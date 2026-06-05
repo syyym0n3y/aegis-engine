@@ -1,0 +1,21 @@
+# secrets — NEVER commit
+.env
+.env.*
+*.key
+*.pem
+supabase/.env
+supabase/.temp/
+
+# deps / build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+
+# deno cache (if vendored locally)
+.deno/
+vendor/
