@@ -1,7 +1,8 @@
-# Trading Substrate
+# Aegis
 
-> Working name — brand TBD. A new **Command Centre** vertical (own repo, own
-> Supabase project) for legal, evidence-based trading research.
+> A new **Command Centre** vertical (own repo) for legal, evidence-based trading
+> research. _Aegis — the shield: the risk gate is the only positive-EV part, so
+> the system's identity is protection, not prediction._
 
 **This is not a trading bot. It is a falsification engine that is allowed to
 trade only after it has repeatedly tried and failed to disprove an edge.**

@@ -1,4 +1,4 @@
-# DECISIONS — append-only architectural decision log (Trading Substrate)
+# DECISIONS — append-only architectural decision log (Aegis)
 
 > New decisions at the top. Never edit a past entry; supersede with a new one.
 

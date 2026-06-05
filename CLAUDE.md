@@ -1,4 +1,4 @@
-# CLAUDE.md — Trading Substrate (working name; brand TBD by operator)
+# CLAUDE.md — Aegis (CC trading vertical)
 
 > **Governed by Command Centre.** This is a new CC vertical in its OWN repo + OWN
 > Supabase project, deliberately blast-radius-isolated from YGS so a trading

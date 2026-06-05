@@ -31,7 +31,7 @@ bad strategies.
 - Create Alpaca **paper** account → put creds in Vault `cc_trd_alpaca_paper_*`
   (free, no money — paper only for Stage 1).
 - Sign off the gate thresholds (D-070 seeds: DSR>0.95, PBO<0.5, floors 30/50/100).
-- Brand/name for the vertical (working name "trading-substrate").
+- ~~Brand/name for the vertical~~ → **Aegis** (chosen 2026-06-06).
 
 ## Explicitly OUT of Stage 1
 The risk gate, paper executor, broker reconciliation, and any execution path.
