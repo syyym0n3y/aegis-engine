@@ -9,7 +9,7 @@
 import { pboCSCV } from "./trd-stats.ts";
 import { evaluateStrategy, gateVerdict } from "./trd-backtest-core.ts";
 import { asOf, lookaheadViolations, PitRecord } from "./trd-point-in-time.ts";
-import { backtest, Panel, StrategySpec, SymbolData, TrialContext } from "./trd-strategy.ts";
+import { backtest, BacktestResult, StrategySpec, SymbolData, TrialContext } from "./trd-strategy.ts";
 
 function lcg(seed: number): () => number {
   let s = seed >>> 0;
@@ -67,26 +67,34 @@ export function runSelfTest(): SelfTestResult {
 
   // 4) A congressional copycat is unmasked as sector beta and REJECTED end-to-end.
   {
-    const rng = lcg(2026);
-    const n = 300;
-    const base = Date.parse("2026-01-01T00:00:00Z");
-    const dates = Array.from({ length: n }, (_, i) => new Date(base + i * 86_400_000).toISOString().slice(0, 10));
-    const mkt: number[] = [0];
-    for (let t = 1; t < n; t++) mkt.push(0.0005 + 0.009 * gauss(rng));
-    const megaRet: number[] = [0];
-    for (let t = 1; t < n; t++) megaRet.push(0.85 * mkt[t] + 0.0015 * gauss(rng));
-    const mega: SymbolData = { symbol: "MEGA", dates, returns: megaRet, features: { congress_net: [{ effectiveDate: "2026-01-01", value: 10 }] } };
-    const spec: StrategySpec = {
-      family: "congress", name: "copycat", version: 1, universe: ["MEGA"],
-      signal: { kind: "feature_threshold", feature: "congress_net", op: ">", value: 0, side: "long" },
-      sizing: { kind: "equal_weight", maxPositions: 1 }, costBps: 5,
-    };
-    const ctx: TrialContext = { nTrials: 40, varTrialSharpes: 0.02, benchmarkSharpe: 0.03, factors: { mkt: mkt.slice(1) } };
-    const panel: Panel = { dates, symbols: [mega] };
-    const res = backtest(spec, panel, ctx);
+    const res = runCopycatBacktest();
     const ok = !res.verdict.passed && (res.stats.decomposition?.r2 ?? 0) > 0.6;
     checks.push({ name: "copycat_unmasked_as_beta", passed: ok, detail: `passed=${res.verdict.passed} r2=${(res.stats.decomposition?.r2 ?? 0).toFixed(2)} fail=${JSON.stringify(res.verdict.failing)}` });
   }
 
   return { passed: checks.every((c) => c.passed), checks };
+}
+
+/** The canonical congressional-copycat demonstration backtest: a strategy that is
+ * always-long a high-beta name on an "always net buying" signal. The engine must
+ * unmask it as sector beta (no significant residual alpha) and REJECT. Exported so
+ * the backtest CLI/edge-fn can persist this verdict as a real trd_backtest_runs
+ * row — the D-070 success metric, recorded. */
+export function runCopycatBacktest(): BacktestResult {
+  const rng = lcg(2026);
+  const n = 300;
+  const base = Date.parse("2026-01-01T00:00:00Z");
+  const dates = Array.from({ length: n }, (_, i) => new Date(base + i * 86_400_000).toISOString().slice(0, 10));
+  const mkt: number[] = [0];
+  for (let t = 1; t < n; t++) mkt.push(0.0005 + 0.009 * gauss(rng));
+  const megaRet: number[] = [0];
+  for (let t = 1; t < n; t++) megaRet.push(0.85 * mkt[t] + 0.0015 * gauss(rng));
+  const mega: SymbolData = { symbol: "MEGA", dates, returns: megaRet, features: { congress_net: [{ effectiveDate: "2026-01-01", value: 10 }] } };
+  const spec: StrategySpec = {
+    family: "congress", name: "copycat", version: 1, universe: ["MEGA"],
+    signal: { kind: "feature_threshold", feature: "congress_net", op: ">", value: 0, side: "long" },
+    sizing: { kind: "equal_weight", maxPositions: 1 }, costBps: 5,
+  };
+  const ctx: TrialContext = { nTrials: 40, varTrialSharpes: 0.02, benchmarkSharpe: 0.03, factors: { mkt: mkt.slice(1) } };
+  return backtest(spec, { dates, symbols: [mega] }, ctx);
 }
