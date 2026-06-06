@@ -1,17 +1,20 @@
 # STATE — Aegis (live state)
 
 ## Last updated
-**2026-06-06 (Opus 4.8 [1m]) — Aegis offline Stage-1 BRAIN complete: stats + cost + PIT + factor-decomp + strategy interpreter + orchestrator + runtime self-test (30 tests green). $0 local-dev.**
+**2026-06-06 (Opus 4.8 [1m]) — Aegis offline Stage-1 BRAIN complete (30 tests) + local DB LIVE via Colima: `0001` applied & VERIFIED (append-only + idempotency + seeded gates) on real Postgres. $0.**
 
 ## Where we are
 - New CC vertical **Aegis**, own repo `/Users/ona/Projects/aegis`. D-070 locked.
   Target re-anchored to "prove a real positive edge net of costs, then scale only
   what's proven" (operator-confirmed).
-- **Provisioning: $0 LOCAL-DEV path chosen (operator).** No cloud Supabase project
-  created (would be **$10/mo** in the operator's org — NOT free as I'd wrongly
-  guessed). Stage 1 runs against local Supabase (`supabase start`) once Docker is
-  running; the paid cloud project is deferred until there's a hosted/scheduled
-  backtest worth $10/mo. **Nothing billed.**
+- **Provisioning: $0 LOCAL-DEV — DB IS UP.** Docker wasn't installed → installed
+  **Colima** (free FOSS runtime, `brew install colima docker`; analytics disabled
+  in `config.toml` for the Colima docker.sock quirk). `supabase start` runs the
+  local stack; **`0001` applied + VERIFIED on live Postgres** (12 tables;
+  append-only UPDATE/DELETE both raise; idempotency dup→unique-violation,
+  on-conflict→no-op; 4 gate thresholds seeded). **Nothing billed.** Cloud ($10/mo,
+  always-on) still required before any real autonomy — local is laptop-only dev.
+  Stop the stack with `supabase stop` + `colima stop` (a VM runs while up).
 - **Built + verified this session (30 unit tests green, `deno check` clean, all offline, $0):**
   - Honest-stats core (`_shared/trd-stats.ts`): PSR / **Deflated Sharpe** / MinTRL /
     **PBO-via-CSCV** + Sharpe/Sortino/maxDD/Calmar + erf/normalCdf/invNorm.
@@ -47,11 +50,11 @@ below needs the operator's free unblock actions (Docker / allowlist / Alpaca pap
    `runSelfTest()` as the deploy ratchet.
 
 ## Blocked on operator (free actions / config)
-- **Start Docker** so `supabase start` can apply `0001` locally ($0).
-- **Allowlist the 4 legal data-source endpoints** (I can't edit the allowlist):
-  `disclosures-clerk.house.gov`, `efdsearch.senate.gov`, `www.sec.gov` (EDGAR),
-  `data.alpaca.markets` / `paper-api.alpaca.markets`. Until then ingestion can't run.
+- ✅ ~~Start Docker~~ — Colima installed + local DB up + `0001` verified.
+- ✅ ~~Allowlist the 4 legal data-source endpoints~~ — added (House/Senate/SEC/Alpaca).
 - **Alpaca paper** account → creds for Vault `cc_trd_alpaca_paper_*` (free, paper only).
+  Needed only for `agent-trd-ingest-prices`; congress + EDGAR ingestion don't need it.
+- (Later) cloud project for always-on autonomy; broker/budget/475(f) for real money.
 - Sign off / amend gate thresholds (D-070 seeds) via a decision-ref row (optional).
 - (Later, real-money only) broker choice, R&D budget $ for MICRO/SMALL, IRS
   475(f) timing — flagged in D-070, not blocking Stage 1.
