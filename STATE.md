@@ -1,7 +1,7 @@
 # STATE — Aegis (live state)
 
 ## Last updated
-**2026-06-06 (Opus 4.8 [1m]) — Aegis offline Stage-1 BRAIN complete (30 tests) + local DB LIVE via Colima: `0001` applied & VERIFIED (append-only + idempotency + seeded gates) on real Postgres. $0.**
+**2026-06-06 (Opus 4.8 [1m]) — Aegis Stage-1 pipeline LIVE end-to-end on REAL data: SEC EDGAR Form-4 ingest → point-in-time features → falsification backtest → operator report, on local Postgres via Colima. 37 tests green. $0.**
 
 ## Where we are
 - New CC vertical **Aegis**, own repo `/Users/ona/Projects/aegis`. D-070 locked.
@@ -38,16 +38,24 @@
 - Design hardened by an 8-agent research+adversarial workflow (`wf_720b2865-2f3`);
   both verify passes returned **sound-with-fixes**; all fixes folded into D-070.
 
-## Next 3 moves (engineering, no money)
-The offline brain is DONE (interpreter + orchestrator + self-test). Everything
-below needs the operator's free unblock actions (Docker / allowlist / Alpaca paper).
-1. Local DB up (Docker → `supabase start` → apply `0001`) → wire `agent-trd-ingest-*`
-   (congress → edgar → prices) once the data-source endpoints are allowlisted.
-2. `agent-trd-features` (persist the point-in-time store) → `agent-trd-backtest`
-   (thin edge-fn wrapper calling `runSelfTest()` then `backtest()`; writes
-   `trd_backtest_runs` + increments `trd_trial_counter`) → `agent-trd-architect-gate`.
-3. `cc-trd-report` CC oversight panel (the visible REJECTED list) + CI wiring of
-   `runSelfTest()` as the deploy ratchet.
+## Stage-1 pipeline — DONE + verified on real data (operator-owned CLIs)
+`./scripts/trd-ingest-edgar.ts [YYYYMMDD] [limit]` → `./scripts/trd-build-features.ts`
+→ `./scripts/trd-backtest.ts` (self-test gate + persists verdict) → `./scripts/trd-report.ts`.
+Proven: 28 real Form-4s → 18 PIT features → copycat REJECTED (r2=0.96, β=0.85,
+residual-α t=−0.85). The honest engine, on live data, $0.
+
+## Next moves
+1. **Real prices** to run real-ticker backtests (not just the synthetic self-test):
+   either the free **Alpaca paper** account → `agent-trd-ingest-prices`, OR authorize
+   a free no-auth feed (e.g. Stooq) — operator's allowlist call. Until prices exist,
+   backtests run on the self-test synthetic panel only.
+2. **First real strategy spec**: an insider-cluster-buy strategy on the EDGAR
+   features (needs prices) — run it through the gate; expect most variants REJECTED.
+3. **Hosted path (cloud-time, deferred — NOT half-built):** thin `agent-trd-*` edge-fn
+   wrappers + `cc-trd-report` CC panel + CI `runSelfTest()` ratchet. The CLIs already
+   ARE the verified operator surface; edge fns only matter once the $10/mo cloud
+   project exists (local can't host always-on). Congress ingestion deferred (House
+   PTRs are messy PDFs; EDGAR/Form-4 is the cleaner + stronger signal anyway).
 
 ## Blocked on operator (free actions / config)
 - ✅ ~~Start Docker~~ — Colima installed + local DB up + `0001` verified.
