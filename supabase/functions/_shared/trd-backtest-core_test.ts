@@ -72,6 +72,8 @@ Deno.test("SELF-TEST: a congressional copycat is unmasked as SECTOR BETA, not al
   assertAlmost(decomp.betas.spy, 0.8, 0.05); // recovers the beta
   assertInRange(decomp.residualAlpha, -5e-4, 5e-4); // ~no alpha
   assert(Math.abs(decomp.residualAlpha) < 1e-3, "residual alpha ~ 0");
+  // the copycat must have NO significant POSITIVE alpha (negative is fine — still no edge)
+  assert(decomp.residualAlphaT < 1.65, `copycat must not show significant positive alpha, t=${decomp.residualAlphaT}`);
 
   const panel = evaluateStrategy({
     returns, costBps: 22, nTrials: 50, varTrialSharpes: 0.02, benchmarkSharpe: 0.03,
@@ -90,6 +92,7 @@ Deno.test("factor decomposition DETECTS genuine residual alpha when it exists", 
   const returns = spy.map((s) => 0.5 * s + alpha + 0.003 * gauss(rng));
   const decomp = factorDecompose(returns, { spy });
   assert(decomp.residualAlpha > 0, `expected positive residual alpha, got ${decomp.residualAlpha}`);
+  assert(decomp.residualAlphaT > 2, `genuine alpha must be statistically significant, t=${decomp.residualAlphaT}`);
   assertAlmost(decomp.betas.spy, 0.5, 0.06);
   // honesty: detecting alpha is NOT the same as passing the gate at this n —
   // the gate may still (correctly) demand a longer track record.

@@ -56,17 +56,42 @@ function solve(A: number[][], b: number[]): number[] {
   return M.map((row, i) => row[n] / row[i]);
 }
 
+/** Inverse of a small square matrix via Gauss-Jordan. Throws if singular. */
+function inv(A: number[][]): number[][] {
+  const n = A.length;
+  const M = A.map((row, i) => [...row, ...row.map((_, j) => (i === j ? 1 : 0))]);
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    for (let r = col + 1; r < n; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+    if (Math.abs(M[piv][col]) < 1e-12) throw new Error("singular matrix");
+    [M[col], M[piv]] = [M[piv], M[col]];
+    const d = M[col][col];
+    for (let c = 0; c < 2 * n; c++) M[col][c] /= d;
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = M[r][col];
+      for (let c = 0; c < 2 * n; c++) M[r][c] -= f * M[col][c];
+    }
+  }
+  return M.map((row) => row.slice(n));
+}
+
 export interface OlsResult {
   coef: number[]; // coef[0] = intercept, coef[1..] = slopes
+  coefSE: number[]; // standard error of each coefficient
+  tStats: number[]; // coef / SE — H0: coefficient = 0
   residuals: number[];
   r2: number;
 }
 
 /** Ordinary least squares of y on X (rows = observations, cols = regressors).
- * An intercept column is added automatically; coef[0] is that intercept. */
+ * An intercept column is added automatically; coef[0] is that intercept. Also
+ * returns per-coefficient standard errors + t-stats so "alpha > 0" can be tested
+ * for SIGNIFICANCE, not just sign (a tiny positive intercept is noise, not edge). */
 export function ols(y: number[], X: number[][]): OlsResult {
   const n = y.length;
   const Xi = X.map((row) => [1, ...row]); // prepend intercept
+  const p = Xi[0].length;
   const Xt = transpose(Xi);
   const XtX = matMul(Xt, Xi);
   const Xty = matMul(Xt, y.map((v) => [v])).map((r) => r[0]);
@@ -76,7 +101,14 @@ export function ols(y: number[], X: number[][]): OlsResult {
   let ssRes = 0, ssTot = 0;
   for (let i = 0; i < n; i++) { ssRes += residuals[i] ** 2; ssTot += (y[i] - ybar) ** 2; }
   const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
-  return { coef, residuals, r2 };
+  // coefficient covariance = sigma^2 * (X'X)^-1
+  const dof = Math.max(1, n - p);
+  const sigma2 = ssRes / dof;
+  let cov: number[][];
+  try { cov = inv(XtX); } catch { cov = Xi.map((_, i) => Xi.map((__, j) => (i === j ? Infinity : 0))); }
+  const coefSE = coef.map((_, j) => Math.sqrt(Math.max(0, sigma2 * cov[j][j])));
+  const tStats = coef.map((c, j) => (coefSE[j] > 0 && Number.isFinite(coefSE[j]) ? c / coefSE[j] : 0));
+  return { coef, coefSE, tStats, residuals, r2 };
 }
 
 // ---------- factor decomposition ----------
@@ -84,6 +116,9 @@ export function ols(y: number[], X: number[][]): OlsResult {
 export interface Decomposition {
   /** per-period intercept of the factor regression = RESIDUAL alpha */
   residualAlpha: number;
+  /** t-stat of the residual alpha (H0: alpha=0). Edge must be SIGNIFICANT, not
+   * just numerically positive — a tiny +alpha at t≈0 is noise, not skill. */
+  residualAlphaT: number;
   betas: Record<string, number>;
   r2: number;
   /** Sharpe of the residual stream (edge NOT explained by the factors) */
@@ -99,10 +134,10 @@ export function factorDecompose(
 ): Decomposition {
   const names = Object.keys(factors);
   const X = strategyReturns.map((_, i) => names.map((nm) => factors[nm][i]));
-  const { coef, residuals, r2 } = ols(strategyReturns, X);
+  const { coef, tStats, residuals, r2 } = ols(strategyReturns, X);
   const betas: Record<string, number> = {};
   names.forEach((nm, j) => (betas[nm] = coef[j + 1]));
-  return { residualAlpha: coef[0], betas, r2, residualSharpe: sharpe(residuals) };
+  return { residualAlpha: coef[0], residualAlphaT: tStats[0], betas, r2, residualSharpe: sharpe(residuals) };
 }
 
 // ---------- walk-forward ----------
@@ -179,6 +214,8 @@ export interface GateThresholds {
   requireNetCostPositive: boolean;
   requireMinTrlSatisfied: boolean;
   requireResidualAlpha: boolean; // edge must exceed factor exposure
+  /** minimum t-stat for the residual alpha to count as real (one-sided ~95% = 1.65) */
+  residualAlphaTMin: number;
 }
 
 export const DEFAULT_GATE: GateThresholds = {
@@ -186,6 +223,7 @@ export const DEFAULT_GATE: GateThresholds = {
   requireNetCostPositive: true,
   requireMinTrlSatisfied: true,
   requireResidualAlpha: true,
+  residualAlphaTMin: 1.65,
 };
 
 export interface GateVerdict { passed: boolean; failing: string[]; }
@@ -200,9 +238,13 @@ export function gateVerdict(p: StatsPanel, t: GateThresholds = DEFAULT_GATE): Ga
     failing.push(`min_track_record ${Number.isFinite(p.minTRL) ? Math.ceil(p.minTRL) : "Inf"} > n=${p.n}`);
   }
   if (t.requireResidualAlpha) {
-    const a = p.decomposition?.residualAlpha;
-    if (a === undefined) failing.push("no_factor_decomposition (cannot prove residual alpha)");
-    else if (!(a > 0)) failing.push(`residual_alpha ${a.toExponential(2)} <= 0 (apparent edge is factor beta, not alpha)`);
+    const d = p.decomposition;
+    if (!d) failing.push("no_factor_decomposition (cannot prove residual alpha)");
+    else if (!(d.residualAlpha > 0)) {
+      failing.push(`residual_alpha ${d.residualAlpha.toExponential(2)} <= 0 (apparent edge is factor beta, not alpha)`);
+    } else if (!(d.residualAlphaT >= t.residualAlphaTMin)) {
+      failing.push(`residual_alpha t=${d.residualAlphaT.toFixed(2)} < ${t.residualAlphaTMin} (edge not statistically distinct from factor beta)`);
+    }
   }
   return { passed: failing.length === 0, failing };
 }
