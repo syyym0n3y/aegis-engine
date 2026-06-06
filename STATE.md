@@ -1,7 +1,7 @@
 # STATE — Aegis (live state)
 
 ## Last updated
-**2026-06-06 (Opus 4.8 [1m]) — Aegis vertical bootstrapped; honest-stats core + falsification self-test built & verified; $0 local-dev path chosen.**
+**2026-06-06 (Opus 4.8 [1m]) — Aegis offline Stage-1 BRAIN complete: stats + cost + PIT + factor-decomp + strategy interpreter + orchestrator + runtime self-test (30 tests green). $0 local-dev.**
 
 ## Where we are
 - New CC vertical **Aegis**, own repo `/Users/ona/Projects/aegis`. D-070 locked.
@@ -12,14 +12,19 @@
   guessed). Stage 1 runs against local Supabase (`supabase start`) once Docker is
   running; the paid cloud project is deferred until there's a hosted/scheduled
   backtest worth $10/mo. **Nothing billed.**
-- **Built + verified this session (25 unit tests green, `deno check` clean, all offline):**
+- **Built + verified this session (30 unit tests green, `deno check` clean, all offline, $0):**
   - Honest-stats core (`_shared/trd-stats.ts`): PSR / **Deflated Sharpe** / MinTRL /
     **PBO-via-CSCV** + Sharpe/Sortino/maxDD/Calmar + erf/normalCdf/invNorm.
-  - **Falsification self-test (`_shared/trd-backtest-core.ts`):** OLS factor
-    decomposition + walk-forward + the REJECT-by-default gate. Proven offline:
-    noise → REJECTED; the congressional copycat → unmasked as sector beta
-    (`residual_alpha <= 0`) → REJECTED; genuine factor-independent alpha → detected.
-    **This is the D-070 Stage-1 success metric, demonstrated.**
+  - **Backtest core (`_shared/trd-backtest-core.ts`):** OLS factor decomposition
+    with per-coef **t-stats** (residual alpha must be statistically SIGNIFICANT,
+    not just positive), expanding walk-forward, and the REJECT-by-default gate.
+  - **Strategy interpreter + orchestrator (`_shared/trd-strategy.ts`):** declarative
+    JSON specs (universe/signal/sizing), point-in-time decision loop (asOf INSIDE
+    the loop), bar-N+1 fills, turnover cost, idempotent content-addressed runKey.
+  - **Runtime self-test (`_shared/trd-selftest.ts`):** proves the engine still kills
+    bad strategies (overfit→PBO, noise→reject, look-ahead→blocked, **congressional
+    copycat→unmasked as sector beta & REJECTED**) — the eventual `agent-trd-backtest`
+    refuses to run if it fails. **This IS the D-070 Stage-1 success metric, demonstrated.**
   - Pessimistic cost model + point-in-time (look-ahead-fail-closed) modules + tests.
   - `0001_trd_substrate.sql` — 12 `trd_*` tables incl. `trd_manual_trades`
     (manual log), `trd_gate_thresholds` (decision-locked), price-revision
@@ -31,12 +36,15 @@
   both verify passes returned **sound-with-fixes**; all fixes folded into D-070.
 
 ## Next 3 moves (engineering, no money)
-1. Build the declarative strategy-spec interpreter that feeds price/feature panels
-   into `trd-backtest-core` (still offline-testable with synthetic panels).
-2. Local DB up (Docker → `supabase start` → apply `0001`) → wire `agent-trd-ingest-*`
+The offline brain is DONE (interpreter + orchestrator + self-test). Everything
+below needs the operator's free unblock actions (Docker / allowlist / Alpaca paper).
+1. Local DB up (Docker → `supabase start` → apply `0001`) → wire `agent-trd-ingest-*`
    (congress → edgar → prices) once the data-source endpoints are allowlisted.
-3. `agent-trd-features` (point-in-time store) → `agent-trd-backtest` (wraps
-   `trd-backtest-core`) → `agent-trd-architect-gate` → `cc-trd-report` (REJECTED list).
+2. `agent-trd-features` (persist the point-in-time store) → `agent-trd-backtest`
+   (thin edge-fn wrapper calling `runSelfTest()` then `backtest()`; writes
+   `trd_backtest_runs` + increments `trd_trial_counter`) → `agent-trd-architect-gate`.
+3. `cc-trd-report` CC oversight panel (the visible REJECTED list) + CI wiring of
+   `runSelfTest()` as the deploy ratchet.
 
 ## Blocked on operator (free actions / config)
 - **Start Docker** so `supabase start` can apply `0001` locally ($0).
