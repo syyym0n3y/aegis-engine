@@ -42,7 +42,15 @@ async function fetchBars(sym: string): Promise<PriceBar[]> {
 
 const sql = postgres(DB);
 try {
-  const rows = await sql`select distinct ticker from trd_raw_filings where source='edgar' and ticker is not null` as unknown as Array<{ ticker: string }>;
+  // scope to tickers that actually carry an insider open-market BUY signal (+ SPY
+  // factor) — keeps the free-tier request count small. Falls back to all filing
+  // tickers if no features exist yet.
+  const minBuyers = Number(Deno.args[0] ?? "1");
+  let rows = await sql`select distinct symbol as ticker from trd_features
+    where feature_key='insider_open_market_buyers_30d' and value >= ${minBuyers}` as unknown as Array<{ ticker: string }>;
+  if (rows.length === 0) {
+    rows = await sql`select distinct ticker from trd_raw_filings where source='edgar' and ticker is not null` as unknown as Array<{ ticker: string }>;
+  }
   const symbols = [...new Set([...rows.map((r) => r.ticker), "SPY"])];
   console.log(`[prices] provider=${provider}  ${symbols.length} symbols`);
   let bars = 0, errors = 0;

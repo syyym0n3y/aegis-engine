@@ -40,8 +40,12 @@ try {
   const spy = bySym.get("SPY");
   if (!spy) fail("no SPY bars for the market-factor decomposition");
 
-  const prices: PriceSeries[] = tickers.filter((t) => bySym.has(t)).map((t) => ({ symbol: t, bars: bySym.get(t)! }));
-  if (prices.length === 0) fail("none of the cluster-buy tickers have price bars");
+  const prices: PriceSeries[] = tickers
+    .filter((t) => bySym.has(t))
+    .map((t) => ({ symbol: t, bars: bySym.get(t)! }))
+    .filter((p) => p.bars.length >= 60); // drop too-new/illiquid names (strict intersection grid)
+  console.log(`[insider] priced tickers (>=60 bars): ${prices.map((p) => `${p.symbol}(${p.bars.length})`).join(", ") || "(none)"}`);
+  if (prices.length === 0) fail("none of the cluster-buy tickers have enough price history");
 
   // insider feature records as point-in-time signal per ticker
   const featRows = await sql`select symbol, effective_date::text as ed, value::float8 as v
