@@ -1,7 +1,7 @@
 # STATE — Aegis (live state)
 
 ## Last updated
-**2026-06-07 (Opus 4.8 [1m]) — D-071 THE HONEST ANSWER: no tradeable alpha edge beats a cheap index after costs. 3/3 strategies REJECTED on REAL data (congress copycat · insider cluster-buy · 18yr time-series momentum). 20yr cross-asset data via Twelve Data (46 symbols, ~195k bars). 8-edge research workflow (both verifiers "unusually honest"). Wealth engine = structural+behavioural + small late lever, NOT a signal. 42 tests. $0.**
+**2026-06-07 (Opus 4.8 [1m]) — D-072 SECOND POND PASS: ~16/16 securities strategies rejected; the real edge is the operator's OWN creator business (Pond H), not a trade. Barbell direction: Ireland-UCITS index core (US-situs estate-tax trap is LETHAL for a SA national) + ISA/SIPP tax wrapper (highest-certainty edge) + tiny finite UK-trust-discount tilt + BUILD the creator substrate (unmonetized on the visa; Graduate Route before 31 Dec 2026, then monetize). Aegis pivots: alpha-finder → folklore-falsifier + core-protector. (D-071: first pass, 3/3 real-data kills incl. 18yr trend.) 42 tests, $0.**
 
 ## Where we are
 - New CC vertical **Aegis**, own repo `/Users/ona/Projects/aegis`. D-070 locked.

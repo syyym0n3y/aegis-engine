@@ -4,6 +4,31 @@
 
 ---
 
+## D-072 — Expanded the pond (8 new candidates): ~16/16 securities strategies now rejected; the operator's REAL edge is the creator business they BUILD, not a trade. Barbell direction locked.
+
+**Date:** 2026-06-07
+
+**Context:** Operator pushed back on D-071 ("maybe we're fishing in the wrong pond — expand the candidate set, do more research"). Ran a second 8-pond research workflow (`wf_87a217a5-91f`, 11 agents) over the *less-crowded* ponds + the small-account-advantage lens the pass-1 reviewer flagged: event-driven/corporate-actions, micro-cap/neglected, carry, crypto-native, alt-data/NLP, illiquidity/alt-assets, stat-arb, and the operator's own domain. Verifiers returned **confirms-pass-1** + **marginal-improvement** ("passes the honesty check at a level I rarely see").
+
+**Decision (the answer to "wrong pond?"):** The operator was RIGHT that pass-1 fished the crowded pond — but the better pond is **not another trading signal, it's the operator themselves.**
+  1. **No liquid trading edge survived — ~16/16 securities strategies now rejected.** Every new pond failed after costs/OOS: event-driven (packaged vehicles PKW/CSD/MERFX all underperformed the index a decade), carry (~0 OOS post-2010, crash-clustered), crypto-native (compressed 25%→<5% in 2yr + visa-barred), alt-data/NLP (commoditized by the operator's own LLM tooling, Sharpe 6.54→1.22), stat-arb (HFT-moated). The index null stands.
+  2. **The "small-account advantage" thesis got a mostly-NEGATIVE answer — and it INVERTED.** Where a capacity gap exists (funds can't size in), the same illiquidity imposes 2-4% retail spreads + no borrow + gap risk that kills it for retail *harder*. The edge is **cost-constrained, not capacity-constrained**; small size is a *disadvantage*. True for event-driven, FX-carry, alt-data, stat-arb.
+  3. **The genuinely better pond is Pond H — the operator's OWN creator/content asset.** Right-tail creator businesses yield ~20-40% owner earnings vs the index's ~7%; the moat (authentic audience/distribution) is the literal Thiel secret no depth-locked giant can replicate. It is the only large, durable, anti-scale edge in EITHER pass. **The business they CREATE is the alpha; public markets are the savings account.** This independently re-derives the operator's own grand thesis (YGS = the leverage substrate).
+  4. **THE DIRECTION = a barbell, not a trade book:**
+     - **CORE (visa-safe, passive):** cheap global equity index via **Ireland-domiciled UCITS ETFs — NOT US-situs** (the $60k NRA US estate-tax trap is *lethal* for a South African; verified SA has NO US estate-tax treaty relief — this is the single most actionable risk finding). Responsible leverage LATER, sized for the gap not the average.
+     - **TAX WRAPPER = the highest-certainty after-cost edge (verifier catch):** ISA (£20k/yr, CGT+income-free, Student-visa-eligible) + SIPP. The wrapper itself IS the edge. Plus UK low-coupon gilts held-to-maturity (CGT-free capital uplift) — a [Certain] visa-safe UK retail tax edge.
+     - **SATELLITE TILTS (≤15-25%, diversifiers not alpha):** a small finite UK investment-trust wide-discount basket in an ISA (Pond G — real but ARBITRAGING in real time: Saba's UKIT ETF launched Mar 2026, discounts already narrowed 36/45 sectors → a 2-5yr window, not permanent); optional liquid real-asset sleeve (REIT/infra).
+     - **THE ACTUAL EDGE (deferred, then dominant):** build the Command Centre / creator substrate NOW but **UNMONETIZED** (legal study/R&D on the Student visa — YPP off, no AdSense/sponsorship), apply **Graduate Route before 31 Dec 2026** (hard clock; from 1 Jan 2027 it shrinks 2yr→18mo), then flip monetization on, compound the cash-flowing asset, borrow against it, park surplus in the index core.
+  5. **Aegis's role SHIFTS:** from "find alpha" (done — 16/16 rejected) to **"falsify folklore + protect the core"** — estate-tax-safe wrapper selection, leverage-gap sizing, value-trap filters, currency-hedge decision (tri-currency ZAR/GBP/USD is material + unscored).
+
+**Alternatives ruled out:** (a) keep hunting trading signals — refused, two exhaustive passes + the engine agree there's no retail-capturable liquid edge; (b) chase the small-account ponds (micro-value, CEF discounts) as the main engine — refused, they're marginal, finite, self-terminating as the account grows, and the active ones breach the visa; (c) treat crypto/carry/event-driven as edges — refused, all reject after costs and most are visa-unsafe to run live.
+
+**Framework lens:** honest-advisor (the answer to "wrong pond?" is "yes — the right pond is you, not a signal") + Thiel (the secret / circle of competence = the operator's own anti-scale creator moat) + operator grand thesis (independently re-derived: audience+distribution is the leverage substrate) + falsification doctrine (16/16 kills; the null index is the benchmark) + visa/cross-border constraints as first-class.
+
+**Success metric:** the operator stops hunting trading edges, builds the Ireland-UCITS tax-sheltered index core + maximises savings rate, builds the creator substrate unmonetized + secures the Graduate Route before the deadline, then monetizes + borrows against a proven cash-flowing asset. Aegis keeps killing folklore + protecting the core. No real money on any unproven signal — ever.
+
+---
+
 ## D-071 — The honest answer: there is no tradeable alpha edge that beats a cheap index after costs; the generational-wealth engine is STRUCTURAL + BEHAVIOURAL, not informational
 
 **Date:** 2026-06-07
