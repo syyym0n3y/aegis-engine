@@ -1,7 +1,7 @@
 # STATE — Aegis (live state)
 
 ## Last updated
-**2026-06-06 (Opus 4.8 [1m]) — Aegis Stage-1 LIVE on REAL data (EDGAR Form-4 → PIT features → falsification backtest → report). Insider cluster-buy backtest + Alpaca price-ingest BUILT (40 tests). Stooq free-feed is DEAD (JS anti-bot) → real insider verdict awaits a free Alpaca paper signup + a buy-event backfill. $0.**
+**2026-06-07 (Opus 4.8 [1m]) — D-071 THE HONEST ANSWER: no tradeable alpha edge beats a cheap index after costs. 3/3 strategies REJECTED on REAL data (congress copycat · insider cluster-buy · 18yr time-series momentum). 20yr cross-asset data via Twelve Data (46 symbols, ~195k bars). 8-edge research workflow (both verifiers "unusually honest"). Wealth engine = structural+behavioural + small late lever, NOT a signal. 42 tests. $0.**
 
 ## Where we are
 - New CC vertical **Aegis**, own repo `/Users/ona/Projects/aegis`. D-070 locked.
