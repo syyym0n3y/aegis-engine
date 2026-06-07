@@ -21,12 +21,13 @@ if (!provider) {
   Deno.exit(2);
 }
 const DB = Deno.env.get("DATABASE_URL") ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-const start = new Date(Date.now() - 550 * 86_400_000).toISOString().slice(0, 10);
+const OUTPUTSIZE = Deno.env.get("OUTPUTSIZE") ?? "550"; // TD max ~5000 (years)
+const start = new Date(Date.now() - Number(OUTPUTSIZE) * 1.5 * 86_400_000).toISOString().slice(0, 10);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function fetchBars(sym: string): Promise<PriceBar[]> {
   if (provider === "twelvedata") {
-    const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${sym}&interval=1day&outputsize=550&apikey=${TD}`);
+    const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${sym}&interval=1day&outputsize=${OUTPUTSIZE}&apikey=${TD}`);
     const text = await res.text();
     const err = twelveDataError(text);
     if (err) throw new Error(err);
@@ -42,16 +43,21 @@ async function fetchBars(sym: string): Promise<PriceBar[]> {
 
 const sql = postgres(DB);
 try {
-  // scope to tickers that actually carry an insider open-market BUY signal (+ SPY
-  // factor) — keeps the free-tier request count small. Falls back to all filing
-  // tickers if no features exist yet.
-  const minBuyers = Number(Deno.args[0] ?? "1");
-  let rows = await sql`select distinct symbol as ticker from trd_features
-    where feature_key='insider_open_market_buyers_30d' and value >= ${minBuyers}` as unknown as Array<{ ticker: string }>;
-  if (rows.length === 0) {
-    rows = await sql`select distinct ticker from trd_raw_filings where source='edgar' and ticker is not null` as unknown as Array<{ ticker: string }>;
+  // SYMBOLS env overrides (explicit universe for strategy testing). Otherwise scope
+  // to tickers carrying an insider open-market BUY signal (+ SPY), small request count.
+  const override = Deno.env.get("SYMBOLS");
+  let symbols: string[];
+  if (override) {
+    symbols = [...new Set([...override.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean), "SPY"])];
+  } else {
+    const minBuyers = Number(Deno.args[0] ?? "1");
+    let rows = await sql`select distinct symbol as ticker from trd_features
+      where feature_key='insider_open_market_buyers_30d' and value >= ${minBuyers}` as unknown as Array<{ ticker: string }>;
+    if (rows.length === 0) {
+      rows = await sql`select distinct ticker from trd_raw_filings where source='edgar' and ticker is not null` as unknown as Array<{ ticker: string }>;
+    }
+    symbols = [...new Set([...rows.map((r) => r.ticker), "SPY"])];
   }
-  const symbols = [...new Set([...rows.map((r) => r.ticker), "SPY"])];
   console.log(`[prices] provider=${provider}  ${symbols.length} symbols`);
   let bars = 0, errors = 0;
   for (const sym of symbols) {
