@@ -140,7 +140,7 @@ function passesTrend(side: "long" | "short", close: number, emaVal: number, mode
 // Cost is charged in R units (a fraction of each trade's risk/stop-distance) so it is comparable
 // across instruments. Gold's ~$0.30/side over an ~$11 stop ≈ 0.05R; 0.05 is a realistic default.
 export interface GrammarCfg { costRPerSide: number; }
-export interface CTrade { r: number; exitIdx: number; trend: TrendState; vol: VolState; session: Session; }
+export interface CTrade { r: number; exitIdx: number; entryTs: string; exitTs: string; side: "long" | "short"; trend: TrendState; vol: VolState; session: Session; }
 
 // True-range → ATR series (Wilder), for the volatility-regime tag.
 function atrSeries(bars: Bar[], period = 14): number[] {
@@ -159,7 +159,7 @@ export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCf
   const e = ema(bars.map((b) => b.close), s.emaPeriod);
   const atr = atrSeries(bars, 14); const atrMed = median(atr);
   const out: CTrade[] = [];
-  let open: { side: "long" | "short"; entry: number; stop: number; target: number; trend: TrendState; vol: VolState; session: Session } | null = null;
+  let open: { side: "long" | "short"; entry: number; stop: number; target: number; entryTs: string; trend: TrendState; vol: VolState; session: Session } | null = null;
   let queued: Sig | null = null; // signal fired on prior bar → enter at this bar's open
   for (let i = 0; i < n; i++) {
     const bar = bars[i];
@@ -167,7 +167,7 @@ export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCf
       let exit: number | null = null;
       if (open.side === "long") { if (bar.low <= open.stop) exit = open.stop; else if (bar.high >= open.target) exit = open.target; }
       else { if (bar.high >= open.stop) exit = open.stop; else if (bar.low <= open.target) exit = open.target; }
-      if (exit !== null) { const dir = open.side === "long" ? 1 : -1; const risk = Math.abs(open.entry - open.stop); const grossR = risk > 0 ? (exit - open.entry) * dir / risk : 0; out.push({ r: grossR - 2 * cfg.costRPerSide, exitIdx: i, trend: open.trend, vol: open.vol, session: open.session }); open = null; }
+      if (exit !== null) { const dir = open.side === "long" ? 1 : -1; const risk = Math.abs(open.entry - open.stop); const grossR = risk > 0 ? (exit - open.entry) * dir / risk : 0; out.push({ r: grossR - 2 * cfg.costRPerSide, exitIdx: i, entryTs: open.entryTs, exitTs: bar.ts, side: open.side, trend: open.trend, vol: open.vol, session: open.session }); open = null; }
     }
     if (!open && queued) { // fill queued entry at this bar's open
       const entry = bar.open, dir = queued.side === "long" ? 1 : -1, risk = Math.abs(entry - queued.stop);
@@ -175,7 +175,7 @@ export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCf
         const slope = i > 10 ? (e[i] - e[i - 10]) / (e[i - 10] || 1) : 0;
         const trend: TrendState = slope > 0.001 ? "up" : slope < -0.001 ? "down" : "flat";
         const vol: VolState = atr[i] >= atrMed ? "hi" : "lo";
-        open = { side: queued.side, entry, stop: queued.stop, target: entry + dir * s.rr * risk, trend, vol, session: sessionOf(new Date(bar.ts).getUTCHours()) };
+        open = { side: queued.side, entry, stop: queued.stop, target: entry + dir * s.rr * risk, entryTs: bar.ts, trend, vol, session: sessionOf(new Date(bar.ts).getUTCHours()) };
       }
       queued = null;
     }

@@ -503,3 +503,34 @@ best cell (BTC 15m sweep, NY, trend-up, +0.775R/trade) has Sharpe 0.38, n=32 →
 The corpus now honestly proves the mechanical retail genre has no deflation-surviving edge
 across essentially the whole tradeable universe. The BTC-sweep-rr3 lead is the one worth a
 dedicated, low-trial, pre-registered test (avoid re-deflating it against a million siblings).
+
+### D-084 — Pre-registered hypothesis + macro correlation + refine harness (2026-08-04)
+
+Three builds answering "wire the BTC-sweep-rr3 lead as a pre-registered hypothesis; correlate
+the patterns to the economy; refine all calculations."
+
+**1. Pre-registration (the honest way to mine the goldmine).** The BTC-sweep-rr3 lead cannot
+be validated by searching harder — every sibling raises its deflation bar. So it is FROZEN as a
+single hypothesis: `trd_prereg` row `btc-sweep-rr3-v1` (spec {sweep, ema20, with, sl5, rr3},
+BTC-USD 15m, registered 2026-08-04). `trd-prereg-tick` edge fn (cron every 6h) runs the EXACT
+grammar code over fresh bars and records ONLY trades entered AFTER registration → the forward
+result is a single, un-deflated trial. Honesty check it already surfaced: the spec's
+UNCONDITIONAL 60d baseline is **−0.057R** (the +0.088..+0.775R were cherry-picked conditional
+cells) — the forward test will settle it. Verdict gated at n≥30 forward trades.
+
+**2. Macro correlation (`scripts/trd-macro-correlation.ts`).** Daily trades across BTC/Gold/
+S&P/Nasdaq tagged with contemporaneous VIX tercile + yield-curve sign. Finding: **chart-pattern
+edges have near-zero correlation with macro** (all |corr(R,VIX)|,|corr(R,curve)| < 0.2). The one
+useful, concrete tie: **BTC-sweep degrades when the curve inverts** (+0.13R normal → −0.60R
+inverted, corr +0.19) → recorded as the deployment macro-gate on the pre-reg hypothesis. This
+confirms the D-079 stance: macro's value is de-risking (fragility), NOT a switch that turns
+these patterns profitable.
+
+**3. Refine harness (`scripts/trd-refine.sh`).** One reproducible command re-runs the unit
+suite + type check + the Pranam falsification + mass search + conditional search + macro
+correlation. The universe sweep is flagged separate (heavy). Pre-registered hypotheses refine
+their own verdict autonomously via the cron tracker.
+
+Net: the corpus now has (a) a frozen, forward-tested candidate that the deflation math can't
+kill unfairly, (b) an honest read that chart edges don't tie to the economy, (c) a one-command
+way to reproduce/refine everything. 131 tests green.
