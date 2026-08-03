@@ -6,6 +6,23 @@
 
 ---
 
+---
+
+## D-077 — GLOBAL FACTOR VALIDATION (free Fama-French, 1927-2026, all world regions): several factors ARE real & robust as diversified RISK PREMIA. Earlier "nothing survives" was a US-only/2010-only/survivorship artifact. The product is a global multi-factor + risk-overlay portfolio, not a signal.
+
+**Date:** 2026-08-03
+
+**Context:** Operator refused the "needs paid data" limitation and pushed for global completeness. Built a FREE point-in-time pipeline: `trd-fetch-ff` (fetches + inflates Fama-French .zip via DecompressionStream deflate-raw) -> `trd_scratch_ff`. Ingested US(1963)/Developed/Europe/Japan/AsiaPac/Emerging 5-factor + momentum(1927). This is the academic gold standard, free.
+
+**Findings (full-period annualized Sharpe, t-stat):**
+- **Equity/market premium: robustly positive in EVERY region** (US 0.47 t3.7 ... EM 0.40 t2.5; Japan weak), and STRONGER post-2010. The #1 durable edge = own equities (vindicates D-071 structural thesis).
+- **Value (HML): real globally** — US 0.34(t2.7), Europe 0.46, Japan 0.45, AsiaPac 0.67(t4.0), Emerging 0.81(t4.9). DECAYED in US/Developed post-2010 (the "value winter") but stayed POSITIVE international/EM. My earlier US-2010+ "value dead" call was WRONG/regime-local.
+- **Quality/Profitability (RMW): robust in developed** (Developed 0.68 t4.1, Europe 0.65 t3.9, US 0.38), held up post-2010.
+- **Momentum (developed): 0.54 t3.2, +7%/yr, post-2010 0.70** — real, not decayed.
+- **Investment (CMA): real, decaying. Size (SMB): dead everywhere.**
+
+**Decision:** The retail-accessible edge is NOT a high-Sharpe signal (all falsified) but a **diversified, multi-FACTOR (value+quality+momentum), multi-REGION (US+intl+EM), long-horizon RISK-PREMIA portfolio + the risk overlay** — modest gross Sharpe ~0.4-0.7, real, century-and-globe validated, what AQR/DFA actually run. This RECONCILES the whole session: single-market technical signals decay/regime-shift (D-071..D-076), but broad academic risk premia persist globally as compensation for risk. Operator's persistence was correct — narrow tests missed real global premia. NEXT: build the global multi-factor book (long top-factor deciles per region, combined, vol-scaled) + cost/implementation via cheap factor ETFs (VLUE/QUAL/MTUM/AVUV/international equivalents) since direct factor replication has high turnover.
+
 ## D-076 — REGIME-STRESS test (2001-2026) — the momentum "edge" was largely a 2011-26 regime artifact; across a full cycle it is ~FLAT. The only thing that survives every test is RISK MANAGEMENT (loss reduction), not any signal.
 
 **Date:** 2026-08-03
