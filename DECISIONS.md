@@ -4,6 +4,20 @@
 
 ---
 
+## D-075 — COMPREHENSIVE falsification: 10,906 strategy×market backtests + OOS seasonality + pre-specified anomalies → the retail timing-edge thesis is REJECTED with a locked holdout + PBO. The durable edge is structural, not a signal.
+
+**Date:** 2026-08-03
+
+**Context:** Operator pushed to exhaustively test before concluding — 4000+ strategies against all markets, unseen-price holdout, winners → EAs. Built it the only honest way (a mass search is a false-positive factory otherwise). Real-data runs, all committed on `feat/wyckoff-evolutionary-search`:
+
+- **Wyckoff evolutionary search** (`trd-evolve` + real Alpaca daily): best-of-134 winner was 1.11β to SPY, residual-alpha t=-0.01 → REJECT.
+- **Intraday session-ORB** across Asia/London/NY × weekday × dir on 54,588 real BTC 15m bars (2436 trades): best segment Sharpe 0.62@n13 → 0.18@n81 (edge shrinks as N grows = noise) → REJECT.
+- **OOS seasonality sweep** (`trd-seasonality-sweep`, 19 markets × 5 setups, 475 segs): 10 persisted OOS (July/Nov equity, HYG Mon/wk1, Uptober) but 0 cleared Bonferroni.
+- **Pre-specified combined tilt** (`trd-prespecified-test`, turn-of-month + Halloween, 8 indices): OOS test half Sharpe 0.65 vs buy-hold 0.86, timing-alpha t=-0.15 → REJECT. Anomaly decay (McLean-Pontiff) caught by the split: real in 1990s-2010s train, gone in 2019-26 test.
+- **Zoo sweep** (`trd-zoo-sweep`, 574 defs × 19 markets = **10,906 trials**, IS/VAL/HOLDOUT): 0/10,906 cleared holdout DSR≥0.95 (best 0.18, all long-BTC-beta); **PBO=0.53 → selection itself overfit**. No winner to convert to an EA.
+
+**Decision:** The retail-accessible timing/pattern/seasonal edge is comprehensively falsified on real data with the strongest available methodology (true-N DSR deflation + locked holdout + PBO). Converges hard with D-071/D-072: buy-and-hold beat every strategy every time; the durable edge for this seat is **structural** (low-cost beta + tax wrapper + behaviour) + the **risk overlay** (the one +EV component) + the **creator/education business** (D-073). Banks win on order-flow/market-making/latency — structural seats we cannot buy — NOT on chart reading from the same data. One untested class remains: cross-sectional relative-value (likely same outcome). Building more strategies only raises the deflation bar; the method, not the count, is the conclusion.
+
 ## D-074 — Wyckoff model + TRIAL-HONEST evolutionary search added as Stage-1 hypothesis generators; the evolution is wired so it CANNOT manufacture a fake edge.
 
 **Date:** 2026-08-03
