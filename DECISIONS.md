@@ -438,3 +438,38 @@ grammar point, so the corpus grows by PARAMETERS, not bespoke code.
 (caption endpoints are gated — hit in R-002). The scalable path is the grammar: feed a
 strategy (screenshot/text) → decompose → it is already in the 2160-point search space.
 More triggers (order-block, BOS/CHoCH, RSI-divergence, VWAP) extend the algebra next.
+
+### D-082 — Canon coverage + conditional-edge engine ("when they work") (2026-08-03)
+
+**Ask:** cover ALL strategies that exist, and extract upside in the *times when* any tested
+strategy works. Two builds:
+
+1. **Canon-complete trigger library.** WebSearch-verified that the retail universe reduces
+   to a finite primitive set (ICT/SMC + price-action + momentum + mean-reversion). Extended
+   `trd-grammar.ts` from 4 → **8 trigger classes**: sweep, fvg, orderblock, breakout,
+   pullback, engulfing, pinbar, rsi. Grammar now = **4,320 composed strategies**. (R-002
+   channel list — SMB, Warrior, Graystone, Bookmap/LuxAlgo — remains leads-not-truth; bulk
+   transcript scrape stays gated, and is unnecessary: every one of their systems is a point
+   in this algebra.)
+
+2. **Conditional-edge engine** (`scripts/trd-conditional-search.ts`). Each trade is tagged
+   with its entry REGIME (trend up/down/flat via EMA slope, vol lo/hi via ATR-vs-median,
+   session). The search slices every strategy by condition and hunts for a cell with positive
+   OOS expectancy that clears DSR deflated by the TRUE (much larger) conditional trial count.
+
+**Result (80,160 conditional cells = 4,320 strategies × 4 markets × 8 conditions):**
+7,700 positive out-of-sample (9.6%) → **0 clear DSR-deflation**. Best (BTC sweep rr3 London)
+DSR 27.8%. VERDICT: REJECTED. The mechanical price-action genre is efficiently arbitraged at
+15m intraday; no conditional edge survives honest deflation.
+
+**Robust cross-run lead (a direction, NOT a tradeable claim):** the least-overfit survivors
+consistently cluster on **high reward:risk (3:1) reversal/continuation** (sweep/pinbar/
+engulfing) in **trend-down or London** regimes — the exact OPPOSITE of the "1:1 → high win
+rate" marketing. If anything real exists in this genre it is rare, wide-target, and regime-
+gated — worth a finer, higher-timeframe search, but it did not clear here.
+
+**Strategic conclusion (honest):** across D-071..D-082, the ONLY edge that has ever cleared
+the gate is the **global factor book** (D-077, Sharpe ~1) — a diversified risk-premia
+portfolio, NOT a chart pattern. Chart/timing "alpha" is not a lever that survives. The durable
+levers are: (1) global risk premia, (2) risk management / survival (firewall + Kelly + macro
+de-risk), (3) conditional deployment. That triad — not a magic setup — is the defensible moat.

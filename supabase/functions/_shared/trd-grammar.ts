@@ -12,9 +12,15 @@
 import { Bar, ema } from "./trd-liquidity-grab.ts";
 export type { Bar };
 
-export type TriggerClass = "sweep" | "fvg" | "breakout" | "pullback";
+// The canon of retail trigger primitives (WebSearch-verified coverage of ICT/SMC + price-action +
+// momentum + mean-reversion families). Every forum/YouTube "system" is a recombination of these.
+//   sweep=liquidity grab · fvg=imbalance · orderblock=OB return · breakout=momentum ·
+//   pullback=trend-continuation · engulfing=PA reversal · pinbar=rejection · rsi=mean-reversion.
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
+export type TrendState = "up" | "down" | "flat";
+export type VolState = "lo" | "hi";
 
 export interface ComponentSpec {
   trigger: TriggerClass; // the setup class (ICT-liquidity / imbalance / momentum / trend-continuation)
@@ -26,7 +32,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "breakout", "pullback"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +80,47 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (b.high >= e && b.close < e) return { side: "short", stop: hi };
       return null;
     }
+    case "orderblock": { // ICT order block: an impulse that engulfs the prior opposite candle
+      const p = bars[i - 1]; const body = Math.abs(b.close - b.open), pbody = Math.abs(p.close - p.open);
+      const impulse = body > 1.4 * (pbody || 1e-9);
+      if (impulse && p.close < p.open && b.close > b.open && b.close > p.high) return { side: "long", stop: Math.min(b.low, p.low) };
+      if (impulse && p.close > p.open && b.close < b.open && b.close < p.low) return { side: "short", stop: Math.max(b.high, p.high) };
+      return null;
+    }
+    case "engulfing": { // 2-candle engulfing reversal
+      const p = bars[i - 1];
+      if (b.close > b.open && b.open <= p.close && b.close >= p.open && p.close < p.open) return { side: "long", stop: b.low };
+      if (b.close < b.open && b.open >= p.close && b.close <= p.open && p.close > p.open) return { side: "short", stop: b.high };
+      return null;
+    }
+    case "pinbar": { // rejection wick (mean-reversion at an extreme)
+      const body = Math.abs(b.close - b.open), up = b.high - Math.max(b.open, b.close), dn = Math.min(b.open, b.close) - b.low;
+      if (dn > 2 * body && dn > up && b.close > b.open) return { side: "long", stop: b.low };
+      if (up > 2 * body && up > dn && b.close < b.open) return { side: "short", stop: b.high };
+      return null;
+    }
+    case "rsi": { // classic mean-reversion: RSI crosses back up through 30 (long) / down through 70 (short)
+      const r = triggerSignal_rsi(bars, i, 14); const rPrev = triggerSignal_rsi(bars, i - 1, 14);
+      if (r === null || rPrev === null) return null;
+      if (rPrev < 30 && r >= 30) return { side: "long", stop: lo };
+      if (rPrev > 70 && r <= 70) return { side: "short", stop: hi };
+      return null;
+    }
   }
+}
+
+const _rsiCache = new Map<string, number[]>();
+function triggerSignal_rsi(bars: Bar[], i: number, period: number): number | null {
+  if (i < period) return null;
+  const key = `${bars.length}:rsi${period}`; let arr = _rsiCache.get(key);
+  if (!arr) {
+    arr = new Array(bars.length).fill(NaN); let gain = 0, loss = 0;
+    for (let k = 1; k <= period; k++) { const d = bars[k].close - bars[k - 1].close; if (d >= 0) gain += d; else loss -= d; }
+    let ag = gain / period, al = loss / period; arr[period] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+    for (let k = period + 1; k < bars.length; k++) { const d = bars[k].close - bars[k - 1].close; const g = d > 0 ? d : 0, l = d < 0 ? -d : 0; ag = (ag * (period - 1) + g) / period; al = (al * (period - 1) + l) / period; arr[k] = al === 0 ? 100 : 100 - 100 / (1 + ag / al); }
+    _rsiCache.set(key, arr);
+  }
+  const v = arr[i]; return Number.isFinite(v) ? v : null;
 }
 // tiny memoized-ish EMA-at-i helper (recompute cheap for the grammar's small period set)
 const _emaCache = new Map<string, number[]>();
@@ -94,13 +140,26 @@ function passesTrend(side: "long" | "short", close: number, emaVal: number, mode
 // Cost is charged in R units (a fraction of each trade's risk/stop-distance) so it is comparable
 // across instruments. Gold's ~$0.30/side over an ~$11 stop ≈ 0.05R; 0.05 is a realistic default.
 export interface GrammarCfg { costRPerSide: number; }
-export interface CTrade { r: number; exitIdx: number; }
-/** Core: run one composed strategy → trades with their R and exit bar index. Pure, no look-ahead. */
+export interface CTrade { r: number; exitIdx: number; trend: TrendState; vol: VolState; session: Session; }
+
+// True-range → ATR series (Wilder), for the volatility-regime tag.
+function atrSeries(bars: Bar[], period = 14): number[] {
+  const tr: number[] = [0];
+  for (let i = 1; i < bars.length; i++) { const h = bars[i].high, l = bars[i].low, pc = bars[i - 1].close; tr.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc))); }
+  const out = new Array(bars.length).fill(0); let a = 0;
+  for (let i = 1; i < bars.length; i++) { a = i <= period ? (a * (i - 1) + tr[i]) / i : (a * (period - 1) + tr[i]) / period; out[i] = a; }
+  return out;
+}
+function median(xs: number[]): number { const s = [...xs].filter((x) => x > 0).sort((a, b) => a - b); return s.length ? s[s.length >> 1] : 0; }
+
+/** Core: run one composed strategy → trades with R, exit index, and the entry REGIME (trend/vol/
+ * session) so callers can find WHEN the strategy works. Pure, no look-ahead. */
 export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): CTrade[] {
   const n = bars.length; if (n < s.emaPeriod + 10) return [];
   const e = ema(bars.map((b) => b.close), s.emaPeriod);
+  const atr = atrSeries(bars, 14); const atrMed = median(atr);
   const out: CTrade[] = [];
-  let open: { side: "long" | "short"; entry: number; stop: number; target: number } | null = null;
+  let open: { side: "long" | "short"; entry: number; stop: number; target: number; trend: TrendState; vol: VolState; session: Session } | null = null;
   let queued: Sig | null = null; // signal fired on prior bar → enter at this bar's open
   for (let i = 0; i < n; i++) {
     const bar = bars[i];
@@ -108,11 +167,16 @@ export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCf
       let exit: number | null = null;
       if (open.side === "long") { if (bar.low <= open.stop) exit = open.stop; else if (bar.high >= open.target) exit = open.target; }
       else { if (bar.high >= open.stop) exit = open.stop; else if (bar.low <= open.target) exit = open.target; }
-      if (exit !== null) { const dir = open.side === "long" ? 1 : -1; const risk = Math.abs(open.entry - open.stop); const grossR = risk > 0 ? (exit - open.entry) * dir / risk : 0; out.push({ r: grossR - 2 * cfg.costRPerSide, exitIdx: i }); open = null; }
+      if (exit !== null) { const dir = open.side === "long" ? 1 : -1; const risk = Math.abs(open.entry - open.stop); const grossR = risk > 0 ? (exit - open.entry) * dir / risk : 0; out.push({ r: grossR - 2 * cfg.costRPerSide, exitIdx: i, trend: open.trend, vol: open.vol, session: open.session }); open = null; }
     }
     if (!open && queued) { // fill queued entry at this bar's open
       const entry = bar.open, dir = queued.side === "long" ? 1 : -1, risk = Math.abs(entry - queued.stop);
-      if (risk > 0 && ((queued.side === "long" && queued.stop < entry) || (queued.side === "short" && queued.stop > entry))) open = { side: queued.side, entry, stop: queued.stop, target: entry + dir * s.rr * risk };
+      if (risk > 0 && ((queued.side === "long" && queued.stop < entry) || (queued.side === "short" && queued.stop > entry))) {
+        const slope = i > 10 ? (e[i] - e[i - 10]) / (e[i - 10] || 1) : 0;
+        const trend: TrendState = slope > 0.001 ? "up" : slope < -0.001 ? "down" : "flat";
+        const vol: VolState = atr[i] >= atrMed ? "hi" : "lo";
+        open = { side: queued.side, entry, stop: queued.stop, target: entry + dir * s.rr * risk, trend, vol, session: sessionOf(new Date(bar.ts).getUTCHours()) };
+      }
       queued = null;
     }
     if (!open && !queued) { // new signal on this closed bar
@@ -128,4 +192,4 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
   return runComponentTrades(bars, s, cfg).map((t) => t.r);
 }
 
-export function clearEmaCache() { _emaCache.clear(); }
+export function clearEmaCache() { _emaCache.clear(); _rsiCache.clear(); }
