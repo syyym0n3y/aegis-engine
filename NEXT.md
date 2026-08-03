@@ -11,6 +11,12 @@
 - [x] **Macro-regime overlay (D-079)**: `trd-macro.ts` fragility engine → `trd-macro-pump`
       (Yahoo curve+vol, keyless) → `trd_macro_state` → `trd-paper-tick` throttles size → cockpit
       cycle view. pg_cron 4×/day. Live: EXPANSION, de-risk 1.0. Macro = fragility, NOT direction.
+- [x] **Strategy algebra + mass search (D-081)**: trd-grammar.ts (2160 combos, 4 trigger classes) +
+      trd-strategy-search.ts (deflation-aware, 4 real markets). trd_strategies corpus on CC.
+- [ ] **Extend the algebra**: more triggers (order-block, BOS/CHoCH, RSI-divergence, VWAP, engulfing),
+      multi-component AND/OR composites, more timeframes/markets; keep DSR+PBO deflation on every run.
+- [ ] **Corpus ingest loop**: each strategy the operator feeds -> decompose to grammar point -> log to
+      trd_strategies with verdict. (Bulk YouTube transcript scrape is gated; feed screenshots/text.)
 - [ ] **Macro enrichment**: get FRED credit-spread/unemployment(Sahm)/CPI into the edge path
       (FRED blocks the SB datacenter → currently best-effort via `scripts/trd-macro-refresh.ts`);
       add EA/UK/JP/CN economies (blend is already contagion-dominated).
