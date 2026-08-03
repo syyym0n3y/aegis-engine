@@ -7,7 +7,7 @@
 
 import { annualizedSharpe, maxDrawdown, mean, sampleStd } from "../supabase/functions/_shared/trd-stats.ts";
 
-const raw = JSON.parse(await Deno.readTextFile("/tmp/monthly.json")) as Record<string, [string, number][]>;
+const raw = JSON.parse(await Deno.readTextFile(Deno.env.get("MONTHLY_FILE") ?? "/tmp/monthly.json")) as Record<string, [string, number][]>;
 const syms = Object.keys(raw);
 const months = [...new Set(syms.flatMap((s) => raw[s].map((x) => x[0])))].sort();
 const idx = new Map(months.map((m, i) => [m, i]));
@@ -73,5 +73,25 @@ for (const [name, sc] of Object.entries(scorers)) {
   }
   console.log(line.join("  |  "));
 }
-console.log(`\n  Read: the "10bps" column (realistic retail all-in) is the truth. If holdout Sharpe there is <~0.4 the edge is eaten by costs;`);
-console.log(`  >~0.5 net with contained DD = a genuinely deployable, risk-managed, market-neutral book. 20bps = pessimistic stress.`);
+// ---- LONG-ONLY tilt: long top quintile vs equal-weight-universe benchmark (no shorts) ----
+function longOnly(scorer: Scorer, h: number, costBps: number): number[] {
+  const active: number[] = []; let prevW = new Map<string, number>();
+  for (let i = h + 1; i < T - 1; i++) {
+    const scored = syms.map((s) => ({ s, m: scorer(s, i, h), fwd: ret.get(s)![i + 1] })).filter((x) => Number.isFinite(x.m) && Number.isFinite(x.fwd));
+    if (scored.length < 20) { active.push(0); continue; }
+    scored.sort((a, b) => b.m - a.m);
+    const q = Math.max(3, Math.floor(scored.length / 5));
+    const w = new Map<string, number>(); scored.slice(0, q).forEach((x) => w.set(x.s, 1 / q));
+    let lo = 0; for (const [s, wt] of w) lo += wt * ret.get(s)![i + 1];
+    const bench = mean(scored.map((x) => x.fwd)); // equal-weight universe
+    const keys = new Set([...w.keys(), ...prevW.keys()]); let tov = 0; for (const s of keys) tov += Math.abs((w.get(s) ?? 0) - (prevW.get(s) ?? 0));
+    active.push((lo - bench) - tov * (costBps / 1e4)); prevW = w; // active return, net of long-side turnover
+  }
+  return active;
+}
+console.log(`\n  LONG-ONLY tilt (top quintile vs equal-weight universe, no shorts, 10bps), HOLDOUT:`);
+for (const [name, sc] of Object.entries(scorers)) {
+  const a = volScale(longOnly(sc, H, 10)); const s2 = Math.floor(a.length * 0.75); const ho = segStats(a, s2, a.length);
+  console.log(`   ${name.replace("_h_", `_${H}_`).padEnd(10)} active Sharpe=${ho.sharpe.toFixed(2)}  ${ho.ret.toFixed(1)}%/yr vs benchmark  DD=${ho.dd.toFixed(0)}%`);
+}
+console.log(`\n  Read: the "10bps" column is the truth. Compare survivor-only vs de-biased: a big drop = survivorship was the edge.`);
