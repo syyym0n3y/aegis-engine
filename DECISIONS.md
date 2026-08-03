@@ -334,3 +334,40 @@ N accounts = N× the loss). **Operator agreed to re-anchor the target to "prove 
 real positive edge net of costs, then scale only what's proven."** No daily-dollar
 quota (quotas force overtrading). Test capital: **$20–50/week, fully losable**;
 daily-loss kill-switch ≈ one session's contribution.
+
+### D-079 — Macro-regime overlay: fragility, not prediction (2026-08-03)
+
+**Trigger:** operator asked (via a shared X post) that the infra "understand how
+economies work… where they are in the economic cycle, so we know what to expect
+in either direction." The linked post (Tigerflow) was actually about the **Kelly
+Criterion** (sizing), which Aegis already implements to the letter (half-Kelly in
+`trd-protect.ts:41`, n≥100 estimation-error floor in `trd-verify.ts:65`). The
+economic-cycle ask is a separate, previously-missing layer.
+
+**Decision:** macro is added as a **fragility overlay, never a direction predictor.**
+The hard evidence (and D-071..D-077) is that cycle *timing* is not reliably
+forecastable — "late-cycle so price falls" back-tests to noise. What IS durable
+(R-001's Global-Financial-Cycle finding) is that macro measures **when the system
+is primed to break**. So `_shared/trd-macro.ts` (`classifyRegime`) emits a de-risk
+MULTIPLIER in (0,1] that ONLY shrinks position size in a fragile regime — it can
+never lever up and never predicts which way price goes. Worst case in a calm tape:
+a no-op. 6 unit tests (2008 crisis → hard cut to the 0.3 floor; benign → no-op;
+inversion-alone → moderate trim; <2 signals → fail-safe cap; contagion blend).
+
+**Live wiring (all $0, keyless, autonomous):**
+- `trd-macro-pump` edge fn pulls **Yahoo** market data (edge-reachable; FRED's CDN
+  blocks the Supabase datacenter — verified 0/5 vs Yahoo 3/3) for the two fastest
+  fragility signals: **yield curve** (10y ^TNX − 3m ^IRX) and **vol regime** (^VIX
+  5y percentile). Writes `trd_macro_state` + append-only `trd_macro_history`.
+- `trd-paper-tick` multiplies every order's risk fraction by the live de-risk factor
+  (fails open to 1.0). `pg_cron` runs the pump 4×/day, 5 min before each 6h tick.
+- `aegis-cockpit` shows the cycle phase, fragility, de-risk applied, and the honest
+  "what to expect (fragility, not direction)" text; CC snapshot carries it too.
+- Current live read (2026-08-03): curve **+0.99pp** (not inverted), VIX **28th pct**
+  → **EXPANSION, fragility 0, de-risk 1.0** (overlay correctly a no-op today).
+
+**Honest limits (logged, not hidden):** the autonomous path sees only curve + vol
+(2 of 5 signals). Credit-spread / unemployment (Sahm) / CPI are FRED-only and added
+best-effort by `scripts/trd-macro-refresh.ts` when FRED is reachable; whichever
+source ran last wins in `trd_macro_state`. Multi-economy (EA/UK/JP/CN) is scaffolded
+(`blendDeRisk` is contagion-dominated) but only US is wired for now.

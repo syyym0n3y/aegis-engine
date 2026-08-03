@@ -114,14 +114,40 @@ referral bribe. Free to the vulnerable by design.
 time-on-app or trade volume, we've become the thing we're fighting. Behaviour change is
 both the mission metric AND the endorsement evidence.
 
-## Open decisions (operator's call)
+## Decisions LOCKED (D-073, 2026-06-24)
 
-1. **Funding / sustainability** — free-to-vulnerable + charity-owned needs a money source.
-   Grants? A "pro" tier for non-vulnerable/institutional users that cross-subsidises the
-   free core? This is the one genuinely unresolved question and it's yours + legal/charity
-   structure to settle.
-2. **Audience-first** — confirm synthetics/forex retail as v1 (recommended) vs equities/options.
-3. **Naming / brand** — "Risk X-Ray" is a placeholder.
+1. **Funding = grant + cross-subsidy; broker/industry money FORBIDDEN forever.** Free-forever
+   for the vulnerable; paid advanced tier only for those who can afford it. Unlocks the UK
+   statutory gambling-harm levy (~£120M/yr; eligibility requires no-industry-funding +
+   conflict-of-interest declaration) + inclusion grants (Interledger, Accion). *Never paywall
+   safety for a vulnerable user; never engineer dependency — success = they need us LESS.*
+2. **No direction, ever** — no buy/sell signals, no "take profit" forecast, no accuracy/
+   performance claims (FCA financial-promotion + advice-boundary line). Accuracy promised
+   ONLY on knowable facts (risk/cost/ruin/historical hit-rate). "Stop the bleeding" = risk
+   limits/stops; "take profit" only as R-multiple/trailing-stop risk-management.
+3. **v1 wedge = the Pre-Trade Reality Check** (below). Forward-looking trade-check ships
+   before the backward history audit.
+4. **Antifragile via clean conduct** — broker attacks self-validate *only because* we give
+   them nothing true to hit. The media empire (YGS) is the distribution moat.
+
+### Still open (operator's call)
+- **Audience-first** — synthetics/forex retail confirmed as v1 (recommended).
+- **Naming / brand** — "Risk X-Ray" is a placeholder.
+- **Charity/freezone legal entity + grant-application timing** (needs counsel before launch).
+
+## v1 wedge — the Pre-Trade Reality Check
+
+User inputs the trade (or the signal they want to verify); we return three layers, in order:
+1. **The facts (~100% accurate, deterministic):** risk as % of account, liquidation distance,
+   true all-in cost, break-even win-rate, ruin contribution, correlation with their open book.
+2. **The context (honest probability, never a verdict):** positioning/regime lean with a
+   confidence band + base rate; where the news/narrative diverges from the actual structure;
+   what this signal *type* has historically delivered net of cost, and its failure conditions.
+3. **The verdict (never a prediction):** "you're risking [X] for a setup with [a real / no
+   measured] edge, in a [fragile/calm] regime — decide with your eyes open." No direction.
+
+Distribution: broker-agnostic, user-side (MT4/MT5 read-only plugin, browser overlay, CSV
+import). No order access, ever. Free 2 checks → subscription for the affording segment only.
 
 ## What reuses the existing Aegis substrate (research already paid for)
 - Honest-stats core (deflated Sharpe / ruin / Monte-Carlo) → the risk calculators.

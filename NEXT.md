@@ -8,6 +8,12 @@
       JWT-locked (return 410) — no operator dashboard-delete needed. `trd-cred-probe`(qpck/rrjr
       copies remain, read-only booleans, harmless). Keepers: `trd-api-*`, `trd-platform`,
       `aegis-terminal`, `trd-paper-tick`, the data pumps.
+- [x] **Macro-regime overlay (D-079)**: `trd-macro.ts` fragility engine → `trd-macro-pump`
+      (Yahoo curve+vol, keyless) → `trd_macro_state` → `trd-paper-tick` throttles size → cockpit
+      cycle view. pg_cron 4×/day. Live: EXPANSION, de-risk 1.0. Macro = fragility, NOT direction.
+- [ ] **Macro enrichment**: get FRED credit-spread/unemployment(Sahm)/CPI into the edge path
+      (FRED blocks the SB datacenter → currently best-effort via `scripts/trd-macro-refresh.ts`);
+      add EA/UK/JP/CN economies (blend is already contagion-dominated).
 - [ ] **Close risk-inventory gaps**: slippage/gap-through-stop stress, fat-tail/black-swan,
       cross-account exposure, durable kill-switch state, disconnect/reconcile.
 - [x] **Autonomous live PAPER loop (worked around, running)**: `trd-paper-tick` edge fn +

@@ -148,8 +148,10 @@ export function classifyRegime(ind: MacroIndicators): MacroRegime {
   }
   if (inflationHot) expectation += inflationRising ? " Inflation is high and rising — policy is a tightening headwind." : " Inflation elevated but cooling.";
 
-  // if we can't see the economy at all, fail SAFE (assume some fragility) rather than assume calm
-  const safeDeRisk = coverage < 0.34 ? Math.min(deRiskFactor, 0.6) : deRiskFactor;
+  // If we have fewer than TWO usable signals we can't really judge the regime → fail SAFE (assume
+  // some fragility) rather than assume calm. Two independent signals (e.g. curve + vol) is a real
+  // read and must NOT be down-capped — else a benign tape needlessly halves size.
+  const safeDeRisk = present < 2 ? Math.min(deRiskFactor, 0.6) : deRiskFactor;
 
   return { economy: ind.economy, asOf: ind.asOf, phase, fragility, deRiskFactor: safeDeRisk, signals, expectation, coverage };
 }

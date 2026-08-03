@@ -45,6 +45,14 @@ Deno.test("inverted curve alone → late-cycle, moderate trim", () => {
   assert(r.deRiskFactor < 1 && r.deRiskFactor > 0.7, `expected moderate trim, got ${r.deRiskFactor}`);
 });
 
+// The live autonomous path has only TWO signals (curve + vol from Yahoo). Two benign signals is a
+// real read → must be a near no-op, NOT down-capped to the fail-safe floor.
+Deno.test("curve + vol only, both benign → no de-risk (not fail-safe capped)", () => {
+  const r = classifyRegime({ economy: "US", asOf: "2026-08-03", yieldCurve10y3m: 0.99, volPercentile: 0.28 });
+  assertEquals(r.phase, "EXPANSION");
+  assert(r.deRiskFactor > 0.95, `two benign signals must be ~no-op, got ${r.deRiskFactor}`);
+});
+
 // Fail SAFE on near-empty data: unknown regime must NOT be treated as calm.
 Deno.test("no data → fail safe (assume some fragility)", () => {
   const r = classifyRegime({ economy: "ZZ", asOf: "2020-01-01" });
