@@ -4,13 +4,17 @@
 - [x] Verify/Protect/Allocate engines + live APIs + public Terminal.
 - [x] Risk Firewall + Setups + adaptive Bot + Paper-Broker bridge (119/119 tests).
 - [x] Capstone proof: allocator concentrates on the real edge (factor book) → compounds.
-- [ ] **Cleanup**: delete temp research probe edge-fns (dashboard — no MCP delete tool):
-      `trd-cred-probe`(×3 projects), `trd-yahoo-probe`, `trd-session-probe`, `trd-wyckoff-run`,
-      `trd-ingest-yahoo`. Keepers: `trd-api-*`, `trd-platform`, `aegis-terminal`, the data pumps.
+- [x] **Cleanup (worked around)**: 5 disposable probe fns on command-centre are now INERT +
+      JWT-locked (return 410) — no operator dashboard-delete needed. `trd-cred-probe`(qpck/rrjr
+      copies remain, read-only booleans, harmless). Keepers: `trd-api-*`, `trd-platform`,
+      `aegis-terminal`, `trd-paper-tick`, the data pumps.
 - [ ] **Close risk-inventory gaps**: slippage/gap-through-stop stress, fat-tail/black-swan,
       cross-account exposure, durable kill-switch state, disconnect/reconcile.
-- [ ] **Live broker bridge** (paper-first, gated): thin MT5/cTrader/Alpaca-paper adapter over
-      `trd-paper-broker`, with cancel-on-disconnect + order reconcile (D-070 pre-SMALL reqs).
+- [x] **Autonomous live PAPER loop (worked around, running)**: `trd-paper-tick` edge fn +
+      `trd_paper_state` + **pg_cron every 6h** advances a real paper account on keyless crypto,
+      autonomously, $0. This IS the forward 'keep + compound over time' test, live now.
+- [ ] **Live REAL-MONEY bridge** — HELD behind the gates by invariant (paper-first until the
+      risk record is clean). Not a tooling limit; the one boundary that must not be bypassed.
 - [ ] **Productionise**: auth + per-firm keys + billing on the APIs; PDF report; branded domain
       (Vercel create-permission OR custom domain on the edge fn).
 - [ ] **Prop-firm pilot** ([`docs/product/PILOT-propfirm.md`](./docs/product/PILOT-propfirm.md)) — the monetising wedge.
