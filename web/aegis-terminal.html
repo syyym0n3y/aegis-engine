@@ -40,7 +40,12 @@
   button{font-family:var(--sans);font-weight:600;font-size:14px;border-radius:8px;padding:11px 18px;border:1px solid var(--line);cursor:pointer;background:var(--surface-2);color:var(--text)}
   button.primary{background:var(--accent);color:#04130c;border-color:transparent}
   button.primary:hover{filter:brightness(1.07)}
+  .filebtn{font-family:var(--sans);font-weight:600;font-size:14px;border-radius:8px;padding:11px 18px;border:1px solid var(--line);cursor:pointer;background:var(--surface-2);color:var(--text);display:inline-flex;align-items:center}
+  .filebtn:hover{border-color:var(--accent)}
   a.link{color:var(--accent);cursor:pointer;font-size:13px}
+  .trust{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12.5px;margin:-14px 0 26px}
+  .trust span{display:inline-flex;gap:6px;align-items:center}
+  .trust b{color:var(--accent);font-family:var(--mono)}
   /* result */
   #out{margin-top:24px;display:none}
   .verdict-hero{display:flex;gap:20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;flex-wrap:wrap}
@@ -80,7 +85,8 @@
 
 <main class="wrap">
   <h1>Grade any trading account — any broker, in one paste.</h1>
-  <p class="lede">Drop in a trade history (MetaTrader statement, or any broker's CSV of closed trades). We normalize it, then run the three checks that 15,000 backtests proved are the only ones that matter: <b>is the edge real, will it blow up, and is it beating a boring passive book?</b> Nothing leaves your browser.</p>
+  <p class="lede">Drop in a trade history (MetaTrader, cTrader, NinjaTrader, TradingView, IBKR, any crypto/forex/stock broker's CSV of closed trades). We normalize it, then run the three checks that 15,000 backtests proved are the only ones that matter: <b>is the edge real, will it blow up, and is it beating a boring passive book?</b></p>
+  <div class="trust"><span><b>100% free</b> — no signup</span><span><b>private</b> — runs in your browser, nothing is uploaded</span><span><b>any broker</b> — paste or upload a statement</span></div>
 
   <div class="panel">
     <div class="grid io-grid">
@@ -96,6 +102,8 @@
     </div>
     <div class="btns">
       <button class="primary" id="go">Analyze account</button>
+      <label class="filebtn" for="file">Upload statement</label>
+      <input id="file" type="file" accept=".csv,.tsv,.txt,.htm,.html" hidden>
       <button id="sample">Load a sample</button>
       <span style="flex:1"></span>
       <a class="link" id="reset">Clear</a>
@@ -116,6 +124,7 @@
       <div class="lcard"><div class="label">Layer 3 · Allocate</div><h3>Beating passive?</h3><div id="abody"></div><canvas id="curve" width="600" height="64"></canvas></div>
     </div>
     <div class="recs"><div class="label">What to do</div><ul id="recs"></ul></div>
+    <div class="btns"><button id="copy">Copy report</button><a class="link" id="again" style="align-self:center">Analyze another account</a></div>
   </section>
 
   <footer>
@@ -148,7 +157,10 @@ const num=x=>{const v=Number(String(x).replace(/[$,%\s]/g,"").replace(/[()]/g,"-
 const splitRows=t=>t.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>(l.includes("\t")?l.split("\t"):l.split(",")).map(c=>c.trim()));
 const pickCol=(h,ns)=>{const lo=h.map(x=>x.toLowerCase());for(const n of ns){const i=lo.findIndex(x=>x.includes(n));if(i>=0)return i;}return -1;};
 function normalize(source,trades,startEquity){const eq=startEquity>0?startEquity:1;const returns=[],curve=[eq];let cur=eq;for(const t of trades){const r=cur>0?t.pnl/cur:0;returns.push(r);cur+=t.pnl;curve.push(cur);}const wins=trades.filter(t=>t.pnl>0),losses=trades.filter(t=>t.pnl<0);const aw=wins.length?wins.reduce((a,b)=>a+b.pnl,0)/wins.length:0;const al=losses.length?Math.abs(losses.reduce((a,b)=>a+b.pnl,0)/losses.length):0;const winRate=trades.length?wins.length/trades.length:0;const wlr=al>0?aw/al:(aw>0?Infinity:0);const risk=al>0?al/eq:0;const times=trades.map(t=>Date.parse(t.ts)).filter(isFinite);const span=times.length>=2?(Math.max(...times)-Math.min(...times))/864e5:0;const tpy=span>5?trades.length/(span/365):252;return{source,startEquity:eq,trades,returns,equityCurve:curve,winRate,winLossRatio:wlr,avgRiskFrac:risk,tradesPerYear:tpy,spanDays:span};}
-function fromGeneric(text,eq){const rows=splitRows(text);if(rows.length<2)return normalize("generic-csv",[],eq);const h=rows[0];const pc=pickCol(h,["profit","pnl","p&l","p/l","net","realized","gain"]);const dc=pickCol(h,["close time","date","time","closed","exit"]);const tr=[];for(let i=1;i<rows.length;i++){const r=rows[i];const pnl=pc>=0?num(r[pc]):num(r[r.length-1]);if(!isFinite(pnl))continue;tr.push({ts:dc>=0?(r[dc]||("t"+i)):("t"+i),pnl});}return normalize("generic-csv",tr,eq);}
+function fromGeneric(text,eq){const rows=splitRows(text);if(rows.length<2)return normalize("generic-csv",[],eq);const h=rows[0];
+  // broad broker coverage: MT, cTrader, NinjaTrader, TradingView, IBKR, crypto exchanges
+  const pc=pickCol(h,["closing p/l","closing pl","closed p&l","closed profit","realized p&l","realized pnl","realized profit","net profit","net p&l","net usd","net","profit(usd)","profit usd","profit","pnl","p&l","p/l","gross profit","gain","result","balance change","cumulative"]);
+  const dc=pickCol(h,["close time","closing time","closed","exit time","exit","date/time","date","time"]);const tr=[];for(let i=1;i<rows.length;i++){const r=rows[i];const pnl=pc>=0?num(r[pc]):num(r[r.length-1]);if(!isFinite(pnl))continue;tr.push({ts:dc>=0?(r[dc]||("t"+i)):("t"+i),pnl});}return normalize("generic-csv",tr,eq);}
 function fromMT(text,eq){const rows=splitRows(text);const tr=[];for(const r of rows){const ty=(r[2]||"").toLowerCase();if(["balance","credit","deposit","withdrawal"].includes(ty))continue;const p=num(r[r.length-1]);if(!isFinite(p)||!["buy","sell"].includes(ty))continue;tr.push({ts:r[1]||r[0]||("t"+tr.length),pnl:p});}return normalize("metatrader",tr,eq);}
 function ingest(raw,fmt,eq){if(fmt==="mt")return fromMT(raw,eq);if(fmt==="generic")return fromGeneric(raw,eq);const f=splitRows(raw).find(r=>r.length>5);if(f&&/buy|sell|balance/i.test((f[2]||"")+(f[3]||"")))return fromMT(raw,eq);return fromGeneric(raw,eq);}
 
@@ -174,6 +186,7 @@ function run(){
   let acct;try{acct=ingest(raw,$("fmt").value,Number($("eq").value)||10000);}catch(e){$("err").textContent="Could not parse that — try selecting the format explicitly.";return;}
   if(acct.trades.length<5){$("err").textContent="Found only "+acct.trades.length+" trades. Need at least 5 with a numeric Profit/PnL column.";return;}
   const R=analyze(acct,Number($("trials").value)||50);
+  LAST={acct,R};
   const gb=$("grade");gb.textContent=R.grade;const col="var("+GRADE_COLOR[R.grade]+")";gb.style.color=col;gb.style.background="color-mix(in srgb,"+col+" 14%,transparent)";gb.style.border="1px solid color-mix(in srgb,"+col+" 40%,transparent)";
   $("headline").textContent=R.headline;
   const wlr=isFinite(acct.winLossRatio)?acct.winLossRatio.toFixed(2):"∞";
@@ -192,6 +205,18 @@ function sample(){
   for(let i=0;i<180;i++){const win=rnd()<0.53;const pnl=win?(650+Math.round(rnd()*300)):-(600+Math.round(rnd()*300));d=new Date(d.getTime()+ (1+Math.floor(rnd()*3))*864e5);rows.push((i+1)+",XAUUSD,"+d.toISOString().slice(0,10)+","+pnl);}
   $("raw").value=rows.join("\n");$("fmt").value="generic";$("eq").value="10000";$("trials").value="120";run();
 }
+let LAST=null;
 $("go").onclick=run;$("sample").onclick=sample;$("reset").onclick=()=>{$("raw").value="";$("out").style.display="none";$("err").textContent="";};
+$("again").onclick=()=>{$("out").style.display="none";window.scrollTo({top:0,behavior:"smooth"});$("raw").focus();};
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{let txt=String(rd.result||"");if(/<\/?(table|tr|td|html)/i.test(txt)){txt=txt.replace(/<\/tr>/gi,"\n").replace(/<\/t[dh]>/gi,",").replace(/<[^>]+>/g,"").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&");}$("raw").value=txt.trim();run();};rd.readAsText(f);};
+$("copy").onclick=()=>{if(!LAST)return;const {acct,R}=LAST,v=R.verify,p=R.protect;const wlr=isFinite(acct.winLossRatio)?acct.winLossRatio.toFixed(2):"inf";
+  const txt=["AEGIS TERMINAL — account report","",
+    "GRADE: "+R.grade+"  — "+R.headline,"",
+    "Account: "+acct.trades.length+" trades | win "+(acct.winRate*100).toFixed(0)+"% | payoff "+wlr+" | risk/trade "+(acct.avgRiskFrac*100).toFixed(1)+"%",
+    "VERIFY  (real?):     "+v.verdict+"  | annual Sharpe "+v.annualSharpe.toFixed(2)+", DSR "+v.deflatedSharpe.toFixed(2)+", score "+v.authenticityScore+"/100",
+    "PROTECT (blow up?):  "+p.verdict+"  | expectancy "+p.expectancyR.toFixed(2)+"R, prob-ruin "+(p.probRuin*100).toFixed(0)+"%",
+    "ALLOCATE (vs passive): your Sharpe "+v.annualSharpe.toFixed(2)+" vs passive 0.60",
+    "","What to do:"].concat(R.recs.map((r,i)=>(i+1)+". "+r[1])).concat(["","Graded free at Aegis Terminal — analytics on your own numbers, no signals."]).join("\n");
+  navigator.clipboard.writeText(txt).then(()=>{const b=$("copy");b.textContent="Copied ✓";setTimeout(()=>b.textContent="Copy report",1600);}).catch(()=>{$("err").textContent="Copy failed — select the report manually.";});};
 window.addEventListener("resize",()=>{if($("out").style.display==="block"){const raw=$("raw").value.trim();if(raw){const a=ingest(raw,$("fmt").value,Number($("eq").value)||10000);drawCurve($("curve"),a.equityCurve);}}});
 </script>
