@@ -400,3 +400,41 @@ more hits) but expectancy-neutral gross and NEGATIVE after costs; the 76.5% is r
 a cherry-picked month, not an edge. Confirms D-071..D-077: no chart/timing signal survives.
 Honest caveat logged: our S/R uses confirmed 1-bar pivots (an approximation of the exact
 LuxAlgo indicator); the cost + regime + OOS findings are robust to that detail.
+
+### D-081 — Strategy ALGEBRA + deflation-aware mass search (2026-08-03)
+
+**Ask:** operator wants to assess thousands of strategies and variations, decompose
+setups into components and recombine them, and find the best across each trader's
+markets. Correctly reframed two impossibilities first: (a) "positive win ratio on
+EVERY trade" is mathematically impossible — the target is positive EXPECTANCY net of
+cost; (b) searching thousands of combos and picking the best is a FALSE-EDGE FACTORY
+unless every trial is deflated for the search itself.
+
+**Built:**
+- `_shared/trd-grammar.ts` — the strategy algebra. A strategy = {trigger class} ×
+  {EMA} × {trend mode} × {stop lookback} × {reward:risk} × {session}. Triggers cover
+  4 classes: sweep (ICT liquidity), fvg (imbalance), breakout (momentum), pullback
+  (trend-continuation). `enumerate()` = 2160 composed strategies. Pranam's D-080
+  strategy is literally ONE point {sweep, with-EMA, rr1}. Honest by construction:
+  next-open entry (no look-ahead), same-bar stop-first exits, cost in R units. 3 tests.
+- `scripts/trd-strategy-search.ts` — runs all 2160 × 4 real markets (Gold GC=F, BTC,
+  ETH, S&P ES=F, keyless Yahoo 15m) and reports the funnel, deflating with the EXISTING
+  honest core (`deflatedSharpe` by true trial count + PBO via `pboCSCV`).
+
+**Result (8,640 trials, ~7s):** 1,613 positive in-sample (19%) → 662 positive
+out-of-sample net cost (7.7%) → **0 clear DSR-deflation** for the 7,251-trial search.
+Best OOS survivor (BTC sweep, rr3, London) DSR = 63% — an overfit survivor. VERDICT:
+REJECTED — 662 marketing-grade "winners" are all multiple-testing artifacts. The gate
+did its job. **Honest lead (not a claim):** least-overfit survivors cluster on
+sweep + WIDE (3:1) targets + London on crypto — the OPPOSITE of the 1:1 win-rate
+farming — a direction for future search, still rejected at this trial count.
+
+**Corpus:** `trd_strategies` table on CC (the "decoded corpus") catalogs each assessed
+strategy — source, component decomposition, claim, verdict, our evidence, decision-ref.
+Seeded with D-080 + D-081. Every future strategy the operator feeds decomposes into a
+grammar point, so the corpus grows by PARAMETERS, not bespoke code.
+
+**Honest limit logged:** bulk YouTube-channel transcript ingestion is NOT reliable
+(caption endpoints are gated — hit in R-002). The scalable path is the grammar: feed a
+strategy (screenshot/text) → decompose → it is already in the 2160-point search space.
+More triggers (order-block, BOS/CHoCH, RSI-divergence, VWAP) extend the algebra next.
