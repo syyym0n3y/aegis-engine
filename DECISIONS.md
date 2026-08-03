@@ -4,6 +4,22 @@
 
 ---
 
+---
+
+## D-076 — REGIME-STRESS test (2001-2026) — the momentum "edge" was largely a 2011-26 regime artifact; across a full cycle it is ~FLAT. The only thing that survives every test is RISK MANAGEMENT (loss reduction), not any signal.
+
+**Date:** 2026-08-03
+
+**Context:** After risk-adjusted momentum survived survivorship-bias + costs (D-075 addendum) on 2011-26 data, operator correctly refused to build without regime coverage / larger sample. Pulled 77 large-caps back to 2001 (incl. 2008 crash-survivors AIG/C/BAC/F/GE) and scored raw vs vol-scaled momentum BY REGIME.
+
+**Findings:**
+- **Full-cycle 2001-2026: momentum is ~flat** — RAW Sharpe 0.02 (0.5%/yr), RISK-ADJ Sharpe 0.19 (2.4%/yr, ~zero after costs). The 0.55-0.59 from D-075 was a **2011-26 QE-bull regime artifact**, not a durable edge.
+- **2001-02 dot-com: both destroyed** (RAW -1.17, RISK-ADJ -1.54 Sharpe). Vol-scaling did NOT save it.
+- **2009 momentum crash: RAW annihilated** (-75%/yr, worst month -36%); **vol-scaling cushioned it hugely** (-1.7%/yr, worst month -4%). Risk-scaling does real, measurable work in crashes — but as loss-reduction, not profit.
+- Risk-adj beat raw in most crisis regimes, confirming risk management is the durable component; but even it is full-cycle-marginal.
+
+**Decision:** No signal edge — including risk-adjusted cross-sectional momentum — robustly survives across regimes + costs + survivorship bias. The apparent survivor was regime-specific. This is the definitive convergence with D-071/D-072/D-075: the durable, repeatedly-validated component is **RISK MANAGEMENT** (vol-scaling verifiably turns a -75%/yr crash into -1.7%), which REDUCES LOSS rather than manufacturing alpha — i.e. the Risk-Overlay product (D-073), not a trading signal. Building a momentum EA now would deploy a regime artifact. Operator's "don't build quickly / haven't conceptualised the market" instinct was correct and is vindicated by the data. Untested families remain (value/quality/vol-premia/carry/cross-asset) — but the method-level conclusion (risk mgmt is the edge, signals decay/regime-shift) is now strongly evidenced.
+
 ## D-075 — COMPREHENSIVE falsification: 10,906 strategy×market backtests + OOS seasonality + pre-specified anomalies → the retail timing-edge thesis is REJECTED with a locked holdout + PBO. The durable edge is structural, not a signal.
 
 **Date:** 2026-08-03
