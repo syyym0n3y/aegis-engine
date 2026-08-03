@@ -15,6 +15,14 @@ See [`docs/trd/STAGE1.md`](./docs/trd/STAGE1.md) for the full spec + VERIFY per 
 - [ ] 8. `cc-trd-report` CC oversight panel (REJECTED list visible).
 - [ ] 9. CI self-test harness (overfit rejected / look-ahead empty / dup no-op).
 
+## Wyckoff evolutionary track (D-074 — built + verified offline, $0)
+- [x] `_shared/trd-wyckoff.ts` — point-in-time Wyckoff events + confidence levers (evr, cvd-proxy). 8 tests.
+- [x] `_shared/trd-evolve.ts` — trial-honest genetic search (DSR-deflated by true N + PBO). 7 tests incl. noise-safety.
+- [x] `scripts/trd-wyckoff-evolve.ts` — runner (offline `BARS_FILE` mode verified → REJECTED as expected; DB mode ready).
+- [ ] **OPERATOR (unblocks real-data sim):** `supabase start` + Alpaca paper creds → `./scripts/trd-ingest-prices.ts`,
+      then `BARS_FILE=… ` unset + `UNIVERSE=… deno run scripts/trd-wyckoff-evolve.ts` for a real verdict.
+- [ ] Data-feed gate for TRUE CVD/OI: tick (Databento/Polygon/Rithmic) + futures OI — replaces the bar proxies.
+
 ## Deferred (Stage 2+ — needs the gates passed first; NOT now)
 - `agent-trd-paper` (Alpaca paper executor, cost-haircut).
 - `trd_manual_trades` capture UI + slippage fold-back (operator's MICRO phase).
