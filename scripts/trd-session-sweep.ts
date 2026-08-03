@@ -54,4 +54,5 @@ for (const r of rows.slice(0, 6)) {
 }
 const totalTrades = rows.reduce((a, r) => a + r.nTrades, 0);
 console.log(`\n  VERDICT: ${anyPass ? "a segment cleared DSR — investigate out-of-sample" : "NOTHING cleared the deflated gate"} (${totalTrades} trades across all segments; median segment n≈${rows.map((r) => r.nTrades).sort((a, b) => a - b)[Math.floor(rows.length / 2)]})`);
-console.log(`  Honest note: 90 days of data → most segments are n<15. Small-sample by construction; the gate is doing its job.`);
+const medN = rows.map((r) => r.nTrades).sort((a, b) => a - b)[Math.floor(rows.length / 2)];
+console.log(`  Honest note: median segment n≈${medN}. ${medN < 30 ? "Small-sample; extend history." : "Real sample — the rejection is meaningful, not just low-N."} Raw Sharpes shrinking toward 0 as N grows is the signature of noise, not edge.`);
