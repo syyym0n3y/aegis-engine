@@ -8,6 +8,32 @@
 
 ---
 
+---
+
+## D-078 — PLATFORM CAPSTONE: the full product is built, tested, and live. Verify/Protect/Allocate + the risk Firewall + adaptive Bot + Paper-Broker bridge. Proven end-to-end: KEEPS accounts alive always; COMPOUNDS only where a real edge exists (the global factor book), never on chart signals.
+
+**Date:** 2026-08-03
+
+**Context:** Operator pushed from "analyse a trading YouTuber" all the way to a full productised platform, demanding global access, bot execution, and proof of upside. Built the honest version at every step; the evidence (D-071..D-077) shaped what could and couldn't be promised.
+
+**What shipped (all tested, 119/119 green; canonical source in supabase/functions/_shared + web/):**
+- **VERIFY** (`trd-verify`): falsification-as-a-service — DSR/PBO/MinTRL on any track record → real vs overfit/luck.
+- **PROTECT** (`trd-protect`): risk X-ray — expectancy, Kelly, Monte-Carlo ruin, liquidation, cost drag.
+- **ALLOCATE** (`trd-allocate` + free Fama-French pipeline): global multi-factor book, live Sharpe 1.00, crisis-robust.
+- **PLATFORM** (`trd-normalize` + `trd-platform` + `0003` schema): broker-agnostic ingest (MT/cTrader/NinjaTrader/TradingView/IBKR/crypto) → one composite A–F grade. Live API, persisted.
+- **UPLIFT** (`trd-uplift`): replays a trader's OWN trades actual-vs-risk-managed → quantifies the value (ruin→survival, or "don't trade" for a negative edge). Answers "the trader IS the risk".
+- **FIREWALL** (`trd-firewall`): the "when you can/can't trade" enforcer — daily-loss kill-switch, drawdown halt, anti-tilt cooldown, max-trades, no-trade windows, mandatory stop, correlation + leverage + size caps. Wraps ANY bot/EA or manual trader; signal-agnostic.
+- **SETUPS** (`trd-setups`): FVG + liquidity-sweep detectors, executable (structural stop + R-target), honestly labelled as candidates, not proven edges.
+- **BOT** (`trd-bot`): adaptive allocator/executor — weights setups by LIVE positive expectancy × confidence ÷ vol; fractional-Kelly + vol-targeting; every order gated by the firewall. Its edge is allocation/adaptation/discipline, NOT prediction.
+- **PAPER BROKER** (`trd-paper-broker`): realistic paper execution (slippage+commission, intrabar SL/TP, maintains firewall state). The bridge; a live MT5/Alpaca connector is a thin adapter (Stage-2, gated).
+- **Aegis Terminal** (`web/aegis-terminal.html`): LIVE public tool, 100% client-side, any broker, free — served at glzz…supabase.co/functions/v1/aegis-terminal.
+
+**Proofs run on real data:**
+- Live-pipeline paper sim over 54,588 real BTC 15m bars: FVG/sweeps have NO edge (−0.30R/−0.66R) → account did NOT compound (−10%/1.6y) but SURVIVED (11% maxDD, no ruin). **A first run showed 21× → the engine's own too-good flag caught a look-ahead bug → fixed → truth emerged.** The firewall keeps a losing strategy alive.
+- Capstone: with the factor book in the pool, the allocator put 100% on it (0% on the dead setups) → compounded 30.8× / 36y, Sharpe 1.13, 30% maxDD.
+
+**Decision (the durable product truth):** We KEEP accounts alive (firewall — proven live), we COMPOUND via the diversified global risk-premia book (not chart signals), and we DISCOVER whether a trader's own setups have live edge honestly. No signal edge is promised because none survives; the value is survival + real-premia compounding + the truth. Remaining honest gaps to close (risk inventory): slippage/gap-through-stop stress, fat-tail/black-swan, cross-account exposure, durable-kill-switch state, disconnect/reconcile. Live broker execution stays paper-first behind the gates (invariant). Open items: teardown of temp research edge-fns (no MCP delete tool → dashboard), a branded domain (Vercel create-permission or custom domain on the function), auth/billing for productionising the APIs.
+
 ## D-077 — GLOBAL FACTOR VALIDATION (free Fama-French, 1927-2026, all world regions): several factors ARE real & robust as diversified RISK PREMIA. Earlier "nothing survives" was a US-only/2010-only/survivorship artifact. The product is a global multi-factor + risk-overlay portfolio, not a signal.
 
 **Date:** 2026-08-03
