@@ -473,3 +473,33 @@ the gate is the **global factor book** (D-077, Sharpe ~1) — a diversified risk
 portfolio, NOT a chart pattern. Chart/timing "alpha" is not a lever that survives. The durable
 levers are: (1) global risk premia, (2) risk management / survival (firewall + Kelly + macro
 de-risk), (3) conditional deployment. That triad — not a magic setup — is the defensible moat.
+
+### D-083 — Universe sweep: 1,010,539 conditional cells, 0 survivors (2026-08-04)
+
+**Ask:** broaden vertically + horizontally, millions of data points, every timeframe/
+session/candle assigned a strategy; keep mining the goldmine.
+
+**Built:** `scripts/trd-universe-search.ts` — the full canon (4,320 strategies) across
+3 timeframes (15m/1h/1d) × 20 markets (crypto, metals, energy, indices, FX, equities) ×
+8 regime conditions. Persists top candidates to `trd_goldmine` (so we refine, not lose them).
+
+**Result (ran in background, ~min):** **419,725 real bars** across 60 market×timeframe
+series → **1,010,539 conditional cells** → **94,679 positive out-of-sample (9.4%)** →
+**0 clear DSR-deflation.** With a million trials the deflation bar is astronomical; the
+best cell (BTC 15m sweep, NY, trend-up, +0.775R/trade) has Sharpe 0.38, n=32 → DSR ≈ 0.
+
+**Findings, honest:**
+- The robust lead sharpened and is now VERY specific + consistent across a million cells:
+  **BTC 15m liquidity-SWEEP, EMA20, WIDE targets (rr3), in trending NY/London** carries the
+  highest per-trade expectancy (+0.5..+0.78R). Same direction as D-081/D-082 — the OPPOSITE
+  of 1:1 win-rate farming — now confirmed at scale. Still fails DSR (small n, low Sharpe).
+- **My prior was WRONG:** I expected higher timeframes (1h/1d) to surface survivors. They did
+  not — every top cell is 15m BTC. The crowding argument didn't hold; if anything the intraday
+  BTC-sweep micro-pattern is the least-noisy, not the daily swing space.
+- The only edge that has EVER cleared remains the global factor book (D-077). One million
+  chart-strategy cells later, that conclusion is now extremely well-tested.
+
+**Interpretation:** this is a SUCCESS of the falsification engine, not a failure to find.
+The corpus now honestly proves the mechanical retail genre has no deflation-surviving edge
+across essentially the whole tradeable universe. The BTC-sweep-rr3 lead is the one worth a
+dedicated, low-trial, pre-registered test (avoid re-deflating it against a million siblings).
