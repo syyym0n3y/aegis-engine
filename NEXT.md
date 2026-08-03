@@ -1,5 +1,20 @@
 # NEXT — work queue
 
+## PLATFORM (D-078 — built + live; the queue to productionise)
+- [x] Verify/Protect/Allocate engines + live APIs + public Terminal.
+- [x] Risk Firewall + Setups + adaptive Bot + Paper-Broker bridge (119/119 tests).
+- [x] Capstone proof: allocator concentrates on the real edge (factor book) → compounds.
+- [ ] **Cleanup**: delete temp research probe edge-fns (dashboard — no MCP delete tool):
+      `trd-cred-probe`(×3 projects), `trd-yahoo-probe`, `trd-session-probe`, `trd-wyckoff-run`,
+      `trd-ingest-yahoo`. Keepers: `trd-api-*`, `trd-platform`, `aegis-terminal`, the data pumps.
+- [ ] **Close risk-inventory gaps**: slippage/gap-through-stop stress, fat-tail/black-swan,
+      cross-account exposure, durable kill-switch state, disconnect/reconcile.
+- [ ] **Live broker bridge** (paper-first, gated): thin MT5/cTrader/Alpaca-paper adapter over
+      `trd-paper-broker`, with cancel-on-disconnect + order reconcile (D-070 pre-SMALL reqs).
+- [ ] **Productionise**: auth + per-firm keys + billing on the APIs; PDF report; branded domain
+      (Vercel create-permission OR custom domain on the edge fn).
+- [ ] **Prop-firm pilot** ([`docs/product/PILOT-propfirm.md`](./docs/product/PILOT-propfirm.md)) — the monetising wedge.
+
 ## Active (Stage 1 — research/backtest, $0)
 See [`docs/trd/STAGE1.md`](./docs/trd/STAGE1.md) for the full spec + VERIFY per step.
 
