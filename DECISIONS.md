@@ -371,3 +371,32 @@ inversion-alone → moderate trim; <2 signals → fail-safe cap; contagion blend
 best-effort by `scripts/trd-macro-refresh.ts` when FRED is reachable; whichever
 source ran last wins in `trd_macro_state`. Multi-economy (EA/UK/JP/CN) is scaffolded
 (`blendDeRisk` is contagion-dominated) but only US is wired for now.
+
+### D-080 — Folklore falsified: "XAU 15m liquidity-grab, 76.53% win" (2026-08-03)
+
+**Input:** operator shared an 8-slide Instagram carousel (Pranam Ghagare / trendwisdom)
+selling an XAU/USD 15m strategy — 30 EMA trend filter + LuxAlgo S/R-with-breaks (Left/
+Right bars 15→1), long on a support liquidity-grab (wick below, close back above), enter
+on the grab-candle break, SL at its low, **1:1 target**. Claim: 98 trades, **76.53% win**,
+<2% DD, +26% — thesis "Low RR = Higher Win Rate." First of a corpus the operator is
+assembling for Aegis to synthesise.
+
+**Built:** `_shared/trd-liquidity-grab.ts` — a faithful, point-in-time, one-position
+mechanical implementation (no look-ahead: entry is a resting stop at a price known when the
+grab candle closed; pessimistic same-bar stop-first exits; per-side cost applied). 3 tests.
+Runner `scripts/trd-liquidity-grab-verify.ts` pulls **real COMEX gold 15m (Yahoo GC=F,
+keyless)** and runs cost-sensitivity + out-of-sample + regime windows.
+
+**Result on 4,509 real bars (2026-05-22 → 08-03, 306 trades — 3× their sample):**
+- Win rate **44.1%**, NOT 76.5%. Expectancy **−0.118R even at ZERO cost**; **−0.192R** at a
+  realistic $0.30/oz per side; **t = −3.34** (a *significant loser*, not a coin flip).
+- Out-of-sample both halves ~44%, negative, consistent.
+- A 1:1 needs win rate ≥ **52.7%** just to break even after cost; the strategy delivers 44%.
+- Regime probe: win rate swings 38%→54% across 6 windows and tracks the window's drift —
+  76% appeared in NO window of 2.5 months. It was a single trending-April artifact.
+
+**Verdict: REJECTED.** The "1:1 = high win rate" story is real arithmetic (tighter target →
+more hits) but expectancy-neutral gross and NEGATIVE after costs; the 76.5% is regime luck on
+a cherry-picked month, not an edge. Confirms D-071..D-077: no chart/timing signal survives.
+Honest caveat logged: our S/R uses confirmed 1-bar pivots (an approximation of the exact
+LuxAlgo indicator); the cost + regime + OOS findings are robust to that detail.
