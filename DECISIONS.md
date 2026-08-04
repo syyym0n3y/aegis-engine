@@ -823,3 +823,36 @@ circuit breaker → durable `trd_killswitch` row, checked by both Alpaca executo
 reset. Flagged (operator/next): rename the fragile Alpaca secret to standard names; add tracker
 staleness alerting. Residual-risk statement: this clears the PAPER threat model only — real money would
 require re-hardening (reconciliation, disconnect, exposure caps) and a fresh audit.
+
+### D-100 — Tail-day study across 17 markets + the verified risk control wired INTO the order path (2026-08-04)
+
+**Operator ask:** find every huge-move day across many real markets, test whether those days are
+predictable, and turn it into something that helps traders — then fix any foundation cracks. Not on
+self-simulated data; verify everything.
+
+**Study (`scripts/trd-tail-study.ts`, real Yahoo daily, 1970→2026, 121,962 tradeable market-days).**
+Adversarially audited by an independent Opus pass; every flaw it found was fixed and the study re-run:
+- **You cannot predict WHICH day or WHICH direction** a tail lands — the sign is not forecastable.
+- **You CAN predict the REGIME (causal, look-ahead-free).** A >3σ day is **5.9×** more likely when
+  trailing-20d realised vol is above its own trailing-252d median — a regime visible IN ADVANCE.
+  **84.5%** of all tail days occur in that elevated regime. (Headline uses a trailing-σ tail label to
+  remove the fixed-σ/heteroskedasticity artifact the auditor flagged; the inflated fixed-σ version was
+  7.1×. Level series ^TNX/DX excluded from the pooled rate; adjClose used; up-day window made causal.)
+- **The biggest UP days are a trap:** 68.1% occur below the 200d MA (bear-market rallies); 28.6% land
+  within 3 days AFTER a >3σ crash. You cannot harvest the up-tail without sitting in the down-tail's
+  cluster → the correct reaction to a high-upside regime is REDUCE, not chase.
+- **Tail risk is systemic:** 93 dates had ≥5 markets post a >3σ move together — all 2008 / 2020 / 2011.
+  Diversification fails exactly when it's needed → de-risk must be portfolio-level.
+
+**Crack found + fixed (the one that mattered).** The thesis says the risk gate is the only near-certain
+positive-EV component — yet it was computed by `trd-macro` and applied NOWHERE in the order path. Both
+Alpaca executors sized purely off stop distance. **Fixed:** new tested primitive
+`_shared/trd-vol-regime.ts` (`volRegimeDeRisk`) = causal vol-target capped as a strict risk-REDUCER
+(size ×min(1, medianRV/RV), floor 0.30, no-op when calm or history thin; never levers up). Wired into
+BOTH `trd-alpaca-tick` (v5) and `trd-alpaca-equity-tick` (v4), deployed, and **verified LIVE on real
+Alpaca daily data** via `?volprobe=1`/`?probe=1`: today QQQ RV 1.52%>1y-median 1.08% → size ×0.715,
+SPY ×0.90, IWM/GLD/BTC/ETH calm ×1.00. Guard: `_shared/trd-vol-regime.test.ts` (5 tests, green).
+
+**Status:** the verified regime control is now enforced in sizing, not just displayed. Still PAPER-only
+(no real money before the gates). Corpus unchanged. Remaining flagged cracks (unchanged from D-099):
+Alpaca secret rename; tracker staleness alerting; surface the tail-risk regime flag on the cockpit.

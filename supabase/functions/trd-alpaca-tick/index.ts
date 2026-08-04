@@ -3,6 +3,7 @@
 // we want ACTUAL edges, not inferred). Alpaca crypto is LONG-ONLY + no gold (those go to other
 // surfaces). Sizing = 1% risk/trade. Idempotent per bar. ?selftest=1 places+closes a tiny real order
 // to prove the path. Crypto market orders fill instantly, so entry/exit are polled synchronously.
+import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts"; // D-100 verified risk control, in the order path
 const SB = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const hdr = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
 const KEYID = Deno.env.get("APCA_API_KEY_ID") ?? "PKEFCKAQHPEDW3PRDJ6JS4V67O";
@@ -25,6 +26,14 @@ async function bars(sym: string) {
   const r = await fetch(`${DATA}/bars?symbols=${encodeURIComponent(sym)}&timeframe=15Min&start=${start}&limit=1000`, { headers: AH });
   const j = await r.json(); return (j.bars?.[sym] ?? []).map((b: any) => ({ ts: b.t, o: b.o, h: b.h, l: b.l, c: b.c }));
 }
+// daily returns for the D-100 vol-regime de-risk (causal: trailing daily closes only)
+async function dailyReturns(sym: string): Promise<number[]> {
+  const start = new Date(Date.now() - 430 * 86400000).toISOString();
+  const r = await fetch(`${DATA}/bars?symbols=${encodeURIComponent(sym)}&timeframe=1Day&start=${start}&limit=1000`, { headers: AH });
+  if (!r.ok) return []; const j = await r.json(); const b = j.bars?.[sym] ?? [];
+  const out: number[] = []; for (let i = 1; i < b.length; i++) if (b[i].c > 0 && b[i - 1].c > 0) out.push(Math.log(b[i].c / b[i - 1].c));
+  return out;
+}
 function ema(v: number[], p: number) { const k = 2 / (p + 1); let e = v[0]; const out = [e]; for (let i = 1; i < v.length; i++) { e = v[i] * k + e * (1 - k); out.push(e); } return out; }
 // sweep-long signal on the LAST closed bar (matches btc-sweep-rr3-v1, long side, ema20 trend filter)
 function sweepLong(b: any[]) {
@@ -40,6 +49,7 @@ Deno.serve(async (req) => {
   const params = new URL(req.url).searchParams; const selftest = params.get("selftest") === "1"; const flatten = params.get("flatten") === "1";
   try {
     if (!SECRET) throw new Error("no Alpaca secret resolved");
+    if (params.get("volprobe") === "1") { const regimes: any = {}; for (const s of SYMBOLS) { const vr = volRegimeDeRisk(await dailyReturns(s)); regimes[s] = { deRisk: +vr.deRisk.toFixed(3), elevated: vr.elevated, reason: vr.reason }; } return new Response(JSON.stringify({ ok: true, volRegimeDeRisk: regimes }, null, 2), { headers: cors }); }
     // SECURITY: flatten/selftest are dangerous (mutate real paper positions) — gate behind the
     // service-role key so a public caller can't disrupt the forward test or spam orders.
     if ((selftest || flatten) && (req.headers.get("x-admin") ?? "") !== SRK) return new Response(JSON.stringify({ ok: false, err: "admin token required for selftest/flatten" }), { status: 403, headers: cors });
@@ -75,10 +85,11 @@ Deno.serve(async (req) => {
       const sig = sweepLong(b);
       if (sig && sig.ts !== lastBars[sym] && sig.entryRef > sig.stop) {
         const stopFrac = (sig.entryRef - sig.stop) / sig.entryRef; if (stopFrac <= 0) continue;
-        const notional = Math.min(equity * 0.3, (RISK * equity) / stopFrac);
+        const vr = volRegimeDeRisk(await dailyReturns(sym)); // D-100: shrink size in elevated-vol regimes (never levers up)
+        const notional = Math.min(equity * 0.3, (RISK * equity) / stopFrac) * vr.deRisk;
         if (notional >= 5) {
           const buy = await submitFill({ symbol: sym, notional: notional.toFixed(2), side: "buy", type: "market", time_in_force: "gtc" });
-          if ((buy as any).status === "filled") { const entry = (buy as any).price; open[sym] = { entry, stop: sig.stop, target: entry + RR * (entry - sig.stop), qty: (buy as any).qty, openTs: sig.ts }; lastBars[sym] = sig.ts; entered++; }
+          if ((buy as any).status === "filled") { const entry = (buy as any).price; open[sym] = { entry, stop: sig.stop, target: entry + RR * (entry - sig.stop), qty: (buy as any).qty, openTs: sig.ts, deRisk: +vr.deRisk.toFixed(3), volElevated: vr.elevated }; lastBars[sym] = sig.ts; entered++; }
         }
       }
     }
