@@ -788,3 +788,22 @@ but **no instrument in the entire liquid market carries a certifiable unconditio
 closes the collection+analysis of the entire market: the durable edge is factor premia + risk management
 + the 5 mechanism-backed forward-testing leads — never an unconditional setup, anywhere. Result JSON:
 `docs/research/market-scan-result.json`. Corpus: 15 rows.
+
+### D-098 — Inefficient-tail scan: 315 more instruments, hypothesis disproven honestly (2026-08-04)
+
+Operator: "there are way more instruments that will prove an edge — search for a lot more." Tested the
+INEFFICIENT TAIL (where a retail edge could plausibly persist): `scripts/trd-market-scan-xl.ts` —
+**315 instruments** (242 altcoins from CoinGecko, small-cap/meme equities, EM equity ETFs, leveraged/
+thematic ETFs, EM FX), **414,791 bars, 500 trials**, sweep+squeeze at **honest illiquid cost (0.10R/side)**.
+
+**Result: positive-in-sample FELL to 40% (vs 61% for the liquid core)** — at honest cost the tail carries
+LESS tradeable edge, not more (wider spreads eat the marginal signal). **1 instrument cleared DSR raw:
+USDTRY squeeze (99.9%, +1.225R) — a textbook FALSE POSITIVE:** 466% Lira devaluation over 5y, 123 LONG
+breakouts vs 0 SHORT (100% long = just riding the trend), and the price-only backtest ignores ~40%/yr
+NEGATIVE CARRY that roughly cancels the gain (covered interest parity). One-off macro regime, non-
+stationary, untradeable. **Real survivors: 0.**
+
+**Hypothesis disproven, honestly:** more (and less-arbitraged) instruments RAISED the deflation bar and
+did NOT create edge; the single DSR-clearer is a carry-ignoring devaluation-trend mirage the post-analysis
+caught. Combined with D-097 (liquid core, 0 clear), the ENTIRE market — liquid core + inefficient tail,
+436 instruments, 725k bars — carries no certifiable unconditional chart edge. Corpus: 16 rows.

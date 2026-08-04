@@ -1,0 +1,351 @@
+{
+  "scanned": 315,
+  "totalBars": 414791,
+  "trials": 500,
+  "positiveInSample": 201,
+  "clearedDSR": 1,
+  "byClass": {
+    "EM FX": {
+      "n": 22,
+      "pos": 13
+    },
+    "altcoin": {
+      "n": 202,
+      "pos": 88
+    },
+    "lev/thematic": {
+      "n": 73,
+      "pos": 28
+    },
+    "EM ETF": {
+      "n": 70,
+      "pos": 26
+    },
+    "small/meme eq": {
+      "n": 133,
+      "pos": 46
+    }
+  },
+  "top": [
+    {
+      "market": "USDTRY=X",
+      "cls": "EM FX",
+      "strat": "squeeze",
+      "n": 123,
+      "exp": 1.225,
+      "dsr": 0.9993
+    },
+    {
+      "market": "USDTRY=X",
+      "cls": "EM FX",
+      "strat": "sweep-rr3",
+      "n": 31,
+      "exp": 1.123,
+      "dsr": 0.439
+    },
+    {
+      "market": "EDGE-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 25,
+      "exp": 0.56,
+      "dsr": 0.0559
+    },
+    {
+      "market": "SMH",
+      "cls": "lev/thematic",
+      "strat": "sweep-rr3",
+      "n": 44,
+      "exp": 0.709,
+      "dsr": 0.0555
+    },
+    {
+      "market": "CORN",
+      "cls": "lev/thematic",
+      "strat": "sweep-rr3",
+      "n": 41,
+      "exp": 0.654,
+      "dsr": 0.0422
+    },
+    {
+      "market": "LIT-USD",
+      "cls": "altcoin",
+      "strat": "squeeze",
+      "n": 47,
+      "exp": 0.46,
+      "dsr": 0.0305
+    },
+    {
+      "market": "IEMG",
+      "cls": "EM ETF",
+      "strat": "sweep-rr3",
+      "n": 35,
+      "exp": 0.514,
+      "dsr": 0.0216
+    },
+    {
+      "market": "FLR-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 41,
+      "exp": 0.556,
+      "dsr": 0.0201
+    },
+    {
+      "market": "ARB-USD",
+      "cls": "altcoin",
+      "strat": "squeeze",
+      "n": 27,
+      "exp": 0.28,
+      "dsr": 0.0193
+    },
+    {
+      "market": "WKHS",
+      "cls": "small/meme eq",
+      "strat": "sweep-rr3",
+      "n": 28,
+      "exp": 0.371,
+      "dsr": 0.0144
+    },
+    {
+      "market": "COPX",
+      "cls": "lev/thematic",
+      "strat": "sweep-rr3",
+      "n": 32,
+      "exp": 0.425,
+      "dsr": 0.0143
+    },
+    {
+      "market": "EEM",
+      "cls": "EM ETF",
+      "strat": "sweep-rr3",
+      "n": 38,
+      "exp": 0.484,
+      "dsr": 0.0138
+    },
+    {
+      "market": "BLNK",
+      "cls": "small/meme eq",
+      "strat": "sweep-rr3",
+      "n": 40,
+      "exp": 0.5,
+      "dsr": 0.0136
+    },
+    {
+      "market": "ACHR",
+      "cls": "small/meme eq",
+      "strat": "sweep-rr3",
+      "n": 44,
+      "exp": 0.527,
+      "dsr": 0.0131
+    },
+    {
+      "market": "APT-USD",
+      "cls": "altcoin",
+      "strat": "squeeze",
+      "n": 79,
+      "exp": 0.435,
+      "dsr": 0.0126
+    },
+    {
+      "market": "VET-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 48,
+      "exp": 0.55,
+      "dsr": 0.0125
+    },
+    {
+      "market": "AMSC",
+      "cls": "small/meme eq",
+      "strat": "squeeze",
+      "n": 76,
+      "exp": 0.458,
+      "dsr": 0.0112
+    },
+    {
+      "market": "TRX-USD",
+      "cls": "altcoin",
+      "strat": "squeeze",
+      "n": 98,
+      "exp": 0.504,
+      "dsr": 0.0092
+    },
+    {
+      "market": "GBTC",
+      "cls": "lev/thematic",
+      "strat": "sweep-rr3",
+      "n": 33,
+      "exp": 0.376,
+      "dsr": 0.009
+    },
+    {
+      "market": "LUNR",
+      "cls": "small/meme eq",
+      "strat": "sweep-rr3",
+      "n": 37,
+      "exp": 0.422,
+      "dsr": 0.009
+    },
+    {
+      "market": "UVIX",
+      "cls": "lev/thematic",
+      "strat": "sweep-rr3",
+      "n": 27,
+      "exp": 0.281,
+      "dsr": 0.0089
+    },
+    {
+      "market": "EWU",
+      "cls": "EM ETF",
+      "strat": "sweep-rr3",
+      "n": 25,
+      "exp": 0.24,
+      "dsr": 0.0088
+    },
+    {
+      "market": "ATOM-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 63,
+      "exp": 0.578,
+      "dsr": 0.0071
+    },
+    {
+      "market": "ETH-USD",
+      "cls": "altcoin",
+      "strat": "squeeze",
+      "n": 70,
+      "exp": 0.418,
+      "dsr": 0.006
+    },
+    {
+      "market": "DOCN",
+      "cls": "small/meme eq",
+      "strat": "sweep-rr3",
+      "n": 38,
+      "exp": 0.379,
+      "dsr": 0.0057
+    },
+    {
+      "market": "PYTH-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 36,
+      "exp": 0.356,
+      "dsr": 0.0057
+    },
+    {
+      "market": "USDINR=X",
+      "cls": "EM FX",
+      "strat": "sweep-rr3",
+      "n": 42,
+      "exp": 0.419,
+      "dsr": 0.0057
+    },
+    {
+      "market": "ULTIMA-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 26,
+      "exp": 0.185,
+      "dsr": 0.0053
+    },
+    {
+      "market": "MCHI",
+      "cls": "EM ETF",
+      "strat": "sweep-rr3",
+      "n": 26,
+      "exp": 0.185,
+      "dsr": 0.0053
+    },
+    {
+      "market": "CASH-USD",
+      "cls": "altcoin",
+      "strat": "squeeze",
+      "n": 45,
+      "exp": 0.281,
+      "dsr": 0.0038
+    },
+    {
+      "market": "PAXG-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 45,
+      "exp": 0.4,
+      "dsr": 0.0036
+    },
+    {
+      "market": "USDIDR=X",
+      "cls": "EM FX",
+      "strat": "sweep-rr3",
+      "n": 35,
+      "exp": 0.286,
+      "dsr": 0.0035
+    },
+    {
+      "market": "USDCOP=X",
+      "cls": "EM FX",
+      "strat": "sweep-rr3",
+      "n": 55,
+      "exp": 0.473,
+      "dsr": 0.0035
+    },
+    {
+      "market": "WFI-USD",
+      "cls": "altcoin",
+      "strat": "sweep-rr3",
+      "n": 29,
+      "exp": 0.179,
+      "dsr": 0.0033
+    },
+    {
+      "market": "RKLB",
+      "cls": "small/meme eq",
+      "strat": "sweep-rr3",
+      "n": 29,
+      "exp": 0.179,
+      "dsr": 0.0033
+    },
+    {
+      "market": "EPOL",
+      "cls": "EM ETF",
+      "strat": "sweep-rr3",
+      "n": 29,
+      "exp": 0.179,
+      "dsr": 0.0033
+    },
+    {
+      "market": "EWL",
+      "cls": "EM ETF",
+      "strat": "sweep-rr3",
+      "n": 29,
+      "exp": 0.179,
+      "dsr": 0.0033
+    },
+    {
+      "market": "EZA",
+      "cls": "EM ETF",
+      "strat": "sweep-rr3",
+      "n": 27,
+      "exp": 0.133,
+      "dsr": 0.0032
+    },
+    {
+      "market": "UNI-USD",
+      "cls": "altcoin",
+      "strat": "squeeze",
+      "n": 37,
+      "exp": 0.196,
+      "dsr": 0.0028
+    },
+    {
+      "market": "JETS",
+      "cls": "lev/thematic",
+      "strat": "squeeze",
+      "n": 65,
+      "exp": 0.34,
+      "dsr": 0.0024
+    }
+  ]
+}
