@@ -563,3 +563,24 @@ grand-cycle pass) and `trd-cycle-matrix.ts` (9 markets × {1h, 1d}).
 falsifiable forward prediction**: bottom→bottom ~1437d from 2022-11-21 ⇒ macro BOTTOM ~2026-10-29
 (±60d). Everything else is noise. Same deflation discipline (null + report-n) applied to periodicity,
 vertically and horizontally.
+
+### D-086 — Cockpit renders: local HTML + live JSON (Supabase HTML constraint) (2026-08-04)
+
+**Bug the operator caught (my error):** aegis-cockpit and aegis-terminal show RAW TEXT +
+mojibake in a browser. Root cause: Supabase's edge gateway force-downgrades edge-function
+responses to `content-type: text/plain` + `x-content-type-options: nosniff` + a `sandbox` CSP
+(anti-phishing on *.supabase.co) — regardless of the `text/html` the function sets. So you
+CANNOT serve browser-rendered HTML from a Supabase edge function. I'd only verified via curl
+(which ignores content-type), skipping the mandatory in-browser render check — the exact failure
+my own doctrine warns against.
+
+**Fix (verified in-browser):** the `?format=json` path is unaffected (correct `application/json`,
+CORS-open) — it stays the CC data interface. The dashboard is now a self-contained LOCAL file
+`web/aegis-cockpit.html` that fetches that live JSON and renders client-side; opened from disk it
+renders perfectly and stays live (60s refresh). Confirmed via browser a11y tree: styled cards,
+live values ($5782, EXPANSION, btc-sweep-rr3-v1 accumulating 0/30), no mojibake.
+
+**Open (honest):** the PUBLIC trader terminal has the same constraint — it needs real static
+hosting (Vercel/Cloudflare/GitHub Pages) to render for outside users; that remains gated on
+deploy access. The operator cockpit is solved (local file). Doctrine reinforced: never claim a
+UI "renders" without an in-browser check.

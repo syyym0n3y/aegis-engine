@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aegis — Command Cockpit</title>
+<!-- Self-contained LOCAL dashboard. Supabase edge functions cannot serve browser-rendered HTML
+     (the gateway forces text/plain + nosniff), so this file renders client-side and pulls the LIVE
+     JSON snapshot from the cockpit's ?format=json endpoint (CORS-open). Open it from disk; it stays
+     live via fetch. Refreshes every 60s. -->
+<style>
+:root{--bg:#0a0d13;--sf:#111621;--ln:#222c3c;--tx:#e7ecf3;--mut:#8b97aa;--faint:#5d6879;--accent:#40b784;--red:#e15a4f;--amber:#d99a3c;--mono:ui-monospace,Menlo,monospace;--sans:system-ui,sans-serif}
+@media(prefers-color-scheme:light){:root{--bg:#f3f5f3;--sf:#fff;--ln:#dde2df;--tx:#131820;--mut:#5a6472;--faint:#8c96a3;--accent:#1c8a5a;--red:#c23a30}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px 60px}.mono{font-family:var(--mono)}.num{font-variant-numeric:tabular-nums;text-align:right}
+.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+header{border-bottom:1px solid var(--ln)}.bar{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+.brand{font-family:var(--mono);font-weight:700;letter-spacing:.04em;display:flex;gap:9px;align-items:center}
+.dot{width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+h2{font-size:14px;margin:34px 0 12px}.grid{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}@media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:15px}.card .lbl{margin-bottom:6px}.card .v{font-family:var(--mono);font-size:24px;font-weight:700}.card .s{font-size:12px;color:var(--mut);margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;overflow:hidden}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--ln)}th{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}tbody tr:last-child td{border-bottom:0}
+.two{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:760px){.two{grid-template-columns:1fr 1fr}}
+.panel{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:16px 18px}.panel .lbl{margin-bottom:10px}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}.row a{color:var(--accent)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:4px;border:1px solid var(--ln);margin:3px 4px 0 0}
+.ok{color:var(--accent)}.warn{color:var(--amber)}li{margin:4px 0;font-size:13px;color:var(--mut)}ul{margin:6px 0;padding-left:18px}
+button{font-family:var(--mono);font-size:12px;background:var(--sf);color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:5px 12px;cursor:pointer}
+#err{color:var(--red);font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+<header><div class="wrap bar"><div class="brand"><span class="dot"></span> AEGIS · COMMAND COCKPIT</div>
+<div><span id="upd" class="mono" style="font-size:12px;color:var(--mut)">loading…</span> <button onclick="load()">↻ refresh</button></div></div></header>
+<main class="wrap"><div id="err"></div><div id="app"></div></main>
+<script>
+const ENDPOINT = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1/aegis-cockpit?format=json";
+const esc = s => String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const phaseCol = p => ({EXPANSION:"var(--accent)",RECOVERY:"var(--accent)",LATE_CYCLE:"var(--amber)",CONTRACTION:"var(--red)"}[p]||"var(--faint)");
+function card(l,v,s,c){return `<div class=card><div class=lbl>${l}</div><div class=v${c?` style="color:${c}"`:""}>${v}</div><div class=s>${s||""}</div></div>`}
+function render(d){
+  const s=d.summary||{}, da=d.data||{}, m=da.macro||{};
+  const dr=(s.macro_de_risk??1); const drc=dr>=.99?"var(--accent)":dr>=.6?"var(--amber)":"var(--red)";
+  const sess=(da.per_session_setup||[]).map(x=>`<tr><td class=mono>${esc(x.key)}</td><td class="mono num">${x.n}</td><td class="mono num" style="color:${x.exp>0?"var(--accent)":"var(--red)"}">${(+x.exp).toFixed(2)}R</td><td class=mono style="color:var(--faint)">${x.n<30?"noise (n<30)":x.exp>0?"scaling":"benched"}</td></tr>`).join("")||`<tr><td colspan=4 style="color:var(--faint)">no trades yet</td></tr>`;
+  const hyps=(da.prereg_hypotheses||[]).map(h=>{const ready=h.n>=30,good=h.exp>0,col=!ready?"var(--faint)":good?"var(--accent)":"var(--red)";return `<div class=row><span class=mono style="font-size:12px">${esc(h.id)} <span style="color:var(--faint)">(${esc(h.market)} ${esc(h.tf)} · ${esc(h.spec&&h.spec.trigger)} rr${esc(h.spec&&h.spec.rr)})</span></span><span class=mono style="color:${col}">${ready?`${h.exp>=0?"+":""}${(+h.exp).toFixed(3)}R · ${good?"forward-positive":"forward-negative"}`:`accumulating ${h.n}/30`}</span></div>`}).join("")||`<span style="color:var(--faint)">none</span>`;
+  const cleared=Math.max(0,(da.corpus_assessed||0)-(da.corpus_rejected||0)-1);
+  document.getElementById("upd").textContent = "live · "+new Date(d.generated_at).toISOString().replace("T"," ").slice(0,16)+" UTC";
+  document.getElementById("app").innerHTML = `
+  <h2>Autonomous paper account — the live 'keep + compound' test</h2>
+  <div class=grid>
+  ${card("Status",s.status==="alive"?"ALIVE":"BREACHED","firewall protecting",s.status==="alive"?"var(--accent)":"var(--red)")}
+  ${card("Equity","$"+(s.equity??0),"× "+(s.multiple??1))}
+  ${card("Max drawdown",(s.max_drawdown_pct??0)+"%",(s.open_positions??0)+" open · "+(s.closed_trades??0)+" closed")}
+  ${card("Ticks",s.ticks??0,"10 markets · every 6h")}
+  </div>
+  <h2>Macro regime — fragility, not direction</h2>
+  <div class=grid>
+  ${card("US cycle phase",esc(m.phase||"—"),"as of "+esc(m.asOf||"—"),phaseCol(m.phase))}
+  ${card("Fragility",Math.round((m.fragility||0)*100)+"%","0 robust · 100 primed")}
+  ${card("De-risk applied",Math.round(dr*100)+"%","bot size × this",drc)}
+  ${card("Signals",(m.signals||[]).length,"curve · vol")}
+  </div>
+  <div class=panel style="margin-top:14px"><div class=lbl>What to expect</div><div style="font-size:13px">${esc(m.expectation||"—")}</div></div>
+  <h2>Pre-registered hypotheses — honest forward test</h2>
+  <div class=panel>${hyps}<div class=row style="border:0;color:var(--faint);font-size:12px"><span>Frozen spec + timestamp → forward trades only → a single trial the search can't bias.</span><span></span></div></div>
+  <h2>Decoded corpus</h2>
+  <div class=grid>
+  ${card("Strategies assessed",da.corpus_assessed??0,"catalogued")}
+  ${card("Rejected by gate",da.corpus_rejected??0,"failed DSR/OOS/cost","var(--red)")}
+  ${card("Deflation-cleared",cleared,"chart edges","var(--accent)")}
+  ${card("Trials searched","1.01M","conditional cells")}
+  </div>
+  ${da.cycle_prediction?`<div class=panel style="margin-top:14px"><div class=lbl>Pre-registered cycle prediction (BTC halving grand-cycle)</div><div style="font-size:13px">${esc(da.cycle_prediction)}</div></div>`:""}
+  <h2>Per-session × setup — what the allocator is learning</h2>
+  <table><thead><tr><th>session × setup</th><th class=num>trades</th><th class=num>expectancy</th><th>allocator</th></tr></thead><tbody>${sess}</tbody></table>
+  <h2>The honest verdict (D-071…D-085)</h2><div class=panel><ul>
+  <li>No chart/timing signal survives honest testing (~1.01M conditional cells, DSR-deflated).</li>
+  <li>Risk management is the durable edge — it keeps accounts alive trading a losing strategy.</li>
+  <li>Compounding comes from the global factor book (Sharpe ~1), not chart setups.</li>
+  <li>Macro measures fragility, not direction; the overlay only ever shrinks size.</li>
+  <li>The one mechanism-backed cycle lead (BTC halving) is pre-registered forward, not backfit.</li>
+  </ul></div>`;
+}
+async function load(){
+  try{ document.getElementById("err").textContent="";
+    const r=await fetch(ENDPOINT,{cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status);
+    render(await r.json());
+  }catch(e){ document.getElementById("err").textContent="fetch failed: "+e.message+" (endpoint may be waking; retrying in 60s)"; }
+}
+load(); setInterval(load, 60000);
+</script>
+</body>
+</html>
