@@ -856,3 +856,28 @@ SPY ×0.90, IWM/GLD/BTC/ETH calm ×1.00. Guard: `_shared/trd-vol-regime.test.ts`
 **Status:** the verified regime control is now enforced in sizing, not just displayed. Still PAPER-only
 (no real money before the gates). Corpus unchanged. Remaining flagged cracks (unchanged from D-099):
 Alpaca secret rename; tracker staleness alerting; surface the tail-risk regime flag on the cockpit.
+
+### D-101 — Synthesis of the "free finance" essay into the models + tail-risk flag on the cockpit (2026-08-04)
+
+Operator shared an eight-pillar essay (Merlow, "Everything You Need to Retire Was Published Decades
+Ago") and asked to use as much as possible in our models. The essay is, in effect, an external audit of
+Aegis's thesis — it maps almost one-to-one onto what we've built. Mapping each pillar → what we do:
+
+| Essay pillar | Aegis status |
+|---|---|
+| **2. Kelly / fractional Kelly** — size matters more than edge; use ≤half-Kelly because you never know your edge; overbetting ruins even a winning system | **NEW this turn:** `_shared/trd-kelly.ts` (+6 tests) — quarter-Kelly on each strategy's *measured* forward edge (p, payoff b, f*=p−(1−p)/b), capped at base budget (pure reducer), tiny-probe on a measured non-edge, conservative default under small sample. Wired into BOTH executors, deployed, verified live (n=0 now → 50%-of-base default, adapts as trades resolve). |
+| **5. Mandelbrot fat tails** — real risk of ruin > your model; bell curve fails; leverage amplifies non-linearly | Validated by D-100 (kurtosis 6–55, tails 5–6× normal). Sizing biases DOWN (fractional Kelly + vol-regime), never assumes normality; ruin metric on the Risk-Xray uses empirical inputs. |
+| **1. Sequence-of-returns risk** — order of returns, not average, decides survival; flexibility (de-risking in bad years) beats clever allocation | This is exactly the D-100 vol-regime de-risk: shrink exposure ahead of the high-tail regime. Now surfaced on the cockpit. |
+| **3. Buffett — never lose money / survival first** — can't compound from zero | The founding invariant: the risk gate is the only near-certain positive-EV component; no real money before the gates. |
+| **4. Simons / Medallion capacity cap** — edge exists in a size range, vanishes at scale | Honest capacity caveat: every lead we find is capacity-bound; we never claim infinite scaling. |
+| **6. Lo — Adaptive Markets** — edges decay because they get crowded; anything working recently is near end-of-life | The whole project's finding (no durable chart edge; leads decay). Forward trackers exist to catch decay; a rolling-expectancy decay monitor is the next add. |
+| **7. Cost is the one variable you control** | Costs are pessimistic-by-default in every backtest (invariant). |
+| **8. Livermore — psychology / disposition effect** | Neutralised structurally: execution is deterministic rules, no discretion, no LLM in the order path. |
+
+**Cockpit:** the D-100 tail-risk regime flag is now surfaced on `aegis-cockpit` (HTML + `?format=json`
+`data.vol_regime`) and in the GitHub-Pages web app — per-instrument de-risk ×factor, the SAME primitive
+the executors apply, so the operator sees exactly the sizing the bots use. Verified in-browser (SPY
+×0.91 / QQQ ×0.71 ELEVATED, Gold/BTC/ETH ×1.00 calm). Sizing is now `kelly × vol-regime` — measured
+edge × regime, both strict risk-reducers under the base budget. NOTE: the public GitHub-Pages deploy of
+the web app is not re-pushed from this repo (no remote here; publishing is operator-gated) — the source
+change is committed and verified locally against the live API.

@@ -4,6 +4,7 @@
 // hours-gated, 1% risk, software-managed exits, reconciled from Alpaca. Actual fills, not inferred.
 // ?probe=1 = clock + shortable status. ?selftest=1 = short 1 share SPY + cover (proves the short path).
 import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts"; // D-100 verified risk control, in the order path
+import { kellySize } from "../_shared/trd-kelly.ts";           // D-101 fractional-Kelly sizing on measured edge
 const SB = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const hdr = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
 const KEYID = Deno.env.get("APCA_API_KEY_ID") ?? "PKEFCKAQHPEDW3PRDJ6JS4V67O";
@@ -54,7 +55,9 @@ Deno.serve(async (req) => {
       const assets: any = {}; for (const s of SYMBOLS) { const a = await get(`/v2/assets/${s}`); assets[s] = a ? { tradable: a.tradable, shortable: a.shortable, etb: a.easy_to_borrow } : "n/a"; }
       const sampleBars = (await bars("SPY")).length;
       const regimes: any = {}; for (const s of SYMBOLS) { const vr = volRegimeDeRisk(await dailyReturns(s)); regimes[s] = { deRisk: +vr.deRisk.toFixed(3), elevated: vr.elevated, reason: vr.reason }; }
-      return new Response(JSON.stringify({ ok: true, market_open: clock?.is_open, next_open: clock?.next_open, assets, spyBarsAvail: sampleBars, volRegimeDeRisk: regimes }, null, 2), { headers: cors });
+      const stx = await fetch(`${SB}/rest/v1/trd_alpaca_state?id=eq.equity&select=closed`, { headers: hdr }).then((r) => r.json()).then((x) => x[0] ?? { closed: [] }).catch(() => ({ closed: [] }));
+      const k = kellySize((stx.closed ?? []).map((c: any) => c.r), 0.01);
+      return new Response(JSON.stringify({ ok: true, market_open: clock?.is_open, next_open: clock?.next_open, assets, spyBarsAvail: sampleBars, volRegimeDeRisk: regimes, kelly: k }, null, 2), { headers: cors });
     }
     if (P.get("selftest") === "1") {
       if ((req.headers.get("x-admin") ?? "") !== SRK) return new Response(JSON.stringify({ ok: false, err: "admin token required for selftest" }), { status: 403, headers: cors });
@@ -87,10 +90,12 @@ Deno.serve(async (req) => {
         if (sig.side === "short") { const asset = await get(`/v2/assets/${sym}`); if (!asset?.shortable) continue; }
         const stopDist = Math.abs(sig.ref - sig.stop);
         const vr = volRegimeDeRisk(await dailyReturns(sym)); // D-100: shrink size in elevated-vol regimes (never levers up)
-        const qty = Math.max(1, Math.floor(((RISK * equity) / stopDist) * vr.deRisk));
+        const k = kellySize(closed.map((c: any) => c.r), RISK); // D-101: fractional-Kelly on THIS strategy's measured edge
+        const riskFrac = k.riskFraction * vr.deRisk;            // compose — both are pure risk-reducers, ≤ base
+        const qty = Math.max(1, Math.floor((riskFrac * equity) / stopDist));
         const side = sig.side === "long" ? "buy" : "sell";
         const buy = await submitFill({ symbol: sym, qty: String(qty), side, type: "market", time_in_force: "day" });
-        if ((buy as any).status === "filled") { const entry = (buy as any).price; const dir = sig.side === "long" ? 1 : -1; open[sym] = { side: sig.side, entry, stop: sig.stop, target: entry + dir * RR * stopDist, qty, openTs: last.ts, deRisk: +vr.deRisk.toFixed(3), volElevated: vr.elevated }; lastBars[sym] = last.ts; entered++; }
+        if ((buy as any).status === "filled") { const entry = (buy as any).price; const dir = sig.side === "long" ? 1 : -1; open[sym] = { side: sig.side, entry, stop: sig.stop, target: entry + dir * RR * stopDist, qty, openTs: last.ts, deRisk: +vr.deRisk.toFixed(3), volElevated: vr.elevated, kellyRisk: +k.riskFraction.toFixed(4) }; lastBars[sym] = last.ts; entered++; }
       }
     }
     const rlog = closed.map((c) => c.r); const exp = rlog.length ? rlog.reduce((x, y) => x + y, 0) / rlog.length : 0;
