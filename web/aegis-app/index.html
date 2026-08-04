@@ -65,6 +65,21 @@ a{color:var(--accent)}
   </div>
 </section>
 
+<section class="view" data-view="portfolio">
+  <h1>Portfolio risk X-ray</h1>
+  <p class="sub">The thing that actually blows up accounts isn't a bad signal — it's <b>hidden correlation + oversizing</b>. Paste your real positions from any broker. Aegis pulls real history and shows your <b>true number of bets</b> and your <b>fat-tailed chance of ruin</b> — then how much to cut. No signals. Just the seatbelt.</p>
+  <div class="panel">
+    <label>Account equity ($)</label><input id="pf_eq" value="25000">
+    <label>Positions — one per line: <span class="mono" style="text-transform:none">SYMBOL long|short NOTIONAL$</span></label>
+    <textarea id="pf_pos" style="min-height:120px">NVDA long 12000
+AMD long 12000
+MSFT long 12000
+QQQ long 12000</textarea>
+    <button class="btn" onclick="doPortfolio()">Run the portfolio X-ray</button>
+    <div id="pf_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
 <section class="view" data-view="protect">
   <h1>Risk X-ray</h1>
   <p class="sub">The Kelly truth: you don't have a strategy problem, you have a <b>sizing</b> problem. Enter your real numbers — this tells you if the same edge compounds or ruins you.</p>
@@ -119,7 +134,7 @@ a{color:var(--accent)}
 
 <script>
 const API = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
-const VIEWS = [["home","Home"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
+const VIEWS = [["home","Home"],["portfolio","Portfolio risk"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
 const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
@@ -128,6 +143,30 @@ function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle(
   if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
+async function doPortfolio(){
+  const eq=+document.getElementById("pf_eq").value;
+  const positions=document.getElementById("pf_pos").value.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.split(/[\s,]+/);return {symbol:m[0],side:/short|sell/i.test(m[1]||"")?"short":"long",notional:+String(m[2]||m[1]).replace(/[^0-9.]/g,"")}}).filter(p=>p.symbol&&p.notional>0);
+  const o=document.getElementById("pf_out");o.innerHTML="<span class=muted>pulling real history + running fat-tailed Monte-Carlo…</span>";
+  try{const r=await fetch(API+"/trd-risk-engine",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({equity:eq,positions})});const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    const rc=d.probRuin>=0.25?"var(--red)":d.probRuin>=0.10?"var(--amber)":"var(--accent)";
+    const eb=d.effectiveBets,conc=d.hiddenConcentration;
+    o.innerHTML=`<div class="verdict" style="color:${rc}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">P(ruin) · ${(d.ruinThreshold*100).toFixed(0)}%+ DD</div><div class="v" style="color:${rc}">${(d.probRuin*100).toFixed(1)}%</div><div class="s">over ${d.horizonDays}d, fat-tailed</div></div>
+      <div class="card"><div class="lbl">Real bets</div><div class="v" style="color:${conc?'var(--amber)':'var(--accent)'}">${eb}</div><div class="s">of ${d.nominalPositions} positions</div></div>
+      <div class="card"><div class="lbl">Gross exposure</div><div class="v">${(d.grossExposure*100).toFixed(0)}%</div><div class="s">ann. vol ${(d.annualizedVol*100).toFixed(0)}%</div></div>
+      <div class="card"><div class="lbl">Cut to</div><div class="v" style="color:${d.suggestedScale<1?'var(--amber)':'var(--accent)'}">${(d.suggestedScale*100).toFixed(0)}%</div><div class="s">of current size</div></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><div class="lbl">1-year outcome band (real history)</div>
+      <div class="row"><span>worst 5%</span><span class="mono" style="color:var(--red)">${(d.horizonReturn.p05*100).toFixed(0)}%</span></div>
+      <div class="row"><span>median</span><span class="mono">${(d.horizonReturn.median*100>=0?'+':'')}${(d.horizonReturn.median*100).toFixed(0)}%</span></div>
+      <div class="row"><span>best 5%</span><span class="mono" style="color:var(--accent)">+${(d.horizonReturn.p95*100).toFixed(0)}%</span></div></div>
+    ${d.correlationMatrix.symbols.length>1?`<div class="muted" style="margin-top:10px">Correlation: ${d.correlationMatrix.symbols.map((s,i)=>d.correlationMatrix.symbols.slice(i+1).map((s2,j)=>`${esc(s)}·${esc(s2)} ${d.correlationMatrix.matrix[i][i+1+j].toFixed(2)}`).join("  ")).filter(Boolean).join("  ")}</div>`:""}
+    ${(d.droppedNoHistory||[]).length?`<div class="pill" style="color:var(--amber);border-color:var(--amber)55">no history, skipped: ${d.droppedNoHistory.map(esc).join(", ")}</div>`:""}`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
 async function doProtect(){
   const body={winRate:+document.getElementById("p_wr").value,winLossRatio:+document.getElementById("p_rr").value,riskPerTradeFrac:+document.getElementById("p_risk").value};
   const o=document.getElementById("p_out");o.innerHTML="<span class=muted>running…</span>";

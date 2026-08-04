@@ -950,3 +950,24 @@ Operator, correctly: forward-testing was being used as the thing we WAIT on to l
 **Doctrine fix (added to CLAUDE.md):** every lead is resolved on ALL available history with walk-forward
 + trial-deflation FIRST; forward-testing is a background re-confirmation, never the bottleneck to a
 verdict. Only genuinely history-poor signals (short-history weekly macro) wait on forward data.
+
+### D-105 — Portfolio risk engine: the broker-agnostic, correlation-aware, fat-tailed ruin X-ray (2026-08-04)
+
+Operator: "think outside the box, the sandbox is limiting… be in a better position than anyone to help
+traders make money through risk management." The honest reframe held: risk management doesn't make money
+per trade — it prevents the ruin that stops compounding. The real constraint was never compute/paid data;
+it was ALTITUDE — we were a research sandbox, not a tool on traders' real books. The unlock needs no
+broker integration: every broker exports a positions list, so we compute risk from that.
+
+**Built `trd-risk-engine` (public, CORS-open) + `_shared/trd-portfolio-risk.ts` (7 tests):**
+- **Correlation-adjusted "real bet count"** — effective number of independent bets (diversification
+  ratio²). Five 0.9-correlated longs read as ~1 bet, not 5 — the hidden concentration that kills retail.
+- **Fat-tailed joint risk of ruin** — block-bootstrap Monte-Carlo on REAL joint history (vol-clustering
+  + 2008/2020 tails preserved), NOT Gaussian VaR (which D-100 proved lies exactly at the tail).
+- Per-position vol-regime de-risk, gross exposure, 1y outcome band, and a sizing prescription.
+- Verified live: $25k / 4 tech longs @2× → verdict RUINOUS, 4 positions → **1.51 real bets**, **28.1%
+  chance of a 50% drawdown**, "cut to 84%." No free single-position calculator does this.
+
+**Reach:** surfaced as a "Portfolio risk" tab in the global web app (any trader, any broker, a positions
+list). No signals, no direction — pure risk. This is the differentiated product the whole thesis pointed
+at: the seatbelt that keeps traders alive long enough for compounding to work. 158 _shared tests green.
