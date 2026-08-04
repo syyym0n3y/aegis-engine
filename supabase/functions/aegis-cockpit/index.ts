@@ -13,14 +13,24 @@ async function gather() {
   const ms = await fetch(`${SB}/rest/v1/trd_macro_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
   const mrow = ms[0] ?? null; const me = mrow?.economies?.[0] ?? null;
   const macro = mrow ? { phase: me?.phase ?? "UNKNOWN", fragility: Number(me?.fragility ?? 0), deRisk: Number(mrow.blended_de_risk ?? 1), expectation: me?.expectation ?? "", signals: (me?.signals ?? []) as string[], asOf: mrow.as_of ?? null } : null;
+  // PRE-REGISTERED hypotheses + their forward verdict (the honest, un-deflated forward test)
+  const pre = await fetch(`${SB}/rest/v1/trd_prereg?active=eq.true&select=id,market,timeframe,spec,registered_at`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const pst = await fetch(`${SB}/rest/v1/trd_prereg_state?select=hyp_id,fwd_n,fwd_expectancy_r,fwd_total_r`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const pmap = new Map((pst as any[]).map((s) => [s.hyp_id, s]));
+  const hyps = (pre as any[]).map((h) => { const s = pmap.get(h.id) ?? {}; return { id: h.id, market: h.market, tf: h.timeframe, spec: h.spec, registered: h.registered_at, n: s.fwd_n ?? 0, exp: Number(s.fwd_expectancy_r ?? 0) }; });
+  // DECODED corpus (assessed strategies + the cycle finding)
+  const corpus = await fetch(`${SB}/rest/v1/trd_strategies?select=name,strategy_class,verdict,evidence`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const rejected = (corpus as any[]).filter((c) => String(c.verdict).toUpperCase().startsWith("REJECT")).length;
+  const cycle = (corpus as any[]).find((c) => c.strategy_class === "cycle");
+  const cyclePrediction = cycle?.evidence?.forward_prediction_prereg ?? null;
   let equity = a?.equity ?? 5000, start = a?.startEquity ?? 5000, peak = a?.peakEquity ?? start;
   const mult = equity / start, dd = peak > 0 ? (peak - equity) / peak : 0;
   const perSess: { key: string; n: number; exp: number }[] = [];
   for (const [k, r] of Object.entries(a?.perSetupR ?? {})) { const arr = r as number[]; perSess.push({ key: k, n: arr.length, exp: arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : 0 }); }
   perSess.sort((x, y) => y.exp - x.exp);
-  return { st, a, equity, start, mult, dd, ticks: st?.ticks ?? 0, updated: st?.updated_at ?? null, openPos: a?.positions?.length ?? 0, closed: a?.closed?.length ?? 0, survived: equity > start * 0.5, perSess, grades, reports: (reps as any[]).length, macro };
+  return { st, a, equity, start, mult, dd, ticks: st?.ticks ?? 0, updated: st?.updated_at ?? null, openPos: a?.positions?.length ?? 0, closed: a?.closed?.length ?? 0, survived: equity > start * 0.5, perSess, grades, reports: (reps as any[]).length, macro, hyps, corpusN: (corpus as any[]).length, rejected, cyclePrediction };
 }
-function j(d: any) { return { protocol_version: 1, project_kind: "aegis", generated_at: new Date().toISOString(), summary: { status: d.survived ? "alive" : "breached", equity: Math.round(d.equity), multiple: +d.mult.toFixed(3), max_drawdown_pct: +(d.dd * 100).toFixed(1), ticks: d.ticks, open_positions: d.openPos, closed_trades: d.closed, platform_reports: d.reports, macro_phase: d.macro?.phase ?? "UNKNOWN", macro_de_risk: d.macro?.deRisk ?? 1 }, data: { per_session_setup: d.perSess, grades: d.grades, factor_book_sharpe: 1.0, macro: d.macro }, open_work: ["live real-money bridge (paper-first, gated)", "close risk-inventory gaps", "auth/billing", "branded domain"], recent_events: [], query_errors: [] }; }
+function j(d: any) { return { protocol_version: 1, project_kind: "aegis", generated_at: new Date().toISOString(), summary: { status: d.survived ? "alive" : "breached", equity: Math.round(d.equity), multiple: +d.mult.toFixed(3), max_drawdown_pct: +(d.dd * 100).toFixed(1), ticks: d.ticks, open_positions: d.openPos, closed_trades: d.closed, platform_reports: d.reports, macro_phase: d.macro?.phase ?? "UNKNOWN", macro_de_risk: d.macro?.deRisk ?? 1 }, data: { per_session_setup: d.perSess, grades: d.grades, factor_book_sharpe: 1.0, macro: d.macro, prereg_hypotheses: d.hyps, corpus_assessed: d.corpusN, corpus_rejected: d.rejected, cycle_prediction: d.cyclePrediction }, open_work: ["live real-money bridge (paper-first, gated)", "close risk-inventory gaps", "auth/billing", "branded domain"], recent_events: [], query_errors: [] }; }
 function esc(s: string) { return String(s).replace(/</g, "&lt;"); }
 function html(d: any) {
   const upd = d.updated ? new Date(d.updated).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
@@ -50,6 +60,21 @@ function html(d: any) {
 <div class=card><div class=lbl>Ticks</div><div class=v>${d.ticks}</div><div class=s>10 markets · every 6h</div></div>
 </div>
 ${macroSection}
+<h2>Pre-registered hypotheses — the honest forward test (un-deflated single trials)</h2>
+<div class=panel>${(d.hyps && d.hyps.length) ? d.hyps.map((h: any) => {
+    const ready = h.n >= 30; const good = h.exp > 0;
+    const col = h.n < 30 ? "var(--faint)" : good ? "var(--accent)" : "var(--red)";
+    return `<div class=row><span class=mono style="font-size:12px">${esc(h.id)} <span style="color:var(--faint)">(${esc(h.market)} ${esc(h.tf)} · ${esc(h.spec?.trigger ?? "")} rr${esc(String(h.spec?.rr ?? ""))})</span></span><span class=mono style="color:${col}">${ready ? `${h.exp >= 0 ? "+" : ""}${h.exp.toFixed(3)}R · ${good ? "forward-positive" : "forward-negative"}` : `accumulating ${h.n}/30`}</span></div>`;
+  }).join("") : `<span style="color:var(--faint)">no active pre-registered hypotheses</span>`}
+<div class=row style="border:0;color:var(--faint);font-size:12px"><span>Frozen spec + timestamp → forward trades only → a single trial the million-sibling search can't bias.</span><span></span></div></div>
+<h2>Decoded corpus — every strategy assessed, honestly</h2>
+<div class=grid>
+<div class=card><div class=lbl>Strategies assessed</div><div class=v>${d.corpusN ?? 0}</div><div class=s>catalogued in trd_strategies</div></div>
+<div class=card><div class=lbl>Rejected by the gate</div><div class=v style="color:var(--red)">${d.rejected ?? 0}</div><div class=s>failed DSR / OOS / cost</div></div>
+<div class=card><div class=lbl>Deflation-cleared</div><div class=v style="color:var(--accent)">${Math.max(0, (d.corpusN ?? 0) - (d.rejected ?? 0) - 1)}</div><div class=s>chart edges (excl. cycle lead)</div></div>
+<div class=card><div class=lbl>Trials searched</div><div class=v>1.01M</div><div class=s>conditional cells, D-083</div></div>
+</div>
+${d.cyclePrediction ? `<div class=panel style="margin-top:14px"><div class=lbl>Pre-registered cycle prediction (BTC halving grand-cycle, D-085)</div><div style="font-size:13px;color:var(--tx)">${esc(String(d.cyclePrediction))}</div></div>` : ""}
 <h2>Per-session × setup — what the allocator is learning (Asia / London / NY)</h2>
 <table><thead><tr><th>session × setup</th><th class=num>trades</th><th class=num>expectancy</th><th>allocator</th></tr></thead><tbody>${sessRows}</tbody></table>
 <div class=two style="margin-top:26px">
@@ -62,12 +87,13 @@ ${macroSection}
 <div class=panel><div class=lbl>Backend — engine + gates</div>
 <div class=row><span>Autonomous loop (pg_cron)</span><span class=mono ok>every 6h</span></div>
 <div class=row><span>Macro regime pump (pg_cron)</span><span class=mono ok>4×/day</span></div>
+<div class=row><span>Pre-reg forward tracker (pg_cron)</span><span class=mono ok>every 6h</span></div>
 <div class=row><span>Risk firewall</span><span class=mono ok>enforcing</span></div>
 <div class=row><span>Real-money order path</span><span class=mono warn>GATED (paper-first)</span></div>
 <div class=row><span>Proven compounding edge</span><span class=mono ok>factor book Sharpe 1.00</span></div>
 <div class=row><span>Accounts graded (platform)</span><span class=mono>${d.reports} · ${gradeRows}</span></div></div>
 </div>
-<h2>The honest verdict (D-071…D-079)</h2><div class=panel><ul>
+<h2>The honest verdict (D-071…D-085)</h2><div class=panel><ul>
 <li><b style=color:var(--tx)>No chart/timing signal survives</b> honest testing (~15,000 backtests, regimes, survivorship, PBO).</li>
 <li><b style=color:var(--tx)>Risk management is the durable edge</b> — it keeps accounts alive even trading a losing strategy (proven live above).</li>
 <li><b style=color:var(--tx)>Compounding comes from the global factor book</b> (value+quality+momentum, US+intl+EM) — Sharpe 1.0, not chart setups.</li>
