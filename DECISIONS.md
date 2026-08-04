@@ -1036,3 +1036,21 @@ trail.ts`, same 28 instruments 2015→2026. The exit discipline is real and mate
   US-tech-concentrated regime a diversified long-only rotator can't beat. Drawdown matched SPY while
   diversified → it was protecting, not winning. Next: LONG/SHORT (capture downtrends both directions) —
   the honest test of whether the full model beats buy&hold OOS + where the asymmetry lives.
+
+### D-108c — Long/short trend rotation: uncorrelated but thin; the honest alpha ceiling (2026-08-04)
+
+Added the short side to the faithful-exit rotation (`scripts/trd-rotation-ls.ts`) — rotate into strongest
+UP and DOWN trends, trailing-stopped both ways. Result: did NOT beat long-only or SPY (IS 1.03, OOS
+Sharpe 0.08 vs long-only 0.16 vs SPY 0.37; CAGR 0.9%) — shorts dragged in the 2023-25 bull. BUT **OOS
+correlation to SPY = −0.15** (uncorrelated). 
+
+**Synthesis of the rotation arc (D-108/b/c):** the operator's model is REAL and validated (the trailing
+"ride-to-consolidation" exit halved drawdown, returns positive OOS, uncorrelated to stocks) — a genuine
+CTA/trend return stream. But OOS alpha is THIN (~0.1-0.2 Sharpe) and does not beat holding US equities in
+the 2023-25 regime. Key honest correction to the operator's premise ("$100→$1M = risk-model optimization"):
+leverage/risk-optimization MULTIPLY a robust edge; they cannot manufacture one — a thin edge levered is a
+thin edge with bigger swings (cf. D-106 itzjblair 23×→ruin). Three durable assets remain: (1) this
+uncorrelated trend stream as a portfolio DIVERSIFIER (its real value, not S&P-beating), (2) the shipped
+risk/survival engine, (3) the product (the only genuine 1e10× lever; needs no trading alpha from us).
+Alpha hunt reaching honest closure: retail-accessible directional alpha is thin-to-zero OOS across every
+class tested (chart, on-chain, carry, single-setup, rotation); durable edge = risk + diversification + product.
