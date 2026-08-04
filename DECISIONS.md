@@ -686,3 +686,29 @@ forward-testing), 8 DEAD/WEAK, 1 GATED (paid order-flow), 1 PARTIAL (vol-regime)
 are slow, structural, cross-sectional-premia and risk-managed — never fast, directional, or anomaly-
 based.** The only remaining free upside is deeper vol-regime isolation; the only paid upside is
 order-flow (a capital decision, not a free test).
+
+### D-092 — Order-flow paywall bypassed + killed; vol-regime = risk-layer win + BTC lead (2026-08-04)
+
+Operator: "if no way around the paywall we pay; follow 1 (order-flow) and 2 (vol-regime) down until
+complete." Both completed.
+
+**Lens #5 Order-flow — the FREE path around the tick-data paywall + verdict.** Binance klines carry
+`takerBuyBaseVolume` → per-bar delta = 2·takerBuy − volume = real CVD, no paid tick data (crypto).
+`scripts/trd-orderflow.ts`, BTC/ETH 15m ~47d: delta is CONTEMPORANEOUS with price (corr 0.68/0.77)
+but **ZERO predictive** (corr 0.006 next bar); both confirmation and divergence trades LOSE after cost
+(Sharpe −17 to −32, shuffle p≈1). **TESTED-DEAD.** Since crypto CVD is the free equivalent of the
+ES/NQ tick signal and it's dead, **paying for futures tick data is NOT justified** — the free proxy
+saved the spend. (Caveat: bar-CVD ≠ full L2/footprint, but the R-002 CVD *confidence-lever* is bar-delta
+and it is dead.)
+
+**Lens #8 Volatility-regime — completed, PARTIAL-WIN.** `scripts/trd-volregime.ts`: (1) vol clustering
+is STRONGLY predictable (corr_t,t+1 = 0.98, t+5 = 0.91 across S&P/BTC/Gold) → **validates vol-targeting
+in the risk layer** (the risk system's core assumption is sound). (2) directional squeeze breakout: no
+edge on S&P/Gold, but **a real LEAD on BTC** (+0.471R, t=4.45) that SURVIVES adversarial check (long
++0.585 / short +0.152 → not trend-leakage; OOS +0.64/+0.21). Pre-registered `btc-squeeze-v1` +
+`trd-squeeze-tick` edge fn + cron (daily 01:30 UTC). Three live forward hypotheses now: btc-sweep,
+gold-tbr, btc-squeeze.
+
+**Frontier fully complete.** 12 lenses mapped; the only remaining upside (paid order-flow) is now
+falsified on its free proxy. Nothing free is left untested. Durable edge = factor premia + risk mgmt;
+three high-RR crypto/Gold leads forward-testing; everything else efficiently priced.
