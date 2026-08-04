@@ -881,3 +881,26 @@ the executors apply, so the operator sees exactly the sizing the bots use. Verif
 edge × regime, both strict risk-reducers under the base budget. NOTE: the public GitHub-Pages deploy of
 the web app is not re-pushed from this repo (no remote here; publishing is operator-gated) — the source
 change is committed and verified locally against the live API.
+
+### D-102 — Edge-decay monitor + tracker-staleness alerting + web app published (2026-08-04)
+
+Completing the D-101 remainder ("go until completeness").
+
+**Edge-decay monitor** (`_shared/trd-decay.ts` +6 tests) — Adaptive-Markets pillar made operational:
+splits a strategy's chronological trades into early vs recent halves and flags `improving / stable /
+decaying / dead`, where **dead** = was positive early, now ≤0 (the crowded-out death Lo describes).
+Wired into `aegis-cockpit` as a "decay watch" column. On real data it immediately earned its keep:
+`fvg:london` (+0.03R) and `fvg:ny` (−0.00R) flagged **DEAD**, `fvg:asia`/`sweep:asia` **decaying** —
+edges that a raw expectancy number would have shown as ~flat, now correctly marked as decayed.
+
+**Tracker-staleness alerting** (closes D-099 #4) — `aegis-cockpit` now reports each autonomous tracker's
+`updated_at` age vs its cadence and flags STALE. Verified live: all 5 (paper loop, macro pump, pre-reg
+tracker, both Alpaca execs) LIVE. Answers "is the engine actually running?" at a glance.
+
+**Web app published** — the GitHub-Pages app (`syyym0n3y/aegis-engine`, commit 21c50e3) now carries the
+tail-risk regime, decay watch, and tracker freshness. Verified in-browser on the live public URL. The
+cockpit function (HTML + json) deployed to match. 151 `_shared` tests green; `deno check` clean.
+
+**Still operator-only (cannot self-serve):** rename the Alpaca secret to `APCA_API_KEY_ID` /
+`APCA_API_SECRET_KEY` in the Supabase dashboard (code already reads either) — the only open item from the
+D-099 audit that requires the operator's own credentials.
