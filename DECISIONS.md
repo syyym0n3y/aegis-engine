@@ -904,3 +904,28 @@ cockpit function (HTML + json) deployed to match. 151 `_shared` tests green; `de
 **Still operator-only (cannot self-serve):** rename the Alpaca secret to `APCA_API_KEY_ID` /
 `APCA_API_SECRET_KEY` in the Supabase dashboard (code already reads either) — the only open item from the
 D-099 audit that requires the operator's own credentials.
+
+### D-103 — On-chain "whale-behaviour" backtest → REJECTED (2026-08-04)
+
+Operator asked to backtest the whale-tracking idea rather than forward-register it. Built
+`scripts/trd-netflow-backtest.ts`. **Stated constraint:** true labelled-exchange netflow is PAID
+(Glassnode/CryptoQuant); tested the strongest FREE aggregate proxies (Blockchain.com): active
+addresses, on-chain USD settled volume, output(BTC) volume, tx-count, NVT — 5,781 daily rows 2010→2026.
+
+Method: 6 signals × 2 direction-modes = 12 configs, each causal + cost-charged (10bps/turn). Select the
+best on the first 70% (in-sample), report the last 30% (holdout, never used for selection); deflate the
+in-sample winner by trial count (DSR); shuffle-null on the holdout; buy&hold as benchmark.
+
+**Result — clean REJECT:**
+- Best in-sample (active-addr momentum, long/flat) Sharpe **1.29** ≈ buy&hold **1.25** → no alpha even
+  in-sample; it was just being long BTC in an uptrend.
+- **HOLDOUT Sharpe −0.28** (buy&hold 0.01). **ALL 12 configs had NEGATIVE holdout Sharpe** — not one
+  survived out of sample.
+- **Deflated Sharpe 73.9% → FAILS the 0.95 gate.** Shuffle-null p≈0.80 → indistinguishable from chance.
+- Only "benefit": part-time-in-cash cut max-DD (68% vs 82%) — that's de-risking, not edge.
+
+**Verdict:** aggregate on-chain whale-behaviour carries no deflated, out-of-sample edge on BTC — it
+front-runs to nothing, exactly as `trd-onchain.ts` predicted and consistent with D-095 (stablecoin lens
+t=1.31) and the engine's core finding. Paying for labelled-exchange netflow is a low-EV bet: the free
+proxy is already dead and it's the same public-signal/front-running class (cf. D-092 order-flow). Not
+wired. Whale-tracking is falsified, not deferred. Corpus unchanged.
