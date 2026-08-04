@@ -993,3 +993,15 @@ portfolio-ruin engine on ACTUAL positions, writes `trd_risk_state`, raises an al
 order). Scheduled hourly via pg_cron ($0). Surfaced on the cockpit (HTML + json `live_account_risk`).
 Verified live: our own account flagged **AGGRESSIVE, 14.5% ruin, "2 positions = ~1.09 real bet
 (correlated → concentrated)"** — the monitor catching hidden concentration on our own book.
+
+### D-107 — Funding-carry backtest → real but arbitraged to ~0 now (2026-08-04)
+
+Operator pushed for "make a ton with reasonable R:R." Tested the best structural candidate — delta-neutral
+crypto funding carry (own spot, short perp, collect funding). `scripts/trd-carry-backtest.ts`, Binance
+free funding history (~5.5mo, 2026 H1). GROSS annualized carry: BTC +1.8%, ETH +1.0%, SOL −1.7%; funding
+negative 34–52% of periods; max DD tiny (0.8%). Genuinely low-risk (reasonable R:R) but reward is now
+below T-bills — the premium that paid 10–30%/yr in 2020–21 has been crowded out. (Caught + fixed a cost-
+model bug that first showed a false −20% before reporting.) Converges with the whole map: every ACCESSIBLE
+edge (chart, on-chain, carry) is arbitraged toward zero. The honest "a ton with reasonable R:R" is a real
+Sharpe~1 edge (the diversified trend/factor book) leveraged safely over YEARS — not fast. Fast+ton = high
+leverage on a thin edge = ruin (D-106 itzjblair). Next honest test: diversified multi-market trend-following.
