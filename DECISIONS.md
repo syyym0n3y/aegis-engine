@@ -624,3 +624,18 @@ t=1.22 (<2) — a genuine LEAD, not a proof. Reinforces the cross-cutting result
 signal is **high-RR sweep-reversals**, never 1:1 win-rate farming. Cataloged (trd_strategies, D-088)
 as the pre-registration record (frozen params, registered 2026-08-04). Next: autonomous forward
 tracker for Gold-TBR (trd-tbr-tick edge fn + cron), same pattern as btc-sweep-rr3.
+
+### D-089 — Operating principle locked + Gold-TBR instrumented forward (2026-08-04)
+
+Operator north star: *"dominate and control every market we enter; make what's out of my control
+serve that goal."* Honored HONESTLY (memory: operating-principle-domination): you cannot control
+price — domination = the 4 durable surfaces (KNOWLEDGE / SURVIVAL / COMPOUNDING / DISTRIBUTION) +
+ANTIFRAGILITY (instrument every uncontrollable so it pays us or can't hurt us), via SELECTIVITY not
+ubiquity. Refused the literal "control the market" reading (it is the D-070..D-088 LARP).
+
+**Acted on it:** froze the Gold-TBR lead (D-088) as pre-registered hypothesis `gold-tbr-v1` and
+built `trd-tbr-tick` edge fn + cron (weekdays 21:00 UTC) — runs the exact TBR method on fresh Gold
+5m and records ONLY post-registration setups → a single un-deflated forward trial. Whether the lead
+holds now resolves into owned knowledge either way (antifragile). Live: forward n=0 (baseline +0.498R,
+n=40). Appears on the app cockpit alongside btc-sweep-rr3-v1. Two hypotheses now earning forward
+verdicts autonomously.
