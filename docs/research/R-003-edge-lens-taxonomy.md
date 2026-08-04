@@ -17,26 +17,28 @@
 | 3 | **Cross-sectional relative value** | relative strength across a basket (leaders vs laggards) | multi-asset OHLC | ✅ | **TESTED-WEAK** — sectors neg, crypto p=0.08 OOS-decays, indices nil (D-090). Momentum premium is slow-only. | low |
 | 4 | **Factor / risk-premia** | value/quality/momentum/size/carry over the cross-section, slow | fundamentals+returns | ✅ (Fama-French) | **CLEARED** — the ONE edge (global book Sharpe ~1, D-077). Core of the whole thesis. | **CORE** |
 | 5 | **Order-flow / microstructure** | CVD, order-book imbalance, absorption, footprint | tick / L2 | ❌ paid | **GATED** — needs Databento/Polygon/Rithmic (R-002) | blocked |
-| 6 | **Cross-asset / intermarket** | lead-lag (DXY→gold, yields→equities, ES↔NQ) | multi-asset | ✅ | **UNTESTED** — chart-pattern×macro corr was ~0 (D-084), but lead-lag itself untested | med |
-| 7 | **Event / catalyst** | scheduled-release volatility (NFP/CPI/FOMC/earnings) | econ calendar + prices | ✅ (FRED dates) | **UNTESTED** — release-window vol is documented + real | **HIGH** |
+| 6 | **Cross-asset / intermarket** | lead-lag (DXY→gold, yields→equities, ES↔NQ) | multi-asset | ✅ | **TESTED-DEAD** (D-091) — contemp corr 0.78–0.93 dominates; no tradeable lag; info priced within the bar | — |
+| 7 | **Event / catalyst** | scheduled-release volatility (NFP/CPI/FOMC/earnings) | econ calendar + prices | ✅ (FRED dates) | **TESTED-DEAD** (D-091) — pre-FOMC drift arbitraged away post-2015 (−0.006%, p=0.65) | — |
 | 8 | **Volatility-regime** | contraction→expansion, vol clustering, regime-switch | OHLC | ✅ | **PARTIAL** — delivery trigger + ATR vol tag built, not isolated | med |
 | 9 | **Cycle / periodicity** | halving/seasonality/spectral | daily long history | ✅ | **TESTED** — only BTC halving is real (D-085); 364d + all else noise | — |
 | 10 | **Flow / positioning** | COT, options gamma/GEX, 13F, Form-4, congressional | filings/options | ⚠️ partial | **PARTIAL-DEAD** — insider/congress rejected (D-071); dealer-GEX untested | med |
-| 11 | **Sentiment / alt-data** | funding rates, put/call, social sentiment, AAII | exchange/alt | ✅ mostly | **UNTESTED** — crypto FUNDING RATE is a real persistent carry premium | **HIGH** |
-| 12 | **Calendar / structural-flow** | turn-of-month, OPEX week, index rebalancing, quarter-end | dates + prices | ✅ | **UNTESTED** — documented, exploitable calendar effects | **HIGH** |
+| 11 | **Sentiment / alt-data** | funding rates, put/call, social sentiment, AAII | exchange/alt | ✅ mostly | **TESTED-WEAK** (D-091) — funding carry real but thin/regime-dependent (BTC 1.7%/yr now); contrarian n.s.; ETH weak lead | low |
+| 12 | **Calendar / structural-flow** | turn-of-month, OPEX week, index rebalancing, quarter-end | dates + prices | ✅ | **TESTED-DEAD** (D-091) — turn-of-month/OPEX/day-of-week all insignificant | — |
 
-## What the map tells us (the honest inventory)
+## What the map tells us (the honest inventory — FRONTIER NOW SWEPT, D-091)
 
-- **Thoroughly done (4):** price-pattern (dead), factor/premia (the one that cleared), cycle (halving
-  only), cross-sectional (weak/slow-only).
-- **Partial (4):** time-structure (24h real + TBR lead), vol-regime, flow/positioning, order-flow (gated).
-- **UNTESTED frontier with FREE data (the answer to "how many more are out there"): 4 lenses —**
-  1. **Calendar/structural-flow (#12)** — turn-of-month, OPEX, quarter-end. Trivially free (dates+prices),
-     documented real. **Test next.**
-  2. **Sentiment/funding (#11)** — crypto funding-rate carry is a real, persistent premium (perp longs
-     pay shorts in contango). Free from exchange APIs (endpoint allowlist needed). **High value.**
-  3. **Event/catalyst (#7)** — volatility around scheduled econ releases (FRED calendar + prices). Free.
-  4. **Cross-asset lead-lag (#6)** — does one asset systematically lead a correlated one intraday.
+- **CLEARED (1):** factor/risk-premia (#4) — the one durable edge (global book Sharpe ~1, D-077).
+- **LEAD / forward-testing (1):** time-structure (#2) — 24h session cycle real; Gold-TBR + BTC-sweep
+  pre-registered forward.
+- **TESTED-DEAD or WEAK (8):** price-pattern, cross-sectional, intermarket, event, calendar,
+  cycle(≈halving-only), flow/positioning, sentiment/funding(thin). Every fast/tradeable/anomaly lens
+  is efficiently priced or arbitraged away.
+- **GATED (1):** order-flow/microstructure (#5) — needs paid tick/L2 data (Databento/Polygon).
+- **PARTIAL (1):** volatility-regime (#8) — some tested via the delivery trigger.
+
+**The answer to "how many more are out there":** of 12 lenses, 10 are now tested — and the frontier of
+free-data lenses is EXHAUSTED. The remaining upside is (a) the paid order-flow lens (#5, capital
+decision), and (b) deeper isolation of the vol-regime lens (#8). Everything else is mapped and mostly dead.
 
 ## The doctrine that makes this a moat
 

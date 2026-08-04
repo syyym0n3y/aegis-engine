@@ -664,3 +664,25 @@ not a fast tradeable signal. Reinforces the cross-cutting law: edges are slow/st
 
 **Frontier queue:** calendar-flow (turn-of-month/OPEX) → funding-carry → event-vol → intermarket
 lead-lag. Each becomes a corpus row; survivors pre-registered forward like btc-sweep / gold-tbr.
+
+### D-091 — Frontier lens sweep complete: 4 untested lenses, 0 survivors (2026-08-04)
+
+Operator: "go and don't stop until you're done." Worked the entire R-003 free-data frontier through
+the honest gate (shuffle null + OOS + report-n). Real data, real verdicts:
+
+- **Calendar/structural-flow (#12)** — `scripts/trd-calendar.ts`, S&P 10y: turn-of-month p=0.64,
+  day-of-week all n.s., OPEX p=0.94. **DEAD.**
+- **Event/catalyst (#7)** — pre-FOMC drift (45 events): mean −0.006%, p=0.65, hit-rate 42%. The famous
+  Lucca-Moench anomaly has been **arbitraged away** post-2015. **DEAD.**
+- **Intermarket lead-lag (#6)** — `scripts/trd-leadlag.ts`: contemp corr 0.78–0.93 dominates; predictive
+  lags tiny + non-tradeable; yields→SPX real but negative-expectancy naive trade. **DEAD.**
+- **Sentiment/funding (#11)** — `scripts/trd-funding.ts`, Binance keyless: BTC carry 1.7%/yr (thin, calm
+  regime), contrarian n.s. (Sharpe −0.60); ETH weak lead (Sharpe 1.07, t=0.72, OOS +); SOL backwardation.
+  **WEAK** — real but regime-dependent yield, no clean standalone edge.
+
+**The frontier is exhausted.** Of 12 lenses (R-003): 1 CLEARED (factor premia), 1 LEAD (time-structure,
+forward-testing), 8 DEAD/WEAK, 1 GATED (paid order-flow), 1 PARTIAL (vol-regime). Corpus now 9 rows,
+0 survivors among chart/tradeable lenses. The cross-cutting law holds across every dimension: **edges
+are slow, structural, cross-sectional-premia and risk-managed — never fast, directional, or anomaly-
+based.** The only remaining free upside is deeper vol-regime isolation; the only paid upside is
+order-flow (a capital decision, not a free test).
