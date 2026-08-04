@@ -1005,3 +1005,21 @@ model bug that first showed a false −20% before reporting.) Converges with the
 edge (chart, on-chain, carry) is arbitraged toward zero. The honest "a ton with reasonable R:R" is a real
 Sharpe~1 edge (the diversified trend/factor book) leveraged safely over YEARS — not fast. Fast+ton = high
 leverage on a thin edge = ruin (D-106 itzjblair). Next honest test: diversified multi-market trend-following.
+
+### D-108 — Cross-sectional trend ROTATION tested (the operator's actual model) (2026-08-04)
+
+Operator, correctly: prior tests were single-setup/single-instrument; his real model is continuous
+cross-sectional rotation — hold the top trend-ranked charts, ride to consolidation, rotate capital.
+`scripts/trd-rotation-backtest.ts`: 28 instruments (ETFs+crypto), 2015→2026, weekly rotation into top-K
+risk-adjusted trend leaders, inverse-vol weighted, vol-targeted 15% (cap 3x), long-only positive-trend.
+
+Result — first approach to beat buy&hold IN-SAMPLE, but failed OOS:
+- **IS (2015-21) Sharpe 0.80 vs SPY 0.67** — real signal (single-setups were negative even in-sample).
+- **HO (2022-26) Sharpe −0.21 vs SPY +0.37, CAGR −3.4% vs +5.1%, maxDD 44.7% vs 18.9%.** All 9 configs
+  failed OOS. DSR 97.8% on IS is overruled by the holdout — the gap is why holdout exists.
+
+Honest caveats (on the method, not the thesis): (1) one 40% holdout = one regime, and 2022-23 was
+historically brutal for momentum; (2) the EXIT was modeled crudely as calendar rotation, NOT the "ride
+until consolidation" trend-decay exit the operator specified — his edge claim lives in the exit, which
+this test did not faithfully build. Next: a proper trailing/trend-decay exit + ruin-engine DD cap, OOS.
+Not a rejection — an under-modeled exit. Corpus unchanged pending the faithful re-test.
