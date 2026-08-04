@@ -604,3 +604,23 @@ t=−3.04). Consistent with the whole genre: chasing the breakout candle gets ca
 **Refinement to test next** (what the content actually implies): enter on the RETRACE into the
 displacement's imbalance/FVG, or AFTER the consolidation is first swept — not on the break itself.
 Grammar now 9 trigger classes; 3 grammar tests green.
+
+### D-088 — NY Time Based Range (Rauf) faithfully tested: negative on his markets, lead on Gold (2026-08-04)
+
+Operator supplied the exact Time Based Academy method (screenshots): range = 8:12–9:12 NY high/low;
+wait for 9:30 open; wait for a TBR liquidity sweep; CISD reversal back into range; enter next bar,
+target the OPPOSING end, stop beyond the swept extreme. Built `scripts/trd-tbr-backtest.ts` — a
+faithful, time-anchored, no-look-ahead intraday backtester (5m, cost 0.05R/side, OOS split).
+
+**Result (~60d, ~35-40 setups/market):**
+- **ES (S&P):** 46% win, **−0.165R**, t=−0.64, OOS +0.05/−0.49 → loses.
+- **NQ (Nasdaq):** 53% win, **−0.194R**, t=−1.32, OOS −0.23/−0.15 → loses.
+- **Gold:** 43% win, **+0.498R**, t=1.22, OOS **+0.72/+0.17** → positive both halves; low-win/high-RR.
+
+**Verdict:** on the indices Rauf actually trades, the method does NOT survive — negative expectancy,
+consistent with D-071..D-087. On **Gold** it is the strongest chart-setup lead the program has found:
+positive expectancy, positive out-of-sample in both halves, high-RR sweep-reversal profile. But n=40,
+t=1.22 (<2) — a genuine LEAD, not a proof. Reinforces the cross-cutting result: the only recurring
+signal is **high-RR sweep-reversals**, never 1:1 win-rate farming. Cataloged (trd_strategies, D-088)
+as the pre-registration record (frozen params, registered 2026-08-04). Next: autonomous forward
+tracker for Gold-TBR (trd-tbr-tick edge fn + cron), same pattern as btc-sweep-rr3.
