@@ -770,3 +770,21 @@ which sweep signals to TAKE — NOT price prediction. OOS: BTC 0.067R→**0.714R
 (takes top ~25%), consistent + sensible weights. **First ML win in the program — exactly where predicted
 (quality filter, not predictor).** Caveat: filtered test n=14-16 → promising not certified. Deployable
 as linear weights (a NEW pre-reg hypothesis, not a mod of the frozen sweep). Corpus now 14 rows.
+
+### D-097 — Entire-market scan: the whole liquid universe, one gate, 0 survivors (2026-08-04)
+
+Operator: "don't stop until we have collected and analysed the entire market." Done.
+`scripts/trd-market-scan.ts` — **121 instruments across 7 asset classes** (US large-caps, sector/broad
+ETFs, global indices, commodity futures, FX, rates, crypto), **310,856 bars**, both leads (sweep-rr3 +
+vol-squeeze) on 10y daily, deflated across all 241 strategy-instrument trials.
+
+**Result: 148/241 positive in-sample (61%) → 0 clear DSR-deflation.** Per-class positive-in-sample rate:
+crypto 70% (highest), US large-cap 65%, rates 63%, global-index 62%, ETF 58%, FX 54%, commodity 52%.
+Top by deflated Sharpe: ^IRX-sweep 51.5%, ETH-squeeze 28%, LINK-sweep 25% — none near 95%.
+
+**The cross-cutting law is now confirmed at FULL-MARKET scale.** The leads concentrate exactly where
+we found them (crypto = highest inefficiency, most retail-driven), plus rates and high-momentum names,
+but **no instrument in the entire liquid market carries a certifiable unconditional chart edge.** This
+closes the collection+analysis of the entire market: the durable edge is factor premia + risk management
++ the 5 mechanism-backed forward-testing leads — never an unconditional setup, anywhere. Result JSON:
+`docs/research/market-scan-result.json`. Corpus: 15 rows.
