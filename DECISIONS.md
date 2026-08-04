@@ -749,3 +749,24 @@ D-093) in one ledger. Tier 0: factor book CLEARED (the compounder). Tier 1: 4 le
 Tier 2: 9 falsified (Pranam grab, 1.01M-cell searches, calendar, intermarket, CVD, COT, insider).
 Tier 3: 4 weak/partial (cross-sectional, funding, vol-clustering→risk-layer, 24h cycle). Five
 cross-cutting laws proven. Scale: ~1.1M+ configurations, 13 lenses.
+
+### D-095/096 — On-chain flow lead + whole-market shorts + ML meta-labeling (2026-08-04)
+
+Operator ordered #2→#1→#3. All built through the honest gate.
+
+**#2 On-chain flow lens (D-095):** `scripts/trd-onchain.ts` — free data (CoinGecko stablecoin supply,
+Blockchain.com activity). **Stablecoin dry-powder 7d growth predicts BTC** (corr 0.20, +1%/wk,
+mechanism: capital→stablecoins→buying, positive BOTH OOS halves) but t=1.31 on 51 independent weeks →
+uncertified LEAD (overlap-inflated to t=2.52). Network activity signals dead. First non-chart non-factor
+lens with a real signal. Frozen `stablecoin-flow-v1`. Honest guard vs the kimchi survivorship anecdote.
+
+**#1 Whole-market shorts (real Alpaca):** `trd-alpaca-equity-tick` — corrects the crypto-only tunnel
+vision. REAL Alpaca paper LONG+SHORT on SPY/QQQ/IWM (indices) + **GLD (a real gold surface** GC=F
+futures couldn't provide). All 4 confirmed shortable+ETB; IEX data works. Market-hours-gated cron.
+
+**#3 ML meta-labeling (D-096):** `scripts/trd-metalabel.ts` — the HONEST ML. Logistic regression on
+signal CONTEXT (vol regime, trend strength, ema slope, stop size, session, recent quality) filters
+which sweep signals to TAKE — NOT price prediction. OOS: BTC 0.067R→**0.714R**, ETH 0.290R→**0.750R**
+(takes top ~25%), consistent + sensible weights. **First ML win in the program — exactly where predicted
+(quality filter, not predictor).** Caveat: filtered test n=14-16 → promising not certified. Deployable
+as linear weights (a NEW pre-reg hypothesis, not a mod of the frozen sweep). Corpus now 14 rows.
