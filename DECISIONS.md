@@ -1087,3 +1087,24 @@ firm rules, two-hurdle Monte-Carlo → true P(paid), optimal risk/trade, EV/eval
 modest edge → "STRONG — FARMABLE, 0.25%, +$2900"; coinflip → "NO EDGE — DON'T BUY". Surfaced as a "Prop
 challenge" tab in the app. Serves the millions who buy evals (~90% fail) — honestly tells most "don't buy",
 the edged ones how to size. Needs no trading alpha from us; runs on the shipped risk math.
+
+### D-111 — Prop-shaped edge FOUND: VIX-conditioned mean-reversion (high win rate) is farmable (2026-08-04)
+
+Operator: hunt the prop-shaped edge (high win rate, shorts, cyclic/regime conditions). Tested the class I'd
+neglected — RSI-2 mean-reversion, long the oversold + SHORT the overbought, regime-filtered, hard 2×ATR stop.
+`scripts/trd-meanrev.ts` + `trd-meanrev-stacked.ts`, 12 liquid ETFs, 2015→2026.
+- **Mean-reversion is prop-shaped: 64-70% win rate** (vs trend's 27%). Survives drawdown rules.
+- **Shorts require the regime filter**: shorting overbought in ANY tape = −0.07R (run over in uptrends);
+  shorting overbought in a DOWNtrend = +0.058R/67%. Validates the operator's "daily/weekly shorts, in the
+  right conditions."
+- **VIX is THE favorable condition**: same setup, high-VIX(>20) +0.162R vs calm −0.010R. Stacking (higher
+  VIX + tighter RSI) lifts win rate to 78% / +0.2R but trades get rare (5-11/yr) and noisy.
+- **The reframe that matters**: my "+0.4R bar" was WRONG for prop — prop is a win-rate/survival game, not
+  an expectancy game. Ran the real edge (70% win, +0.11R) through the prop optimizer → **STRONG-FARMABLE,
+  61% pass, EV +$1,661 per $300 eval** at 3% sizing. A thin edge with a HIGH win rate IS prop-farmable.
+
+**First genuinely actionable prop strategy.** Honest caveats: (1) FREQUENCY — daily setups fire ~0.3/day
+across 12 instruments; a 40-day eval needs more (solve: wider universe / intraday), the operator's "high
+liquidity" point; (2) the +0.11R is optimistic vs the broad-grid OOS (~+0.02R) — forward/OOS confirmation
+needed; (3) real-platform slippage. Next: pre-register the frozen VIX-conditioned mean-reversion spec +
+expand universe for frequency + forward-test. This is the lead that fits the operator's model.
