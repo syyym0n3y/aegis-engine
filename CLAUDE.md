@@ -40,6 +40,13 @@ which is a SUCCESS of the engine, not a failure.** See [`DECISIONS.md`](./DECISI
 - **Every Sharpe is reported next to N** (its trial count). A Sharpe without its
   N is a lie. `trd_trial_counter` increments on EVERY backtest run, including
   failed/iterated ones.
+- **Resolve on history FIRST; forward-testing is background confirmation, never
+  the bottleneck.** Every lead is verdicted on ALL available history with
+  walk-forward + trial-count deflation *now* — decades of bars and thousands of
+  trades beat waiting months for a 30-trade forward counter (D-104: btc-sweep-rr3
+  killed on 4,673 historical trades vs 2/30 forward). Forward data is the final
+  signature on something history already cleared. Only genuinely history-poor
+  signals (short-history weekly macro) legitimately wait on forward weeks.
 - **Costs are pessimistic by default.** Paper P&L is never read as "has edge".
 - **Gate thresholds are decision-locked.** Changing DSR>0.95 / PBO<0.5 / sample
   floors requires a NEW `trd_gate_thresholds` row naming a DECISIONS.md entry —

@@ -929,3 +929,24 @@ front-runs to nothing, exactly as `trd-onchain.ts` predicted and consistent with
 t=1.31) and the engine's core finding. Paying for labelled-exchange netflow is a low-EV bet: the free
 proxy is already dead and it's the same public-signal/front-running class (cf. D-092 order-flow). Not
 wired. Whale-tracking is falsified, not deferred. Corpus unchanged.
+
+### D-104 — Leads resolved on DEEP HISTORY today (not forward-waited) + doctrine fix (2026-08-04)
+
+Operator, correctly: forward-testing was being used as the thing we WAIT on to learn — months of "0/30"
+— when existing history answers now. Fixed the default and resolved the "waiting" leads on deep data:
+
+- **`btc-sweep-rr3` → FALSIFIED.** `scripts/trd-lead-oos-now.ts`: 130k BTC 15m bars (2022-11→2026-08),
+  ran the FROZEN spec vs all 4,860 grammar specs. **N=4,673 trades, expectancy −0.019R, Sharpe −0.011,
+  rank #318/4,430, DSR 0.0%**, walk-forward decays +0.004R→−0.042R. A search survivor, not an edge.
+  4,673 historical trades gave today the verdict 2/30 forward trades would have taken until Q4 to hint.
+- **`btc-squeeze-v1` → MARGINAL SURVIVOR (kept, weak).** `scripts/trd-squeeze-oos-now.ts`: deep daily
+  BTC (3,275 bars, 2017→2026). **N=166, +0.052R/trade, 39% win, +8.6R total, walk-forward HOLDS
+  (+0.015R→+0.089R).** Real but thin (annualized Sharpe ~0.15) — not investable alone, not falsified.
+- **`gold-tbr-v1`** — free 5m gold is capped at ~60 days (Yahoo), so no deep test is possible on free
+  data; the 60-day analog run earlier was noise/negative. Honest limit, not a pass.
+- **`stablecoin-flow-v1`** — weekly macro signal, inherently low-N (t=1.31 in-sample, D-095); this one
+  genuinely needs forward weeks because its history is short — the ONE place forward-waiting is justified.
+
+**Doctrine fix (added to CLAUDE.md):** every lead is resolved on ALL available history with walk-forward
++ trial-deflation FIRST; forward-testing is a background re-confirmation, never the bottleneck to a
+verdict. Only genuinely history-poor signals (short-history weekly macro) wait on forward data.
