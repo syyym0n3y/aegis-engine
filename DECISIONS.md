@@ -712,3 +712,24 @@ gold-tbr, btc-squeeze.
 **Frontier fully complete.** 12 lenses mapped; the only remaining upside (paid order-flow) is now
 falsified on its free proxy. Nothing free is left untested. Durable edge = factor premia + risk mgmt;
 three high-RR crypto/Gold leads forward-testing; everything else efficiently priced.
+
+### D-093 — COT positioning tested (last free lens); free frontier COMPLETE (2026-08-04)
+
+Operator: "do all the free ones until you have gotten all the answers." Ran the last genuinely-untested
+free lens — **CFTC Commitment of Traders** positioning (free Socrata). `scripts/trd-cot.ts`, with a
+proper release lag (survey Tue → act next week, no look-ahead) + shuffle null + OOS.
+
+Result (S&P, the one market that joined cleanly, n=75): corr(commercial-net, fwd-2w)=0.34 (mild) but the
+tradeable version is NEGATIVE (Sharpe −0.61, t=−1.04, OOS −0.01/−1.70, shuffle p=0.85). **TESTED-DEAD** —
+commercials-as-smart-money is folklore at the tradeable level; the mild corr does not survive as a
+strategy. (Honest caveat: the futures-ticker price join had a plumbing gap on Gold/Crude/10Y; the clean
+S&P result + positioning already being partial-dead from D-071 settles it.)
+
+**THE FREE FRONTIER IS COMPLETE.** 12 lenses + COT, all tested. Corpus: 12 rows, 4 hard-DEAD, rest
+weak/partial, 0 tradeable survivors; the only CLEARED thing is the factor book; 3 leads forward-testing.
+**Honest stopping rule stated:** from here, "more tests" means parameter VARIATIONS of already-mapped
+lenses, not new lenses — and each variation raises the deflation bar (the multiple-testing tax we
+enforce). Running thousands more to find a "winner" is the false-edge factory. The free answers are IN:
+the edge is slow factor-premia + risk management; everything fast/positioning/flow/anomaly is efficiently
+priced. Remaining upside requires either PAID data (order-flow already pre-falsified on its free proxy)
+or real forward time on the 3 pre-registered leads.
