@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aegis — the falsification engine for traders</title>
+<style>
+:root{--bg:#0a0d13;--sf:#111621;--sf2:#161e2b;--ln:#222c3c;--tx:#e7ecf3;--mut:#8b97aa;--faint:#5d6879;--accent:#40b784;--red:#e15a4f;--amber:#d99a3c;--blue:#4f8ff0;--mono:ui-monospace,Menlo,monospace;--sans:system-ui,-apple-system,sans-serif}
+@media(prefers-color-scheme:light){:root{--bg:#f3f5f3;--sf:#fff;--sf2:#edf0ee;--ln:#dde2df;--tx:#131820;--mut:#5a6472;--faint:#8c96a3;--accent:#1c8a5a;--red:#c23a30}}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px 80px}
+header{border-bottom:1px solid var(--ln);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);z-index:5}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 0;flex-wrap:wrap;gap:10px}
+.brand{font-family:var(--mono);font-weight:700;letter-spacing:.04em;display:flex;gap:9px;align-items:center;font-size:15px}
+.dot{width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{font-family:var(--mono);font-size:12px;background:transparent;color:var(--mut);border:1px solid transparent;border-radius:7px;padding:7px 12px;cursor:pointer}
+nav button.on{background:var(--sf);color:var(--tx);border-color:var(--ln)}
+h1{font-size:26px;letter-spacing:-.02em;margin:26px 0 6px}h2{font-size:14px;margin:30px 0 12px;font-family:var(--mono);color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
+.sub{color:var(--mut);font-size:15px;max-width:640px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}@media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:11px;padding:15px}.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.v{font-family:var(--mono);font-size:24px;font-weight:700}.s{font-size:12px;color:var(--mut);margin-top:2px}
+.panel{background:var(--sf);border:1px solid var(--ln);border-radius:11px;padding:18px 20px;margin-top:14px}
+.mono{font-family:var(--mono)}.num{font-variant-numeric:tabular-nums;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--sf);border:1px solid var(--ln);border-radius:11px;overflow:hidden}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--ln)}th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}tbody tr:last-child td{border-bottom:0}
+label{display:block;font-family:var(--mono);font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 5px}
+input,textarea{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:14px}
+textarea{min-height:90px;resize:vertical}
+.btn{margin-top:16px;font-family:var(--mono);font-weight:600;font-size:13px;background:var(--accent);color:#04120b;border:0;border-radius:8px;padding:11px 20px;cursor:pointer}
+.btn:active{transform:translateY(1px)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:5px;border:1px solid var(--ln);margin:3px 4px 0 0}
+.verdict{font-family:var(--mono);font-size:16px;font-weight:700;margin-bottom:6px}
+.bar{height:9px;border-radius:5px;background:var(--sf2);overflow:hidden;margin-top:4px}.bar>i{display:block;height:100%;background:var(--accent)}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}.row a{color:var(--accent);text-decoration:none}
+ul{padding-left:18px}li{margin:5px 0;font-size:13.5px;color:var(--mut)}li b{color:var(--tx)}
+.view{display:none}.view.on{display:block}
+.muted{color:var(--faint);font-size:12px;font-family:var(--mono)}
+footer{border-top:1px solid var(--ln);margin-top:40px;padding-top:16px;color:var(--faint);font-size:12px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+<div class="brand"><span class="dot"></span> AEGIS</div>
+<nav id="nav"></nav>
+</div></header>
+<main class="wrap">
+
+<section class="view on" data-view="home">
+  <h1>The falsification engine for traders.</h1>
+  <p class="sub">Aegis is not a signal service. It's the opposite: it tries to <b>disprove</b> every strategy before it ever risks a dollar — deflating for the estimation error, the costs, and the thousands of variations tried to find it. Most "edges" don't survive. Knowing which is the whole product.</p>
+  <div class="grid" style="margin-top:22px">
+    <div class="card"><div class="lbl">Strategies tested</div><div class="v">1.01M</div><div class="s">conditional cells, deflated</div></div>
+    <div class="card"><div class="lbl">Survived honest gate</div><div class="v" style="color:var(--red)">0</div><div class="s">chart/timing setups</div></div>
+    <div class="card"><div class="lbl">Durable edge found</div><div class="v" style="color:var(--accent)">1</div><div class="s">global factor book</div></div>
+    <div class="card"><div class="lbl">Cost of finding out</div><div class="v">$0</div><div class="s">so you don't blow up</div></div>
+  </div>
+  <div class="panel"><b>Use it three ways →</b> <span class="muted">tabs above</span>
+    <div class="row"><span><b>Risk X-ray</b> — will your position sizing blow up the account? (the one near-certain edge)</span><a href="#" onclick="go('protect');return false">open →</a></div>
+    <div class="row"><span><b>Authenticity check</b> — is your backtest a real edge or overfit luck?</span><a href="#" onclick="go('verify');return false">open →</a></div>
+    <div class="row"><span><b>Global allocator</b> — the one book that actually compounds (Sharpe ~1)</span><a href="#" onclick="go('allocate');return false">open →</a></div>
+    <div class="row"><span><b>Live cockpit</b> — the autonomous paper engine, running now</span><a href="#" onclick="go('cockpit');return false">open →</a></div>
+  </div>
+</section>
+
+<section class="view" data-view="protect">
+  <h1>Risk X-ray</h1>
+  <p class="sub">The Kelly truth: you don't have a strategy problem, you have a <b>sizing</b> problem. Enter your real numbers — this tells you if the same edge compounds or ruins you.</p>
+  <div class="panel">
+    <label>Win rate (0–1)</label><input id="p_wr" value="0.55">
+    <label>Reward : risk ratio (avg win ÷ avg loss)</label><input id="p_rr" value="2">
+    <label>Risk per trade (fraction of equity, e.g. 0.05 = 5%)</label><input id="p_risk" value="0.05">
+    <button class="btn" onclick="doProtect()">Run the X-ray</button>
+    <div id="p_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<section class="view" data-view="verify">
+  <h1>Authenticity check</h1>
+  <p class="sub">Paste your per-trade returns (R multiples or %). Aegis computes the <b>Deflated Sharpe</b> — is the edge real, or a survivor of the thousands of variations tried to find it?</p>
+  <div class="panel">
+    <label>Per-trade returns, comma-separated</label>
+    <textarea id="v_ret">0.5,-1,1.5,-1,0.8,-1,2,-1,1,-1,0.6,-1,1.2,-1,0.9,-1,1.4,-1,0.7,-1</textarea>
+    <label>Periods per year (252 daily, 12 monthly, 35040 for 15m)</label><input id="v_ppy" value="252">
+    <button class="btn" onclick="doVerify()">Check authenticity</button>
+    <div id="v_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<section class="view" data-view="allocate">
+  <h1>Global allocator</h1>
+  <p class="sub">The one thing that cleared every gate: a diversified global risk-premia book (value + quality + momentum across US / developed / emerging). Not a chart pattern — the honest engine of compounding.</p>
+  <div id="a_out" class="panel">loading…</div>
+</section>
+
+<section class="view" data-view="cockpit">
+  <h1>Live cockpit</h1>
+  <p class="sub">The autonomous paper engine — trading 10 markets across every session, macro-throttled, firewall-protected. Updates every 6h on its own. <span id="c_upd" class="muted"></span></p>
+  <div id="c_out">loading…</div>
+</section>
+
+<section class="view" data-view="doctrine">
+  <h1>What we found</h1>
+  <div class="panel"><ul>
+    <li><b>No chart/timing signal survives</b> honest testing — ~1.01M conditional strategies across the tradeable universe, deflated by trial count. Zero cleared.</li>
+    <li><b>Risk management is the durable edge</b> — sane sizing keeps an account alive even trading a losing strategy. That's the near-certain positive-expectancy component.</li>
+    <li><b>Compounding comes from the global factor book</b> (Sharpe ~1), not setups.</li>
+    <li><b>Macro measures fragility, not direction</b> — the overlay only ever shrinks size when the system is primed to break.</li>
+    <li><b>The one cyclic regularity is the BTC halving</b> (halving→top ≈530d, n=3) — pre-registered as a forward prediction, not backfit.</li>
+    <li><b>Rauf is right about one thing:</b> the edge fires in specific conditions, not every day. Overtrading is how you give it back. Aegis quantifies exactly <i>which</i> conditions — and proves most "conditions" are noise.</li>
+  </ul></div>
+  <p class="muted" style="margin-top:14px">Single-operator research tool. Not investment advice. No signals are sold.</p>
+</section>
+
+<footer class="wrap">Aegis · falsification engine · data via live edge APIs · <span id="f_status">connecting…</span></footer>
+</main>
+
+<script>
+const API = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
+const VIEWS = [["home","Home"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
+const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const nav=document.getElementById("nav");
+VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
+function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
+  if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); location.hash=k; window.scrollTo(0,0);}
+const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
+
+async function doProtect(){
+  const body={winRate:+document.getElementById("p_wr").value,winLossRatio:+document.getElementById("p_rr").value,riskPerTradeFrac:+document.getElementById("p_risk").value};
+  const o=document.getElementById("p_out");o.innerHTML="<span class=muted>running…</span>";
+  try{const r=await fetch(API+"/trd-api-protect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    o.innerHTML=`<div class="verdict" style="color:${vcol(d.verdict)}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">Expectancy</div><div class="v">${(+d.expectancyR).toFixed(2)}R</div></div>
+      <div class="card"><div class="lbl">Full Kelly</div><div class="v">${(d.kellyFraction*100).toFixed(1)}%</div><div class="s">half-Kelly ${(d.kellyFraction*50).toFixed(1)}%</div></div>
+      <div class="card"><div class="lbl">Overbet ratio</div><div class="v" style="color:${d.overbetRatio>1?'var(--red)':'var(--accent)'}">${(+d.overbetRatio).toFixed(2)}×</div><div class="s">of half-Kelly</div></div>
+      <div class="card"><div class="lbl">1yr ruin risk</div><div class="v" style="color:${d.probRuin>0.05?'var(--red)':'var(--accent)'}">${(d.probRuin*100).toFixed(0)}%</div><div class="s">lose ≥50%</div></div>
+    </div>`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doVerify(){
+  const ret=document.getElementById("v_ret").value.split(/[,\s]+/).map(Number).filter(x=>Number.isFinite(x));
+  const body={returns:ret,periodsPerYear:+document.getElementById("v_ppy").value};
+  const o=document.getElementById("v_out");o.innerHTML="<span class=muted>checking…</span>";
+  try{const r=await fetch(API+"/trd-api-verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    o.innerHTML=`<div class="verdict" style="color:${vcol(d.verdict)}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">Observations</div><div class="v">${d.n}</div></div>
+      <div class="card"><div class="lbl">Annual Sharpe</div><div class="v">${(+d.annualSharpe).toFixed(2)}</div></div>
+      <div class="card"><div class="lbl">Deflated Sharpe</div><div class="v" style="color:${d.deflatedSharpe>0.95?'var(--accent)':'var(--red)'}">${(d.deflatedSharpe*100).toFixed(0)}%</div><div class="s">need &gt;95%</div></div>
+      <div class="card"><div class="lbl">Min track record</div><div class="v">${Math.round(d.minTrackRecord)}</div><div class="s">obs needed</div></div>
+    </div>
+    ${(d.flags||[]).map(f=>`<span class="pill" style="color:var(--amber);border-color:var(--amber)55">${esc(f)}</span>`).join("")}`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doAllocate(){
+  const o=document.getElementById("a_out");o.innerHTML="loading…";
+  try{const d=await(await fetch(API+"/trd-api-allocate?preset=global")).json();
+    const w=Object.entries(d.weights||{}).sort((a,b)=>b[1]-a[1]);const mx=Math.max(...w.map(x=>x[1]));
+    o.innerHTML=`<div class="muted">window ${esc(d.window)} · ${d.months} months</div>`+w.map(([k,v])=>`<div style="margin-top:10px"><div class="row" style="border:0;padding:0"><span class="mono">${esc(k)}</span><span class="mono">${(v*100).toFixed(1)}%</span></div><div class="bar"><i style="width:${(v/mx*100).toFixed(0)}%"></i></div></div>`).join("");
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+function card(l,v,s,c){return `<div class="card"><div class="lbl">${l}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div><div class="s">${s||""}</div></div>`}
+async function doCockpit(){
+  const o=document.getElementById("c_out");
+  try{const d=await(await fetch(API+"/aegis-cockpit?format=json",{cache:"no-store"})).json();const s=d.summary||{},da=d.data||{},m=da.macro||{};
+    document.getElementById("c_upd").textContent="live · "+new Date(d.generated_at).toISOString().replace("T"," ").slice(0,16)+" UTC";
+    const hyps=(da.prereg_hypotheses||[]).map(h=>{const ready=h.n>=30,good=h.exp>0;return `<div class="row"><span class="mono" style="font-size:12px">${esc(h.id)}</span><span class="mono" style="color:${!ready?'var(--faint)':good?'var(--accent)':'var(--red)'}">${ready?((h.exp>=0?'+':'')+(+h.exp).toFixed(3)+'R'):('accumulating '+h.n+'/30')}</span></div>`}).join("")||'<span class=muted>none</span>';
+    const sess=(da.per_session_setup||[]).slice(0,8).map(x=>`<tr><td class="mono">${esc(x.key)}</td><td class="mono num">${x.n}</td><td class="mono num" style="color:${x.exp>0?'var(--accent)':'var(--red)'}">${(+x.exp).toFixed(2)}R</td></tr>`).join("")||'<tr><td colspan=3 class=muted>no trades yet</td></tr>';
+    o.innerHTML=`<div class="grid">
+      ${card("Status",s.status==="alive"?"ALIVE":"BREACHED","firewall protecting",s.status==="alive"?"var(--accent)":"var(--red)")}
+      ${card("Equity","$"+(s.equity??0),"× "+(s.multiple??1))}
+      ${card("Max drawdown",(s.max_drawdown_pct??0)+"%",(s.open_positions??0)+" open · "+(s.closed_trades??0)+" closed")}
+      ${card("Macro",esc(s.macro_phase||"—"),"de-risk "+Math.round((s.macro_de_risk??1)*100)+"%")}</div>
+      <h2>Pre-registered hypotheses (forward test)</h2><div class="panel">${hyps}</div>
+      <h2>Per-session × setup — what it's learning</h2><table><thead><tr><th>session×setup</th><th class="num">n</th><th class="num">expectancy</th></tr></thead><tbody>${sess}</tbody></table>
+      ${da.cycle_prediction?`<h2>Pre-registered cycle prediction</h2><div class="panel" style="font-size:13px">${esc(da.cycle_prediction)}</div>`:""}`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+// boot
+(async()=>{try{await fetch(API+"/aegis-cockpit?format=json");document.getElementById("f_status").textContent="APIs live";}catch{document.getElementById("f_status").textContent="APIs waking…"}})();
+go((location.hash||"#home").slice(1)||"home");
+</script>
+</body>
+</html>

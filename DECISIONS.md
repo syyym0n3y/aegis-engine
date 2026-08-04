@@ -584,3 +584,23 @@ live values ($5782, EXPANSION, btc-sweep-rr3-v1 accumulating 0/30), no mojibake.
 hosting (Vercel/Cloudflare/GitHub Pages) to render for outside users; that remains gated on
 deploy access. The operator cockpit is solved (local file). Doctrine reinforced: never claim a
 UI "renders" without an in-browser check.
+
+### D-087 — Aegis shipped as a real public app + "delivery" primitive (2026-08-04)
+
+**App (de-larp):** Vercel create-project is 403-blocked on the operator's account role (not
+bypassable). Shipped instead on GitHub Pages — a real, public, RENDERING app:
+https://syyym0n3y.github.io/aegis-engine/ (repo syyym0n3y/aegis-engine). Tabbed SPA: live
+cockpit (pulls aegis-cockpit JSON), Risk X-ray (trd-api-protect), Authenticity check
+(trd-api-verify), Global allocator (trd-api-allocate), Findings. Verified IN-BROWSER: renders
+as HTML, live data loads ($5782, EXPANSION, btc-sweep-rr3-v1 0/30), CORS `*` confirmed on all
+APIs so the tools work cross-origin. Local source: web/aegis-app/index.html.
+
+**"Exploiting deliveries" (Rauf/ICT) made testable:** added a `delivery` grammar trigger =
+CONSOLIDATION (window range < 3× median bar range — the market hasn't picked a side) followed by
+a DISPLACEMENT candle breaking the range (a Change In State of Delivery / CISD). First honest test
+(15m, cost 0.05R): naive "enter on the displacement candle" is a LOSER — Gold rr2 +0.067R (t=0.38,
+insignificant), everything else negative and mostly significantly so (BTC rr1 t=−2.48, S&P rr2
+t=−3.04). Consistent with the whole genre: chasing the breakout candle gets caught by the fakeout.
+**Refinement to test next** (what the content actually implies): enter on the RETRACE into the
+displacement's imbalance/FVG, or AFTER the consolidation is first swept — not on the break itself.
+Grammar now 9 trigger classes; 3 grammar tests green.

@@ -16,7 +16,11 @@ export type { Bar };
 // momentum + mean-reversion families). Every forum/YouTube "system" is a recombination of these.
 //   sweep=liquidity grab · fvg=imbalance · orderblock=OB return · breakout=momentum ·
 //   pullback=trend-continuation · engulfing=PA reversal · pinbar=rejection · rsi=mean-reversion.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi";
+// "delivery" = the ICT/Rauf concept made testable: a CONSOLIDATION (balance — the market hasn't
+// picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
+// Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
+// the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -32,7 +36,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -104,6 +108,19 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (r === null || rPrev === null) return null;
       if (rPrev < 30 && r >= 30) return { side: "long", stop: lo };
       if (rPrev > 70 && r <= 70) return { side: "short", stop: hi };
+      return null;
+    }
+    case "delivery": { // consolidation (balance) → displacement break = Change In State of Delivery
+      const W = Math.max(4, s.stopLookback * 2); if (i < W + 1) return null;
+      let ch = -Infinity, cl = Infinity; const rng: number[] = [];
+      for (let j = i - W; j < i; j++) { if (bars[j].high > ch) ch = bars[j].high; if (bars[j].low < cl) cl = bars[j].low; rng.push(bars[j].high - bars[j].low); }
+      const med = [...rng].sort((a, z) => a - z)[rng.length >> 1] || 1e-9;
+      const consolidated = (ch - cl) < 3 * med;          // the window is a tight balance (no side winning)
+      const displaced = (b.high - b.low) > 1.5 * med;     // this bar expands hard = delivery
+      if (consolidated && displaced) {
+        if (b.close > ch) return { side: "long", stop: cl };
+        if (b.close < cl) return { side: "short", stop: ch };
+      }
       return null;
     }
   }
