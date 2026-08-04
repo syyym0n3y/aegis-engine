@@ -1108,3 +1108,24 @@ across 12 instruments; a 40-day eval needs more (solve: wider universe / intrada
 liquidity" point; (2) the +0.11R is optimistic vs the broad-grid OOS (~+0.02R) — forward/OOS confirmation
 needed; (3) real-platform slippage. Next: pre-register the frozen VIX-conditioned mean-reversion spec +
 expand universe for frequency + forward-test. This is the lead that fits the operator's model.
+
+### D-112 — meanrev-vix-v1 pre-registered + wired: forward tracker, scanner, personal-risk map (2026-08-04)
+
+Wired the D-111 prop-shaped edge end-to-end.
+- **Pre-registered** `meanrev-vix-v1` (frozen spec + timestamp 2026-08-04 23:47Z): RSI-2<5 long / >95 short,
+  200MA regime, VIX≥20 gate, 2×ATR stop, RSI-revert exit, forward-only.
+- **`_shared/trd-meanrev.ts`** (+5 tests): the signal + trade-resolver as one tested primitive so the live
+  tracker and backtest run identical code.
+- **`trd-meanrev-tick`**: forward tracker (resolves trades, accrues R, no look-ahead) + live favourability
+  SCANNER across a broadened 40-instrument universe (indices/sectors/intl/commodities/bonds/crypto/mega-cap
+  singles). `?scan=1` = live "which markets/side are favourable now". Cron weekdays 22:00 UTC. Surfaced on
+  cockpit. Verified: VIX 16.5 now → 0 setups ("calm, sit out") — the regime gate works; it fires on stress.
+- **Personal-account risk map** (`scripts/trd-personal-growth.ts`): at 200 favourable trades/yr, **~2-3%
+  risk/trade = the grow-a-ton-safely band — 56-92% median CAGR with 0% chance of a 50% drawdown**; above
+  ~5% enters the blow-up zone (P(50% DD) 9%→82%). The edge is thin (+0.11R) so growth = FREQUENCY ×
+  compounding, not big bets.
+
+**Honest limits (do-not-oversell):** the CAGR ceiling assumes the +0.11R favourable-condition edge HOLDS
+live — the broad-grid OOS was thinner (~+0.02R), so the forward test (now accruing) is the arbiter, not the
+backtest. Timeframe = DAILY only (free-data limit); intraday needs forward collection or paid data. "First
+to know" = the live scanner; it currently says WAIT (VIX calm). Nothing risks real money — forward/paper only.
