@@ -733,3 +733,19 @@ enforce). Running thousands more to find a "winner" is the false-edge factory. T
 the edge is slow factor-premia + risk management; everything fast/positioning/flow/anomaly is efficiently
 priced. Remaining upside requires either PAID data (order-flow already pre-falsified on its free proxy)
 or real forward time on the 3 pre-registered leads.
+
+### D-094 — dYdX short surface un-automatable; full strategy analysis (R-004) (2026-08-04)
+
+**Short-surface search closed (honest wall).** Attempted the no-KYC dYdX v4 testnet path: wallet
+generation + faucet WORK (202, no KYC, no money), but the `@dydxprotocol/v4-client-js` order client
+**cannot run in a Supabase edge function** (needs Node node_modules + lodash/protobuf native deps;
+Deno edge runtime has neither). Combined with Binance geo-blocked for the operator and Hyperliquid's
+faucet gated behind a mainnet deposit, there is NO no-KYC crypto-short surface our autonomous infra
+can drive. Verdict: shorts stay on the simulator (validated conservative by Alpaca's real 0.096% fills).
+
+**Full analysis: `docs/research/R-004-full-strategy-analysis.md`** — every strategy/backtest (D-070…
+D-093) in one ledger. Tier 0: factor book CLEARED (the compounder). Tier 1: 4 leads forward-testing
+(btc-sweep, gold-tbr, btc-squeeze, halving cycle) — all high-RR crypto/Gold vol-liquidity events.
+Tier 2: 9 falsified (Pranam grab, 1.01M-cell searches, calendar, intermarket, CVD, COT, insider).
+Tier 3: 4 weak/partial (cross-sectional, funding, vol-clustering→risk-layer, 24h cycle). Five
+cross-cutting laws proven. Scale: ~1.1M+ configurations, 13 lenses.
