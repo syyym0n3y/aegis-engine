@@ -534,3 +534,32 @@ their own verdict autonomously via the cron tracker.
 Net: the corpus now has (a) a frozen, forward-tested candidate that the deflation math can't
 kill unfairly, (b) an honest read that chart edges don't tie to the economy, (c) a one-command
 way to reproduce/refine everything. 131 tests green.
+
+### D-085 — Cycle/periodicity study, applied vertically + horizontally (2026-08-04)
+
+**Ask:** operator observed crypto tops/bottoms at ~1064-day and ~364-day intervals; study it
+across years and markets; apply the principle vertically (timeframes) + horizontally (markets).
+
+**Built (honest periodicity engine):** `_shared/trd-cycles.ts` — major swing-extrema detection +
+**Rayleigh phase-clustering test** (R≈1 ⇒ extrema recur at a consistent phase of period P) +
+**Monte-Carlo null** (the max R random extrema reach across the same scanned periods — the
+periodicity analogue of DSR deflation). 3 tests. Runners: `trd-cycle-study.ts` (deep, per-market,
+grand-cycle pass) and `trd-cycle-matrix.ts` (9 markets × {1h, 1d}).
+
+**Findings:**
+- **1064d ≈ real, as bottom→top:** BTC grand cycle (true macro extrema) — top→top **1424, 1426d**;
+  bottom→bottom **1437d**; bottom→top **1061, 1050d** (≈ the claimed 1064); halving→top **526, 548,
+  534d**. All tied to the ~1458d Bitcoin **halving supply shock** (a real mechanism). n=2-3 cycles —
+  striking + mechanism-backed but statistically uncertifiable; **not** present in S&P/Gold (no halving).
+- **364d annual: NOT supported** at any scale in any market (R well below null).
+- **Vertical/intraday: the 24-hour session cycle IS real** — beats the MC null in **7/9 markets**
+  (equities R=0.81, FX/oil/crypto 0.25-0.43); the 120h weekly cycle is not. Markets have an intraday
+  clock (session structure), not a multi-year calendar. Validates the asia/london/ny session tags.
+- **Multi-year swing scale: 0/9 markets** beat their own null. Markets are not clocks at the
+  macro-swing scale.
+
+**Verdict:** the 1064 observation is a genuine, mechanism-backed regularity in BTC's halving cycle
+(the one cycle worth respecting), logged to `trd_strategies` (class=cycle) with a **pre-registered,
+falsifiable forward prediction**: bottom→bottom ~1437d from 2022-11-21 ⇒ macro BOTTOM ~2026-10-29
+(±60d). Everything else is noise. Same deflation discipline (null + report-n) applied to periodicity,
+vertically and horizontally.
