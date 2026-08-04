@@ -40,6 +40,9 @@ Deno.serve(async (req) => {
   const params = new URL(req.url).searchParams; const selftest = params.get("selftest") === "1"; const flatten = params.get("flatten") === "1";
   try {
     if (!SECRET) throw new Error("no Alpaca secret resolved");
+    // SECURITY: flatten/selftest are dangerous (mutate real paper positions) — gate behind the
+    // service-role key so a public caller can't disrupt the forward test or spam orders.
+    if ((selftest || flatten) && (req.headers.get("x-admin") ?? "") !== SRK) return new Response(JSON.stringify({ ok: false, err: "admin token required for selftest/flatten" }), { status: 403, headers: cors });
     if (flatten) { const r = await fetch(`${BROKER}/v2/positions`, { method: "DELETE", headers: AH }); await fetch(`${SB}/rest/v1/trd_alpaca_state?on_conflict=id`, { method: "POST", headers: { ...hdr, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ id: "default", open_trades: {}, updated_at: new Date().toISOString() }) }); return new Response(JSON.stringify({ ok: true, flattened: r.status, msg: "all positions closed, state reset" }), { headers: cors }); }
     if (selftest) { // prove the real order path: buy $15 BTC, then close it
       const buy = await submitFill({ symbol: "BTC/USD", notional: "15", side: "buy", type: "market", time_in_force: "gtc" });
@@ -48,6 +51,9 @@ Deno.serve(async (req) => {
       const roundTripCostPct = (buy as any).price && (sell as any).price ? (((sell as any).price - (buy as any).price) / (buy as any).price * 100) : null;
       return new Response(JSON.stringify({ ok: true, selftest: "REAL paper order placed + closed", buyFill: buy, sellFill: sell, realRoundTripCostPct: roundTripCostPct }, null, 2), { headers: cors });
     }
+    // KILL-SWITCH: durable circuit breaker (trd_killswitch row) — halts live trading, survives restarts.
+    const ks = await fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`, { headers: hdr }).then((r) => r.json()).catch(() => []);
+    if (ks?.[0]?.active) return new Response(JSON.stringify({ ok: true, skipped: "kill-switch active" }), { headers: cors });
     const a = await acct(); if (!a) throw new Error("account fetch failed");
     const equity = +a.equity;
     const st = await fetch(`${SB}/rest/v1/trd_alpaca_state?id=eq.default&select=*`, { headers: hdr }).then((r) => r.json()).then((x) => x[0] ?? { open_trades: {}, closed: [], ticks: 0 });

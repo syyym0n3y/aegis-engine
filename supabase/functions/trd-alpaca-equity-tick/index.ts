@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, market_open: clock?.is_open, next_open: clock?.next_open, assets, spyBarsAvail: sampleBars }, null, 2), { headers: cors });
     }
     if (P.get("selftest") === "1") {
+      if ((req.headers.get("x-admin") ?? "") !== SRK) return new Response(JSON.stringify({ ok: false, err: "admin token required for selftest" }), { status: 403, headers: cors });
       if (!clock?.is_open) return new Response(JSON.stringify({ ok: true, note: "market closed — short self-test runs at next open", next_open: clock?.next_open }), { headers: cors });
       const sh = await submitFill({ symbol: "SPY", qty: "1", side: "sell", type: "market", time_in_force: "day" });
       if ((sh as any).status !== "filled") return new Response(JSON.stringify({ ok: false, stage: "short", sh }, null, 2), { headers: cors });
@@ -54,6 +55,8 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, selftest: "REAL short opened + covered", shortFill: sh, coverFill: cover }, null, 2), { headers: cors });
     }
     if (!clock?.is_open) return new Response(JSON.stringify({ ok: true, skipped: "market closed", next_open: clock?.next_open }), { headers: cors });
+    const ks = await fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`, { headers: hdr }).then((r) => r.json()).catch(() => []);
+    if (ks?.[0]?.active) return new Response(JSON.stringify({ ok: true, skipped: "kill-switch active" }), { headers: cors });
     const a = await get("/v2/account"); const equity = +a.equity;
     const st = await fetch(`${SB}/rest/v1/trd_alpaca_state?id=eq.equity&select=*`, { headers: hdr }).then((r) => r.json()).then((x) => x[0] ?? { open_trades: {}, closed: [], ticks: 0, last_bars: {} });
     const open: Record<string, any> = st.open_trades ?? {}; const closed: any[] = st.closed ?? []; const lastBars: Record<string, string> = st.last_bars ?? {};

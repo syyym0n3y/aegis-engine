@@ -807,3 +807,19 @@ stationary, untradeable. **Real survivors: 0.**
 did NOT create edge; the single DSR-clearer is a carry-ignoring devaluation-trend mirage the post-analysis
 caught. Combined with D-097 (liquid core, 0 clear), the ENTIRE market — liquid core + inefficient tail,
 436 instruments, 725k bars — carries no certifiable unconditional chart edge. Corpus: 16 rows.
+
+### D-099 — Stablecoin-flow tracker wired + full-stack security audit (2026-08-04)
+
+**Forward-testing picture complete.** Wired `trd-stablecoin-tick` (weekly cron Mon 02:00 UTC): the
+on-chain dry-powder lead (stablecoin-flow-v1) now accrues forward on its own — USDT+USDC 7d supply
+growth vs trailing median → long/short BTC, resolved-and-post-registration weeks only, no look-ahead.
+All 4 pre-registered hypotheses now have autonomous trackers.
+
+**Security & robustness audit** (`docs/SECURITY-AUDIT.md`). Structural strength: the whole stack is
+PAPER-only — no real money, so worst case is a corrupted paper record, not a loss. FIXED two HIGH
+vulns: (1) the Alpaca executors' `?flatten=1`/`?selftest=1` were PUBLIC (anyone could close positions
+or spam orders) → now require `x-admin: <service-role-key>`, verified 403 for public callers; (2) no
+circuit breaker → durable `trd_killswitch` row, checked by both Alpaca executors, verified trip→halt→
+reset. Flagged (operator/next): rename the fragile Alpaca secret to standard names; add tracker
+staleness alerting. Residual-risk statement: this clears the PAPER threat model only — real money would
+require re-hardening (reconciliation, disconnect, exposure caps) and a fresh audit.
