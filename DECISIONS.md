@@ -1054,3 +1054,22 @@ uncorrelated trend stream as a portfolio DIVERSIFIER (its real value, not S&P-be
 risk/survival engine, (3) the product (the only genuine 1e10× lever; needs no trading alpha from us).
 Alpha hunt reaching honest closure: retail-accessible directional alpha is thin-to-zero OOS across every
 class tested (chart, on-chain, carry, single-setup, rotation); durable edge = risk + diversification + product.
+
+### D-109 — Prop-farming economics: operator's model validated + the risk-optimization is the multiplier (2026-08-04)
+
+Operator's correction (right): influencers farm PROP accounts — downside = eval fee (~$300), not the
+balance; pass target, collect payout, reinvest. That's cheap optionality, and P(pass) is dominated by
+SIZING → "the difference is risk-model optimization" is TRUE in this frame. Quantified it:
+`scripts/trd-prop-sim.ts` (Monte-Carlo, $50k / +8% target / 10% maxDD / 5% daily / two-hurdle eval+funded).
+- With a MODEST real edge (47% win, 2:1 → +0.41R): optimal sizing (0.25-0.75%/trade) → P(paid) ~100%,
+  **EV +$2,900 per $300 eval (~10×), downside capped at $300.**
+- Same edge, oversized 5%/trade (itzjblair school): P(paid) 23%, EV +$448 — 85% of value thrown away by
+  sizing alone. The risk model is the multiplier, exactly as the operator argued.
+- NO-edge control (coinflip, both hurdles): P(paid) 0%, EV −$300. This is the firm's business — they sell
+  to the edgeless. (Caught + fixed a first-pass bug that treated 'pass eval'='cash', which wrongly made
+  coinflip +EV.)
+**VERDICT:** prop-farming is a genuine +EV, capped-downside, scalable business — IFF (1) a real (even
+modest, +0.4R) edge AND (2) sizing optimized to pass. Unifies the project: risk engine (Kelly/vol/ruin) =
+the pass-rate optimizer; the bottleneck remains a modest REAL edge. Two products fall out: (a) prop-farm
+with our sizing engine once a modest edge is established; (b) a "pass your prop challenge" sizing tool for
+the millions who buy evals — honestly tells most of them they have no edge, and the edged ones how to size.
