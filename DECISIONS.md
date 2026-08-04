@@ -1073,3 +1073,17 @@ modest, +0.4R) edge AND (2) sizing optimized to pass. Unifies the project: risk 
 the pass-rate optimizer; the bottleneck remains a modest REAL edge. Two products fall out: (a) prop-farm
 with our sizing engine once a modest edge is established; (b) a "pass your prop challenge" sizing tool for
 the millions who buy evals — honestly tells most of them they have no edge, and the edged ones how to size.
+
+### D-110 — Both built: prop-edge test (our signal) + "Pass Your Prop Challenge" product (2026-08-04)
+
+Operator: "build both."
+**(1) Our edge vs the +0.4R prop bar** (`scripts/trd-prop-edge.ts`): the validated trailing-trend entries
+logged per-trade R. IS +0.81R (clears), **HOLDOUT +0.12R (below the +0.4R bar), 27% win.** Positive OOS
+(notable — better than every chart setup) but too thin AND wrong-shape for prop (27% win → long losing
+streaks breach the drawdown rule). Honest no on farming with THIS edge; sharpened the target to a higher-
+win-rate, lower-variance signal.
+**(2) `trd-prop-optimizer` (public product)** — "Pass Your Prop Challenge": takes a trader's real win/RR +
+firm rules, two-hurdle Monte-Carlo → true P(paid), optimal risk/trade, EV/eval, honest verdict. Verified:
+modest edge → "STRONG — FARMABLE, 0.25%, +$2900"; coinflip → "NO EDGE — DON'T BUY". Surfaced as a "Prop
+challenge" tab in the app. Serves the millions who buy evals (~90% fail) — honestly tells most "don't buy",
+the edged ones how to size. Needs no trading alpha from us; runs on the shipped risk math.

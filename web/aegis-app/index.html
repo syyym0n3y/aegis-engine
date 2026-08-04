@@ -80,6 +80,24 @@ QQQ long 12000</textarea>
   </div>
 </section>
 
+<section class="view" data-view="prop">
+  <h1>Pass your prop challenge</h1>
+  <p class="sub">~90% of prop evals fail — from no edge or wrong sizing. Enter your real stats and your firm's rules. Aegis Monte-Carlos your <b>true chance of a paid account</b>, the <b>risk-per-trade that maximises it</b>, and whether buying the eval is +EV — and it'll tell you honestly if you have no edge.</p>
+  <div class="panel">
+    <label>Your win rate (0–1)</label><input id="pr_wr" value="0.47">
+    <label>Reward : risk (avg win ÷ avg loss)</label><input id="pr_rr" value="2">
+    <label>Eval cost ($)</label><input id="pr_cost" value="300">
+    <div class="grid" style="margin-top:6px">
+      <div><label>Account ($)</label><input id="pr_acct" value="50000"></div>
+      <div><label>Profit target</label><input id="pr_tgt" value="0.08"></div>
+      <div><label>Max drawdown</label><input id="pr_dd" value="0.10"></div>
+      <div><label>Daily loss limit</label><input id="pr_daily" value="0.05"></div>
+    </div>
+    <button class="btn" onclick="doProp()">Optimise my challenge</button>
+    <div id="pr_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
 <section class="view" data-view="protect">
   <h1>Risk X-ray</h1>
   <p class="sub">The Kelly truth: you don't have a strategy problem, you have a <b>sizing</b> problem. Enter your real numbers — this tells you if the same edge compounds or ruins you.</p>
@@ -134,7 +152,7 @@ QQQ long 12000</textarea>
 
 <script>
 const API = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
-const VIEWS = [["home","Home"],["portfolio","Portfolio risk"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
+const VIEWS = [["home","Home"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
 const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
@@ -143,6 +161,24 @@ function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle(
   if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
+async function doProp(){
+  const body={winRate:+document.getElementById("pr_wr").value,winR:+document.getElementById("pr_rr").value,lossR:1,evalCost:+document.getElementById("pr_cost").value,accountSize:+document.getElementById("pr_acct").value,targetPct:+document.getElementById("pr_tgt").value,maxDDpct:+document.getElementById("pr_dd").value,dailyLossPct:+document.getElementById("pr_daily").value};
+  const o=document.getElementById("pr_out");o.innerHTML="<span class=muted>running Monte-Carlo…</span>";
+  try{const d=await(await fetch(API+"/trd-prop-optimizer",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})).json();
+    if(d.error)throw new Error(d.error);
+    const vc=/STRONG/.test(d.verdict)?"var(--accent)":/MARGINAL/.test(d.verdict)?"var(--amber)":"var(--red)";
+    const rows=(d.grid||[]).map(g=>`<tr><td class="mono num">${g.riskPct}%</td><td class="mono num">${g.pPass}%</td><td class="mono num">${g.pPaid}%</td><td class="mono num" style="color:${g.evPerEval>0?'var(--accent)':'var(--red)'}">${g.evPerEval>=0?'+':''}$${g.evPerEval}</td></tr>`).join("");
+    o.innerHTML=`<div class="verdict" style="color:${vc}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">Your edge</div><div class="v" style="color:${d.expectancyR>0?'var(--accent)':'var(--red)'}">${d.expectancyR>=0?'+':''}${(+d.expectancyR).toFixed(2)}R</div><div class="s">per trade</div></div>
+      <div class="card"><div class="lbl">Optimal risk</div><div class="v">${d.optimalRiskPct}%</div><div class="s">per trade</div></div>
+      <div class="card"><div class="lbl">Paid-account odds</div><div class="v" style="color:${vc}">${d.pPaidAtOptimal}%</div><div class="s">at optimal size</div></div>
+      <div class="card"><div class="lbl">EV per eval</div><div class="v" style="color:${d.evAtOptimal>0?'var(--accent)':'var(--red)'}">${d.evAtOptimal>=0?'+':''}$${d.evAtOptimal}</div></div>
+    </div>
+    <table style="margin-top:14px"><thead><tr><th>risk/trade</th><th class="num">pass eval</th><th class="num">get paid</th><th class="num">EV/eval</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
 async function doPortfolio(){
   const eq=+document.getElementById("pf_eq").value;
   const positions=document.getElementById("pf_pos").value.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.split(/[\s,]+/);return {symbol:m[0],side:/short|sell/i.test(m[1]||"")?"short":"long",notional:+String(m[2]||m[1]).replace(/[^0-9.]/g,"")}}).filter(p=>p.symbol&&p.notional>0);
