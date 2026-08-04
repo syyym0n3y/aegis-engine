@@ -639,3 +639,28 @@ built `trd-tbr-tick` edge fn + cron (weekdays 21:00 UTC) — runs the exact TBR 
 holds now resolves into owned knowledge either way (antifragile). Live: forward n=0 (baseline +0.498R,
 n=40). Appears on the app cockpit alongside btc-sweep-rr3-v1. Two hypotheses now earning forward
 verdicts autonomously.
+
+### D-090 — Edge-Lens Taxonomy: the map of where edges can live (2026-08-04)
+
+Operator: be the most context/knowledge-aware ecosystem — know more than the market about what
+edges exist and how to find them; draw out models (lenses) to look at the data. Reframe: a strategy
+is one point; a LENS is a whole dimension, each spawning thousands of strategies. So we map the
+LENSES, not the strategies.
+
+**Built:** [`docs/research/R-003-edge-lens-taxonomy.md`](./docs/research/R-003-edge-lens-taxonomy.md)
+— 12 edge-lenses (price-pattern, time-structure, cross-sectional RV, factor/premia, order-flow,
+intermarket, event/catalyst, vol-regime, cycle, flow/positioning, sentiment/funding, calendar-flow),
+each with the structural feature it exploits, data needs, free-data feasibility, and our honest status.
+
+**Inventory:** thoroughly done 4 (price-pattern DEAD, factor/premia CLEARED, cycle=halving-only,
+cross-sectional weak); partial 4; **UNTESTED free-data frontier 4** = calendar-flow, crypto-funding
+carry, event-window vol, intermarket lead-lag. That is the honest answer to "how many more are out there."
+
+**Demonstrated the map generates real tests** (`scripts/trd-xsection.ts`, a lens we'd never used):
+cross-sectional relative value on sectors/crypto/indices. Result (D-090 corpus): sector momentum neg
+(Sharpe −0.11, shuffle p=0.63), crypto momentum weak lead (0.44, p=0.08, OOS decays), indices nil.
+Conclusion: the cross-sectional momentum edge is the SLOW factor (WML, already in the D-077 book),
+not a fast tradeable signal. Reinforces the cross-cutting law: edges are slow/structural/risk-managed.
+
+**Frontier queue:** calendar-flow (turn-of-month/OPEX) → funding-carry → event-vol → intermarket
+lead-lag. Each becomes a corpus row; survivors pre-registered forward like btc-sweep / gold-tbr.
