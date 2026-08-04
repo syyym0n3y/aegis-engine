@@ -1023,3 +1023,16 @@ historically brutal for momentum; (2) the EXIT was modeled crudely as calendar r
 until consolidation" trend-decay exit the operator specified — his edge claim lives in the exit, which
 this test did not faithfully build. Next: a proper trailing/trend-decay exit + ruin-engine DD cap, OOS.
 Not a rejection — an under-modeled exit. Corpus unchanged pending the faithful re-test.
+
+### D-108b — Faithful trailing-exit rotation: the operator's exit VALIDATED (2026-08-04)
+
+Rebuilt D-108 with the operator's ACTUAL exit — Chandelier trailing trend-stop ("ride the high, cut on
+rollover into consolidation") + trend-rank redeploy — instead of calendar rotation. `scripts/trd-rotation-
+trail.ts`, same 28 instruments 2015→2026. The exit discipline is real and material:
+- **IS Sharpe 0.80 → 1.18** (SPY 0.67); **OOS Sharpe −0.21 → +0.16** (flipped positive); **OOS max
+  drawdown 44.7% → 17.9%** (≈ SPY's 18.9%, while diversified). Best result in the project besides the
+  factor book. The operator's "don't leave early / don't stay late" exit HALVED drawdown — validated.
+- Honest gap: still trails SPY buy&hold OOS (+1.7%/yr vs +5.1%) because it's LONG-ONLY and 2023-25 was a
+  US-tech-concentrated regime a diversified long-only rotator can't beat. Drawdown matched SPY while
+  diversified → it was protecting, not winning. Next: LONG/SHORT (capture downtrends both directions) —
+  the honest test of whether the full model beats buy&hold OOS + where the asymmetry lives.
