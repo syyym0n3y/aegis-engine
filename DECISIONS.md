@@ -971,3 +971,25 @@ broker integration: every broker exports a positions list, so we compute risk fr
 **Reach:** surfaced as a "Portfolio risk" tab in the global web app (any trader, any broker, a positions
 list). No signals, no direction — pure risk. This is the differentiated product the whole thesis pointed
 at: the seatbelt that keeps traders alive long enough for compounding to work. 158 _shared tests green.
+
+### D-106 — Live risk monitor (free, polled auto-sync) + the itzjblair reality check (2026-08-04)
+
+Operator sent an Instagram day-trader's per-trade "wins" (itzjblair: +$9.9k, +$30k, +$43k floating) as
+"what a good set-up can do," and asked for the real-time risk monitor built free. Both handled:
+
+**The reality check (honest-advisor, evidence-backed).** The screenshots are the exact survivorship trap
+the engine exists to kill: the giant green numbers are UP&L (UNREALIZED, floating open positions); the
+banked RP&L is NEGATIVE in nearly every frame (−$266, −$1,694, −$2,177, −$4,320). Ran his Img-3 size
+(20 MNQ short ≈ $1.17M on a "$50k" account) through our own `trd-risk-engine`: **23.4× leverage, 100%
+P(50% drawdown), worst-5% = −100% (full wipe).** Even 1 NQ contract on $50k = 9.6×, 100% ruin. The
+"$30 bomb" winner and the account-ending wipe are the SAME bet at the SAME size — inseparable. Prop-eval
+accounts + finfluencer framing ("first day live", Follow, motivational overlays) = a dream sold to the
+96%, not an edge. This VALIDATES the mission (the monitor is the antidote), it does not change the goal.
+
+**The monitor (free, no paid host).** `trd-risk-monitor` — ruin is a slow variable, so cron-polling the
+real book beats a websocket daemon: reads the live Alpaca account READ-ONLY, runs the D-105 fat-tailed
+portfolio-ruin engine on ACTUAL positions, writes `trd_risk_state`, raises an alert ≥15% ruin, and with
+`?enforce=1` trips the durable kill-switch (halts OUR paper bots ONLY — never places/closes a real
+order). Scheduled hourly via pg_cron ($0). Surfaced on the cockpit (HTML + json `live_account_risk`).
+Verified live: our own account flagged **AGGRESSIVE, 14.5% ruin, "2 positions = ~1.09 real bet
+(correlated → concentrated)"** — the monitor catching hidden concentration on our own book.
