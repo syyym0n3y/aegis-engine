@@ -1369,3 +1369,15 @@ mechanical trigger. Confirms D-121 (small-N Alpaca) at 75× the data. Kills the 
 does NOT touch the group's untested DISCRETIONARY selectivity. Data was FREE (Dukascopy) — the "needs paid
 SIP" deferral (pre-OPERATING_DOCTRINE) was false. Honesty invariant held: resolved on all history now, not
 forward weeks.
+
+### D-125 — Stochastic Divergence AW reconstructed+gated (REJECT, DSR 0.0%); .ex5 folder CLOSED (2026-08-05)
+
+Last reconstructable .ex5. Rebuilt from spec (%K14/%D3, ±3 confirmed pivots = NO look-ahead), both
+regular(reversal) + hidden(continuation), both directions. `scripts/trd-stoch-div-gate.ts`, 28 instruments
+(stocks+commodities+crypto), full Yahoo, 5d/2ATR, cost 0.05R, 9,164 trades.
+- reg-bull(long) OOS +0.013R; hid-bull(long) OOS +0.007R (both ≈0); **reg-bear(short) OOS −0.103R,
+  hid-bear(short) OOS −0.103R** (shorts worst). COMBINED −0.047R flat across IS/OOS.
+- Best type Sharpe −0.001 → **Deflated Sharpe 0.0% → REJECT.**
+Nuance: divergence-SHORTS lose because they fight drift — a signal-specific failure, NOT evidence shorts
+lose (crowding/positioning shorts tested separately). **All 5 inherited .ex5 now assessed: 0 carry edge
+(4 folklore/synthetic/reconstructed-and-rejected, 1 risk-tool whose source is OSS). Folder closed.**
