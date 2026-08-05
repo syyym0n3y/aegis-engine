@@ -1630,3 +1630,33 @@ candle. med-move% / p90-range% columns = per-candle stop-sizing numbers per TF. 
 (Binance REST 1m cap → recent regime, not long-run; index-depth needs data.binance.vision bulk dumps);
 continuous-session RV excludes overnight gaps (standard). Deeper observation (bulk crypto 1m, intraday
 U-shape) available on request.
+
+### D-143 — Universal instrument X-ray (ANY listed stock) + intraday U-shape + full-history crypto 1m (2026-08-05)
+
+Operator: too narrow with S&P — must analyse ANY listed stock's history/behaviour under all conditions; +
+pull full-history crypto 1m + intraday U-shape ("when favourable, which instruments").
+- **`trd-xray` edge fn (the big one)**: ?symbol=ANY ticker → full X-ray from free Yahoo daily: span, ann-vol,
+  CAGR, fat-tail stats (skew/kurt/worst-day), drawdown, beta-to-SPY, trend, **conditional behaviour table**
+  (fwd-5d ret/win%/vol BY VIX regime calm/normal/stress AND by 200MA trend), seasonality, + live vol-regime
+  deRisk. VERIFIED across types: NVDA (27.5y, 59% vol, β1.64, rises in stress), KO (56.6y, β0.56 defensive),
+  TLT (β −0.23 hedge), COIN (5.3y IPO, 84.8% vol, β2.63). Works for any listed instrument, all conditions.
+- **`trd-intraday-ushape.ts`**: hour-of-day vol, 15y Dukascopy. S&P/Nasdaq vol PEAKS at NY open (13-15 UTC,
+  ~1.9× avg), calmest Asia 3-6 UTC → calm = mean-rev/tight-stop favourable, NY open = breakout/stop-run.
+- **`fetch-binance-1m.sh`**: full-history crypto 1m from FREE bulk dumps (data.binance.vision), streams
+  month-by-month → data/binance/ (gitignored). BTC ~3M/4.7M bars at commit; crypto U-shape runs on completion.
+
+### D-144 — Data-first conditional discovery: direction is REGIME-CONDITIONED (2026-08-05)
+
+Operator redirect: stop imposing a system; 1 setup/trade, non-overlapping, tag every instance, discover where
+winners cluster; refine the DATA the system queries, don't prove a strategy. `scripts/trd-instance-discovery.ts`
++ R-007. 1,973,680 instances across 4 markets (S&P/Nasdaq 15y + BTC/ETH 9y full-1m bulk) × 6 TFs × 6 setups.
+Anti-snoop: winner = IS>+0.03R AND OOS>+0.03R same slice; then chance-baseline + coherence (≥3 independent
+market×TF) filter.
+- **Aggregate ≈ chance**: 18.4% persistent vs 14.5% baseline → NO blanket edge (confirms whole corpus at 2M scale).
+- **Coherent conditional DIRECTION is real** (repeats across markets/TFs + mechanism; calendar slices discarded):
+  VIX-stress→SHORT (sweep-rev +0.354R/10 combos, breakdown +0.252R/9); VIX-calm→LONG (+0.20/+0.21/+0.15R);
+  low-vol(atr)→LONG sweep-rev (+0.150R/16 combos, broadest); Asia→LONG sweep-rev (+0.184R/12).
+- **The buy/sell the system adds = a REGIME-CONDITIONED LEAN** (stress→short, calm/low-vol→long), queried at
+  decision time + sized by the risk engine. CANDIDATES (modest, fat-tailed) → pre-registered forward test before capital.
+Method fix logged: capped R ±15 + degenerate-stop filter (killed a +47R tiny-ATR artifact). Vindicates the
+data-first frame: pooled deflation rejected wholesale what conditional+coherence discovery shows is real structure.
