@@ -1179,3 +1179,25 @@ backtest shows) — it's the SELECTIVITY/condition-filtering that picks which 2�
 testable: replicate his filters (validate the range before 9:30, clean liquidity take, relative strength,
 NY session) and measure whether the FILTERED sweep-reversal clears a real edge where the raw one doesn't.
 Next: precise NY-TBR engine (8:12–9:12 ET, 9:30 wait, opposing-end target) + condition filters on 1m equity.
+
+### D-115 — Generalized session-range engine (every session × market, broad): raw loses, "edges" are small-N noise (2026-08-04)
+
+Broadened the intraday sweep→reversal→opposing-end (Rauf's TBR logic) across 5 crypto markets × 3 sessions
+(Asia/London/NY) × 90d 1m = 1,209 trades (`scripts/trd-intraday-tbr.ts`). Honest result:
+- **RAW loses: −0.057R, 19% win.** Low-win-rate/high-RR shape (target = opposing range end). Confirms the
+  raw mechanical sweep-reversal is not an edge — same as daily TBR, trend, carry, on-chain.
+- **Session gradient real-ish:** NY best (+0.074R), London breakeven, Asia worst (−0.204R). London/NY SHORT
+  less-bad than long. Consistent with active-session liquidity.
+- **Selectivity filter (trend-aligned + high-vol) moved raw −0.057R → +0.038R (159 trades)** — marginally
+  positive but STILL 16% win (wrong shape for prop; long losing streaks breach drawdown).
+- **The standout cells are NOISE, not edges (flagged honestly):** London short+downtrend+hivol +1.842R but
+  **n=13**; NY same +1.446R **n=33**; BTC filtered +1.135R **n=29**. Small-N at high RR = data-mining
+  artifacts. Presenting these as "found it" would be the exact survivorship trap the engine exists to kill.
+
+**Honest conclusion:** the MECHANICAL version of Rauf's method does not carry a robust systematic edge
+across a broad, careful test. His real +$56K/mo is real but comes from DISCRETIONARY condition-reading
+("validate before 9:30", ES/NQ relative strength, which 2-3 days, execution/exits) that is NOT
+systematizable from free OHLCV. This converges with the entire project: retail-accessible MECHANICAL edges
+are thin-to-noise; the money that exists is discretionary skill OR the risk/prop/product business. What a
+real systematic intraday test would need (don't have): years of 1m (not 90d), equity/FX feeds, and
+order-flow/footprint data (paid) — the "read" Rauf uses likely isn't in free OHLCV.
