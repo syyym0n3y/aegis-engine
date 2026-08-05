@@ -12,6 +12,9 @@ export const ASSET_VOL_MODELS: Record<string, AssetVolModel> = {
   USO: { ivSymbol: "^OVX", b0: 0.0035, bRV: 0.0953, bIV: 0.7208, ref: 0.3176 },
   QQQ: { ivSymbol: "^VXN", b0: -0.017, bRV: 0.154, bIV: 0.7424, ref: 0.2012 },
   SPY: { ivSymbol: "^VIX", b0: -0.0485, bRV: 0.0667, bIV: 0.9656, ref: 0.1506 },
+  // crypto (D-135b): Deribit DVOL, RVann uses √365. DVOL dominates (BTC t=4.8, ETH t=3.4; RV insignificant).
+  BTC: { ivSymbol: "DVOL", b0: -0.0458, bRV: -0.0626, bIV: 0.9868, ref: 0.359 },
+  ETH: { ivSymbol: "DVOL", b0: 0.1376, bRV: -0.1607, bIV: 0.8429, ref: 0.5874 },
 };
 const VOL_FLOOR = 0.03;
 

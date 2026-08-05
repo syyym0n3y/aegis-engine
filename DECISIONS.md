@@ -1559,3 +1559,17 @@ excess-vs-buy&hold Sharpe, OOS + deflation. Buy-hold = 12.8% CAGR / Sharpe 0.80.
 Verdict: the t=4.5 association is real but not tradable alone (timing to cash costs more than it saves).
 CONFIRMS (now proven, not asserted) DIX belongs as an AWARENESS surface — dark-pool accumulation lean /
 conviction color — never sizing or a standalone strategy. The operator was right to force the test.
+
+### D-137 — Crypto DVOL sizing (horizontal complete) + DIX awareness surfaced (2026-08-05)
+
+Completed the two remaining items.
+- **Crypto vol leg**: `scripts/trd-crypto-vol.ts` — Deribit DVOL (free, 2021→now) forward-vol screen:
+  BTC DVOL t=4.8 ✓, ETH t=3.4 ✓ (trailing RV insignificant both — DVOL dominates, like gold/oil). Added
+  BTC/ETH to ASSET_VOL_MODELS; wired `trd-alpaca-tick` to size BTC/ETH by DVOL (units: crypto √365, not
+  √252), fail-open to vol-regime. LIVE VERIFIED (volprobe): BTC DVOL 34.4→fwd 27.7%→×1, ETH 48→48.2%→×1.
+  → EVERY asset class the engine trades now sizes by its own best forward-vol signal: equity-index
+  GEX+VIXterm+RV, gold GVZ, crypto DVOL. Horizontal pass COMPLETE.
+- **DIX awareness surface**: after D-136 proved DIX is not tradable alpha, surfaced it as CONTEXT — trd-gex
+  regime block now returns dixPercentile + darkPoolLean; aegis-cockpit order-flow panel shows it, explicitly
+  labelled "awareness only, gated & failed as alpha (DSR 29%)". LIVE: SPY DIX 68th pctile, neutral lean.
+178 tests green; deno check clean across all touched fns.

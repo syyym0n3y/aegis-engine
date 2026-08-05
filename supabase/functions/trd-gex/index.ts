@@ -5,16 +5,20 @@ import { buildGexProfile, type OptContract } from "../_shared/trd-gex.ts";
 import { gexRegime } from "../_shared/trd-gex-regime.ts";
 
 // D-132: live GEX regime → forward-vol de-risk, from free SqueezeMetrics 15y history (SPY/SPX only).
-async function regimeFromSqueeze(): Promise<{ percentile: number; regime: string; expectedFwdVolPct: number; deRisk: number; asof: string } | null> {
+async function regimeFromSqueeze(): Promise<{ percentile: number; regime: string; expectedFwdVolPct: number; deRisk: number; asof: string; dixPercentile: number; darkPoolLean: string } | null> {
   try {
     const r = await fetch("https://squeezemetrics.com/monitor/static/DIX.csv", { headers: { "User-Agent": "Mozilla/5.0" } });
     if (!r.ok) return null;
     const rows = (await r.text()).trim().split("\n").slice(1).map((l) => l.split(","));
-    const series = rows.map((p) => +p[3]).filter((x) => Number.isFinite(x));
-    if (series.length < 300) return null;
-    const cur = series[series.length - 1]; const hist = series.slice(0, -1);
-    const g = gexRegime(cur, hist);
-    return { ...g, asof: rows[rows.length - 1][0] };
+    const gexSeries = rows.map((p) => +p[3]).filter((x) => Number.isFinite(x));
+    const dixSeries = rows.map((p) => +p[2]).filter((x) => Number.isFinite(x));
+    if (gexSeries.length < 300) return null;
+    const g = gexRegime(gexSeries[gexSeries.length - 1], gexSeries.slice(0, -1));
+    // DIX = awareness only (D-136: t=4.5 but FAILS as tradable alpha, DSR 28.7%). A lean, not a signal.
+    const dCur = dixSeries[dixSeries.length - 1]; const dHist = dixSeries.slice(0, -1).sort((a, b) => a - b);
+    let dr = 0; while (dr < dHist.length && dHist[dr] < dCur) dr++; const dixPct = dHist.length ? dr / dHist.length : 0.5;
+    const lean = dixPct >= 0.7 ? "elevated dark-pool buying (mild bullish lean — context only)" : dixPct <= 0.3 ? "low dark-pool buying (mild cautious lean — context only)" : "neutral dark-pool activity";
+    return { ...g, asof: rows[rows.length - 1][0], dixPercentile: +dixPct.toFixed(3), darkPoolLean: lean };
   } catch { return null; }
 }
 
