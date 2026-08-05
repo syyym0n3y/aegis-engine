@@ -1614,3 +1614,19 @@ All committed; deno check clean; deployed + live-verified.
 Encoded `_shared/trd-session-vol.ts` (+3 tests): SESSION_VOL_PCT baselines + sessionExpectedVol(dailyFwdVol)
 scaling each session by the live regime. Surfaced on aegis-cockpit sizing panel (live: Asia ~2.1% / London
 ~3.2% / NY ~6.5% at today's calm regime). 194 _shared tests green.
+
+### D-142 — Full multi-TF candle surface (1m→4h × instruments); 2 data-integrity bugs fixed (2026-08-05)
+
+Operator: all candles (1m/5m/15m/30m/1h/2h/4h) at the same positions across instruments; "make sure all the
+data is right." `scripts/trd-tf-surface.ts` — every TF resampled from ONE matched 1m base per instrument.
+Two real bugs caught + fixed on the "is it right?" check:
+1. **Crypto window mismatch**: fixed-5000-bars-per-native-interval meant 1m covered 3.5d (calm) vs 4h 2.3y
+   → false non-flat vol. Fixed: pull one 1m window, resample all TFs from it (identical sample period).
+2. **Index annualization**: RTH 252×390 basis understated index vol ~1.9× (S&P read 8.5%). Fixed to
+   data-driven bars ÷ calendar-years → S&P 16.8%, Nasdaq 20.4% (match known long-run vol).
+RESULT (verified right): ann-vol FLAT down every column for ALL 4 instruments × 7 TFs — S&P 16.7-16.9,
+Nasdaq 20.2-20.5, BTC 27-29 (21d), ETH 38-40 (21d) → clean √-scaling, so the regime de-risk calibrates every
+candle. med-move% / p90-range% columns = per-candle stop-sizing numbers per TF. Honest limits: crypto 21d
+(Binance REST 1m cap → recent regime, not long-run; index-depth needs data.binance.vision bulk dumps);
+continuous-session RV excludes overnight gaps (standard). Deeper observation (bulk crypto 1m, intraday
+U-shape) available on request.
