@@ -1412,3 +1412,12 @@ in-sample — symmetric consistency hints the crowding effect is real, hidden by
 test = a SINGLE pre-registered hypothesis ("fade the crowded funding side", 1-2 trials) on crypto, extended
 to equities/commodities via COT weekly positioning (free, OI-like). Queued. Nothing promoted; terminal state
 remains "nothing cleared the gate" = the thesis working (D-070).
+
+### D-127 — Pre-registered funding-crowding test: FAILS clean (crowding≠reversion) (2026-08-05)
+
+Isolated the D-126b hint with a 2-trial pre-registered test (no setup/CVD/MTF dredge). `trd-funding-edge.ts`,
+10 perps, funding top/bottom decile → forward 3d return.
+- **H1 SHORT crowded-long: −2.17% (OOS −1.47%), 48% win** — crowded longs CONTINUE, shorting loses.
+- **H2 LONG crowded-short: +0.43% (OOS +0.24%), Sharpe 0.047 → DSR 0.5% FAILS.**
+Verdict: funding-crowding ALONE does not predict reversion (if anything crowded-long = momentum). The map's
++0.25R was dredge, not crowding. Confirms D-126b honestly with minimal trials. Nothing promoted.
