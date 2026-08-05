@@ -11,7 +11,7 @@ const UNIVERSE = ["SPY", "QQQ", "IWM", "DIA", "XLK", "XLF", "XLE", "XLV", "XLU",
 const HORIZON = 5, STOP_ATR = 2, ATRP = 10;
 type XBar = Bar & { ts: number };
 async function bars(sym: string): Promise<XBar[]> {
-  const p2 = Math.floor(Date.now() / 1000), p1 = p2 - 4200 * 86400;
+  const p2 = Math.floor(Date.now() / 1000), p1 = 0; // FULL history (matches/exceeds 16y; SPY→1993)
   const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&period1=${p1}&period2=${p2}`, { headers: { "User-Agent": "Mozilla/5.0" } });
   const j = await r.json().catch(() => null); const res = j?.chart?.result?.[0]; if (!res?.timestamp) return [];
   const t = res.timestamp as number[]; const q = res.indicators.quote[0]; const out: any[] = [];
@@ -51,7 +51,7 @@ for (const sym of UNIVERSE) {
 
 const agg = (t: T[]) => t.length ? `${(mean(t.map((x) => x.r)) >= 0 ? "+" : "")}${mean(t.map((x) => x.r)).toFixed(3)}R/${(t.filter((x) => x.r > 0).length / t.length * 100).toFixed(0)}%/${t.length}` : "—";
 const MON = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-console.log(`CONDITIONS MAP — expectancy(R) / win% / N, per setup × condition. ${UNIVERSE.length} instruments, ~11y, 5d horizon, 2ATR stop.\n`);
+console.log(`CONDITIONS MAP — expectancy(R) / win% / N, per setup × condition. ${UNIVERSE.length} instruments, FULL history (SPY→1993, up to ~33y), 5d horizon, 2ATR stop.\n`);
 for (const [name, t] of Object.entries(trades)) {
   console.log(`══ ${name}  [ALL: ${agg(t)}] ══`);
   console.log(`   VIX:  calm<15 ${agg(t.filter((x) => x.vix < 15))}   normal15-25 ${agg(t.filter((x) => x.vix >= 15 && x.vix < 25))}   STRESS>25 ${agg(t.filter((x) => x.vix >= 25))}`);
