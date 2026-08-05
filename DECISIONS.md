@@ -1676,3 +1676,24 @@ Operator: pre-register the top conditional candidates + is the data refined or d
 Binance), counts ONLY post-registration entries → one un-deflated forward trial each, applies the SAME regime
 cost model so forward is comparable to the frozen backtest number. Deployed + verified (all 0/30, correct at
 T+0). pg_cron 'trd-r007-forward' every 6h (jobid 22). Read ≥30 forward trades/candidate.
+
+### D-146 — FULL AUDIT: all 4 pre-registered candidates FALSIFIED before capital (2026-08-06)
+
+Operator: "account for everything, don't stop until you have." Closed all 4 audit gaps from D-145. Result:
+**every candidate falsified — retired pre-forward, zero capital risked.**
+- **GAP 2 era walk-forward** (`trd-walkforward-era.ts`): stress-short positive 4/6 eras, CONCENTRATED in 2021
+  (+1.97R) while 2020 crisis NEGATIVE (−0.09R) = one-era artifact. calm-long 11/11 eras; meanrev 10/12;
+  BTC-lowvol 4/8 and negative 2022-24 (decaying).
+- **GAP 1 gap-risk** (same script): 11-21% of trades span session gaps, mean worst adverse gap −0.34 to
+  −0.58R; charging it costs ~0.03R. All survived — NOT the killer.
+- **GAP 3 universe breadth** (`trd-universe-breadth.ts`, 50 instruments): **stress-short positive in 0/50**
+  (mean −0.217R). calm-long 25/50 = coin flip (mean +0.001R), works on tech/growth, fails on commodities/
+  rate-sensitives → the signature of LONG-EQUITY BETA, not a setup.
+- **GAP 4 random-entry control** (`trd-random-control.ts`, DECISIVE): 5× matched random entries per signal
+  (same instrument/regime/direction/mechanics). **NO setup beat random — all |t|<2; 3/6 WORSE than random.**
+  → R-007 discovered the REGIME, not the setup; calm-VIX random longs earn +0.15-0.25R from drift.
+All 4 marked FALSIFIED-PRE-FORWARD in trd_r007_state with reasons; R-007 doc amended with the falsification.
+**PERMANENT NEW GATE: every conditional-expectancy claim must beat a matched RANDOM-ENTRY control** — without
+it, regime drift reads as setup edge. This is the methodological upgrade the audit produced.
+Corpus verdict unchanged and stronger: no mechanical setup on any TF/regime/instrument-set beats random entry.
+Durable value remains the risk/sizing engine + regime awareness (live, measured, guarded).
