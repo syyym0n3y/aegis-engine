@@ -1547,3 +1547,15 @@ asset, previously sized on RV alone) → GVZ model in `trd-alpaca-equity-tick`, 
 missing. LIVE VERIFIED: GVZ 25.6 → fwd 21.2% → GLD deRisk 0.726 (vs ~0.89 under plain RV — GVZ-driven,
 correct). TLT/USO/QQQ-VXN in the table, ready when traded. 178 tests green. Units: vr.rv daily → ×√252.
 NEXT (breadth): crypto per-asset (Deribit DVOL/funding) for the crypto executor; surface asset-vol on cockpit.
+
+### D-136 — DIX gated as a directional edge: FAILS (awareness tilt, not alpha) — now proven (2026-08-05)
+
+Operator challenged the D-134 assertion "DIX = awareness not size." Tested it properly as a directional edge
+(`scripts/trd-dix-edge.ts`, 3837 days): condition SPX exposure on trailing-252 DIX percentile, 4 variants,
+excess-vs-buy&hold Sharpe, OOS + deflation. Buy-hold = 12.8% CAGR / Sharpe 0.80.
+- long/flat, long/short, scaled: ALL negative excess Sharpe (going to cash on low-DIX underperforms).
+- best "tilt" variant: 13.7% CAGR but maxDD 35% (vs 21%), excess IS +0.42 → **OOS −0.19**.
+- **GATE: best excess Sharpe → DSR 28.7% → FAILS.** DIX is NOT standalone alpha.
+Verdict: the t=4.5 association is real but not tradable alone (timing to cash costs more than it saves).
+CONFIRMS (now proven, not asserted) DIX belongs as an AWARENESS surface — dark-pool accumulation lean /
+conviction color — never sizing or a standalone strategy. The operator was right to force the test.
