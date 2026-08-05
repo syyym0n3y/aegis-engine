@@ -1224,3 +1224,20 @@ untested/gated; directional/chart/intraday = front-run to noise (tested 10×). *
 money lives in STRUCTURAL PREMIA (paid to bear risk), not directional prediction. VRP is the standout.**
 Next: validate with CBOE BXM/PUT/PUTW actual index history (real buy-write/put-write track records), then
 wire tail-managed. Options data (chains/IV) needed for a full build — the one paid-ish gap.
+
+### D-117 — "G Trade" house-money covered-calls = right concept, decay-trap instrument (2026-08-04)
+
+Operator's source for the covered-call idea: TikTok "G Trade" — covered calls on LEVERAGED ETFs (TQQQ 3x,
+TSLL 2x) framed as "rent collecting with house money." His OWN screenshots show LOSSES: sold calls "down
+322%" (−$1,420 MV), a TQQQ $51 call bought back for −$1,292 realized (−384%), shares −33% underwater
+(avg $79.30 → ~$53). His own words: "like any leverage ETF you should NOT be buying and holding." Tell: his
+search bar reads "pov ideas for content video funny" — the trading is content; "$10k/day" is the hook.
+
+**Quantified the decay (TQQQ vs QQQ, 2010-2026, real data):** QQQ +1,733%/−35% maxDD; TQQQ +32,165% but
+**−82% maxDD**, and vs a no-decay "true 3x" of +72,157% → TQQQ delivered <HALF of pure 3x; the missing
+~40,000pp = volatility decay. Leveraged ETFs are the WORST "hold forever" underlying, and a covered call on
+one is the worst combination (capped upside + decay + rocket-losses on the short call).
+
+**Verdict:** the CONCEPT (covered calls = VRP harvest, D-116, 84% positive) is real; G Trade's IMPLEMENTATION
+is a decay trap his own numbers show losing. Correct version = covered-call/put-write on QUALITY non-decaying
+underlyings (SPY/blue-chip/dividend), tail-managed by the D-100 engine. Keep the idea, drop the ticker + guru.
