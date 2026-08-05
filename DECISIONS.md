@@ -1573,3 +1573,15 @@ Completed the two remaining items.
   regime block now returns dixPercentile + darkPoolLean; aegis-cockpit order-flow panel shows it, explicitly
   labelled "awareness only, gated & failed as alpha (DSR 29%)". LIVE: SPY DIX 68th pctile, neutral lean.
 178 tests green; deno check clean across all touched fns.
+
+### D-138 — Bonds (TLT) + Oil (USO) taken live in the paper executor (2026-08-05)
+
+Took the D-135 table-ready assets live. `trd-alpaca-equity-tick` (Alpaca PAPER — no real money, within the
+paper-first invariant): universe SPY/QQQ/IWM/GLD → +TLT +USO. Refactored sizing to be MODEL-DRIVEN not
+per-symbol: any non-index symbol with an ASSET_VOL_MODELS entry is sized by its implied-vol index via a
+once-per-tick ivCache (GLD→^GVZ, TLT→^MOVE, USO→^OVX), fail-open to vol-regime. LIVE VERIFIED (probe):
+- TLT tradable+shortable (trades both ways), MOVE 77.6 → fwd 10% → ×1 (calm bonds).
+- USO tradable but NOT shortable on Alpaca → existing short-skip guard makes it long-only; OVX 51.5 →
+  fwd 44% → ×0.722 (elevated oil vol correctly de-risked).
+Every traded instrument now sized by its own best forward-vol signal. Cron unchanged (loops SYMBOLS
+internally). 178 _shared tests green; deno check clean. Horizontal breadth now FULLY live.
