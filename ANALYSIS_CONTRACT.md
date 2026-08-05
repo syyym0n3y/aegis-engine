@@ -44,3 +44,16 @@
 ## The one line that covers it all
 **Report the measurement, not the feeling. Real over approximate. Built over projected. Consistent over
 convenient.** The operator does not want bias — he wants the number and its uncertainty, stated plainly.
+
+## Rule 7 — the RANDOM-CONTROL gate (added 2026-08-06, D-146; paid for in full)
+
+**No conditional expectancy may be called an edge until it beats a MATCHED RANDOM-ENTRY control.**
+Match on: same instrument, same regime/condition, same direction, same stop/target mechanics. Require the
+Welch t of (setup − control) ≥ 2 via `_shared/trd-random-control.ts` `edgeVsRandom()` (fails closed on N<30).
+
+Why this is now Rule 7: four candidates (D-144/145) reached +0.08…+0.32R OOS expectancy, survived
+regime-dependent costs, survived era walk-forward, and were formally pre-registered — and ALL FOUR were then
+shown to be **regime drift, not setups**: none beat a random entry in the same regime (all |t|<2, half were
+worse than random), and the headline stress-short was positive in **0 of 50** instruments. In calm VIX a
+*random* long earns +0.15–0.25R. Any "setup" measured without this control is measuring the market's drift
+and calling it skill. This gate is machine-enforced and unit-tested; it must never be bypassed.
