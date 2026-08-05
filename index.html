@@ -65,6 +65,12 @@ a{color:var(--accent)}
   </div>
 </section>
 
+<section class="view" data-view="copilot">
+  <h1>Market co-pilot</h1>
+  <p class="sub">Real-time market awareness: <b>what phase we're in, what's about to hurt, where to hide, what's favourable now, and how much to risk</b> — from real leading signals + the history of how instruments behave in each kind of crash. Not advice; awareness.</p>
+  <div id="cp_out">loading…</div>
+</section>
+
 <section class="view" data-view="portfolio">
   <h1>Portfolio risk X-ray</h1>
   <p class="sub">The thing that actually blows up accounts isn't a bad signal — it's <b>hidden correlation + oversizing</b>. Paste your real positions from any broker. Aegis pulls real history and shows your <b>true number of bets</b> and your <b>fat-tailed chance of ruin</b> — then how much to cut. No signals. Just the seatbelt.</p>
@@ -152,13 +158,13 @@ QQQ long 12000</textarea>
 
 <script>
 const API = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
-const VIEWS = [["home","Home"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
+const VIEWS = [["home","Home"],["copilot","Co-pilot"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
 const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
 function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
-  if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); location.hash=k; window.scrollTo(0,0);}
+  if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); if(k==="copilot")doCopilot(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
 async function doProp(){
@@ -177,6 +183,30 @@ async function doProp(){
       <div class="card"><div class="lbl">EV per eval</div><div class="v" style="color:${d.evAtOptimal>0?'var(--accent)':'var(--red)'}">${d.evAtOptimal>=0?'+':''}$${d.evAtOptimal}</div></div>
     </div>
     <table style="margin-top:14px"><thead><tr><th>risk/trade</th><th class="num">pass eval</th><th class="num">get paid</th><th class="num">EV/eval</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doCopilot(){
+  const o=document.getElementById("cp_out");o.innerHTML="<span class=muted>reading the market…</span>";
+  try{const d=await(await fetch(API+"/trd-regime",{cache:"no-store"})).json();const r=d.regime;
+    const pc=r.recessionRiskScore>=55?"var(--red)":r.recessionRiskScore>=30?"var(--amber)":"var(--accent)";
+    const fav=Array.isArray(d.whatsFavourableNow)?d.whatsFavourableNow.map(x=>`<span class="pill" style="color:${x.meanRevSetup==='long'?'var(--accent)':'var(--red)'}">${esc(x.symbol)} ${esc(x.meanRevSetup)}</span>`).join(""):`<span class="muted">${esc(d.whatsFavourableNow)}</span>`;
+    const sizing=(d.sizingGuide||[]).map(x=>`<div class="row"><span class="mono">${esc(x.symbol)}</span><span class="mono" style="color:${x.sizeMultiplier>=0.99?'var(--accent)':x.sizeMultiplier>=0.6?'var(--amber)':'var(--red)'}">size ×${x.sizeMultiplier} ${x.volElevated?'· vol elevated':''}</span></div>`).join("");
+    const pb=d.eventPlaybook;
+    o.innerHTML=`<div class="grid">
+      ${card("Phase",esc(r.phase.split(' /')[0]),"as of "+esc(d.asOf),pc)}
+      ${card("Recession risk",r.recessionRiskScore+"/100","curve "+r.curve10y3m+"pp",pc)}
+      ${card("VIX",r.vix,r.spyAbove200MA?"SPY uptrend":"SPY DOWNtrend",r.vix>25?'var(--red)':r.vix>20?'var(--amber)':'var(--accent)')}
+      ${card("Credit",r.creditRiskOff?"RISK-OFF":"risk-on","HY vs IG",r.creditRiskOff?'var(--red)':'var(--accent)')}</div>
+    <div class="panel" style="margin-top:14px"><div class="lbl">Posture</div><div style="font-size:14px;color:var(--tx)">${esc(r.posture)}</div>
+      ${r.signals.length?`<div style="margin-top:10px">${r.signals.map(s=>`<span class="pill" style="color:var(--amber);border-color:var(--amber)55">${esc(s)}</span>`).join("")}</div>`:`<div class="muted" style="margin-top:8px">no warning signals firing</div>`}</div>
+    <h2>What's favourable now</h2><div class="panel">${fav}</div>
+    <h2>Sizing guide (vol-regime × instrument)</h2><div class="panel">${sizing}</div>
+    <h2>Event playbook — where to hide depends on the crash TYPE</h2>
+    <div class="panel" style="font-size:13px"><div style="color:var(--tx);margin-bottom:8px">${esc(pb.note)}</div>
+      <div class="row"><span><b>Growth-scare</b> <span class="muted">(${esc(pb.growth_scare.examples)})</span></span></div>
+      <div style="font-size:12px;color:var(--mut);padding:2px 0 8px">hide: ${pb.growth_scare.protects.map(esc).join(", ")} · hit: ${pb.growth_scare.hit.map(esc).join(", ")}</div>
+      <div class="row"><span><b>Inflation / rate shock</b> <span class="muted">(${esc(pb.inflation_rate_shock.examples)})</span></span></div>
+      <div style="font-size:12px;color:var(--mut);padding:2px 0">hide: ${pb.inflation_rate_shock.protects.map(esc).join(", ")} · <span style="color:var(--red)">${esc(pb.inflation_rate_shock.warning)}</span></div></div>`;
   }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
 }
 async function doPortfolio(){
