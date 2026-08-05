@@ -7,6 +7,11 @@ import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts"; // D-100 verifie
 import { kellySize } from "../_shared/trd-kelly.ts";           // D-101 fractional-Kelly sizing on measured edge
 import { gexRegime } from "../_shared/trd-gex-regime.ts";       // D-132 GEX forward-vol de-risk (validated t=-14.1)
 import { fwdVolDeRisk } from "../_shared/trd-fwdvol.ts";        // D-134 UNIFIED forward-vol forecast (trailingRV+GEX+VIXterm)
+import { assetFwdVolDeRisk } from "../_shared/trd-asset-vol.ts"; // D-135 per-asset implied-vol sizing (gold→GVZ, etc.)
+// Latest close of a Yahoo implied-vol index as a FRACTION (e.g. ^GVZ 25.6 → 0.256). NaN on failure.
+async function ivLevel(sym: string): Promise<number> {
+  try { const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5d`, { headers: { "User-Agent": "Mozilla/5.0" } }); const j = await r.json(); const c = j?.chart?.result?.[0]?.indicators?.quote?.[0]?.close?.filter((x: number) => Number.isFinite(x)); return c?.length ? c[c.length - 1] / 100 : NaN; } catch { return NaN; }
+}
 const IDX = new Set(["SPY", "QQQ", "IWM"]); // broad equity indices the SPX GEX/VIX-term model applies to; NOT GLD (gold)
 // Once-per-tick VIX term structure (VIX/VIX3M): >1 = backwardation/stress. Free Yahoo. NaN on failure (fail-open).
 async function marketVixTerm(): Promise<number> {
@@ -81,7 +86,8 @@ Deno.serve(async (req) => {
       const k = kellySize((stx.closed ?? []).map((c: any) => c.r), 0.01);
       const gexDR = await gexMarketDeRisk(); const vixTerm = await marketVixTerm(); // D-132/134
       const unified: any = {}; for (const s of ["SPY", "QQQ", "IWM"]) { const vr = volRegimeDeRisk(await dailyReturns(s)); unified[s] = fwdVolDeRisk(vr.rv * Math.sqrt(252), gexDR.pctile >= 0 ? gexDR.pctile : NaN, vixTerm); }
-      return new Response(JSON.stringify({ ok: true, market_open: clock?.is_open, next_open: clock?.next_open, assets, spyBarsAvail: sampleBars, volRegimeDeRisk: regimes, gexMarketDeRisk: gexDR, vixTerm: Number.isFinite(vixTerm) ? +vixTerm.toFixed(3) : null, unifiedFwdVolDeRisk: unified, kelly: k }, null, 2), { headers: cors });
+      const gvz = await ivLevel("^GVZ"); const gvr = volRegimeDeRisk(await dailyReturns("GLD")); const gld = assetFwdVolDeRisk("GLD", gvr.rv * Math.sqrt(252), gvz); // D-135
+      return new Response(JSON.stringify({ ok: true, market_open: clock?.is_open, next_open: clock?.next_open, assets, spyBarsAvail: sampleBars, volRegimeDeRisk: regimes, gexMarketDeRisk: gexDR, vixTerm: Number.isFinite(vixTerm) ? +vixTerm.toFixed(3) : null, unifiedFwdVolDeRisk: unified, gldGvzDeRisk: { gvz: Number.isFinite(gvz) ? +(gvz * 100).toFixed(1) : null, ...gld }, kelly: k }, null, 2), { headers: cors });
     }
     if (P.get("selftest") === "1") {
       if ((req.headers.get("x-admin") ?? "") !== SRK) return new Response(JSON.stringify({ ok: false, err: "admin token required for selftest" }), { status: 403, headers: cors });
@@ -97,6 +103,7 @@ Deno.serve(async (req) => {
     const a = await get("/v2/account"); const equity = +a.equity;
     const gexDR = await gexMarketDeRisk(); // D-132: market-wide GEX percentile (≤1, fail-open)
     const vixTerm = await marketVixTerm(); // D-134: VIX/VIX3M term structure (fail-open NaN)
+    const gvz = await ivLevel("^GVZ");     // D-135: gold implied vol for GLD sizing (fail-open NaN)
     const st = await fetch(`${SB}/rest/v1/trd_alpaca_state?id=eq.equity&select=*`, { headers: hdr }).then((r) => r.json()).then((x) => x[0] ?? { open_trades: {}, closed: [], ticks: 0, last_bars: {} });
     const open: Record<string, any> = st.open_trades ?? {}; const closed: any[] = st.closed ?? []; const lastBars: Record<string, string> = st.last_bars ?? {};
     let entered = 0, exited = 0;
@@ -119,8 +126,9 @@ Deno.serve(async (req) => {
         const k = kellySize(closed.map((c: any) => c.r), RISK); // D-101: fractional-Kelly on THIS strategy's measured edge
         // D-134: for equity indices use the UNIFIED forward-vol forecast (trailingRV+GEX+VIXterm → one deRisk,
         // no triple-counting); GLD keeps the plain vol-regime. vr.rv is DAILY stdev → annualize ×√252.
-        let sizeDeRisk: number, sizeSrc: string;
-        if (IDX.has(sym)) { const gp = gexDR.pctile >= 0 ? gexDR.pctile : NaN; sizeDeRisk = fwdVolDeRisk(vr.rv * Math.sqrt(252), gp, vixTerm).deRisk; sizeSrc = "unified-fwdvol"; }
+        let sizeDeRisk: number, sizeSrc: string; const rvAnn = vr.rv * Math.sqrt(252);
+        if (IDX.has(sym)) { const gp = gexDR.pctile >= 0 ? gexDR.pctile : NaN; sizeDeRisk = fwdVolDeRisk(rvAnn, gp, vixTerm).deRisk; sizeSrc = "unified-fwdvol"; }
+        else if (sym === "GLD") { const a = assetFwdVolDeRisk("GLD", rvAnn, gvz); sizeDeRisk = a.model !== "none" ? a.deRisk : vr.deRisk; sizeSrc = a.model !== "none" ? "gvz-fwdvol" : "vol-regime"; } // D-135: gold sized by GVZ (dominant t=27.7)
         else { sizeDeRisk = vr.deRisk; sizeSrc = "vol-regime"; }
         const riskFrac = k.riskFraction * sizeDeRisk;           // pure risk-reducer ≤ base, never levers, no direction
         const qty = Math.max(1, Math.floor((riskFrac * equity) / stopDist));

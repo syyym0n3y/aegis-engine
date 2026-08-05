@@ -1532,3 +1532,18 @@ vol-regime. Fail-open per term. LIVE VERIFIED: VIXterm 0.826, GEX p96 → SPY ×
 IWM ×1. Replaces+improves D-133. 175 tests green.
 DIX: confirmed but directional+small → surface as awareness tilt, NOT sizing (own pass). HORIZONTAL next:
 replicate the fwd-vol framework per asset class (crypto: funding+RV; bonds: MOVE; gold: GVZ) — breadth.
+
+### D-135 — HORIZONTAL pass: per-asset implied-vol sizing; framework generalises across asset classes (2026-08-05)
+
+Replicated the D-134 forward-vol framework across asset classes, each gated the same way (does the asset's
+own free implied-vol index add forward-vol value over trailing RV? |t|>2). `scripts/trd-horizontal-vol.ts`,
+full Yahoo history:
+- Bonds TLT/^MOVE IV t=13.7 ✓ | **Gold GLD/^GVZ IV t=27.7 ✓ (RV t=1.8 NS — GVZ DOMINATES)** |
+  Oil USO/^OVX t=27.5 ✓ | Nasdaq QQQ/^VXN t=38.8 ✓ | S&P ctrl SPY/^VIX t=48.4 ✓.
+  → implied-vol indices are powerful forward-vol predictors in EVERY asset class, often dominating RV.
+Built `_shared/trd-asset-vol.ts` (+3 tests): ASSET_VOL_MODELS table (fitted b0/bRV/bIV/ref per asset) +
+assetFwdVolDeRisk(asset, RVann, ivLevel)=min(1,ref/forecast), fail-open. Wired GLD (the traded non-index
+asset, previously sized on RV alone) → GVZ model in `trd-alpaca-equity-tick`, fallback to vol-regime if GVZ
+missing. LIVE VERIFIED: GVZ 25.6 → fwd 21.2% → GLD deRisk 0.726 (vs ~0.89 under plain RV — GVZ-driven,
+correct). TLT/USO/QQQ-VXN in the table, ready when traded. 178 tests green. Units: vr.rv daily → ×√252.
+NEXT (breadth): crypto per-asset (Deribit DVOL/funding) for the crypto executor; surface asset-vol on cockpit.
