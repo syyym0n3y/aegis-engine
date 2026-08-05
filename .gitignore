@@ -20,3 +20,4 @@ dist/
 .deno/
 vendor/
 data/duka/
+data/binance/
