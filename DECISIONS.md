@@ -1241,3 +1241,23 @@ one is the worst combination (capped upside + decay + rocket-losses on the short
 **Verdict:** the CONCEPT (covered calls = VRP harvest, D-116, 84% positive) is real; G Trade's IMPLEMENTATION
 is a decay trap his own numbers show losing. Correct version = covered-call/put-write on QUALITY non-decaying
 underlyings (SPY/blue-chip/dividend), tail-managed by the D-100 engine. Keep the idea, drop the ticker + guru.
+
+### D-118 — VRP on REAL CBOE data (corrects D-116): risk-reducer, not return-multiplier (2026-08-04)
+
+Pulled the actual CBOE indices (free, Yahoo): ^BXM (BuyWrite, since 1988), ^PUT (PutWrite, since 1996) vs
+SPY, 30y aligned (`scripts/trd-vrp-cboe.ts`).
+- SPY buy&hold: CAGR 10.4%, vol 19.3%, Sharpe 0.51, maxDD 55%.
+- ^BXM covered-call: CAGR **7.3%**, vol 14.1%, Sharpe 0.50, maxDD 40%.
+- ^PUT put-write: CAGR 8.5%, vol 15.3%, Sharpe **0.54**, maxDD **37%**, corr 0.80.
+
+**CORRECTS D-116:** my BS-approximation gave covered-call 13.2% CAGR (beating buy&hold) — WRONG; real BXM
+did 7.3%, well BELOW SPY. Honest truth: VRP is real but the STANDARD harvest does NOT beat buy&hold on
+return — it delivers similar RISK-ADJUSTED return with much shallower drawdown (37-40% vs 55%), giving up
+~2-3%/yr of return (capped upside). **It's a risk-REDUCER, not a return-multiplier.** Value = drawdown
+control → safer leverage + survival. Put-write is the best variant. To actually BEAT buy&hold via VRP needs
+active option-selling optimisation (strikes/timing/tail-hedge) → full options-chain data (the one paid gap).
+
+**Data status (operator wants all data):** free + verified for VRP (^BXM/^PUT 30-38y), factors
+(VLUE/MTUM/QUAL/USMV/SIZE), credit (HYG/LQD/JNK), term (TLT/^TNX), carry (FX/commodity ETFs). Only granular
+options chains + IV history are PAID (~$100-300/mo, for active option-selling beyond vanilla). Next: backtest
+the full structural-premia stack on the free data + build the combined diversified premia book.
