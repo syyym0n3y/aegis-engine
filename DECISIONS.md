@@ -1458,3 +1458,18 @@ Built the two free order-flow awareness engines (D-128 roadmap items 1-2), teste
 Both labelled AWARENESS context (not signals/advice). 169 _shared tests pass (+6), deno check clean.
 NEXT: surface trd-gex + trd-value-area in aegis-cockpit + app co-pilot tab; refine dealer-side (put-skew);
 crypto liquidity/footprint leg.
+
+### D-130 — Auction-levels backtest across timeframes: REJECT (levels = context, not signals) (2026-08-05)
+
+Operator: run our gate at the new levels, across timeframes/setups; "loads of history, min_hours not 1min".
+Built `scripts/trd-levels-backtest.ts` (reuses tested valueArea): 4 value-area setups × 3 TFs (1h/4h/1d) ×
+both directions × 6 markets (crypto Binance full-vol + S&P/Nasdaq Dukascopy 15y resampled, TPO profile).
+No look-ahead (trade off PRIOR session's VA). ~470k trades.
+- **fade-VAH-short**: −0.08→−0.11R all TFs (loses). **breakdown-VAL-short**: −0.04→−0.12R (loses).
+- **fade-VAL-long**: ~0 (+0.006 OOS 1h, negative higher TF). **breakout-VAH-long**: 1h ALL +1.333R but
+  **IS +2.187 → OOS +0.027** (in-sample bull artifact; 4h/1d OOS ~0).
+- **GATE: best cell breakout-VAH-long|1d Sharpe 0.054 → DSR 0.0% → FAILS** (12 setup×TF trials).
+Verdict: value-area levels do NOT survive as mechanical setups on ANY timeframe. Longs = drift artifacts
+collapsing OOS; shorts = fight drift, lose. Multi-TF did not rescue. CONFIRMS levels are discretionary
+AWARENESS context (→ live on cockpit D-129b) NOT signals — the thesis working, not a failure. GEX-regime
+historical conditioning needs paid historical chains (flagged, not faked). Terminal "nothing cleared" (D-070).
