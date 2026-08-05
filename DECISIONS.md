@@ -1421,3 +1421,24 @@ Isolated the D-126b hint with a 2-trial pre-registered test (no setup/CVD/MTF dr
 - **H2 LONG crowded-short: +0.43% (OOS +0.24%), Sharpe 0.047 → DSR 0.5% FAILS.**
 Verdict: funding-crowding ALONE does not predict reversion (if anything crowded-long = momentum). The map's
 +0.25R was dredge, not crowding. Confirms D-126b honestly with minimal trials. Nothing promoted.
+
+### D-128 — Order-flow stack mapped; FREE GEX dealer-levels engine built+proven (2026-08-05)
+
+Operator's roadmap: master order flow (ATAS/Sierra/Bookmap) + options/GEX/SpotGamma dealer levels + stack
+into auction-market-theory framework (value areas, composite/prior value, narrative). Researched + mapped
+free-vs-paid honestly:
+- **Auction Market Theory (value areas VAH/VAL/POC, composite, prior value)** = FREE, buildable from
+  Dukascopy 1-min indices + Binance crypto already held. [NEXT BUILD]
+- **GEX/dealer hedging levels (SpotGamma displacement)** = FREE. Yahoo options now crumb-gated; found CBOE
+  free delayed chain (cdn.cboe.com/api/global/delayed_quotes/options/{SPY,_SPX}.json) — provides gamma+OI+IV
+  directly for 14k SPY / 32k SPX contracts. Built `scripts/trd-gex-levels.ts`: net-GEX regime, call/put
+  walls, gamma-flip. PROVEN live: SPY spot 771.67 → call wall 775, put wall 750, positive-gamma; SPX call
+  wall 7800/put wall 7400. Displaces SpotGamma (~$50-100/mo).
+- **Liquidity heatmap/footprint (Bookmap/ATAS/Sierra)** = crypto FREE (Binance L2+aggTrades); equities/
+  futures PAID ($50-200/mo tick+L2). The only genuinely-paid leg.
+HONEST FRAME (advisor): research found ZERO backtest evidence these are MECHANICAL edges — they are
+DISCRETIONARY AWARENESS/context, which is exactly the co-pilot product (no trading alpha needed to be
+valuable). Caveats logged: GEX OI is EOD-lagged; dealer-side = standard long-call/short-put assumption;
+gamma-flip via cum-zero-cross is approximate (walls+regime solid).
+NEXT: (1) refine flip (reprice gamma across spot), wire GEX into a `trd-gex` edge fn + co-pilot tab;
+(2) build the value-area/auction engine on the 1-min data; (3) crypto liquidity/footprint from Binance free.
