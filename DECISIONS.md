@@ -1381,3 +1381,22 @@ regular(reversal) + hidden(continuation), both directions. `scripts/trd-stoch-di
 Nuance: divergence-SHORTS lose because they fight drift — a signal-specific failure, NOT evidence shorts
 lose (crowding/positioning shorts tested separately). **All 5 inherited .ex5 now assessed: 0 carry edge
 (4 folklore/synthetic/reconstructed-and-rejected, 1 risk-tool whose source is OSS). Folder closed.**
+
+### D-126 — Multi-TF flow map: funding-CROWDING short-fade is the standout candidate (2026-08-05)
+
+"No stone unturned" build: multi-timeframe (4h trade / 1d filter) + REAL CVD (Binance klines taker-buy vol
+field 9 → per-bar delta, free full-history) + REAL funding (positioning/crowding proxy for OI-side),
+SHORTS & LONGS both. `scripts/trd-mtf-flow-map.ts`. 8 perps, 47,703 trades, 2017-08→2026-08 (9y).
+Bug caught+fixed pre-verdict: klines limit=1500 capped to 1000 → only pulled 1000 bars; fixed to 1000 →
+full 12-19k bars/symbol.
+- **SHORT trend-pullback + crowd-fade + CVD + MTF**: base +0.052R → +crowd +0.308R (n=537) → ALL3 +0.333R
+  (n=404) → **OOS +0.397R/46%/n=89**. The standout, and it's SHORT-side.
+- LONG mirror: crowd-fade +0.283R IS but **ALL3 FAILS OOS −0.118R** → short is the robust side (confirms
+  operator's no-long-bias point).
+- **Attribution (honest): funding-CROWDING is the active filter (~+0.25R); CVD from taker-vol adds ≈0**
+  (+0.052→+0.056). Do not credit CVD.
+- meanrev-fade standout cells (+14.9R n=12, +1.3R n=165) = small-N NOISE, flagged not claimed.
+VERDICT: crypto funding-crowding SHORT-fade = strongest positive-OOS candidate found this session. NOT yet
+an edge — scanned ~24 cells → needs DEFLATED-SHARPE gate vs trial count + forward confirm before promotion.
+LIMIT: OI/CVD free+deep only on crypto; equities/commodities legs need COT weekly (free, OI-like) + can run
+the multi-TF (minus order-flow) on Dukascopy indices / Yahoo — queued, not yet done.
