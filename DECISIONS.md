@@ -1129,3 +1129,29 @@ Wired the D-111 prop-shaped edge end-to-end.
 live — the broad-grid OOS was thinner (~+0.02R), so the forward test (now accruing) is the arbiter, not the
 backtest. Timeframe = DAILY only (free-data limit); intraday needs forward collection or paid data. "First
 to know" = the live scanner; it currently says WAIT (VIX calm). Nothing risks real money — forward/paper only.
+
+### D-113 — Conditions map: which setup wins in which regime (+ honest short-side correction) (2026-08-04)
+
+Operator: study which setups won in which conditions across all ingested instruments + cyclic context.
+`scripts/trd-conditions-map.ts` — 5 setups fired unconditionally across 35 instruments (~11y), each trade
+tagged by VIX regime / trend / day-of-week / month, aggregated to a lookup. Findings (expectancy/win%/N):
+
+| Setup | Best condition | Worst |
+|---|---|---|
+| **dip-buy (RSI<30, uptrend)** | **STRESS VIX>25: +0.088R/57%** | Feb season |
+| rsi2-long (oversold) | STRESS: +0.055R/55%, aboveMA +0.048 | Jan season −0.10 |
+| breakout-long (20d high) | normal VIX +0.049R | **STRESS −0.037** (trend fails in stress) |
+| rsi2-short (overbought) | **LOSES everywhere −0.103R** | calm −0.127 |
+| breakdown-short (20d low) | **LOSES −0.121R** | aboveMA −0.205 |
+
+**The map's story:** LONG mean-reversion (buy dips/oversold) is the edge, and it's STRONGEST in high-VIX
+stress. Breakout/trend is the COMPLEMENT — works in calm/normal, FAILS in stress. Regime dictates setup:
+calm→trend, stress→mean-rev-long. **Cyclic:** Wednesday best day for longs (+0.08R/56%); seasonality per
+setup (dip-buy best Dec, breakout best Jan, mean-rev-long best Jul).
+
+**HONEST CORRECTION:** SHORTS LOSE systematically — both fade-overbought (−0.10R) and breakdown (−0.12R),
+across all regimes. The market's upward drift punishes systematic daily shorts. This corrects the D-111
+short claim (+0.058R "short in downtrend"), which was fragile to the narrow 12-instrument/narrow-exit test;
+on the broad universe with a clean horizon, the short side is a drag. Implication: meanrev-vix-v1's short
+leg is a negative-EV component → recommend a LONG-ONLY refinement (dip-buy + high-VIX = the +0.088R/57%
+cell). The operator's daily/weekly-short thesis does not hold on daily EOD bars (may differ intraday).
