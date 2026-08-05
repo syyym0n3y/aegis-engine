@@ -1302,3 +1302,19 @@ what's about to hurt, where to hide, how much to risk"). Roadmap (operator's ask
 equity/futures shorting (ES/NQ via Alpaca-auth, not crypto proxies); (b) systematically ingest published-book
 frameworks (Market Wizards/Elder/Dalio economic-machine/O'Neil/etc.) as testable strategies; (c) integrate
 the regime engine live into the cockpit + per-session/timeframe/cycle awareness.
+
+### D-121 — Co-pilot live + canon library + real 1-min NY-TBR (builds 1-3) (2026-08-04)
+
+Executed the operator's 3-item roadmap under ANALYSIS_CONTRACT (numbers + N + OOS, no editorial).
+- **(1) Live co-pilot** — `trd-regime` edge fn (phase/recession-score from curve+VIX+trend+credit; crash-
+  type event playbook; live vol-regime sizing + mean-rev scan) + app "Co-pilot" tab. Deployed, verified
+  live: EXPANSION / 0-100 / RISK-ON / VIX 16.5. The product: what phase, what's about to hurt, where to
+  hide (by crash type), what's favourable now, how much to risk.
+- **(2) Canon library** — R-006 + `scripts/trd-canon.ts`: Minervini Trend Template +0.096R OOS (27% win,
+  thin/beta), Elder Triple Screen +0.022R OOS (~0). Dalio/Sinclair covered (D-119/116). Behavioural canon
+  (Livermore/Schwager) = risk-mgmt = shipped engine. O'Neil needs fundamentals (untested).
+- **(3) Real 1-min NY-TBR** — `trd-intraday-equity` edge fn, Alpaca IEX 1-min SPY/QQQ (149k bars, 376 days,
+  the real gap vs crypto proxy). NY-TBR sweep-reversal fired ~30 setups/instrument (selective, matches
+  Rauf's "not every day"). **SHORT negative on BOTH (SPY −0.44R n=17, QQQ −0.40R n=16); LONG positive but
+  n=11-14 = NOISE (flagged, not claimed).** N too small for a verdict; robust read = mechanical short loses
+  (confirms D-113/115). The group's edge is discretionary selectivity, not the mechanical trigger.
