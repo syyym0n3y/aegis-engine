@@ -1660,3 +1660,19 @@ market×TF) filter.
   decision time + sized by the risk engine. CANDIDATES (modest, fat-tailed) → pre-registered forward test before capital.
 Method fix logged: capped R ±15 + degenerate-stop filter (killed a +47R tiny-ATR artifact). Vindicates the
 data-first frame: pooled deflation rejected wholesale what conditional+coherence discovery shows is real structure.
+
+### D-145 — R-007 candidates COST-GATED then PRE-REGISTERED; forward clock started (2026-08-05)
+
+Operator: pre-register the top conditional candidates + is the data refined or do we need better testing?
+**Accuracy refinement FIRST (the answer to the second question):** the top finding is "short into VIX stress"
+— but stress is exactly when spreads/slippage blow out, and discovery used a flat 0.05R cost. Built
+`scripts/trd-cost-regime.ts` re-running candidates on GROSS R then netting REGIME-DEPENDENT costs
+(calm .04 / norm .08 / stress .20 R). Result — ALL FOUR SURVIVE:
+- sweeprev-short|stress  OOS gross +0.517 → **+0.317R @regime cost** (n=1041) ← survives a punishing 0.20R
+- sweeprev-long|calm     +0.338 → **+0.298R** (n=977) | meanrev-long|calm +0.247 → **+0.207R** (n=3885)
+- sweeprev-long|lowvol   +0.164 → **+0.082R** (n=18307)
+**Pre-registered** (frozen spec + immutable registered_at 2026-08-05T22:58:54Z) in new `trd_r007_state`
+(migration 0012). `trd-r007-tick` edge fn evaluates each on live free data (SPY 15m Yahoo + ^VIX; BTCUSDT 15m
+Binance), counts ONLY post-registration entries → one un-deflated forward trial each, applies the SAME regime
+cost model so forward is comparable to the frozen backtest number. Deployed + verified (all 0/30, correct at
+T+0). pg_cron 'trd-r007-forward' every 6h (jobid 22). Read ≥30 forward trades/candidate.
