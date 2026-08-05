@@ -1505,3 +1505,13 @@ Wired: `_shared/trd-gex-regime.ts` (+test) — gexRegime(currentGex, trailingGex
 high-gamma, exp fwd vol 9.7%, ×1 size. SIZING signal, direction-agnostic (D-131(B) failed). 172 tests green.
 NEXT (own pass, HIGH-blast order-path): multiply equity-index position size by GEX deRisk alongside the
 existing volRegimeDeRisk in the paper executor — deliberate risk-engine change, gate separately.
+
+### D-133 — GEX de-risk wired into the equity order path (2026-08-05)
+
+The HIGH-blast pass deferred in D-132. `trd-alpaca-equity-tick` sizing line now composes
+`riskFrac = kellySize × volRegimeDeRisk × gexDeRisk`, where gexDeRisk applies ONLY to equity indices
+(SPY/QQQ/IWM, not GLD) via `gexMarketDeRisk()` — free SqueezeMetrics series → gexRegime() → ≤1 reducer,
+FAIL-OPEN to 1.0 (network fail = no-op). Never levers up, never a direction call (D-131(B) failed). Stored
+on each position (gexDeRisk, gexRegime) + shown in ?probe=1. LIVE VERIFIED: market open, gexMarketDeRisk
+{deRisk 1, high-gamma, pctile 0.96} — no-op now (calm), auto-shrinks ~0.62× when low-gamma. Guard: gexRegime
+primitive unit-tested (≤1, monotone, caps at 1); deno check green. All three sizing terms are pure reducers.
