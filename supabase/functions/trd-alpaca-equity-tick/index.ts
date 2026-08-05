@@ -6,7 +6,16 @@
 import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts"; // D-100 verified risk control, in the order path
 import { kellySize } from "../_shared/trd-kelly.ts";           // D-101 fractional-Kelly sizing on measured edge
 import { gexRegime } from "../_shared/trd-gex-regime.ts";       // D-132 GEX forward-vol de-risk (validated t=-14.1)
-const IDX = new Set(["SPY", "QQQ", "IWM"]); // broad equity indices GEX (SPX) applies to; NOT GLD (gold)
+import { fwdVolDeRisk } from "../_shared/trd-fwdvol.ts";        // D-134 UNIFIED forward-vol forecast (trailingRV+GEX+VIXterm)
+const IDX = new Set(["SPY", "QQQ", "IWM"]); // broad equity indices the SPX GEX/VIX-term model applies to; NOT GLD (gold)
+// Once-per-tick VIX term structure (VIX/VIX3M): >1 = backwardation/stress. Free Yahoo. NaN on failure (fail-open).
+async function marketVixTerm(): Promise<number> {
+  try {
+    const one = async (s: string) => { const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=5d`, { headers: { "User-Agent": "Mozilla/5.0" } }); const j = await r.json(); const c = j?.chart?.result?.[0]?.indicators?.quote?.[0]?.close?.filter((x: number) => Number.isFinite(x)); return c?.[c.length - 1]; };
+    const [vx, v3] = [await one("^VIX"), await one("^VIX3M")];
+    return (vx > 0 && v3 > 0) ? vx / v3 : NaN;
+  } catch { return NaN; }
+}
 // Once-per-tick market-wide GEX de-risk from free SqueezeMetrics history. Fail-OPEN to 1.0 (pure reducer, ≤1).
 async function gexMarketDeRisk(): Promise<{ deRisk: number; regime: string; pctile: number }> {
   try {
@@ -70,8 +79,9 @@ Deno.serve(async (req) => {
       const regimes: any = {}; for (const s of SYMBOLS) { const vr = volRegimeDeRisk(await dailyReturns(s)); regimes[s] = { deRisk: +vr.deRisk.toFixed(3), elevated: vr.elevated, reason: vr.reason }; }
       const stx = await fetch(`${SB}/rest/v1/trd_alpaca_state?id=eq.equity&select=closed`, { headers: hdr }).then((r) => r.json()).then((x) => x[0] ?? { closed: [] }).catch(() => ({ closed: [] }));
       const k = kellySize((stx.closed ?? []).map((c: any) => c.r), 0.01);
-      const gexDR = await gexMarketDeRisk(); // D-132: verify the equity-index GEX de-risk feed live
-      return new Response(JSON.stringify({ ok: true, market_open: clock?.is_open, next_open: clock?.next_open, assets, spyBarsAvail: sampleBars, volRegimeDeRisk: regimes, gexMarketDeRisk: gexDR, kelly: k }, null, 2), { headers: cors });
+      const gexDR = await gexMarketDeRisk(); const vixTerm = await marketVixTerm(); // D-132/134
+      const unified: any = {}; for (const s of ["SPY", "QQQ", "IWM"]) { const vr = volRegimeDeRisk(await dailyReturns(s)); unified[s] = fwdVolDeRisk(vr.rv * Math.sqrt(252), gexDR.pctile >= 0 ? gexDR.pctile : NaN, vixTerm); }
+      return new Response(JSON.stringify({ ok: true, market_open: clock?.is_open, next_open: clock?.next_open, assets, spyBarsAvail: sampleBars, volRegimeDeRisk: regimes, gexMarketDeRisk: gexDR, vixTerm: Number.isFinite(vixTerm) ? +vixTerm.toFixed(3) : null, unifiedFwdVolDeRisk: unified, kelly: k }, null, 2), { headers: cors });
     }
     if (P.get("selftest") === "1") {
       if ((req.headers.get("x-admin") ?? "") !== SRK) return new Response(JSON.stringify({ ok: false, err: "admin token required for selftest" }), { status: 403, headers: cors });
@@ -85,7 +95,8 @@ Deno.serve(async (req) => {
     const ks = await fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`, { headers: hdr }).then((r) => r.json()).catch(() => []);
     if (ks?.[0]?.active) return new Response(JSON.stringify({ ok: true, skipped: "kill-switch active" }), { headers: cors });
     const a = await get("/v2/account"); const equity = +a.equity;
-    const gexDR = await gexMarketDeRisk(); // D-132: market-wide equity-index forward-vol de-risk (≤1, fail-open)
+    const gexDR = await gexMarketDeRisk(); // D-132: market-wide GEX percentile (≤1, fail-open)
+    const vixTerm = await marketVixTerm(); // D-134: VIX/VIX3M term structure (fail-open NaN)
     const st = await fetch(`${SB}/rest/v1/trd_alpaca_state?id=eq.equity&select=*`, { headers: hdr }).then((r) => r.json()).then((x) => x[0] ?? { open_trades: {}, closed: [], ticks: 0, last_bars: {} });
     const open: Record<string, any> = st.open_trades ?? {}; const closed: any[] = st.closed ?? []; const lastBars: Record<string, string> = st.last_bars ?? {};
     let entered = 0, exited = 0;
@@ -106,12 +117,16 @@ Deno.serve(async (req) => {
         const stopDist = Math.abs(sig.ref - sig.stop);
         const vr = volRegimeDeRisk(await dailyReturns(sym)); // D-100: shrink size in elevated-vol regimes (never levers up)
         const k = kellySize(closed.map((c: any) => c.r), RISK); // D-101: fractional-Kelly on THIS strategy's measured edge
-        const gDR = IDX.has(sym) ? gexDR.deRisk : 1;            // D-132: GEX vol-regime de-risk on equity indices only
-        const riskFrac = k.riskFraction * vr.deRisk * gDR;      // compose — all pure risk-reducers, ≤ base, never lever up
+        // D-134: for equity indices use the UNIFIED forward-vol forecast (trailingRV+GEX+VIXterm → one deRisk,
+        // no triple-counting); GLD keeps the plain vol-regime. vr.rv is DAILY stdev → annualize ×√252.
+        let sizeDeRisk: number, sizeSrc: string;
+        if (IDX.has(sym)) { const gp = gexDR.pctile >= 0 ? gexDR.pctile : NaN; sizeDeRisk = fwdVolDeRisk(vr.rv * Math.sqrt(252), gp, vixTerm).deRisk; sizeSrc = "unified-fwdvol"; }
+        else { sizeDeRisk = vr.deRisk; sizeSrc = "vol-regime"; }
+        const riskFrac = k.riskFraction * sizeDeRisk;           // pure risk-reducer ≤ base, never levers, no direction
         const qty = Math.max(1, Math.floor((riskFrac * equity) / stopDist));
         const side = sig.side === "long" ? "buy" : "sell";
         const buy = await submitFill({ symbol: sym, qty: String(qty), side, type: "market", time_in_force: "day" });
-        if ((buy as any).status === "filled") { const entry = (buy as any).price; const dir = sig.side === "long" ? 1 : -1; open[sym] = { side: sig.side, entry, stop: sig.stop, target: entry + dir * RR * stopDist, qty, openTs: last.ts, deRisk: +vr.deRisk.toFixed(3), volElevated: vr.elevated, kellyRisk: +k.riskFraction.toFixed(4), gexDeRisk: +gDR.toFixed(3), gexRegime: gexDR.regime }; lastBars[sym] = last.ts; entered++; }
+        if ((buy as any).status === "filled") { const entry = (buy as any).price; const dir = sig.side === "long" ? 1 : -1; open[sym] = { side: sig.side, entry, stop: sig.stop, target: entry + dir * RR * stopDist, qty, openTs: last.ts, deRisk: +sizeDeRisk.toFixed(3), sizeSrc, volElevated: vr.elevated, kellyRisk: +k.riskFraction.toFixed(4), gexRegime: gexDR.regime, vixTerm: Number.isFinite(vixTerm) ? +vixTerm.toFixed(3) : null }; lastBars[sym] = last.ts; entered++; }
       }
     }
     const rlog = closed.map((c) => c.r); const exp = rlog.length ? rlog.reduce((x, y) => x + y, 0) / rlog.length : 0;

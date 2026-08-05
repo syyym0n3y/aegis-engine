@@ -1515,3 +1515,20 @@ FAIL-OPEN to 1.0 (network fail = no-op). Never levers up, never a direction call
 on each position (gexDeRisk, gexRegime) + shown in ?probe=1. LIVE VERIFIED: market open, gexMarketDeRisk
 {deRisk 1, high-gamma, pctile 0.96} — no-op now (calm), auto-shrinks ~0.62× when low-gamma. Guard: gexRegime
 primitive unit-tested (≤1, monotone, caps at 1); deno check green. All three sizing terms are pure reducers.
+
+### D-134 — "Measurably smarter" screen: VIXterm + DIX added; unified fwd-vol sizing wired (2026-08-05)
+
+Applied the GEX incremental-value gate to a batch of free signals (`scripts/trd-signal-screen.ts`, 3825
+aligned days SqueezeMetrics∩VIX∩VIX3M, general OLS + t-stats):
+- **(A) forward-5d-vol ~ trailingRV + GEXpct + VIXterm(VIX/VIX3M)**: ALL jointly significant — trailingRV
+  t=26.9, GEXpct t=−6.6, **VIXterm t=20.3**. VIX term structure adds large independent forward-vol info.
+- **(B) forward-10d-ret ~ momentum + DIX**: DIX t=+4.5 (+0.22%/σ), momentum t=−2.8. DIX = mild real return tilt.
+INTEGRATION (the honest part): the 3 vol signals CORRELATE in stress, so multiplying separate de-risks
+(as D-133 did with vol×gex) triple-counts → over-shrinks. Fixed with a UNIFIED forecast:
+`_shared/trd-fwdvol.ts` (+3 tests) fits fwdVol = −0.335 + 0.429·trailingRV − 0.034·gexPct + 0.478·vixTerm
+(median ref 0.134) → deRisk=min(1,ref/forecast). Wired into `trd-alpaca-equity-tick`: index symbols
+(SPY/QQQ/IWM) now size by the unified forecast (units fixed: vr.rv is DAILY → ×√252), GLD keeps plain
+vol-regime. Fail-open per term. LIVE VERIFIED: VIXterm 0.826, GEX p96 → SPY ×1 (8.8%), QQQ ×0.96 (13.9%),
+IWM ×1. Replaces+improves D-133. 175 tests green.
+DIX: confirmed but directional+small → surface as awareness tilt, NOT sizing (own pass). HORIZONTAL next:
+replicate the fwd-vol framework per asset class (crypto: funding+RV; bonds: MOVE; gold: GVZ) — breadth.
