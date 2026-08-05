@@ -1697,3 +1697,24 @@ All 4 marked FALSIFIED-PRE-FORWARD in trd_r007_state with reasons; R-007 doc ame
 it, regime drift reads as setup edge. This is the methodological upgrade the audit produced.
 Corpus verdict unchanged and stronger: no mechanical setup on any TF/regime/instrument-set beats random entry.
 Durable value remains the risk/sizing engine + regime awareness (live, measured, guarded).
+
+### D-147 — Rule-7 applied to the ENTIRE corpus; ONE survivor; BUY/SELL + house-money engine live (2026-08-06)
+
+**(A) Retroactive random-control audit** (`trd-retro-random-audit.ts`): 14 strategy families × 45 instruments
+× full history, each vs matched random entries (same instrument/regime/direction/mechanics), regime costs.
+**4/14 beat random — but 3 are traps: they beat random while LOSING money** (meanrev RSI2<5 −0.022R t=4.66;
+RSI2>95 short −0.084R t=5.05; sweep-rev short −0.110R t=2.10). "Less bad than random" ≠ tradable.
+FAILED outright: breakout (t=−4.33), breakdown (−6.36), trend-follow 50>200 (0.20), trend-pullback (−0.11),
+Minervini (−1.91), volume-spike (0.26), gap-fade (0.87), inside-bar (−3.23), engulfing (−2.90), sweep-rev
+long (1.82). → the trend/breakout/pattern canon is drift, confirmed at corpus scale.
+**(B) THE ONE SURVIVOR — dip-buy (RSI14<30 while price>200MA)**, verified in `trd-survivor-verify.ts`:
++0.122R vs random −0.051R **t=5.63**; IS +0.124 → **OOS +0.120 (t=3.92 vs random)**; **broad 16/21
+instruments (76%)**; **beats random in EVERY regime independently** (calm t=2.17, normal t=3.89, stress
+t=3.75 — biggest edge +0.25R in stress). Soft spot: 16/26 eras (62%). Same signal as D-111, now Rule-7 clean.
+**(C) DECISION ENGINE** `_shared/trd-decision.ts` (+7 tests) + `trd-decide` edge fn (live): issues BUY only
+on the verified survivor, **NEVER issues SELL** (no short setup ever passed), sizes via the per-asset
+forward-vol engine, and implements the operator's HOUSE-MONEY rule as a two-tier budget — 0.5% of the
+ORIGINAL deposit + 2% of BANKED PROFIT, capped at 2% of equity. Verified: at 10k deposit → $40 risk (0.40%,
+172 consecutive losses to halve); after growth to 25k → $280 risk of which **$240 (86%) is banked profit and
+only $40 is deposit capital**. Fixed a house-money reporting bug (pro-rata split under the hard cap).
+205 tests green. Live scan today: no instrument oversold-in-uptrend → engine stands aside, risks nothing.
