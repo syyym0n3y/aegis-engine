@@ -50,5 +50,7 @@ for (const [name, prefix] of [["S&P500 (ES proxy)", "usa500idxusd"], ["Nasdaq100
   console.log(`\n════ ${name} — NY-TBR sweep-reversal, 1m Dukascopy, ${bars.length} bars, ${bars[0].day}→${bars[bars.length - 1].day} ════`);
   console.log(`  ALL: ${agg(t)}   |  IS ${agg(t.slice(0, k))} → OOS ${agg(t.slice(k))}`);
   console.log(`  SHORT ${agg(t.filter((x) => x.side === "short"))}   LONG ${agg(t.filter((x) => x.side === "long"))}`);
+  const oos = t.slice(k);
+  console.log(`  OOS×side: SHORT ${agg(oos.filter((x) => x.side === "short"))}   LONG ${agg(oos.filter((x) => x.side === "long"))}`);
 }
 console.log(`\nDeep intraday on the REAL instruments (index = ES/NQ proxy), ~16y, FREE (Dukascopy). Numbers only per ANALYSIS_CONTRACT.`);

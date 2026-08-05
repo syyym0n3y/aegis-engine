@@ -1355,3 +1355,17 @@ dynamic-MT5=available; decompile=grey/low-odds.
 n=2387). Best-band **Deflated Sharpe = 17.5% << 95% → REJECT.** Honest nuance: monotonic gradient =
 weak MOMENTUM-continuation on strong buy-power (opposite of the indicator's reversal marketing), still
 sub-gate. Remaining reconstructable candidate = Stochastic Divergence AW if operator wants it gated.
+
+### D-124 — Mechanical NY-TBR REJECTED on 15y real 1-min index data (11.1M bars) (2026-08-05)
+
+The definitive test the whole thread pointed at: the group's NY Time-Based-Range sweep→reversal→opposing-end,
+fired mechanically BOTH directions, on FREE Dukascopy 1-min S&P500 (usa500idxusd) + Nasdaq100 (usatechidxusd),
+2011-09→2026-07. 11.15M bars, 5,921 trades. `scripts/trd-duka-backtest.ts`.
+- **S&P500**: ALL +0.494R/30%/n=3057 — but **IS +0.861R → OOS −0.056R** (textbook overfit collapse).
+  OOS×side: SHORT −0.004R (breakeven, n=668), LONG −0.119R. The full-sample SHORT +0.914R is ALL in-sample.
+- **Nasdaq100**: ALL −0.054R, OOS −0.035R. OOS×side SHORT −0.063R, LONG −0.002R. Dead both halves.
+**VERDICT: no OOS edge on either instrument, any side; best case = breakeven-after-costs.** REJECT the
+mechanical trigger. Confirms D-121 (small-N Alpaca) at 75× the data. Kills the "the rule makes money" claim;
+does NOT touch the group's untested DISCRETIONARY selectivity. Data was FREE (Dukascopy) — the "needs paid
+SIP" deferral (pre-OPERATING_DOCTRINE) was false. Honesty invariant held: resolved on all history now, not
+forward weeks.
