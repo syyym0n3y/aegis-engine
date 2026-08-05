@@ -1442,3 +1442,19 @@ valuable). Caveats logged: GEX OI is EOD-lagged; dealer-side = standard long-cal
 gamma-flip via cum-zero-cross is approximate (walls+regime solid).
 NEXT: (1) refine flip (reprice gamma across spot), wire GEX into a `trd-gex` edge fn + co-pilot tab;
 (2) build the value-area/auction engine on the 1-min data; (3) crypto liquidity/footprint from Binance free.
+
+### D-129 — GEX edge fn + Auction/Value-Area engine BUILT, DEPLOYED, VERIFIED LIVE (2026-08-05)
+
+Built the two free order-flow awareness engines (D-128 roadmap items 1-2), tested-core pattern:
+- **`_shared/trd-gex.ts` (+test)**: BS-gamma, netGexAt, buildGexProfile. Gamma FLIP now PROPER (reprices
+  gamma via Black-Scholes across candidate spots — fixes D-128 crude cum-zero-cross). `trd-gex` edge fn pulls
+  CBOE free chain → regime/call-wall/put-wall/flip. LIVE VERIFIED: SPY spot 771.36, positive-gamma, call
+  wall 775, put wall 762, flip 762.98 (spot ABOVE flip = stable, now consistent w/ +total GEX), 4229 contracts.
+- **`_shared/trd-auction.ts` (+test)**: valueArea (volume-at-price → POC/VAH/VAL), auctionContext
+  (developing/prior/composite). Caught+fixed a real bug pre-commit: top-edge bar made bLo exceed last bin →
+  span 0 → Infinity volume; clamped bLo. `trd-value-area` edge fn (Binance crypto / Yahoo equity). LIVE
+  VERIFIED: BTCUSDT 251 sessions, developing POC 64107, prior 63819, composite VAH 65365/VAL 63118 + location
+  reads.
+Both labelled AWARENESS context (not signals/advice). 169 _shared tests pass (+6), deno check clean.
+NEXT: surface trd-gex + trd-value-area in aegis-cockpit + app co-pilot tab; refine dealer-side (put-skew);
+crypto liquidity/footprint leg.
