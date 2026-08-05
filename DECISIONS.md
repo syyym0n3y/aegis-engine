@@ -1490,3 +1490,18 @@ OptionsDX free EOD SPX/SPY, HistoricalData.net free-2013. `scripts/trd-gex-regim
   pays), not promotable. Follow-up: pre-registered single-hypothesis meanrev-long|low-gamma (1-2 trials).
 Net: found free 15y GEX; ONE robust structural signal (A, needs incremental-value gate) + one borderline
 directional candidate (B). Best session outcome yet on the "levels" thread.
+
+### D-132 — GEX vol-regime signal PASSES incremental gate; wired live as a SIZING input (2026-08-05)
+
+Gated D-131(A)'s incremental value (`scripts/trd-gex-incremental.ts`, 3580 days):
+- **3×3 double-sort** RV-tercile × GEX-tercile: GEX separates fwd-5d vol WITHIN every trailing-RV row
+  (RV-high: low-gamma 23.7% vs high-gamma 13.9%). Not just vol-clustering.
+- **OLS fwdVol ~ trailingRV + GEX: GEX t-stat = −14.1**, −1.94 vol-pts per +1σ, controlling for RV →
+  **GEX ADDS predictive value over the D-100 trailing-RV primitive.** PROMOTED.
+- #2 pre-registered dip-buy|low-gamma (1 trial): Sharpe 0.237 → **DSR 37% FAILS** — directional dead, killed clean.
+Wired: `_shared/trd-gex-regime.ts` (+test) — gexRegime(currentGex, trailingGex) → percentile→expectedFwdVol
+(15y fit: p0→19.4%, 0.5→12.5%, 1→9.5%)→deRisk=min(1,12/expVol). Fed by free SqueezeMetrics series into
+`trd-gex` edge fn (vol_regime block) + surfaced on aegis-cockpit GEX panel. LIVE VERIFIED: SPY 96th pctile =
+high-gamma, exp fwd vol 9.7%, ×1 size. SIZING signal, direction-agnostic (D-131(B) failed). 172 tests green.
+NEXT (own pass, HIGH-blast order-path): multiply equity-index position size by GEX deRisk alongside the
+existing volRegimeDeRisk in the paper executor — deliberate risk-engine change, gate separately.

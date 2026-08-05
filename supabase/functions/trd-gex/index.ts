@@ -2,6 +2,21 @@
 // delayed options chain (gamma+OI+IV) and returns net-GEX regime, call/put walls, and the BS-repriced gamma
 // flip via the tested _shared/trd-gex.ts core. AWARENESS context, not a signal. ?symbol=SPY (or _SPX), &dte=45.
 import { buildGexProfile, type OptContract } from "../_shared/trd-gex.ts";
+import { gexRegime } from "../_shared/trd-gex-regime.ts";
+
+// D-132: live GEX regime → forward-vol de-risk, from free SqueezeMetrics 15y history (SPY/SPX only).
+async function regimeFromSqueeze(): Promise<{ percentile: number; regime: string; expectedFwdVolPct: number; deRisk: number; asof: string } | null> {
+  try {
+    const r = await fetch("https://squeezemetrics.com/monitor/static/DIX.csv", { headers: { "User-Agent": "Mozilla/5.0" } });
+    if (!r.ok) return null;
+    const rows = (await r.text()).trim().split("\n").slice(1).map((l) => l.split(","));
+    const series = rows.map((p) => +p[3]).filter((x) => Number.isFinite(x));
+    if (series.length < 300) return null;
+    const cur = series[series.length - 1]; const hist = series.slice(0, -1);
+    const g = gexRegime(cur, hist);
+    return { ...g, asof: rows[rows.length - 1][0] };
+  } catch { return null; }
+}
 
 function parseOcc(sym: string): { type: "C" | "P"; strike: number; dte: number } | null {
   const m = sym.match(/^[A-Z]+?(\d{6})([CP])(\d{8})$/); if (!m) return null;
@@ -28,8 +43,11 @@ Deno.serve(async (req) => {
     }
     if (!spot || contracts.length < 10) return new Response(JSON.stringify({ ok: false, err: "insufficient chain", spot, contracts: contracts.length }), { status: 502, headers: cors });
     const g = buildGexProfile(contracts, spot);
+    const regime = (symbol === "SPY" || symbol === "_SPX" || symbol === "SPX") ? await regimeFromSqueeze() : null;
     const out = {
       ok: true, symbol, spot, asof_note: "CBOE delayed; OI is prior-session EOD (OCC)",
+      vol_regime: regime, // D-132: forward-vol de-risk from 15y GEX (validated t=-14.1 over trailing-RV) — SIZING, not direction
+      vol_regime_read: regime ? `${regime.regime} — expected fwd 5d vol ≈ ${regime.expectedFwdVolPct}% → size ×${regime.deRisk} (percentile ${(regime.percentile * 100).toFixed(0)})` : null,
       regime: g.regime, regime_read: g.regime === "positive"
         ? "dealers dampen moves — vol suppressed, price gravitates to value/POC"
         : "dealers amplify moves — vol expansion, trend/breakout risk",
