@@ -1400,3 +1400,15 @@ VERDICT: crypto funding-crowding SHORT-fade = strongest positive-OOS candidate f
 an edge — scanned ~24 cells → needs DEFLATED-SHARPE gate vs trial count + forward confirm before promotion.
 LIMIT: OI/CVD free+deep only on crypto; equities/commodities legs need COT weekly (free, OI-like) + can run
 the multi-TF (minus order-flow) on Dukascopy indices / Yahoo — queued, not yet done.
+
+### D-126b — Deflation gate on the flow-map standout: FAILS (DSR 0.5%) (2026-08-05)
+
+Ran the promised deflated-Sharpe gate on the SHORT trend-pullback +ALL3 cell (`trd-mtf-flow-map.ts` gate
+block): 24 cells scanned, var(trial Sharpes)=0.0235, cell N=404 per-trade Sharpe 0.195 → **DSR = 0.5% <<
+95% → FAILS.** Observed Sharpe is BELOW expectedMax(24 trials) = a selection artifact. The +0.397R OOS was
+best-of-dredge, not edge. Engine worked on my own candidate.
+NON-LAZY FOLLOW-UP (not a retraction of the map): funding-CROWDING added ~+0.25R on BOTH directions
+in-sample — symmetric consistency hints the crowding effect is real, hidden by the 24-trial penalty. Legit
+test = a SINGLE pre-registered hypothesis ("fade the crowded funding side", 1-2 trials) on crypto, extended
+to equities/commodities via COT weekly positioning (free, OI-like). Queued. Nothing promoted; terminal state
+remains "nothing cleared the gate" = the thesis working (D-070).

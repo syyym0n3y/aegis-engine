@@ -79,3 +79,28 @@ for(const dir of [-1,1] as const){ const dn=dir===-1?"SHORT":"LONG ";
   }
 }
 console.log(`\nREAD: the "+ALL3" rows = the highly-favoured positions (multi-TF aligned + order-flow confirming + crowded against). OOS is the honest verdict; small-N flagged. CVD from taker-vol, funding real — all free, full history.`);
+
+// ── DEFLATION GATE: was the standout SHORT crowd-fade cell just the best of many dredged cells? ──
+const { sharpe, deflatedSharpe, sampleStd } = await import("../supabase/functions/_shared/trd-stats.ts");
+const skewKurt=(a:number[])=>{const m=mean(a),s=sampleStd(a);if(!(s>0))return[0,3];let sk=0,ku=0;for(const x of a){const z=(x-m)/s;sk+=z**3;ku+=z**4;}return[sk/a.length,ku/a.length];};
+// enumerate every cell I actually looked at (the multiple-testing set)
+const cells:{name:string;t:T[]}[]=[];
+for(const dir of [-1,1] as const) for(const setup of ["trend-pullback","meanrev-fade"]){
+  const base=sub(x=>x.dir===dir&&x.setup===setup);
+  cells.push({name:`${dir}-${setup}`,t:base});
+  cells.push({name:`${dir}-${setup}+mtf`,t:base.filter(x=>x.mtf)});
+  cells.push({name:`${dir}-${setup}+cvd`,t:base.filter(x=>x.cvd)});
+  cells.push({name:`${dir}-${setup}+crowd`,t:base.filter(x=>x.crowd)});
+  cells.push({name:`${dir}-${setup}+mtf&cvd`,t:base.filter(x=>x.mtf&&x.cvd)});
+  cells.push({name:`${dir}-${setup}+ALL3`,t:base.filter(x=>x.mtf&&x.cvd&&x.crowd)});
+}
+const cellSharpes=cells.filter(c=>c.t.length>=30).map(c=>sharpe(c.t.map(x=>x.r)));
+const varTrials=cellSharpes.length>1?sampleStd(cellSharpes)**2:0.25;
+const shortALL3=sub(x=>x.dir===-1&&x.setup==="trend-pullback"&&x.mtf&&x.cvd&&x.crowd).map(x=>x.r);
+const [sk,ku]=skewKurt(shortALL3); const srBest=sharpe(shortALL3);
+const dsr=deflatedSharpe(srBest,shortALL3.length,sk,ku,cells.length,varTrials);
+console.log(`\n════ DEFLATION GATE (standout = SHORT trend-pullback +ALL3) ════`);
+console.log(`  cells scanned (trials): ${cells.length}   var(trial Sharpes): ${varTrials.toFixed(4)}`);
+console.log(`  cell N=${shortALL3.length}, per-trade Sharpe ${srBest.toFixed(3)}, skew ${sk.toFixed(2)}, kurt ${ku.toFixed(1)}`);
+console.log(`  → DEFLATED SHARPE PROB = ${(dsr*100).toFixed(1)}%   (gate: >95% to promote)`);
+console.log(`  VERDICT: ${dsr>0.95?"SURVIVES — promote to forward test":"FAILS deflation — candidate only, not an edge"}`);
