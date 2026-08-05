@@ -1201,3 +1201,26 @@ systematizable from free OHLCV. This converges with the entire project: retail-a
 are thin-to-noise; the money that exists is discretionary skill OR the risk/prop/product business. What a
 real systematic intraday test would need (don't have): years of 1m (not 90d), equity/FX feeds, and
 order-flow/footprint data (paid) — the "read" Rauf uses likely isn't in free OHLCV.
+
+### D-116 — Volatility Risk Premium (covered-call / option-selling): the first REAL high-win-rate edge (2026-08-04)
+
+Operator proposed holding core shares + using options ("house money"). Untangled: shares don't decay;
+selling covered calls COLLECTS theta = harvesting the Volatility Risk Premium (VRP). Measured it on real
+data (`scripts/trd-vrp.ts`, SPY vs ^VIX, 25y/6155 days):
+- **VRP is real + persistent: implied 19.4 vs realised 15.8 = +3.6 vol pts, POSITIVE 84% of months**,
+  positive in every regime (calm +2.3 / normal +4.0 / stress +5.1). Option sellers are paid ~5/6 of the time.
+- **84% win = prop-shaped, high-probability** — and STRUCTURAL (paid to bear risk), NOT a front-run chart
+  pattern, so it doesn't arbitrage to zero like the directional stuff.
+- Covered-call test: Sharpe 1.11 vs buy&hold 0.71 (risk-adjusted win). **HONEST FLAG: my CC CAGR came out
+  13.2%>10% — likely my Black-Scholes premium approx is too generous; the robust/literature result is CC ≈
+  or slightly < buy&hold total return but much lower vol/drawdown. Bank the Sharpe, not the CAGR.**
+
+**Caveats:** covered calls cap upside + keep full downside; VRP crashes (Feb-2018 Volmageddon, Mar-2020)
+hit sellers hard — the D-100 fat-tail engine is exactly the sizing/hedging tool for this (danger & tool matched).
+
+**Strategic map (structurally-different approaches):** VRP/option-selling = REAL, high-win, best edge found;
+carry = real-but-arbitraged; trend/CTA = real diversifier, thin OOS; rel-value & event = real but
+untested/gated; directional/chart/intraday = front-run to noise (tested 10×). **Conclusion: reasonable-R:R
+money lives in STRUCTURAL PREMIA (paid to bear risk), not directional prediction. VRP is the standout.**
+Next: validate with CBOE BXM/PUT/PUTW actual index history (real buy-write/put-write track records), then
+wire tail-managed. Options data (chains/IV) needed for a full build — the one paid-ish gap.
