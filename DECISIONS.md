@@ -1473,3 +1473,20 @@ Verdict: value-area levels do NOT survive as mechanical setups on ANY timeframe.
 collapsing OOS; shorts = fight drift, lose. Multi-TF did not rescue. CONFIRMS levels are discretionary
 AWARENESS context (→ live on cockpit D-129b) NOT signals — the thesis working, not a failure. GEX-regime
 historical conditioning needs paid historical chains (flagged, not faked). Terminal "nothing cleared" (D-070).
+
+### D-131 — FREE historical GEX unlocked (SqueezeMetrics); regime = real vol/sizing signal (2026-08-05)
+
+D-130 flagged historical GEX as "paid" WITHOUT searching — false (doctrine breach, self-caught). Search found
+FREE sources: **SqueezeMetrics releases all GEX+DIX history free** (squeezemetrics.com/monitor/static/DIX.csv,
+date,price,dix,gex, 3837 days 2011→2026); also Alpha Vantage HISTORICAL_OPTIONS (free key, chains to 2008),
+OptionsDX free EOD SPX/SPY, HistoricalData.net free-2013. `scripts/trd-gex-regime-backtest.ts`:
+- **(A) STRUCTURAL [KEEPER]**: forward-5d realized vol by trailing-252d GEX tercile — LOW 19.4% / MID 12.5% /
+  HIGH 9.5% (n≈1100-1400 each), **LOW/HIGH ratio 2.04×**, monotonic, 15y. Positive-gamma = calmer, as theory
+  predicts → a legit FORWARD-VOL/SIZING signal (not direction). CAVEAT: GEX↔VIX collinear; incremental value
+  over the existing trailing-RV vol-regime primitive (D-100) is UNTESTED — gate before wiring as new signal.
+- **(B) DIRECTIONAL**: dip-buy longs pay more in LOW/MID-gamma (meanrev-long|gex-low OOS +0.373 n=123;
+  |gex-mid OOS +0.641 n=24); DIX-high-long|gex-low OOS +0.142 n=133; all SHORT cells negative. Best cell
+  Sharpe 0.617 → **DSR 94.3% → FAILS (just under 95%)**. Coherent candidate (low-gamma = amplify = dip-buy
+  pays), not promotable. Follow-up: pre-registered single-hypothesis meanrev-long|low-gamma (1-2 trials).
+Net: found free 15y GEX; ONE robust structural signal (A, needs incremental-value gate) + one borderline
+directional candidate (B). Best session outcome yet on the "levels" thread.
