@@ -1585,3 +1585,18 @@ once-per-tick ivCache (GLD→^GVZ, TLT→^MOVE, USO→^OVX), fail-open to vol-re
   fwd 44% → ×0.722 (elevated oil vol correctly de-risked).
 Every traded instrument now sized by its own best forward-vol signal. Cron unchanged (loops SYMBOLS
 internally). 178 _shared tests green; deno check clean. Horizontal breadth now FULLY live.
+
+### D-140 — Full-universe sizing surfaced + data depth verified (33y+) + test suite expanded to 191 (2026-08-05)
+
+Three deliverables on the "surface sizing + more data + more tests" ask:
+- **Universe sizing panel** (D-139): aegis-cockpit now pulls both executor probes and renders every traded
+  instrument with its live vol-based deRisk — SPY/QQQ/IWM (GEX+VIXterm), GLD (GVZ), TLT (MOVE), USO (OVX),
+  BTC/ETH (DVOL). 8 instruments / 5 asset classes, each sized by its OWN forward-vol signal. Fixed a
+  template-literal split bug (Supabase bundler stricter than deno check) + a cold-start race in the probe fetch.
+- **Data provenance** (`scripts/trd-data-provenance.ts`): VERIFIED live spans — VIX 36.6y (1990→), SPY 33.5y
+  (1993→), 78,306 daily instrument-days across the 13 sources + 121,962-day tail study + 11.15M Dukascopy
+  1-min bars + 9y Binance + CBOE/Deribit chains. "33 years" is measured, not claimed. Surfaced on cockpit.
+- **Test suite → 191** (`_shared/trd-sizing-invariants.test.ts`, +13 property tests, thousands of assertions):
+  every sizing de-risk proven ∈(0,1], fail-open on NaN, monotone; valueArea ordering/finiteness; bsGamma≥0;
+  and the critical order-path guard — composed (kelly × d1 × d2 …) can NEVER exceed base kelly (no lever-up).
+All committed; deno check clean; deployed + live-verified.

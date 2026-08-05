@@ -230,6 +230,7 @@ ${freshSection}
 <li><b style=color:var(--tx)>Compounding comes from the global factor book</b> (value+quality+momentum, US+intl+EM) — Sharpe 1.0, not chart setups.</li>
 <li><b style=color:var(--tx)>Macro measures fragility, not direction</b> — the regime overlay only ever shrinks size when the system is primed to break; it never predicts which way price goes.</li>
 <li>The loop trades <b style=color:var(--tx)>10 markets across every session</b> and learns which session×setup has live edge — trusting none until n≥30.</li>
+<li><b style=color:var(--tx)>Evidence base (verified, all free):</b> up to <b style=color:var(--tx)>36.6 years</b> of daily history (VIX 1990→, SPY 1993→), 78k+ daily instrument-days, an 11.15M-bar 1-minute Dukascopy set, a 121,962-market-day tail study, and a <b style=color:var(--tx)>191-test</b> machine-guard suite (every sizing de-risk proven ≤1 — the order path can never lever up). Reproduce: <span class=mono style=font-size:11px>scripts/trd-data-provenance.ts</span>.</li>
 </ul></div>
 </main></body></html>`;
 }
