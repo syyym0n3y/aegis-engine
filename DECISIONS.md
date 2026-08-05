@@ -1280,3 +1280,25 @@ verified the long way: durable edge = structural beta + risk overlay; "nothing c
 engine SUCCEEDING. Honest money map: (1) own quality equity + don't blow up + small trend/gold sleeve to
 soften drawdown (~10%/yr, compounds); (2) risk management = the multiplier (shipped); (3) the 1e10x is the
 PRODUCT/prop businesses (need no alpha). Real Sharpe-1 needs long/short factors + institutional infra we lack.
+
+### D-120 — Market-awareness engine (regime + event playbook): the co-pilot, not the falsifier (2026-08-04)
+
+Operator reframe (valid): I swung between "make a ton" and "no edge" — both wrong; the product must be an
+awareness ECOSYSTEM that helps traders profit AND survive, not a falsifier that only says no. Built the seed:
+`scripts/trd-regime-engine.ts` — (1) LIVE regime read (yield curve + VIX + SPY-trend + credit → phase +
+recession-risk score; now: EXPANSION, 0/100), (2) EVENT PLAYBOOK from real crash history, (3) leading-signal
+warnings (curve inverted before every modern recession).
+
+**Key data insight (answers "how do instruments behave in events / forces that cause losses"):** the crash
+playbook is CRASH-TYPE-DEPENDENT. Growth-scare crashes (2008 SPY-55/TLT+25/GLD+24; 2020 SPY-34/TLT+14) →
+bonds+gold+dollar protect. INFLATION/rate-shock crash (2022 SPY-24, **TLT −29**, GLD −7) → bonds FAIL WITH
+stocks; only **UUP +18 / DBC +21** protect. A trader hiding in bonds in 2022 got hit twice. The engine must
+read the TYPE of stress and point to the RIGHT shelter — this is exactly the awareness a falsifier can't give.
+
+**Reconciled thesis:** make money = harvest real CONDITIONAL edges (VRP, high-VIX mean-rev, favorable
+sessions, prop-farming) WHEN regime favors them; don't lose = regime engine flags phase + stress-type +
+de-risks to the right defensive; compound both via the risk engine. Product = co-pilot ("what's working now,
+what's about to hurt, where to hide, how much to risk"). Roadmap (operator's asks): (a) real MINUTE data for
+equity/futures shorting (ES/NQ via Alpaca-auth, not crypto proxies); (b) systematically ingest published-book
+frameworks (Market Wizards/Elder/Dalio economic-machine/O'Neil/etc.) as testable strategies; (c) integrate
+the regime engine live into the cockpit + per-session/timeframe/cycle awareness.
