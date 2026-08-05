@@ -1318,3 +1318,22 @@ Executed the operator's 3-item roadmap under ANALYSIS_CONTRACT (numbers + N + OO
   Rauf's "not every day"). **SHORT negative on BOTH (SPY −0.44R n=17, QQQ −0.40R n=16); LONG positive but
   n=11-14 = NOISE (flagged, not claimed).** N too small for a verdict; robust read = mechanical short loses
   (confirms D-113/115). The group's edge is discretionary selectivity, not the mechanical trigger.
+
+### D-122 — 5 inherited .ex5 files assessed & dropped; only risk-panel category survives (2026-08-05)
+
+Operator passed a folder of 5 compiled MT5 binaries ("parts of a system passed on") asking how each helps
+the mission, horizontally/vertically. Under ANALYSIS_CONTRACT (grounded, no lazy dismissal): ran `strings`
+on all 5 — **zero readable logic recovered** (`.ex5` = encrypted MQL5 bytecode; only compression noise +
+embedded-icon bitmap). Verdict is by identity+genre, labelled as such.
+- **Boom1000_Confluence_Alert** → REJECT. Deriv's own docs confirm Boom 1000 is a *cryptographically-secure
+  RNG* "unaffected by real-world news/volatility" — no order flow/auction, chart edge provably impossible.
+  Reconfirms D-096/D-097 rejected genre, from the vendor itself.
+- **Buy and Sell Power** (Elder-Ray family) → already in canon from source math (`trd-canon.ts`/R-006).
+- **Easy Buy Sell Signal** → REJECT, arrow-signal folklore; compiled so can't even check repaint.
+- **Stochastic Divergence AW** → reconstructable-from-scratch but low priority (divergence backtests poorly
+  OOS); only non-trivial candidate if operator wants it gated like any lead.
+- **Trade_Assistant (EarnForex 2010)** → only keeper by CATEGORY: risk/position-sizing panel = the one
+  +EV component. And redundant: EarnForex open-sources it (github.com/EarnForex/PositionSizer) as readable
+  MQL5, and the math is already in `_shared/trd-kelly.ts` + `_shared/trd-portfolio-risk.ts`.
+Net: 0/5 carry an extractable edge; 1/5 points at the risk category we already own. Honest limit stated:
+compiled `.ex5` source is unreadable; reconstruction+gating is the only path and genre priors say REJECT.
