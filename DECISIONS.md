@@ -1337,3 +1337,21 @@ embedded-icon bitmap). Verdict is by identity+genre, labelled as such.
   MQL5, and the math is already in `_shared/trd-kelly.ts` + `_shared/trd-portfolio-risk.ts`.
 Net: 0/5 carry an extractable edge; 1/5 points at the risk category we already own. Honest limit stated:
 compiled `.ex5` source is unreadable; reconstruction+gating is the only path and genre priors say REJECT.
+
+### D-123 — .ex5 knowledge fully exhausted; Buy&Sell Power reconstructed+gated (REJECT, DSR 17.5%) (2026-08-05)
+
+Corrected D-122's lazy "nothing more knowable." Static bytecode IS encrypted (proven: EX5\x04 header,
+high-entropy code section) — but the authors' mql5 marketplace pages document the LOGIC. Recovered specs:
+- **Buy&Sell Power** (#133177): tick-vol buy/sell % over N=14, bands 55/62/65/70%. RECONSTRUCTED.
+- **Easy Buy Sell Signal** (#103206): non-repaint arrow, candle-close confirmed; formula NOT published.
+- **Stochastic Divergence AW** (#87097): regular+hidden stoch/price divergence, non-repaint. Reconstructable.
+- **Trade Assistant** (EarnForex): NOT a sizing panel (D-122 error) — it's a multi-TF Stoch+RSI+CCI
+  confluence indicator, FULL SOURCE OPEN at github.com/EarnForex/Trade-Assistant. Readable.
+- **Boom1000 Confluence**: RSI/MA/confluence spike-alert on Deriv RNG. REJECT (RNG, D-096).
+Knowledge ladder now stated: static-strings=dead-end; author-page=works; header-forensics=done;
+dynamic-MT5=available; decompile=grey/low-odds.
+**Buy&Sell Power gated** (`scripts/trd-bsp-backtest.ts`, 129,487 trades, 32 instruments, full Yahoo hist,
+5d/2ATR, cost 0.05R): thr55 -0.038R, thr62 -0.028R, thr65 -0.012R(OOS +0.021), thr70 +0.019R(OOS +0.062R
+n=2387). Best-band **Deflated Sharpe = 17.5% << 95% → REJECT.** Honest nuance: monotonic gradient =
+weak MOMENTUM-continuation on strong buy-power (opposite of the indicator's reversal marketing), still
+sub-gate. Remaining reconstructable candidate = Stochastic Divergence AW if operator wants it gated.
