@@ -1600,3 +1600,17 @@ Three deliverables on the "surface sizing + more data + more tests" ask:
   every sizing de-risk proven ∈(0,1], fail-open on NaN, monotone; valueArea ordering/finiteness; bsGamma≥0;
   and the critical order-path guard — composed (kelly × d1 × d2 …) can NEVER exceed base kelly (no lever-up).
 All committed; deno check clean; deployed + live-verified.
+
+### D-141 — Session/timeframe vol: measured, regime carries intraday, surfaced (2026-08-05)
+
+"Don't neglect candles/sessions" — the sizing models are daily→5d; validated they generalise intraday.
+`scripts/trd-session-tf-vol.ts` on 15y Dukascopy 1-min S&P (5.72M bars):
+- **(1) Session vol profile (annualized, 15y)**: Asia 3.0% · London 4.6% · **NY 9.4%** (NY ≈3× Asia, n≈4200 days each).
+- **(2) Timeframe scaling**: NY realized vol 9.4/9.3/9.1/8.6% at 1m/5m/15m/60m — candle-STABLE (no microstructure
+  blow-up), so scalper & swing trader size against the same regime, different horizon.
+- **(3) Daily GEX regime CARRIES INTO every session**: low-γ vs high-γ intraday vol ratio Asia 1.96×, London
+  1.94×, NY 2.06× — the ~2× daily signal holds in each session → the daily forward-vol de-risk is valid for
+  intraday sizing, not just daily.
+Encoded `_shared/trd-session-vol.ts` (+3 tests): SESSION_VOL_PCT baselines + sessionExpectedVol(dailyFwdVol)
+scaling each session by the live regime. Surfaced on aegis-cockpit sizing panel (live: Asia ~2.1% / London
+~3.2% / NY ~6.5% at today's calm regime). 194 _shared tests green.
