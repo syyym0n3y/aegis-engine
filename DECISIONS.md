@@ -1261,3 +1261,22 @@ active option-selling optimisation (strikes/timing/tail-hedge) → full options-
 (VLUE/MTUM/QUAL/USMV/SIZE), credit (HYG/LQD/JNK), term (TLT/^TNX), carry (FX/commodity ETFs). Only granular
 options chains + IV history are PAID (~$100-300/mo, for active option-selling beyond vanilla). Next: backtest
 the full structural-premia stack on the free data + build the combined diversified premia book.
+
+### D-119 — Combined premia book (real data): Sharpe ~0.5, NOT 1; corrects my leverage claim (2026-08-04)
+
+Built the combined structural-premia book (`scripts/trd-premia-book.ts`): 6 sleeves (SPY/TLT/HYG/GLD/DBC/^PUT)
+risk-parity + a trend overlay, vol-targeted 12%, 19y (2007-2026), IS/OOS.
+- Full: SPY CAGR 11.1%/Sharpe 0.54/maxDD 60%; risk-parity 5.9%/**0.64**/**26%**; trend 7.0%/0.63/33%;
+  COMBINED 9.6%/0.54/49%. OOS: SPY **16.1%/0.76**; COMBINED 11.6%/0.51 — SPY BEAT the book OOS.
+- **CORRECTS my prior-message claim** ("combining → Sharpe ~1, leverage 2-3x safely"): WRONG. Real Sharpe
+  ~0.51-0.54, NOT 1 (sleeves aren't uncorrelated: VRP-SPY 0.79, credit-SPY 0.68; only TLT/-0.31/ & GLD
+  diversify → ~2 independent bets, not 6). Leverage on Sharpe-0.5: **×2 → 82% maxDD, ×3 → 99% (ruin).**
+  Leverage is only safe on HIGH Sharpe; my safe-leverage claim was false at this Sharpe.
+
+**CONVERGENT CONCLUSION (~20 strategies, 119 decisions):** no accessible MECHANICAL strategy beats
+buy&hold equity + disciplined risk management. Chart/intraday/carry/rotation/mean-rev/VRP/premia-book —
+all thin-to-noise or merely drawdown-reducing vs the equity risk premium. This IS the CLAUDE.md thesis
+verified the long way: durable edge = structural beta + risk overlay; "nothing clears the gates" is the
+engine SUCCEEDING. Honest money map: (1) own quality equity + don't blow up + small trend/gold sleeve to
+soften drawdown (~10%/yr, compounds); (2) risk management = the multiplier (shipped); (3) the 1e10x is the
+PRODUCT/prop businesses (need no alpha). Real Sharpe-1 needs long/short factors + institutional infra we lack.
