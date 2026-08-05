@@ -1155,3 +1155,27 @@ short claim (+0.058R "short in downtrend"), which was fragile to the narrow 12-i
 on the broad universe with a clean horizon, the short side is a drag. Implication: meanrev-vix-v1's short
 leg is a negative-EV component → recommend a LONG-ONLY refinement (dip-buy + high-VIX = the +0.088R/57%
 cell). The operator's daily/weekly-short thesis does not hold on daily EOD bars (may differ intraday).
+
+### D-114 — Intraday session engine (sweep-reversal) + DayTradingRauf/TBR methodology (2026-08-04)
+
+Built the intraday engine on 1m data (Binance BTC/ETH, 55d, 80k bars each). Sweep-reversal both directions,
+session-tagged, CVD-filtered (`scripts/trd-intraday-sweep.ts`).
+- **Raw mechanical sweep-reversal is THIN**: +0.02R, ~37% win at RR2 (≈breakeven, same profile as the daily
+  TBR). CVD confirmation is NOT a clean filter (helped ETH-long +0.136 vs +0.065, hurt BTC-short).
+- **Session is the strong axis**: NY best — BTC SHORT NY +0.090R/40%, ETH LONG NY **+0.180R/43%** (n=352);
+  London worst. Consistent with US-session liquidity. (55d = small; directional, not proven.)
+
+**DayTradingRauf / Time Based Academy (operator-supplied, CREDIBLE — unlike itzjblair):** shares REAL
+monthly P&L WITH losing days (+$56K Mar incl −$8.58K/−$5.4K red days; +$19.5K Apr incl −$6.04K week;
+"3 wins 1 loss" weeks). Repeatable model: **NY TBR = mark 8:12–9:12 ET range → wait for 9:30 open → wait
+for liquidity to be taken (sweep) → enter the reversal (order block/delivery shift) → target the OPPOSING
+end, stop beyond swept extreme.** ES-vs-NQ relative strength. NOT survivorship (losses shown, monthly
+consistency, trades what he preaches).
+
+**The decisive insight (his own words) = our whole thesis:** *"Your edge isn't designed to fire every day.
+It's designed for specific conditions. You're losing because you're over-exposing your strategy — maybe
+2–3 of 5 days offer clean high-probability conditions."* The edge is NOT the raw sweep (thin, as our
+backtest shows) — it's the SELECTIVITY/condition-filtering that picks which 2–3 days to take. That's
+testable: replicate his filters (validate the range before 9:30, clean liquidity take, relative strength,
+NY session) and measure whether the FILTERED sweep-reversal clears a real edge where the raw one doesn't.
+Next: precise NY-TBR engine (8:12–9:12 ET, 9:30 wait, opposing-end target) + condition filters on 1m equity.
