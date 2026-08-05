@@ -19,3 +19,4 @@ dist/
 # deno cache (if vendored locally)
 .deno/
 vendor/
+data/duka/

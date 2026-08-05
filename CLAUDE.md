@@ -22,6 +22,9 @@ which is a SUCCESS of the engine, not a failure.** See [`DECISIONS.md`](./DECISI
 
 0. [`ANALYSIS_CONTRACT.md`](./ANALYSIS_CONTRACT.md) — **binds every analysis: report the measurement not
    the feeling; real over approximate; built over projected; consistent over convenient.** No bias by mood.
+0b. [`OPERATING_DOCTRINE.md`](./OPERATING_DOCTRINE.md) — **research before you defer (never claim
+   impossible/paid without a verified search); prove before you claim; scale the product not the promise;
+   free-first, paid-on-ROI.** Proactivity + trust + growth/scale doctrine.
 1. [`STATE.md`](./STATE.md) — current live state, what's built, what's blocked.
 2. [`NEXT.md`](./NEXT.md) — the Stage-1 work queue.
 3. [`DECISIONS.md`](./DECISIONS.md) — D-070 + append-only decision log.
