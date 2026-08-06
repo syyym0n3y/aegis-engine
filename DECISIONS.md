@@ -1743,3 +1743,25 @@ sweep short t=1.40; HTF-filtered t=0.97/1.92 (filter does not rescue); FVG conti
 (−0.032R/−0.043R) → real signal ≠ tradable edge**; sweep+iFVG "confluence" t=0.64/0.53 — **confluence is a
 myth here: stacking dropped t from 6.15 to 0.64 by shrinking N without improving expectancy.**
 Corpus verdict stands: dip-buy (RSI14<30 in uptrend) remains the ONLY setup that beats random AND profits.
+
+### D-149 — Frequency frontier: two SELF-INFLICTED errors caught and corrected (2026-08-06)
+
+Operator: "find what makes the dip-buy fire more often" (baseline fires only ~25×/yr across 45 instruments).
+`trd-dipbuy-frontier.ts` swept 20 variants (RSI period × threshold × trend-MA), each Rule-7 gated.
+**FREQUENCY LEVERS THAT WORK (statistically):** faster RSI (14→5→2) gives 10-50× more fires and still beats
+random (t=5-8.7); looser threshold works to <40 but **DIES at <45**; trend filter can loosen 200MA→100MA but
+**DIES at 50MA and with NO filter (RSI14<35 no-trend = −0.043R, loses money)** → the uptrend requirement is
+NON-NEGOTIABLE; without it you catch falling knives.
+Ranked by TOTAL R/yr (the metric that matters for compounding, = expectancy × frequency), RSI5<30 >100MA
+looked best: 459.7 fires/yr × +0.028R = 12.87 R/yr = 4.3× the baseline's 3.03.
+
+**THEN THE VERIFICATION KILLED IT — and both failures were MY errors, not the market's:**
+1. **SELECTION CONTAMINATION (E1)**: I ranked variants by FULL-SAMPLE R/yr, which includes the OOS period.
+   The "winner" then collapsed **IS +0.063R → OOS −0.021R (t=1.39, FAILS)**. Textbook contamination.
+   Correct protocol (now implemented in `trd-frontier-honest.ts`): rank on IN-SAMPLE ONLY → report OOS untouched.
+2. **CONCURRENCY (E2)**: the house-money equity curve compounded trades sequentially while **median 12 / max 93
+   positions were open simultaneously** → 12-93× the modelled risk, producing a fake 143× curve WITH a 99.8%
+   drawdown (i.e. ruin). Correct: cap TOTAL open risk (portfolio heat ≤6%), now implemented.
+3. **COST FRAGILITY**: the frontier variant turns NEGATIVE at 1.5× the assumed cost; the baseline survives to 2×.
+Note the variant DID pass breadth (30/45), eras (36/56) and per-regime random controls (t=2.47/6.21/7.19) —
+those gates are necessary but NOT sufficient: only the uncontaminated OOS test exposed it.
