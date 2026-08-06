@@ -1718,3 +1718,28 @@ ORIGINAL deposit + 2% of BANKED PROFIT, capped at 2% of equity. Verified: at 10k
 172 consecutive losses to halve); after growth to 25k → $280 risk of which **$240 (86%) is banked profit and
 only $40 is deposit capital**. Fixed a house-money reporting bug (pro-rata split under the hard cap).
 205 tests green. Live scan today: no instrument oversold-in-uptrend → engine stands aside, risks nothing.
+
+### D-148 — House-money backtested (works, control-verified) + ICT sweeps/iFVG falsified at 1.7M scale (2026-08-06)
+
+**(A) HOUSE-MONEY MODEL BACKTEST** (`trd-housemoney-backtest.ts`) — the operator's rule run over the
+survivor's full history (dip-buy, 780 signals, 1971→2026, 45 instruments, real sizing + vol de-risk + regime costs):
+| model | final | mult | CAGR | maxDD | min-equity |
+|---|---|---|---|---|---|
+| **HOUSE MONEY (0.5% deposit + 2% banked profit)** | **$20,173** | **2.02×** | 1.3% | 17.3% | **$9,978** |
+| flat 0.5% of equity | $15,222 | 1.52× | 0.8% | 7.9% | $10,000 |
+| flat 2% of equity | $50,686 | 5.07× | 3.0% | 28.6% | $9,912 |
+| fixed $50 | $14,250 | 1.43× | 0.6% | 7.5% | $10,000 |
+→ House money beats flat-0.5% (2.02× vs 1.52×) because banked profit funds larger risk; **the original deposit
+was never meaningfully exposed (min equity $9,978, i.e. −$22)**. CONTROL (decisive): the SAME house-money model
+on RANDOM entries returns **0.93× (loses)** and flat-2% on random returns 0.72% w/ 54.8% DD → **the money model
+amplifies a real edge, it does NOT rescue a non-edge.** Honest limit: 1.3% CAGR — the signal is safe and real
+but RARE (780 fires in 55y across 45 instruments).
+
+**(B) LIQUIDITY SWEEPS + INVERSE FVG — FALSIFIED** (`trd-ict-sweep-ifvg.ts`), Rule-7 gated from the start.
+10 ICT variants × 45 daily instruments + 15m S&P/Nasdaq/BTC/ETH = **~1.7M setup instances**:
+**0 variants both beat random AND are profitable.** liq-sweep long −0.050R (t=−0.25, identical to random);
+sweep short t=1.40; HTF-filtered t=0.97/1.92 (filter does not rescue); FVG continuation t=1.13 / **−2.45**
+(bearish FVG WORSE than random); **iFVG inversion t=6.15/5.42 — statistically REAL but still LOSES money
+(−0.032R/−0.043R) → real signal ≠ tradable edge**; sweep+iFVG "confluence" t=0.64/0.53 — **confluence is a
+myth here: stacking dropped t from 6.15 to 0.64 by shrinking N without improving expectancy.**
+Corpus verdict stands: dip-buy (RSI14<30 in uptrend) remains the ONLY setup that beats random AND profits.
