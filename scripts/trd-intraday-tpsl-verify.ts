@@ -65,3 +65,18 @@ console.log(`\n════ PER INSTRUMENT (OOS) ════`); for (const s of
 console.log(`\n════ WHEN — per SESSION (OOS) ════`); for (const s of ["Asia", "London", "NY", "late"]) agg(ALL.filter((x) => !x.is && x.sess === s), s);
 console.log(`\n════ WHEN — per DAY OF WEEK (OOS) ════`); for (const d of ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) agg(ALL.filter((x) => !x.is && x.dow === d), d);
 console.log(`\n════ WHEN — per VIX REGIME (OOS) ════`); for (const r of ["calm", "norm", "stress"]) agg(ALL.filter((x) => !x.is && x.reg === r), r);
+
+console.log(`\n════ DISAMBIGUATION: is the calm-VIX effect in BOTH halves, or a one-sided artifact? ════`);
+for (const r of ["calm", "norm", "stress"]) { agg(ALL.filter((x) => x.is && x.reg === r), `IS  ${r}`); agg(ALL.filter((x) => !x.is && x.reg === r), `OOS ${r}`); }
+console.log(`\n════ HOW MANY DAYS ARE FAVOURABLE? (calm = VIX<15) ════`);
+{
+  const days = new Set(ALL.map((x) => x.sym + x.dow));
+  const calmDays = new Set(ALL.filter((x) => x.reg === "calm").map((x) => x.sym));
+  const nCalm = ALL.filter((x) => x.reg === "calm").length, nAll = ALL.length;
+  console.log(`   calm-regime signals: ${nCalm}/${nAll} = ${(nCalm / nAll * 100).toFixed(1)}% of all intraday signals`);
+  let calmVixDays = 0, totalVixDays = 0;
+  for (const [, v] of vix) { totalVixDays++; if (v < 15) calmVixDays++; }
+  console.log(`   VIX<15 calendar days: ${calmVixDays}/${totalVixDays} = ${(calmVixDays / totalVixDays * 100).toFixed(1)}% of all trading days (~${Math.round(calmVixDays / totalVixDays * 252)} of 252/yr)`);
+  console.log(`   → if the calm cell validates, the tradable window is ~${Math.round(calmVixDays / totalVixDays * 252)} days/yr, not ~25 trades/yr`);
+  void days; void calmDays;
+}

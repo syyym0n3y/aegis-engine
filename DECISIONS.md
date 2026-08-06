@@ -1869,3 +1869,19 @@ concurrent signals MUST share one risk budget (validates the 6% heat cap, D-153)
 **(3) LEAD-LAG**: 64.5% of 1,980 pairs significant at |t|>2 vs 5% chance → real structure EXISTS, but the
 strongest explains only **r²=1.8% of next-day variance** and is NEGATIVE (mean reversion — the same effect
 dip-buy already harvests). Not tradable as an entry after costs. Correlation governs SIZING, not entries.
+
+### D-155 — Intraday TP/SL fails OOS; calm-VIX cell is NOISE; stress-avoidance REPLICATES (2026-08-06)
+
+Tested whether the intraday (15m) leg of the TP/SL grid holds on its own — it fired 10,628× vs 780 daily,
+i.e. the frequency the operator wants. `trd-intraday-tpsl-verify.ts`, SL 2ATR / TP 3×SL, IS/OOS + random control.
+- **Pooled looked good (+0.044R, t=3.63 ✓✓) but OOS FAILS: +0.011R, t=1.04** (IS +0.068R t=3.86). Per
+  instrument OOS: all 4 fail. Per session OOS: all 4 fail. Per DOW OOS: only Fri passes (1 of 7 ≈ chance).
+- **The calm-VIX cell (OOS +0.703R, win 46%, t=6.29, n=368) looked spectacular — DISAMBIGUATION KILLED IT:**
+  IS calm +0.090R t=1.51 ✗ vs OOS calm +0.703R t=6.29 ✓; IS norm +0.095R t=4.45 ✓ vs OOS norm −0.038R ✗.
+  **The cells FLIP SIGN between halves → noise, not a regime effect.** A real effect appears in BOTH halves.
+  (Had I reported the OOS-only table this would have shipped as an edge. The IS/OOS regime split is now the
+  standard disambiguation for any subgroup finding.)
+- **REPLICATED FINDING (both halves, same sign): intraday dip-buy in VIX>25 STRESS LOSES** — IS −0.448R
+  (t=−3.32), OOS −0.438R (t=−1.74), win rate 21-25%. A verified AVOIDANCE rule: do not dip-buy intraday in
+  stress. This is the only intraday result that replicates.
+VERDICT: no support for high-frequency intraday trading. The verified daily spec (D-152/153) stands unchanged.
