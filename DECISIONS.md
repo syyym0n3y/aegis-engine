@@ -1784,3 +1784,20 @@ bet, not diversification. Hence the huge drawdowns AND the thousands of signals 
 **Frequency beyond the portfolio-heat budget is worthless — the trades cannot be taken.**
 CONCLUSION: the baseline's rarity is a FEATURE (selectivity), not a bug. Do NOT loosen parameters. The only
 legitimate route to more fires is MORE UNCORRELATED INSTRUMENTS, not looser thresholds on the same 45.
+
+### D-151 — Universe expansion also fails risk-adjusted; the edge is inherently RARE (2026-08-06)
+
+Tested D-150's constructive hypothesis (more UNCORRELATED instruments at the UNCHANGED baseline spec, rather
+than looser parameters). `trd-universe-expand.ts`, 45 → 155 instruments (added international single-country,
+EM, commodities, thematics, rates, credit, FX, 40 more single names):
+- fires/yr **24.6 → 90.1 (3.7×)** — frequency DOES scale with instrument count.
+- BUT expectancy **+0.120R → +0.043R** — the added instruments carry a much weaker edge, exactly matching the
+  D-147 breadth finding (dip-buy works on equity/growth, fails on commodities/rate-sensitives).
+- Concurrency-capped curve: **1.80× / 13.3% DD (ratio 0.136) → 2.16× / 39.8% DD (ratio 0.054)** — more raw
+  return but **3× the drawdown = 2.5× WORSE risk-adjusted.**
+- Clustering metric said "spread out" (1.41→1.70 signals/day) yet DD tripled → the clustering proxy is NOT
+  sufficient; only the equity curve decides. Logged as a methodological note.
+**CONCLUSION (both scaling routes now closed): the dip-buy edge cannot be scaled by loosening parameters
+(D-150) OR by adding instruments indiscriminately (D-151). Both dilute expectancy faster than they add
+frequency. ~25 fires/yr on a quality 45-instrument book at +0.12R is the honest capacity of this edge.**
+Remaining test: quality-filtered expansion (instrument cohort ranked on IS-only, validated OOS) — running.
