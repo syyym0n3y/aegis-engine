@@ -2048,3 +2048,26 @@ papers — not these same 7 re-weighted. A perfect apples-to-apples test needs O
 alt-portfolio files (attempted; the Drive folder is JS-rendered and the bulk file download is slow). So the
 verdict is STRONGLY EVIDENCED, not proven for these specific 7. EDGAR remains available and verified if a
 liquid-universe variant is ever worth testing.
+
+### D-163 — FINAL: the 7 survivors are unharvestable — 77% of return is in the SHORT leg (2026-08-06)
+
+Downloaded OSAP's full per-decile portfolio file (78 MB, 1,226,796 portfolio-months, 212 signals, deciles
+01-10 + LS with Nlong/Nshort). `scripts/trd-osap-longshort-legs.ts` decomposes WHERE the return actually lives.
+**THE 7 SURVIVORS, OOS 2015+:**
+| component | %/mo | t |
+|---|---|---|
+| LONG-SHORT (needs shorting) | 1.167 | **5.32** |
+| **SHORT-LEG contribution** | **0.897** | **3.58** ← **77% of the total** |
+| LONG-ONLY (top decile vs middle) | 0.270 | 2.15 (pooled) |
+**PER-SIGNAL LONG-ONLY — 6 of 7 have NO tradable long-only edge:**
+SmileSlope LS t=4.17 → long-only **t=0.09**; dCPVolSpread 3.41 → **−0.31**; NetPayoutYield 3.05 → **0.28**;
+XFIN 3.09 → **0.64**; EarningsStreak 3.56 → **0.70**; RIO_Volatility 3.15 → 1.40;
+**OrderBacklogChg 3.01 → 2.44 (the ONLY one)** — and it holds just 51 stocks/leg, and its input (order
+backlog) is narrative text, NOT in XBRL, so it is the least obtainable of all seven. The pooled long-only
+t=2.15 is driven almost entirely by that single signal.
+Breadth: library averages 541 long / 553 short stocks per portfolio; survivors 237-597 per leg.
+**CONCLUSION — THE LITERATURE THREAD IS CLOSED.** Even the 7 predictors that survived post-publication
+testing at t>3 since 2015 are UNHARVESTABLE: equal-weighted (D-162), microcap-dependent (D-161), and 77%
+short-leg dependent requiring hundreds of hard-to-borrow small-cap shorts (D-163). Six of seven vanish
+entirely long-only. **859 claims catalogued → 212 tested at scale → 0 implementable for a normal account.**
+This also retro-validates every rejection this session: the corpus was not missing a hidden edge.
