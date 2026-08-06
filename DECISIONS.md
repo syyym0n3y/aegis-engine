@@ -2221,3 +2221,39 @@ requires an edge the entire liquid universe does not contain) but the **co-pilot
 heat cap + house-money + measured cost + geometry ranking, which guarantees the *survival* half for any trader
 who brings their own entries. We sell the seatbelt, honestly, not the rocket. 228 tests green (deploy-sim +
 nasdaq-hf added; both are analysis scripts, not order-path code).
+
+## D-170 — the full sweep found ONE survivor: BTC 5m mean-reversion short (fee-gated to ≤5bp execution)
+
+Operator: "go across all timeframes, markets, instruments and sessions." Built `scripts/trd-full-sweep.ts` —
+the exhaustive falsification matrix on every intraday market we hold at 1-min: NASDAQ + S&P500 (Dukascopy
+~15y) and BTC + ETH (Binance ~8.9y), across TFs 5/15/30/60/240m, across sessions (Asia/London/NY-am/NY-pm/
+Overnight for equities; 24h for crypto), both long and short, each cell vs its OWN matched random control (D-146).
+
+**92 cells tested, 7 nominal passes at t≥2.** But 92 hypotheses at t≥2 manufacture ~4-5 false positives by
+chance (Bonferroni t≈3.1). The 3 S&P passes (t=2.10, 2.10, 2.67, scattered across unrelated session/TF combos,
+low N) are textbook multiple-testing noise — dismissed. The crypto cluster was different: BTC-5m-short hit t=6.81.
+
+**Anti-fooling gates** (`scripts/trd-crypto-gate.ts`): trial-deflation (t≥3.1) + both-halves sign stability
+(D-155) + walk-forward OOS (select first 60%, confirm untouched last 40%). Of the 4 crypto cells:
+- BTC/5m/long t=2.82 → ✗ fails deflation (H2 flips negative)
+- ETH/5m/long t=3.09 → ✗ H2 flips negative
+- ETH/5m/short t=3.86 → ✗ one half is noise (H2 t=1.9)
+- **BTC/5m/short t=8.07 → ✓✓ SURVIVES ALL: H1 +0.597/t5.9, H2 +0.268/t3.6, OOS +0.290/t4.7.**
+
+Setup: short a 5-min bar with RSI14>70 while price < 200-period MA (fade a short-term rip inside a downtrend),
+2×ATR stop, 3R target. 132 trades/yr. This is the FIRST thing in the project — past 859 anomaly claims, 212
+Chen-Zimmermann predictors, 123-instrument daily geometry, and 91 other sweep cells — to clear the random gate,
+trial deflation, both-halves, AND OOS. It is a genuine historical clearance, not a lead (D-104 doctrine: 8.9y +
+1,179 trades + clean OOS beats waiting).
+
+**The one binding caveat — execution cost** (`scripts/trd-btc-fees.ts`, same trades recharged at real fees):
+profitable at 0/2/5bp per side (+0.47 / +0.34 / +0.14R), break-even at ~7.5bp, DEAD at 10bp retail spot taker
+(−0.19R). vs-random t stays 6.4+ at every fee (controls pay the same fee) — what moves is the NET sign. So it
+is real ONLY on low-fee execution: futures taker (~4-5bp) or patient maker fills (~1-2bp), NOT retail spot.
+
+**Status: this does NOT touch real money.** It is the first strategy to earn a place in forward PAPER
+confirmation — the final signature. It is single-instrument (concentration risk), fee-fragile, and at 132
+trades/yr still needs ~35y to 10× at safe 0.5% sizing (the frequency wall from D-169 is dented, not gone). But
+the honest verdict shifts: the market is NOT uniformly efficient at this resolution. There is one drop of fuel,
+reachable only with cheap execution. Next gate: forward paper on a ≤5bp venue, sized by the co-pilot, kill-switch
+armed. 228 tests green; three analysis scripts added (full-sweep, crypto-gate, btc-fees).
