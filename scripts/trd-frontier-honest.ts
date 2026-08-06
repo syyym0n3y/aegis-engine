@@ -84,8 +84,10 @@ function curveHeatCapped(name: string) {
   }
   const rets: number[] = []; for (let i = 1; i < c.length; i++) rets.push(c[i] / c[i - 1] - 1);
   const yrs = (Date.parse(tr[tr.length - 1].date) - Date.parse(tr[0].date)) / (365.25 * 864e5);
-  console.log(`   ${name.padEnd(20)} final $${Math.round(eq).toLocaleString().padStart(11)}  ${(eq / DEPOSIT).toFixed(2).padStart(6)}×  CAGR ${((Math.pow(eq / DEPOSIT, 1 / yrs) - 1) * 100).toFixed(1).padStart(5)}%  maxDD ${(maxDrawdown(rets) * 100).toFixed(1).padStart(5)}%  min-eq $${Math.round(minEq).toLocaleString()}  skipped(heat) ${skipped}`);
+  const dd = maxDrawdown(rets) * 100, mult = eq / DEPOSIT;
+  console.log(`   ${name.padEnd(20)} $${Math.round(eq).toLocaleString().padStart(11)} ${mult.toFixed(2).padStart(7)}× ${((Math.pow(mult, 1 / yrs) - 1) * 100).toFixed(1).padStart(5)}% ${dd.toFixed(1).padStart(6)}% ${(mult / (dd || 1)).toFixed(3).padStart(8)}  ${skipped} (min-eq $${Math.round(minEq).toLocaleString()})`);
 }
-console.log(`\nCONCURRENCY-CAPPED equity curves (total open risk ≤ ${(MAX_HEAT * 100).toFixed(0)}% — the E2 fix):`);
-if (survivors.length) curveHeatCapped(survivors[0].name);
-curveHeatCapped("RSI14<30 >200MA");
+console.log(`\nCONCURRENCY-CAPPED equity curves (total open risk ≤ ${(MAX_HEAT * 100).toFixed(0)}% — the E2 fix).`);
+console.log(`The decisive practical metric is RETURN ÷ DRAWDOWN — frequency you cannot hold within your heat budget is worthless:`);
+console.log(`   ${"variant".padEnd(20)} ${"final".padStart(12)} ${"mult".padStart(7)} ${"CAGR".padStart(6)} ${"maxDD".padStart(7)} ${"mult/DD".padStart(8)}  skipped`);
+for (const s of survivors.slice(0, 6)) curveHeatCapped(s.name);

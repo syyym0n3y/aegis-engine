@@ -1765,3 +1765,22 @@ looked best: 459.7 fires/yr × +0.028R = 12.87 R/yr = 4.3× the baseline's 3.03.
 3. **COST FRAGILITY**: the frontier variant turns NEGATIVE at 1.5× the assumed cost; the baseline survives to 2×.
 Note the variant DID pass breadth (30/45), eras (36/56) and per-regime random controls (t=2.47/6.21/7.19) —
 those gates are necessary but NOT sufficient: only the uncontaminated OOS test exposed it.
+
+### D-150 — Frequency does NOT improve the system; the constraint is CORRELATION, not the threshold (2026-08-06)
+
+Corrected protocol (`trd-frontier-honest.ts`): rank variants on IN-SAMPLE only → validate OOS untouched →
+concurrency-capped equity curve (portfolio heat ≤6%). Results:
+- **Contamination confirmed**: the full-sample "winner" RSI5<30 >100MA went IS 28.8 R/yr → **OOS −10.0 R/yr**.
+- **Structural finding: the 200MA trend filter is ROBUST, the 100MA OVERFITS** — 4/5 of the 100MA variants
+  fail OOS; 7/8 of the 200MA variants hold. Use 200MA.
+- **9/16 variants hold OOS**, and RSI14<40 >200MA has the highest OOS R/yr (10.8 = 3.4× baseline)…
+- **…but risk-adjusted, EVERY higher-frequency variant is WORSE** (return ÷ maxDD):
+  baseline RSI14<30 **0.136** | RSI5<10 0.117 | RSI14<35 0.055 | RSI5<20 0.049 | RSI14<40 0.038 | RSI2<10 0.014.
+  Baseline is the ONLY variant where the deposit is never touched (min-eq $10,000) and only 46 signals are
+  dropped; RSI14<40 drops **5,000** and draws down 58%; RSI2<10 drops 7,998 and draws down 85%.
+**WHY (the real lesson): the extra fires are CORRELATED.** Loosening the threshold makes the signal fire across
+many instruments SIMULTANEOUSLY (market-wide dips) → hundreds of concurrent correlated longs = one big beta
+bet, not diversification. Hence the huge drawdowns AND the thousands of signals a heat budget cannot hold.
+**Frequency beyond the portfolio-heat budget is worthless — the trades cannot be taken.**
+CONCLUSION: the baseline's rarity is a FEATURE (selectivity), not a bug. Do NOT loosen parameters. The only
+legitimate route to more fires is MORE UNCORRELATED INSTRUMENTS, not looser thresholds on the same 45.
