@@ -2141,3 +2141,38 @@ than random your edge is ZERO and you simply pay the cost — the sizing still p
 manufacture an edge. This is a calculator, not a promise." Shipped in both API and UI so no user can read
 the ladder as a return forecast.
 222 _shared tests green. Ladder rendered in `copilot.html`, pushed.
+
+### D-167/168 — Zero-friction measured costs + instrument R:R geometry (SPY ranks 27th) (2026-08-06)
+
+Operator: "research the broker and take it from them... minimum friction" + "stop using SPY, there are
+instruments with measurably better probabilities and R:R." Both were fair. Both done.
+**(A) COST — MEASURED, NEVER ASKED FOR** (`_shared/trd-cost.ts`, +5 tests):
+- Commission RESEARCHED not assumed: as of 2026 the major US retail brokers (Robinhood/Webull/Fidelity/
+  Schwab/Firstrade/Public) are **$0 on stocks & ETFs**. My earlier $1 assumption was OUTDATED and was
+  inflating every minimum-deposit figure. Options $0-0.65/contract, futures ~$0.25-2.25 — table exposed as
+  an optional override, default zero-commission.
+- Spread MEASURED per instrument via **Corwin & Schultz (2012, JF)** high/low estimator — no quote feed, no
+  user input. SPY: 0.135% round-trip = **0.056R** (35% of the +0.16R edge). Honest limit: C-S overestimates
+  for ultra-liquid names, so it errs CONSERVATIVE.
+**(B) INSTRUMENT R:R GEOMETRY — and a failed first attempt, reported not hidden.**
+FIRST ATTEMPT WRONG: ranked instruments BY the dip-buy signal → the signal fires <1×/yr per name, so only
+14 of ~130 cleared 40 samples and NONE beat random. Unanswerable at that N; I asked the data the wrong question.
+RE-FRAMED (`trd-rr-geometry.ts`): from EVERY 5th bar over full history, how often does an instrument travel
++3R before −1R (2×ATR stop, pessimistic fills)? **123 instruments, ~1,669 samples EACH** — a property of the
+instrument, independent of any signal, usable with the trader's OWN entries.
+| instrument | 3R hit% (long) | net R | min deposit |
+|---|---|---|---|
+| AAPL | **29.1** | +0.368 | $3,912 |
+| NFLX | 29.0 | +0.347 | **$889** |
+| NVDA | 28.8 | +0.427 | $3,116 |
+| GLD | 28.6 | +0.363 | $2,741 |
+| GOOGL | 28.0 | +0.485 | $5,514 |
+| **SPY** | **18.9** | +0.261 | **RANK 27/123** |
+**SPY is BELOW the 25% break-even on clean wins — the operator's criticism was correct and measurable.**
+(Nuance kept in the product: SPY's expectancy is still positive because timeout partials are favourable;
+hit% and net R are reported separately so neither is misread.)
+**SHORTS, 4th independent confirmation: only 2 of 123 instruments have short geometry ≥ break-even** (best
+~15% vs 25% needed) — the structural reason every short setup has failed our tests.
+SHIPPED: `_shared/trd-geometry-table.ts` (123 instruments embedded) → `trd-copilot` now returns the
+instrument's geometry, WARNS when it is below break-even for the chosen direction, and names better
+alternatives. Rendered in copilot.html. 227 tests green.

@@ -16,6 +16,7 @@ import { assetFwdVolDeRisk, ASSET_VOL_MODELS } from "../_shared/trd-asset-vol.ts
 import { sessionExpectedVol } from "../_shared/trd-session-vol.ts";
 import { evaluate as scaleEval, minViableDeposit, EXPECTANCY_R, WIN_RATE, RR, EFFECTIVE_BETS } from "../_shared/trd-scale.ts";
 import { estimateCost } from "../_shared/trd-cost.ts";
+import { geometryFor, RR_GEOMETRY } from "../_shared/trd-geometry-table.ts";
 
 const MAX_HEAT = 0.06, MAX_RISK = 0.02, BASE_RISK = 0.005, HOUSE_RISK = 0.02, TP_MULT = 3;
 async function bars(sym: string) {
@@ -77,6 +78,11 @@ Deno.serve(async (req) => {
     if (regime === "STRESS") warn.push(`VIX ${vix.toFixed(1)} = STRESS regime. Measured: intraday dip-buying in stress LOSES in both sample halves (−0.44R). Size is already cut to ×${deRisk.toFixed(2)}; consider sitting out.`);
     if (side === "short") warn.push(`SHORT side: across our entire corpus (14 strategy families, 1.7M ICT instances, a 20-cell TP/SL grid) NO short setup ever beat a random entry. Shorts are not forbidden — but no evidence supports a systematic short edge.`);
     if (stopPct > 15) warn.push(`Stop is ${stopPct.toFixed(1)}% away — very wide. Position size is correspondingly tiny; consider a closer structural stop.`);
+    // ── R:R GEOMETRY (D-168): does THIS instrument actually travel 3R before 1R? ──
+    const geo = geometryFor(symbol);
+    const dirHit = geo ? (side === "long" ? geo.hL : geo.hS) : null;
+    const dirNet = geo ? (side === "long" ? geo.nL : geo.nS) : null;
+    if (geo && dirHit != null && dirHit < 25) warn.push(`GEOMETRY: ${symbol} reaches a 3R target before a 1R stop only ${dirHit}% of the time going ${side} (25% is break-even on the clean win). Measured over ~1,669 samples of full history. Consider an instrument whose geometry pays — the leaders are ${Object.entries(RR_GEOMETRY).filter(([, v]) => v.hL > 27).sort((a, b) => b[1].nL - a[1].nL).slice(0, 5).map(([k, v]) => `${k} ${v.hL}%`).join(", ")}.`);
     const lossesToHalve = riskAmt > 0 ? Math.floor(Math.log(0.5) / Math.log(1 - riskAmt / equity)) : Infinity;
     const sess = sessionExpectedVol(Number.isFinite(vr.rv) ? vr.rv * Math.sqrt(252) * 100 : 13.4);
 
@@ -118,6 +124,14 @@ Deno.serve(async (req) => {
         probability_math: `The measured reference edge is ${(WIN_RATE * 100).toFixed(0)}% win rate at 1:${RR} = +${(WIN_RATE * RR - (1 - WIN_RATE)).toFixed(2)}R per trade BEFORE costs. Your round-trip cost here is ${here.costInR}R, leaving ${here.edgeAfterCostR}R.`,
         expected_return_is_conditional: `CRITICAL: "expected_annual_pct" assumes YOUR entries carry that same +${EXPECTANCY_R}R edge and that you find that many qualifying trades. If your entries are no better than random, your edge is ZERO and you simply pay the cost — the sizing still protects you, but it cannot manufacture an edge. This is a calculator, not a promise.`,
       },
+      instrument_geometry: geo ? {
+        direction_tested: side, hit_3R_before_1R_pct: dirHit, net_expectancy_R: dirNet,
+        break_even_pct: 25, favourable: (dirHit ?? 0) >= 25,
+        long_hit_pct: geo.hL, short_hit_pct: geo.hS,
+        note: "Measured from every 5th bar over full history (~1,669 samples), 2×ATR stop, 3R target, pessimistic fills, net of the measured spread. This is a property of the INSTRUMENT, independent of any entry signal — it tells you whether a 1:3 target is realistic here at all.",
+        best_long_geometry: Object.entries(RR_GEOMETRY).filter(([, v]) => v.hL > 27).sort((a, b) => b[1].nL - a[1].nL).slice(0, 8).map(([k, v]) => ({ symbol: k, hit_pct: v.hL, net_R: v.nL })),
+        shorts_note: `Only ${Object.values(RR_GEOMETRY).filter((v) => v.hS >= 25).length} of ${Object.keys(RR_GEOMETRY).length} instruments have short geometry at or above break-even — the structural reason short setups keep failing our tests.`,
+      } : null,
       warnings: warn,
       evidence: {
         target_rule: "TP = 3×SL. Measured on ~11k trades: TP at 0.5×SL wins 64% of the time and still LOSES money (−0.10R); TP at 3×SL wins 29% and MAKES money (+0.058R). Cutting winners short is what kills accounts.",

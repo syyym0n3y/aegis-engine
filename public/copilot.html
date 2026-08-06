@@ -60,7 +60,7 @@ $("f").addEventListener("submit",async e=>{
   try{
     const d=await (await fetch(API+"?"+q)).json();
     if(!d.ok){ $("out").innerHTML='<div class="panel" style="border-color:var(--red)">'+(d.err||"error")+'</div>'; return; }
-    const t=d.trade,w=d.why_this_size,c=d.context,cs=d.capital_scaling;
+    const t=d.trade,w=d.why_this_size,c=d.context,cs=d.capital_scaling,g=d.instrument_geometry;
     const blocked=t.risk_amount<=0;
     $("out").innerHTML=`
 <div class=grid>
@@ -77,6 +77,15 @@ ${d.warnings.map(x=>`<div class="warn${x.startsWith("BLOCKED")?" block":""}">${x
  <div class=row><span>House money</span><span class=mono style="font-size:12px">${w.house_money}</span></div>
  <div class=row><span>Market regime</span><span class=mono>VIX ${c.vix ?? "—"} · ${c.regime} · ${d.symbol} ann vol ${c.instrument_ann_vol_pct ?? "—"}%</span></div>
 </div>
+${g?`<div class=panel>
+ <div class=lbl style="margin-bottom:8px">Does this instrument actually reach a 3R target?</div>
+ <div class=row><span>${d.symbol} hits +3R before −1R (${g.direction_tested})</span><span class=mono style="color:${g.favourable?'var(--accent)':'var(--red)'};font-weight:700">${g.hit_3R_before_1R_pct}%</span></div>
+ <div class=row><span>Break-even on the clean win</span><span class=mono>25%</span></div>
+ <div class=row><span>Net expectancy after measured spread</span><span class=mono>${g.net_expectancy_R}R</span></div>
+ <div class=ev style="margin-top:8px">${g.note}</div>
+ <div class=ev><b>Best long geometry measured:</b> ${g.best_long_geometry.map(x=>x.symbol+" "+x.hit_pct+"%").join(" · ")}</div>
+ <div class=ev style="color:var(--amber)">${g.shorts_note}</div>
+</div>`:""}
 <div class=panel>
  <div class=lbl style="margin-bottom:8px">Capital scaling — what changes as the account grows</div>
  <div class=ev>Minimum viable deposit for <b>${d.symbol}</b>: <b class=mono>${cs.minimum_viable_deposit ? money(cs.minimum_viable_deposit) : "n/a"}</b> — below this, the lot is untradable or fixed costs exceed the edge.</div>
