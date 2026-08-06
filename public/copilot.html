@@ -60,7 +60,7 @@ $("f").addEventListener("submit",async e=>{
   try{
     const d=await (await fetch(API+"?"+q)).json();
     if(!d.ok){ $("out").innerHTML='<div class="panel" style="border-color:var(--red)">'+(d.err||"error")+'</div>'; return; }
-    const t=d.trade,w=d.why_this_size,c=d.context;
+    const t=d.trade,w=d.why_this_size,c=d.context,cs=d.capital_scaling;
     const blocked=t.risk_amount<=0;
     $("out").innerHTML=`
 <div class=grid>
@@ -76,6 +76,23 @@ ${d.warnings.map(x=>`<div class="warn${x.startsWith("BLOCKED")?" block":""}">${x
  <div class=row><span>Portfolio heat after this trade</span><span class=mono>${w.portfolio_heat}</span></div>
  <div class=row><span>House money</span><span class=mono style="font-size:12px">${w.house_money}</span></div>
  <div class=row><span>Market regime</span><span class=mono>VIX ${c.vix ?? "—"} · ${c.regime} · ${d.symbol} ann vol ${c.instrument_ann_vol_pct ?? "—"}%</span></div>
+</div>
+<div class=panel>
+ <div class=lbl style="margin-bottom:8px">Capital scaling — what changes as the account grows</div>
+ <div class=ev>Minimum viable deposit for <b>${d.symbol}</b>: <b class=mono>${cs.minimum_viable_deposit ? money(cs.minimum_viable_deposit) : "n/a"}</b> — below this, the lot is untradable or fixed costs exceed the edge.</div>
+ <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px">
+ <thead><tr>${["equity","lot","notional","risk","positions","cost (R)","edge left","binding"].map(h=>`<th style="text-align:left;padding:5px 8px;border-bottom:1px solid var(--ln);font-family:var(--mono);font-size:10px;text-transform:uppercase;color:var(--mut)">${h}</th>`).join("")}</tr></thead>
+ <tbody>${cs.ladder.map(r=>`<tr style="${r.equity===Math.round(Number($("equity").value))?"background:rgba(64,183,132,.08)":""}">
+   <td style="padding:5px 8px" class=mono>${money(r.equity)}</td>
+   <td style="padding:5px 8px" class=mono>${r.viable?r.lot:"—"}</td>
+   <td style="padding:5px 8px" class=mono>${r.viable?money(r.notional):"—"}</td>
+   <td style="padding:5px 8px" class=mono>${r.viable?money(r.risk):"—"}</td>
+   <td style="padding:5px 8px" class=mono>${r.viable?r.concurrent_positions:"—"}</td>
+   <td style="padding:5px 8px" class=mono>${r.viable?r.cost_in_R:"—"}</td>
+   <td style="padding:5px 8px" class=mono>${r.viable?r.edge_after_cost_R+"R":"—"}</td>
+   <td style="padding:5px 8px;color:${r.viable?"var(--mut)":"var(--red)"};font-size:11px">${r.binding}</td></tr>`).join("")}</tbody></table></div>
+ <div class=ev style="margin-top:10px">${cs.how_it_scales}</div>
+ <div class=ev style="color:var(--amber)"><b>${cs.expected_return_is_conditional ?? ""}</b></div>
 </div>
 <div class=panel>
  <div class=lbl style="margin-bottom:8px">Why these numbers — every rule was measured</div>

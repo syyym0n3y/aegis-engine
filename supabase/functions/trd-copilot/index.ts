@@ -14,13 +14,14 @@
 import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts";
 import { assetFwdVolDeRisk, ASSET_VOL_MODELS } from "../_shared/trd-asset-vol.ts";
 import { sessionExpectedVol } from "../_shared/trd-session-vol.ts";
+import { evaluate as scaleEval, minViableDeposit, EXPECTANCY_R, WIN_RATE, RR, EFFECTIVE_BETS } from "../_shared/trd-scale.ts";
 
 const MAX_HEAT = 0.06, MAX_RISK = 0.02, BASE_RISK = 0.005, HOUSE_RISK = 0.02, TP_MULT = 3;
 async function bars(sym: string) {
   const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&period1=0&period2=${Math.floor(Date.now() / 1000)}`, { headers: { "User-Agent": "Mozilla/5.0" } });
   const j = await r.json().catch(() => null); const res = j?.chart?.result?.[0]; if (!res?.timestamp) return null;
   const t = res.timestamp as number[]; const q = res.indicators.quote[0]; const o: any[] = [];
-  for (let i = 0; i < t.length; i++) { const O = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i]; if ([O, h, l, c].some((x) => x == null || !Number.isFinite(x))) continue; o.push({ d: new Date(t[i] * 1000).toISOString().slice(0, 10), o: O, h, l, c }); }
+  for (let i = 0; i < t.length; i++) { const O = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i], v = q.volume?.[i]; if ([O, h, l, c].some((x) => x == null || !Number.isFinite(x))) continue; o.push({ d: new Date(t[i] * 1000).toISOString().slice(0, 10), o: O, h, l, c, v: Number.isFinite(v) ? v : 0 }); }
   return o.length ? o : null;
 }
 async function last(sym: string): Promise<number> { try { const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5d`, { headers: { "User-Agent": "Mozilla/5.0" } }); const j = await r.json(); const c = j?.chart?.result?.[0]?.indicators?.quote?.[0]?.close?.filter((x: number) => Number.isFinite(x)); return c?.length ? c[c.length - 1] : NaN; } catch { return NaN; } }
@@ -78,6 +79,15 @@ Deno.serve(async (req) => {
     const lossesToHalve = riskAmt > 0 ? Math.floor(Math.log(0.5) / Math.log(1 - riskAmt / equity)) : Infinity;
     const sess = sessionExpectedVol(Number.isFinite(vr.rv) ? vr.rv * Math.sqrt(252) * 100 : 13.4);
 
+    // ── CAPITAL LADDER: what changes as the account grows, from minimum viable to institutional ──
+    const advShares = (() => { const v = (b as any[]).slice(-60).map((x: any) => x.v ?? 0).filter((x: number) => x > 0); return v.length ? v.reduce((a: number, c: number) => a + c, 0) / v.length : 2e6; })();
+    const isCrypto = /USD$|USDT$/.test(symbol) || symbol.includes("-USD");
+    const scaleBase = { price: entry, stopPct, advShares, minLot: isCrypto ? 0.0001 : 1, costPerTradeUsd: isCrypto ? 0 : 1, spreadPct: isCrypto ? 0.05 : 0.03 };
+    const minDep = minViableDeposit(scaleBase);
+    const LADDER = [500, 2000, 10000, 50000, 250000, 1000000, 10000000];
+    const ladder = LADDER.map((e) => { const t = scaleEval({ ...scaleBase, equity: e, deposit: Math.min(e, deposit) }); return { equity: e, lot: t.lot, notional: t.notional, risk: t.riskPerTrade, risk_pct: t.riskPct, concurrent_positions: t.positions, cost_in_R: t.costInR, edge_after_cost_R: t.edgeAfterCostR, viable: t.viable, binding: t.bindingConstraint, expected_annual_pct: t.expectedAnnualPct }; });
+    const here = scaleEval({ ...scaleBase, equity, deposit });
+
     return new Response(JSON.stringify({
       ok: true, symbol, side, asof: b[i].d,
       trade: {
@@ -97,6 +107,14 @@ Deno.serve(async (req) => {
         note: `A 45-instrument book is only ~2.6 INDEPENDENT bets (measured) — correlations rise in selloffs, so concurrent positions share one ${MAX_HEAT * 100}% budget rather than each getting their own.`,
       },
       context: { vix: Number.isFinite(vix) ? +vix.toFixed(2) : null, regime, instrument_ann_vol_pct: Number.isFinite(vr.rv) ? +(vr.rv * Math.sqrt(252) * 100).toFixed(1) : null, session_expected_vol: sess },
+      capital_scaling: {
+        minimum_viable_deposit: minDep,
+        your_tier: { viable: here.viable, binding_constraint: here.bindingConstraint, cost_in_R: here.costInR, edge_after_cost_R: here.edgeAfterCostR, concurrent_positions_supported: here.positions, expected_annual_pct: here.expectedAnnualPct },
+        ladder,
+        how_it_scales: `As equity grows, TWO things scale: LOT SIZE and the NUMBER of concurrent positions. Both are capped. Positions cap at ~${Math.round(EFFECTIVE_BETS * 4)} names (a 45-instrument book is only ~${EFFECTIVE_BETS} EFFECTIVE bets, so more names add risk, not breadth). Lot size caps at 1% of average daily volume. Below the minimum viable deposit, fixed costs exceed the ${EXPECTANCY_R}R edge and no amount of skill recovers it.`,
+        probability_math: `The measured reference edge is ${(WIN_RATE * 100).toFixed(0)}% win rate at 1:${RR} = +${(WIN_RATE * RR - (1 - WIN_RATE)).toFixed(2)}R per trade BEFORE costs. Your round-trip cost here is ${here.costInR}R, leaving ${here.edgeAfterCostR}R.`,
+        expected_return_is_conditional: `CRITICAL: "expected_annual_pct" assumes YOUR entries carry that same +${EXPECTANCY_R}R edge and that you find that many qualifying trades. If your entries are no better than random, your edge is ZERO and you simply pay the cost — the sizing still protects you, but it cannot manufacture an edge. This is a calculator, not a promise.`,
+      },
       warnings: warn,
       evidence: {
         target_rule: "TP = 3×SL. Measured on ~11k trades: TP at 0.5×SL wins 64% of the time and still LOSES money (−0.10R); TP at 3×SL wins 29% and MAKES money (+0.058R). Cutting winners short is what kills accounts.",

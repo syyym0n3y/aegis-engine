@@ -2118,3 +2118,26 @@ LIVE-VERIFIED: NVDA long $25k/$10k/$200-open → 18.37sh, $286 risk (1.15%), 60 
 GLD correctly routes to the ^GVZ implied-vol model (×0.736); SHORT side inverts stop/target AND warns that no
 short setup ever beat a random entry; heat cap at 6% BLOCKS with an explicit message.
 Honest framing kept in the product: "you choose the trade, we size it", plus the not-advice disclaimer.
+
+### D-166 — Capital scaling: minimum viable deposit → institutional, with the real binding constraints (2026-08-06)
+
+Operator: "from the minimum you can deposit to the maximum... what goes up as equity goes up is the NUMBER
+of trades at the same positions and the LOT SIZES, weighted against probabilities and risk." Correct — and
+now computed rather than asserted. `_shared/trd-scale.ts` (+8 tests) + wired into `trd-copilot`.
+**THE THREE BINDING CONSTRAINTS, each from a measured result:**
+1. **COST FLOOR (small accounts).** Reference expectancy +0.16R/trade (29% win × 3R − 71% × 1R, D-154).
+   Round-trip cost expressed in R = cost$ ÷ risk$. If cost-in-R ≥ 0.16R **the edge is gone**. Binary-searching
+   this gives a hard MINIMUM VIABLE DEPOSIT per instrument. **SPY = $3,706** (at $768/share, ~2% stop).
+2. **CORRELATION CEILING (mid accounts).** Heat 6% ÷ risk-per-trade gives a raw count, capped at ~10 names
+   because 45 instruments = 2.6 EFFECTIVE bets (D-154). More names add risk, not breadth.
+3. **LIQUIDITY CEILING (large accounts).** Position > 1% of average daily volume moves the market; caps lot
+   size regardless of capital.
+**LIVE LADDER (SPY):** $500 and $2,000 → NOT VIABLE (can't buy 1 share); $10,000 → 2 shares, $37 risk,
+binding = CORRELATION; $50,000 → 45 sh, $834 risk, 3 positions; $250k → 261 sh; $1M → 1,071 sh; $10M →
+10,786 sh ($8.3M notional) — binding stays "risk budget" because SPY's ADV is enormous.
+**HONESTY GUARD SHIPPED WITH IT:** expected_annual_pct is explicitly labelled CONDITIONAL — "assumes YOUR
+entries carry that +0.16R edge and that you find that many qualifying trades. If your entries are no better
+than random your edge is ZERO and you simply pay the cost — the sizing still protects you, but it cannot
+manufacture an edge. This is a calculator, not a promise." Shipped in both API and UI so no user can read
+the ladder as a return forecast.
+222 _shared tests green. Ladder rendered in `copilot.html`, pushed.
