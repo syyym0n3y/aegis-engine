@@ -74,6 +74,14 @@ async function universeSizing() {
   } catch (e) { (globalThis as any).__szErr.push(`cr:${String(e).slice(0, 60)}`); }
   return rows;
 }
+// LOCKED-SPEC DECISION SCAN (D-152): the one verified signal, run live across the verified book.
+async function decisionScan() {
+  try {
+    const r = await fetch(`${BASE}/trd-decide?scan=1&equity=10000&deposit=10000`);
+    const j = r.ok ? await r.json() : null;
+    return j?.ok ? j : null;
+  } catch { return null; }
+}
 async function gather() {
   const ps = await fetch(`${SB}/rest/v1/trd_paper_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
   const st = ps[0] ?? null; const a = st?.account ?? null;
@@ -101,14 +109,15 @@ async function gather() {
   const volRegime = await volRegimes();
   const orderFlowLevels = await orderFlow();
   const sizing = await universeSizing();
+  const decision = await decisionScan();
   const fresh = await freshness();
   const rs = await fetch(`${SB}/rest/v1/trd_risk_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
   const liveRisk = (rs as any[])[0] ?? null;
   const mrs = await fetch(`${SB}/rest/v1/trd_prereg_state?hyp_id=eq.meanrev-vix-v1&select=forward_trades,fwd_n,fwd_expectancy_r`, { headers: H }).then((r) => r.json()).catch(() => []);
   const meanrev = (mrs as any[])[0] ? { scanner: (mrs as any[])[0].forward_trades?.scanner ?? [], n: (mrs as any[])[0].fwd_n ?? 0, exp: Number((mrs as any[])[0].fwd_expectancy_r ?? 0) } : null;
-  return { st, a, equity, start, mult, dd, ticks: st?.ticks ?? 0, updated: st?.updated_at ?? null, openPos: a?.positions?.length ?? 0, closed: a?.closed?.length ?? 0, survived: equity > start * 0.5, perSess, grades, reports: (reps as any[]).length, macro, hyps, corpusN: (corpus as any[]).length, rejected, cyclePrediction, volRegime, fresh, liveRisk, meanrev, gex: orderFlowLevels.gex, valueAreas: orderFlowLevels.va, sizing };
+  return { st, a, equity, start, mult, dd, ticks: st?.ticks ?? 0, updated: st?.updated_at ?? null, openPos: a?.positions?.length ?? 0, closed: a?.closed?.length ?? 0, survived: equity > start * 0.5, perSess, grades, reports: (reps as any[]).length, macro, hyps, corpusN: (corpus as any[]).length, rejected, cyclePrediction, volRegime, fresh, liveRisk, meanrev, gex: orderFlowLevels.gex, valueAreas: orderFlowLevels.va, sizing, decision };
 }
-function j(d: any) { return { protocol_version: 1, project_kind: "aegis", generated_at: new Date().toISOString(), summary: { status: d.survived ? "alive" : "breached", equity: Math.round(d.equity), multiple: +d.mult.toFixed(3), max_drawdown_pct: +(d.dd * 100).toFixed(1), ticks: d.ticks, open_positions: d.openPos, closed_trades: d.closed, platform_reports: d.reports, macro_phase: d.macro?.phase ?? "UNKNOWN", macro_de_risk: d.macro?.deRisk ?? 1 }, data: { per_session_setup: d.perSess, grades: d.grades, factor_book_sharpe: 1.0, macro: d.macro, vol_regime: d.volRegime, tracker_freshness: d.fresh, live_account_risk: d.liveRisk?.snapshot ?? null, meanrev_scanner: d.meanrev, prereg_hypotheses: d.hyps, corpus_assessed: d.corpusN, corpus_rejected: d.rejected, cycle_prediction: d.cyclePrediction, gex_levels: d.gex, value_areas: d.valueAreas, universe_sizing: d.sizing }, open_work: ["live real-money bridge (paper-first, gated)", "close risk-inventory gaps", "auth/billing", "branded domain"], recent_events: [], query_errors: (globalThis as any).__szErr ?? [] }; }
+function j(d: any) { return { protocol_version: 1, project_kind: "aegis", generated_at: new Date().toISOString(), summary: { status: d.survived ? "alive" : "breached", equity: Math.round(d.equity), multiple: +d.mult.toFixed(3), max_drawdown_pct: +(d.dd * 100).toFixed(1), ticks: d.ticks, open_positions: d.openPos, closed_trades: d.closed, platform_reports: d.reports, macro_phase: d.macro?.phase ?? "UNKNOWN", macro_de_risk: d.macro?.deRisk ?? 1 }, data: { per_session_setup: d.perSess, grades: d.grades, factor_book_sharpe: 1.0, macro: d.macro, vol_regime: d.volRegime, tracker_freshness: d.fresh, live_account_risk: d.liveRisk?.snapshot ?? null, meanrev_scanner: d.meanrev, prereg_hypotheses: d.hyps, corpus_assessed: d.corpusN, corpus_rejected: d.rejected, cycle_prediction: d.cyclePrediction, gex_levels: d.gex, value_areas: d.valueAreas, universe_sizing: d.sizing, decision_scan: d.decision }, open_work: ["live real-money bridge (paper-first, gated)", "close risk-inventory gaps", "auth/billing", "branded domain"], recent_events: [], query_errors: (globalThis as any).__szErr ?? [] }; }
 function esc(s: string) { return String(s).replace(/</g, "&lt;"); }
 function html(d: any) {
   const upd = d.updated ? new Date(d.updated).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
@@ -170,6 +179,19 @@ ${scan.length ? `<table><thead><tr><th>market</th><th>side</th><th class=num>RSI
 ${gexArr.length ? `<table><thead><tr><th>underlying</th><th class=num>spot</th><th>gamma regime</th><th class=num>put wall</th><th class=num>flip</th><th class=num>call wall</th><th>fwd-vol regime → size</th></tr></thead><tbody>${gexArr.map((g: any) => `<tr><td class=mono>${esc(g.symbol)}</td><td class="mono num">${g.spot}</td><td class=mono style="color:${regCol(g.regime)}">${esc(g.regime)} ${g.totalGexBn >= 0 ? "+" : ""}${g.totalGexBn}B</td><td class="mono num" style="color:var(--accent)">${g.putWall}</td><td class="mono num" style="color:${near(g.spot, g.flip)}">${g.flip ?? "—"}</td><td class="mono num" style="color:var(--red)">${g.callWall}</td><td class=mono style="font-size:11px;color:${g.deRisk != null && g.deRisk < 0.85 ? "var(--amber)" : "var(--mut)"}">${g.volRegime ? `${esc(g.volRegime)} · ~${g.expFwdVol}% → ×${g.deRisk}` : "—"}</td></tr>`).join("")}</tbody></table><div style="font-size:11.5px;color:var(--faint);margin-top:6px">fwd-vol regime = the D-132 signal: 15y-validated (GEX t=−14.1 over trailing-RV) forward-vol de-risk. Low-gamma → ~2× vol → size down. SIZING only, never a direction call.</div>
 ${gexArr[0]?.dixLean ? `<div style="font-size:12px;color:var(--mut);margin-top:8px"><b style="color:var(--tx)">DIX (dark-pool)</b>: ${(gexArr[0].dixPct * 100).toFixed(0)}th pctile — ${esc(gexArr[0].dixLean)}. <span style="color:var(--faint)">Awareness only: D-136 gated it as tradable alpha → FAILED (DSR 29%). A lean, not a signal.</span></div>` : ""}` : ""}
 ${vaArr.length ? `<table style="margin-top:14px"><thead><tr><th>market</th><th class=num>spot</th><th class=num>VAL</th><th class=num>POC</th><th class=num>VAH</th><th class=num>prior POC</th><th>location</th></tr></thead><tbody>${vaArr.map((v: any) => `<tr><td class=mono>${esc(v.name)}</td><td class="mono num">${v.spot}</td><td class="mono num" style="color:var(--accent)">${v.val}</td><td class="mono num" style="color:var(--amber)">${v.poc}</td><td class="mono num" style="color:var(--red)">${v.vah}</td><td class="mono num">${v.priorPoc ?? "—"}</td><td class=mono style="font-size:11px;color:var(--mut)">${esc(String(v.loc ?? ""))}</td></tr>`).join("")}</tbody></table>` : ""}` : "";
+  // LOCKED-SPEC DECISION (D-152) — the single verified signal, live across the verified book
+  const dec = d.decision;
+  const decSection = dec ? `
+<h2>Buy / sell decision — the ONE verified signal (D-147/152, locked spec)</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">Of <b style="color:var(--tx)">14 strategy families × 45 instruments × full history</b>, exactly one both beat a matched random-entry control AND made money: <b style="color:var(--tx)">dip-buy — RSI${dec.spec.rsiPeriod} &lt; ${dec.spec.rsiThreshold} while price &gt; ${dec.spec.trendMA}MA</b> (+${dec.spec.expectancyR}R vs random −0.051R, t=${dec.spec.vsRandomT}; OOS +${dec.spec.oosExpectancyR}R, t=${dec.spec.oosT}; beats random in calm/normal/stress independently). <b style="color:var(--tx)">It never issues SELL</b> — no short setup ever passed the control. Loosening it, expanding the book, or cherry-picking instruments were all tested and all destroy the edge (D-150/151/152), so the spec is <b style="color:var(--tx)">locked</b>.</div>
+<div class=grid>
+<div class=card><div class=lbl>Signals firing now</div><div class=v style="color:${dec.firing > 0 ? "var(--accent)" : "var(--faint)"}">${dec.firing}</div><div class=s>of ${dec.universe_size} in the verified book</div></div>
+<div class=card><div class=lbl>Portfolio heat</div><div class=v style="color:${dec.portfolio_heat_pct >= dec.heat_budget_pct ? "var(--red)" : "var(--accent)"}">${dec.portfolio_heat_pct}%</div><div class=s>budget ${dec.heat_budget_pct}% total open risk</div></div>
+<div class=card><div class=lbl>Expected frequency</div><div class=v>${dec.spec.firesPerYear}<span style="font-size:14px">/yr</span></div><div class=s>rarity IS the edge</div></div>
+<div class=card><div class=lbl>Return ÷ drawdown</div><div class=v style="color:var(--accent)">${dec.spec.returnPerDrawdown}</div><div class=s>best of all variants tested</div></div>
+</div>
+${dec.firing > 0 ? `<table style="margin-top:14px"><thead><tr><th>instrument</th><th>action</th><th class=num>price</th><th class=num>RSI14</th><th class=num>risk $</th><th class=num>risk %</th><th class=num>size</th><th class=num>stop %</th></tr></thead><tbody>${dec.signals.map((s: any) => `<tr><td class=mono>${esc(s.symbol)}</td><td class=mono style="color:${s.action === "BUY" ? "var(--accent)" : "var(--faint)"}">${esc(s.action)}${s.heat_capped ? " (heat-capped)" : ""}</td><td class="mono num">${s.price}</td><td class="mono num">${s.rsi14}</td><td class="mono num">$${s.risk_amount}</td><td class="mono num">${s.risk_pct}%</td><td class="mono num">${s.position_size}</td><td class="mono num">${s.stop_pct}%</td></tr>`).join("")}</tbody></table>` : `<div class=panel style="margin-top:14px;font-size:13px;color:var(--mut)">${esc(dec.note)}</div>`}
+<div style="font-size:11.5px;color:var(--faint);margin-top:8px">Sizing = house-money model (0.5% of the original deposit + 2% of banked profit) × forward-vol de-risk, capped at 2% per trade and ${dec.heat_budget_pct}% total open risk. Historical evidence and risk arithmetic — not investment advice. Paper-first: no real-money order path.</div>` : "";
   // UNIVERSE SIZING (D-139) — every traded instrument sized by its own best forward-vol signal
   const szArr = d.sizing ?? [];
   const szCol = (x: number) => x == null ? "var(--faint)" : x >= 0.99 ? "var(--accent)" : x >= 0.7 ? "var(--amber)" : "var(--red)";
@@ -186,6 +208,7 @@ ${vaArr.length ? `<table style="margin-top:14px"><thead><tr><th>market</th><th c
 <div class=card><div class=lbl>Max drawdown</div><div class=v>${(d.dd * 100).toFixed(1)}%</div><div class=s>${d.openPos} open · ${d.closed} closed</div></div>
 <div class=card><div class=lbl>Ticks</div><div class=v>${d.ticks}</div><div class=s>10 markets · every 6h</div></div>
 </div>
+${decSection}
 ${macroSection}
 ${volSection}
 ${orderFlowSection}

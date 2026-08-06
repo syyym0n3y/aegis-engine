@@ -53,3 +53,38 @@ Deno.test("decide: position size = risk / stop distance (mechanically correct)",
   assert(Math.abs(d.positionNotional - d.riskAmount / 0.05) < 0.01);
   assert(Math.abs(d.positionSize - d.positionNotional / 100) < 0.01);
 });
+
+// ── LOCKED SPEC guards (D-152 wiring) ──
+import { LOCKED_SPEC, LOCKED_UNIVERSE } from "./trd-decision.ts";
+
+Deno.test("PORTFOLIO HEAT: a decision NEVER pushes total risk past the 6% cap (the D-149 E2 fix)", () => {
+  const cap = LOCKED_SPEC.maxPortfolioHeatPct / 100 * 10000;
+  for (const openRisk of [0, 200, 400, 590, 600, 1000]) {
+    const d = decide({ ...base, rsi14: 20, equity: 10000, openRiskAmount: openRisk });
+    // the new trade may never take total risk above the cap; if already over, it must add nothing
+    assert(openRisk + d.riskAmount <= Math.max(openRisk, cap) + 1e-6, `decision breached cap: open ${openRisk} + new ${d.riskAmount}`);
+    if (openRisk >= cap) assertEquals(d.riskAmount, 0, `must add ZERO risk when already at/over cap (open ${openRisk})`);
+  }
+});
+
+Deno.test("PORTFOLIO HEAT: a signal is BLOCKED (risk 0) once the budget is exhausted", () => {
+  const full = decide({ ...base, rsi14: 20, equity: 10000, openRiskAmount: 600 }); // 6% already live
+  assertEquals(full.riskAmount, 0);
+  assert(full.reason.includes("BLOCKED by portfolio heat"));
+  const partial = decide({ ...base, rsi14: 20, equity: 10000, openRiskAmount: 580 });
+  assert(partial.riskAmount > 0 && partial.riskAmount <= 20.0001, `should be trimmed to remaining room, got ${partial.riskAmount}`);
+  assert(partial.heatCapped);
+});
+
+Deno.test("OFF-BOOK: instruments outside the verified book are flagged", () => {
+  assert(!decide({ ...base, rsi14: 20, symbol: "SPY" }).offBook, "SPY is in the book");
+  const off = decide({ ...base, rsi14: 20, symbol: "DOGE" });
+  assert(off.offBook && off.reason.includes("OFF-BOOK"), "unverified instrument must be flagged");
+});
+
+Deno.test("LOCKED SPEC constants match the verified evidence (guards against silent drift)", () => {
+  assertEquals(LOCKED_SPEC.rsiPeriod, 14); assertEquals(LOCKED_SPEC.rsiThreshold, 30); assertEquals(LOCKED_SPEC.trendMA, 200);
+  assertEquals(LOCKED_SPEC.maxPortfolioHeatPct, 6);
+  assertEquals(LOCKED_UNIVERSE.length, 45);
+  assert(LOCKED_SPEC.oosT > 2, "spec must retain its OOS significance");
+});

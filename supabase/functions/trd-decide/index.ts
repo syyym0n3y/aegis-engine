@@ -3,7 +3,7 @@
 // sizing engine + house-money risk accounting (after the first profit, further risk is funded by banked
 // profit so the original deposit stops being exposed).
 // ?symbol=SPY&equity=10000&deposit=10000  → decision + sizing + survival math. Free data only.
-import { decide } from "../_shared/trd-decision.ts";
+import { decide, LOCKED_SPEC, LOCKED_UNIVERSE } from "../_shared/trd-decision.ts";
 import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts";
 import { assetFwdVolDeRisk, ASSET_VOL_MODELS } from "../_shared/trd-asset-vol.ts";
 
@@ -23,8 +23,34 @@ Deno.serve(async (req) => {
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
   try {
     const P = new URL(req.url).searchParams;
-    const symbol = (P.get("symbol") ?? "SPY").toUpperCase();
     const equity = +(P.get("equity") ?? "10000"), deposit = +(P.get("deposit") ?? P.get("equity") ?? "10000");
+    const openRisk = +(P.get("openRisk") ?? "0");
+
+    // ── SCAN MODE: run the LOCKED spec across the whole verified book, respecting the portfolio heat budget ──
+    if (P.get("scan") === "1") {
+      const fires: any[] = []; const errs: string[] = []; let heat = openRisk;
+      for (const sym of LOCKED_UNIVERSE) {
+        const bb = await daily(sym); if (!bb || bb.length < 220) { errs.push(sym); continue; }
+        const c2 = bb.map((x) => x.c); const j = c2.length - 1;
+        const rr = rsi(c2, LOCKED_SPEC.rsiPeriod), aa = atr(bb, 14);
+        const ma = c2.slice(-LOCKED_SPEC.trendMA).reduce((s, x) => s + x, 0) / LOCKED_SPEC.trendMA;
+        if (!(rr[j] < LOCKED_SPEC.rsiThreshold && c2[j] > ma) || !(aa[j] > 0)) continue;
+        const rets: number[] = []; for (let k = 1; k < c2.length; k++) rets.push(c2[k] / c2[k - 1] - 1);
+        const vr = volRegimeDeRisk(rets);
+        const stopPct = (LOCKED_SPEC.stopATR * aa[j]) / c2[j] * 100;
+        const d = decide({ rsi14: rr[j], price: c2[j], sma200: ma, deRisk: vr.deRisk, equity, originalDeposit: deposit, stopDistancePct: stopPct, openRiskAmount: heat, symbol: sym });
+        if (d.action === "BUY" && d.riskAmount > 0) heat += d.riskAmount;
+        fires.push({ symbol: sym, price: +c2[j].toFixed(2), rsi14: +rr[j].toFixed(1), action: d.action, risk_amount: d.riskAmount, risk_pct: d.riskPctOfEquity, position_size: d.positionSize, stop_pct: +stopPct.toFixed(2), vol_deRisk: +vr.deRisk.toFixed(3), heat_capped: d.heatCapped });
+      }
+      return new Response(JSON.stringify({
+        ok: true, mode: "scan", asof: new Date().toISOString().slice(0, 10), spec: LOCKED_SPEC, universe_size: LOCKED_UNIVERSE.length,
+        firing: fires.length, signals: fires, portfolio_heat_pct: +(heat / equity * 100).toFixed(2), heat_budget_pct: LOCKED_SPEC.maxPortfolioHeatPct,
+        note: fires.length === 0 ? `No instrument in the verified ${LOCKED_UNIVERSE.length}-book is oversold within an uptrend today — stand aside, risk nothing. Expected ≈${LOCKED_SPEC.firesPerYear} fires/yr; most days are correctly empty.` : `${fires.length} signal(s) firing. Sized under a ${LOCKED_SPEC.maxPortfolioHeatPct}% total-heat budget.`,
+        unavailable: errs.length ? errs : undefined,
+      }, null, 2), { headers: cors });
+    }
+
+    const symbol = (P.get("symbol") ?? "SPY").toUpperCase();
     const b = await daily(symbol);
     if (!b || b.length < 220) return new Response(JSON.stringify({ ok: false, err: `insufficient history for ${symbol}` }), { status: 404, headers: cors });
     const cl = b.map((x) => x.c); const i = cl.length - 1;
@@ -37,9 +63,10 @@ Deno.serve(async (req) => {
     let deRisk = vr.deRisk, sizingSrc = "vol-regime (trailing RV)";
     const m = ASSET_VOL_MODELS[symbol];
     if (m) { const iv = await ivLevel(m.ivSymbol); const a = assetFwdVolDeRisk(symbol, vr.rv * Math.sqrt(252), iv); if (a.model !== "none") { deRisk = a.deRisk; sizingSrc = `${m.ivSymbol} forward-vol model (fwd ${a.forecastVolPct}%)`; } }
-    const d = decide({ rsi14: r14[i], price, sma200, deRisk, equity, originalDeposit: deposit, stopDistancePct: stopPct });
+    const d = decide({ rsi14: r14[i], price, sma200, deRisk, equity, originalDeposit: deposit, stopDistancePct: stopPct, openRiskAmount: openRisk, symbol });
     return new Response(JSON.stringify({
-      ok: true, symbol, asof: b[i].d, price: +price.toFixed(2),
+      ok: true, symbol, asof: b[i].d, price: +price.toFixed(2), spec: LOCKED_SPEC, in_verified_book: !d.offBook,
+      portfolio: { open_risk: openRisk, heat_pct: d.portfolioHeatPct, heat_budget_pct: LOCKED_SPEC.maxPortfolioHeatPct, heat_capped: d.heatCapped },
       signal: { rsi14: +r14[i].toFixed(1), sma200: +sma200.toFixed(2), trend: price > sma200 ? "uptrend" : "downtrend" },
       decision: d.action, why: d.reason,
       risk: { risk_amount: d.riskAmount, risk_pct_of_equity: d.riskPctOfEquity, position_size: d.positionSize, position_notional: d.positionNotional, stop_distance_pct: +stopPct.toFixed(2), sizing_source: sizingSrc, vol_deRisk: +deRisk.toFixed(3) },

@@ -1826,3 +1826,22 @@ from random OOS. The unfiltered book wins on both expectancy (+0.115R) and signi
 the capacity of this edge is ~25 trades/yr and attempts to scale it destroy it.**
 Methodological note logged: the signal-clustering proxy said the expanded universe "diversified" (1.41→1.70
 signals/day) while DD tripled — proxies are not verdicts; only the concurrency-capped equity curve decides.
+
+### D-153 — Locked spec WIRED LIVE into the decision engine + cockpit (2026-08-06)
+
+The D-152 locked spec is now enforced in code, not just documented.
+**`_shared/trd-decision.ts`** (+4 tests, 11 total):
+- `LOCKED_SPEC` constants (RSI14/<30/200MA, expectancy 0.122, t 5.63, OOS 0.115/t 2.80, 25 fires/yr,
+  return/DD 0.136, 6% heat cap) + `LOCKED_UNIVERSE` (the verified 45-instrument book).
+- **PORTFOLIO HEAT CAP now enforced in the live path** — previously the E2 fix existed only in the backtest.
+  A decision can never push total open risk past 6%; at/over the cap it adds ZERO and says so.
+- **OFF-BOOK flag**: any symbol outside the verified 45 is marked `offBook` with an explicit warning that the
+  edge was NOT validated there (D-151/152).
+- Test-guarded against silent drift: a unit test asserts the spec constants themselves.
+**`trd-decide` edge fn**: new `?scan=1` mode runs the locked spec across the whole verified book, sizing each
+signal sequentially against the shared heat budget; `?openRisk=` threads live portfolio heat. VERIFIED LIVE:
+scan → 45 instruments, 0 firing today, heat 0/6%; heat guard trims then blocks at 6%; COIN flagged off-book.
+**`aegis-cockpit`**: new top-of-page "Buy / sell decision" panel — signals firing now, portfolio heat vs
+budget, expected frequency (25/yr, "rarity IS the edge"), return/DD 0.136, the evidence line, and the
+explicit "never issues SELL" + "spec is locked" statements. Renders live.
+205+ _shared tests green; deno check clean.
