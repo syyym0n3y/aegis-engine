@@ -1968,3 +1968,26 @@ data across thousands of stocks — exactly the 189-claim data gap in R-009. **I
 on free data. They are the concrete shortlist if a paid fundamentals/options feed is ever justified.
 Also fixed a display-scaling slip pre-commit (CSV already in %, was ×100 again); t-stats scale-invariant so
 no verdict changed.
+
+### D-160 — Options survivors implemented from free CBOE; machinery verified; accumulation started (2026-08-06)
+
+Of the 7 predictors still alive since 2015 (D-159), 3 were options/short-constraint. Examined the exact
+definitions from SignalDoc: **RIO_Volatility needs 13F institutional holdings (NOT options — excluded)**;
+the two genuinely options-based are:
+  • **SmileSlope** (Yan 2011 JFE, orig t=8.168, sign −1): putIV − callIV at |delta|=0.50, 30 DTE.
+  • **CPVolSpread** (Bali & Hovakimian 2009, t=4.2, sign +1): ATM callIV − putIV. **dCPVolSpread** (An/Ang/
+    Bali/Cakici 2014, t=6.77) is its MONTHLY CHANGE → structurally requires history.
+Built `_shared/trd-smile.ts` (+5 tests): delta-interpolated IV at any target |delta|, expiry-interpolated to
+30 DTE, fails safe to nulls. **Verified CBOE covers single stocks** (AAPL 3,029 contracts with IV+delta).
+**SELF-CORRECTION (mine, not the code's):** my first cross-section sanity check declared FAIL because only
+37% of slopes were positive. That hypothesis was WRONG — at |delta|=0.50 both legs are ATM, where put-call
+parity forces call/put IV to near-equality, so a near-zero residual is EXPECTED; Yan's signal is the
+cross-sectional VARIATION in that residual, not its level. Diagnostic at |delta|=0.25 confirms the machinery:
+**SPY +3.46 vol-points, QQQ +4.12** (textbook index put-skew), and 5/6 names show OTM skew > ATM skew exactly
+as parity requires. TSLA's negative skew is real (documented call-skew in momentum names).
+**ACCUMULATION STARTED:** `trd_smile` table + `trd-smile-snap` edge fn + pg_cron `15 21 * * 1-5`. First
+snapshot LIVE: 40 instruments, 0 errors, widest 25d skew SMH 5.6vp / XLK 5.6vp / XLY 5.3vp.
+**HONEST STATUS: UNTESTED BY US.** No free historical option-chain archive exists, so these cannot be
+backtested today — the table IS the history being built. Nothing reads it for trading. Also noted: at ATM the
+residual magnitudes (0.001-0.02) may be swamped by delayed-quote noise, which is itself a real
+implementability question the accumulated series will answer.
