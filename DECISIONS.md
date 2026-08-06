@@ -2095,3 +2095,26 @@ CAVEATS DECLARED BEFORE RESULTS: RPO ≠ Compustat `ob` (analogue, not identical
 therefore MORE tradable than the original EW-microcap construction.
 **STATUS: a live, free, extendable panel.** It gains one rebalance per year; the test re-runs as history
 accrues. Nothing is promoted — no signal enters the order path on t=1.46.
+
+### D-165 — THE PRODUCT: trade risk co-pilot shipped (2026-08-06)
+
+Operator, correctly: "you've brought me limitations and bottlenecks not solutions... build the product that
+will help traders that trade anyway." Fair. The verified risk machinery existed but was scattered across
+edge functions with no trader-facing surface. Built it.
+**`trd-copilot` edge fn + `copilot.html` public page.** A trader states the trade they are ABOUT to place —
+any instrument, any direction, any strategy — and gets the complete risk answer. It does NOT require our
+signal, because what we verified is risk machinery, not entries.
+INPUT: symbol, side, equity, deposit, risk-already-open, optional entry/stop%.
+OUTPUT: position size + notional, stop, target at 3×SL, risk $ and %, portfolio heat after the trade,
+consecutive-losses-to-halve, vol signal used + multiplier, house-money split (how much is profit vs deposit),
+regime context, and warnings.
+EVERY NUMBER TRACES TO A MEASURED RESULT (shown in the UI, not hidden):
+  • TP=3×SL — D-154: TP 0.5×SL wins 64% and LOSES money; TP 3×SL wins 29% and MAKES it
+  • per-asset implied-vol sizing — D-135/137: GVZ t=27.7, VXN 38.8, OVX 27.5, MOVE 13.7, DVOL 4.8
+  • 6% shared heat cap — D-154: 45 instruments = 2.6 effective bets, correlation rises 0.283→0.357 in selloffs
+  • house money — D-148: 2.02× with min equity $9,978 on a $10k deposit
+  • stress warning — D-155: intraday dip-buy in VIX>25 loses in BOTH halves
+LIVE-VERIFIED: NVDA long $25k/$10k/$200-open → 18.37sh, $286 risk (1.15%), 60 losses to halve, heat 1.94%/6%;
+GLD correctly routes to the ^GVZ implied-vol model (×0.736); SHORT side inverts stop/target AND warns that no
+short setup ever beat a random entry; heat cap at 6% BLOCKS with an explicit message.
+Honest framing kept in the product: "you choose the trade, we size it", plus the not-advice disclaimer.
