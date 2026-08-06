@@ -2019,3 +2019,32 @@ construction strips market beta, so unlike instruments these really are differen
 **CONCLUSION: the published anomaly literature offers no tradable edge in liquid securities.** The honest
 harvesting method (take ALL equally, never pick) works only where you cannot actually trade. This closes the
 literature thread: 859 claims catalogued, 212 tested at scale, 0 implementable in liquid form on our stack.
+
+### D-162 — EDGAR verified free & sufficient, but NOT worth building: all 7 survivors are equal-weight (2026-08-06)
+
+Took EDGAR next as directed. **Access VERIFIED and it is genuinely sufficient** for the fundamentals gap:
+- `data.sec.gov/api/xbrl/frames/us-gaap/<TAG>/USD/CY<YYYY>.json` returns ONE concept across ALL filers —
+  exactly the cross-sectional shape needed. Live counts for CY2023: dividends 1,181 companies; buybacks
+  2,666; equity issuance 2,160; debt issued 1,165; debt repaid 1,394. Free, no key (declared User-Agent).
+- **NetPayoutYield** (= (dividends + buybacks − issuance)/mktcap) and **XFIN** (net external financing) are
+  both directly computable from these tags. OrderBacklogChg is not (backlog is narrative, not XBRL).
+**BUT THE BUILD WAS STOPPED BY A CHEAP PRE-CHECK.** Pulled the portfolio construction of all 7 survivors
+from SignalDoc:
+| survivor | weight | LS quantile | data |
+|---|---|---|---|
+| SmileSlope | **EW** | 0.2 | Options |
+| dCPVolSpread | **EW** | 0.1 | Options |
+| EarningsStreak | **EW** | 0.2 | Accounting |
+| NetPayoutYield | **EW** | 0.1 | Accounting |
+| XFIN | **EW** | 0.1 | Accounting |
+| OrderBacklogChg | **EW** | 0.1 | Accounting |
+| RIO_Volatility | **EW** | — | 13F |
+**ALL SEVEN ARE EQUAL-WEIGHTED**, most on decile long-short sorts — i.e. exactly the microcap-heavy
+construction that D-161 showed collapses under value-weighting (EW t=4.28 → VW t=0.57 across the library).
+**DECISION: do NOT build the EDGAR fundamentals pipeline.** It would faithfully replicate microcap effects
+that are not implementable in liquid securities. The pre-check cost minutes; the build would have cost days.
+HONEST LIMIT ON THIS CONCLUSION: D-161's VW test used the 22 predictors that were VW in their ORIGINAL
+papers — not these same 7 re-weighted. A perfect apples-to-apples test needs OSAP's liquidity-screened
+alt-portfolio files (attempted; the Drive folder is JS-rendered and the bulk file download is slow). So the
+verdict is STRONGLY EVIDENCED, not proven for these specific 7. EDGAR remains available and verified if a
+liquid-universe variant is ever worth testing.
