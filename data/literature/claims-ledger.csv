@@ -1,0 +1,861 @@
+claim,source,journal,year,category,definition,testable,data_needed,meta
+Idiosyncratic volatility,Fama and MacBeth (1973),Journal of Political Economy,,risk/vol,Residual stock volatility from CAPM,yes,OHLCV 33y + 1m intraday,HLZ
+Earnings growth expectations,Ofer (1975),Journal of Finance,1975,risk/vol,"Projecting firm earnings growth based on market beta, firm size, dividend payout ratio, leverage and earnings variability",yes,OHLCV 33y + 1m intraday,HLZ
+PE ratio,Basu (1977),Journal of Finance,1977,price,Firm price-to-earnings ratio,yes,OHLCV 33y + 1m intraday,HLZ
+Dividend yield,Litzenberger and Ramaswamy (1979),Journal of Financial Economics,1979,price,Dividend per share divided by share price,yes,OHLCV 33y + 1m intraday,HLZ
+Firm size,Banz (1981),Journal of Financial Economics,1981,other,Market value of firm stocks,unknown,,HLZ
+Short interest,Figlewski (1981),Journal of Financial and Quantitative Analysis,1981,positioning/flow,Equity short interest,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+EP ratio,Basu (1983),Journal of Financial Economics,1983,price,Firm earnings-to-price ratio,yes,OHLCV 33y + 1m intraday,HLZ
+Long-term return reversal,De Bondt and Thaler (1985),Journal of Finance,1985,price,Long-term past abnormal return,yes,OHLCV 33y + 1m intraday,HLZ
+Debt to equity ratio,Bhandari (1988),Journal of Finance,1988,fundamental,Non-common equity liabilities to equity,no-data,needs paid fundamentals depth,HLZ
+Illiquidity,Amihud and Mendelson (1989),Journal of Finance,1989,microstructure,Illiquidity proxied by bid-ask spread,partial,"volume/range only, no L2",HLZ
+Predicted earnings change,Ou and Penman (1989),Journal of Accounting & Economics,1989,fundamental,Predicted earnings change in one year based on a financial statement analysis that combines a large set of financial statement items,no-data,needs paid fundamentals depth,HLZ
+Return predictability,Jegadeesh (1990),Journal of Finance,1990,price,Short-term (one month) and long-term (twelve months) serial correlations in returns,yes,OHLCV 33y + 1m intraday,HLZ
+Return momentum,Jegadeesh and Titman (1993),Journal of Finance,1993,price,Past stock returns,yes,OHLCV 33y + 1m intraday,HLZ
+New public stock issuance,Loughran and Ritter (1995),Journal of Finance,1995,fundamental,New public stock issuance,no-data,needs paid fundamentals depth,HLZ
+Dividend initiations,"Michaely, Thaler and Womack (1995)",Journal of Finance,1995,fundamental,Initiations of cash dividend payments,no-data,needs paid fundamentals depth,HLZ
+Dividend omissions,"Michaely, Thaler and Womack (1995)",Journal of Finance,,fundamental,Omissions of cash dividend payments,no-data,needs paid fundamentals depth,HLZ
+Earnings forecast,La Porta (1996),Journal of Finance,1996,positioning/flow,Errors in analysts' forecasts on earnings growth,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+R&D capital,Lev and Sougiannis (1996),Journal of Accounting & Economics,1996,fundamental,R&D capital over total assets,no-data,needs paid fundamentals depth,HLZ
+Accruals,Sloan (1996),Accounting Review,1996,fundamental,"Accruals defined by the change in non-cash current assets, less the change in current liabilities, less depreciation expense, all divided by average total assets",no-data,needs paid fundamentals depth,HLZ
+Buy recommendations,Womack (1996),Journal of Finance,1996,positioning/flow,Buy recommendations from security analysts,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Sell recommendations,Womack (1996),Journal of Finance,,positioning/flow,Sell recommendations from security analysts,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Trading volume,"Brennan, Chordia and Subrahmanyam (1997)",Journal of Financial Economics,,microstructure,Dollar volume traded per month,partial,"volume/range only, no L2",HLZ
+Bankruptcy risk,Ilia (1998),Journal of Finance,1998,other,The probability of bankruptcy from Altman (1968),unknown,,HLZ
+Illiquidity,"Datar, Naik and Radcliffe (1998)",Journal of Financial Markets,1998,microstructure,Liquidity proxied by the turnover rate: number of shares traded as a fraction of the number of shares outstanding,partial,"volume/range only, no L2",HLZ
+Industry momentum,Moskowitz and Grinblatt (1999),Journal of Finance,1999,price,Industry-wide momentum returns,yes,OHLCV 33y + 1m intraday,HLZ
+Trading volume,Lee and Swaminathan (2000),Journal of Finance,2000,microstructure,Past trading volume,partial,"volume/range only, no L2",HLZ
+Within-industry percent change in employees,"Asness, Porter and Stevens (2000)",Working Paper,2000,other,Difference between firm percent change in employees and average percent change in employees within the industry,unknown,,HLZ
+Financial statement information,Piotroski (2000),Journal of Accounting Research,2000,other,A composite score based on historical financial statement that separates winners from losers,unknown,,HLZ
+Level of liquidity,"Chordia, Subrahmanyam and Anshuman (2001)",Journal of Financial Economics,2001,microstructure,Level of dollar trading volume and share turnover,partial,"volume/range only, no L2",HLZ
+Variability of liquidity,"Chordia, Subrahmanyam and Anshuman (2001)",Journal of Financial Economics,,risk/vol,Volatility of dollar trading volume and share turnover,yes,OHLCV 33y + 1m intraday,HLZ
+Financial constraints,"Lamont, Polk and Saa-Requejo (2001)",Review of Financial Studies,2001,other,Measure financial constraints with Kaplan and Zingales (1997) index,unknown,,HLZ
+Bond rating changes,Dichev and Piotroski (2001),Journal of Finance,2001,other,Moody's bond ratings changes,unknown,,HLZ
+Analysts' forecasts,"Pieter, Lo and Pfeiffer (2011)",Accounting Review,2001,positioning/flow,Financial analysts' forecasts of annual earnings,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Institutional ownership,Gompers and Metrick (2001),Quarterly Journal of Economics,2001,positioning/flow,Institutional holdings of firm assets,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Distress risk,Griffin and Lemmon (2002),Journal of Finance,2002,other,Distress risk as proxied by Ohlson's O-score,unknown,,HLZ
+Analyst dispersion,"Diether, Malloy and Scherbina (2002)",Journal of Finance,2002,positioning/flow,Dispersion in analysts' earnings forecasts,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Breadth of ownership,"Chen, Hong and Stein (2002)",Journal of Financial Economics,2002,positioning/flow,Ratio of the number of mutual funds holding long positions in the stock to total number of mutual funds,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Shareholder rights,"Gompers, Ishii and Metrick (2003)",Quarterly Journal of Economics,2003,other,Shareholder rights as proxied by an index using 24 governance rules,unknown,,HLZ
+Excluded expenses,"Jeffrey, Lundholm and Soliman (2003)",Review of Accounting Studies,2003,fundamental,Excluded expenses in firm's earnings reports,no-data,needs paid fundamentals depth,HLZ
+Growth in long-term net operating assets,"Fairfield, Whisenant and Yohn (2003)",Accounting Review,2003,macro,Growth in long-term net operating assets,partial,Yahoo proxies (FRED blocked),HLZ
+Return consistency,Watkins (2003),Journal of Behavioral Finance,2003,price,Consecutive returns with the same sign,yes,OHLCV 33y + 1m intraday,HLZ
+Unexpected change in R&D,"Allan, Maxwell and Siddique (2004)",Journal of Finance,2004,fundamental,Unexpected change in firm research and expenditures,no-data,needs paid fundamentals depth,HLZ
+52-week high,George and Hwang (2004),Journal of Finance,2004,price,Nearness to the 52-week high price,yes,OHLCV 33y + 1m intraday,HLZ
+Analysts' recommendations,"Jegadeesh, Kim, Krische and Lee (2004)",Journal of Finance,2004,positioning/flow,Consensus analysts' recommendations from sell-side firms,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Abnormal capital investment,"Titman, Wei and Xie (2004)",Journal of Financial and Quantitative Analysis,2004,fundamental,Past year capital expenditures scaled by average capital expenditures for previous three years,no-data,needs paid fundamentals depth,HLZ
+External corporate governance,Cremers and Nair (2005),Journal of Finance,2005,other,Proxies for corporate control,unknown,,HLZ
+Internal corporate governance,Cremers and Nair (2005),Journal of Finance,,other,Proxies for share-holder activism,unknown,,HLZ
+Individual stock liquidity,Acharya and Pedersen (2005),Journal of Financial Economics,,microstructure,Individual stock illiquidity as defined in Amihud (2002),partial,"volume/range only, no L2",HLZ
+Price delay,Hou and Moskowitz (2005),Review of Financial Studies,2005,price,Delay in a stock price's response to information,yes,OHLCV 33y + 1m intraday,HLZ
+Heterogeneous beliefs,"Anderson, Ghysels and Juergens (2005)",Review of Financial Studies,2005,positioning/flow,Factors constructed from disagreement among analysts about expected short- and long-term earnings,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Short-sale constraints,Nagel (2005),Journal of Financial Economics,2005,positioning/flow,Short-sale constraint proxied by Institutional ownership,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Short-sale constraints,"Asquith, Pathak and Ritter (2005)",Journal of Financial Economics,2005,positioning/flow,Short-sale constraint proxied by short interest and institutional ownership,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Growth index,Mohanram (2005),Review of Accounting Studies,2005,positioning/flow,"A combined index constructed based on earnings, cash flows, earnings stability, growth stability and intensity of R&D, capital expenditure and advertising",partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Financial constraints,Whited and Wu (2006),Review of Financial Studies,2006,fundamental,Constraint index estimated from a firm's investment Euler equation,no-data,needs paid fundamentals depth,HLZ
+idiosyncratic volatility,"Ang, Hodrick, Xing and Zhang (2006)",Journal of Finance,,risk/vol,Idiosyncratic volatility relative to Fama and French (1992) three-factor model,yes,OHLCV 33y + 1m intraday,HLZ
+Capital investment,Anderson and Garcia-Feijoo (2006),Journal of Finance,2006,fundamental,Capital expenditure growth,no-data,needs paid fundamentals depth,HLZ
+Industry concentration,Hou and Robinson (2006),Journal of Finance,2006,other,Industry concentration as proxied by the Herfindahl index,unknown,,HLZ
+Intangible information,Daniel and Titman (2006),Journal of Finance,2006,price,Residuals from cross-sectional regression of firm returns on fundamental growth measures,yes,OHLCV 33y + 1m intraday,HLZ
+Profitability,Fama and French (2006),Journal of Financial Economics,2006,fundamental,Expected earnings growth,no-data,needs paid fundamentals depth,HLZ
+Investment,Fama and French (2006),Journal of Financial Economics,,fundamental,Expected growth in book equity,no-data,needs paid fundamentals depth,HLZ
+Net financing,"Bradshaw, Richardson and Sloan (2006)",Journal of Accounting and Economics,2006,positioning/flow,Net amount of cash flow received from external financing,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Pension plan funding,Franzoni and Marin (2006),Journal of Finance,2006,other,"Pension plan funding status calculated as the difference between the fair value of plan assets and the projected benefit obligation, divided by market capitalization",unknown,,HLZ
+Unexpected earnings' autocorrelations,Narayanamoorthy (2006),Journal of Accounting Research,,fundamental,Standardized unexpected earnings' autocorrelations via the sign of the most recent earnings realization,no-data,needs paid fundamentals depth,HLZ
+Credit rating,"Avramov, Chordia, Jostova and Philipov (2007)",Journal of Finance,2007,macro,S&P firm credit rating,partial,Yahoo proxies (FRED blocked),HLZ
+Firm age,"Kumar, Sorescu, Boehme and Danielsen (2008)",Review of Financial Studies,,other,Firm's public listing age,unknown,,HLZ
+Interaction between market volatility and firm age,"Kumar, Sorescu, Boehme and Danielsen (2008)",Review of Financial Studies,,risk/vol,Product of market volatility and firm age,yes,OHLCV 33y + 1m intraday,HLZ
+Country-level idiosyncratic volatility,Guo and Savickas (2008),Review of Financial Studies,2008,risk/vol,Weighted average of variances and auto-covariances of firm-level idiosyncratic return shocks,yes,OHLCV 33y + 1m intraday,HLZ
+Distress,"Campbell, Hilscher and Szilagyi (2008)",Journal of Finance,2008,other,Distressed firm failure probability estimated based on a dynamic logit model,unknown,,HLZ
+Shareholder advantage,"Garlappi, Shu and Yan (2008)",Review of Financial Studies,2008,other,Benefits from renegotiation upon default,unknown,,HLZ
+Interaction between shareholder advantage and implied market value of assets,"Garlappi, Shu and Yan (2008)",Review of Financial Studies,,options,Implied market value of assets provided by Moody's KMV,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Asset growth,"Cooper, Gulen and Schill (2008)",Journal of Finance,2008,fundamental,Year-on-year percentage change in total assets,no-data,needs paid fundamentals depth,HLZ
+Share issuance,Pontiff and Woodgate (2008),Journal of Finance,2008,fundamental,Annual share issuance based on adjusted shares,no-data,needs paid fundamentals depth,HLZ
+Firm economic links,Cohen and Frazzini (2008),Journal of Finance,2008,price,Economic links proxied by return of a portfolio of its major customers,yes,OHLCV 33y + 1m intraday,HLZ
+Sin stock,"Frank, Ma and Oliphant (2008)",Financial Analyst Journal,2008,other,"Stocks in the industry of adult services, alcohol, defense, gaming, medical and tobacco",unknown,,HLZ
+Investor recognition,Lehavy and Sloan (2008),Review of Accounting Studies,2008,positioning/flow,Investor recognition proxied by the change in the breadth of institutional ownership,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+DuPont analysis,Soliman (2008),Accounting Review,2008,fundamental,Sales over net operating assets in DuPont analysis,no-data,needs paid fundamentals depth,HLZ
+Financial distress,"Avramov, Chordia, Jostova and Philipov (2009)",Journal of Financial Economics,2009,macro,Credit rating downgrades,partial,Yahoo proxies (FRED blocked),HLZ
+Idiosyncratic volatility,Fu (2009),Journal of Financial Economics,2009,risk/vol,Conditional expected idiosyncratic volatility estimated from a GARCH model,yes,OHLCV 33y + 1m intraday,HLZ
+Debt capacity,Hahn and Lee (2009),Journal of Finance,2009,fundamental,Firm tangibility as in Almeida and Campello (2007),no-data,needs paid fundamentals depth,HLZ
+Productivity of cash,Chandrashekar and Rao (2009),Working Paper,2009,other,Net present value of all firm's present and future projects generated per dollar of cash holdings,unknown,,HLZ
+Advertising,Chemmanur and Yan (2009),Working Paper,2009,other,Change in expenditures on advertising,unknown,,HLZ
+Earnings volatility,Gow and Taylor (2009),Working Paper,2009,risk/vol,Earnings volatility,yes,OHLCV 33y + 1m intraday,HLZ
+Efficiency score,Nguyen and Swanson (2009),Journal of Financial and Quantitative Analysis,2009,other,Firm efficiency/inefficiency estimated from firm characteristics based on a stochastic frontier approach,unknown,,HLZ
+Real estate holdings,Tuzel (2010),Review of Financial Studies,2010,other,"Real estate to total property, plant and equipment",unknown,,HLZ
+Related industry returns,Menzly and Ozbas (2010),Journal of Finance,2010,options,Stock returns from economically related supplier and customer industries,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Volatility smirk,"Xing, Zhang and Zhao (2010)",Journal of Financial and Quantitative Analysis,2010,risk/vol,Steepness in individual option volatility smirk,yes,OHLCV 33y + 1m intraday,HLZ
+R&D investment,Li (2011),Review of Financial Studies,2011,fundamental,Firm's investment in research and development,no-data,needs paid fundamentals depth,HLZ
+Extreme stock returns,"Bali, Cakici and Whitelaw (2011)",Journal of Financial Economics,2011,price,Portfolios sorted based on extreme past returns,yes,OHLCV 33y + 1m intraday,HLZ
+Jumps in individual stock returns,Yan (2011),Journal of Financial Economics,2011,risk/vol,Average jump size proxied by slope of option implied volatility smile,yes,OHLCV 33y + 1m intraday,HLZ
+Organizational capital,Eisfeldt and Papanikolaou (2011),Working Paper,2011,other,"Directly measured using Selling, General and Administrative expenditures",unknown,,HLZ
+Non-accounting information quality,"Callen, Khan and Lu (2011)",Contemporary Accounting Research,2011,price,Average delay with which non-accounting information is impounded into stock price,yes,OHLCV 33y + 1m intraday,HLZ
+Accounting information quality,"Callen, Khan and Lu (2011)",Contemporary Accounting Research,,price,Average delay with which accounting information is impounded into stock price,yes,OHLCV 33y + 1m intraday,HLZ
+Short interest,Michael and Rees (2011),Accounting Review,2011,positioning/flow,Short interest from short sellers,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Percent total accrual,"Hafzalla, Lundholm and Van Winkle (2007)",Accounting Review,2011,fundamental,Firm accruals scaled by earnings,no-data,needs paid fundamentals depth,HLZ
+Really dirty surplus,"Landsman, Miller, Peasnell and Shu (2011)",Accounting Review,2011,other,Really dirty surplus that happens when a firm issues or reacquires its own shares in a transaction that does not record the shares at fair market value,unknown,,HLZ
+Earnings forecast,Li (2011),Review of Accounting Studies,2011,fundamental,Earnings forecast based on firm fundamentals,no-data,needs paid fundamentals depth,HLZ
+Tax expense surprises,Thomas and Zhang (2011),Journal of Accounting Research,2011,fundamental,Seasonally differenced quarterly tax expense,no-data,needs paid fundamentals depth,HLZ
+Option to stock volume ratio,Johnson and So (2012),Journal of Financial Economics,2012,options,Option volume divided by stock volume,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Cash holdings,Palazzo (2012),Journal of Financial Economics,2012,other,Firm cash holdings,unknown,,HLZ
+Firm hiring rate,"Bazdresch, Belo and Lin (2012)",Working Paper,2012,other,Firm hiring rate measured by the change in the number of employees over the average number of employees,unknown,,HLZ
+Information processing complexity,Cohen and Lou (2012),Journal of Financial Economics,2012,price,Past return for paired pseudo-conglomerates,yes,OHLCV 33y + 1m intraday,HLZ
+Innovative efficiency,"Hirshleifer, Hsu and Li (2012)",Journal of Financial Economics,2012,other,Patents/citations scaled by research and development expenditures,unknown,,HLZ
+Deferred revenues,Prakash and Sinha (2012),Contemporary Accounting Research,2012,fundamental,Changes in the current deferred revenue liability,no-data,needs paid fundamentals depth,HLZ
+Firm's ability to innovate,"Cohen, Diether and Malloy (2013)",Review of Financial Studies,2013,fundamental,Rolling firm-by-firm regressions of firm-level sales growth on lagged R&D,no-data,needs paid fundamentals depth,HLZ
+Gross profitability,Novy-Marx (2013),Journal of Financial Economics,2013,fundamental,Gross profits to assets,no-data,needs paid fundamentals depth,HLZ
+Betting-against-beta,Frazzini and Pedersen (2013),Working Paper,2013,risk/vol,Long leveraged low-beta assets and short high-beta assets,yes,OHLCV 33y + 1m intraday,HLZ
+Secured debt,Valta (2013),Working Paper,2013,fundamental,Proportion of secured to total debt,no-data,needs paid fundamentals depth,HLZ
+Convertible debt,Valta (2013),Working Paper,,fundamental,Proportion of convertible to total debt,no-data,needs paid fundamentals depth,HLZ
+Convertible debt indicator,Valta (2013),Working Paper,,fundamental,Dummy variable indicating whether a firm has convertible debt outstanding,no-data,needs paid fundamentals depth,HLZ
+Beta squared,Fama and MacBeth (1973),Journal of Political Economy,,risk/vol,Square of market beta,yes,OHLCV 33y + 1m intraday,HLZ
+Book-to-market,Fama and French (2006),Journal of Financial Economics,,fundamental,Book value of equity plus deferred taxes to market value of equity,no-data,needs paid fundamentals depth,HLZ
+Book-to-market ratio,"Brennan, Chordia and Subrahmanyam (1997)",Journal of Financial Economics,,fundamental,Book value of equity plus deferred taxes to market value of equity,no-data,needs paid fundamentals depth,HLZ
+Cash flow,Da and Warachka (2009),Journal of Financial Economics,2009,positioning/flow,Aggregate earnings based on revisions to analyst earnings forecasts,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Cash flow-to-price,"Hou, Karolyi and Kho (2011)",Review of Financial Studies,,positioning/flow,Factor-mimicking portfolios based on cash flow-to-price of international equity returns,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Consensus recommendations,"Barber, Lehavy, McNichols and Trueman (2001)",Journal of Finance,2001,positioning/flow,Consensus recommendations measured by the average analyst recommendations,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Coskewness,Harvey and Siddique (2000),Journal of Finance,2000,risk/vol,Excess return on a portfolio which long stocks with low past coskewness,yes,OHLCV 33y + 1m intraday,HLZ
+Debt offerings,Spiess and Affleck-Graves (1999),Journal of Financial Economics,1999,fundamental,Whether a firm makes straight and convertible debt offerings,no-data,needs paid fundamentals depth,HLZ
+Downside risk,"Ang, Chen and Xing (2006)",Review of Financial Studies,2006,price,Correlation with index return conditional on index return being below a threshold value,yes,OHLCV 33y + 1m intraday,HLZ
+Earnings,Chordia and Shivakumar (2006),Journal of Financial Economics,2006,positioning/flow,Return on a zero-investment portfolio long in stocks with high earnings surprises and short in stocks with low earnings surprises,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Earnings announcement return,"Brandt, Kishore, Santa-Clara and Venkatachalam (2008)",Working Paper,2008,price,Earnings announcement return capturing the market reaction to unexpected information contained in the firm's earnings release,yes,OHLCV 33y + 1m intraday,HLZ
+Earnings expectations,"Hawkins, Chamberlin and Daniel (1984)",Financial Analyst Journal,1984,fundamental,Consensus earnings expectations,no-data,needs paid fundamentals depth,HLZ
+Financial constraints,Li (2011),Review of Financial Studies,,other,Kaplan and Zingales (1997) financial constraint index,unknown,,HLZ
+Financial intermediary's wealth,"Adrian, Etula and Muir (2012)",Journal of Finance,2012,macro,Intermediary's marginal value of wealth proxied by shocks to leverage of securities broker-dealers,partial,Yahoo proxies (FRED blocked),HLZ
+Firm fundamental value,Frankel and Lee (1998),Journal of Accounting and Economics,1998,other,Firms' fundamental values estimated from I/B/E/S consensus forecasts and a residual income model,unknown,,HLZ
+Fundamental analysis,Abarbanell and Bushee (1998),Accounting Review,1998,fundamental,"Investment signals constructed using a collection of variables that relate to contemporaneous changes in inventories, accounts receivables, gross margins, selling expenses, capital  expenditures, effective tax rates, inventory methods, audit qualific",no-data,needs paid fundamentals depth,HLZ
+Idiosyncratic return volatility,"Ali, Hwang and Trombley (2003)",Journal of Financial Economics,2003,risk/vol,Residual variance obtained by regressing daily stock returns on market index return,yes,OHLCV 33y + 1m intraday,HLZ
+Index option return,Vanden (2006),Review of Financial Studies,,options,Index option return and its square,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Index option returns,Vanden (2004),Review of Financial Studies,,options,Return on S\&P 500 index option,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Industrial production growth,"Chan, Chen and Hsieh (1985)",Journal of Financial Economics,,macro,Seasonally adjusted monthly growth rate of industrial production,partial,Yahoo proxies (FRED blocked),HLZ
+Institutional holding,"Arbel, Carvell and Strebel (1983)",Financial Analyst Journal,1983,positioning/flow,Institutional concentration rankings from Standard and Poor's,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Interest rate,Campbell (1996),Journal of Political Economy,,price,Treasury bill rate less 1-year moving average,yes,OHLCV 33y + 1m intraday,HLZ
+Investor sophistication,"Ali, Hwang and Trombley (2003)",Journal of Financial Economics,,positioning/flow,Number of analysts or institutional owners,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Labor income growth,Dittmar (2002),Journal of Finance,,other,Smoothed labor income growth rate,unknown,,HLZ
+Liquidity,Liu (2006),Journal of Financial Economics,2006,microstructure,Turnover-adjusted number of days with zero trading over the prior 12 months,partial,"volume/range only, no L2",HLZ
+Market illiquidity,Amihud (2002),Journal of Financial Markets,2002,price,Average over the year of the daily ratio of the stock's absolute return to its dollar trading volume,yes,OHLCV 33y + 1m intraday,HLZ
+Market liquidity,Pastor and Stambaugh (2003),Journal of Political Economy,2003,price,Aggregated liquidity based on firm future excess stock return regressed on current signed excess return times trading volume,yes,OHLCV 33y + 1m intraday,HLZ
+Market liquidity,Acharya and Pedersen (2005),Journal of Financial Economics,,microstructure,Value-weighted individual stock illiquidity as defined in Amihud (2002),partial,"volume/range only, no L2",HLZ
+Market mispricing,Hirshleifer and Jiang (2010),Review of Financial Studies,2010,fundamental,Zero-investment portfolio constructed from repurchasing and issuing firms,no-data,needs paid fundamentals depth,HLZ
+Market return,"Black, Jensen and Scholes (1972)",Studies in the Theory of Capital Markets,1972,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Carhart (1997),Journal of Finance,,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Black (1972),Journal of Business,1972,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Kraus and Litzenberger (1976),Journal of Finance,1976,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Lintner(1965),Journal of Finance,1965,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Sharpe (1964),Journal of Finance,1964,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Heckerman (1972),Journal of Finance,1972,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Fama and MacBeth (1973),Journal of Political Economy,1973,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Mossin (1966),Econometrica,1966,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Jagannathan and Wang (1996),Journal of Finance,1996,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Ferson and Harvey (1991),Journal of Political Economy,1991,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,"Kumar, Sorescu, Boehme and Danielsen (2008)",Review of Financial Studies,,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Litzenberger and Ramaswamy (1979),Journal of Financial Economics,,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Acharya and Pedersen (2005),Journal of Financial Economics,2005,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,"Fogler, John and Tipton (1981)",Journal of Finance,1981,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market volatility innovation,"Kumar, Sorescu, Boehme and Danielsen (2008)",Review of Financial Studies,2008,risk/vol,Difference in monthly average of squared daily return differences,yes,OHLCV 33y + 1m intraday,HLZ
+Momentum,"Hou, Karolyi and Kho (2011)",Review of Financial Studies,2011,price,Factor-mimicking portfolios based on momentum of international equity returns,yes,OHLCV 33y + 1m intraday,HLZ
+Momentum,Carhart (1997),Journal of Finance,,positioning/flow,Return on a zero-investment portfolio long in past winners and short in past losers,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Momentum,"Brennan, Chordia and Subrahmanyam (1997)",Journal of Financial Economics,,price,Past cumulative stock return,yes,OHLCV 33y + 1m intraday,HLZ
+Payout yield,"Boudoukh, Michaely, Richardson and Roberts (2007)",Journal of Finance,2007,positioning/flow,Return on a zero-investment portfolio long in high-yield stocks and short in low-yield stocks,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Predicted return signs,Holthausen and Larcker (1992),Journal of Accounting & Economics,1992,price,Return signs predicted by a logit model using financial ratios,yes,OHLCV 33y + 1m intraday,HLZ
+Private information,"David, Hvidkjaer and O'Hara (2010)",Journal of Financial and Quantitative Analysis,2010,positioning/flow,"Return on a zero-investment portfolio long in high PIN stocks and short in low PIN stocks; PIN (private information) is the probability of information-
+based trade",partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Return momentum,"Chopra, Lakonishok and Ritter (1992)",Journal of Financial Economics,1992,risk/vol,Size and beta adjusted mean prior five-year returns,yes,OHLCV 33y + 1m intraday,HLZ
+Return-on-equity portfolio return,"Chen, Novy-Marx and Zhang (2011)",Working Paper,2011,price,Difference between returns of portfolios with high and low return on equity,yes,OHLCV 33y + 1m intraday,HLZ
+Seasoned equity offerings,Spiess and Affleck-Graves (1995),Journal of Financial Economics,1995,other,Whether a firm makes seasoned equity offerings,unknown,,HLZ
+Size,Daniel and Titman (1997),Journal of Finance,1997,other,Market value of equity,unknown,,HLZ
+Size,Fama and French (1993),Journal of Financial Economics,,positioning/flow,Return on a zero-investment portfolio long in small stocks and short in large stocks,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Size,Fama and French (1992),Journal of Finance,1992,positioning/flow,Return on a zero-investment portfolio long in small stocks and short in large stocks,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Size,Carhart (1997),Journal of Finance,1997,positioning/flow,Return on a zero-investment portfolio long in small stocks and short in large stocks,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Size,"Brennan, Chordia and Subrahmanyam (1997)",Journal of Financial Economics,1997,other,Market value of equity,unknown,,HLZ
+Systematic volatility,"Ang, Hodrick, Xing and Zhang (2006)",Journal of Finance,2006,risk/vol,Aggregate volatility relative to Fama and French (1992) three-factor model,yes,OHLCV 33y + 1m intraday,HLZ
+Term structure,Fama and French (1993),Journal of Financial Economics,,price,Difference in return between long-term government bond and one-month Treasury bill,yes,OHLCV 33y + 1m intraday,HLZ
+Trading volume,Lo and Wang (2006),Journal of Finance,,price,Return on a hedge portfolio constructed using trading volume and market returns,yes,OHLCV 33y + 1m intraday,HLZ
+Transaction costs,Mayshar (1981),Journal of Finance,1981,other,THEORY,unknown,,HLZ
+Transaction costs,"Ali, Hwang and Trombley (2003)",Journal of Financial Economics,,microstructure,"Bid-ask spread, volume, etc.",partial,"volume/range only, no L2",HLZ
+Value,Carhart (1997),Journal of Finance,,positioning/flow,Return on a zero-investment portfolio long in growth stocks and short in value stocks,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Value,Daniel and Titman (1997),Journal of Finance,,fundamental,Book value of equity plus deferred taxes to market value of equity,no-data,needs paid fundamentals depth,HLZ
+Value,Fama and French (1993),Journal of Financial Economics,,positioning/flow,Return on a zero-investment portfolio long in growth stocks and short in value stocks,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Value,Fama and French (1992),Journal of Finance,,positioning/flow,Return on a zero-investment portfolio long in growth stocks and short in value stocks,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Illiquidity,Brennan and Subrahmanyam (1996),Journal of Financial Economics,1996,price,Derivative transaction price with respect to signed trade size,yes,OHLCV 33y + 1m intraday,HLZ
+Within-industry size,"Asness, Porter and Stevens (2000)",Working Paper,2000,other,Difference between firm size and average firm size within the industry,unknown,,HLZ
+Within-industry value,"Asness, Porter and Stevens (2000)",Working Paper,2000,fundamental,Difference between firm book-to-market ratio and average book-to-market ratio within the industry,no-data,needs paid fundamentals depth,HLZ
+Within-industry cashflow to price ratio,"Asness, Porter and Stevens (2000)",Working Paper,2000,positioning/flow,Difference between firm cashflow to price ratio and average cashflow to price ratio within the industry,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Within-industry momentum,"Asness, Porter and Stevens (2000)",Working Paper,2000,price,Difference between firm past stock prices and average past stock prices within the industry,yes,OHLCV 33y + 1m intraday,HLZ
+Information uncertainty,"Jiang, Lee and Zhang (2005)",Review of Accounting Studies,2005,risk/vol,"Information uncertainty proxied by firm age, return volatility, trading volume or cash flow duration",yes,OHLCV 33y + 1m intraday,HLZ
+R&D reporting biases,"Lev, Sarath and Sougiannis (2005)",Contemporary Accounting Research,2005,fundamental,R&D reporting biases proxied by the difference between R&D growth and earnings growth,no-data,needs paid fundamentals depth,HLZ
+Realized-implied volatility spread,Bali and Hovakimian (2009),Management Science,2009,risk/vol,Difference between past realized volatility and the average of call and put implied volatility,yes,OHLCV 33y + 1m intraday,HLZ
+Call-put implied volatility spread,Bali and Hovakimian (2009),Management Science,,risk/vol,Difference between call and put implied volatility,yes,OHLCV 33y + 1m intraday,HLZ
+Idiosyncratic skewness,"Boyer, Mitton and Vorkink (2010)",Review of Financial Studies,2010,risk/vol,Skewness forecasted using firm level predictive variables,yes,OHLCV 33y + 1m intraday,HLZ
+Excess multiple,"An, Bhojraj and Ng (2010)","Journal of Accounting, Auditing & Finance",2010,other,Excess multiple calculated as the difference between the accounting multiple and the warranted multiple obtained by regressing the cross-section of firm multiples on accounting variables,unknown,,HLZ
+Intra-industry return reversals,"Hameed, Huang and Mian (2010)",Working Paper,2010,price,Intra-industry return reversals captured by the return difference between loser stocks and winners stocks based on relative monthly performance within the industry,yes,OHLCV 33y + 1m intraday,HLZ
+Excess cash,Simutin (2010),Financial Management,2010,other,Most recently available ratio of cash to total assets,unknown,,HLZ
+Extreme downside risk,"Huang, Liu, Rhee and Wu (2010)",Journal of Banking and Finance,2010,other,Extreme downside risk proxied by the left tail index in the classical generalized extreme value distribution,unknown,,HLZ
+Residual income,Balachandran and Mohanram (2011),Review of Accounting Studies,2011,fundamental,Firm residual income growth extracted from firm earnings growth,no-data,needs paid fundamentals depth,HLZ
+Stock skewness,"Conrad, Dittmar and Ghysels (2012)",Journal of Finance,2012,risk/vol,Ex ante stock risk-neutral skewness implied by option prices,yes,OHLCV 33y + 1m intraday,HLZ
+Expected return proxy,"Burlacu, Fontaine, Jimenez-Garces and Seasholes (2012)",Journal of Financial Economics,2012,price,Logistic transformation of the fit (R^2) from a regression of returns on past prices,yes,OHLCV 33y + 1m intraday,HLZ
+Default risk,Vassalou and Xing (2004),Journal of Finance,2004,options,Firm default likelihood using Merton's option pricing model,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Long-run market volatility,Adrian and Rosenberg (2008),Journal of Finance,,risk/vol,Low frequency volatility extracted from a time-series model of market returns,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Vanden (2004),Review of Financial Studies,2004,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Predicted earnings increase score,Wahlen and Wieland (2011),Review of Accounting Studies,2011,fundamental,Predicted earnings increase score based on financial statement information,no-data,needs paid fundamentals depth,HLZ
+Short-run market volatility,Adrian and Rosenberg (2008),Journal of Finance,2008,risk/vol,High frequency volatility extracted from a time-series model of market returns,yes,OHLCV 33y + 1m intraday,HLZ
+Earnings sustainability,Penman and Zhang (2002),Working Paper,2002,fundamental,A summary score based on firm fundamentals that informs about the sustainability of earning,no-data,needs paid fundamentals depth,HLZ
+Adjusted R&D,"Lev, Nissim and Thomas (2005)",Working Paper,2005,fundamental,Adjusted R&D that incorporates capitalization and amortization,no-data,needs paid fundamentals depth,HLZ
+Forecasted earnings per share,"Cen, Wei and Zhang (2006)",Working Paper,2006,positioning/flow,Analysts' forecasted earnings per share,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Acceleration,Gettleman and Marks (2006),Working Paper,2006,price,Firm's ranking on change in six-month momentum relative to the cross-section of other firms,yes,OHLCV 33y + 1m intraday,HLZ
+Change in order backlog,Baik and Ahn (2007),Seoul Journal of Business,2007,other,Change in order backlog,unknown,,HLZ
+Insider forecasts of firm volatility,"James, Fodor and Peterson (2007)",Working Paper,2007,risk/vol,Future firm volatility obtained from executive stock options,yes,OHLCV 33y + 1m intraday,HLZ
+Information in order backlog,"Gu, Wang and Ye (2008)",Working Paper,2008,fundamental,Changes in order backlog on future profitability,no-data,needs paid fundamentals depth,HLZ
+Cash flow volatility,Huang (2009),Journal of Empirical Finance,2009,risk/vol,Rolling standard deviation of the standardized cashflow over the past sixteen quarters,yes,OHLCV 33y + 1m intraday,HLZ
+Long-run idiosyncratic volatility,Cao and Xu (2010),Working Paper,2010,risk/vol,Long-run idiosyncratic volatility filtered from idiosyncratic volatility using HP filters,yes,OHLCV 33y + 1m intraday,HLZ
+Earnings distributed to equity holders,"Papanastasopoulos, Thomakos and Wang (2010)",Review of Accounting & Finance,2010,fundamental,Earnings distributed to equity holders,no-data,needs paid fundamentals depth,HLZ
+Net cash distributed to equity holders,"Papanastasopoulos, Thomakos and Wang (2010)",Review of Accounting & Finance,2010,fundamental,Dividends minus stock issues,no-data,needs paid fundamentals depth,HLZ
+Volatility of liquidity,"Akbas, Armstrong and Petkova (2011)",Working Paper,2011,risk/vol,Measured by the price impact of trade as in Amihud (2002),yes,OHLCV 33y + 1m intraday,HLZ
+Accrual volatility,"Bandyopadhyay, Huang and Wirjanto (2011)",Working Paper,2011,risk/vol,Firm accrual volatility measured by the standard deviation of the ratio of accruals to sales,yes,OHLCV 33y + 1m intraday,HLZ
+Overreaction to nonfundamental price changes,"Da, Liu and Schaumburg (2011)",Working Paper,2011,positioning/flow,"Overreaction to within-industry discount rate shocks as captured by decomposing the short-term reversal into across-industry return momentum, within-industry variation in expected returns, under-reaction to within-industry cash flow news and overreac",partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Firm productivity,Imrohoroglu and Tuzel (2011),Working Paper,2011,other,"Firm level total factor productivity estimated from firm value added, employment and capital",unknown,,HLZ
+Asset growth,Nyberg and Poyry (2011),Working Paper,2011,fundamental,Yearly percentage change in total balance sheet assets,no-data,needs paid fundamentals depth,HLZ
+Customer-base concentration,Patatoukas (2011),Working Paper,2011,other,Annual change in customer-base concentration,unknown,,HLZ
+Expected return uncertainty,"Baltussen, Bekkum, Van Der Grient (2012)",Working Paper,2012,risk/vol,Proxied by the volatility of option-implied volatility,yes,OHLCV 33y + 1m intraday,HLZ
+Change in call implied volatility,"Ang, Bali and Cakici (2012)",Working Paper,2012,risk/vol,Change in call implied volatility,yes,OHLCV 33y + 1m intraday,HLZ
+Change in put implied volatility,"Ang, Bali and Cakici (2012)",Working Paper,2012,risk/vol,Change in put implied volatility,yes,OHLCV 33y + 1m intraday,HLZ
+Abnormal operating cash flows,Li (2012),Working Paper,2012,positioning/flow,Abnormal operating cash flows,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Abnormal production costs,Li (2012),Working Paper,2012,other,Abnormal production costs,unknown,,HLZ
+Earnings forecast optimism,So (2012),Working Paper,2012,positioning/flow,Difference between characteristic forecasts and analyst forecasts,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Fraud probability,"Beneish, Lee and Nichols (2013)",Financial Analysts Journal,2012,other,Probability of manipulation based on accounting variables,unknown,,HLZ
+Bad private information,"Brennan, Huh and Subrahmanyam (2013)",Working Paper,2013,other,"Decomposing the PIN measure of Easley, Hvidkjaer and O'Hara (2002) into two elements that reflect informed trading on good news and bad news",unknown,,HLZ
+Consumption volatility,Boguth and Kuehn (2012),Journal of Finance,2012,risk/vol,Filtered consumption growth volatility from a Markov regime-switching model based on historical consumption data,yes,OHLCV 33y + 1m intraday,HLZ
+Illiquidity,"Chordia, Huh and Subrahmanyam (2009)",Review of Financial Studies,2009,microstructure,Estimated using structural formula in line with Kyle's (1985) lambda,partial,"volume/range only, no L2",HLZ
+Investor sentiment,Baker and Wurgler (2006),Journal of Finance,2006,other,Composite sentiment index based on various sentiment measures,unknown,,HLZ
+Market volatility and jumps,"Cremers, Halling and Weinbaum (2010)",Working Paper,2010,risk/vol,Estimated based on S&P index option returns,yes,OHLCV 33y + 1m intraday,HLZ
+Takeover likelihood,"Cremers, Nair and John (2009)",Review of Financial Studies,2009,other,Estimated via a logit model of regressing ex-post acquisition indicator on various firm- and industry-level accounting variables,unknown,,HLZ
+Trend signal,Han and Zhou (2013),Working Paper,2013,positioning/flow,"Return on a zero-investment portfolio long in past winners and short in past losers based on short-term, intermediate-term and long-term stock price trends",partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Earnings management likelihood,Beneish (1997),Journal of Accounting and Public Policy,1997,fundamental,Earnings management likelihood obtained by regressiong realized  violators of Generally Accepted Accounting Principles on firm characteristics,no-data,needs paid fundamentals depth,HLZ
+Transaction costs,Amihud and Mendelson (1986),Journal of Financial Economics,1986,other,THEORY,unknown,,HLZ
+Market skewness,"Chang, Christoffersen and Jacobs (2012)",Journal of Financial Economics,2012,risk/vol,Higher moments of market returns estimated from daily index options,yes,OHLCV 33y + 1m intraday,HLZ
+Patent citation,Gu (2005),"Journal of Accounting, Auditing & Finance",2005,other,Change of patent citation impact deflated by average total assets,unknown,,HLZ
+Information revelation,Gokcen (2009),Working Paper,2009,price,Monthly estimate of the daily correlation between absolute returns and dollar volume,yes,OHLCV 33y + 1m intraday,HLZ
+Local unemployment,Korniotis and Kumar (2009),Working Paper,2009,other,Relative state unemployment,unknown,,HLZ
+Local housing collateral,Korniotis and Kumar (2009),Working Paper,2009,other,State-level housing collateral,unknown,,HLZ
+Total volatility,Douglas (1967),Yale Economic Essays,1967,risk/vol,Individual stock volatility,yes,OHLCV 33y + 1m intraday,HLZ
+Trader composition,Shu (2007),Working Paper,2007,positioning/flow,Fraction of total trading volume of a stock from institutional trading,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Ticker symbol,"Head, Smith and Wilson (2007)",Quarterly Review of Economics & Finance,2007,other,Creativity in stocks' ticker symbols,unknown,,HLZ
+Firm information quality,"Armstrong, Banerjee and Corona (2010)",Working Paper,2010,risk/vol,"Firm information quality proxied by analyst forecasts, idiosyncratic volatility and standard errors of beta estimates",yes,OHLCV 33y + 1m intraday,HLZ
+Projected earnings accuracy,"Hess, Kreutzmann and Pucker (2011)",Working Paper,2011,positioning/flow,Skilled analysts identified by both past earnings forecasts accuracy and skills,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Firm productivity,Brown and Rowe (2007),Working Paper,2007,price,Firm productivity measured by returns on invested capital,yes,OHLCV 33y + 1m intraday,HLZ
+Earning forecasts uncertainty,Ackert and Athanassakos (1997),Journal of Financial Research,1997,fundamental,Standard deviation of earnings forecasts,no-data,needs paid fundamentals depth,HLZ
+Real asset liquidity,Ortiz-Molina and Phillips (2011),Working Paper,2011,microstructure,Number of potential buyers for a firm's assets from within the industry,partial,"volume/range only, no L2",HLZ
+Long-term growth forecasts,Bauman and Dowen (1988),Financial Analyst Journal,1988,fundamental,Long-term growth forecasts proxied by the five-year earnings per share growth rate forecasts,no-data,needs paid fundamentals depth,HLZ
+Capital stock,Balvers and Huang (2007),Journal of Financial Economics,,macro,Quarterly capital stock interpolated from annual data,partial,Yahoo proxies (FRED blocked),HLZ
+Productivity,Balvers and Huang (2007),Journal of Financial Economics,2007,macro,Productivity level as in King and Rebelo (2000),partial,Yahoo proxies (FRED blocked),HLZ
+Return reversals at the style level,Teo and Woo (2004),Journal of Financial Economics,2004,price,Zero-investment portfolios sorted based on past return performance at the style level,yes,OHLCV 33y + 1m intraday,HLZ
+Corporate bond return,"Fogler, John and Tipton (1981)",Journal of Finance,,options,Index of long-term Aa utility bonds with deferred calls returns,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Treasury bond return,"Fogler, John and Tipton (1981)",Journal of Finance,,price,3-month US Treasury bill return,yes,OHLCV 33y + 1m intraday,HLZ
+Goodwill impairment,Gu and Lev (2008),Accounting Review,2008,price,Buyers' overpriced shares at acquisition,yes,OHLCV 33y + 1m intraday,HLZ
+Average variance of equity returns,Chen and Petkova (2012),Review of Financial Studies,2012,risk/vol,Decomposition of market variance into an average correlation component and an average variance component,yes,OHLCV 33y + 1m intraday,HLZ
+Cash flow covariance with aggregate consumption,Da (2009),Journal of Finance,2009,risk/vol,Cash flow covariance with aggregate consumption,yes,OHLCV 33y + 1m intraday,HLZ
+Cash flow duration,Da (2009),Journal of Finance,,positioning/flow,Cash flow duration sensitivity to aggregate consumption,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Cash flow news,Campbell and Vuolteenaho (2004),American Economic Review,2004,positioning/flow,News about future market cash flow,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Change in expected inflation,"Chan, Chen and Hsieh (1985)",Journal of Financial Economics,,macro,Change in expected inflation as defined in Fama and Gibbons (1984),partial,Yahoo proxies (FRED blocked),HLZ
+Consumption growth,Lettau and Ludvigson (2001),Journal of Political Economy,2001,macro,Per capita real consumption growth rate,partial,Yahoo proxies (FRED blocked),HLZ
+Consumption growth,"Breeden, Gibbons and Litzenberger (1989)",Journal of Finance,1989,macro,Per capita real consumption growth,partial,Yahoo proxies (FRED blocked),HLZ
+Consumption-wealth ratio,Lettau and Ludvigson (2001),Journal of Political Economy,,macro,Proxied by a weighted average of human and nonhuman wealth,partial,Yahoo proxies (FRED blocked),HLZ
+Credit premium,"Chan, Chen and Hsieh (1985)",Journal of Financial Economics,,price,"Risk premium measured as difference in return between ``under Baa"" bond portfolio and long-term government bond portfolio",yes,OHLCV 33y + 1m intraday,HLZ
+Credit risk,Fama and French (1993),Journal of Financial Economics,,price,Difference in return between long-term corporate bond and long-term government bond,yes,OHLCV 33y + 1m intraday,HLZ
+Discount rate news,Campbell and Vuolteenaho (2004),American Economic Review,,other,News about future market discount rate,unknown,,HLZ
+Durable and nondurable consumption growth,Yogo (2006),Journal of Finance,2006,macro,Durable and nondurable consumption growth,partial,Yahoo proxies (FRED blocked),HLZ
+Financing frictions,"Gomes, Yaron and Zhang (2006)",Review of Financial Studies,2006,microstructure,Default premium,partial,"volume/range only, no L2",HLZ
+Garbage growth,Savov (2011),Journal of Finance,2011,macro,Realized annual garbage growth,partial,Yahoo proxies (FRED blocked),HLZ
+High order market and bond return,Bansal and Viswanathan (1993),Journal of Finance,1993,price,High order equity index returns and bond returns,yes,OHLCV 33y + 1m intraday,HLZ
+Investment growth,Xing (2008),Review of Financial Studies,2008,positioning/flow,Return on a zero-investment portfolio long in low investment growth firms and short in high investment growth firms,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Long run consumption,"Bansal, Dittmar and Lundblad (2005)",Journal of Finance,2005,positioning/flow,Cash flow risk measured by cointegration residual with aggregate consumption,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Long-horizon consumption growth,Parker and Julliard (2005),Journal of Political Economy,2005,macro,Three-year consumption growth rate,partial,Yahoo proxies (FRED blocked),HLZ
+Market return,Dittmar (2002),Journal of Finance,2002,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,"Chan, Chen and Hsieh (1985)",Journal of Financial Economics,1985,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Fama and French (1993),Journal of Financial Economics,1993,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Maximum Sharpe ratio portfolio,"Brennan, Wang and Xia (2004)",Journal of Finance,,macro,Maximum Sharpe ratio portfolio extracted from a time-series model of bond yields and expected inflation,partial,Yahoo proxies (FRED blocked),HLZ
+Money growth,"Chan, Foresi and Lang (1996)",Journal of Finance,1996,macro,"M2 or M3 minus currency, divided by total population",partial,Yahoo proxies (FRED blocked),HLZ
+Nonlinear functions of consumption growth,Chapman (1997),Journal of Finance,1997,macro,Low order orthonormal polynomials of current and future consumption growth,partial,Yahoo proxies (FRED blocked),HLZ
+Real interest rate,"Brennan, Wang and Xia (2004)",Journal of Finance,2004,macro,Real interest rates extracted from a time-series model of bond yields and expected inflation,partial,Yahoo proxies (FRED blocked),HLZ
+Returns on physical investment,Cochrane (1996),Journal of Political Economy,1996,price,Inferred from investment data via a production function,yes,OHLCV 33y + 1m intraday,HLZ
+Squared labor income growth,Dittmar (2002),Journal of Finance,,other,Squared smoothed labor income growth rate,unknown,,HLZ
+Squared market return,Dittmar (2002),Journal of Finance,,price,Squared equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Tax rate for capital gains,Bossaerts and Dammon (1994),Journal of Finance,1994,fundamental,Short-term capital gains tax rate,no-data,needs paid fundamentals depth,HLZ
+Tax rate for dividend,Bossaerts and Dammon (1994),Journal of Finance,,fundamental,Dividend tax rate,no-data,needs paid fundamentals depth,HLZ
+Term structure,"Chan, Chen and Hsieh (1985)",Journal of Financial Economics,,price,Yield curve slope measured as difference in return between long-term government bond and 1-month Treasury bill,yes,OHLCV 33y + 1m intraday,HLZ
+Unanticipated inflation,"Chan, Chen and Hsieh (1985)",Journal of Financial Economics,,macro,Realized minus expected inflation,partial,Yahoo proxies (FRED blocked),HLZ
+Mean consumption growth,Korniotis (2008),Review of Financial Studies,2008,macro,Across-state mean consumption growth rate,partial,Yahoo proxies (FRED blocked),HLZ
+Mean habit growth,Korniotis (2008),Review of Financial Studies,,macro,Across-state mean habit growth rate,partial,Yahoo proxies (FRED blocked),HLZ
+Variance of consumption growth,Korniotis (2008),Review of Financial Studies,,risk/vol,Across-state consumption growth variance,yes,OHLCV 33y + 1m intraday,HLZ
+Variance of habit growth,Korniotis (2008),Review of Financial Studies,,risk/vol,Across-state habit growth variance,yes,OHLCV 33y + 1m intraday,HLZ
+Aggregate real consumption,Breeden (1979),Journal of Financial Economics,1979,macro,THEORY,partial,Yahoo proxies (FRED blocked),HLZ
+Expected inflation,Stulz (1986),Journal of Finance,1986,macro,THEORY,partial,Yahoo proxies (FRED blocked),HLZ
+Exposure to financial distress costs,George and Hwang (2010),Journal of Financial Economics,2010,other,THEORY,unknown,,HLZ
+Financial constraints,"Livdan, Sapriza and Zhang (2009)",Journal of Finance,2009,macro,THEORY,partial,Yahoo proxies (FRED blocked),HLZ
+Foreign exchange rate change,Adler and Dumas (1983),Journal of Finance,1983,other,THEORY,unknown,,HLZ
+High order market return,Rubinstein (1973),Journal of Financial and Quantitative Analysis,1973,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Individual consumer's wealth,Constantinides (1982),Journal of Business,1982,other,THEORY,unknown,,HLZ
+Individual investor resources,Rubinstein (1974),Journal of Financial Economics,1974,other,THEORY,unknown,,HLZ
+Inter-cohort consumption differences,"Garleanu, Kogan and Panageas (2012)",Journal of Financial Economics,2012,macro,THEORY,partial,Yahoo proxies (FRED blocked),HLZ
+Investment opportunity change,"Cox, Ingersoll and Ross (1985)",Econometrica,1985,fundamental,THEORY,no-data,needs paid fundamentals depth,HLZ
+Marginal rate of substitution,Lucas (1978),Econometrica,1978,macro,THEORY,partial,Yahoo proxies (FRED blocked),HLZ
+Relative prices of consumption goods,Heckerman (1972),Journal of Finance,1972,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Shareholder recovery,Garlappi and Yan (2011),Journal of Finance,2011,other,THEORY,unknown,,HLZ
+Short sale restrictions,Jarrow (1980),Journal of Finance,1980,positioning/flow,THEORY,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+State variables representing future investment opportunity,Merton (1973),Econometrica,1973,fundamental,THEORY,no-data,needs paid fundamentals depth,HLZ
+Transaction costs,Constantinides (1986),Journal of Political Economy,1986,other,THEORY,unknown,,HLZ
+World consumption,Stulz (1981),Journal of Financial Economics,1981,macro,THEORY,partial,Yahoo proxies (FRED blocked),HLZ
+World market return,Solnik (1974),Journal of Economic Theory,1974,price,THEORY,yes,OHLCV 33y + 1m intraday,HLZ
+Attenuated returns,"Chordia, Subrahmanyam and Tong (2013)",Working Paper,2013,price,Composite trading strategy returns where the weights are based on averaging percentile rank scores of various characteristics for each stock on portfolios,yes,OHLCV 33y + 1m intraday,HLZ
+Consumption growth volatility,"Ferson, Nallareddy and Xie (2012)",Journal of Financial Economics,,risk/vol,Consumption growth volatility shocks identified from the risk-free rate and market price-dividend ratio based on Bansal and Yaron (2005)'s long-run risk model,yes,OHLCV 33y + 1m intraday,HLZ
+Cross-sectional pricing inefficiency,"Akbas, Armstrong, Sorescu and Subrahmanyam (2013)",Working Paper,2013,price,"Pricing inefficiency proxied by returns to simulated trading strategies that capture momentum, profitability, value, earnings and reversal",yes,OHLCV 33y + 1m intraday,HLZ
+Expected dividend growth,"Doskov, Pekkala and Ribeiro (2013)",Working Paper,2013,fundamental,Expected dividend growth based on a macro time-series model,no-data,needs paid fundamentals depth,HLZ
+Expected dividend level,"Doskov, Pekkala and Ribeiro (2013)",Working Paper,2013,fundamental,Expected dividend level based on a macro time-series model,no-data,needs paid fundamentals depth,HLZ
+Fourth-quarter to fourth-quarter consumption growth,Jagannathan and Wang  (2007),Journal of Finance,2007,macro,Fourth-quarter to fourth-quarter consumption growth rate,partial,Yahoo proxies (FRED blocked),HLZ
+GDP growth news,Vassalou (2003),Journal of Financial Economics,2003,macro,GDP growth news obtained from predictive regressions on lagged equity and fixed-income portfolios,partial,Yahoo proxies (FRED blocked),HLZ
+Idiosyncratic consumption,Jacobs and Wang (2004),Journal of Finance,2004,risk/vol,Cross-sectional consumption growth variance,yes,OHLCV 33y + 1m intraday,HLZ
+Interaction between index and option return,Vanden (2006),Review of Financial Studies,,options,Product of market and option returns,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Investment portfolio return,"Chen, Novy-Marx and Zhang (2011)",Working Paper,2011,price,Difference between returns of portfolios with low and high investment-to-asset ratio,yes,OHLCV 33y + 1m intraday,HLZ
+Investors' beliefs,Ozoguz (2008),Review of Financial Studies,2009,options,Belief extracted from a two-state regime-switching model of aggregate market return and aggregate output,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Investors' uncertainty,Ozoguz (2008),Review of Financial Studies,,options,Uncertainty extracted from a two-state regime-switching model of aggregate market return and aggregate output,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Knightian uncertainty,"Viale, Garcia-Feijoo and Giannetti (2011)",Working Paper,2011,macro,Knightian uncertainty estimated from an investor's optimization problem under Knightian uncertainty,partial,Yahoo proxies (FRED blocked),HLZ
+Learning,"Viale, Garcia-Feijoo and Giannetti (2011)",Working Paper,2012,macro,Learning estimated from an investor's optimization problem under Knightian uncertainty,partial,Yahoo proxies (FRED blocked),HLZ
+Long-run consumption growth,"Ferson, Nallareddy and Xie (2012)",Journal of Financial Economics,2012,price,Long-run consumption growth rate identified from the risk-free rate and market price-dividend ratio based on Bansal and Yaron (2005)'s long-run risk model,yes,OHLCV 33y + 1m intraday,HLZ
+Long-run stockholder consumption growth,"Malloy, Moskowitz and Vissing-Jorgensen (2009)",Journal of Finance,2009,macro,Aggregated microlevel stockholder consumption,partial,Yahoo proxies (FRED blocked),HLZ
+Long-term interest rate,Sweeney and Warga (1986),Journal of Finance,1986,macro,Change in the yield of long-term government bonds,partial,Yahoo proxies (FRED blocked),HLZ
+Market return,"Chen, Novy-Marx and Zhang (2011)",Working Paper,2011,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Lo and Wang (2006),Journal of Finance,2006,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Market return,Vanden (2006),Review of Financial Studies,2006,price,Equity index return and its square,yes,OHLCV 33y + 1m intraday,HLZ
+Retail investor sentiment,Kumar and Lee (2006),Journal of Finance,2006,other,Systematic retail trading based on transaction data,unknown,,HLZ
+Short-run consumption growt,"Ferson, Nallareddy and Xie (2012)",Journal of Financial Economics,,price,Short-run consumption growth rate identified from the risk-free rate and market price-dividend ratio based on Bansal and Yaron (2005)'s long-run risk model,yes,OHLCV 33y + 1m intraday,HLZ
+Squared market return,Kraus and Litzenberger (1976),Journal of Finance,,price,Square of equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Treasury bill return,Oldfield and Rogalski (1981),Journal of Finance,1981,price,Principle components extracted from returns of Treasury bills,yes,OHLCV 33y + 1m intraday,HLZ
+Distress risk,Kapadia (2011),Journal of Financial Economics,2011,other,Aggregate distress risk obtained by projecting future business failure growth rates on a set of basis assets,unknown,,HLZ
+Change in G-7 industrial production,Ferson and Harvey (1993),Review of Financial Studies,,macro,Change in G-7 industrial production,partial,Yahoo proxies (FRED blocked),HLZ
+Change in long-term inflationary expectations,Ferson and Harvey (1993),Review of Financial Studies,,macro,Change in long-term inflationary expectations,partial,Yahoo proxies (FRED blocked),HLZ
+Change in long-term inflationary expectations,Ferson and Harvey (1994),Journal of Banking and Finance,,macro,Change in long-term inflationary expectations,partial,Yahoo proxies (FRED blocked),HLZ
+Change in oil price,Ferson and Harvey (1993),Review of Financial Studies,,price,Change in the monthly average US dollar price per barrel of crude oil,yes,OHLCV 33y + 1m intraday,HLZ
+Change in oil price,Ferson and Harvey (1994),Journal of Banking and Finance,,price,Change in the monthly average US dollar price per barrel of crude oil,yes,OHLCV 33y + 1m intraday,HLZ
+Change in the Eurodollar-Treasury yield spread,Ferson and Harvey (1993),Review of Financial Studies,,microstructure,First difference of the spread between the 90-day Eurodollar yield and the 90-day Treasury-bill yield,partial,"volume/range only, no L2",HLZ
+Change in weighted exchange rate,Ferson and Harvey (1993),Review of Financial Studies,,price,Log first difference of the trade-weighted US dollar price of ten industrialized countries' currencies,yes,OHLCV 33y + 1m intraday,HLZ
+Change in weighted exchange rate,Ferson and Harvey (1994),Journal of Banking and Finance,,price,Log first difference of the trade-weighted US dollar price of ten industrialized countries' currencies,yes,OHLCV 33y + 1m intraday,HLZ
+Fitted return based on predictive regressions,Ferson and Harvey (1999),Journal of Finance,1999,price,"Expected portfolio return obtained by projecting historical returns on lagged macro instruments, including term spreads, dividend yield, credit spread and short-term Treasury bill",yes,OHLCV 33y + 1m intraday,HLZ
+Unexpected inflation for the G-7 countries,Ferson and Harvey (1993),Review of Financial Studies,,macro,Unexpected inflation based on a time-series model on an aggregate G-7 inflation rate,partial,Yahoo proxies (FRED blocked),HLZ
+Weighted real short-term interest rate,Ferson and Harvey (1993),Review of Financial Studies,,macro,GDP weighted average of short-term interest rates in G-7 countries,partial,Yahoo proxies (FRED blocked),HLZ
+World equity return,Ferson and Harvey (1993),Review of Financial Studies,1993,price,US dollar return of the MSCI world equity market in excess of a short-term interest rate,yes,OHLCV 33y + 1m intraday,HLZ
+World equity return,Ferson and Harvey (1994),Journal of Banking and Finance,1994,price,US dollar return of the MSCI world equity market in excess of a short-term interest rate,yes,OHLCV 33y + 1m intraday,HLZ
+Dividend yield,Campbell (1996),Journal of Political Economy,,fundamental,Dividend yield on value-weighted index,no-data,needs paid fundamentals depth,HLZ
+Entrepreneur income,Heaton and Lucas (2000),Journal of Finance,2000,other,Proprietary income of entrepreneurs,unknown,,HLZ
+Housing price ratio,Lustig and Nieuwerburgh (2005),Journal of Finance,2005,price,Ratio of housing to human wealth,yes,OHLCV 33y + 1m intraday,HLZ
+Labor income,Campbell (1996),Journal of Political Economy,,macro,Real labor income growth rate,partial,Yahoo proxies (FRED blocked),HLZ
+Market return,Campbell (1996),Journal of Political Economy,1996,price,Equity index return,yes,OHLCV 33y + 1m intraday,HLZ
+Term structure,Campbell (1996),Journal of Political Economy,,positioning/flow,Long-short government bond yield spread,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Distressed investment strategy return,Fung and Hsieh (1997),Review of Financial Studies,,price,Return for hedge funds that follow a distressed investment strategy,yes,OHLCV 33y + 1m intraday,HLZ
+Global/macro strategy return,Fung and Hsieh (1997),Review of Financial Studies,,price,Return for hedge funds that follow a global/macro strategy,yes,OHLCV 33y + 1m intraday,HLZ
+Opportunistic strategy return,Fung and Hsieh (1997),Review of Financial Studies,1997,price,Return for hedge funds that follow an opportunistic strategy,yes,OHLCV 33y + 1m intraday,HLZ
+Straddle return,Fung and Hsieh (2001),Review of Financial Studies,2001,options,Lookback straddles' returns constructed based on option prices,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Trend following strategy return,Fung and Hsieh (1997),Review of Financial Studies,,price,Return for hedge funds that follow a trend following strategy,yes,OHLCV 33y + 1m intraday,HLZ
+Value strategy return,Fung and Hsieh (1997),Review of Financial Studies,,price,Return for hedge funds that follow a value strategy,yes,OHLCV 33y + 1m intraday,HLZ
+Change in the slope of the yield curve,Ferson and Harvey (1991),Journal of Political Economy,,other,Change in the difference between a 10-year Treasury bond yield and a 3-month Treasury bill yield,unknown,,HLZ
+Consumption growth,Ferson and Harvey (1991),Journal of Political Economy,,macro,Real per capita growth of personal consumption expenditures for nondurables & services,partial,Yahoo proxies (FRED blocked),HLZ
+Credit spread,Ferson and Harvey (1991),Journal of Political Economy,,price,Baa corporate bond return less monthly long-term government bond return,yes,OHLCV 33y + 1m intraday,HLZ
+Real short rate,Ferson and Harvey (1991),Journal of Political Economy,,positioning/flow,One-month Treasury bill return less inflation rate,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Unexpected inflation,Ferson and Harvey (1991),Journal of Political Economy,,macro,Difference between actual and time-series forecasts of inflation rate,partial,Yahoo proxies (FRED blocked),HLZ
+Liquidity,Korajczyk and Sadka (2008),Journal of Financial Economics,2008,microstructure,Systematic liquidity extracted from eight empirical liquidity measures,partial,"volume/range only, no L2",HLZ
+Product price change,Van Binsbergen (2012),Working Paper,2012,price,Cumulative product price changes since an industry enters the producer price index program,yes,OHLCV 33y + 1m intraday,HLZ
+Stock-cash flow sensitivity,Chen and Strebulaev (2012),Working Paper,2012,positioning/flow,Stock-cash flow sensitivity estimated from a structural one-factor contingent-claim model,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Carry,"Koijen, Moskowitz, Pedersen and Vrugt (2012)",Working Paper,2012,price,Expected return minus expected price appreciation,yes,OHLCV 33y + 1m intraday,HLZ
+Change in oil prices,"Chen, Roll and Ross (1986)",Journal of Business,,price,Growth rate in oil prices,yes,OHLCV 33y + 1m intraday,HLZ
+Changes in expected inflation,"Chen, Roll and Ross (1986)",Journal of Business,,macro,Changes in expected inflation as defined in Fama and Gibbons (1984),partial,Yahoo proxies (FRED blocked),HLZ
+Commodity index,"Boons, Roon and Szymanowska (2012)",Working Paper,2012,other,Open interest-weighted total index that aggregates 33 commodities,unknown,,HLZ
+Credit premium,"Chen, Roll and Ross (1986)",Journal of Business,,price,"Risk premium measured as difference in return between ``under Baa"" bond portfolio and long-term government bond portfolio",yes,OHLCV 33y + 1m intraday,HLZ
+Future growth in the opportunity cost of money,Lioui and Maio (2012),Working Paper,2012,macro,Opportunity cost of money as proxied by 3-month Treasury bill rate or effective Federal Funds rate,partial,Yahoo proxies (FRED blocked),HLZ
+Income growth for distributive industries,Eiling (2012),Journal of Finance,,macro,Income growth for distributive industries,partial,Yahoo proxies (FRED blocked),HLZ
+Income growth for goods producing industries,Eiling (2012),Journal of Finance,2012,macro,Income growth for goods producing industries,partial,Yahoo proxies (FRED blocked),HLZ
+Income growth for government,Eiling (2012),Journal of Finance,,macro,Income growth for government,partial,Yahoo proxies (FRED blocked),HLZ
+Income growth for manufacturing industries,Eiling (2012),Journal of Finance,,macro,Income growth for manufacturing industries,partial,Yahoo proxies (FRED blocked),HLZ
+Income growth for service industries,Eiling (2012),Journal of Finance,,macro,Income growth for service industries,partial,Yahoo proxies (FRED blocked),HLZ
+Industrial production growth,"Chen, Roll and Ross (1986)",Journal of Business,1986,macro,Seasonally adjusted monthly growth rate of industrial production,partial,Yahoo proxies (FRED blocked),HLZ
+Investment growth by financial firms,"Li, Vassalou and Xing (2006)",Journal of Business,,fundamental,Financial firms investment growth,no-data,needs paid fundamentals depth,HLZ
+Investment growth by households,"Li, Vassalou and Xing (2006)",Journal of Business,2006,fundamental,Household investment growth,no-data,needs paid fundamentals depth,HLZ
+Investment growth by nonfarm noncorporate business,"Li, Vassalou and Xing (2006)",Journal of Business,,fundamental,Nonfarm noncorporate business investment growth,no-data,needs paid fundamentals depth,HLZ
+Investment growth by nonfarm nonfinancial corporate firms,"Li, Vassalou and Xing (2006)",Journal of Business,,fundamental,Nonfarm nonfinancial corporate firms investment growth,no-data,needs paid fundamentals depth,HLZ
+Labor income,"Gomez, Priestley and Zapatero (2012)",Working Paper,2012,macro,Labor income at the census division level,partial,Yahoo proxies (FRED blocked),HLZ
+Labor income,Jagannathan and Wang (1996),Journal of Finance,,macro,Real labor income growth rate,partial,Yahoo proxies (FRED blocked),HLZ
+Market uncertainty,Bali and Zhou (2012),Working Paper,2012,risk/vol,Proxied by variance risk premium,yes,OHLCV 33y + 1m intraday,HLZ
+Market-wide liquidity,"Hu, Pan and Wang (2012)",Working Paper,2012,price,"Proxied by ``noise"" in Treasury prices",yes,OHLCV 33y + 1m intraday,HLZ
+Rare disasters,"Berkman, Jacobsen and Lee (2011)",Journal of Financial Economics,2011,other,Disaster index based on international political crises,unknown,,HLZ
+Slope of yield curve,Jagannathan and Wang (1996),Journal of Finance,,positioning/flow,Long-short government bond yield spread,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Stochastic volatility,"Campbell, Giglio, Polk and Turley (2012)",Working Paper,2012,risk/vol,Estimated from a heteroscedastic VAR based on market and macro variables,yes,OHLCV 33y + 1m intraday,HLZ
+Term structure,"Chen, Roll and Ross (1986)",Journal of Business,,price,Yield curve slope measured as difference in return between long-term government bond and 1-month Treasury bill,yes,OHLCV 33y + 1m intraday,HLZ
+Third to tenth power of market return,"Chung, Johnson and Schill (2006)",Journal of Business,2006,price,Third to tenth power of market return,yes,OHLCV 33y + 1m intraday,HLZ
+Unanticipated inflation,"Chen, Roll and Ross (1986)",Journal of Business,,macro,Realized minus expected inflation,partial,Yahoo proxies (FRED blocked),HLZ
+Credit rating,"Erb, Harvey and Viskanta (1996)",Journal of Portfolio Management,1996,positioning/flow,Institutional investor country credit rating from semi-annual survey,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Change in expected GNP,"Elton, Gruber and Blake (1995)",Journal of Finance,,macro,Change in expectation from economic surveys,partial,Yahoo proxies (FRED blocked),HLZ
+Change in expected inflation,"Elton, Gruber and Blake (1995)",Journal of Finance,1995,macro,Change in expectation from economic surveys,partial,Yahoo proxies (FRED blocked),HLZ
+Return on S&P stocks,"Elton, Gruber, Das and Hlavka (1993)",Review of Financial Studies,1993,price,Returns on S&P stocks,yes,OHLCV 33y + 1m intraday,HLZ
+Returns on non-S&P stocks,"Elton, Gruber, Das and Hlavka (1993)",Review of Financial Studies,,price,Returns on non-S&P stocks,yes,OHLCV 33y + 1m intraday,HLZ
+Analyst forecasts optimism,Da and Warachka (2009),Working Paper,2009,positioning/flow,Relative optimism and pessimism proxied by the difference between long-term and short-term analyst forecast of earnings growth,partial,"FINRA short-vol 2018+, CFTC COT",HLZ
+Idiosyncratic component of S&P 500 return,Brennan and Li (2008),Working Paper,2008,risk/vol,Residual of the linear projection of the S&P 500 return onto the CRSP value weighted index return,yes,OHLCV 33y + 1m intraday,HLZ
+Dispersion in beliefs,Jiang and Sun (2011),Working Paper,2011,other,Revealed through active holdings of fund managers,unknown,,HLZ
+Information intensity,Zhao (2012),Working Paper,2012,other,Proxied by monthly frequency of current report filings,unknown,,HLZ
+Debt covenant protection,Wang (2012),Working Paper,2012,fundamental,Firm-level covenant index constructed based on 30 covenant categories,no-data,needs paid fundamentals depth,HLZ
+Credit default swap spreads,Han and Zhou (2011),Working Paper,2011,microstructure,Five-year spread less one-year spread,partial,"volume/range only, no L2",HLZ
+Implied cost of capital,Callen and Lyle (2011),Working Paper,2011,options,Implied cost of capital estimated using option contracts,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Disclosure level,Botosan (1997),Accounting Review,1997,other,Voluntary disclosure level of manufacturing firms' annual reports,unknown,,HLZ
+Corporate acquisitions,Loughran and Vijh (1997),Journal of Finance,1997,other,Difference between stock mergers and cash tender offers for corporate acquisitions,unknown,,HLZ
+Short-sale constraints,Jones and Lamont (2002),Journal of Financial Economics,2002,other,Shorting costs for NYSE stocks,unknown,,HLZ
+Order backlog,"Rajgopal, Shevlin and Venkatachalam (2003)",Review of Accounting Studies,2003,other,"Order backlog divided by average total assets, transformed to a scaled-decile variable",unknown,,HLZ
+Put-call parity,"Ofek, Richardson and Whitelaw (2004)",Journal of Financial Economics,2004,options,Violations of put-call parity,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Environment indicator,"Brammer, Brooks and Pavelin (2006)",Financial Management,2006,other,A composite index measuring a firm's environmental responsibility,unknown,,HLZ
+Employment indicator,"Brammer, Brooks and Pavelin (2006)",Financial Management,,other,A composite index measuring employee responsibility,unknown,,HLZ
+Community indicator,"Brammer, Brooks and Pavelin (2006)",Financial Management,,other,A composite index measuring community responsiveness,unknown,,HLZ
+Media coverage,Fang and Peress (2009),Journal of Finance,2009,other,Firm mass media coverage,unknown,,HLZ
+Political campaign contributions,"Cooper, Gulen and Ovtchinnikov (2010)",Journal of Finance,2010,other,Firm contributions to US political campaigns,unknown,,HLZ
+Intangibles,Edmans (2011),Journal of Financial Economics,2011,other,"Employee satisfaction proxied by the list of ``100 Best Companies to Work for in America""",unknown,,HLZ
+Labor unions,"Chen, Kacperczyk and Ortiz-Molina (2011)",Journal of Financial and Quantitative Analysis,2011,other,Labor force unionization measured by the percentage of employed workers in a firm's primary Census industry Classification industry covered by unions in collective bargaining with employers,unknown,,HLZ
+Geographic dispersion,Garcia and Norli (2012),Journal of Financial Economics,2012,other,Number of states in which a firm has business operations,unknown,,HLZ
+Political geography,"Kim, Pantzalis and Park (2012)",Journal of Financial Economics,2012,other,Political proximity measured by political alignment index of each state's leading politicians with the ruling presidential party,unknown,,HLZ
+Opportunistic buy,"Cohen, Malloy and Pomorski (2012)",Journal of Finance,2012,other,Prior month buy indicator for opportunistic traders who do not trade routinely,unknown,,HLZ
+Opportunistic sell,"Cohen, Malloy and Pomorski (2012)",Journal of Finance,,other,Prior month sell indicator for opportunistic traders who do not trade routinely,unknown,,HLZ
+Earnings conference calls,"Price, Doran, Peterson and Bliss (2012)",Journal of Banking and Finance,2012,options,Sentiment of conference call wording,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Board centrality,"Larcker, So and Wang (2013)",Journal of Accounting and Economics,2013,other,Board centrality measured by four basic dimensions of well-connectedness,unknown,,HLZ
+Realized skewness,"Amaya, Christoffersen, Jacobs and Vasquez (2011)",Working Paper,2010,risk/vol,Realized skewness obtained from high-frequency intraday prices,yes,OHLCV 33y + 1m intraday,HLZ
+Information risk,"Easley, Hvidkjaer and O'Hara (2002)",Journal of Finance,2002,other,Probability of information-based trading for individual stock,unknown,,HLZ
+Small trades,Hvidkjaer (2008),Review of Financial Studies,2008,microstructure,Volume arising from small trades,partial,"volume/range only, no L2",HLZ
+Order imbalance,"Barber, Odean and Zhu (2009)",Review of Financial Studies,2009,other,Difference between buyer- and seller-initiated trades,unknown,,HLZ
+Realized kurtosis,"Amaya, Christoffersen, Jacobs and Vasquez (2011)",Working Paper,2011,price,Realized kurtosis obtained from high-frequency intraday prices,yes,OHLCV 33y + 1m intraday,HLZ
+Time-series momentum,"Moskowitz, Ooi and Pedersen (2012)",Journal of Financial Economics,2012,price,Time-series momentum strategy based on autocorrelations of scaled returns,yes,OHLCV 33y + 1m intraday,HLZ
+Buy orders,"Brennan, Chordia, Subrahmanyam and Tong (2012)",Journal of Financial Economics,2012,price,Sensitivity of price changes to sell orders,yes,OHLCV 33y + 1m intraday,HLZ
+Sell orders,"Brennan, Chordia, Subrahmanyam and Tong (2012)",Journal of Financial Economics,,price,Sensitivity of price changes to buy orders,yes,OHLCV 33y + 1m intraday,HLZ
+Jump beta,Sophia Zhengzi Li (2012),Working Paper,2012,risk/vol,Discontinuous jump beta based on Todorov and Bollerslev (2010),yes,OHLCV 33y + 1m intraday,HLZ
+Liquidity,Sadka (2006),Journal of Financial Economics,2006,price,Market-wide liquidity constructed first by decomposing firm-level liquidity into variable and fixed price effects then averaging the variable component,yes,OHLCV 33y + 1m intraday,HLZ
+Credit risk premia,"Friewald, Wagner and Zechner (2012)",Working Paper,2012,options,Market implied credit risk premia based on the term structure of CDS spreads,partial,"CBOE chain + VIX/SKEW/VVIX, shallow history",HLZ
+Labor mobility,Donangelo (2012),Working Paper,2012,other,Labor mobility based on average occupational dispersion of employees in an industry,unknown,,HLZ
+Earnings cyclicality,Gourio (2007),Working Paper,2007,fundamental,Sensitivity of earnings to changes in aggregate total factor productivity,no-data,needs paid fundamentals depth,HLZ
+New listings dummy,McConnell and Sanger (1984),Financial Analyst Journal,1984,other,Announcement that a company has filed a formal application to list on the NYSE,unknown,,HLZ
+ΔCAPEX-ΔIndustry CAPEX,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,MP
+Earnings Consistency,Alwathainani (2009),NA,2009,fundamental,,no-data,needs paid fundamentals depth,MP
+Idiosyncratic Risk,Ang et al. (2006),NA,2006,risk/vol,,yes,OHLCV 33y + 1m intraday,MP
+Momentum-Credit Ratings,Aramov et al. (2007),NA,2007,price,,yes,OHLCV 33y + 1m intraday,MP
+Max,"Bali, Cakici, and Whitelaw (2010)",NA,2010,other,,unknown,,MP
+Size,Banz (1981),NA,1981,other,,unknown,,MP
+Change in Forecast+ Accrua,Barth and Hutton (2004),NA,2004,other,,unknown,,MP
+M/B and Accruals,Bartov and Kim (2004),NA,2004,fundamental,,no-data,needs paid fundamentals depth,MP
+Earnings / Price,Basu (1977),NA,1977,price,,yes,OHLCV 33y + 1m intraday,MP
+Leverage,Bhandari (1988),NA,1988,other,,unknown,,MP
+Price,Blume and Husic (1972),NA,1972,price,,yes,OHLCV 33y + 1m intraday,MP
+Total XFIN,"Bradshaw, Richardson, and Sloan (2006)",NA,2006,other,,unknown,,MP
+Momentum and LT Reversal,Chan and Ko (2006),NA,2006,price,,yes,OHLCV 33y + 1m intraday,MP
+R&D / Market Value of Equity,Chan et al. (2001),NA,2001,fundamental,,no-data,needs paid fundamentals depth,MP
+Volume Variance,"Chordia, Subranhmanyam, and Anshuman (2001)",NA,2001,risk/vol,,yes,OHLCV 33y + 1m intraday,MP
+Asset Growth,"Cooper, Guylen and Schill (2008)",NA,2008,fundamental,,no-data,needs paid fundamentals depth,MP
+Share Issuance (5-Year),Daniel and Titman (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,MP
+Share Volume,"Datair, Naik, and Radcliffe (1998)",NA,1998,microstructure,,partial,"volume/range only, no L2",MP
+Long-Term Reversal,Debondt and Thaler (1985),NA,1985,price,,yes,OHLCV 33y + 1m intraday,MP
+Exchange Switch,Dharan and Ikenberry (1995),NA,1995,other,,unknown,,MP
+O-Score (More Financial Distress),Dichev (1998),NA,1998,other,,unknown,,MP
+Credit Rating Downgrade,Dichev and Piotroski (2001),NA,2001,macro,,partial,Yahoo proxies (FRED blocked),MP
+Forecast Dispersion,"Diether, Malloy, and Scherbina (2002)",NA,2002,other,,unknown,,MP
+Unexpected R&D Increases,"Eberhart, Maxwell, and Siddique (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,MP
+Org. Capital,Eisfeldt and Papanikolaou (2013),NA,2013,other,,unknown,,MP
+BookEquity / MarketEquity,FF (1992),NA,1992,fundamental,,no-data,needs paid fundamentals depth,MP
+Earnings Surprise,"Foster, Olsen, and Shevlin (1984)",NA,1984,fundamental,,no-data,needs paid fundamentals depth,MP
+G Index,"Gompers, Ishi and Metrick (2003)",NA,2003,other,,unknown,,MP
+IPO no R&D,"Gou, Lev, and Shi (2006)",NA,2006,fundamental,,no-data,needs paid fundamentals depth,MP
+Industry Momentu,Grinblatt and Moskwotiz (1999),NA,1999,other,,unknown,,MP
+Percent Operating Accrual,"Hafzalla, Lundholm, and Van Winkle (2011)",NA,2011,fundamental,,no-data,needs paid fundamentals depth,MP
+Percent Total Accrual,"Hafzalla, Lundholm, and Van Winkle (2011)",NA,2011,fundamental,,no-data,needs paid fundamentals depth,MP
+Dividends,Hartzmark and Solomon (2013),NA,2013,fundamental,,no-data,needs paid fundamentals depth,MP
+Seasonality,Heston and Sadka (2008),NA,2008,other,,unknown,,MP
+Net Operating Assets,Hirshleifer et al. (2004),NA,2004,other,,unknown,,MP
+Herfindahl Index,Hou and Robinson (2006),NA,2006,other,,unknown,,MP
+Short-Term Reversal,Jegadeesh (1989),NA,1989,price,,yes,OHLCV 33y + 1m intraday,MP
+Revenue Surprises,Jegadeesh and Livnat (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,MP
+Momentum,Jegadeesh and Titman (1993),NA,1993,price,,yes,OHLCV 33y + 1m intraday,MP
+Change in Recommendation,Jegadeesh et al. (2004),NA,2004,other,,unknown,,MP
+Profitability,"Karthik, Bartov, and Faurel (2010)",NA,2010,fundamental,,no-data,needs paid fundamentals depth,MP
+Mergers,Langetieg (1978),NA,1978,other,,unknown,,MP
+Momentum-Volume,Lee and Swaminathan (2000),NA,2000,price,,yes,OHLCV 33y + 1m intraday,MP
+Tax,Lev and Nissim (2004),NA,2004,fundamental,,no-data,needs paid fundamentals depth,MP
+Sustainable Growth,Lockwood and Prombutr (2010),NA,2010,other,,unknown,,MP
+Public Seasoned Equity Offerings,Loughran and Ritter (1995),NA,1995,other,,unknown,,MP
+Enterprise Multiple,Loughran and Wellman (2011),NA,2011,other,,unknown,,MP
+Cash Flow / Market Value of Equity,LSV (1994),NA,1994,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",MP
+Sales Growth,LSV (1994),NA,1994,fundamental,,no-data,needs paid fundamentals depth,MP
+Dividend Omission,"Michaely, Thaler, and Womack (1995)",NA,1995,fundamental,,no-data,needs paid fundamentals depth,MP
+Dividend Initiation,"Michaely, Thaler, and Womack (1995)",NA,1995,fundamental,,no-data,needs paid fundamentals depth,MP
+G-Score,Mohanram (2005),NA,2005,other,,unknown,,MP
+Lagged Momentum,Novy-Marx (2012),NA,2012,price,,yes,OHLCV 33y + 1m intraday,MP
+Operating Leverage,Novy-Marx (2010),NA,2010,other,,unknown,,MP
+Enterprise Component of Book/Price,"Penman, Richardson, and Tuna (2007)",NA,2007,price,,yes,OHLCV 33y + 1m intraday,MP
+Leverage Component of Book/Price,"Penman, Richardson, and Tuna (2007)",NA,2007,price,,yes,OHLCV 33y + 1m intraday,MP
+F-Score,Piotroski (2000),NA,2000,other,,unknown,,MP
+Share Issuance (1-Year),Pontiff and Woodgate (2008),NA,2008,fundamental,,no-data,needs paid fundamentals depth,MP
+Initial Public Offering,Ritter (1991),NA,1991,other,,unknown,,MP
+Change in Asset Turnover,Soliman (2008),NA,2008,microstructure,,partial,"volume/range only, no L2",MP
+Noncurrent Operating Assets Changes,Soliman (2008),NA,2008,other,,unknown,,MP
+Net Working Capital Changes,Soliman (2008),NA,2008,other,,unknown,,MP
+Growth in Inventory,Thomas and Zhang (2002),NA,2002,fundamental,,no-data,needs paid fundamentals depth,MP
+Investment,"Titman, Wei, and Xie (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,MP
+Firm Age-Momentum,Zhang (2994),NA,2994,price,,yes,OHLCV 33y + 1m intraday,MP
+Amihud's measure (Illiquidity),NA (2002),NA,2002,microstructure,,partial,"volume/range only, no L2",MP
+ΔSales-ΔInventory,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,MP
+ΔSales-ΔSG&A,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,MP
+Bid-Ask Spread,Amihud and Mendelsohn (1986),NA,1986,microstructure,,partial,"volume/range only, no L2",MP
+Sales/Price,Barbee et al (1996),NA,1996,price,,yes,OHLCV 33y + 1m intraday,MP
+Down Forecast,Barber et al. (2001),NA,2001,other,,unknown,,MP
+Up Forecast,Barber et al. (2001),NA,2001,other,,unknown,,MP
+Firm Age,Barry and Brown (1984),NA,1984,other,,unknown,,MP
+Advertising / Market Value of Equity,Chan et al. (2001),NA,2001,other,,unknown,,MP
+Spinoffs,"Cusatis, Miles, and Wooldridge (1993)",NA,1993,other,,unknown,,MP
+Short Interest,Dechow et al. (2001),NA,2001,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",MP
+Growth in LTNOA,"Fairfield, Whisenant and Yohn (2003)",NA,2003,other,,unknown,,MP
+Beta,Fama and MacBeth (1973),NA,1973,risk/vol,,yes,OHLCV 33y + 1m intraday,MP
+Analyst Value,Frankel and Lee (1998),NA,1998,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",MP
+Pension Funding Status,Franzoni and Marin (2006),NA,2006,other,,unknown,,MP
+Return-on-Equity,Haugen and Baker (1996),NA,1996,price,,yes,OHLCV 33y + 1m intraday,MP
+Cash Flow Variance,Haugen and Baker (1996),NA,1996,risk/vol,,yes,OHLCV 33y + 1m intraday,MP
+Volume / Market Value of Equity,Haugen and Baker (1996),NA,1996,microstructure,,partial,"volume/range only, no L2",MP
+Volume Trend,Haugen and Baker (1996),NA,1996,microstructure,,partial,"volume/range only, no L2",MP
+Share Repurchases,"Ikenberry, Lakonishok, and Vermaelen (1995)",NA,1995,other,,unknown,,MP
+Momentum-Reversal,Jegadeesh and Titman (1993),NA,1993,price,,yes,OHLCV 33y + 1m intraday,MP
+IPO and Age,Ritter (1991),NA,1991,other,,unknown,,MP
+Debt Issuance,Spiess and Affleck-Graves (1999),NA,1999,fundamental,,no-data,needs paid fundamentals depth,MP
+Dividend Yield,"Naranjo, Nimalendran, and Ryngaert (1998)",NA,1998,fundamental,,no-data,needs paid fundamentals depth,MP
+Asset Turnover,Soliman (2008),NA,2008,microstructure,,partial,"volume/range only, no L2",MP
+Profit Margin,Soliman (2008),NA,2008,other,,unknown,,MP
+Change in Profit Margin,Soliman (2008),NA,2008,other,,unknown,,MP
+Z-Score (Less Financial Distress),Dichev (1998),NA,1998,other,,unknown,,MP
+% change in CAPEX - industry % change in CAPEX,Abarbanell & Bushee (1998),TAR,1998,fundamental,,no-data,needs paid fundamentals depth,GHZ
+% change in gross margin - % change in sales,Abarbanell & Bushee (1998),TAR,1998,fundamental,,no-data,needs paid fundamentals depth,GHZ
+% change in sales - % change in inventory,Abarbanell & Bushee (1998),TAR,1998,fundamental,,no-data,needs paid fundamentals depth,GHZ
+% change in sales - % change in SG&A,Abarbanell & Bushee (1998),TAR,1998,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Illiquidity,Acharya & Pedersen (2005),JF,2005,microstructure,,partial,"volume/range only, no L2",GHZ
+Idiosyncratic return volatility,"Ali, Hwang & Trombley (2003)",JFE,2003,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+% change over two years in CAPEX,Anderson & Garcia-Feijoo (2006),JF,2006,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Return volatility,"Ang, Hodrick, Xing & Zhang (2006)",JF,2006,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+"Return on Assets, Quarterly","Balakrishnan, Bartov & Faurel (2010)",JAE,2010,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Maximum daily return in prior month,"Bali, Cakici & Whitelaw (2011)",JFE,2011,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Firm size (market cap),Banz (1981),JFE,1981,other,,unknown,,GHZ
+Sales-to-price,"Barbee, Mukherji & Raines (1996)",FAJ,1996,price,,yes,OHLCV 33y + 1m intraday,GHZ
+# of consecutive earnings increases,"Barth, Elliott & Finn (1999)",JAR,1999,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Earnings-to-price,Basu (1977),JF,1977,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Forecasted growth in 5-year EPS,Baumann & Dowen (1988),FAJ,1988,other,,unknown,,GHZ
+Employee growth rate,"Bazdresch, Belo & Lin (2009)",WP,2009,other,,unknown,,GHZ
+Cash productivity,Chandrashekar & Rao (2009),WP,2009,other,,unknown,,GHZ
+Dollar trading volume in month t-2,"Chordia, Subrahmanyam & Anshuman (2001)",JFE,2001,microstructure,,partial,"volume/range only, no L2",GHZ
+Volatility of share turnover,"Chordia, Subrahmanyam & Anshuman (2001)",JFE,2001,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+Volatility of dollar trading volume,"Chordia, Subrahmanyam & Anshuman (2001)",JFE,2001,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+Asset growth,"Cooper, Gulen & Schil (2008)",JF,2008,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Share turnover,"Datar, Naik & Radcliffe (1998)",JFM,1998,microstructure,,partial,"volume/range only, no L2",GHZ
+36-month momentum,De Bondt & Thaler (1985),JF,1985,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Cash flow-to-price,"Desai, Rajgopal & Venkatachalam (2004)",TAR,2004,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",GHZ
+Dispersion in forecasted eps,"Diether, Malloy & Scherbina (2002)",JF,2002,other,,unknown,,GHZ
+RD_increase,"Eberhart, Maxwell & Siddique (2004)",JF,2004,other,,unknown,,GHZ
+Organizational capital,Eisfeldt & Papanikolaou (2013),JF,2013,other,,unknown,,GHZ
+Scaled analyst forecast of one year ahead earnings,"Elgers, Lo & Pfeiffer (2001)",TAR,2001,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",GHZ
+Growth in long term net operating assets,"Fairfield, Whisenant & Yohn (2003)",TAR,2003,macro,,partial,Yahoo proxies (FRED blocked),GHZ
+Beta,Fama & MacBeth (1973),JPE,1973,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+Operating Profitability,Fama and French (2015),JFE,2015,fundamental,,no-data,needs paid fundamentals depth,GHZ
+R&D-to-market cap,"Guo, Lev & Shi (2006)",JBFA,2006,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Percent accruals,"Hafzalla, Lundholm & Van Winkle (2011)",TAR,2011,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Debt capacity-to-firm tangibility,Hahn & Lee (2009),JF,2009,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Change in forecasted annual EPS,"Hawkins, Chamberlin & Daniel (1984)",FAJ,1984,other,,unknown,,GHZ
+Price delay,Hou & Moskowitz (2005),RFS,2005,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Industry sales concentration,Hou & Robinson (2006),JF,2006,fundamental,,no-data,needs paid fundamentals depth,GHZ
+"Return on Equity, Quarterly","Hou, Xue, and Zhang (2015)",RFS,2015,price,,yes,OHLCV 33y + 1m intraday,GHZ
+1-month momentum,Jegadeesh (1990),JF,1990,price,,yes,OHLCV 33y + 1m intraday,GHZ
+12-month momentum,Jegadeesh (1990),JF,1990,price,,yes,OHLCV 33y + 1m intraday,GHZ
+6-month momentum,Jegadeesh & Titman (1990),JF,1990,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Revenue surprise,Kama (2009),JBFA,2009,fundamental,,no-data,needs paid fundamentals depth,GHZ
+3-day return around earnings announcement,"Kishore, Brandt, Santa-Clara & Venkatachalam (2008)",WP,2008,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Annual sales growth,"Lakonishok, Shleifer & Vishny (1994)",JF,1994,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Taxable income to book income,Lev & Nissim (2004),TAR,2004,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Dividends-to-price,Litzenberger & Ramaswamy (1982),JF,1982,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Zero-trading days,Liu (2006),JFE,2006,other,,unknown,,GHZ
+New equity issue,"Loughran, Ritter & Ritter (1995)",JF,1995,other,,unknown,,GHZ
+Dividend initiation,"Michaely, Thaler & Womack (1995)",JF,1995,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Dividend omission,"Michaely, Thaler & Womack (1995)",JF,1995,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Financial statements score,Mohanram (2005),RAS,2005,other,,unknown,,GHZ
+Industry momentum,Moskowitz & Grinblatt (1999),JF,1999,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Gross profitability,Novy-Marx (2012),WP,2012,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Financial statements score,Piotroski (2000),JAR,2000,other,,unknown,,GHZ
+Change in shares outstanding,Pontiff & Woodgate (2008),JF,2008,other,,unknown,,GHZ
+Unexpected quarterly earnings,"Rendelmann, Jones & Latane (1982)",JFE,1982,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Change in common shareholder equity,"Richardson, Sloan, Soliman & Tun (2005)",JAE,2005,other,,unknown,,GHZ
+Change in long-term debt,"Richardson, Sloan, Soliman & Tun (2005)",JAE,2005,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Book-to-market,"Rosenberg, Reid & Lanstein (1985)",JPM,1985,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Change in # analysts,Scherbina (2007),WP,2007,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",GHZ
+Working capital accruals,Sloan (1996),TAR,1996,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Industry-adjusted change in asset turnover,Soliman (2008),TAR,2008,microstructure,,partial,"volume/range only, no L2",GHZ
+Change in tax expense,Thomas & Zhang (2010),WP,2010,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Changes in inventory,Thomas & Zhang (2002),RAS,2002,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Corporate investment,"Titman, Wei & Xie (2004)",JFQA,2004,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Illiquidity (bid-ask spread),Amihud & Mendelson (1989),JF,1989,microstructure,,partial,"volume/range only, no L2",GHZ
+Depreciation-to-gross PP&E,Holthausen & Larcker (1992),JAE,1992,other,,unknown,,GHZ
+% change in depreciation-to-gross PP&E,Holthausen & Larcker (1992),JAE,1992,other,,unknown,,GHZ
+Sin stock,Hong & Kacperczyk (2009),JEF,2009,other,,unknown,,GHZ
+Cash flow-to-debt,Ou & Penmann (1989),JAE,1989,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",GHZ
+Current ratio,Ou & Penmann (1989),JAE,1989,other,,unknown,,GHZ
+% change in current ratio,Ou & Penmann (1989),JAE,1989,other,,unknown,,GHZ
+% change in quick ratio,Ou & Penmann (1989),JAE,1989,other,,unknown,,GHZ
+% change in sales-to-inventory,Ou & Penmann (1989),JAE,1989,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Quick ratio,Ou & Penmann (1989),JAE,1989,other,,unknown,,GHZ
+Sales-to-cash,Ou & Penmann (1989),JAE,1989,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Sales-to-inventory,Ou & Penmann (1989),JAE,1989,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Sales-to-receivables,Ou & Penmann (1989),JAE,1989,fundamental,,no-data,needs paid fundamentals depth,GHZ
+# of analysts covering stock,"Elgers, Lo & Pfeiffer (2001)",TAR,2001,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",GHZ
+Earnings volatility,"Francis, LaFond, Olsson & Schipper (2004)",TAR,2004,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+# of years since first Compustat coverage,"Jiang, Lee & Zhang (2005)",RAS,2005,other,,unknown,,GHZ
+Secured debt-to-total debt,Valta (2013),WP,2013,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Secured debt indicator,Valta (2013),WP,2013,fundamental,,no-data,needs paid fundamentals depth,GHZ
+% change in sales - % change in accounts receivable,Abarbanell & Bushee (1998),TAR,1998,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Return on invested capital,Brown & Rowe (2007),WP,2007,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Beta squared,Fama & MacBeth (1973),JPE,1973,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+R&D-to-sales,"Guo, Lev & Shi (2006)",JBFA,2006,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Industry-adjusted change in profit margin,Soliman (2008),TAR,2008,other,,unknown,,GHZ
+CAPEX and inventory,Chen & Zhang (2010),JF,2010,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Industry-adjusted book-to-market,"Asness, Porter & Stevens (1994)",WP,1994,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Industry-adjusted cash flow-to-price ratio,"Asness, Porter & Stevens (1994)",WP,1994,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",GHZ
+Industry-adjusted change in employees,"Asness, Porter & Stevens (1994)",WP,1994,other,,unknown,,GHZ
+Industry-adjusted firm size,"Asness, Porter & Stevens (1994)",WP,1994,other,,unknown,,GHZ
+Absolute accruals,"Bandyopadhyay, Huang & Wirjanto (2010)",WP,2010,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Accrual volatility,"Bandyopadhyay, Huang & Wirjanto (2010)",WP,2010,risk/vol,,yes,OHLCV 33y + 1m intraday,GHZ
+Change in 6-month momentum,Gettleman & Marks (2006),WP,2006,price,,yes,OHLCV 33y + 1m intraday,GHZ
+Abnormal volume in earnings announcement month,"Lerman, Livnat & Mendenhall (2007)",WP,2007,fundamental,,no-data,needs paid fundamentals depth,GHZ
+Discretionay accruals,Xie (2001),NA,2001,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Operating accruals,Sloan (1996),NA,1996,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Assets-to-market,Fama and French (1992),NA,1992,other,,unknown,,HXZ
+Analysts' forecast change,"Hawkins, Chamberlin, and Daniel (1984)",NA,1984,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Cumulative abnormal stock returns around earnings announcements,"Chan, Jegadeesh, and Lakonishok (1996)",NA,1996,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Investment-to-assets,"Cooper, Gulen and Schill (2008)",NA,2008,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Pastor-Stambaugh Liquidity Beta,Pastor and Stambuagh (2003),NA,2003,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Tail risk,Kelly and Jiang (2014),NA,2014,other,,unknown,,HXZ
+Systematic volatillity risk,"Ang, Hodrick, Xing, and Zhang (2007)",NA,2007,other,,unknown,,HXZ
+Systematic volatillity risk,"Ang, Hodrick, Xing, and Zhang (2008)",NA,2008,other,,unknown,,HXZ
+Systematic volatillity risk,"Ang, Hodrick, Xing, and Zhang (2009)",NA,2009,other,,unknown,,HXZ
+Book-to-June-end market equity,Asnesss and Frazzini (2013),NA,2013,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Book-to-market equity,"Rosenberg, Reid, and Lanstein (1985)",NA,1985,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Book leverage,Fama and French (1992),NA,1992,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Cash-to-assets,Palazzo (2012),NA,2012,other,,unknown,,HXZ
+Cash-based operating profitablility,"Ball, Gerakos, Linnainmaa, and Nikolaev (2016)",NA,2016,other,,unknown,,HXZ
+Cash flow-to-price,"Lakonishok, Scheifer, and Vishny (1994)",NA,1994,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Operating cash flow-to-price,"Desai, Rajgopal, and Benkatachalam (2004)",NA,2004,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Chage in common equity,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Inventory changes,Thomas and Zhang (2002),NA,2002,fundamental,,no-data,needs paid fundamentals depth,HXZ
+% change in investment - %change in industry investment,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Change in net non-current operating assets,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Change in net non-cash working capital,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Tax expense surprise,Thomas and Zhang (2011),NA,2011,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Citations-to-R&D expense,"Hirschleifer, Hsu and Li (2013)",NA,2013,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Composite equity issuance,Daniel and Titman (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Composite debt issuance,"Lyandres, Sun and Zhang (2008)",NA,2008,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Convertible debt-to-total debt,Valta (2016),NA,2016,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Credit ratings,"Avramov, Chordia, Jostova, and Philipov (2009)",JFM,2009,macro,,partial,Yahoo proxies (FRED blocked),HXZ
+Customer momentum,Cohen and Frazzini (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Change in current operating assets,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Change in current Ooperating liabilities,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Change in financials liabilities,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Chagne in long-term investments,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Change in net financial assets,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Change in net operating assets,"Hirshleifer, Hou, Teoh, Zhang (2004)",NA,2004,other,,unknown,,HXZ
+Dollar trading volume,"Brennan, Chordia, and Subrahmanyam (1998)",NA,1998,microstructure,,partial,"volume/range only, no L2",HXZ
+Disparing between long- and short-term earnings growth forecasts,Da and Warachka (2011),NA,2011,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Earnings Surprise,"Foster, Olsen and Shevliln (1984)",NA,1984,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Industry lead-lag effect in earnings surprises,Hou (2007),NA,2007,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Enterprise book-to-price,"Penman, Richardson, and Tuna (2007)",NA,2007,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Earnings-to-price,Basu (1983),NA,1983,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Equity Duration,"Dechow, Sloan and Soliman (2004)",NA,2004,other,,unknown,,HXZ
+Long-term growth forecasts,La Porta (1996),NA,1996,macro,,partial,Yahoo proxies (FRED blocked),HXZ
+Dispersion of analysts' earnings forecasts,"Diether, Malloy and Scherbina (2002)",NA,2002,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Corporate governance,"Gompers, Ishii and Metrick (2003)",NA,2003,other,,unknown,,HXZ
+Gross profits-to-assets,Novy-Marx (2013),NA,2013,other,,unknown,,HXZ
+Growth in advertising expense,Lou (2014),NA,2014,other,,unknown,,HXZ
+Two-year investment growth,Anderson and Garcia-Feijoo (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Three-year investment growth,Anderson and Garcia-Feijoo (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Industry concentration (sales),Hou and Robinson (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Industry concentration (book equity),Hou and Robinson (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Hiring rate,"Belo, Lin and Bazdresch (2014)",NA,2014,other,,unknown,,HXZ
+Total volatility,"Ang, Hodrick, Xing, and Zhang (2006)",NA,2006,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Idiosyncratic volatility per the FF 3-factor model,"Ang, Hodrick, Xing, and Zhang (2006)",NA,2006,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Idiosyncratic volatility,"Ali, Hwang, and Trombley (2003)",NA,2003,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Absolute return-to-volume,Amihud (2002),NA,2002,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Industry lead-lag effect in prior returns,Hou (2007),NA,2007,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Intangible return,Daniel and Titman (2006),NA,2006,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Abnormal corporate investment,"Titman, Wei, and Xie (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Changes in PPE and inventory/assets,"Lyandres, Sun and Zhang (2008)",NA,2008,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Inventory growth,Belo and Lin (2011),NA,2011,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Customer industries momentum,Menzly and Ozbas (2010),NA,2010,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Supplier industries momentum,Menzly and Ozbas (2010),NA,2010,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Debt-to-market,Bhandari (1988),NA,1988,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Reversal,De Bondt and Thaler (1985),NA,1985,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Maximum daily return,"Bali, Cakici, and Whitelaw (2011)",NA,2011,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Five-year sales growth rank,","Lakonishok, Scheifer, and Vishny (1994)",NA,1994,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Price momentum (11-month prior returns),Jegadeesh and Titman (1993),NA,1993,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Year 1-lagged return, nonannual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Price momentum (6-month prior returns),Jegadeesh and Titman (1993),NA,1993,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Years 2-5-lagged returns, nonannual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Years 6-10-lagged returns, nonannual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Years 16-20-lagged returns, nonannual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Years 2-5-lagged returns, annual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Years 6-10-lagged returns, annual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Years 11-15-lagged returns, annual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"Years 16-20-lagged returns, annual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+"12-month-lagged return, annual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Growth (G) score,Mohanram (2005),NA,2005,other,,unknown,,HXZ
+Neb debt finance,"Bradshaw, Richardson, and Sloan (2006)",NA,2006,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Net debt-to-price,"Penman, Richardson, and Tuna (2007)",NA,2007,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Net equity finance,"Bradshaw, Richardson, and Sloan (2006)",NA,2006,other,,unknown,,HXZ
+Net payout yield,"Boudoukh, Michaely, Richardson, and Roberts (2007)",NA,2007,other,,unknown,,HXZ
+Net ooperating assets,"Hirschleifer, Hou Teoh, and Zhang (2004)",NA,2004,other,,unknown,,HXZ
+Operating leverage,Novy-Marx (2011),NA,2011,other,,unknown,,HXZ
+Order backlag,"Rajgopal, Shevlin and Venkatachalam (2003)",NA,2003,other,,unknown,,HXZ
+Industry-adjusted organizationa capital,Eisfeldt and Papanikolaou (2013),NA,2013,other,,unknown,,HXZ
+O-score,Dichev (1998),NA,1998,other,,unknown,,HXZ
+Patent-to-R&D capital,"Hirschleifer, Hsu and Li (2013)",NA,2013,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Payout Yield,"Boudoukh, Michaely, Richardson, and Roberts (2007)",NA,2007,other,,unknown,,HXZ
+Percent operating accruals,"Hafzalla, Lundholm, and Van Winkle (2011)",NA,2011,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Percent total accruals,"Hafzalla, Lundholm, and Van Winkle (2011)",NA,2011,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Share price,Miller and Scholes (1982),NA,1982,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Price delay based on Rsq,Hou and Moskowitz (2005),NA,2005,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Fundamental (F) score,Piotroski (2000),NA,2000,other,,unknown,,HXZ
+R&D-to-market,"Chan, Lakonishok, and Sougiannis (2001)",NA,2001,fundamental,,no-data,needs paid fundamentals depth,HXZ
+R&D capital-to-assets,Li (2011),NA,2011,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Eleven-month residual momentum,"Blitz, Huij, and Martens (2011)",NA,2011,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Segment momentum,Cohen and Lou (2012),NA,2012,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Total skewness,"Bali, Engle, and Murray (2015)",NA,2015,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Idiosyncratic skewness per the FF 3-factor model,"Bali, Engle, and Murray (2015)",NA,2015,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Revisions in analyst's' earnings forecasts,"Chan, Jegadeesh, and Lakonishok (1996)",NA,1996,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Revenue surprise,Jegadeesh and Livnat (2006),NA,2006,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Return on assets,"Balakrishnan, Bartov, and Faurel (2010)",JAE,2010,price,,yes,OHLCV 33y + 1m intraday,HXZ
+net stock issues,Pontiff and Woodgate (2008),NA,2008,other,,unknown,,HXZ
+Share turnover,"Datar, Naik, and Radcliffe (1998)",NA,1998,microstructure,,partial,"volume/range only, no L2",HXZ
+Market equity,Banz (1981),NA,1981,other,,unknown,,HXZ
+Coefficient of variation for share turnover,"Chordia, Subrahmanyam, and Anshuman (2001)",NA,2001,microstructure,,partial,"volume/range only, no L2",HXZ
+Short-term reversal,Jegadeesh (1990),NA,1990,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Tangibility of assets,Hahn and Lee (2009),NA,2009,other,,unknown,,HXZ
+Taxable income-to-book income,Lev and Nissim (2004),NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Total accruals,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Coefficient of variation for dollar trading,"Chordia, Subrahmanyam, and Anshuman (2001)",NA,2001,other,,unknown,,HXZ
+Net external finance,"Bradshaw, Richardson, and Sloan (2006)",NA,2006,other,,unknown,,HXZ
+Prior 6-month turnoever-adjusted numer of zero daily trading volume,Liu (2006),NA,2006,microstructure,,partial,"volume/range only, no L2",HXZ
+Prior 1-month turnoever-adjusted numer of zero daily trading volume,Liu (2006),NA,2006,microstructure,,partial,"volume/range only, no L2",HXZ
+Prior 12-month turnoever-adjusted numer of zero daily trading volume,Liu (2006),NA,2006,microstructure,,partial,"volume/range only, no L2",HXZ
+Advertising expense-to-market,"Chan, Lakonishok, and Sougiannis (2001)",NA,2001,other,,unknown,,HXZ
+Analysts-based intrinsic value-to-market,Frankel and Lee (1998),NA,1998,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Analysts optimism,Frankel and Lee (1998),NA,1998,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Market beta,Fama and MacBeth (1973),NA,1973,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+The Frazzini-Pedersen (2014) beta,Frazzini and Pedersen (2014),NA,2014,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+The high-low bid-ask spread estimator,Corwin and Schultz (2012),NA,2012,microstructure,,partial,"volume/range only, no L2",HXZ
+Firm age,"Jiange, Lee and Zhang (2005)",NA,2005,other,,unknown,,HXZ
+Pension funding rate (scaled by market equity),Franzoni and Martin (2006),NA,2006,other,,unknown,,HXZ
+Change in long-term net operating assets,"Fairfield, Whisenant and Yohn (2003)",NA,2003,macro,,partial,Yahoo proxies (FRED blocked),HXZ
+%change in sales - %change in inventory,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,HXZ
+%change in sales - %change in SG&A,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Industry concentration (total assets),Hou and Robinson (2006),NA,2006,other,,unknown,,HXZ
+"Years 11-15-lagged returns, nonannual",Heston and Sadka (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+# consecutive quarters with earnings increases,"Barth, Elliot, and Finn (1999)",NA,1999,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Operating profits-to-equity,Fama and French (2015),NA,2015,other,,unknown,,HXZ
+Operating profits-to-assets,"Ball, Gerakos, Linnainmaa, and Nikolaev (2016)",NA,2016,other,,unknown,,HXZ
+Predicted analysts focecast erro,Frankel and Lee (1998),NA,1998,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Price delay based on slopes,Hou and Moskowitz (2005),NA,2005,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Price delay based on slopes adjusted for standard errors,Hou and Moskowitz (2005),NA,2005,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Probability of Informed Trading,"Easley, Hvidkjaer, O'Hara (2002)",NA,2002,other,,unknown,,HXZ
+Rela estate ratio,Tuzel (2010),NA,2010,other,,unknown,,HXZ
+Return on equity,"Hou, Xue, and Zhang (2015)",NA,2015,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Analysts' earnings forecast-to-price,"Elgers, Lo, and Pfeiffer (2001)",NA,2001,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Sales-to-price,"Barbee, Mukherji, and Raines (1996)",NA,1996,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Leverage beta,"Adrian, Etula, and Muir (2014)",NA,2014,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Bid-ask spread,Hou and Loh (2015),NA,2015,microstructure,,partial,"volume/range only, no L2",HXZ
+Change in short-term investments,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Downside beta,"Ang, Chen and Xing (2006)",NA,2006,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Failure probability monthly sort,"Campbell, Hilscher, and Szilagyi (2008)",NA,2008,other,,unknown,,HXZ
+Dispersion in analyst long-term growth forecasts,"Anderson, Ghysels, and Juergens (2005)",NA,2005,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Financial constraints (the Kaplan-Zingales index),"Lamont, Polk, and Saa-Requejo (2001)",NA,2001,other,,unknown,,HXZ
+R&D-to-sales,"Chan, Lakonishok, and Sougiannis (2001)",NA,2001,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Financial constraints (the Whited-Wu index),Whited and Wu (2006),NA,2006,other,,unknown,,HXZ
+Z-score,Dichev (1998),NA,1998,other,,unknown,,HXZ
+Percent discretionary accruals,"Hafzalla, Lundholm, and Van Winkle (2012)",NA,2012,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly accrual quality,"Francis, Lafond, Olsson and Schipper (2005)",NA,2005,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Accrual quality,"Francis, Lafond, Olsson and Schipper (2005)",NA,2005,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly Assets-to-market,Fama and French (1992),NA,1992,other,,unknown,,HXZ
+Quarterly Investment-to-assets,"Cooper, Gulen and Schill (2008)",NA,2008,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Asset liquity (scaled by book assets),Ortiz-Molina and Phillips (2014),NA,2014,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly asset liquidity (book assets),Ortiz-Molina and Phillips (2014),NA,2014,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Asset liquity (scaled by market assets),Ortiz-Molina and Phillips (2014),NA,2014,other,,unknown,,HXZ
+Quarterly asset liquidity (market assets),Ortiz-Molina and Phillips (2014),NA,2014,microstructure,,partial,"volume/range only, no L2",HXZ
+Quarterly asset turnover,Soliman (2008),NA,2008,microstructure,,partial,"volume/range only, no L2",HXZ
+Liquidity beta (illiquidity-illiquidity),Acharya and Pederson (2005),NA,2005,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Liquidity beta (illiquidity-return),Acharya and Pederson (2005),NA,2005,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+The Dimson (1979) beta,Frazzini and Pedersen (2014),NA,2014,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Net liquidity beta,Acharya and Pederson (2005),NA,2005,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Liquidity beta (return-illiquidity),Acharya and Pederson (2005),NA,2005,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Liquidity beta (return-return),Acharya and Pederson (2005),NA,2005,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Quarterly Book-to-market equity,"Rosenberg, Reid, and Lanstein (1985)",NA,1985,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly book leverage,Fama and French (1992),NA,1992,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Brand capital-to-assets,"Belo, Lin and Vitorino (2014)",NA,2014,other,,unknown,,HXZ
+Capital turnover,Haugen and Baker (1996),NA,1996,microstructure,,partial,"volume/range only, no L2",HXZ
+Quarterly capital turnover,Haugen and Baker (1996),NA,1996,microstructure,,partial,"volume/range only, no L2",HXZ
+Cash-based operating profits to-lagged assets,"Ball, Gerakos, Linnainmaa, and Nikolaev (2016)",NA,2016,other,,unknown,,HXZ
+Quarterly cash-based operating profits to-lagged assets,"Ball, Gerakos, Linnainmaa, and Nikolaev (2016)",NA,2016,other,,unknown,,HXZ
+Quarterly operating cash flow-to-price,"Desai, Rajgopal, and Benkatachalam (2004)",NA,2004,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Quarterly Cash flow-to-price,"Lakonishok, Scheifer, and Vishny (1994)",NA,1994,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Change in Roa,??? (???),NA,,other,,unknown,,HXZ
+Change in ROE,??? (???),NA,,other,,unknown,,HXZ
+Change in non-current operating assets,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Change in non-current operating liabilities,"Richardson, Sloan Soliman and Tuna (2005)",NA,2005,other,,unknown,,HXZ
+Quarterly Dividend yield,Litzenberger and Ramaswamy (1979),NA,1979,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Earnings Convervatism,"Francis, Lafond, Olsson and Schipper (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Earnings persistence,"Francis, Lafond, Olsson and Schipper (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Earnigns predictability,"Francis, Lafond, Olsson and Schipper (2004)",NA,2004,other,,unknown,,HXZ
+Earnings smoothness,"Francis, Lafond, Olsson and Schipper (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Earnings timeliness,"Francis, Lafond, Olsson and Schipper (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Value relevance of earnings,"Francis, Lafond, Olsson and Schipper (2004)",NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly Enterprise book-to-price,"Penman, Richardson, and Tuna (2007)",NA,2007,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Quarterly Enterprise multiple,Loughran and Wellman (2011),NA,2011,other,,unknown,,HXZ
+Quarterly Earnings-to-price,Basu (1983),NA,1983,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Effective tax rate,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Failure probaility,"Campbell, Hilscher, and Szilagyi (2008)",NA,2008,other,,unknown,,HXZ
+"Long-term growth forecasts, monthly sorts",La Porta (1996),NA,1996,macro,,partial,Yahoo proxies (FRED blocked),HXZ
+Persion funding rate (scaled by assets),Franzoni and Martin (2006),NA,2006,other,,unknown,,HXZ
+Gross profits-to-lagged assets,Novy-Marx (2013),NA,2013,other,,unknown,,HXZ
+Gross profits-to-lagged assets quarterly,Novy-Marx (2013),NA,2013,other,,unknown,,HXZ
+Inversmtent growth,Xing (2008),NA,2008,other,,unknown,,HXZ
+%change in gross margin - %change in sales,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,HXZ
+%change in sales - %change in accounts receivable,Abarbanell and Bushee (1998),NA,1998,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Idiosyncratic volatility per the CAPM,"Ang, Hodrick, Xing, and Zhang (2006)",NA,2006,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Idiosyncratic volatility per the q-factor,"Ang, Hodrick, Xing, and Zhang (2006)",NA,2006,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Intrinsic value-to-market,Frankel and Lee (1998),NA,1998,other,,unknown,,HXZ
+Quarterly Kaplan-Zingales index,"Lamont, Polk, and Saa-Requejo (2001)",NA,2001,other,,unknown,,HXZ
+Labor force efficiency,Abarbanell and Bushee (1998),NA,1998,other,,unknown,,HXZ
+Quarterly Debt-to-market,Bhandari (1988),NA,1988,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Analysts coverage,"Elgers, Lo, and Pfeiffer (2001)",NA,2001,positioning/flow,,partial,"FINRA short-vol 2018+, CFTC COT",HXZ
+Quarterly net debt-to-price,"Penman, Richardson, and Tuna (2007)",NA,2007,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Quarterly Net Payout Yield,"Boudoukh, Michaely, Richardson, and Roberts (2007)",NA,2007,other,,unknown,,HXZ
+Operating profits-to-lagged equity,Fama and French (2015),NA,2015,other,,unknown,,HXZ
+Operating profits-to-lagged equity quarterly,Fama and French (2015),NA,2015,other,,unknown,,HXZ
+Operating profits-to-lagged assets,"Ball, Gerakos, Linnainmaa, and Nikolaev (2016)",NA,2016,other,,unknown,,HXZ
+Quarterly operating profits-to-lagged assets,"Ball, Gerakos, Linnainmaa, and Nikolaev (2016)",NA,2016,other,,unknown,,HXZ
+Quarterly operating leverage,Novy-Marx (2011),NA,2011,other,,unknown,,HXZ
+Organization capital/assets,Eisfeldt and Papanikolaou (2013),NA,2013,other,,unknown,,HXZ
+Quarterly O-Score,Dichev (1998),NA,1998,other,,unknown,,HXZ
+Quarterly Payout Yield,"Boudoukh, Michaely, Richardson, and Roberts (2007)",NA,2007,other,,unknown,,HXZ
+Quarterly profit margin,Soliman (2008),NA,2008,other,,unknown,,HXZ
+Quarterly F-Score,Piotroski (2000),NA,2000,other,,unknown,,HXZ
+Quarterly R&D-to-market,"Chan, Lakonishok, and Sougiannis (2001)",NA,2001,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly R&D-to-sales,"Chan, Lakonishok, and Sougiannis (2001)",NA,2001,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Six-month residual momentum,"Blitz, Huij, and Martens (2011)",NA,2011,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Return on net operating assets,Soliman (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Quarterly return on net operating assets,Soliman (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Quaterly return on net operating assets,Soliman (2008),NA,2008,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Idiosyncratic skewness per the CAPM,"Bali, Engle, and Murray (2015)",NA,2015,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Idiosyncratic skewness per the q-factor model,"Bali, Engle, and Murray (2015)",NA,2015,risk/vol,,yes,OHLCV 33y + 1m intraday,HXZ
+Secured debt-to-total debt,Valta (2016),NA,2016,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Annual sales growth,"Lakonishok, Scheifer, and Vishny (1994)",NA,1994,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly sales growth,"Lakonishok, Scheifer, and Vishny (1994)",NA,1994,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly Sales-to-price,"Barbee, Mukherji, and Raines (1996)",NA,1996,price,,yes,OHLCV 33y + 1m intraday,HXZ
+Quarterly tangibility of assets,Hahn and Lee (2009),NA,2009,other,,unknown,,HXZ
+Quarterly taxable income-to-book income,Lev and Nissim (2004),NA,2004,fundamental,,no-data,needs paid fundamentals depth,HXZ
+Quarterly Whited-Wu index,Whited and Wu (2006),NA,2006,other,,unknown,,HXZ
+Quarterly Z-score,Dichev (1998),NA,1998,other,,unknown,,HXZ

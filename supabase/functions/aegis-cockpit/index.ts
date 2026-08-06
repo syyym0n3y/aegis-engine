@@ -82,6 +82,14 @@ async function decisionScan() {
     return j?.ok ? j : null;
   } catch { return null; }
 }
+// SHORT-FLOW + LITERATURE LEDGER (D-158) — non-price awareness + what the published record says vs our data.
+async function shortFlowAndClaims() {
+  let flow: any = null, claims: any[] = [], counts: any = {};
+  try { const r = await fetch(`${BASE}/trd-shortflow`); const j = r.ok ? await r.json() : null; if (j?.ok) flow = j; } catch { /* */ }
+  try { claims = await fetch(`${SB}/rest/v1/trd_claims?select=claim,source,authors,year,category,our_verdict,our_evidence&order=id`, { headers: H }).then((r) => r.json()); } catch { /* */ }
+  for (const c of claims) counts[c.our_verdict] = (counts[c.our_verdict] ?? 0) + 1;
+  return { flow, claims, counts };
+}
 async function gather() {
   const ps = await fetch(`${SB}/rest/v1/trd_paper_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
   const st = ps[0] ?? null; const a = st?.account ?? null;
@@ -110,14 +118,15 @@ async function gather() {
   const orderFlowLevels = await orderFlow();
   const sizing = await universeSizing();
   const decision = await decisionScan();
+  const lit = await shortFlowAndClaims();
   const fresh = await freshness();
   const rs = await fetch(`${SB}/rest/v1/trd_risk_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
   const liveRisk = (rs as any[])[0] ?? null;
   const mrs = await fetch(`${SB}/rest/v1/trd_prereg_state?hyp_id=eq.meanrev-vix-v1&select=forward_trades,fwd_n,fwd_expectancy_r`, { headers: H }).then((r) => r.json()).catch(() => []);
   const meanrev = (mrs as any[])[0] ? { scanner: (mrs as any[])[0].forward_trades?.scanner ?? [], n: (mrs as any[])[0].fwd_n ?? 0, exp: Number((mrs as any[])[0].fwd_expectancy_r ?? 0) } : null;
-  return { st, a, equity, start, mult, dd, ticks: st?.ticks ?? 0, updated: st?.updated_at ?? null, openPos: a?.positions?.length ?? 0, closed: a?.closed?.length ?? 0, survived: equity > start * 0.5, perSess, grades, reports: (reps as any[]).length, macro, hyps, corpusN: (corpus as any[]).length, rejected, cyclePrediction, volRegime, fresh, liveRisk, meanrev, gex: orderFlowLevels.gex, valueAreas: orderFlowLevels.va, sizing, decision };
+  return { st, a, equity, start, mult, dd, ticks: st?.ticks ?? 0, updated: st?.updated_at ?? null, openPos: a?.positions?.length ?? 0, closed: a?.closed?.length ?? 0, survived: equity > start * 0.5, perSess, grades, reports: (reps as any[]).length, macro, hyps, corpusN: (corpus as any[]).length, rejected, cyclePrediction, volRegime, fresh, liveRisk, meanrev, gex: orderFlowLevels.gex, valueAreas: orderFlowLevels.va, sizing, decision, lit };
 }
-function j(d: any) { return { protocol_version: 1, project_kind: "aegis", generated_at: new Date().toISOString(), summary: { status: d.survived ? "alive" : "breached", equity: Math.round(d.equity), multiple: +d.mult.toFixed(3), max_drawdown_pct: +(d.dd * 100).toFixed(1), ticks: d.ticks, open_positions: d.openPos, closed_trades: d.closed, platform_reports: d.reports, macro_phase: d.macro?.phase ?? "UNKNOWN", macro_de_risk: d.macro?.deRisk ?? 1 }, data: { per_session_setup: d.perSess, grades: d.grades, factor_book_sharpe: 1.0, macro: d.macro, vol_regime: d.volRegime, tracker_freshness: d.fresh, live_account_risk: d.liveRisk?.snapshot ?? null, meanrev_scanner: d.meanrev, prereg_hypotheses: d.hyps, corpus_assessed: d.corpusN, corpus_rejected: d.rejected, cycle_prediction: d.cyclePrediction, gex_levels: d.gex, value_areas: d.valueAreas, universe_sizing: d.sizing, decision_scan: d.decision }, open_work: ["live real-money bridge (paper-first, gated)", "close risk-inventory gaps", "auth/billing", "branded domain"], recent_events: [], query_errors: (globalThis as any).__szErr ?? [] }; }
+function j(d: any) { return { protocol_version: 1, project_kind: "aegis", generated_at: new Date().toISOString(), summary: { status: d.survived ? "alive" : "breached", equity: Math.round(d.equity), multiple: +d.mult.toFixed(3), max_drawdown_pct: +(d.dd * 100).toFixed(1), ticks: d.ticks, open_positions: d.openPos, closed_trades: d.closed, platform_reports: d.reports, macro_phase: d.macro?.phase ?? "UNKNOWN", macro_de_risk: d.macro?.deRisk ?? 1 }, data: { per_session_setup: d.perSess, grades: d.grades, factor_book_sharpe: 1.0, macro: d.macro, vol_regime: d.volRegime, tracker_freshness: d.fresh, live_account_risk: d.liveRisk?.snapshot ?? null, meanrev_scanner: d.meanrev, prereg_hypotheses: d.hyps, corpus_assessed: d.corpusN, corpus_rejected: d.rejected, cycle_prediction: d.cyclePrediction, gex_levels: d.gex, value_areas: d.valueAreas, universe_sizing: d.sizing, decision_scan: d.decision, short_flow: d.lit?.flow ?? null, literature_ledger: { claims: d.lit?.claims ?? [], counts: d.lit?.counts ?? {} } }, open_work: ["live real-money bridge (paper-first, gated)", "close risk-inventory gaps", "auth/billing", "branded domain"], recent_events: [], query_errors: (globalThis as any).__szErr ?? [] }; }
 function esc(s: string) { return String(s).replace(/</g, "&lt;"); }
 function html(d: any) {
   const upd = d.updated ? new Date(d.updated).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
@@ -179,6 +188,28 @@ ${scan.length ? `<table><thead><tr><th>market</th><th>side</th><th class=num>RSI
 ${gexArr.length ? `<table><thead><tr><th>underlying</th><th class=num>spot</th><th>gamma regime</th><th class=num>put wall</th><th class=num>flip</th><th class=num>call wall</th><th>fwd-vol regime → size</th></tr></thead><tbody>${gexArr.map((g: any) => `<tr><td class=mono>${esc(g.symbol)}</td><td class="mono num">${g.spot}</td><td class=mono style="color:${regCol(g.regime)}">${esc(g.regime)} ${g.totalGexBn >= 0 ? "+" : ""}${g.totalGexBn}B</td><td class="mono num" style="color:var(--accent)">${g.putWall}</td><td class="mono num" style="color:${near(g.spot, g.flip)}">${g.flip ?? "—"}</td><td class="mono num" style="color:var(--red)">${g.callWall}</td><td class=mono style="font-size:11px;color:${g.deRisk != null && g.deRisk < 0.85 ? "var(--amber)" : "var(--mut)"}">${g.volRegime ? `${esc(g.volRegime)} · ~${g.expFwdVol}% → ×${g.deRisk}` : "—"}</td></tr>`).join("")}</tbody></table><div style="font-size:11.5px;color:var(--faint);margin-top:6px">fwd-vol regime = the D-132 signal: 15y-validated (GEX t=−14.1 over trailing-RV) forward-vol de-risk. Low-gamma → ~2× vol → size down. SIZING only, never a direction call.</div>
 ${gexArr[0]?.dixLean ? `<div style="font-size:12px;color:var(--mut);margin-top:8px"><b style="color:var(--tx)">DIX (dark-pool)</b>: ${(gexArr[0].dixPct * 100).toFixed(0)}th pctile — ${esc(gexArr[0].dixLean)}. <span style="color:var(--faint)">Awareness only: D-136 gated it as tradable alpha → FAILED (DSR 29%). A lean, not a signal.</span></div>` : ""}` : ""}
 ${vaArr.length ? `<table style="margin-top:14px"><thead><tr><th>market</th><th class=num>spot</th><th class=num>VAL</th><th class=num>POC</th><th class=num>VAH</th><th class=num>prior POC</th><th>location</th></tr></thead><tbody>${vaArr.map((v: any) => `<tr><td class=mono>${esc(v.name)}</td><td class="mono num">${v.spot}</td><td class="mono num" style="color:var(--accent)">${v.val}</td><td class="mono num" style="color:var(--amber)">${v.poc}</td><td class="mono num" style="color:var(--red)">${v.vah}</td><td class="mono num">${v.priorPoc ?? "—"}</td><td class=mono style="font-size:11px;color:var(--mut)">${esc(String(v.loc ?? ""))}</td></tr>`).join("")}</tbody></table>` : ""}` : "";
+  // SHORT-FLOW AWARENESS + LITERATURE LEDGER (D-158)
+  const sf = d.lit?.flow, cl = d.lit?.claims ?? [], cc = d.lit?.counts ?? {};
+  const vcol = (v: string) => v === "CONFIRMED" ? "var(--accent)" : v.startsWith("FAILED") ? "var(--red)" : "var(--faint)";
+  const shortFlowSection = sf ? `
+<h2>Short-flow awareness — real order flow (FINRA), ${sf.asof}</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">What share of each instrument's volume was executed as SHORT sales, ranked against its own 2018-2026 history (<b style="color:var(--tx)">89,762 symbol-days</b>). Book mean today: <b style="color:var(--tx)">${sf.book_mean_short_pct}%</b>. <span style="color:var(--amber)">AWARENESS ONLY — not a signal.</span> <span style="color:var(--faint)">Tested to destruction (D-157): it inverts the published Boehmer effect, passed the pooled incremental test (IS t=+2.95 / OOS t=+2.91) then FAILED decomposition — ETFs flip sign, single stocks collapse, so the pooled stability was an aggregation artifact.</span></div>
+<div class=two>
+<div class=panel><div class=lbl>Unusually HIGH short flow (≥90th pctile)</div>${sf.unusually_high.length ? sf.unusually_high.map((x: string) => `<div class=row><span class=mono style="font-size:12px">${esc(x)}</span></div>`).join("") : `<div style="color:var(--faint);font-size:12px">none today</div>`}</div>
+<div class=panel><div class=lbl>Unusually LOW short flow (≤10th pctile)</div>${sf.unusually_low.length ? sf.unusually_low.map((x: string) => `<div class=row><span class=mono style="font-size:12px">${esc(x)}</span></div>`).join("") : `<div style="color:var(--faint);font-size:12px">none today</div>`}</div>
+</div>
+<div style="font-size:11.5px;color:var(--faint);margin-top:8px">ETFs structurally run 59-62% short volume vs 37-41% for single stocks (market-maker create/redeem + hedging), so each symbol is compared only to ITSELF.</div>` : "";
+  const litSection = cl.length ? `
+<h2>Literature ledger — what the published record claims vs what OUR data says</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">The meta-studies have already catalogued the field, and the verdict is brutal: <b style="color:var(--tx)">Hou-Xue-Zhang replicated 452 anomalies — 65% fail at |t|&gt;1.96, 82% at 2.78, 85% at t&gt;3</b>; Harvey-Liu-Zhu conclude "most claimed research findings in financial economics are likely false"; McLean-Pontiff measure 26-58% post-publication decay. Our independent corpus agrees: <b style="color:var(--tx)">1 of 14 strategy families</b> beat a random control and profited. The full <b style="color:var(--tx)">859-claim ledger</b> (Harvey-Liu-Zhu + Chen-Zimmermann catalogues, with references and testability) is in <span class=mono style="font-size:11px">data/literature/claims-ledger.csv</span>.</div>
+<div class=grid>
+<div class=card><div class=lbl>Claims catalogued</div><div class=v>859</div><div class=s>+ ${cl.length} adjudicated below</div></div>
+<div class=card><div class=lbl>Confirmed by our data</div><div class=v style="color:var(--accent)">${cc["CONFIRMED"] ?? 0}</div><div class=s>survived every gate</div></div>
+<div class=card><div class=lbl>Failed our gates</div><div class=v style="color:var(--red)">${Object.entries(cc).filter(([k]) => k.startsWith("FAILED")).reduce((s2, [, v]) => s2 + (v as number), 0)}</div><div class=s>random-control / OOS / decomposition</div></div>
+<div class=card><div class=lbl>Testable with free data</div><div class=v>256</div><div class=s>of 859 (189 need paid fundamentals)</div></div>
+</div>
+<table style="margin-top:14px"><thead><tr><th>claim</th><th>source</th><th>category</th><th>our verdict</th></tr></thead><tbody>${cl.map((c: any) => `<tr><td style="font-size:12px">${esc(String(c.claim).slice(0, 110))}</td><td class=mono style="font-size:11px;color:var(--mut)">${esc(String(c.authors ?? c.source).slice(0, 34))}</td><td class=mono style="font-size:11px;color:var(--mut)">${esc(c.category)}</td><td class=mono style="font-size:11px;color:${vcol(c.our_verdict)}">${esc(c.our_verdict)}</td></tr>`).join("")}</tbody></table>
+<div style="font-size:11.5px;color:var(--faint);margin-top:8px">Gold vs fluff is decided by our gates, not by the author's reputation: random-entry control (D-146), both-halves sign stability (D-155), incremental-to-price (D-156), and subgroup decomposition (D-157).</div>` : "";
   // LOCKED-SPEC DECISION (D-152) — the single verified signal, live across the verified book
   const dec = d.decision;
   const decSection = dec ? `
@@ -213,6 +244,8 @@ ${macroSection}
 ${volSection}
 ${orderFlowSection}
 ${sizingSection}
+${shortFlowSection}
+${litSection}
 ${liveRiskSection}
 ${meanrevSection}
 <h2>Pre-registered hypotheses — the honest forward test (un-deflated single trials)</h2>
