@@ -1845,3 +1845,27 @@ scan → 45 instruments, 0 firing today, heat 0/6%; heat guard trims then blocks
 budget, expected frequency (25/yr, "rarity IS the edge"), return/DD 0.136, the evidence line, and the
 explicit "never issues SELL" + "spec is locked" statements. Renders live.
 205+ _shared tests green; deno check clean.
+
+### D-154 — TP/SL grid + correlation/lead-lag: R:R is decisive, shorts fail again, 45 instruments = 2.6 bets (2026-08-06)
+
+Operator pushed on three things I had NOT tested. All three now measured.
+**(1) TP/SL — a REAL gap in my prior work**: every earlier test used a 2ATR stop + TIME exit, never a
+take-profit. `trd-tpsl-grid.ts` grids SL∈{1,1.5,2,3}ATR × TP∈{0.5,1,1.5,2,3}×SL, both directions, 35 daily
+instruments + 4×15m series, pessimistic fills (SL checked before TP), Rule-7 gated. n≈11k/cell.
+**R:R IS DECISIVE — and it is counter-intuitive:**
+| TP | win rate | expectancy |
+|---|---|---|
+| 0.5×SL | **64%** | −0.10R (LOSES) |
+| 1×SL | 51% | −0.04R (loses) |
+| 2×SL | 38% | +0.02R |
+| **3×SL** | **29-33%** | **+0.058R (best)** |
+→ **Cutting winners short destroys the edge**: the 64%-win configs lose money, the 29%-win configs make it.
+8 configurations beat random AND profit — **ALL LONG**. **All 20 SHORT cells fail** (best −0.069R). Shorts have
+now been rejected by the corpus audit (D-147), the ICT battery (D-148) and this TP/SL grid — three independent tests.
+**(2) CORRELATION (`trd-correlation-leadlag.ts`, 45 instruments, 3573 common days)**: avg pairwise 0.370;
+**EFFECTIVE NUMBER OF BETS = 2.6 out of 45** — holding the whole book is ~2.6 independent bets, NOT 45.
+Correlation RISES in selloffs (0.357 vs 0.283 calm) → diversification fails exactly when needed. This is why
+concurrent signals MUST share one risk budget (validates the 6% heat cap, D-153).
+**(3) LEAD-LAG**: 64.5% of 1,980 pairs significant at |t|>2 vs 5% chance → real structure EXISTS, but the
+strongest explains only **r²=1.8% of next-day variance** and is NEGATIVE (mean reversion — the same effect
+dip-buy already harvests). Not tradable as an entry after costs. Correlation governs SIZING, not entries.
