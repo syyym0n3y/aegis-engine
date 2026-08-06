@@ -1885,3 +1885,30 @@ i.e. the frequency the operator wants. `trd-intraday-tpsl-verify.ts`, SL 2ATR / 
   (t=−3.32), OOS −0.438R (t=−1.74), win rate 21-25%. A verified AVOIDANCE rule: do not dip-buy intraday in
   stress. This is the only intraday result that replicates.
 VERDICT: no support for high-frequency intraday trading. The verified daily spec (D-152/153) stands unchanged.
+
+### D-156 — Non-price battery: 3 pass univariate, ALL fail the incremental test (2026-08-06)
+
+Operator: exhaust non-price signals + get the literature. R-008 written first (McLean-Pontiff 26-58%
+post-publication decay; Goyal-Welch 15 macro predictors fail IS *and* OOS for 30y; Boehmer/Jones/Zhang
+short-volume −1.16%/20d). Verified free data: **FINRA daily per-symbol short volume (the key find)**, CFTC COT,
+^SKEW, ^VVIX, ^VIX9D. FRED network-blocked here; CBOE put/call 403 → proxied.
+**Battery (`trd-nonprice-signals.ts`, 7 signals × 3 horizons, decile spreads, both-halves-same-sign gate):**
+- PASSED univariate at 20d: **VIX9D/VIX** (IS +0.92% t=2.85 → OOS +1.16% t=3.28), **VIX/VIX3M** (+0.70% t=2.24
+  → +1.99% t=5.91), **CREDIT HYG/LQD** (−0.97% t=−3.35 → −1.09% t=−3.36). First signals all session to pass it.
+- FAILED as Goyal-Welch predicts: BREADTH (IS-only, flips OOS), CURVE (IS-only), SKEW (fades OOS).
+**BUT the confound: VIX backwardation happens AFTER selloffs → "buy stressed term structure" may just be
+DIP-BUYING re-labelled.** `trd-vixterm-incremental.ts` runs fwd20d ~ trailing20dRet + RSI14 + vixTerm + credit,
+split IS/OOS:
+| predictor | IS t | OOS t |
+|---|---|---|
+| VIX/VIX3M | **−7.25** | **+2.88** (SIGN FLIP) |
+| credit HYG/LQD | −8.37 | +0.80 (collapses) |
+| VIX9D/VIX | +2.73 | +0.13 (collapses) |
+| trailing-20d ret | +5.87 | −3.82 (also flips) |
+| RSI14 | −6.93 | +1.68 |
+**EVERY predictor flips sign or collapses once price is controlled for.** Under the rule set BEFORE seeing
+results (same sign both halves while controlling), none is promotable. The univariate decile effect is real
+but is not INCREMENTAL to the price signals — it is the same drift/mean-reversion in options-market clothing.
+Note the univariate-vs-multivariate divergence is itself the lesson: a decile spread passing both halves is
+NOT sufficient; the incremental (controlled) test is the honest gate.
+STILL RUNNING: FINRA daily short-volume test (the literature's strongest non-price candidate, and a SHORT signal).
