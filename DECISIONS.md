@@ -1939,3 +1939,32 @@ information effect. **NOT PROMOTABLE.**
 METHOD UPGRADE (now standard): a pooled incremental pass is NOT sufficient — decompose by any subgroup with a
 mechanistic reason to differ (here ETF vs single stock) and require BOTH to hold. Pooled stability can be
 manufactured by offsetting subgroup instabilities.
+
+### D-159 — All 212 published predictors tested; independently reproduces BOTH landmark meta-studies (2026-08-06)
+
+Pulled Chen & Zimmermann's Open Source Asset Pricing dataset — **212 predictors × 1,188 months (1926-2024)
+monthly long-short portfolio returns** (drive.usercontent.google.com direct download) + SignalDoc.csv (331
+predictors with each paper's authors, year, ORIGINAL sample-end year and reported t-stat).
+`scripts/trd-osap-212.ts`. **The strongest OOS design available: split each predictor at ITS OWN paper's
+sample-end year, so the post period is data the authors never saw** (McLean-Pontiff design, whole library at once).
+| Test | Result |
+|---|---|
+| IN-SAMPLE (authors' own period) | **83%** significant at \|t\|>1.96, mean LS +0.614%/mo |
+| POST-PUBLICATION \|t\|>1.96 | 77/212 survive → **64% FAIL** |
+| POST-PUBLICATION \|t\|>2.78 (Hou-Xue-Zhang) | 45/212 → **79% FAIL** |
+| POST-PUBLICATION \|t\|>3.00 (Harvey-Liu-Zhu) | 38/212 → **82% FAIL** |
+| Sign stability | 13% **flip sign entirely** post-publication |
+| Median decay | **52% of the published edge is gone** |
+| **STILL ALIVE since 2015 at \|t\|>3** | **7/212 = 3%** |
+**INDEPENDENT REPLICATION OF THE LITERATURE'S OWN META-STUDIES:** our 82% failure at t>3 vs Hou-Xue-Zhang's
+85% (452 anomalies); our 52% median decay sits inside McLean-Pontiff's measured 26-58%. Two landmark results
+reproduced from raw data with our own code.
+**THE 7 STILL ALIVE (2015→, t>3, correct sign):** SmileSlope (Yan, option-implied), EarningsStreak (Loh &
+Warachka), dCPVolSpread (An/Ang/Bali/Cakici, options informed-trading), RIO_Volatility (Nagel, short-sale
+constraints), XFIN (Bradshaw et al.), NetPayoutYield (Boudoukh et al.), OrderBacklogChg (Baik & Ahn).
+**Notably 3 of 7 are OPTIONS- or SHORT-CONSTRAINT-based** — the non-price families D-156/157 were probing.
+**HONEST LIMIT:** all 7 are FIRM-LEVEL CROSS-SECTIONAL predictors needing fundamentals and/or option-implied
+data across thousands of stocks — exactly the 189-claim data gap in R-009. **Identified, not implementable**
+on free data. They are the concrete shortlist if a paid fundamentals/options feed is ever justified.
+Also fixed a display-scaling slip pre-commit (CSV already in %, was ×100 again); t-stats scale-invariant so
+no verdict changed.
