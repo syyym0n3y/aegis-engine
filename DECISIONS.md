@@ -1801,3 +1801,28 @@ EM, commodities, thematics, rates, credit, FX, 40 more single names):
 (D-150) OR by adding instruments indiscriminately (D-151). Both dilute expectancy faster than they add
 frequency. ~25 fires/yr on a quality 45-instrument book at +0.12R is the honest capacity of this edge.**
 Remaining test: quality-filtered expansion (instrument cohort ranked on IS-only, validated OOS) — running.
+
+### D-152 — Instrument cherry-picking also fails; the baseline spec is FINAL (2026-08-06)
+
+Last route tested (`trd-quality-universe.ts`): rank instruments by IN-SAMPLE expectancy, trade the top cohort
+OUT-OF-SAMPLE (D-149-corrected protocol, concurrency-capped).
+| cohort (IS-selected) | OOS exp | vs-random t | verdict |
+|---|---|---|---|
+| top 10 | +0.060R | **1.12** | ✗ |
+| top 20 | +0.035R | 1.43 | ✗ |
+| top 30 | +0.038R | 1.80 | ✗ |
+| top 50 | +0.019R | 1.35 | ✗ |
+| **base 45 (unfiltered)** | **+0.115R** | **2.80** | **✓ ONLY survivor** |
+| all 155 (unfiltered) | +0.022R | 1.63 | ✗ (0.97× — loses) |
+**Selecting instruments by past performance IS overfitting** — every IS-ranked cohort is indistinguishable
+from random OOS. The unfiltered book wins on both expectancy (+0.115R) and significance (t=2.80).
+
+**ALL THREE ROUTES TO HIGHER FREQUENCY ARE NOW CLOSED:**
+1. Loosen parameters (D-150) → fires cluster on the same days (correlated), DD 58-85%, signals undrawable.
+2. Add instruments indiscriminately (D-151) → edge diluted +0.120R → +0.043R, DD 13% → 40%.
+3. Cherry-pick instruments by history (D-152) → fails OOS entirely (t=1.1-1.8).
+**FINAL SPEC (locked): dip-buy RSI14<30 while price>200MA, unfiltered ~45-instrument liquid book,
+~25 fires/yr, +0.12R, return/DD 0.136, deposit never touched. Its rarity is SELECTIVITY, not a defect —
+the capacity of this edge is ~25 trades/yr and attempts to scale it destroy it.**
+Methodological note logged: the signal-clustering proxy said the expanded universe "diversified" (1.41→1.70
+signals/day) while DD tripled — proxies are not verdicts; only the concurrency-capped equity curve decides.
