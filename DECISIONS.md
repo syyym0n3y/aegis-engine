@@ -1991,3 +1991,31 @@ snapshot LIVE: 40 instruments, 0 errors, widest 25d skew SMH 5.6vp / XLK 5.6vp /
 backtested today — the table IS the history being built. Nothing reads it for trading. Also noted: at ATM the
 residual magnitudes (0.001-0.02) may be swamped by delayed-quote noise, which is itself a real
 implementability question the accumulated series will answer.
+
+### D-161 — Survivor-selection is an illusion; anomaly library is a MICROCAP artifact (2026-08-06)
+
+"Leave no stone unturned." Three decisive tests on the 212-predictor library, using data already in hand.
+**(1) DOES SELECTING THE SURVIVORS WORK?** (`trd-osap-survivor-select.ts`) Strict time separation: SELECT on
+post-publication data up to 2015 only, EVALUATE 2015-2024 untouched, compare to random picks of equal size.
+| selection | picked | OOS %/mo | vs random |
+|---|---|---|---|
+| selT>1.96 | 66 | 0.442 | z=1.98 ✗ |
+| selT>2.5 | 44 | 0.486 | z=2.09 (1 of 3 = noise) |
+| selT>3 | 33 | 0.348 | z=0.60 ✗ |
+**NON-MONOTONIC across thresholds** (a higher bar should select BETTER, not worse) = noise. Decisive
+per-predictor test: **follow-through 16% among SELECTED vs 16% among ALL — identical.** Picking the
+anomalies that "still work" adds NOTHING. Same trap as D-149 (frequency) and D-152 (instruments).
+**(2) BUT THE LIBRARY AS A WHOLE IS SIGNIFICANT — and it is NOT correlation-inflated.** Equal-weight ALL 212:
+**+0.292%/mo OOS 2015-2024, t=3.92.** Effective-bets check (mirroring D-154's 45→2.6): average pairwise
+correlation **0.029**, **EFFECTIVE INDEPENDENT ANOMALIES = 29.4 of 188** → GENUINE breadth (long-short
+construction strips market beta, so unlike instruments these really are different bets). The t-stat is real.
+**(3) IMPLEMENTABILITY — THE KILLER (Hou-Xue-Zhang's critique, reproduced independently on their library):**
+| construction | OOS %/mo | t |
+|---|---|---|
+| EQUAL-weight (incl. microcaps) n=178 | 0.316 | **4.28** ✓ |
+| VALUE-weight (liquid/tradable) n=22 | **0.097** | **0.57** ✗ |
+**VW is 31% of EW and NOT significant. The library's entire OOS return is a MICROCAP ARTIFACT** — and the
+0.097%/mo is GROSS, before monthly long-short decile rebalancing and short-borrow costs.
+**CONCLUSION: the published anomaly literature offers no tradable edge in liquid securities.** The honest
+harvesting method (take ALL equally, never pick) works only where you cannot actually trade. This closes the
+literature thread: 859 claims catalogued, 212 tested at scale, 0 implementable in liquid form on our stack.
