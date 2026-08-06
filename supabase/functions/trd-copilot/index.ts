@@ -15,6 +15,7 @@ import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts";
 import { assetFwdVolDeRisk, ASSET_VOL_MODELS } from "../_shared/trd-asset-vol.ts";
 import { sessionExpectedVol } from "../_shared/trd-session-vol.ts";
 import { evaluate as scaleEval, minViableDeposit, EXPECTANCY_R, WIN_RATE, RR, EFFECTIVE_BETS } from "../_shared/trd-scale.ts";
+import { estimateCost } from "../_shared/trd-cost.ts";
 
 const MAX_HEAT = 0.06, MAX_RISK = 0.02, BASE_RISK = 0.005, HOUSE_RISK = 0.02, TP_MULT = 3;
 async function bars(sym: string) {
@@ -82,7 +83,8 @@ Deno.serve(async (req) => {
     // ── CAPITAL LADDER: what changes as the account grows, from minimum viable to institutional ──
     const advShares = (() => { const v = (b as any[]).slice(-60).map((x: any) => x.v ?? 0).filter((x: number) => x > 0); return v.length ? v.reduce((a: number, c: number) => a + c, 0) / v.length : 2e6; })();
     const isCrypto = /USD$|USDT$/.test(symbol) || symbol.includes("-USD");
-    const scaleBase = { price: entry, stopPct, advShares, minLot: isCrypto ? 0.0001 : 1, costPerTradeUsd: isCrypto ? 0 : 1, spreadPct: isCrypto ? 0.05 : 0.03 };
+    const cost = estimateCost(b as any, (P.get("broker") ?? "zero-commission"), isCrypto);   // MEASURED, not asked for
+    const scaleBase = { price: entry, stopPct, advShares, minLot: isCrypto ? 0.0001 : 1, costPerTradeUsd: cost.commissionUsd, spreadPct: cost.spreadPct };
     const minDep = minViableDeposit(scaleBase);
     const LADDER = [500, 2000, 10000, 50000, 250000, 1000000, 10000000];
     const ladder = LADDER.map((e) => { const t = scaleEval({ ...scaleBase, equity: e, deposit: Math.min(e, deposit) }); return { equity: e, lot: t.lot, notional: t.notional, risk: t.riskPerTrade, risk_pct: t.riskPct, concurrent_positions: t.positions, cost_in_R: t.costInR, edge_after_cost_R: t.edgeAfterCostR, viable: t.viable, binding: t.bindingConstraint, expected_annual_pct: t.expectedAnnualPct }; });
@@ -107,6 +109,7 @@ Deno.serve(async (req) => {
         note: `A 45-instrument book is only ~2.6 INDEPENDENT bets (measured) — correlations rise in selloffs, so concurrent positions share one ${MAX_HEAT * 100}% budget rather than each getting their own.`,
       },
       context: { vix: Number.isFinite(vix) ? +vix.toFixed(2) : null, regime, instrument_ann_vol_pct: Number.isFinite(vr.rv) ? +(vr.rv * Math.sqrt(252) * 100).toFixed(1) : null, session_expected_vol: sess },
+      cost: { measured_spread_pct_round_trip: cost.spreadPct, commission_usd_round_trip: cost.commissionUsd, broker_assumed: cost.broker, cost_in_R: here.costInR, how: cost.source },
       capital_scaling: {
         minimum_viable_deposit: minDep,
         your_tier: { viable: here.viable, binding_constraint: here.bindingConstraint, cost_in_R: here.costInR, edge_after_cost_R: here.edgeAfterCostR, concurrent_positions_supported: here.positions, expected_annual_pct: here.expectedAnnualPct },
