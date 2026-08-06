@@ -2176,3 +2176,48 @@ hit% and net R are reported separately so neither is misread.)
 SHIPPED: `_shared/trd-geometry-table.ts` (123 instruments embedded) → `trd-copilot` now returns the
 instrument's geometry, WARNS when it is below break-even for the chosen direction, and names better
 alternatives. Rendered in copilot.html. 227 tests green.
+
+## D-169 — "crack Nasdaq / $100 → 10×": the frequency wall is real and it is fatal to the promise, not the product
+
+The operator's last brief: crack Nasdaq even at 30-second trades; place trades confidently that "won't blow
+the bank but with great odds"; analyse every gap and every bottleneck to trading $100 to tenfold.
+
+Answered with three measured artifacts, no projections:
+
+1. **10× is arithmetic, not skill** (`scripts/trd-tenfold-math.ts`, 10k Monte-Carlo on the measured 29%/+3R
+   distribution). At the safe 0.5% risk this engine ships: P(10×)=100%, P(ruin)=0% — but it needs **~4,700
+   trades**. Full-Kelly is 3.5% risk. Speed-to-10× and survival are the SAME dial turned opposite ways;
+   anyone promising both is lying. The only honest lever that moves both is a **bigger edge or more trades**.
+
+2. **Nasdaq high-frequency gives the trade COUNT but the cost wall eats it** (`scripts/trd-nasdaq-hf.ts`,
+   5.4M Dukascopy 1-min bars, 14.9y, degenerate-ATR guard fixed). 1-min = 864 trades/yr (the frequency you
+   want) but a 1bp round-trip spread is **0.54R per trade** because the stop shrinks with the timeframe →
+   net −0.512R, and it is WORSE than a random control (t=−6.92). Cost falls as the timeframe grows
+   (0.54→0.38→0.22→0.15R at 1/5/15/30m) but **nothing beats random at any timeframe**, and **shorts fail at
+   every one — the 5th independent confirmation**. High frequency is available; a high-frequency *edge* is not.
+
+3. **The deployable system, simulated honestly** (`scripts/trd-deploy-sim.ts`, the verified daily dip-buy
+   fired across all 45 book instruments, date-ordered, 6% heat cap, house-money sizing). The dip-buy — the
+   ONE setup that beats a random control — fires only **774 times in 55 years across the whole book = 14/yr**
+   (RSI14<30 AND price>200MA are strict and correlated: the book dips together). Net edge +0.167R, 61% win.
+   Compounded at safe 0.5%: **1.9× over 55 years, never 10×.** House-money: 2.9×, never 10×. Min equity never
+   fell below the $100 deposit in either — survival is total, growth is glacial.
+
+**THE GAP ANALYSIS (across the board), and why each bottleneck does not close for free:**
+
+| Bottleneck | Measured value | Can it close? |
+|---|---|---|
+| Verified edge exists? | dip-buy only, +0.17R net | YES — but it is the ONLY one in 859 claims + 212 predictors + our corpus |
+| Edge frequency | 14 fires/yr across 45 instruments | NO cheap fix: more instruments dilute + correlate (D-151); more setups don't survive random control |
+| High-frequency substitute | 864/yr at 1-min Nasdaq | NO: no edge beats random, and 0.15–0.54R cost > 0.17R edge |
+| Cost at speed | spread/stop grows as TF shrinks | Only closes with futures/DMA (capital + infra), never on a $100 retail account |
+| Survival | 0% ruin at ≤2% risk | ALREADY CLOSED — this is the one near-certain positive-EV component |
+| 10× itself | needs ~4,700 safe-risk trades | At 14 real edge-trades/yr = **~335 years**. The wall is frequency, full stop. |
+
+**Verdict (D-070 holds):** there is no verified mechanical edge that fires often enough, at a timeframe where
+cost is small enough, to turn $100 into $1,000 in any human timeframe at survivable risk. The honest terminal
+state — "nothing clears the gate fast enough" — is the engine WORKING. What ships is not a 10× promise (that
+requires an edge the entire liquid universe does not contain) but the **co-pilot**: correct sizing + the 6%
+heat cap + house-money + measured cost + geometry ranking, which guarantees the *survival* half for any trader
+who brings their own entries. We sell the seatbelt, honestly, not the rocket. 228 tests green (deploy-sim +
+nasdaq-hf added; both are analysis scripts, not order-path code).
