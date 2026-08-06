@@ -1912,3 +1912,30 @@ but is not INCREMENTAL to the price signals — it is the same drift/mean-revers
 Note the univariate-vs-multivariate divergence is itself the lesson: a decile spread passing both halves is
 NOT sufficient; the incremental (controlled) test is the honest gate.
 STILL RUNNING: FINRA daily short-volume test (the literature's strongest non-price candidate, and a SHORT signal).
+
+### D-157 — FINRA short-volume: INVERTS the literature, passes pooled, FAILS on decomposition (2026-08-06)
+
+Built the order-flow asset: **`fetch-finra-shortvol.ts` → 2,013 trading days × 45 instruments = 89,762
+symbol-days of real daily short-sale volume (2018-08 → 2026-08), free.** Structural fact noted BEFORE testing:
+ETFs run 59-62% SVR (EEM/XLI/KRE) vs single stocks 37-41% (GOOGL/MSFT/PFE) — ETF shorting is market-maker
+create/redeem + hedging, so Boehmer's single-stock mechanism should be STRONGER in single names.
+**RESULT 1 — the literature INVERTS.** Boehmer/Jones/Zhang: high short volume → LOW returns (short signal).
+Our 2018+ (entirely post-publication) data: **LONG at top-decile SVR pays — OOS +0.227R, win 46%, vs-random
++0.100, t=4.17 at 20d** (and +0.043R t=2.12 at 5d), while SHORT at high SVR fails at every horizon.
+Consistent with McLean-Pontiff decay taken past zero into over-correction.
+**RESULT 2 — incremental test (D-156 rule): PASSES POOLED.** fwd20d ~ trailing20dRet + RSI14 + SVRpercentile:
+IS **t=+2.95 (+0.12%/σ)**, OOS **t=+2.91 (+0.11%/σ)** — same sign, both significant, near-identical magnitude.
+The FIRST signal all session to pass this. Notably the PRICE predictors flip violently around it
+(trailing-20d −7.88→+13.64; RSI14 +3.98→−14.45) while SVR stays stable.
+**RESULT 3 — DECOMPOSITION KILLS IT.** Pre-registered ETF/single-stock split:
+| | IS | OOS |
+|---|---|---|
+| ETFs | **t=−2.84** | **t=+3.60** (SIGN FLIP) |
+| Single stocks | **t=+5.90** | **t=+1.13** (collapses) |
+**Neither subgroup passes → the pooled stability is an AGGREGATION ARTIFACT**: the IS effect comes from single
+stocks, the OOS effect from ETFs — two different unstable effects averaging into apparent stability. The
+mechanism prediction (stronger in single names) held IS then vanished OOS — the opposite of a real
+information effect. **NOT PROMOTABLE.**
+METHOD UPGRADE (now standard): a pooled incremental pass is NOT sufficient — decompose by any subgroup with a
+mechanistic reason to differ (here ETF vs single stock) and require BOTH to hold. Pooled stability can be
+manufactured by offsetting subgroup instabilities.
