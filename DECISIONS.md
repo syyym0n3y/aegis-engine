@@ -2071,3 +2071,27 @@ testing at t>3 since 2015 are UNHARVESTABLE: equal-weighted (D-162), microcap-de
 short-leg dependent requiring hundreds of hard-to-borrow small-cap shorts (D-163). Six of seven vanish
 entirely long-only. **859 claims catalogued → 212 tested at scale → 0 implementable for a normal account.**
 This also retro-validates every rejection this session: the corpus was not missing a hidden edge.
+
+### D-164 — OrderBacklogChg rebuilt from EDGAR; I WAS WRONG that it isn't in XBRL (2026-08-06)
+
+**SELF-CORRECTION FIRST: in D-162 I claimed order backlog is "narrative text, NOT in XBRL". That was wrong.**
+ASC 606 (effective 2018) requires `RevenueRemainingPerformanceObligation` (RPO) — contractually committed
+revenue not yet recognised — and it IS tagged: **707-844 companies per year, 2018-2025**. Order backlog is
+obtainable free after all. The claim was asserted from assumption, not checked; checking took one API call.
+**BUILT (free, EDGAR XBRL frames + Yahoo):** `fetch-edgar-backlog.ts` → **3,611 company-years, 776 tickers,
+2019-2025** (RPO ÷ average total assets, YoY change = Baik & Ahn 2007). `trd-backlog-test.ts` → 722 tickers
+priced, **2,830 signal+forward-return observations**, entry lagged 4 months after fiscal year-end (no look-ahead).
+| portfolio | mean | t | verdict |
+|---|---|---|---|
+| LONG-SHORT (top − bottom decile) | **−6.44%/yr** | −0.55 | ✗ WRONG SIGN vs the paper's +1 |
+| **LONG-ONLY (top decile − universe)** | **+8.83%/yr** | **1.46** | INCONCLUSIVE (positive, right sign, 5/6 years positive) |
+| RANDOM control (matched pick) | −3.47%/yr | −0.82 | — |
+**VERDICT: cannot confirm, cannot reject.** Long-only beats the random control by ~12pp with the correct sign
+and 5 of 6 positive years, but t=1.46 < 2. **This is LOW POWER BY CONSTRUCTION — 6 annual rebalances is all
+ASC 606 history allows** (2018 start). The single negative year (2020 COVID, −18%) drives the shortfall.
+The long-short leg failing is consistent with D-163: the short leg is where the trouble lives.
+CAVEATS DECLARED BEFORE RESULTS: RPO ≠ Compustat `ob` (analogue, not identical); ~780 contract-revenue firms
+(software/services), NOT the paper's full CRSP cross-section — though notably this universe is LARGER-cap and
+therefore MORE tradable than the original EW-microcap construction.
+**STATUS: a live, free, extendable panel.** It gains one rebalance per year; the test re-runs as history
+accrues. Nothing is promoted — no signal enters the order path on t=1.46.
