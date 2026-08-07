@@ -9,7 +9,6 @@ provably equal to the source is a rewrite, not a port.
 
 Pure stdlib (math only) so it drops into LEAN's Python runtime with no dependencies.
 """
-from __future__ import annotations
 import math
 from typing import Sequence
 

@@ -2391,3 +2391,31 @@ operator's.
 placeholder 0.25 → treat the random-control t as the operative gate until calibrated); LEAN crypto feed is
 Coinbase not Binance (a discrepancy the forward test exposes) — the real prize is LEAN's survivorship-free
 EQUITIES/FUTURES, which our local Yahoo data cannot provide. 234 TS tests green; 3 Python parity+unit tests green; $0.
+
+## D-176 — the survivorship-free run FALSIFIES the dip-buy: it does NOT beat random once delisted names are included
+
+Ran the daily equity universe sweep (D-175) on QuantConnect's FREE tier over their survivorship-bias-free US
+equity data (983 names seen incl. DELISTED, 2010-2026, 35.3M data points, 123s, $0). Verdict logged live:
+
+  universe names: 983   setup trades: 640   controls: 353
+  dip-buy setup +0.2994R   vs random control +0.1922R   → edge +0.107R, t=1.15, PASSES=False
+  VERDICT: NO EDGE over random — the expectancy is REGIME DRIFT (D-146)
+
+**This is the falsification engine working, and it is the whole reason the LEAN move mattered.** The dip-buy
+(RSI14<30 while >200SMA) passed the random-control gate STRONGLY on curated Yahoo survivors (D-146: +0.122R vs
+random, t=5.63). On the survivorship-free universe — which includes the names that dipped and kept dipping to
+delisting — the edge over a random long collapses to t=1.15 (not significant). The setup still makes +0.30R, but
+so does a random long in the same regime (+0.19R); the gap is noise. Survivorship bias in our curated data was
+inflating the edge — exactly METHODOLOGY_AUDIT.md flaw #1, now demonstrated with a number, not asserted.
+
+Honest caveats: (a) N=640 setups is lower than D-146's (warmup + monthly universe churn + top-100 cap thin the
+fires) so power is reduced — but the point estimate gap ALSO shrank, and t=1.15 is weak on its own; (b) DSR shows
+0.0 because var-of-trial-Sharpes is an uncalibrated placeholder — the random-control t is the operative gate; (c)
+this concerns the daily EQUITY dip-buy only; the BTC/5m/short crypto survivor (D-170, Binance, 24/7) is untouched
+by survivorship bias and still stands in forward paper.
+
+**Net:** the ONE edge that had cleared the gate on curated equities does not survive survivorship-free data. The
+LEAN + gate port (D-174) + free-tier daily sweep (D-175) paid for itself on its first real run by killing a
+false positive for $0. The engine's default verdict — REJECT — holds. Next: widen the universe (top-500) and
+lengthen history to restore power, and re-confirm; but the honest current read is that the equity dip-buy is
+survivorship-inflated drift, not a setup.
