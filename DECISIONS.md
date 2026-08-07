@@ -2257,3 +2257,38 @@ trades/yr still needs ~35y to 10× at safe 0.5% sizing (the frequency wall from 
 the honest verdict shifts: the market is NOT uniformly efficient at this resolution. There is one drop of fuel,
 reachable only with cheap execution. Next gate: forward paper on a ≤5bp venue, sized by the co-pilot, kill-switch
 armed. 228 tests green; three analysis scripts added (full-sweep, crypto-gate, btc-fees).
+
+## D-171 — forward PAPER tracker LIVE for the BTC/5m/short survivor (+ near-miss controls, general registry)
+
+Operator: "set up forward paper for BTC/5m/short. make sure all other instruments and timeframes are considered."
+
+Built and shipped an isolated, general forward-paper harness on the live glzz project. Why isolated, not the
+existing `trd-prereg-tick`: that tick runs the sweep/fvg **grammar** (`runComponentTrades`); my D-170 survivor
+is an RSI mean-reversion setup not expressible in that grammar — registering it there would run the wrong logic.
+
+**What shipped (all $0, paper-only, NO order path exists — Stage-1 invariant intact):**
+- Migration `0013_trd_forward_paper.sql` (applied to glzz): `trd_forward` (general registry — ANY symbol/TF/
+  direction is a one-row insert), `trd_forward_trade` (append-only evidence ledger, UPDATE/DELETE blocked by
+  trigger, idempotent on unique(candidate,entry_ts)), `trd_forward_state` (mutable rollup). Verified live: the
+  append-only trigger rejects DELETE (P0001); a backdated probe recorded 11 forward trades then a 2nd tick kept
+  N=11 (idempotency holds — ledger is source of truth); probe cleaned, ledger back to 0.
+- `_shared/trd-forward-setup.ts` + 7 unit tests: the EXACT setup code, factored out. Verified byte-faithful to
+  the sweep — reproduces D-170 on Binance (n=1182, gross +0.471R, +0.143R @5bp). No look-ahead (entry = bar i+1
+  open), degenerate-ATR guard, fee charged as a fraction of the stop.
+- Edge fn `trd-forward-tick` (deployed, verify_jwt=false to match the cron-tick pattern): kill-switch-gated
+  (fail-closed on `trd_killswitch.active`), pulls fresh Yahoo bars (edge-reachable; Binance geo-blocks the
+  datacenter — same constraint as FRED), records ONLY trades entered strictly after `registered_at`, recomputes
+  the rollup from the ledger. Keyless.
+- Cron `trd-forward-forward` @ `43 */6 * * *` (jobid 24) — autonomous, offset from the other 11 trd crons.
+- Operator surface `scripts/trd-forward-status.sh` — one command, no auth, prints the live verdict per candidate.
+
+**"All other instruments and timeframes considered":** the registry is general and seeded with THREE candidates —
+the survivor `btc-5m-short-v1` (D-170: t=8.07, OOS +0.29R) PLUS its two near-misses as live falsification
+controls: `eth-5m-short-v1` (full t=3.86 but one half was noise) and `btc-5m-long-v1` (t=2.82, failed deflation).
+If the controls also go forward-positive, our deflation threshold was too strict; if only BTC/5m/short holds, the
+selection was honest. The full 92-cell sweep (D-170) already covered every market/TF/session/direction we hold at
+1-min; nothing else cleared the gate, so nothing else is worth a forward slot yet. Adding one later = one INSERT.
+
+**Promotion gate (locked):** ≥30 post-registration forward trades AND a positive mean consistent with the
+in-sample edge, on ≤5bp/side execution. Only then does it advance toward micro — still behind every LADDER rung.
+Forward clock started 2026-08-07. 234 tests green.
