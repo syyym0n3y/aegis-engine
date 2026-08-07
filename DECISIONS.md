@@ -2443,3 +2443,37 @@ forward paper — crypto has no survivorship bias to correct. (3) The engine's d
 well-powered survivorship-free sample; the whole LEAN port (D-174/175) paid for itself by converting a false
 positive into a confirmed rejection for $0. Next honest lever if desired: extend history to 1998 and/or test the
 short side / other setups on the same free survivorship-free substrate — but the equity dip-buy is settled.
+
+## D-178 — multi-setup sweep finds an EQUITY survivor that mirrors the crypto one: rip-short (RSI>70 below 200MA)
+
+Kept pushing (operator) with a 6-setup panel in one free-tier run over survivorship-free US equities (1,876 names
+incl. delisted, 2010-2026, 36.2M data points, 298s, $0), each setup vs its matched random control, Bonferroni
+t>=2.64 for the number tested. Verdict:
+
+  dipbuy   n=1998  +0.2421 vs random +0.1822  edge +0.060  t=1.50  reject   (confirms D-177 again)
+  ripshort n=1283  +0.1265 vs random -0.1864  edge +0.313  t=7.07  SURVIVES (deflated)
+  bbmr_l   n=13913 +0.2120 vs random +0.1822  edge +0.030  t=1.03  reject
+  bbmr_s   n=6554  -0.1085 vs random -0.1864  edge +0.078  t=2.73  reject (setup loses money outright)
+  brk_l/brk_s  n=0  VOID — Donchian UpperBand/LowerBand include the current bar so the breakout never fires; fix
+                    to prior-period channel before re-testing (this run effectively tested 4 setups, not 6).
+
+**The survivor: rip-short** — short when RSI14>70 while close<200SMA (fade an overbought rip inside a downtrend),
+2xATR stop, 3R target. On survivorship-free equities it earns +0.1265R NET of 2bp while a random short in the
+same regime loses -0.1864R (shorting fights equity drift, as expected) → edge +0.313R, t=7.07, past the deflated
+bar with huge margin. n=1283 is a solid sample.
+
+**Why this matters: it is the EQUITY analog of the BTC/5m/short crypto survivor (D-170).** The identical mechanic
+— mean-reversion short of overbought-in-downtrend — now survives the random-control gate on TWO independent
+markets (Binance crypto 5m AND survivorship-free US equities daily). Convergent evidence across uncorrelated
+venues is far stronger than one instrument. It also reconciles D-173 (unconditional equity shorts lose): the
+UNCONDITIONAL short loses to drift, but the CONDITIONAL overbought-in-downtrend short does not.
+
+**Honest caveats before belief (do NOT promote yet):** (1) short BORROW COSTS are unmodeled — only 2bp round-
+trip; overbought names in downtrends are often hard-to-borrow, and borrow fees could erode +0.13R materially —
+this is the make-or-break test. (2) both-halves sign stability (D-155) + walk-forward OOS not yet run on the
+equity version. (3) survivorship-free INCLUDES the delisted downtrenders, so bias is not inflating this one (if
+anything it is honest/helpful to a short). (4) DSR not calibrated; random-control t is the operative gate.
+
+**Next:** model realistic borrow/short costs and re-charge; run both-halves + OOS on rip-short; fix the Donchian
+breakout and re-sweep. If rip-short survives borrow costs + OOS, register it in trd_forward alongside the crypto
+survivor. First equity setup to clear the gate on honest data; $0.
