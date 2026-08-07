@@ -2500,3 +2500,29 @@ EDGE vs random stays large (+0.316R) because the random short pays borrow too, b
 hard-to-borrow names (20-50%/yr) could push a given trade's net negative. So rip-short is a real edge over random
 but a THIN absolute earner on equities once borrow is honest — position sizing + borrow-rate screening matter.
 The Donchian fix retired the breakout family as noise (both brk reject; brk_l even negative). $0.
+
+## D-180 — HOUR: survivor FLIPS timeframe — rip-short fails hourly, dip-buy weakly survives; no universal edge
+
+HOUR run of the enhanced panel (200 names, 39.5M pts, 1262s=21min on the free node, 8% borrow). Verdict:
+
+  dipbuy   n=21170  +0.1196 vs +0.0671  edge +0.0525  t=3.73 | H1 2.96 H2 2.24 | SURVIVES (weak)
+  ripshort n=18963  -0.0604 vs -0.0789  edge +0.0185  t=1.33 | H1 -0.50 H2 2.29 | reject
+  bbmr_l   n=78097  +0.0902 vs +0.0671  edge +0.023   t=1.98 | reject
+  bbmr_s   n=55966  -0.0970 vs -0.0789  edge -0.018   t=-1.57 | reject
+  brk_l    n=219655 +0.0312 vs +0.0671  edge -0.036   t=-3.28 | reject (breakouts negative again)
+  brk_s    n=159253 -0.0668 vs -0.0789  edge +0.012   t=1.13 | reject
+  SURVIVORS: dipbuy
+
+**The critical finding: the survivor is NOT timeframe-stable.** rip-short — which cleared the full gauntlet at
+DAILY (t=7.23) and on crypto 5m (D-170) — FAILS at hourly equities (t=1.33, H1 t=-0.50, fails both-halves). And
+dip-buy, which was DEAD at daily (D-179, t=1.50), weakly "survives" hourly (t=3.73 but marginal H1/H2 2.96/2.24).
+With multi-timeframe testing now spanning ~18 setup×TF cells, the Bonferroni bar should be ~t>=2.9; the hourly
+dip-buy at H2 t=2.24 is a WEAK, suspect pass, not a robust edge.
+
+**Honest interpretation:** daily rip-short and hourly rip-short are different phenomena (multi-day vs intraday
+mean-reversion); it is not a contradiction that one works and the other doesn't, but it DOES mean rip-short is a
+DAILY(+crypto-5m)-specific edge, not a universal one. The timeframe-flip of "the survivor" across daily/hour is
+itself evidence we are near the noise floor: which setup "wins" depends on the timeframe, which is what you expect
+when edges are marginal. The robust, high-t, borrow-and-both-halves-surviving result remains DAILY rip-short
+(t=7.23) + its crypto twin; the hourly dip-buy is a weak lead at best. No setup survives at BOTH daily and hourly.
+Next: MINUTE (reduced universe — full-universe minute over 16y exceeds the free node; will be scope-labelled). $0.
