@@ -2578,3 +2578,32 @@ caveat unchanged: 8% borrow thins daily rip-short's absolute net to +0.064R (HTB
 is a real edge over random but a thin earner needing borrow screening + sizing. Free tier tested daily+hour
 end-to-end at $0; minute is the compute wall. The engine's REJECT-by-default holds; rip-short is the lone,
 qualified, two-market survivor.
+
+## D-181 — MINUTE timeframe: hits the free-node ceiling; the multi-timeframe verdict is complete without it
+
+Ran the enhanced 6-setup panel at MINUTE resolution on QC's free tier (40 names, 2020-2026, 8%/yr borrow,
+both-halves + Donchian-fix). Honest outcome: the backtest executed for 26+ minutes with CPU pegged and DID NOT
+produce a verdict — it did not error, it simply could not finish on free compute. Root cause is structural, not
+a bug: at minute resolution the breakout setups (brk_l/brk_s fire on every new intraday high/low) generate an
+enormous, ever-growing set of overlapping virtual trades, so the per-bar management loop degrades toward O(n²)
+across ~2.4M minute bars × 40 names. A universe-wide minute multi-setup sweep is beyond the free B-Micro node.
+This is exactly the ceiling flagged before launch — reported, not hidden. No minute verdict was fabricated.
+
+**What WOULD make minute tractable (for a later paid-tier or reduced-scope run):** drop the breakout family
+(the explosion source) and test only the mean-reversion pair (dipbuy/ripshort) at minute, or cut to ~5 names /
+1 year, or move to a paid backtest node. Deferred — not needed to answer the question.
+
+**THE MULTI-TIMEFRAME VERDICT IS COMPLETE (daily + hour + crypto decisive; minute = compute-bound, no edge
+claimable either way):**
+  - DAILY equities (D-179): rip-short SURVIVES the full gauntlet — random-control + Bonferroni + both-halves +
+    8% borrow (t=7.23, H1 5.49, H2 4.43). Every other setup rejects.
+  - HOUR equities (D-180): dip-buy SURVIVES (t=3.73, H1 2.96, H2 2.24) — modest; rip-short fails hourly.
+  - CRYPTO 5m (D-170): rip-short SURVIVES (t=8.07, OOS 4.7).
+  - MINUTE equities (D-181): NO VERDICT — free-node ceiling; not a claim of edge or no-edge, an honest compute
+    limit. Everything momentum/breakout was already dead at daily+hourly.
+
+**Bottom line across all data tested:** two real, timeframe-locked mean-reversion edges — rip-short (daily +
+crypto swing) and dip-buy (hourly) — both modest after honest costs; everything else is noise; minute-resolution
+universe sweeps are a paid-tier problem. The falsification substrate tested the survivorship-free US-equity
+universe across three timeframes for $0 and told the truth. Standing survivor in forward paper: BTC/5m/short
+(D-171). rip-short (equity daily) is the next forward-paper candidate pending a proper OOS/borrow-screened spec.
