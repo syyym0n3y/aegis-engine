@@ -2324,3 +2324,40 @@ winners run" is right up to ~5R via a WIDER FIXED target — not a trailing stop
 **Action:** registered `btc-5m-short-5R-v1` (tpMult=5) into forward paper alongside the 3R baseline so the live
 data — not an in-sample choice from {3,5,10} — decides 3R vs 5R out of sample. 4 candidates now tracked. $0, no
 order path. 234 tests green.
+
+## D-173 — "raise the cap across markets" + methodology self-audit + the substrate that ends the bottleneck
+
+Operator: carry D-172's cap-raising across all markets/instruments; chart everything; analyse our methodology
+flaws; recommend sandboxes suited to this scale; embed the Musk/Thiel/Karp thesis so I can identify when I'M the
+bottleneck. Uncomfortable truth stated up front: I cannot chart every stock in every market on this laptop
+(~50k+ instruments, survivorship-free tick data); I have 123 daily + 4 intraday. Pretending otherwise is the
+false-confidence the project exists to kill. So: (1) ran the cap-raising across everything we DO hold; (2) audited
+our flaws honestly; (3) recommended the ceiling-removing infrastructure.
+
+**Cap-raising result (`scripts/trd-cap-universe.ts`, 123 instruments, ~1,669 samples each, LONG+SHORT, caps 2-10R):**
+- LONG optimal cap 6-10R positive across EVERY class — but CONFOUNDED by secular drift + Yahoo survivorship. Not a
+  harvestable edge; it is beta + missing-dead-names. Labelled as such (Karp: name the confound).
+- SHORT (clean tail, no drift tailwind) splits by market physics: equities/sector-ETFs LOSE at every cap
+  (-0.13..-0.18R, the 6th short confirmation); commodities +0.069R@10R, bonds +0.159R@8R, FX +0.086R@10R — the
+  non-drifting, FATTER-tailed classes (MFE p99 ~12R vs ~7R equities) reward HIGH caps symmetrically.
+- Verdict: "raise the cap respectively across markets" is CONFIRMED and directional — fat-tailed non-drifting
+  markets (crypto/commodities/FX) reward wide targets; equities reward only long (untradeable drift). Generalizes
+  the BTC 5R finding (D-172): the survivor is crypto for the same reason commodities/FX show it.
+
+**Methodology audit → `METHODOLOGY_AUDIT.md`** (committed). Ranked flaws: survivorship (HIGH), universe breadth
+(HIGH), in-sample selection (HIGH), inconsistent deflation (MED-HIGH), ad-hoc look-ahead (MED), estimated-not-
+measured cost (MED), fragile/geo-blocked pipes (MED), CSV/single-laptop compute (MED — the literal reason "chart
+everything" can't run here), shallow regime-conditioning (LOW-MED). Plus a self-diagnosis rule: I am the bottleneck
+the moment I (a) say "can't" without a search + next step, (b) hand-roll what should be substrate, (c) report a
+number without its confound.
+
+**Thesis embedded (Musk/Thiel/Karp):** Musk = delete the process step (the expensive "part" is me re-authoring
+one-off scripts; delete via one reusable engine). Thiel = the surviving edge is the unglamorous small-capacity
+disbelieved kind (crypto short tail), not "test everything and hope"; a $100 edge is no monopoly. Karp = the moat
+is the GATE as enforced ontology; results not narrative; name every confound.
+
+**Recommended substrate (the real fix, not more grinding):** QuantConnect/LEAN (survivorship-free universe +
+event-driven engine + paper/live, free tier) as the primary sandbox — port our honest-stats GATE on top; Norgate/
+Polygon/Databento for data; DuckDB+Parquet → ArcticDB to kill CSV. Concrete next move: run the D-170 full-sweep
+protocol across the survivorship-free universe on LEAN, apply the D-173 per-market cap, feed survivors into the
+live `trd_forward` tracker. That is "chart every market" done for real, runs without me. 234 tests green; $0.
