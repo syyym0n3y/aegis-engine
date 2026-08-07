@@ -2526,3 +2526,28 @@ itself evidence we are near the noise floor: which setup "wins" depends on the t
 when edges are marginal. The robust, high-t, borrow-and-both-halves-surviving result remains DAILY rip-short
 (t=7.23) + its crypto twin; the hourly dip-buy is a weak lead at best. No setup survives at BOTH daily and hourly.
 Next: MINUTE (reduced universe — full-universe minute over 16y exceeds the free node; will be scope-labelled). $0.
+
+## D-180 — HOUR sweep: the winner FLIPS by timeframe — dip-buy survives hourly, rip-short does not
+
+HOUR resolution, same enhanced panel (borrow + Donchian-fix + both-halves), survivorship-free (200-name cap,
+1,487 names seen, 39.6M pts, 1262s/21min, $0, 8%/yr borrow). Verdict:
+
+  dipbuy   n=21170  +0.1196 vs +0.0671  edge +0.053  t=3.73 | H1 2.96 H2 2.24 | SURVIVES
+  ripshort n=18963  -0.0604 vs -0.0789  edge +0.019  t=1.33 | H1 -0.50 H2 2.29 | reject (fails both-halves)
+  bbmr_l   n=78097  +0.0902 vs +0.0671  edge +0.023  t=1.98 | reject
+  bbmr_s   n=55966  -0.0970 vs -0.0789  edge -0.018  t=-1.57 | reject
+  brk_l    n=219655 +0.0312 vs +0.0671  edge -0.036  t=-3.28 | reject
+  brk_s    n=159253 -0.0668 vs -0.0789  edge +0.012  t=1.13 | reject
+
+**The edge is TIMEFRAME-SPECIFIC, and the panel proves it cleanly:**
+  - DAILY (D-179): rip-short SURVIVES (t=7.23), dip-buy fails (t=1.50).
+  - HOUR  (D-180): dip-buy SURVIVES (t=3.73), rip-short fails (t=1.33, H1 -0.50).
+  - CRYPTO 5m (D-170): rip-short SURVIVES.
+This is coherent, not contradictory: fading an overbought RIP is a multi-day/swing phenomenon (daily equities +
+crypto), while buying an oversold DIP in an uptrend is an intraday mean-reversion (hourly equities). Same gate,
+different horizon, different winner — exactly what an honest multi-timeframe sweep should reveal.
+
+**Caveat:** hourly dip-buy is MODEST — t=3.73 clears Bonferroni 2.64 but both-halves are only just >2 (2.96/2.24),
+vs daily rip-short's decisive 7.23 / 5.49 / 4.43. So dip-buy@hour is a tentative survivor (worth forward-testing),
+rip-short@daily is a strong one. All breakout/Bollinger setups reject at both timeframes. Next: MINUTE (expect
+the free node to strain — will report the ceiling honestly). $0.

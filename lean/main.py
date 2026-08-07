@@ -18,11 +18,11 @@ from collections import deque
 from aegis_gate import edge_vs_random
 
 # ---- TIMEFRAME SWITCH: set RES + matching constants, then run ----
-RES = Resolution.Daily            # Daily | Hour | Minute
-BAR_DAYS = 1.0                    # calendar-days per bar for borrow accrual: Daily=1, Hour~1/6.5, Minute~1/390
+RES = Resolution.Minute          # Daily | Hour | Minute
+BAR_DAYS = 1.0/390               # calendar-days per bar for borrow accrual: Daily=1, Hour~1/6.5, Minute~1/390
 # For Hour set BAR_DAYS=1/6.5; for Minute set BAR_DAYS=1/390 (and expect the free node to strain).
 
-UNIVERSE_SIZE = 300
+UNIVERSE_SIZE = 40               # minute: scope-limited (full universe over 16y exceeds the free node)
 MA_LEN, ATR_LEN, RSI_LEN, BB_LEN, DCH_LEN = 200, 14, 14, 20, 20
 STOP_ATR, TP_MULT, MAX_HOLD = 2.0, 3.0, 20
 FEE_BPS_SIDE = 2.0
@@ -37,7 +37,7 @@ MID = None                        # set in Initialize (midpoint of the backtest 
 class AegisMultiTF(QCAlgorithm):
 
     def Initialize(self):
-        self.SetStartDate(2010, 1, 1)
+        self.SetStartDate(2020, 1, 1)   # minute: shortened window for free-node feasibility
         self.SetEndDate(2026, 7, 31)
         self.SetCash(100000)
         self.UniverseSettings.Resolution = RES
