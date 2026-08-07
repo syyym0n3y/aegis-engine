@@ -77,3 +77,12 @@ insert into trd_forward (candidate, symbol, timeframe, direction, setup, fee_bps
 on conflict (candidate) do nothing;
 
 insert into trd_forward_state (candidate) select candidate from trd_forward on conflict (candidate) do nothing;
+
+-- D-172: 5R-target variant of the survivor, registered to forward-test 3R vs 5R head-to-head (exit study
+-- found 5R lifts in-sample net edge +0.145R->+0.212R; the live forward test decides which target holds).
+insert into trd_forward (candidate, symbol, timeframe, direction, setup, fee_bps_side, in_sample_evidence) values
+  ('btc-5m-short-5R-v1','BTC-USD','5m','short',
+   '{"rsiLen":14,"rsiThresh":70,"maLen":200,"atrLen":14,"stopAtr":2,"tpMult":5,"maxBars":144,"dir":-1}'::jsonb,
+   5, '{"n":1182,"netR5bp":0.212,"vsRandT":6.33,"totalR":250,"note":"D-172 exit study"}'::jsonb)
+on conflict (candidate) do nothing;
+insert into trd_forward_state (candidate) values ('btc-5m-short-5R-v1') on conflict do nothing;

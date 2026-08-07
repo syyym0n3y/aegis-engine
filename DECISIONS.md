@@ -2292,3 +2292,35 @@ selection was honest. The full 92-cell sweep (D-170) already covered every marke
 **Promotion gate (locked):** ≥30 post-registration forward trades AND a positive mean consistent with the
 in-sample edge, on ≤5bp/side execution. Only then does it advance toward micro — still behind every LADDER rung.
 Forward clock started 2026-08-07. 234 tests green.
+
+## D-172 — chart analysis (support/resistance + session cutoffs + the "one big candle"): S/R fails the gate, but a wider fixed target improves the survivor
+
+Operator: analyse charts — support/resistance across every candle, account for day-start/end + weekend cutoffs,
+and the fact that "you can make a shit ton on one candle" — then compare chart analysis to the data.
+
+Built `scripts/trd-sr-charts.ts`: CAUSAL S/R (swing-pivot fractals confirmed only after W bars; a level at bar i
+uses ONLY pivots confirmed before i — no look-ahead, the flaw that makes chart backtests lie), session cutting at
+real gaps (day break + weekend), forced-flat at each session's last bar, and tested rejection/bounce/breakout vs
+the D-146 random control on NASDAQ 15m, S&P500 15m, BTC 5m, BTC 15m.
+
+**Session cutoffs (built as asked):** NASDAQ cut into 1,771 sessions, S&P 1,680; forced flat at each day/week end;
+opening-gap distribution measured (NASDAQ mean |gap| 0.38%, max 11.8%). BTC = ~1 continuous session over 8.9y
+(24/7) — CONFIRMS the survivor BTC/5m/short has no day-start/end boundary problem at all.
+
+**S/R vs the data — chart reading gets NO exemption from the gate:** 15 of 16 S/R cells are noise or WORSE than
+random. Positive means (e.g. NASDAQ bounce-long +0.065R) are market drift, not S/R timing — the random control
+with the same stop/target does as well or better (t=-3.38). The lone nominal pass (S&P bounce-long t=2.12) is
+refuted by its own twin: the IDENTICAL setup on NASDAQ is t=-3.38. A mechanic +2.1 on S&P and -3.4 on near-
+identical NASDAQ is a multiple-testing artifact. Entering "at a level" adds nothing over a random bar.
+
+**The "one big candle", measured (`scripts/trd-btc-exit.ts`):** the fat tail is REAL (MFE max 263R on NASDAQ;
+random entries reached even further) but UNTIMED by S/R — top 1% of S/R entries hold only ~4-5% of favourable
+movement and the random MFE distribution (p50 0.9R, p95 3.7R) is identical to the S/R setups. The tail is not a
+chart-pattern property. BUT it exposed a real improvement to the ONE entry that beats random: on BTC/5m/short,
+varying only the EXIT (net 5bp, vs random) — fixed 3R +0.145R/t7.75; **fixed 5R +0.212R/t6.33 (+46% edge, total
+R 171->250)**; fixed 10R +0.088R (too greedy); trailing stops NEGATIVE (crypto noise whipsaws them out). So "let
+winners run" is right up to ~5R via a WIDER FIXED target — not a trailing stop, not S/R.
+
+**Action:** registered `btc-5m-short-5R-v1` (tpMult=5) into forward paper alongside the 3R baseline so the live
+data — not an in-sample choice from {3,5,10} — decides 3R vs 5R out of sample. 4 candidates now tracked. $0, no
+order path. 234 tests green.
