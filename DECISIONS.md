@@ -2477,3 +2477,26 @@ anything it is honest/helpful to a short). (4) DSR not calibrated; random-contro
 **Next:** model realistic borrow/short costs and re-charge; run both-halves + OOS on rip-short; fix the Donchian
 breakout and re-sweep. If rip-short survives borrow costs + OOS, register it in trd_forward alongside the crypto
 survivor. First equity setup to clear the gate on honest data; $0.
+
+## D-179 — DAILY (rigor gauntlet): rip-short survives deflation + both-halves + borrow; all others rejected
+
+Enhanced multi-setup panel (borrow cost + Donchian fix + both-halves) at DAILY on survivorship-free US equities
+(1,876 names, 36.2M pts, 285s, $0, 8%/yr short borrow). Verdict:
+
+  dipbuy   n=1998  +0.2421 vs +0.1822  edge +0.060  t=1.50 | H1 1.62 H2 0.57 | reject
+  ripshort n=1283  +0.0640 vs -0.2524  edge +0.316  t=7.23 | H1 5.49 H2 4.43 | SURVIVES
+  bbmr_l   n=13913 +0.2120 vs +0.1822  edge +0.030  t=1.03 | reject
+  bbmr_s   n=6554  -0.1664 vs -0.2524  edge +0.086  t=3.05 | H2 -0.00 | reject (fails both-halves + loses money)
+  brk_l    n=45267 +0.1385 vs +0.1822  edge -0.044  t=-1.61 | reject  (Donchian FIXED, now fires — breakouts are noise)
+  brk_s    n=21449 -0.2196 vs -0.2524  edge +0.033  t=1.31 | reject
+
+**rip-short is the sole survivor and it now clears EVERY in-sample gate:** random-control (t=7.23 vs Bonferroni
+2.64), both-halves sign stability (H1 5.49, H2 4.43 — both >2, same-sign positive, D-155), AND a realistic 8%/yr
+short borrow charged to both setup and the matched random control. This is the equity twin of BTC/5m/short (D-170)
+— same mechanic, two independent markets, both surviving the full gauntlet.
+
+**Honest sensitivity — the one soft spot:** 8% borrow cut net R from +0.1265 (D-178, no borrow) to +0.0640. The
+EDGE vs random stays large (+0.316R) because the random short pays borrow too, but the ABSOLUTE net is thin;
+hard-to-borrow names (20-50%/yr) could push a given trade's net negative. So rip-short is a real edge over random
+but a THIN absolute earner on equities once borrow is honest — position sizing + borrow-rate screening matter.
+The Donchian fix retired the breakout family as noise (both brk reject; brk_l even negative). $0.
