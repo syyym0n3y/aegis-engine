@@ -2361,3 +2361,33 @@ event-driven engine + paper/live, free tier) as the primary sandbox — port our
 Polygon/Databento for data; DuckDB+Parquet → ArcticDB to kill CSV. Concrete next move: run the D-170 full-sweep
 protocol across the survivorship-free universe on LEAN, apply the D-173 per-market cap, feed survivors into the
 live `trd_forward` tracker. That is "chart every market" done for real, runs without me. 234 tests green; $0.
+
+## D-174 — LEAN + gate port: the falsification GATE ported to Python, parity-proven, ready for the survivorship-free universe
+
+Operator: "build the LEAN + gate port now." Done — the substrate move from D-173, not another one-off script.
+
+**The gate is the IP; LEAN is the sandbox.** Ported `_shared/trd-stats.ts` + `trd-random-control.ts` to
+`lean/aegis_gate.py` (pure stdlib, drops into LEAN's Python runtime): erf/normalCdf/invNorm, moments, Sharpe/
+Sortino/maxDD/Calmar, PSR/DSR/MinTRL, PBO-via-CSCV, and the D-146 edge_vs_random.
+
+**A port that is not provably equal to the source is a rewrite, not a port** — so parity is enforced:
+`lean/ts_gate_dump.ts` emits the TS gate on fixed fixtures; `lean/test_aegis_gate.py` runs the Python gate on the
+SAME fixtures and asserts equality. Result: ALL 28 parity checks match to float noise (~1e-15) — erf, invNorm,
+PSR, DSR, MinTRL, PBO, edge t-stat, everything. The Python gate IS the TS gate.
+
+**End-to-end proof (`lean/run_gate_on_csv.py`):** ran the D-170 survivor (BTC/5m/short) through the PYTHON gate on
+our Binance CSV → 1,182 trades, +0.145R @5bp, edge vs random +0.463R, **t=7.01, PASSES** — reproduces D-170
+(+0.143R) independently of the TS pipeline.
+
+**The LEAN algorithm (`lean/main.py`):** runs the strategy on LEAN data, books VIRTUAL setup trades + matched
+RANDOM-timed controls (1% of eligible bars — corrected from an initial bug that co-located controls with setups),
+and calls the gate in OnEndOfAlgorithm. NO live orders — pure measurement, consistent with the no-order-path
+invariant. Swapping the single AddCrypto for a universe selection turns it into a survivorship-free sweep of every
+instrument; the gate call is unchanged. `lean/README.md` has the exact operator runbook (pip install lean; lean
+login; push; cloud backtest) — I cannot create the QuantConnect account (prohibited), so that one step is the
+operator's.
+
+**Honest caveats recorded:** DSR needs the real trial-Sharpe variance to be meaningful (main.py passes a
+placeholder 0.25 → treat the random-control t as the operative gate until calibrated); LEAN crypto feed is
+Coinbase not Binance (a discrepancy the forward test exposes) — the real prize is LEAN's survivorship-free
+EQUITIES/FUTURES, which our local Yahoo data cannot provide. 234 TS tests green; 3 Python parity+unit tests green; $0.
