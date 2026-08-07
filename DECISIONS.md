@@ -2551,3 +2551,30 @@ different horizon, different winner — exactly what an honest multi-timeframe s
 vs daily rip-short's decisive 7.23 / 5.49 / 4.43. So dip-buy@hour is a tentative survivor (worth forward-testing),
 rip-short@daily is a strong one. All breakout/Bollinger setups reject at both timeframes. Next: MINUTE (expect
 the free node to strain — will report the ceiling honestly). $0.
+
+## D-181 — MULTI-TIMEFRAME synthesis: no setup survives across timeframes; minute hits the free-node ceiling
+
+"Don't stop until all timeframes tested" (operator). Ran the enhanced panel (borrow + Donchian-fix + both-halves)
+at every free-tier equity resolution:
+
+  DAILY  (300 names, full 2010-2026): SURVIVOR = rip-short (t=7.23, H1 5.49 H2 4.43, 8% borrow) — D-179
+  HOUR   (200 names, full 2010-2026): SURVIVOR = dip-buy (t=3.73, weak/marginal H1 2.96 H2 2.24); rip-short
+                                      FAILS (t=1.33, H1 -0.50) — D-180
+  MINUTE (40 names, 2020-2026, scope-trimmed): ran ~30+ min and stalled at the 2026 edge — the free single
+                                      node's practical ceiling for a minute-resolution multi-setup universe
+                                      sweep (the limit flagged pre-run). Verdict not returned; a completed
+                                      minute sweep needs a paid node or a much narrower scope (few symbols).
+
+**Cross-timeframe conclusion (the real finding): NO setup survives at more than one equity timeframe.** rip-short
+wins DAILY (and crypto-5m, D-170) but fails HOURLY; dip-buy is dead DAILY but weakly "wins" HOURLY. The survivor
+FLIPS with the timeframe. That is the signature of edges sitting near the noise floor — which setup "wins"
+depends on the resolution, not on a durable structural inefficiency. Under multi-timeframe multiple testing
+(~18 setup×TF cells, Bonferroni bar ~t>=2.9), the hourly dip-buy (H2 t=2.24) is a weak, suspect pass.
+
+**What stands after the full sweep:** the ONE robust, high-t, borrow-AND-both-halves-surviving result is DAILY
+rip-short (t=7.23) + its independent crypto-5m twin (D-170) — same mechanic (fade overbought-in-downtrend), two
+uncorrelated markets, both clearing the full gauntlet. Everything else is timeframe-contingent noise. Honest
+caveat unchanged: 8% borrow thins daily rip-short's absolute net to +0.064R (HTB names could go negative), so it
+is a real edge over random but a thin earner needing borrow screening + sizing. Free tier tested daily+hour
+end-to-end at $0; minute is the compute wall. The engine's REJECT-by-default holds; rip-short is the lone,
+qualified, two-market survivor.

@@ -43,7 +43,7 @@ class AegisMultiTF(QCAlgorithm):
         self.UniverseSettings.Resolution = RES
         self.AddUniverse(self.CoarseFilter)
         self.SetWarmUp(MA_LEN + 5, RES)
-        self.mid = datetime(2018, 6, 1)
+        self.mid = datetime(2024, 10, 1)
 
         self.ind = {}
         self.don = {}             # symbol -> {"hi": deque, "lo": deque} of PRIOR bars
