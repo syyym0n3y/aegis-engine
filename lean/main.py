@@ -15,7 +15,7 @@ import random
 
 from aegis_gate import edge_vs_random, deflated_sharpe, sharpe, skewness, kurtosis
 
-UNIVERSE_SIZE = 100      # top-N by dollar volume, refreshed monthly (stable large/mid caps)
+UNIVERSE_SIZE = 500      # top-N by dollar volume, refreshed monthly — widened (D-177) to restore power
 RSI_LEN, MA_LEN, ATR_LEN = 14, 200, 14
 RSI_BUY = 30             # dip-buy trigger
 STOP_ATR, TP_MULT = 2.0, 3.0

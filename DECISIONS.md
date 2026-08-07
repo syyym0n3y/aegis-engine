@@ -2419,3 +2419,27 @@ LEAN + gate port (D-174) + free-tier daily sweep (D-175) paid for itself on its 
 false positive for $0. The engine's default verdict — REJECT — holds. Next: widen the universe (top-500) and
 lengthen history to restore power, and re-confirm; but the honest current read is that the equity dip-buy is
 survivorship-inflated drift, not a setup.
+
+## D-177 — top-500 wider sweep CONFIRMS the kill: the equity dip-buy is survivorship-inflated drift, well-powered
+
+Ran D-175 with UNIVERSE_SIZE=500 on QC free tier, survivorship-free US equities (2,441 names seen incl. delisted,
+2010-2026, 37.1M data points, 315s, $0). Verdict:
+
+  universe names: 2441   setup trades: 3849   controls: 2492
+  dip-buy setup +0.1996R   vs random control +0.1443R   → edge +0.0553R, t=1.62, PASSES=False
+  VERDICT: NO EDGE over random — regime drift (D-146)
+
+**This resolves the only open caveat from D-176 (low power) and confirms the kill.** Sample went 640 → 3,849
+setups (6x). If the dip-buy were a real edge merely under-powered before, more data would RAISE t and hold the
+effect. Instead the edge SHRANK (+0.107R → +0.055R) and t stayed sub-threshold (1.15 → 1.62, both < 2, far < the
+~3.1 deflation bar). That is the signature of no edge: it fades with power. Progression across the three tests is
+decisive — curated survivors t=5.63 (D-146) → survivorship-free n=640 t=1.15 (D-176) → survivorship-free n=3849
+t=1.62 (D-177). The curated-data edge was survivorship bias, full stop (METHODOLOGY_AUDIT flaw #1, now proven
+across two sample sizes).
+
+**Standing conclusions:** (1) the daily EQUITY dip-buy is REJECTED on honest data — it does not beat a random
+long. (2) The BTC/5m/short crypto survivor (D-170, Binance, 24/7, no delisting) is untouched and remains in
+forward paper — crypto has no survivorship bias to correct. (3) The engine's default REJECT verdict holds with a
+well-powered survivorship-free sample; the whole LEAN port (D-174/175) paid for itself by converting a false
+positive into a confirmed rejection for $0. Next honest lever if desired: extend history to 1998 and/or test the
+short side / other setups on the same free survivorship-free substrate — but the equity dip-buy is settled.
