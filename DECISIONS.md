@@ -3014,3 +3014,33 @@ adding independent axes gives no incremental lift and stacking stress axes is ne
 regime-*selection* of a single setup, not multi-signal *stacking*. The only confluence that could still add value is
 a genuinely NON-stress orthogonal axis (e.g. flow/positioning) — but no such free signal is in hand, and the prior
 after two failures is low. $0, no order path touched.
+
+---
+
+## D-196 — DECODE: Trades By Sci (@tradesbysci) "simple price action" method — 6/6 pillars land in falsified space
+
+Operator asked to run the channel through YGS/CC decode + extract "best-probability" market approach. Triaged the
+method (not the transcripts — copyrighted + redundant; syllabus via thecoursepedia: Supply&Demand, Liquidity, Market
+Structure, Order Blocks, Price Imbalance/FVG). Every pillar = a family already gated. Full map in `DECODE_tradesbysci.md`.
+
+**Test built this session (`scripts/trd-gold-sr.ts`):** the exact clip method — downtrend → buy the swing-low
+demand-zone bounce → "no-trade until break above resistance" → target range high — mechanized on gold/metals daily
+(GC=F/SI=F/GLD/SLV/HG=F/PL=F), vs matched random LONG, deflated |t|≥2.64.
+```
+POOLED (n=2,704)   setupR +0.253  vs random +0.226  edge +0.027  t=0.83   ✗ (drift, not edge)
+downtrend regime   setupR +0.188  vs random +0.234  edge -0.046  t=-1.01  ✗ (NEGATIVE where the method claims to work)
+```
+The +0.25R "profit" is entirely gold's bull drift — a random long in the same regime matches it. The break-above
+variant filtered to <30 signals (confirmation never fires). REJECT.
+
+**The $8.5M panel = drift × leverage, not edge:** balance≠withdrawn; panel-2 equity €11.17M > balance €6.87M = big
+UNREALIZED open long, margin level 260% (one swing from a call). `BUY 100` lots long gold in a 3,900→4,250 rally.
+Not falsifiable as skill; the number is the course's marketing.
+
+**Pillar → verdict:** S&D=D-196 random · Liquidity=D-080/081 (0/8,640) · Market-structure/BOS=D-194 (worse than
+random) · Order-blocks/FVG=D-194 · Trend/breakout=PLAYBOOK#3 dead · "no-trade-until-break"=never fires. The one
+grain of truth (buy oversold in a decline) is the SAME family as our lone conditional long edge (bbfade_lo/bear,
+D-194) — but he teaches it universal + confluence-stacked, both of which we falsified (D-194/195). Best-probability
+approach per the engine is the near-opposite of the course: fade extremes, one regime-conditioned setup, judge vs
+random, size small/wide. $0. Third social strategy triaged by the repeatable social-claim→mechanize→gate→verdict
+flow (after D-193, D-194). No order path touched.

@@ -1,6 +1,16 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — AUGMENTATION program CLOSED + 3rd social decode (D-193…D-196).** Confluence question fully
+answered: it does NOT help — correlated (D-194) OR orthogonal (D-195, zero incremental lift; stacking stress axes is
+net-negative → selects bear regime). rip-short's "when" = one regime filter (bull+high-vol), not a stack. DECODED
+Trades By Sci (@tradesbysci, 539k subs, $199 course): 6/6 method pillars (S&D, liquidity, market-structure/BOS,
+order-blocks/FVG, trend, "no-trade-until-break") all land in already-falsified space; the exact demand-zone gold long
+(`scripts/trd-gold-sr.ts`) = random (+0.25R setupR is pure gold drift, NEGATIVE edge in its own downtrend regime); the
+$8.5M panel = drift×leverage (260% margin level), not edge. `DECODE_tradesbysci.md` + `AUGMENTATION.md` are the
+deliverables. Tests are FINISHED (only untested lever = a non-stress orthogonal axis e.g. flow/positioning — no free
+source in hand). $0, no order path touched. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — PIVOT to AUGMENTATION (D-193/194).** Engine reframed from "falsify" to "tell the trader
 when/what/which-regime." Two builds: (1) the PRECISE 7-step ICT composition (`trd-alpaca-ict`, ~4,800 setups on
 GLD/SLV/SPY/QQQ) is REJECTED and *worse than random* (t=−3 to −7) — FVG/BOS confirmation makes you enter late, after
