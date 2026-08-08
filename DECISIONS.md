@@ -3324,3 +3324,38 @@ random (both sides pay it); it kills NET profitability, not skill. The right fra
 profit. Edges are daily-locked because only slow-enough bars let skill clear the spread. Full timeframe ladder now
 complete: daily (rip-short eq p=1e-7, crypto momentum p=5e-7) + 1h (crypto momentum net+0.050R) are the tradeable set;
 5m/15m/30m are skill-but-unprofitable. $0, no order path.
+
+---
+
+## D-205 — crypto momentum is SURVIVORSHIP-ROBUST (my caveat was wrong); capped-stop is structurally survivorship-proof
+
+Attacked the last open caveat — crypto momentum's survivorship exposure (D-202/204 flagged it "survivor-only"). Stress
+test (`scripts/trd-crypto-surv.ts`): re-ran donch_L per-instrument on the CRATERED tail — 16 coins that dropped 54–100%
+(LUNC −100%, ICP −99%, CRV −98%, ALGO −97%, EOS/NEO/FIL −94%…) as the free proxy for the delisted-to-zero coins a
+survivor set omits. PREDICTED (from D-197): recovery-dependent momentum-long collapses on cratered coins. WRONG.
+```
+setup      set        N   k   %pos  medNet   binom p    bothH
+donch_L    survivors   8   5   88%  +0.621   5.1e-7     6/8    SYSTEMATIC
+donch_L    battered   16   6   69%  +0.305   1.6e-6     8/15   SYSTEMATIC  <- holds on -100% coins
+donch_L    combined   24  10   75%  +0.337   1.4e-10   14/23   SYSTEMATIC
+bbfade_lo  any        —    —    —    ~0       p=1.0      —      none (mean-rev is DEAD in crypto)
+```
+
+**Three corrections/findings:**
+1. **Crypto momentum is a REAL, survivorship-CHECKED edge — upgrade from "survivor-caveated lead."** It stays
+   systematic (net +0.31R, p=1.6e-6) on coins that cratered to near-zero. My repeated survivorship caveat (D-202/204)
+   was too conservative.
+2. **The general principle (generalises D-197): a 1R-CAPPED STOP is STRUCTURALLY survivorship-proof, in ANY direction.**
+   I wrongly equated "recovery-dependent long" with "survivorship-exposed." A capped stop bounds every trade to −1R —
+   so a coin/stock going to zero contributes bounded −1R stop-outs, never catastrophic loss. Survivorship bias can only
+   inflate strategies whose absent losers would have been UNBOUNDED (buy-and-hold, no-stop dip-buy). donch_L caps loss
+   exactly like rip-short/bbfade → the missing dead coins can't inflate it. This is why momentum-long survived the
+   cratered tail. (dip-buy died on survivorship-free equities not because it's long, but because its D-176/177 test let
+   losers run; a stop-capped dip-buy would differ.)
+3. **Crypto is a MOMENTUM market; equities are MEAN-REVERSION — opposite structures.** donch_L systematic in crypto,
+   dead in equities (D-202); bbfade_lo/ripshort systematic in equities, dead in crypto. Match the setup family to the
+   asset's character (PLAYBOOK #3 was equity-specific, not universal).
+
+**Verified tradeable set now = THREE edges:** rip-short (daily equity, p=1e-7), bbfade_lo/bear (daily equity, D-197),
+crypto momentum (daily donch_L, survivorship-checked p=1.4e-10; also 1h net+0.05R D-204). Residual: fully-delisted-to-
+zero coins are untestable free, but the capped-stop argument bounds that exposure structurally. $0, no order path.
