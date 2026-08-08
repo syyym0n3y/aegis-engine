@@ -22,11 +22,14 @@
    slice — rip-short's per-trade edge nearly doubles (+0.057R→+0.109R) once you fire it only in high-vol bull tape.
    "When to trade" beats "what to trade." A blanket rule averages the good cell with the dead one and looks mediocre.
 
-2. **Redundant confluence makes trades WORSE, not better.** Stacking two setups that fire on the same condition
-   (rip-short ∧ upper-band-fade) *reduced* the edge vs rip-short alone (t 2.56 vs 4.45) — it shrinks your sample
-   faster than it sharpens the signal. More confirmations ≠ better trade. Confluence only helps if the signals are
-   **orthogonal** (e.g. a flow signal + a mean-reversion signal), which we have not yet been able to test — never
-   two flavours of the same overbought reading.
+2. **Confluence makes trades WORSE, not better — correlated OR orthogonal (D-194 + D-195).** Stacking two setups
+   that fire on the same condition (rip-short ∧ upper-band-fade) *reduced* the edge vs rip-short alone (t 2.56 vs
+   4.45) — redundant, shrinks the sample. And stacking a *genuinely orthogonal* market-state axis (breadth corr
+   +0.03, VIX-pct corr −0.01 vs the entry signal) gave **zero incremental lift** over unfiltered rip-short
+   (vsBase_t ≈ 0 for every axis), while stacking two stress axes (VIX-high ∩ breadth-low) was *net-negative*
+   (−0.30R) because they jointly select the bear/crash regime where the setup dies. **Orthogonal-to-the-signal ≠
+   additive.** The only "when to trade" that helps is single-setup regime *selection* (rule 1), not multi-signal
+   stacking. (An orthogonal *non-stress* axis — flow/positioning — is the last untested lever; no free source in hand.)
 
 3. **A falsified strategy can hold a real conditional edge.** Bollinger-fade-long is rejected as a blanket rule
    (D-178) yet is a deflated edge in bear regimes. The honest message to a trader running it: *"it loses on average
@@ -44,5 +47,6 @@
 ## Reproduce
 ```bash
 deno run --allow-net scripts/trd-augment.ts            # the regime×vol map, deflated
+deno run --allow-net scripts/trd-confluence.ts         # orthogonal confluence: orthogonality proof + incremental lift
 SB_ANON=<anon> deno run --allow-net --allow-env scripts/trd-ict-run.ts GLD,SLV,SPY,QQQ   # the 7-step ICT gate
 ```

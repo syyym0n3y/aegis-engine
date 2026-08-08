@@ -2979,3 +2979,38 @@ regime cell, deflated for the search. The honest trader message: "your setup isn
 the specific regime where it beats random, and here is why stacking confirmations makes it worse, not better." Written
 to `AUGMENTATION.md`. rip-short still the only unconditional-quality survivor; bbfade_lo/bear is a new conditional
 candidate for the forward tracker. $0. No order path touched.
+
+---
+
+## D-195 — orthogonal confluence FAILS too: rip-short's edge is a single-regime-filter, not a stack (`scripts/trd-confluence.ts`)
+
+D-194 killed CORRELATED confluence (two overbought readings on one name = redundant). The open question was whether
+a signal from a DIFFERENT information axis — market BREADTH (% of universe >200MA), VIX percentile (trailing 252d),
+or CROSS-SECTIONAL RSI rank — stacked on rip-short beats rip-short ALONE. Built + tested (Yahoo daily, 50 names,
+n=871 rip-short signals, random-short control pool n=82,147, no look-ahead, deflated Bonferroni z≈2.64).
+
+**Orthogonality PROVEN** (Pearson corr vs the name's own RSI — the thing bbfade failed):
+```
+  breadth  corr +0.027    vixPct corr -0.009    xsRank corr +0.366 (partly correlated by construction)
+  (vs bull regime: breadth~bull +0.579 — breadth is largely the regime restated; vixPct/xsRank are not)
+```
+**Incremental lift = NULL.** Favourable tercile of each axis, tested vs random AND vs the unfiltered baseline:
+```
+  filter        n    setupR   vsRand_t  vsBase_t  verdict
+  breadth lo   293   -0.020     2.59     -0.23   no lift
+  vixPct hi    292   +0.059     3.35     +0.68   beats random but ~ base (= the D-194 stress cell, not new)
+  xsRank hi    819   -0.022     4.03     -0.33   beats random but ~ base
+```
+Every `vsBase_t`≈0 → no orthogonal axis beats rip-short alone. They "beat random" only because unfiltered rip-short
+(all regimes, setupR −0.002) barely does; none improves on the baseline.
+
+**Stacking two orthogonal stress axes is HARMFUL:** rip-short ∩ vixPct-hi ∩ breadth-lo → setupR −0.305, vsBase_t
+−2.96. High VIX + weak breadth = the bear/crash regime where rip-short dies from squeezes (D-191). **Individually-
+orthogonal-to-the-signal ≠ additive** — two stress-flavoured filters jointly select the WORST regime.
+
+**Conclusion (closes the confluence question).** Confluence does not help rip-short — correlated (D-194) or
+orthogonal (D-195). Its "when to trade" is fully captured by ONE regime filter (SPY>200MA, high-vol cell, D-191/194);
+adding independent axes gives no incremental lift and stacking stress axes is net-negative. Augmentation's win is
+regime-*selection* of a single setup, not multi-signal *stacking*. The only confluence that could still add value is
+a genuinely NON-stress orthogonal axis (e.g. flow/positioning) — but no such free signal is in hand, and the prior
+after two failures is low. $0, no order path touched.
