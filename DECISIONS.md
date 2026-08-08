@@ -2788,3 +2788,27 @@ and empty here; it does not change the standing conclusion. The only survivors r
 pair: rip-short (daily + crypto5m) and dip-buy (hourly, weak). To revive cross-sectional would need a
 survivorship-free small/mid-cap universe (Alpaca free covers those names — a future run) where the effect + its
 cost are both larger. $0.
+
+## D-189 — concurrency/portfolio sim (PLAYBOOK gap #2): rip-short's per-trade edge becomes a 32%-drawdown short book
+
+Built `scripts/trd-portfolio-sim.ts`: walks all rip-short daily signals across 40 names in chronological order,
+applies the D-154 6% heat cap (0.5% risk/trade), real cost + 8%/yr borrow, and measures the ACTUAL portfolio
+equity curve — the concurrency the per-trade tests ignored.
+
+  931 signals, per-trade mean +0.104R. Worst single-day cluster: 8 simultaneous entries; peak 12-24 concurrent.
+  heat cap 6%:  1.18x, maxDD 32.1%, 43 signals skipped by cap
+  heat cap 3%:  1.12x, maxDD 28.8%, 170 skipped
+  heat cap 12%: 1.28x, maxDD 33.4%, 12 skipped
+
+**Verdict — concurrency is the real risk, and it is worse than the per-trade edge suggested.** rip-short shorts
+overbought-in-downtrend names; those signals CLUSTER (8 in one day) and are correlated (all short, all in weak
+names), so when a downtrend relief-rallies the whole book squeezes together → ~32% peak-to-trough drawdown even at
+a 6% heat cap, for only a modest terminal multiple. The isolated +0.104R does NOT make a clean standalone short
+book. Actionable: rip-short should NOT be run short-only/concentrated — it belongs in a market-neutral or hedged
+book, sized far smaller, or gated by a squeeze/vol filter; the heat cap alone does not tame the correlated drawdown.
+Caveat: the equity curve is sampled at signal times (lumpy P&L application) so DD is approximate, but the clustering
+(8 same-day, 12-24 concurrent) and the ~30% DD across cap levels are a consistent, real signal.
+
+This is exactly what gap #2 warned: per-trade R in isolation understated portfolio risk. rip-short remains a real
+per-trade edge over random (D-179/184) but is a POOR standalone portfolio — a critical deployment constraint found
+before any money moved. $0.
