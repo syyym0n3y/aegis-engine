@@ -1,6 +1,22 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 5) — PROGRAM COMPLETE: every PLAYBOOK gap closed; ONE edge fully characterized (D-146…D-192).**
+Exhaustive falsification done end-to-end for $0. THE ANSWER: exactly one edge survives every test —
+**rip-short** (short RSI>70 while <200MA), a SMALL BULL-REGIME mean-reversion short on liquid equities (D-179
+t=7.23; survives program-wide deflation to N=100k, D-191), corroborated independently on crypto 5m (D-170). Its
+full deployment envelope is now known: **liquid + easy-to-borrow names, SPY>200MA regime only, small size,
+hedged/market-neutral** (standalone short book = 32% DD from bear squeezes, D-189/191; slippage-robust to ~28bp
+and liquids 100% ETB, D-190). **dip-buy** hourly FAILS program-wide deflation → false positive (D-191, demoted).
+Everything momentum / breakout / cross-sectional reversal (D-188) / minute (D-187) is DEAD. Gaps all closed:
+fills+capacity (D-190), concurrency (D-189), regime (D-191), cross-sectional (D-188), look-ahead + crypto-
+survivorship (D-192). Forward paper: 24 candidates live, borrow-modeled (D-185), cron 6h. Real-fills path built
+DORMANT (`trd-alpaca-paper-exec`, armed-OFF via trd_exec_arm; kill-switch+regime+ETB+heat gated) — operator arms
+it to cross into execution; Claude does not. Free-solution map exercised (Alpaca minute, Dukascopy, Stooq
+allowlisted). PLAYBOOK.md = the transferable buy/sell patterns. 234 TS + 3 Py tests green. $0 spent, no order
+placed. Next signal comes from TIME (forward clocks / arming the paper executor), not more backtests.
+
+## Prior
 **2026-08-08 (Opus 5) — MULTI-TIMEFRAME SWEEP COMPLETE + 2 SURVIVORS IN FORWARD PAPER (D-170…D-186).** The LEAN+gate
 port (D-174) ran the survivorship-free US-equity universe across DAILY (top-500), HOUR (top-200) and attempted
 MINUTE (free-node ceiling, D-181), plus BTC/ETH crypto and all intraday SESSIONS (D-170) — every gate: random-
