@@ -3268,3 +3268,27 @@ dipbuy / equity-donch_L / commod / fx: no systematic per-instrument edge
 pooled both-halves can BOTH manufacture (crypto era-drift) AND mask (crypto per-coin momentum) real structure. The
 de-biased default going forward: judge each instrument on its own regime vs its own random control; infer by COUNT with
 a binomial null; report pooled only as a secondary power-boosted view, never as the arbiter over the individual. $0.
+
+---
+
+## D-203 — intraday gap CLOSED: 1h crypto/FX/futures show NO systematic per-instrument edge (cost wall)
+
+Operator: "test (intraday for FX/futures/crypto)." Ran the D-202 de-biased engine (per-instrument, own regime, own
+random control, count-inference) on 1-HOUR bars (`scripts/trd-intraday.ts`, Yahoo 1h/730d ≈ 17k bars/instrument =
+high power), cost charged per class (crypto 5bp/fx 2bp/fut 3bp per side) and cost-in-R reported.
+```
+class    setup      N   k  %pos  medEdgeR  cost-in-R  binom p   verdict
+crypto   donch_L    8   2   75%   +0.089     0.068     1.6e-2   ~ leans real (but cost eats 76% of gross)
+fx       dipbuy     6   1   67%   +0.251     0.167     1.4e-1   drift-suspect (cost-in-R 0.167 = FX intraday killer)
+futures  (all)     8-12 ≤1  ~50%   ~+0.02     0.054     ≥0.26    ✗ none
+crypto/fx/futures — every other setup: ✗ no systematic per-instrument edge
+```
+**Nothing clears p<0.001.** The single lean (crypto donch_L 1h, p=0.016) is cost-marginal: cost-in-R 0.068 vs edge
++0.089. The crypto momentum edge that is SYSTEMATIC on DAILY (D-202, p=5e-7) does NOT survive the drop to hourly —
+faster bar → smaller ATR stop → the same spread becomes a larger fraction of R (PLAYBOOK #5 cost wall, #4 timeframe-
+locked). FX intraday is structurally worst (cost-in-R 0.167: tiny 1h ATR vs 2bp spread).
+
+**Verdict:** intraday adds cost without adding signal on these assets. Finer bars (15m/5m) are covered by the existing
+minute cost-wall (D-187) + the monotonic cost trend here (faster = worse) — not re-run, would only confirm the wall.
+The edges remain DAILY-locked: rip-short (equity daily, systematic per-instrument p=1e-7, D-202) and crypto momentum
+(daily, systematic p=5e-7 but survivor-caveated). Intraday coverage now complete; no new edge. $0, no order path.
