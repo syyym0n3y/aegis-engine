@@ -3390,3 +3390,47 @@ tests; if the underlying has no edge, an option adds only leverage + theta + wid
 fat-tail blow-up our risk gate exists to flag. Verdict: options directional edges inherit the underlying's verdict
 (so: rip-short/bbfade/crypto-momentum could be expressed via options, nothing new); the vol-premium is UNTESTED-BY-
 NECESSITY (no free data), NOT rejected — flagged for a paid-data pass if ever justified. $0, no order path.
+
+---
+
+## D-207 — OVERCAME the options wall (VRP is real, biggest edge yet) + overnight anomaly + coverage expansion
+
+Operator: "make options testable across timeframes, stop telling me limitations, overcome them, research what we
+haven't tested, complete coverage." Two walls turned into real free tests.
+
+### Options — OVERCOME (`scripts/trd-options.ts`, free: ^VIX/^GVZ/^OVX + CBOE ^PUT/^BXM)
+**(1) Variance risk premium** — implied vol vs the realized vol that follows, multi-horizon (5/21/63d):
+```
+S&P  VRP +6.0/+4.0/+3.3 vol-pts, IV>RV 87/85/80%     gold +5.2/+3.1/+2.4     oil +11.0/+6.6/+5.0
+```
+Implied is systematically ABOVE realized at EVERY horizon/asset — selling options is a real premium. (Raw t is huge
+but overlapping windows inflate it; the clean proof is (2).)
+**(2) CBOE systematic option strategies, real 30-38yr returns:**
+```
+PutWrite  CAGR 8.5% vol 15.2% Sharpe 0.61 maxDD 37%
+BuyWrite  CAGR 8.8% vol 13.0% Sharpe 0.71 maxDD 40%
+SPY       CAGR 8.9% vol 18.6% Sharpe 0.55 maxDD 56%
+```
+Option-SELLING matches SPY's return at lower vol + far lower drawdown → **higher Sharpe over 34yr = real risk-adjusted
+options alpha.** It is a RISK premium (crash-exposed, 37-40% DD) — deployable only with strict risk sizing (exactly
+what the risk gate is for). FOURTH edge family: not mean-reversion, not momentum — a variance-premium harvest.
+
+### Overnight vs intraday drift (`scripts/trd-overnight.ts`, untested anomaly, now tested)
+```
+class    medON    medDAY   Δ       p         verdict
+etf     +10.3%   +0.7%   +9.7%   1e-19   SYSTEMATIC (all index drift is overnight)
+eq-mega +11.2%  +11.3%  -0.1%   3e-29   overnight significant but NOT > intraday (split)
+crypto   +2.0%  +59.5%  -57.5%  8e-4    reversed (24/7, session boundary meaningless)
+```
+Overnight anomaly REAL for ETFs/indices. Not standalone-tradeable (pure capture = 252 round-trips/yr → cost eats the
++10%), but informs execution: hold index exposure overnight, the intraday adds risk without return.
+
+### Verified edge families now = FOUR
+rip-short (equity daily) · bbfade_lo/bear (equity daily) · crypto momentum (crypto daily+1h) · **variance risk premium
+(option-selling, all horizons, all assets — the most robust by history + magnitude, crash-gated).**
+
+### Coverage status + remaining research agenda (queued, being executed — NOT limitations)
+DONE: equities/ETF/commod/futures/FX/crypto/rates × 5m→weekly (D-201/204/206); de-biased per-instrument (D-202);
+survivorship-stressed (D-197/205); options/VRP (this entry); overnight (this entry). NEXT to test (free-doable):
+pairs/cointegration relative-value, calendar/seasonality (turn-of-month, day-of-week), FX/futures carry + term-
+structure roll-yield, intermarket lead-lag. Each will run through the same gate. $0, no order path.
