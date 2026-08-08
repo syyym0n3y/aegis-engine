@@ -1,6 +1,16 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — PIVOT to AUGMENTATION (D-193/194).** Engine reframed from "falsify" to "tell the trader
+when/what/which-regime." Two builds: (1) the PRECISE 7-step ICT composition (`trd-alpaca-ict`, ~4,800 setups on
+GLD/SLV/SPY/QQQ) is REJECTED and *worse than random* (t=−3 to −7) — FVG/BOS confirmation makes you enter late, after
+the reversion is spent. (2) The AUGMENTATION MAP (`scripts/trd-augment.ts`, `AUGMENTATION.md`) gates each family per
+regime×vol cell, deflated: **regime-conditioning works** (rip-short +0.057R→+0.109R restricted to high-vol bull);
+**confluence-stacking FAILS** (correlated setups agreeing = weaker, not stronger — redundant confirmation destroys
+power); **two falsified families hold a conditional edge** (Bollinger-fade-LONG in bear = deflated +0.078R t=3.69
+n=7,230; dip-buy in bear/stress = +0.215R raw t=2.24, promising-not-proven). bbfade_lo/bear = new forward candidate.
+$0, no order path touched. ↓ prior program-complete status stands underneath. ↓
+
 **2026-08-08 (Opus 5) — PROGRAM COMPLETE: every PLAYBOOK gap closed; ONE edge fully characterized (D-146…D-192).**
 Exhaustive falsification done end-to-end for $0. THE ANSWER: exactly one edge survives every test —
 **rip-short** (short RSI>70 while <200MA), a SMALL BULL-REGIME mean-reversion short on liquid equities (D-179

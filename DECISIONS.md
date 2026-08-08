@@ -2917,3 +2917,65 @@ session-anchored VWAP + running SD, fade 2SD, stop 2×ATR, target=VWAP, vs rando
 liquidity (D-080/81) and mean-reversion-band-fade (D-178). The gate evaluated both in one session for $0 and neither
 beats a random entry with positive expectancy. This is the falsification engine's highest-leverage use: instantly
 triaging the endless stream of social-media strategies. rip-short remains the only survivor. $0.
+
+---
+
+## D-194 — the PIVOT: from falsification to AUGMENTATION (regime-conditioning works; confluence-stacking does not)
+
+Operator directive: "we are not in the job of falsification, we augment... show traders their strategy isn't enough,
+AND how to adapt it into a winning one in certain conditions... know when to place the trade, with what setup, based
+on regime... see if multiple strategies on the same position can beat a random trade." Two builds this turn.
+
+### (1) The PRECISE 7-step ICT composition — mechanized and REJECTED (`trd-alpaca-ict`, GLD/SLV/SPY/QQQ, 5m, ~4,800 setups)
+Not the D-081 grammar-average — the EXACT kashfutures recipe: prior-1h high/low = liquidity → 5m SWEEP (wick beyond,
+close back inside) → FVG in reversal dir → price returns INTO the FVG (inverse) → BOS (close beyond post-sweep swing)
+→ enter reversal, stop beyond sweep extreme. vs matched random.
+```
+sym  setups tgt  setupR   randR   edge     t   verdict
+GLD   1066  2R  -0.123  +0.084  -0.206  -4.44  REJECT   (worse than random)
+SPY   1455  2R  -0.214  +0.052  -0.265  -6.80  REJECT
+QQQ   1421  2R  -0.123  +0.114  -0.237  -5.98  REJECT
+SLV    849  2R  -0.093  +0.002  -0.094  -1.89  REJECT
+```
+The exact recipe is WORSE than a coin-flip entry (negative t) on every symbol/target. Mechanism: by the time the
+1-min BOS "confirms," the post-sweep reversion is spent — FVG/BOS confirmation makes you enter LATE. Confirms D-080/081
+with the precise composition, not an average. AUGMENTATION verdict: no regime rescues it — it is anti-edge, not no-edge.
+
+### (2) The AUGMENTATION MAP (`scripts/trd-augment.ts`, Yahoo daily, 50 names, next-open entry, cost+borrow, deflated)
+For each family, gate EACH regime×vol cell vs a matched same-direction random entry (D-146). Bonferroni across 30
+searched cells → crit |t|≈3.14 (searching for the winning condition IS multiple testing — deflated so we don't sell
+the trader the same self-fooling we're exposing). `✓✓`=deflated-pass, `~`=raw-t≥2-only, cells n≥30.
+```
+setup      dir   cell    n     setupR  randR   edge     t   verdict
+ripshort   short bull    545  +0.060  -0.275 +0.335  4.45  ✓✓ EDGE (deflated)
+ripshort   short stress  433  +0.109  -0.230 +0.339  4.38  ✓✓ EDGE (deflated)   <- best cell
+ripshort   short calm    332  -0.012  -0.320 +0.307  3.01  flat setupR (dead in calm)
+dipbuy     long  ALL     846  +0.167  +0.168 -0.002 -0.03  none (dead as run)
+dipbuy     long  stress  302  +0.254  +0.039 +0.215  2.24  ~ conditional rescue (bear/stress selloffs)
+bbfade_lo  long  bear   7230  +0.155  +0.077 +0.078  3.69  ✓✓ EDGE (deflated)   <- NEW conditional edge
+bbfade_hi  short bull  21467  -0.204  -0.240 +0.036  3.09  none (setupR still negative)
+conf_short short bull    277  -0.002  -0.266 +0.264  2.56  WEAKER than ripshort/bull alone
+conf_long  long  bull    408  +0.201  +0.240 -0.039 -0.43  none
+```
+
+### Three findings that ARE the deliverable
+1. **Confluence-stacking FAILS.** Two mean-rev setups agreeing on the same position (ripshort∧bbfade_hi;
+   dipbuy∧bbfade_lo) did NOT beat either component — conf_short/bull t=2.56 < ripshort/bull t=4.45. They fire on the
+   SAME overbought/oversold condition, so confluence shrinks n faster than it sharpens edge. **Redundant confirmation
+   destroys statistical power** — the answer to "can multiple strategies on one position beat random?" is NO for
+   correlated signals. (Uncorrelated confluence untested — would need orthogonal families, e.g. flow + mean-rev.)
+2. **Regime-conditioning is the augmentation that works.** rip-short's edge nearly doubles restricted to its cell:
+   +0.057R(all) → +0.109R (high-vol BULL). "When to fire": stress+bull, never calm. This is the D-191 template made
+   general: the same setup is deployable or dead depending on the regime slice.
+3. **Two falsified families have a genuine conditional rescue** (the "adapt it into a winner" story):
+   - **Bollinger-fade-LONG in BEAR regimes** = deflated edge (+0.078R, t=3.69, n=7,230): buy the lower band in a
+     down-tape beats random longs. Rejected as a whole (D-178), real in one regime cell.
+   - **dip-buy in bear/stress selloffs** = +0.215R raw (t=2.24) vs dead overall — promising, not deflation-proven;
+     needs more bear samples before promotion.
+
+### Doctrine update
+Augmentation ≠ "find any condition where it prints." Augmentation = the SAME random-control gate applied WITHIN each
+regime cell, deflated for the search. The honest trader message: "your setup isn't enough as a blanket rule — here is
+the specific regime where it beats random, and here is why stacking confirmations makes it worse, not better." Written
+to `AUGMENTATION.md`. rip-short still the only unconditional-quality survivor; bbfade_lo/bear is a new conditional
+candidate for the forward tracker. $0. No order path touched.
