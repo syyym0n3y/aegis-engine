@@ -2812,3 +2812,29 @@ Caveat: the equity curve is sampled at signal times (lumpy P&L application) so D
 This is exactly what gap #2 warned: per-trade R in isolation understated portfolio risk. rip-short remains a real
 per-trade edge over random (D-179/184) but is a POOR standalone portfolio — a critical deployment constraint found
 before any money moved. $0.
+
+## D-190 — execution reality (PLAYBOOK gap #1): slippage-robust edge, capacity fine on liquids; concurrency is the real limit
+
+Built two probes for the fills/capacity gap:
+- `scripts/trd-exec-reality.ts` — re-charge rip-short daily (40 names) at rising slippage + 8%/yr borrow, edge vs
+  random at each tier: 2bp +0.104R t=5.3 | 5bp +0.092 t=5.7 | 10bp +0.073 t=6.0 | 15bp +0.054 t=4.5 | 20bp +0.034
+  t=2.9 | 30bp -0.004 (net-negative). The EDGE vs random is slippage-ROBUST (t stays 4.5-6, both legs pay slippage);
+  the ABSOLUTE net erodes and dies at ~28bp/side.
+- `trd-alpaca-shortable` (edge fn, paper-api /v2/assets): 40/40 liquid names are shortable AND easy-to-borrow.
+
+**Verdict:** on the LIQUID universe, execution is fine — borrow is a non-constraint (all ETB; 8% was conservative,
+ETB borrows ~<1-3%) and slippage on liquid names (~1-3bp/side) leaves net +0.05-0.10R. rip-short is EXECUTABLE on
+liquid ETB names at small size. The HTB/high-slippage risk only appears in the small-cap tail (where rip-short also
+fires more) — so RESTRICT rip-short to the liquid ETB subset. The binding deployment constraint is NOT fills or
+borrow; it is the D-189 CONCURRENCY/32%-drawdown (correlated short squeeze) — addressable by hedging + smaller size,
+not by better execution.
+
+**PLAYBOOK gaps status after this build-out:**
+  #4 cross-sectional ranking — BUILT (D-188): reversal REJECT across horizons; arbitraged out of liquids.
+  #2 concurrency/heat — BUILT (D-189): rip-short = 32% DD standalone short book; needs hedge/neutral + small size.
+  #1 fills/slippage/capacity — BUILT (D-190): edge slippage-robust, liquids fully ETB; concurrency is the real limit.
+  Remaining (smaller/known): regime conditioning, crypto survivorship (dead coins), program-wide deflation
+  (rip-short survives it, dip-buy likely not), 1-bar look-ahead re-check, and the REAL-BROKER paper executor for
+  true fills — that last one is an ORDER PATH, deliberately NOT auto-built (Stage-1 invariant); build it DORMANT
+  and operator-armed when ready. Net honest picture: rip-short is a real-but-marginal edge, deployable only
+  liquid+ETB+hedged+small; dip-buy is weak/regime-suspect; everything else is dead. $0.
