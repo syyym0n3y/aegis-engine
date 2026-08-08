@@ -1,6 +1,24 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 5) — MULTI-TIMEFRAME SWEEP COMPLETE + 2 SURVIVORS IN FORWARD PAPER (D-170…D-186).** The LEAN+gate
+port (D-174) ran the survivorship-free US-equity universe across DAILY (top-500), HOUR (top-200) and attempted
+MINUTE (free-node ceiling, D-181), plus BTC/ETH crypto and all intraday SESSIONS (D-170) — every gate: random-
+control (D-146) + Bonferroni deflation + both-halves + real borrow. **Two timeframe-locked mean-reversion edges
+survived, both now in forward paper (24 candidates, $0, no order path, cron 6h):**
+  • **rip-short** (RSI>70 & <200MA, short) — DAILY equities (D-179, t=7.23) AND crypto 5m (D-170, t=8.07). Robustness
+    D-184: sign-robust 39/54 variants, PBO 40% (NOT overfit) — a real but SMALL cross-sectional/breadth edge; trade
+    wide-and-thin, never concentrated. THE stronger survivor. Forward: 10 per-symbol legs + crypto legs.
+  • **dip-buy** (RSI<30 & >200MA, long) — HOURLY equities (D-180, t=3.73, modest). Robustness D-186: FRAGILE out-of-
+    window (17/54 positive on recent 2y) → regime-suspect, LOW confidence. Weak link; in forward paper but do not size.
+Everything momentum/breakout is DEAD at every timeframe. Survivorship bias was the source of the curated-data false
+positives (D-176/177). Borrow now modeled in the tracker (D-185, v2). Free-solution map for every "paid" frontier in
+FREE_SOLUTIONS.md — minute-universe (local LEAN + Alpaca-free/Dukascopy), futures/FX (Dukascopy), global (Stooq,
+survivorship-biased-but-quantified); the only remaining steps are operator-gated CREDENTIALS (Alpaca key / Dukascopy
+endpoint), not effort. Promotion gate unchanged: >=30 forward trades, positive mean consistent with in-sample, before
+micro. 234 TS + 3 Py tests green. $0 spent this entire arc.
+
+## Prior
 **2026-08-07 (Opus 4.8) — FORWARD PAPER LIVE for the first-ever gate survivor (D-171).** The D-170 full sweep (92 cells across NASDAQ/S&P500/BTC/ETH × 5 TFs × sessions × long/short, each vs its own random control) found exactly ONE survivor of random-control + trial-deflation + both-halves + walk-forward OOS: **BTC/5m mean-reversion short** (t=8.07; OOS +0.29R/t4.7; real at ≤5bp/side, dead at 10bp retail spot). It is now under autonomous forward PAPER: migration `0013_trd_forward_paper.sql` (general registry `trd_forward` + append-only ledger `trd_forward_trade` + rollup `trd_forward_state`), edge fn `trd-forward-tick` (kill-switch-gated, Yahoo feed, keyless, verify_jwt=false), cron `trd-forward-forward` @ 43 */6 (jobid 24). Seeded with the survivor + two near-miss controls (eth-5m-short, btc-5m-long) so "all instruments/TFs considered" is a one-row insert and the controls falsify our deflation threshold. Verified live end-to-end: append-only trigger blocks DELETE, idempotency holds (probe 11 trades → re-tick N=11), ledger clean, forward clock started 2026-08-07. Promotion gate: ≥30 forward trades + positive mean consistent with in-sample, ≤5bp exec — still behind every LADDER rung. $0, no order path. Operator surface: `scripts/trd-forward-status.sh`. 234 tests green.
 
 ## Prior
