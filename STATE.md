@@ -1,6 +1,16 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — BOTH edges wired + verified dormant-by-market (D-197…D-199).** Two survivorship-checked
+edges now run live on the $0 virtual forward tracker (cron 6h): rip-short (bull-regime short) + bbfade_lo/bear
+(bear-regime long, D-197 — edge GROWS on a battered universe, opposite of dip-buy's mirage; 8 legs registered,
+detector extended with band-mode + SPY-bear regime gate, 9/9 tests green). Demo BROKER (Alpaca paper) executor
+deployed DORMANT (arm=false, killswitch=false) + owner-run `scripts/demo-exec.sh` {status|arm|disarm|kill|tick|forward}
+— Claude does NOT arm; one operator command goes live. VERIFIED (D-199): 0 forward trades = honest scarcity — 9/10
+rip-short names above their 200MA in this bull tape, so the overbought-in-downtrend signal cannot fire; bbfade needs
+SPY<200MA. Both edges dormant-BY-MARKET; arming now places 0 trades (correct, D-070). Next signal comes from the
+MARKET (a regime that offers a setup) or the operator arming demo — NOT more backtests. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — AUGMENTATION program CLOSED + 3rd social decode (D-193…D-196).** Confluence question fully
 answered: it does NOT help — correlated (D-194) OR orthogonal (D-195, zero incremental lift; stacking stress axes is
 net-negative → selects bear regime). rip-short's "when" = one regime filter (bull+high-vol), not a stack. DECODED
