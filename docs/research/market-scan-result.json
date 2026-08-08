@@ -1,0 +1,280 @@
+{
+  "scanned": 121,
+  "classes": 7,
+  "totalBars": 310856,
+  "trials": 241,
+  "positiveInSample": 148,
+  "clearedDSR": 0,
+  "byClass": {
+    "rates": {
+      "n": 8,
+      "pos": 5
+    },
+    "crypto": {
+      "n": 30,
+      "pos": 21
+    },
+    "US large-cap": {
+      "n": 80,
+      "pos": 52
+    },
+    "ETF broad/sector": {
+      "n": 50,
+      "pos": 29
+    },
+    "commodity fut": {
+      "n": 23,
+      "pos": 12
+    },
+    "global index": {
+      "n": 26,
+      "pos": 16
+    },
+    "FX": {
+      "n": 24,
+      "pos": 13
+    }
+  },
+  "top": [
+    {
+      "market": "^IRX",
+      "cls": "rates",
+      "strat": "sweep-rr3",
+      "n": 29,
+      "exp": 0.831,
+      "dsr": 0.5145
+    },
+    {
+      "market": "ETH-USD",
+      "cls": "crypto",
+      "strat": "squeeze",
+      "n": 126,
+      "exp": 0.515,
+      "dsr": 0.2808
+    },
+    {
+      "market": "LINK-USD",
+      "cls": "crypto",
+      "strat": "sweep-rr3",
+      "n": 95,
+      "exp": 0.668,
+      "dsr": 0.2494
+    },
+    {
+      "market": "^IRX",
+      "cls": "rates",
+      "strat": "squeeze",
+      "n": 102,
+      "exp": 0.441,
+      "dsr": 0.1752
+    },
+    {
+      "market": "HD",
+      "cls": "US large-cap",
+      "strat": "sweep-rr3",
+      "n": 92,
+      "exp": 0.596,
+      "dsr": 0.1537
+    },
+    {
+      "market": "BTC-USD",
+      "cls": "crypto",
+      "strat": "squeeze",
+      "n": 176,
+      "exp": 0.479,
+      "dsr": 0.1495
+    },
+    {
+      "market": "ARKK",
+      "cls": "ETF broad/sector",
+      "strat": "sweep-rr3",
+      "n": 78,
+      "exp": 0.541,
+      "dsr": 0.1176
+    },
+    {
+      "market": "^TYX",
+      "cls": "rates",
+      "strat": "sweep-rr3",
+      "n": 86,
+      "exp": 0.528,
+      "dsr": 0.0955
+    },
+    {
+      "market": "TLT",
+      "cls": "ETF broad/sector",
+      "strat": "sweep-rr3",
+      "n": 61,
+      "exp": 0.474,
+      "dsr": 0.0937
+    },
+    {
+      "market": "AVAX-USD",
+      "cls": "crypto",
+      "strat": "sweep-rr3",
+      "n": 75,
+      "exp": 0.5,
+      "dsr": 0.0893
+    },
+    {
+      "market": "MSFT",
+      "cls": "US large-cap",
+      "strat": "squeeze",
+      "n": 132,
+      "exp": 0.399,
+      "dsr": 0.0706
+    },
+    {
+      "market": "^FVX",
+      "cls": "rates",
+      "strat": "sweep-rr3",
+      "n": 72,
+      "exp": 0.456,
+      "dsr": 0.0655
+    },
+    {
+      "market": "QQQ",
+      "cls": "ETF broad/sector",
+      "strat": "sweep-rr3",
+      "n": 86,
+      "exp": 0.481,
+      "dsr": 0.0633
+    },
+    {
+      "market": "EEM",
+      "cls": "ETF broad/sector",
+      "strat": "sweep-rr3",
+      "n": 63,
+      "exp": 0.424,
+      "dsr": 0.0617
+    },
+    {
+      "market": "LLY",
+      "cls": "US large-cap",
+      "strat": "sweep-rr3",
+      "n": 73,
+      "exp": 0.434,
+      "dsr": 0.0534
+    },
+    {
+      "market": "AAPL",
+      "cls": "US large-cap",
+      "strat": "sweep-rr3",
+      "n": 87,
+      "exp": 0.463,
+      "dsr": 0.0523
+    },
+    {
+      "market": "^TNX",
+      "cls": "rates",
+      "strat": "sweep-rr3",
+      "n": 71,
+      "exp": 0.421,
+      "dsr": 0.0498
+    },
+    {
+      "market": "DIA",
+      "cls": "ETF broad/sector",
+      "strat": "sweep-rr3",
+      "n": 69,
+      "exp": 0.407,
+      "dsr": 0.0463
+    },
+    {
+      "market": "UNI-USD",
+      "cls": "crypto",
+      "strat": "squeeze",
+      "n": 59,
+      "exp": 0.267,
+      "dsr": 0.0441
+    },
+    {
+      "market": "TSLA",
+      "cls": "US large-cap",
+      "strat": "squeeze",
+      "n": 123,
+      "exp": 0.366,
+      "dsr": 0.0415
+    },
+    {
+      "market": "PL=F",
+      "cls": "commodity fut",
+      "strat": "sweep-rr3",
+      "n": 29,
+      "exp": 0.141,
+      "dsr": 0.0373
+    },
+    {
+      "market": "CAT",
+      "cls": "US large-cap",
+      "strat": "squeeze",
+      "n": 132,
+      "exp": 0.362,
+      "dsr": 0.0363
+    },
+    {
+      "market": "DOGE-USD",
+      "cls": "crypto",
+      "strat": "sweep-rr3",
+      "n": 44,
+      "exp": 0.264,
+      "dsr": 0.0346
+    },
+    {
+      "market": "GOOGL",
+      "cls": "US large-cap",
+      "strat": "sweep-rr3",
+      "n": 90,
+      "exp": 0.411,
+      "dsr": 0.0286
+    },
+    {
+      "market": "^GSPC",
+      "cls": "global index",
+      "strat": "sweep-rr3",
+      "n": 76,
+      "exp": 0.374,
+      "dsr": 0.0278
+    },
+    {
+      "market": "GBPJPY=X",
+      "cls": "FX",
+      "strat": "squeeze",
+      "n": 38,
+      "exp": 0.128,
+      "dsr": 0.0268
+    },
+    {
+      "market": "V",
+      "cls": "US large-cap",
+      "strat": "sweep-rr3",
+      "n": 80,
+      "exp": 0.35,
+      "dsr": 0.0192
+    },
+    {
+      "market": "^GSPTSE",
+      "cls": "global index",
+      "strat": "sweep-rr3",
+      "n": 73,
+      "exp": 0.325,
+      "dsr": 0.0185
+    },
+    {
+      "market": "ATOM-USD",
+      "cls": "crypto",
+      "strat": "sweep-rr3",
+      "n": 104,
+      "exp": 0.4,
+      "dsr": 0.0178
+    },
+    {
+      "market": "AVAX-USD",
+      "cls": "crypto",
+      "strat": "squeeze",
+      "n": 83,
+      "exp": 0.24,
+      "dsr": 0.0145
+    }
+  ]
+}

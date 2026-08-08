@@ -1,0 +1,8 @@
+{
+  "algorithm-language": "Python",
+  "parameters": {},
+  "description": "Aegis gate port — D-170 RSI mean-reversion survivor on LEAN, judged by the random-control + Deflated-Sharpe gate (aegis_gate.py). Virtual trades only; no live orders.",
+  "local-id": "aegis-gate",
+  "cloud-id": null,
+  "libraries": []
+}

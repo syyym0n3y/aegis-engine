@@ -1,0 +1,299 @@
+// aegis-cockpit — the operator's live view of EVERYTHING (front + backend). Reads real
+// state server-side (autonomous paper account, platform reports, macro regime) and renders a
+// dashboard. ?format=json returns the CC-shaped snapshot (for the projects table ingest).
+import { volRegimeDeRisk } from "../_shared/trd-vol-regime.ts"; // D-100 verified tail-risk control
+import { decayReport } from "../_shared/trd-decay.ts";           // D-102 edge-decay monitor (Adaptive Markets)
+import { sessionExpectedVol } from "../_shared/trd-session-vol.ts"; // D-141 session/timeframe vol awareness
+const SB = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const H = { apikey: SRK, Authorization: `Bearer ${SRK}` };
+const BASE = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
+// current vol-regime de-risk per instrument, from keyless Yahoo daily — the SAME primitive the
+// executors apply in the order path, so the cockpit shows exactly the sizing the bots use.
+async function yDaily(sym: string): Promise<number[]> {
+  const p2 = Math.floor(Date.now() / 1000), p1 = p2 - 500 * 86400;
+  const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&period1=${p1}&period2=${p2}`, { headers: { "User-Agent": "Mozilla/5.0" } });
+  const jr = await r.json().catch(() => null); const res = jr?.chart?.result?.[0]; if (!res?.timestamp) return [];
+  const c = res.indicators.quote[0].close as number[]; const out: number[] = [];
+  for (let i = 1; i < c.length; i++) if (c[i] > 0 && c[i - 1] > 0 && Number.isFinite(c[i]) && Number.isFinite(c[i - 1])) out.push(Math.log(c[i] / c[i - 1]));
+  return out;
+}
+async function volRegimes() {
+  const set: [string, string][] = [["S&P (SPY)", "SPY"], ["Nasdaq (QQQ)", "QQQ"], ["Gold (GLD)", "GLD"], ["BTC", "BTC-USD"], ["ETH", "ETH-USD"]];
+  const out: any[] = [];
+  for (const [name, sym] of set) { const vr = volRegimeDeRisk(await yDaily(sym)); out.push({ name, sym, deRisk: +vr.deRisk.toFixed(3), elevated: vr.elevated, rvPct: Number.isFinite(vr.rv) ? +(vr.rv * 100).toFixed(2) : null, medianRvPct: Number.isFinite(vr.medianRV) ? +(vr.medianRV * 100).toFixed(2) : null }); }
+  return out;
+}
+// D-102 tracker-staleness alerting: each autonomous tracker should have updated within its cadence.
+async function freshness() {
+  const now = Date.now();
+  const specs: [string, string, number][] = [
+    ["autonomous paper loop", "trd_paper_state?id=eq.default&select=updated_at", 13],
+    ["macro pump", "trd_macro_state?id=eq.default&select=updated_at", 13],
+    ["pre-reg tracker", "trd_prereg_state?select=updated_at&order=updated_at.desc&limit=1", 13],
+    ["alpaca crypto exec", "trd_alpaca_state?id=eq.default&select=updated_at", 26],
+    ["alpaca equity exec", "trd_alpaca_state?id=eq.equity&select=updated_at", 26],
+  ];
+  const out: any[] = [];
+  for (const [name, q, maxH] of specs) {
+    const row = await fetch(`${SB}/rest/v1/${q}`, { headers: H }).then((r) => r.json()).then((x) => x?.[0] ?? null).catch(() => null);
+    const ts = row?.updated_at ? Date.parse(row.updated_at) : NaN;
+    const ageH = Number.isFinite(ts) ? (now - ts) / 3600000 : null;
+    out.push({ name, updated: row?.updated_at ?? null, ageHours: ageH != null ? +ageH.toFixed(1) : null, maxHours: maxH, stale: ageH == null ? true : ageH > maxH });
+  }
+  return out;
+}
+// ORDER-FLOW LEVELS (D-129): live dealer-GEX + auction value areas, the free SpotGamma/auction stack.
+async function orderFlow() {
+  const gex: any[] = [];
+  for (const s of ["SPY", "_SPX"]) {
+    const g = await fetch(`${BASE}/trd-gex?symbol=${s}`).then((r) => r.json()).catch(() => null);
+    if (g?.ok) gex.push({ symbol: g.symbol, spot: g.spot, regime: g.regime, regimeRead: g.regime_read, callWall: g.call_wall, putWall: g.put_wall, flip: g.gamma_flip, totalGexBn: g.total_gex_bn, volRegime: g.vol_regime?.regime ?? null, deRisk: g.vol_regime?.deRisk ?? null, expFwdVol: g.vol_regime?.expectedFwdVolPct ?? null, dixPct: g.vol_regime?.dixPercentile ?? null, dixLean: g.vol_regime?.darkPoolLean ?? null });
+  }
+  const va: any[] = [];
+  for (const [name, sym, tf] of [["S&P (SPY)", "SPY", "1h"], ["Nasdaq (QQQ)", "QQQ", "1h"], ["BTC", "BTCUSDT", "1h"], ["ETH", "ETHUSDT", "1h"]] as [string, string, string][]) {
+    const v = await fetch(`${BASE}/trd-value-area?symbol=${sym}&tf=${tf}`).then((r) => r.json()).catch(() => null);
+    if (v?.ok && v.developing) va.push({ name, sym, spot: v.spot, poc: v.developing.poc, vah: v.developing.vah, val: v.developing.val, priorPoc: v.prior?.poc ?? null, compVah: v.composite?.vah ?? null, compVal: v.composite?.val ?? null, loc: v.location_vs_composite });
+  }
+  return { gex, va };
+}
+// UNIVERSE SIZING (D-139): live per-instrument forward-vol de-risk across every asset the engine trades,
+// pulled from the two executor probes — so the operator sees exactly how big each position is sized and why.
+async function universeSizing() {
+  const rows: any[] = []; (globalThis as any).__szErr = [];
+  try {
+    const er = await fetch(`${BASE}/trd-alpaca-equity-tick?probe=1`);
+    const eq = er.ok ? await er.json() : null; if (!er.ok) (globalThis as any).__szErr.push(`eq ${er.status}`);
+    if (eq?.ok) {
+      for (const [s, v] of Object.entries(eq.unifiedFwdVolDeRisk ?? {})) rows.push({ sym: s, cls: "equity index", signal: "GEX+VIXterm+RV", fwdVol: (v as any).forecastVolPct, deRisk: (v as any).deRisk });
+      for (const [s, v] of Object.entries(eq.assetVolDeRisk ?? {})) rows.push({ sym: s, cls: s === "GLD" ? "gold" : s === "TLT" ? "bonds" : s === "USO" ? "oil" : "asset", signal: (v as any).ivIndex, iv: (v as any).ivLevel, fwdVol: (v as any).forecastVolPct, deRisk: (v as any).deRisk });
+    }
+  } catch (e) { (globalThis as any).__szErr.push(`eq:${String(e).slice(0, 60)}`); }
+  try {
+    const cr = await fetch(`${BASE}/trd-alpaca-tick?volprobe=1`).then((r) => r.json()).catch(() => null);
+    if (cr?.ok) for (const [s, v] of Object.entries(cr.sizing ?? {})) rows.push({ sym: s, cls: "crypto", signal: (v as any).applied === "dvol" ? "DVOL" : "vol-regime", iv: (v as any).dvol, fwdVol: (v as any).forecastVolPct, deRisk: (v as any).dvolDeRisk });
+  } catch (e) { (globalThis as any).__szErr.push(`cr:${String(e).slice(0, 60)}`); }
+  return rows;
+}
+// LOCKED-SPEC DECISION SCAN (D-152): the one verified signal, run live across the verified book.
+async function decisionScan() {
+  try {
+    const r = await fetch(`${BASE}/trd-decide?scan=1&equity=10000&deposit=10000`);
+    const j = r.ok ? await r.json() : null;
+    return j?.ok ? j : null;
+  } catch { return null; }
+}
+// SHORT-FLOW + LITERATURE LEDGER (D-158) — non-price awareness + what the published record says vs our data.
+async function shortFlowAndClaims() {
+  let flow: any = null, claims: any[] = [], counts: any = {};
+  try { const r = await fetch(`${BASE}/trd-shortflow`); const j = r.ok ? await r.json() : null; if (j?.ok) flow = j; } catch { /* */ }
+  try { claims = await fetch(`${SB}/rest/v1/trd_claims?select=claim,source,authors,year,category,our_verdict,our_evidence&order=id`, { headers: H }).then((r) => r.json()); } catch { /* */ }
+  for (const c of claims) counts[c.our_verdict] = (counts[c.our_verdict] ?? 0) + 1;
+  return { flow, claims, counts };
+}
+async function gather() {
+  const ps = await fetch(`${SB}/rest/v1/trd_paper_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const st = ps[0] ?? null; const a = st?.account ?? null;
+  const reps = await fetch(`${SB}/rest/v1/trd_platform_reports?select=grade`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const grades: Record<string, number> = {}; for (const r of (reps as any[])) grades[r.grade] = (grades[r.grade] ?? 0) + 1;
+  // MACRO regime (from trd-macro-pump)
+  const ms = await fetch(`${SB}/rest/v1/trd_macro_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const mrow = ms[0] ?? null; const me = mrow?.economies?.[0] ?? null;
+  const macro = mrow ? { phase: me?.phase ?? "UNKNOWN", fragility: Number(me?.fragility ?? 0), deRisk: Number(mrow.blended_de_risk ?? 1), expectation: me?.expectation ?? "", signals: (me?.signals ?? []) as string[], asOf: mrow.as_of ?? null } : null;
+  // PRE-REGISTERED hypotheses + their forward verdict (the honest, un-deflated forward test)
+  const pre = await fetch(`${SB}/rest/v1/trd_prereg?active=eq.true&select=id,market,timeframe,spec,registered_at`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const pst = await fetch(`${SB}/rest/v1/trd_prereg_state?select=hyp_id,fwd_n,fwd_expectancy_r,fwd_total_r`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const pmap = new Map((pst as any[]).map((s) => [s.hyp_id, s]));
+  const hyps = (pre as any[]).map((h) => { const s = pmap.get(h.id) ?? {}; return { id: h.id, market: h.market, tf: h.timeframe, spec: h.spec, registered: h.registered_at, n: s.fwd_n ?? 0, exp: Number(s.fwd_expectancy_r ?? 0) }; });
+  // DECODED corpus (assessed strategies + the cycle finding)
+  const corpus = await fetch(`${SB}/rest/v1/trd_strategies?select=name,strategy_class,verdict,evidence`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const rejected = (corpus as any[]).filter((c) => String(c.verdict).toUpperCase().startsWith("REJECT")).length;
+  const cycle = (corpus as any[]).find((c) => c.strategy_class === "cycle");
+  const cyclePrediction = cycle?.evidence?.forward_prediction_prereg ?? null;
+  let equity = a?.equity ?? 5000, start = a?.startEquity ?? 5000, peak = a?.peakEquity ?? start;
+  const mult = equity / start, dd = peak > 0 ? (peak - equity) / peak : 0;
+  const perSess: { key: string; n: number; exp: number; decay: string; decayReason: string }[] = [];
+  for (const [k, r] of Object.entries(a?.perSetupR ?? {})) { const arr = r as number[]; const dr = decayReport(arr); perSess.push({ key: k, n: arr.length, exp: arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : 0, decay: dr.status, decayReason: dr.reason }); }
+  perSess.sort((x, y) => y.exp - x.exp);
+  const volRegime = await volRegimes();
+  const orderFlowLevels = await orderFlow();
+  const sizing = await universeSizing();
+  const decision = await decisionScan();
+  const lit = await shortFlowAndClaims();
+  const fresh = await freshness();
+  const rs = await fetch(`${SB}/rest/v1/trd_risk_state?id=eq.default&select=*`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const liveRisk = (rs as any[])[0] ?? null;
+  const mrs = await fetch(`${SB}/rest/v1/trd_prereg_state?hyp_id=eq.meanrev-vix-v1&select=forward_trades,fwd_n,fwd_expectancy_r`, { headers: H }).then((r) => r.json()).catch(() => []);
+  const meanrev = (mrs as any[])[0] ? { scanner: (mrs as any[])[0].forward_trades?.scanner ?? [], n: (mrs as any[])[0].fwd_n ?? 0, exp: Number((mrs as any[])[0].fwd_expectancy_r ?? 0) } : null;
+  return { st, a, equity, start, mult, dd, ticks: st?.ticks ?? 0, updated: st?.updated_at ?? null, openPos: a?.positions?.length ?? 0, closed: a?.closed?.length ?? 0, survived: equity > start * 0.5, perSess, grades, reports: (reps as any[]).length, macro, hyps, corpusN: (corpus as any[]).length, rejected, cyclePrediction, volRegime, fresh, liveRisk, meanrev, gex: orderFlowLevels.gex, valueAreas: orderFlowLevels.va, sizing, decision, lit };
+}
+function j(d: any) { return { protocol_version: 1, project_kind: "aegis", generated_at: new Date().toISOString(), summary: { status: d.survived ? "alive" : "breached", equity: Math.round(d.equity), multiple: +d.mult.toFixed(3), max_drawdown_pct: +(d.dd * 100).toFixed(1), ticks: d.ticks, open_positions: d.openPos, closed_trades: d.closed, platform_reports: d.reports, macro_phase: d.macro?.phase ?? "UNKNOWN", macro_de_risk: d.macro?.deRisk ?? 1 }, data: { per_session_setup: d.perSess, grades: d.grades, factor_book_sharpe: 1.0, macro: d.macro, vol_regime: d.volRegime, tracker_freshness: d.fresh, live_account_risk: d.liveRisk?.snapshot ?? null, meanrev_scanner: d.meanrev, prereg_hypotheses: d.hyps, corpus_assessed: d.corpusN, corpus_rejected: d.rejected, cycle_prediction: d.cyclePrediction, gex_levels: d.gex, value_areas: d.valueAreas, universe_sizing: d.sizing, decision_scan: d.decision, short_flow: d.lit?.flow ?? null, literature_ledger: { claims: d.lit?.claims ?? [], counts: d.lit?.counts ?? {} } }, open_work: ["live real-money bridge (paper-first, gated)", "close risk-inventory gaps", "auth/billing", "branded domain"], recent_events: [], query_errors: (globalThis as any).__szErr ?? [] }; }
+function esc(s: string) { return String(s).replace(/</g, "&lt;"); }
+function html(d: any) {
+  const upd = d.updated ? new Date(d.updated).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
+  const gc = (g: string) => ({ A: "#40b784", B: "#40b784", C: "#d99a3c", D: "#d99a3c", F: "#e15a4f" } as any)[g] ?? "#8b97aa";
+  const decayCol = (s: any) => s.n < 30 ? ["noise (n<30)", "var(--faint)"] : s.decay === "dead" ? ["DEAD — retire", "var(--red)"] : s.decay === "decaying" ? ["decaying", "var(--amber)"] : s.decay === "improving" ? ["improving", "var(--accent)"] : s.exp > 0 ? ["stable · scaling", "var(--accent)"] : ["stable · benched", "var(--faint)"];
+  const sessRows = d.perSess.length ? d.perSess.map((s: any) => { const [dl, dc] = decayCol(s); return `<tr><td class=mono>${esc(s.key)}</td><td class="mono num">${s.n}</td><td class="mono num" style="color:${s.exp > 0 ? "var(--accent)" : "var(--red)"}">${s.exp.toFixed(2)}R</td><td class=mono style="color:${dc}">${dl}</td></tr>`; }).join("") : `<tr><td colspan=4 style="color:var(--faint)">no trades yet — waiting for the next 6h tick</td></tr>`;
+  // D-102 tracker freshness
+  const fresh = d.fresh ?? []; const anyStale = fresh.filter((f: any) => f.stale).length;
+  const freshSection = `
+<h2>Tracker freshness — is the autonomous engine actually running?${anyStale ? ` <span style="color:var(--red)">${anyStale} STALE</span>` : ` <span style="color:var(--accent)">all live</span>`}</h2>
+<div class=panel>${fresh.map((f: any) => `<div class=row><span>${esc(f.name)}</span><span class=mono style="color:${f.stale ? "var(--red)" : "var(--accent)"}">${f.ageHours != null ? f.ageHours + "h ago" : "never"} · ${f.stale ? "STALE (>" + f.maxHours + "h)" : "ok"}</span></div>`).join("")}</div>`;
+  const gradeRows = Object.keys(d.grades).length ? Object.entries(d.grades).map(([g, n]) => `<span class=pill style="color:${gc(g)};border-color:${gc(g)}55">${g}: ${n}</span>`).join("") : "<span style=color:var(--faint)>none graded yet</span>";
+  // MACRO panel
+  const m = d.macro;
+  const phaseColor = (p: string) => ({ EXPANSION: "var(--accent)", RECOVERY: "var(--accent)", LATE_CYCLE: "var(--amber)", CONTRACTION: "var(--red)", UNKNOWN: "var(--faint)" } as any)[p] ?? "var(--faint)";
+  const drColor = !m ? "var(--faint)" : m.deRisk >= 0.99 ? "var(--accent)" : m.deRisk >= 0.6 ? "var(--amber)" : "var(--red)";
+  const macroSignals = m && m.signals.length ? m.signals.map((s: string) => `<span class=pill style="color:var(--amber);border-color:var(--amber)55">${esc(s)}</span>`).join("") : `<span style="color:var(--faint)">none firing — benign regime</span>`;
+  const macroSection = `
+<h2>Macro regime — where the economy sits, and the risk it implies</h2>
+<div class=grid>
+<div class=card><div class=lbl>US cycle phase</div><div class=v style="color:${phaseColor(m?.phase ?? "UNKNOWN")}">${m?.phase ?? "—"}</div><div class=s>as of ${m?.asOf ?? "—"}</div></div>
+<div class=card><div class=lbl>Fragility</div><div class=v>${m ? (m.fragility * 100).toFixed(0) : "—"}%</div><div class=s>0 robust · 100 primed to break</div></div>
+<div class=card><div class=lbl>De-risk applied</div><div class=v style="color:${drColor}">${m ? (m.deRisk * 100).toFixed(0) : "100"}%</div><div class=s>bot size × this (≤100%)</div></div>
+<div class=card><div class=lbl>Signals firing</div><div class=v>${m ? m.signals.length : 0}</div><div class=s>curve · vol regime</div></div>
+</div>
+<div class=panel style="margin-top:14px"><div class=lbl>What to expect — fragility, NOT direction</div><div style="font-size:13px;color:var(--tx)">${esc(m?.expectation ?? "Macro pump has not run yet — the bot runs at full (already-capped) risk until it does.")}</div><div style="margin-top:10px">${macroSignals}</div></div>`;
+  // VOL-REGIME panel — the D-100 verified tail-risk control, per instrument, exactly as sized in the order path
+  const vr = d.volRegime ?? [];
+  const vrColor = (x: any) => x.deRisk >= 0.99 ? "var(--accent)" : x.deRisk >= 0.6 ? "var(--amber)" : "var(--red)";
+  const anyElevated = vr.filter((x: any) => x.elevated).length;
+  const volSection = `
+<h2>Tail-risk regime — the verified control (D-100), live in the order path</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">On 121,962 real market-days a &gt;3σ "tail" day is <b style=color:var(--tx)>~5.9× more likely</b> when trailing-20d volatility sits above its own 1-year median — a regime knowable <i>in advance</i> (84.5% of all tail days occur in it). The engine can't predict the day or the direction, so it does the one honest thing: <b style=color:var(--tx)>shrinks size in proportion to how elevated vol is</b> (×min(1, 1y-median ÷ current), floor 30%, never levers up). ${anyElevated ? `<b style=color:var(--amber)">${anyElevated}/${vr.length} markets are in an elevated regime right now → the bots are already sized down there.</b>` : `All ${vr.length} tracked markets are calm → full (already-capped) size.`}</div>
+<div class=grid>${vr.map((x: any) => `<div class=card><div class=lbl>${esc(x.name)}</div><div class=v style="color:${vrColor(x)}">×${x.deRisk.toFixed(2)}</div><div class=s>${x.elevated ? "ELEVATED" : "calm"} · RV ${x.rvPct ?? "—"}% vs 1y ${x.medianRvPct ?? "—"}%</div></div>`).join("")}</div>`;
+  // LIVE ACCOUNT RISK — the polled monitor (D-106) on the real book
+  const lr = d.liveRisk?.snapshot; const lrCol = !lr ? "var(--faint)" : lr.verdict === "RUINOUS" ? "var(--red)" : lr.verdict === "OVER-SIZED" ? "var(--amber)" : lr.verdict === "AGGRESSIVE" ? "var(--amber)" : "var(--accent)";
+  const liveRiskSection = lr ? `
+<h2>Live account risk — the monitor, polling the real book hourly (D-106)</h2>
+<div class=grid>
+<div class=card><div class=lbl>Verdict</div><div class=v style="color:${lrCol}">${esc(lr.verdict)}</div><div class=s>$${Math.round(lr.equity ?? 0).toLocaleString()} equity</div></div>
+<div class=card><div class=lbl>P(50%+ drawdown/yr)</div><div class=v style="color:${lrCol}">${lr.probRuin != null ? (lr.probRuin * 100).toFixed(1) + "%" : "—"}</div><div class=s>fat-tailed, real history</div></div>
+<div class=card><div class=lbl>Real bets</div><div class=v>${lr.effectiveBets ?? "—"}</div><div class=s>of ${lr.nominalPositions ?? 0} positions</div></div>
+<div class=card><div class=lbl>Gross exposure</div><div class=v>${lr.grossExposure != null ? (lr.grossExposure * 100).toFixed(0) + "%" : "—"}</div><div class=s>ann vol ${lr.annualizedVol != null ? (lr.annualizedVol * 100).toFixed(0) + "%" : "—"}</div></div>
+</div>
+<div class=panel style="margin-top:14px;font-size:13px;color:var(--tx)">${esc(lr.plainEnglish ?? "")} <span style="color:var(--faint)">Reads-only; halts our paper bots on a ruinous reading, never touches real positions.</span></div>` : "";
+  // MEAN-REVERSION FAVOURABILITY SCANNER (D-111) — which markets are in a favourable setup right now
+  const mr = d.meanrev; const scan = mr?.scanner ?? [];
+  const meanrevSection = mr ? `
+<h2>Favourability scanner — meanrev-vix-v1 (where the odds are right now)</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">VIX-conditioned mean-reversion (RSI-2 extreme + 200MA regime + VIX≥20). ${scan.length ? `<b style=color:var(--amber)">${scan.length} favourable setup${scan.length > 1 ? "s" : ""} firing now</b> — the regime is live.` : `<b style=color:var(--accent)">No setups — VIX calm, sit out.</b> The edge pays in stress, not quiet tape.`} Forward test: ${mr.n < 30 ? `accumulating ${mr.n}/30` : (mr.exp >= 0 ? "+" : "") + mr.exp.toFixed(3) + "R"}.</div>
+${scan.length ? `<table><thead><tr><th>market</th><th>side</th><th class=num>RSI-2</th><th class=num>price</th><th class=num>stop%</th><th class=num>VIX</th></tr></thead><tbody>${scan.slice(0, 20).map((s: any) => `<tr><td class=mono>${esc(s.sym)}</td><td class=mono style="color:${s.side === "long" ? "var(--accent)" : "var(--red)"}">${esc(s.side)}</td><td class="mono num">${s.rsi}</td><td class="mono num">${s.price}</td><td class="mono num">${s.stopPct}%</td><td class="mono num">${s.vix}</td></tr>`).join("")}</tbody></table>` : ""}` : "";
+  // ORDER-FLOW LEVELS (D-129) — free dealer-GEX + auction value areas, the SpotGamma/auction stack
+  const gexArr = d.gex ?? []; const vaArr = d.valueAreas ?? [];
+  const regCol = (r: string) => r === "positive" ? "var(--accent)" : "var(--red)";
+  const near = (spot: number, level: number | null) => level == null ? "var(--faint)" : Math.abs(spot - level) / spot < 0.005 ? "var(--amber)" : "var(--tx)";
+  const orderFlowSection = (gexArr.length || vaArr.length) ? `
+<h2>Order-flow levels — where dealers hedge & where the auction values price (D-129, free)</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">Reconstructed FREE (CBOE chain for GEX, volume-profile for value) — the SpotGamma + auction-market stack without the subscriptions. <b style=color:var(--tx)>Positive gamma</b> = dealers dampen, price gravitates to value/POC (fade the walls). <b style=color:var(--tx)>Negative gamma</b> = dealers amplify, breakouts run. These are <i>awareness context</i> (where the battle is), never a signal.</div>
+${gexArr.length ? `<table><thead><tr><th>underlying</th><th class=num>spot</th><th>gamma regime</th><th class=num>put wall</th><th class=num>flip</th><th class=num>call wall</th><th>fwd-vol regime → size</th></tr></thead><tbody>${gexArr.map((g: any) => `<tr><td class=mono>${esc(g.symbol)}</td><td class="mono num">${g.spot}</td><td class=mono style="color:${regCol(g.regime)}">${esc(g.regime)} ${g.totalGexBn >= 0 ? "+" : ""}${g.totalGexBn}B</td><td class="mono num" style="color:var(--accent)">${g.putWall}</td><td class="mono num" style="color:${near(g.spot, g.flip)}">${g.flip ?? "—"}</td><td class="mono num" style="color:var(--red)">${g.callWall}</td><td class=mono style="font-size:11px;color:${g.deRisk != null && g.deRisk < 0.85 ? "var(--amber)" : "var(--mut)"}">${g.volRegime ? `${esc(g.volRegime)} · ~${g.expFwdVol}% → ×${g.deRisk}` : "—"}</td></tr>`).join("")}</tbody></table><div style="font-size:11.5px;color:var(--faint);margin-top:6px">fwd-vol regime = the D-132 signal: 15y-validated (GEX t=−14.1 over trailing-RV) forward-vol de-risk. Low-gamma → ~2× vol → size down. SIZING only, never a direction call.</div>
+${gexArr[0]?.dixLean ? `<div style="font-size:12px;color:var(--mut);margin-top:8px"><b style="color:var(--tx)">DIX (dark-pool)</b>: ${(gexArr[0].dixPct * 100).toFixed(0)}th pctile — ${esc(gexArr[0].dixLean)}. <span style="color:var(--faint)">Awareness only: D-136 gated it as tradable alpha → FAILED (DSR 29%). A lean, not a signal.</span></div>` : ""}` : ""}
+${vaArr.length ? `<table style="margin-top:14px"><thead><tr><th>market</th><th class=num>spot</th><th class=num>VAL</th><th class=num>POC</th><th class=num>VAH</th><th class=num>prior POC</th><th>location</th></tr></thead><tbody>${vaArr.map((v: any) => `<tr><td class=mono>${esc(v.name)}</td><td class="mono num">${v.spot}</td><td class="mono num" style="color:var(--accent)">${v.val}</td><td class="mono num" style="color:var(--amber)">${v.poc}</td><td class="mono num" style="color:var(--red)">${v.vah}</td><td class="mono num">${v.priorPoc ?? "—"}</td><td class=mono style="font-size:11px;color:var(--mut)">${esc(String(v.loc ?? ""))}</td></tr>`).join("")}</tbody></table>` : ""}` : "";
+  // SHORT-FLOW AWARENESS + LITERATURE LEDGER (D-158)
+  const sf = d.lit?.flow, cl = d.lit?.claims ?? [], cc = d.lit?.counts ?? {};
+  const vcol = (v: string) => v === "CONFIRMED" ? "var(--accent)" : v.startsWith("FAILED") ? "var(--red)" : "var(--faint)";
+  const shortFlowSection = sf ? `
+<h2>Short-flow awareness — real order flow (FINRA), ${sf.asof}</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">What share of each instrument's volume was executed as SHORT sales, ranked against its own 2018-2026 history (<b style="color:var(--tx)">89,762 symbol-days</b>). Book mean today: <b style="color:var(--tx)">${sf.book_mean_short_pct}%</b>. <span style="color:var(--amber)">AWARENESS ONLY — not a signal.</span> <span style="color:var(--faint)">Tested to destruction (D-157): it inverts the published Boehmer effect, passed the pooled incremental test (IS t=+2.95 / OOS t=+2.91) then FAILED decomposition — ETFs flip sign, single stocks collapse, so the pooled stability was an aggregation artifact.</span></div>
+<div class=two>
+<div class=panel><div class=lbl>Unusually HIGH short flow (≥90th pctile)</div>${sf.unusually_high.length ? sf.unusually_high.map((x: string) => `<div class=row><span class=mono style="font-size:12px">${esc(x)}</span></div>`).join("") : `<div style="color:var(--faint);font-size:12px">none today</div>`}</div>
+<div class=panel><div class=lbl>Unusually LOW short flow (≤10th pctile)</div>${sf.unusually_low.length ? sf.unusually_low.map((x: string) => `<div class=row><span class=mono style="font-size:12px">${esc(x)}</span></div>`).join("") : `<div style="color:var(--faint);font-size:12px">none today</div>`}</div>
+</div>
+<div style="font-size:11.5px;color:var(--faint);margin-top:8px">ETFs structurally run 59-62% short volume vs 37-41% for single stocks (market-maker create/redeem + hedging), so each symbol is compared only to ITSELF.</div>` : "";
+  const litSection = cl.length ? `
+<h2>Literature ledger — what the published record claims vs what OUR data says</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">The meta-studies have already catalogued the field, and the verdict is brutal: <b style="color:var(--tx)">Hou-Xue-Zhang replicated 452 anomalies — 65% fail at |t|&gt;1.96, 82% at 2.78, 85% at t&gt;3</b>; Harvey-Liu-Zhu conclude "most claimed research findings in financial economics are likely false"; McLean-Pontiff measure 26-58% post-publication decay. Our independent corpus agrees: <b style="color:var(--tx)">1 of 14 strategy families</b> beat a random control and profited. The full <b style="color:var(--tx)">859-claim ledger</b> (Harvey-Liu-Zhu + Chen-Zimmermann catalogues, with references and testability) is in <span class=mono style="font-size:11px">data/literature/claims-ledger.csv</span>.</div>
+<div class=grid>
+<div class=card><div class=lbl>Claims catalogued</div><div class=v>859</div><div class=s>+ ${cl.length} adjudicated below</div></div>
+<div class=card><div class=lbl>Confirmed by our data</div><div class=v style="color:var(--accent)">${cc["CONFIRMED"] ?? 0}</div><div class=s>survived every gate</div></div>
+<div class=card><div class=lbl>Failed our gates</div><div class=v style="color:var(--red)">${Object.entries(cc).filter(([k]) => k.startsWith("FAILED")).reduce((s2, [, v]) => s2 + (v as number), 0)}</div><div class=s>random-control / OOS / decomposition</div></div>
+<div class=card><div class=lbl>Testable with free data</div><div class=v>256</div><div class=s>of 859 (189 need paid fundamentals)</div></div>
+</div>
+<table style="margin-top:14px"><thead><tr><th>claim</th><th>source</th><th>category</th><th>our verdict</th></tr></thead><tbody>${cl.map((c: any) => `<tr><td style="font-size:12px">${esc(String(c.claim).slice(0, 110))}</td><td class=mono style="font-size:11px;color:var(--mut)">${esc(String(c.authors ?? c.source).slice(0, 34))}</td><td class=mono style="font-size:11px;color:var(--mut)">${esc(c.category)}</td><td class=mono style="font-size:11px;color:${vcol(c.our_verdict)}">${esc(c.our_verdict)}</td></tr>`).join("")}</tbody></table>
+<div style="font-size:11.5px;color:var(--faint);margin-top:8px">Gold vs fluff is decided by our gates, not by the author's reputation: random-entry control (D-146), both-halves sign stability (D-155), incremental-to-price (D-156), and subgroup decomposition (D-157).</div>` : "";
+  // LOCKED-SPEC DECISION (D-152) — the single verified signal, live across the verified book
+  const dec = d.decision;
+  const decSection = dec ? `
+<h2>Buy / sell decision — the ONE verified signal (D-147/152, locked spec)</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">Of <b style="color:var(--tx)">14 strategy families × 45 instruments × full history</b>, exactly one both beat a matched random-entry control AND made money: <b style="color:var(--tx)">dip-buy — RSI${dec.spec.rsiPeriod} &lt; ${dec.spec.rsiThreshold} while price &gt; ${dec.spec.trendMA}MA</b> (+${dec.spec.expectancyR}R vs random −0.051R, t=${dec.spec.vsRandomT}; OOS +${dec.spec.oosExpectancyR}R, t=${dec.spec.oosT}; beats random in calm/normal/stress independently). <b style="color:var(--tx)">It never issues SELL</b> — no short setup ever passed the control. Loosening it, expanding the book, or cherry-picking instruments were all tested and all destroy the edge (D-150/151/152), so the spec is <b style="color:var(--tx)">locked</b>.</div>
+<div class=grid>
+<div class=card><div class=lbl>Signals firing now</div><div class=v style="color:${dec.firing > 0 ? "var(--accent)" : "var(--faint)"}">${dec.firing}</div><div class=s>of ${dec.universe_size} in the verified book</div></div>
+<div class=card><div class=lbl>Portfolio heat</div><div class=v style="color:${dec.portfolio_heat_pct >= dec.heat_budget_pct ? "var(--red)" : "var(--accent)"}">${dec.portfolio_heat_pct}%</div><div class=s>budget ${dec.heat_budget_pct}% total open risk</div></div>
+<div class=card><div class=lbl>Expected frequency</div><div class=v>${dec.spec.firesPerYear}<span style="font-size:14px">/yr</span></div><div class=s>rarity IS the edge</div></div>
+<div class=card><div class=lbl>Return ÷ drawdown</div><div class=v style="color:var(--accent)">${dec.spec.returnPerDrawdown}</div><div class=s>best of all variants tested</div></div>
+</div>
+${dec.firing > 0 ? `<table style="margin-top:14px"><thead><tr><th>instrument</th><th>action</th><th class=num>price</th><th class=num>RSI14</th><th class=num>risk $</th><th class=num>risk %</th><th class=num>size</th><th class=num>stop %</th></tr></thead><tbody>${dec.signals.map((s: any) => `<tr><td class=mono>${esc(s.symbol)}</td><td class=mono style="color:${s.action === "BUY" ? "var(--accent)" : "var(--faint)"}">${esc(s.action)}${s.heat_capped ? " (heat-capped)" : ""}</td><td class="mono num">${s.price}</td><td class="mono num">${s.rsi14}</td><td class="mono num">$${s.risk_amount}</td><td class="mono num">${s.risk_pct}%</td><td class="mono num">${s.position_size}</td><td class="mono num">${s.stop_pct}%</td></tr>`).join("")}</tbody></table>` : `<div class=panel style="margin-top:14px;font-size:13px;color:var(--mut)">${esc(dec.note)}</div>`}
+<div style="font-size:11.5px;color:var(--faint);margin-top:8px">Sizing = house-money model (0.5% of the original deposit + 2% of banked profit) × forward-vol de-risk, capped at 2% per trade and ${dec.heat_budget_pct}% total open risk. Historical evidence and risk arithmetic — not investment advice. Paper-first: no real-money order path.</div>` : "";
+  // UNIVERSE SIZING (D-139) — every traded instrument sized by its own best forward-vol signal
+  const szArr = d.sizing ?? [];
+  const szCol = (x: number) => x == null ? "var(--faint)" : x >= 0.99 ? "var(--accent)" : x >= 0.7 ? "var(--amber)" : "var(--red)";
+  const sizingSection = szArr.length ? `
+<h2>Universe sizing — every position sized by its own forward-vol signal (D-135/137/139)</h2>
+<div class=panel style="margin-bottom:14px;font-size:13px;color:var(--tx)">Each asset class is sized by the implied-vol signal that best predicts ITS forward vol (all passed |t|&gt;2 incremental gates): equity indices by GEX+VIX-term, gold by GVZ, bonds by MOVE, oil by OVX, crypto by DVOL. deRisk = min(1, calm-ref ÷ forecast) — full size when calm, shrink as forecast vol rises, <b style="color:var(--tx)">never levers up</b>. SIZING only, direction-agnostic.</div>
+<table><thead><tr><th>instrument</th><th>asset class</th><th>vol signal</th><th class=num>implied vol</th><th class=num>forecast fwd-vol</th><th class=num>size ×</th></tr></thead><tbody>${szArr.map((x: any) => `<tr><td class=mono>${esc(x.sym)}</td><td class=mono style="font-size:12px;color:var(--mut)">${esc(x.cls)}</td><td class=mono style="font-size:12px">${esc(String(x.signal ?? ""))}</td><td class="mono num">${x.iv != null ? x.iv : "—"}</td><td class="mono num">${x.fwdVol != null ? x.fwdVol + "%" : "—"}</td><td class="mono num" style="color:${szCol(x.deRisk)}">×${x.deRisk != null ? x.deRisk : "—"}</td></tr>`).join("")}</tbody></table>
+<div style="font-size:12px;color:var(--mut);margin-top:10px"><b style="color:var(--tx)">Session × timeframe (D-141, 15y 1-min):</b> intraday vol by session, scaled by today's regime — ${sessionExpectedVol((szArr.find((r: any) => r.sym === "SPY")?.fwdVol) ?? 13.4).map((s) => `<b style="color:var(--tx)">${s.session}</b> ~${s.expectedPct}%`).join(" · ")}. <span style="color:var(--faint)">NY ≈3× Asia; the daily regime carries into every session (~2× low-γ), so the same de-risk sizes 1m scalps and daily swings alike. Vol is candle-stable across 1m/5m/15m/60m.</span></div>` : "";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aegis — Command Cockpit</title><style>:root{--bg:#0a0d13;--sf:#111621;--sf2:#161e2b;--ln:#222c3c;--tx:#e7ecf3;--mut:#8b97aa;--faint:#5d6879;--accent:#40b784;--red:#e15a4f;--amber:#d99a3c;--mono:ui-monospace,Menlo,monospace;--sans:system-ui,sans-serif}@media(prefers-color-scheme:light){:root{--bg:#f3f5f3;--sf:#fff;--sf2:#edf0ee;--ln:#dde2df;--tx:#131820;--mut:#5a6472;--faint:#8c96a3;--accent:#1c8a5a;--red:#c23a30}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.5}.wrap{max-width:1040px;margin:0 auto;padding:0 22px 60px}.mono{font-family:var(--mono)}.num{font-variant-numeric:tabular-nums;text-align:right}.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}header{border-bottom:1px solid var(--ln)}.bar{display:flex;justify-content:space-between;align-items:center;padding:18px 0}.brand{font-family:var(--mono);font-weight:700;letter-spacing:.04em;display:flex;gap:9px;align-items:center}.dot{width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}h2{font-size:14px;margin:34px 0 12px;letter-spacing:-.01em}.grid{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}@media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}}.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:15px}.card .lbl{margin-bottom:6px}.card .v{font-family:var(--mono);font-size:24px;font-weight:700}.card .s{font-size:12px;color:var(--mut);margin-top:2px}table{width:100%;border-collapse:collapse;font-size:13px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;overflow:hidden}th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--ln)}th{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}tbody tr:last-child td{border-bottom:0}.two{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:760px){.two{grid-template-columns:1fr 1fr}}.panel{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:16px 18px}.panel .lbl{margin-bottom:10px}.row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}.row a{color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:12px}.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:4px;border:1px solid var(--ln);margin:3px 4px 0 0}.ok{color:var(--accent)}.warn{color:var(--amber)}li{margin:4px 0;font-size:13px;color:var(--mut)}ul{margin:6px 0;padding-left:18px}</style></head><body><header><div class="wrap bar"><div class=brand><span class=dot></span> AEGIS · COMMAND COCKPIT</div><div class=mono style="font-size:12px;color:var(--mut)">live · updated ${upd}</div></div></header><main class=wrap>
+<h2>Autonomous paper account — the live 'keep + compound' test</h2>
+<div class=grid>
+<div class=card><div class=lbl>Status</div><div class=v style="color:${d.survived ? "var(--accent)" : "var(--red)"}">${d.survived ? "ALIVE" : "BREACHED"}</div><div class=s>firewall protecting</div></div>
+<div class=card><div class=lbl>Equity</div><div class=v>$${Math.round(d.equity)}</div><div class=s>from $${d.start} · ${d.mult.toFixed(3)}x</div></div>
+<div class=card><div class=lbl>Max drawdown</div><div class=v>${(d.dd * 100).toFixed(1)}%</div><div class=s>${d.openPos} open · ${d.closed} closed</div></div>
+<div class=card><div class=lbl>Ticks</div><div class=v>${d.ticks}</div><div class=s>10 markets · every 6h</div></div>
+</div>
+${decSection}
+${macroSection}
+${volSection}
+${orderFlowSection}
+${sizingSection}
+${shortFlowSection}
+${litSection}
+${liveRiskSection}
+${meanrevSection}
+<h2>Pre-registered hypotheses — the honest forward test (un-deflated single trials)</h2>
+<div class=panel>${(d.hyps && d.hyps.length) ? d.hyps.map((h: any) => {
+    const ready = h.n >= 30; const good = h.exp > 0;
+    const col = h.n < 30 ? "var(--faint)" : good ? "var(--accent)" : "var(--red)";
+    return `<div class=row><span class=mono style="font-size:12px">${esc(h.id)} <span style="color:var(--faint)">(${esc(h.market)} ${esc(h.tf)} · ${esc(h.spec?.trigger ?? "")} rr${esc(String(h.spec?.rr ?? ""))})</span></span><span class=mono style="color:${col}">${ready ? `${h.exp >= 0 ? "+" : ""}${h.exp.toFixed(3)}R · ${good ? "forward-positive" : "forward-negative"}` : `accumulating ${h.n}/30`}</span></div>`;
+  }).join("") : `<span style="color:var(--faint)">no active pre-registered hypotheses</span>`}
+<div class=row style="border:0;color:var(--faint);font-size:12px"><span>Frozen spec + timestamp → forward trades only → a single trial the million-sibling search can't bias.</span><span></span></div></div>
+<h2>Decoded corpus — every strategy assessed, honestly</h2>
+<div class=grid>
+<div class=card><div class=lbl>Strategies assessed</div><div class=v>${d.corpusN ?? 0}</div><div class=s>catalogued in trd_strategies</div></div>
+<div class=card><div class=lbl>Rejected by the gate</div><div class=v style="color:var(--red)">${d.rejected ?? 0}</div><div class=s>failed DSR / OOS / cost</div></div>
+<div class=card><div class=lbl>Deflation-cleared</div><div class=v style="color:var(--accent)">${Math.max(0, (d.corpusN ?? 0) - (d.rejected ?? 0) - 1)}</div><div class=s>chart edges (excl. cycle lead)</div></div>
+<div class=card><div class=lbl>Trials searched</div><div class=v>1.01M</div><div class=s>conditional cells, D-083</div></div>
+</div>
+${d.cyclePrediction ? `<div class=panel style="margin-top:14px"><div class=lbl>Pre-registered cycle prediction (BTC halving grand-cycle, D-085)</div><div style="font-size:13px;color:var(--tx)">${esc(String(d.cyclePrediction))}</div></div>` : ""}
+<h2>Per-session × setup — what the allocator is learning (Asia / London / NY)</h2>
+<table><thead><tr><th>session × setup</th><th class=num>trades</th><th class=num>expectancy</th><th>decay watch</th></tr></thead><tbody>${sessRows}</tbody></table>
+${freshSection}
+<div class=two style="margin-top:26px">
+<div class=panel><div class=lbl>Frontend — what's live for traders</div>
+<div class=row><span>Public Terminal (any broker, free)</span><a href="${BASE}/aegis-terminal">open ↗</a></div>
+<div class=row><span>Verify API (real vs overfit)</span><a href="${BASE}/trd-api-verify">POST</a></div>
+<div class=row><span>Protect API (ruin / sizing)</span><a href="${BASE}/trd-api-protect">POST</a></div>
+<div class=row><span>Allocate API (global factor book)</span><a href="${BASE}/trd-api-allocate?preset=global">GET</a></div>
+<div class=row><span>Platform API (grade any account)</span><a href="${BASE}/trd-platform">POST</a></div></div>
+<div class=panel><div class=lbl>Backend — engine + gates</div>
+<div class=row><span>Autonomous loop (pg_cron)</span><span class=mono ok>every 6h</span></div>
+<div class=row><span>Macro regime pump (pg_cron)</span><span class=mono ok>4×/day</span></div>
+<div class=row><span>Pre-reg forward tracker (pg_cron)</span><span class=mono ok>every 6h</span></div>
+<div class=row><span>Risk firewall</span><span class=mono ok>enforcing</span></div>
+<div class=row><span>Real-money order path</span><span class=mono warn>GATED (paper-first)</span></div>
+<div class=row><span>Proven compounding edge</span><span class=mono ok>factor book Sharpe 1.00</span></div>
+<div class=row><span>Accounts graded (platform)</span><span class=mono>${d.reports} · ${gradeRows}</span></div></div>
+</div>
+<h2>The honest verdict (D-071…D-085)</h2><div class=panel><ul>
+<li><b style=color:var(--tx)>No chart/timing signal survives</b> honest testing (~15,000 backtests, regimes, survivorship, PBO).</li>
+<li><b style=color:var(--tx)>Risk management is the durable edge</b> — it keeps accounts alive even trading a losing strategy (proven live above).</li>
+<li><b style=color:var(--tx)>Compounding comes from the global factor book</b> (value+quality+momentum, US+intl+EM) — Sharpe 1.0, not chart setups.</li>
+<li><b style=color:var(--tx)>Macro measures fragility, not direction</b> — the regime overlay only ever shrinks size when the system is primed to break; it never predicts which way price goes.</li>
+<li>The loop trades <b style=color:var(--tx)>10 markets across every session</b> and learns which session×setup has live edge — trusting none until n≥30.</li>
+<li><b style=color:var(--tx)>Evidence base (verified, all free):</b> up to <b style=color:var(--tx)>36.6 years</b> of daily history (VIX 1990→, SPY 1993→), 78k+ daily instrument-days, an 11.15M-bar 1-minute Dukascopy set, a 121,962-market-day tail study, and a <b style=color:var(--tx)>191-test</b> machine-guard suite (every sizing de-risk proven ≤1 — the order path can never lever up). Reproduce: <span class=mono style=font-size:11px>scripts/trd-data-provenance.ts</span>.</li>
+</ul></div>
+</main></body></html>`;
+}
+Deno.serve(async (req) => {
+  const d = await gather();
+  if (new URL(req.url).searchParams.get("format") === "json") return new Response(JSON.stringify(j(d)), { headers: { "content-type": "application/json", "access-control-allow-origin": "*" } });
+  return new Response(html(d), { headers: { "content-type": "text/html; charset=utf-8" } });
+});

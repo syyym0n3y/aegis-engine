@@ -1,0 +1,1 @@
+../_shared/trd-setups.ts

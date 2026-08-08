@@ -20,6 +20,11 @@ which is a SUCCESS of the engine, not a failure.** See [`DECISIONS.md`](./DECISI
 
 ## Session-resume protocol — read in order
 
+0. [`ANALYSIS_CONTRACT.md`](./ANALYSIS_CONTRACT.md) — **binds every analysis: report the measurement not
+   the feeling; real over approximate; built over projected; consistent over convenient.** No bias by mood.
+0b. [`OPERATING_DOCTRINE.md`](./OPERATING_DOCTRINE.md) — **research before you defer (never claim
+   impossible/paid without a verified search); prove before you claim; scale the product not the promise;
+   free-first, paid-on-ROI.** Proactivity + trust + growth/scale doctrine.
 1. [`STATE.md`](./STATE.md) — current live state, what's built, what's blocked.
 2. [`NEXT.md`](./NEXT.md) — the Stage-1 work queue.
 3. [`DECISIONS.md`](./DECISIONS.md) — D-070 + append-only decision log.
@@ -40,6 +45,13 @@ which is a SUCCESS of the engine, not a failure.** See [`DECISIONS.md`](./DECISI
 - **Every Sharpe is reported next to N** (its trial count). A Sharpe without its
   N is a lie. `trd_trial_counter` increments on EVERY backtest run, including
   failed/iterated ones.
+- **Resolve on history FIRST; forward-testing is background confirmation, never
+  the bottleneck.** Every lead is verdicted on ALL available history with
+  walk-forward + trial-count deflation *now* — decades of bars and thousands of
+  trades beat waiting months for a 30-trade forward counter (D-104: btc-sweep-rr3
+  killed on 4,673 historical trades vs 2/30 forward). Forward data is the final
+  signature on something history already cleared. Only genuinely history-poor
+  signals (short-history weekly macro) legitimately wait on forward weeks.
 - **Costs are pessimistic by default.** Paper P&L is never read as "has edge".
 - **Gate thresholds are decision-locked.** Changing DSR>0.95 / PBO<0.5 / sample
   floors requires a NEW `trd_gate_thresholds` row naming a DECISIONS.md entry —
