@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aegis — the falsification engine for traders</title>
+<style>
+:root{--bg:#0a0d13;--sf:#111621;--sf2:#161e2b;--ln:#222c3c;--tx:#e7ecf3;--mut:#8b97aa;--faint:#5d6879;--accent:#40b784;--red:#e15a4f;--amber:#d99a3c;--blue:#4f8ff0;--mono:ui-monospace,Menlo,monospace;--sans:system-ui,-apple-system,sans-serif}
+@media(prefers-color-scheme:light){:root{--bg:#f3f5f3;--sf:#fff;--sf2:#edf0ee;--ln:#dde2df;--tx:#131820;--mut:#5a6472;--faint:#8c96a3;--accent:#1c8a5a;--red:#c23a30}}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px 80px}
+header{border-bottom:1px solid var(--ln);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);z-index:5}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 0;flex-wrap:wrap;gap:10px}
+.brand{font-family:var(--mono);font-weight:700;letter-spacing:.04em;display:flex;gap:9px;align-items:center;font-size:15px}
+.dot{width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{font-family:var(--mono);font-size:12px;background:transparent;color:var(--mut);border:1px solid transparent;border-radius:7px;padding:7px 12px;cursor:pointer}
+nav button.on{background:var(--sf);color:var(--tx);border-color:var(--ln)}
+h1{font-size:26px;letter-spacing:-.02em;margin:26px 0 6px}h2{font-size:14px;margin:30px 0 12px;font-family:var(--mono);color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
+.sub{color:var(--mut);font-size:15px;max-width:640px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}@media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:11px;padding:15px}.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.v{font-family:var(--mono);font-size:24px;font-weight:700}.s{font-size:12px;color:var(--mut);margin-top:2px}
+.panel{background:var(--sf);border:1px solid var(--ln);border-radius:11px;padding:18px 20px;margin-top:14px}
+.mono{font-family:var(--mono)}.num{font-variant-numeric:tabular-nums;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--sf);border:1px solid var(--ln);border-radius:11px;overflow:hidden}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--ln)}th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}tbody tr:last-child td{border-bottom:0}
+label{display:block;font-family:var(--mono);font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 5px}
+input,textarea{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:14px}
+textarea{min-height:90px;resize:vertical}
+.btn{margin-top:16px;font-family:var(--mono);font-weight:600;font-size:13px;background:var(--accent);color:#04120b;border:0;border-radius:8px;padding:11px 20px;cursor:pointer}
+.btn:active{transform:translateY(1px)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:5px;border:1px solid var(--ln);margin:3px 4px 0 0}
+.verdict{font-family:var(--mono);font-size:16px;font-weight:700;margin-bottom:6px}
+.bar{height:9px;border-radius:5px;background:var(--sf2);overflow:hidden;margin-top:4px}.bar>i{display:block;height:100%;background:var(--accent)}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}.row a{color:var(--accent);text-decoration:none}
+ul{padding-left:18px}li{margin:5px 0;font-size:13.5px;color:var(--mut)}li b{color:var(--tx)}
+.view{display:none}.view.on{display:block}
+.muted{color:var(--faint);font-size:12px;font-family:var(--mono)}
+footer{border-top:1px solid var(--ln);margin-top:40px;padding-top:16px;color:var(--faint);font-size:12px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+<div class="brand"><span class="dot"></span> AEGIS</div>
+<nav id="nav"></nav>
+</div></header>
+<main class="wrap">
+
+<section class="view on" data-view="home">
+  <h1>The falsification engine for traders.</h1>
+  <p class="sub">Aegis is not a signal service. It's the opposite: it tries to <b>disprove</b> every strategy before it ever risks a dollar — deflating for the estimation error, the costs, and the thousands of variations tried to find it. Most "edges" don't survive. Knowing which is the whole product.</p>
+  <div class="grid" style="margin-top:22px">
+    <div class="card"><div class="lbl">Universe swept</div><div class="v">170+</div><div class="s">instruments, 9 asset classes</div></div>
+    <div class="card"><div class="lbl">Timeframes</div><div class="v">7</div><div class="s">5m → weekly</div></div>
+    <div class="card"><div class="lbl">Verified edges</div><div class="v" style="color:var(--accent)">3</div><div class="s">after deflation + survivorship</div></div>
+    <div class="card"><div class="lbl">Cost of finding out</div><div class="v">$0</div><div class="s">so you don't blow up</div></div>
+  </div>
+  <div class="panel"><b>The 3 that survived — each on its own terms</b> <span class="muted">every other setup rejected</span>
+    <div class="row"><span><b>rip-short</b> · equity daily · short overbought-below-200MA — 6/11 mega-caps individually, p=1×10⁻⁷</span><span class="mono" style="color:var(--accent)">bull · short</span></div>
+    <div class="row"><span><b>bbfade_lo / bear</b> · equity daily · buy the lower band in a down-market — survivorship-checked (D-197)</span><span class="mono" style="color:var(--accent)">bear · long</span></div>
+    <div class="row"><span><b>crypto momentum</b> · daily + 1h · Donchian breakout — holds on coins down 54–100%, p=1.4×10⁻¹⁰</span><span class="mono" style="color:var(--accent)">crypto · long</span></div>
+  </div>
+  <div class="panel"><b>Use it →</b> <span class="muted">tabs above</span>
+    <div class="row"><span><b>Risk X-ray</b> — will your position sizing blow up the account?</span><a href="#" onclick="go('protect');return false">open →</a></div>
+    <div class="row"><span><b>Authenticity check</b> — is your backtest a real edge or overfit luck?</span><a href="#" onclick="go('verify');return false">open →</a></div>
+    <div class="row"><span><b>Live cockpit</b> — the autonomous paper engine, running now</span><a href="#" onclick="go('cockpit');return false">open →</a></div>
+  </div>
+</section>
+
+<section class="view" data-view="copilot">
+  <h1>Market co-pilot</h1>
+  <p class="sub">Real-time market awareness: <b>what phase we're in, what's about to hurt, where to hide, what's favourable now, and how much to risk</b> — from real leading signals + the history of how instruments behave in each kind of crash. Not advice; awareness.</p>
+  <div id="cp_out">loading…</div>
+</section>
+
+<section class="view" data-view="portfolio">
+  <h1>Portfolio risk X-ray</h1>
+  <p class="sub">The thing that actually blows up accounts isn't a bad signal — it's <b>hidden correlation + oversizing</b>. Paste your real positions from any broker. Aegis pulls real history and shows your <b>true number of bets</b> and your <b>fat-tailed chance of ruin</b> — then how much to cut. No signals. Just the seatbelt.</p>
+  <div class="panel">
+    <label>Account equity ($)</label><input id="pf_eq" value="25000">
+    <label>Positions — one per line: <span class="mono" style="text-transform:none">SYMBOL long|short NOTIONAL$</span></label>
+    <textarea id="pf_pos" style="min-height:120px">NVDA long 12000
+AMD long 12000
+MSFT long 12000
+QQQ long 12000</textarea>
+    <button class="btn" onclick="doPortfolio()">Run the portfolio X-ray</button>
+    <div id="pf_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<section class="view" data-view="prop">
+  <h1>Pass your prop challenge</h1>
+  <p class="sub">~90% of prop evals fail — from no edge or wrong sizing. Enter your real stats and your firm's rules. Aegis Monte-Carlos your <b>true chance of a paid account</b>, the <b>risk-per-trade that maximises it</b>, and whether buying the eval is +EV — and it'll tell you honestly if you have no edge.</p>
+  <div class="panel">
+    <label>Your win rate (0–1)</label><input id="pr_wr" value="0.47">
+    <label>Reward : risk (avg win ÷ avg loss)</label><input id="pr_rr" value="2">
+    <label>Eval cost ($)</label><input id="pr_cost" value="300">
+    <div class="grid" style="margin-top:6px">
+      <div><label>Account ($)</label><input id="pr_acct" value="50000"></div>
+      <div><label>Profit target</label><input id="pr_tgt" value="0.08"></div>
+      <div><label>Max drawdown</label><input id="pr_dd" value="0.10"></div>
+      <div><label>Daily loss limit</label><input id="pr_daily" value="0.05"></div>
+    </div>
+    <button class="btn" onclick="doProp()">Optimise my challenge</button>
+    <div id="pr_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<section class="view" data-view="protect">
+  <h1>Risk X-ray</h1>
+  <p class="sub">The Kelly truth: you don't have a strategy problem, you have a <b>sizing</b> problem. Enter your real numbers — this tells you if the same edge compounds or ruins you.</p>
+  <div class="panel">
+    <label>Win rate (0–1)</label><input id="p_wr" value="0.55">
+    <label>Reward : risk ratio (avg win ÷ avg loss)</label><input id="p_rr" value="2">
+    <label>Risk per trade (fraction of equity, e.g. 0.05 = 5%)</label><input id="p_risk" value="0.05">
+    <button class="btn" onclick="doProtect()">Run the X-ray</button>
+    <div id="p_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<section class="view" data-view="verify">
+  <h1>Authenticity check</h1>
+  <p class="sub">Paste your per-trade returns (R multiples or %). Aegis computes the <b>Deflated Sharpe</b> — is the edge real, or a survivor of the thousands of variations tried to find it?</p>
+  <div class="panel">
+    <label>Per-trade returns, comma-separated</label>
+    <textarea id="v_ret">0.5,-1,1.5,-1,0.8,-1,2,-1,1,-1,0.6,-1,1.2,-1,0.9,-1,1.4,-1,0.7,-1</textarea>
+    <label>Periods per year (252 daily, 12 monthly, 35040 for 15m)</label><input id="v_ppy" value="252">
+    <button class="btn" onclick="doVerify()">Check authenticity</button>
+    <div id="v_out" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<section class="view" data-view="allocate">
+  <h1>Global allocator</h1>
+  <p class="sub">The one thing that cleared every gate: a diversified global risk-premia book (value + quality + momentum across US / developed / emerging). Not a chart pattern — the honest engine of compounding.</p>
+  <div id="a_out" class="panel">loading…</div>
+</section>
+
+<section class="view" data-view="cockpit">
+  <h1>Live cockpit</h1>
+  <p class="sub">The autonomous paper engine — trading 10 markets across every session, macro-throttled, firewall-protected. Updates every 6h on its own. <span id="c_upd" class="muted"></span></p>
+  <div id="c_out">loading…</div>
+</section>
+
+<section class="view" data-view="doctrine">
+  <h1>What we found</h1>
+  <div class="panel"><ul>
+    <li><b>Three edges survive the full gate</b> — across 170+ instruments and 7 timeframes (5m→weekly), judged per-instrument vs its own random entry, deflated, and stress-tested for survivorship: <b>rip-short</b> (equity daily short), <b>bbfade_lo/bear</b> (equity daily long in down-markets), <b>crypto momentum</b> (Donchian breakout). Every other setup was rejected.</li>
+    <li><b>Judge each instrument on its OWN terms</b> — not the market's regime, not a pooled average. Pooling can both manufacture and mask real structure; a market-wide (SPY) regime imposed on gold/FX/crypto is a bias. Count how many instruments individually beat their own random entry (binomial null).</li>
+    <li><b>A 1R-capped stop is structurally survivorship-proof, in any direction</b> — a name going to zero contributes bounded −1R stop-outs, never catastrophic loss, so the missing dead names can't inflate the edge. That's why crypto momentum holds even on coins that cratered 54–100%.</li>
+    <li><b>Crypto is a momentum market; equities are mean-reversion</b> — opposite structures. Match the setup family to the asset's character; the old "mean-reversion beats momentum" rule was equity-specific.</li>
+    <li><b>The cost wall kills profit, not skill</b> — mean-reversion beats random even at 5m, but the spread makes it net-negative. Edges are daily-locked because only slow bars let skill clear the cost (cost-in-R: 5m 0.31 → daily 0.03).</li>
+    <li><b>Beating a RANDOM entry is everything</b> — positive expectancy is worthless (a random long earns +0.15–0.25R on drift alone). A setup is real only if it beats a matched random entry in the same regime, deflated for how many things were tried.</li>
+  </ul></div>
+  <p class="muted" style="margin-top:14px">Single-operator research tool. Not investment advice. No signals are sold.</p>
+</section>
+
+<footer class="wrap">Aegis · falsification engine · data via live edge APIs · <span id="f_status">connecting…</span></footer>
+</main>
+
+<script>
+const API = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
+const VIEWS = [["home","Home"],["copilot","Co-pilot"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
+const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const nav=document.getElementById("nav");
+VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
+function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
+  if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); if(k==="copilot")doCopilot(); location.hash=k; window.scrollTo(0,0);}
+const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
+
+async function doProp(){
+  const body={winRate:+document.getElementById("pr_wr").value,winR:+document.getElementById("pr_rr").value,lossR:1,evalCost:+document.getElementById("pr_cost").value,accountSize:+document.getElementById("pr_acct").value,targetPct:+document.getElementById("pr_tgt").value,maxDDpct:+document.getElementById("pr_dd").value,dailyLossPct:+document.getElementById("pr_daily").value};
+  const o=document.getElementById("pr_out");o.innerHTML="<span class=muted>running Monte-Carlo…</span>";
+  try{const d=await(await fetch(API+"/trd-prop-optimizer",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})).json();
+    if(d.error)throw new Error(d.error);
+    const vc=/STRONG/.test(d.verdict)?"var(--accent)":/MARGINAL/.test(d.verdict)?"var(--amber)":"var(--red)";
+    const rows=(d.grid||[]).map(g=>`<tr><td class="mono num">${g.riskPct}%</td><td class="mono num">${g.pPass}%</td><td class="mono num">${g.pPaid}%</td><td class="mono num" style="color:${g.evPerEval>0?'var(--accent)':'var(--red)'}">${g.evPerEval>=0?'+':''}$${g.evPerEval}</td></tr>`).join("");
+    o.innerHTML=`<div class="verdict" style="color:${vc}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">Your edge</div><div class="v" style="color:${d.expectancyR>0?'var(--accent)':'var(--red)'}">${d.expectancyR>=0?'+':''}${(+d.expectancyR).toFixed(2)}R</div><div class="s">per trade</div></div>
+      <div class="card"><div class="lbl">Optimal risk</div><div class="v">${d.optimalRiskPct}%</div><div class="s">per trade</div></div>
+      <div class="card"><div class="lbl">Paid-account odds</div><div class="v" style="color:${vc}">${d.pPaidAtOptimal}%</div><div class="s">at optimal size</div></div>
+      <div class="card"><div class="lbl">EV per eval</div><div class="v" style="color:${d.evAtOptimal>0?'var(--accent)':'var(--red)'}">${d.evAtOptimal>=0?'+':''}$${d.evAtOptimal}</div></div>
+    </div>
+    <table style="margin-top:14px"><thead><tr><th>risk/trade</th><th class="num">pass eval</th><th class="num">get paid</th><th class="num">EV/eval</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doCopilot(){
+  const o=document.getElementById("cp_out");o.innerHTML="<span class=muted>reading the market…</span>";
+  try{const d=await(await fetch(API+"/trd-regime",{cache:"no-store"})).json();const r=d.regime;
+    const pc=r.recessionRiskScore>=55?"var(--red)":r.recessionRiskScore>=30?"var(--amber)":"var(--accent)";
+    const fav=Array.isArray(d.whatsFavourableNow)?d.whatsFavourableNow.map(x=>`<span class="pill" style="color:${x.meanRevSetup==='long'?'var(--accent)':'var(--red)'}">${esc(x.symbol)} ${esc(x.meanRevSetup)}</span>`).join(""):`<span class="muted">${esc(d.whatsFavourableNow)}</span>`;
+    const sizing=(d.sizingGuide||[]).map(x=>`<div class="row"><span class="mono">${esc(x.symbol)}</span><span class="mono" style="color:${x.sizeMultiplier>=0.99?'var(--accent)':x.sizeMultiplier>=0.6?'var(--amber)':'var(--red)'}">size ×${x.sizeMultiplier} ${x.volElevated?'· vol elevated':''}</span></div>`).join("");
+    const pb=d.eventPlaybook;
+    o.innerHTML=`<div class="grid">
+      ${card("Phase",esc(r.phase.split(' /')[0]),"as of "+esc(d.asOf),pc)}
+      ${card("Recession risk",r.recessionRiskScore+"/100","curve "+r.curve10y3m+"pp",pc)}
+      ${card("VIX",r.vix,r.spyAbove200MA?"SPY uptrend":"SPY DOWNtrend",r.vix>25?'var(--red)':r.vix>20?'var(--amber)':'var(--accent)')}
+      ${card("Credit",r.creditRiskOff?"RISK-OFF":"risk-on","HY vs IG",r.creditRiskOff?'var(--red)':'var(--accent)')}</div>
+    <div class="panel" style="margin-top:14px"><div class="lbl">Posture</div><div style="font-size:14px;color:var(--tx)">${esc(r.posture)}</div>
+      ${r.signals.length?`<div style="margin-top:10px">${r.signals.map(s=>`<span class="pill" style="color:var(--amber);border-color:var(--amber)55">${esc(s)}</span>`).join("")}</div>`:`<div class="muted" style="margin-top:8px">no warning signals firing</div>`}</div>
+    <h2>What's favourable now</h2><div class="panel">${fav}</div>
+    <h2>Sizing guide (vol-regime × instrument)</h2><div class="panel">${sizing}</div>
+    <h2>Event playbook — where to hide depends on the crash TYPE</h2>
+    <div class="panel" style="font-size:13px"><div style="color:var(--tx);margin-bottom:8px">${esc(pb.note)}</div>
+      <div class="row"><span><b>Growth-scare</b> <span class="muted">(${esc(pb.growth_scare.examples)})</span></span></div>
+      <div style="font-size:12px;color:var(--mut);padding:2px 0 8px">hide: ${pb.growth_scare.protects.map(esc).join(", ")} · hit: ${pb.growth_scare.hit.map(esc).join(", ")}</div>
+      <div class="row"><span><b>Inflation / rate shock</b> <span class="muted">(${esc(pb.inflation_rate_shock.examples)})</span></span></div>
+      <div style="font-size:12px;color:var(--mut);padding:2px 0">hide: ${pb.inflation_rate_shock.protects.map(esc).join(", ")} · <span style="color:var(--red)">${esc(pb.inflation_rate_shock.warning)}</span></div></div>`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doPortfolio(){
+  const eq=+document.getElementById("pf_eq").value;
+  const positions=document.getElementById("pf_pos").value.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.split(/[\s,]+/);return {symbol:m[0],side:/short|sell/i.test(m[1]||"")?"short":"long",notional:+String(m[2]||m[1]).replace(/[^0-9.]/g,"")}}).filter(p=>p.symbol&&p.notional>0);
+  const o=document.getElementById("pf_out");o.innerHTML="<span class=muted>pulling real history + running fat-tailed Monte-Carlo…</span>";
+  try{const r=await fetch(API+"/trd-risk-engine",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({equity:eq,positions})});const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    const rc=d.probRuin>=0.25?"var(--red)":d.probRuin>=0.10?"var(--amber)":"var(--accent)";
+    const eb=d.effectiveBets,conc=d.hiddenConcentration;
+    o.innerHTML=`<div class="verdict" style="color:${rc}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">P(ruin) · ${(d.ruinThreshold*100).toFixed(0)}%+ DD</div><div class="v" style="color:${rc}">${(d.probRuin*100).toFixed(1)}%</div><div class="s">over ${d.horizonDays}d, fat-tailed</div></div>
+      <div class="card"><div class="lbl">Real bets</div><div class="v" style="color:${conc?'var(--amber)':'var(--accent)'}">${eb}</div><div class="s">of ${d.nominalPositions} positions</div></div>
+      <div class="card"><div class="lbl">Gross exposure</div><div class="v">${(d.grossExposure*100).toFixed(0)}%</div><div class="s">ann. vol ${(d.annualizedVol*100).toFixed(0)}%</div></div>
+      <div class="card"><div class="lbl">Cut to</div><div class="v" style="color:${d.suggestedScale<1?'var(--amber)':'var(--accent)'}">${(d.suggestedScale*100).toFixed(0)}%</div><div class="s">of current size</div></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><div class="lbl">1-year outcome band (real history)</div>
+      <div class="row"><span>worst 5%</span><span class="mono" style="color:var(--red)">${(d.horizonReturn.p05*100).toFixed(0)}%</span></div>
+      <div class="row"><span>median</span><span class="mono">${(d.horizonReturn.median*100>=0?'+':'')}${(d.horizonReturn.median*100).toFixed(0)}%</span></div>
+      <div class="row"><span>best 5%</span><span class="mono" style="color:var(--accent)">+${(d.horizonReturn.p95*100).toFixed(0)}%</span></div></div>
+    ${d.correlationMatrix.symbols.length>1?`<div class="muted" style="margin-top:10px">Correlation: ${d.correlationMatrix.symbols.map((s,i)=>d.correlationMatrix.symbols.slice(i+1).map((s2,j)=>`${esc(s)}·${esc(s2)} ${d.correlationMatrix.matrix[i][i+1+j].toFixed(2)}`).join("  ")).filter(Boolean).join("  ")}</div>`:""}
+    ${(d.droppedNoHistory||[]).length?`<div class="pill" style="color:var(--amber);border-color:var(--amber)55">no history, skipped: ${d.droppedNoHistory.map(esc).join(", ")}</div>`:""}`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doProtect(){
+  const body={winRate:+document.getElementById("p_wr").value,winLossRatio:+document.getElementById("p_rr").value,riskPerTradeFrac:+document.getElementById("p_risk").value};
+  const o=document.getElementById("p_out");o.innerHTML="<span class=muted>running…</span>";
+  try{const r=await fetch(API+"/trd-api-protect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    o.innerHTML=`<div class="verdict" style="color:${vcol(d.verdict)}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">Expectancy</div><div class="v">${(+d.expectancyR).toFixed(2)}R</div></div>
+      <div class="card"><div class="lbl">Full Kelly</div><div class="v">${(d.kellyFraction*100).toFixed(1)}%</div><div class="s">half-Kelly ${(d.kellyFraction*50).toFixed(1)}%</div></div>
+      <div class="card"><div class="lbl">Overbet ratio</div><div class="v" style="color:${d.overbetRatio>1?'var(--red)':'var(--accent)'}">${(+d.overbetRatio).toFixed(2)}×</div><div class="s">of half-Kelly</div></div>
+      <div class="card"><div class="lbl">1yr ruin risk</div><div class="v" style="color:${d.probRuin>0.05?'var(--red)':'var(--accent)'}">${(d.probRuin*100).toFixed(0)}%</div><div class="s">lose ≥50%</div></div>
+    </div>`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doVerify(){
+  const ret=document.getElementById("v_ret").value.split(/[,\s]+/).map(Number).filter(x=>Number.isFinite(x));
+  const body={returns:ret,periodsPerYear:+document.getElementById("v_ppy").value};
+  const o=document.getElementById("v_out");o.innerHTML="<span class=muted>checking…</span>";
+  try{const r=await fetch(API+"/trd-api-verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    o.innerHTML=`<div class="verdict" style="color:${vcol(d.verdict)}">${esc(d.verdict)}</div>
+    <div style="font-size:14px">${esc(d.plainEnglish)}</div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card"><div class="lbl">Observations</div><div class="v">${d.n}</div></div>
+      <div class="card"><div class="lbl">Annual Sharpe</div><div class="v">${(+d.annualSharpe).toFixed(2)}</div></div>
+      <div class="card"><div class="lbl">Deflated Sharpe</div><div class="v" style="color:${d.deflatedSharpe>0.95?'var(--accent)':'var(--red)'}">${(d.deflatedSharpe*100).toFixed(0)}%</div><div class="s">need &gt;95%</div></div>
+      <div class="card"><div class="lbl">Min track record</div><div class="v">${Math.round(d.minTrackRecord)}</div><div class="s">obs needed</div></div>
+    </div>
+    ${(d.flags||[]).map(f=>`<span class="pill" style="color:var(--amber);border-color:var(--amber)55">${esc(f)}</span>`).join("")}`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+async function doAllocate(){
+  const o=document.getElementById("a_out");o.innerHTML="loading…";
+  try{const d=await(await fetch(API+"/trd-api-allocate?preset=global")).json();
+    const w=Object.entries(d.weights||{}).sort((a,b)=>b[1]-a[1]);const mx=Math.max(...w.map(x=>x[1]));
+    o.innerHTML=`<div class="muted">window ${esc(d.window)} · ${d.months} months</div>`+w.map(([k,v])=>`<div style="margin-top:10px"><div class="row" style="border:0;padding:0"><span class="mono">${esc(k)}</span><span class="mono">${(v*100).toFixed(1)}%</span></div><div class="bar"><i style="width:${(v/mx*100).toFixed(0)}%"></i></div></div>`).join("");
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+function card(l,v,s,c){return `<div class="card"><div class="lbl">${l}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div><div class="s">${s||""}</div></div>`}
+async function doCockpit(){
+  const o=document.getElementById("c_out");
+  try{const d=await(await fetch(API+"/aegis-cockpit?format=json",{cache:"no-store"})).json();const s=d.summary||{},da=d.data||{},m=da.macro||{};
+    document.getElementById("c_upd").textContent="live · "+new Date(d.generated_at).toISOString().replace("T"," ").slice(0,16)+" UTC";
+    const hyps=(da.prereg_hypotheses||[]).map(h=>{const ready=h.n>=30,good=h.exp>0;return `<div class="row"><span class="mono" style="font-size:12px">${esc(h.id)}</span><span class="mono" style="color:${!ready?'var(--faint)':good?'var(--accent)':'var(--red)'}">${ready?((h.exp>=0?'+':'')+(+h.exp).toFixed(3)+'R'):('accumulating '+h.n+'/30')}</span></div>`}).join("")||'<span class=muted>none</span>';
+    const dLbl=x=>x.n<30?["noise","var(--faint)"]:x.decay==="dead"?["DEAD — retire","var(--red)"]:x.decay==="decaying"?["decaying","var(--amber)"]:x.decay==="improving"?["improving","var(--accent)"]:[x.exp>0?"stable · scaling":"stable · benched","var(--faint)"];
+    const sess=(da.per_session_setup||[]).slice(0,8).map(x=>{const[dl,dc]=dLbl(x);return `<tr><td class="mono">${esc(x.key)}</td><td class="mono num">${x.n}</td><td class="mono num" style="color:${x.exp>0?'var(--accent)':'var(--red)'}">${(+x.exp).toFixed(2)}R</td><td class="mono" style="color:${dc}">${dl}</td></tr>`}).join("")||'<tr><td colspan=4 class=muted>no trades yet</td></tr>';
+    const fr=da.tracker_freshness||[];const staleN=fr.filter(f=>f.stale).length;
+    const frHtml=fr.length?`<h2>Tracker freshness — is the engine running? ${staleN?`<span style="color:var(--red)">${staleN} stale</span>`:`<span style="color:var(--accent)">all live</span>`}</h2><div class="panel">${fr.map(f=>`<div class="row"><span>${esc(f.name)}</span><span class="mono" style="color:${f.stale?'var(--red)':'var(--accent)'}">${f.ageHours!=null?f.ageHours+'h ago':'never'} · ${f.stale?'STALE':'ok'}</span></div>`).join("")}</div>`:"";
+    const vr=da.vol_regime||[];const vrCol=x=>x.deRisk>=0.99?"var(--accent)":x.deRisk>=0.6?"var(--amber)":"var(--red)";
+    const elev=vr.filter(x=>x.elevated).length;
+    const vrCards=vr.map(x=>card(esc(x.name),"×"+(+x.deRisk).toFixed(2),(x.elevated?"ELEVATED":"calm")+" · RV "+(x.rvPct??"—")+"% vs 1y "+(x.medianRvPct??"—")+"%",vrCol(x))).join("");
+    const vrSection=vr.length?`<h2>Tail-risk regime — the verified control, live in the order path</h2>
+      <div class="panel" style="font-size:13px">On 121,962 real market-days a &gt;3σ day is <b>~5.9× more likely</b> when trailing vol is above its 1-year median (84.5% of tail days). Can't predict the day or direction, so the engine <b>shrinks size in proportion to how elevated vol is</b> (floor 30%, never levers up). ${elev?`<b style="color:var(--amber)">${elev}/${vr.length} markets elevated now — bots already sized down there.</b>`:`All ${vr.length} tracked markets calm.`}</div>
+      <div class="grid" style="margin-top:12px">${vrCards}</div>`:"";
+    o.innerHTML=`<div class="grid">
+      ${card("Status",s.status==="alive"?"ALIVE":"BREACHED","firewall protecting",s.status==="alive"?"var(--accent)":"var(--red)")}
+      ${card("Equity","$"+(s.equity??0),"× "+(s.multiple??1))}
+      ${card("Max drawdown",(s.max_drawdown_pct??0)+"%",(s.open_positions??0)+" open · "+(s.closed_trades??0)+" closed")}
+      ${card("Macro",esc(s.macro_phase||"—"),"de-risk "+Math.round((s.macro_de_risk??1)*100)+"%")}</div>
+      ${vrSection}
+      <h2>Pre-registered hypotheses (forward test)</h2><div class="panel">${hyps}</div>
+      ${frHtml}
+      <h2>Per-session × setup — what it's learning</h2><table><thead><tr><th>session×setup</th><th class="num">n</th><th class="num">expectancy</th><th>decay watch</th></tr></thead><tbody>${sess}</tbody></table>
+      ${da.cycle_prediction?`<h2>Pre-registered cycle prediction</h2><div class="panel" style="font-size:13px">${esc(da.cycle_prediction)}</div>`:""}`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
+}
+// boot
+(async()=>{try{await fetch(API+"/aegis-cockpit?format=json");document.getElementById("f_status").textContent="APIs live";}catch{document.getElementById("f_status").textContent="APIs waking…"}})();
+go((location.hash||"#home").slice(1)||"home");
+</script>
+</body>
+</html>
