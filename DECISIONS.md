@@ -3229,3 +3229,42 @@ ONE edge family clears every honest filter (rip-short), it generalizes across ca
 newcomers (crypto momentum) are survivorship/era mirages the both-halves gate exposes. bbfade_lo/bear (D-194/197) sits
 just under the multi-asset deflation bar here (t=2.6 pooled) but cleared on its own dedicated bear-regime test — kept.
 $0, no order path. The universe is now broad + multi-asset; the honest limiter remains survivorship-free data, not effort.
+
+---
+
+## D-202 — OPERATOR CAUGHT A REAL BIAS: de-bias by judging each instrument on its own terms → conclusions revised
+
+Operator (pointing at the Vercel deployment aegis-engine-psi.vercel.app): "you think the multiasset stocks should
+dictate how we look at individual stock performance, stop being biased." CORRECT on two counts I conceded and fixed:
+(1) I conditioned EVERY instrument — crypto, gold, FX, single stocks — on the US **stock market's** regime (SPY vs
+200MA); no honest reason Bitcoin/gold/AAPL should be judged by whether the S&P is up. (2) Pooling returns into one
+per-class number lets the aggregate dictate the individual. FIX (`scripts/trd-selfregime.ts`): judge each instrument
+ALONE, on ITS OWN 200MA/vol regime, vs ITS OWN matched random control (D-146); infer at the population level not by
+averaging returns but by COUNTING how many instruments INDIVIDUALLY beat their own random at t≥2, vs the Binomial(N,
+0.025) chance null. No SPY, no pooling. (Kept deflation — that is false-positive defense, not bias.)
+
+**Results (k = #instruments individually beating own random at t≥2; binom p = P(≥k by luck)):**
+```
+class        setup      N   k   %pos  medEdge   binom p    verdict
+eq-mega      ripshort   11  6   73%   +0.512    1.0e-7   ✓✓ SYSTEMATIC per-instrument edge
+crypto       donch_L     8  5  100%   +0.352    5.1e-7   ✓✓ SYSTEMATIC per-instrument edge  <- pooling had MASKED this
+eq-mega      bbfade_lo  30  4   63%   +0.016    6.4e-3   ~ leans real (weaker than pooled implied)
+eq-mid       donch_L    29  4   62%   +0.041    5.6e-3   ~ leans real
+eq-battered  ripshort    7  1   86%   +0.305    1.6e-1   drift-suspect (D-201 pooled OVER-stated breadth)
+dipbuy / equity-donch_L / commod / fx: no systematic per-instrument edge
+```
+
+**What the de-biasing CHANGED (operator vindicated):**
+- **Crypto momentum (donch_L) is REAL per-instrument (p=5e-7), NOT the pooled "mirage" I called in D-201.** The pooled
+  both-halves half-flip was a pooling artifact (era/composition shift across coins), not per-coin instability. My
+  aggregate framing produced a false negative. **BUT** survivorship still caveats it: these 8 coins are survivors;
+  momentum-long is continuation-dependent = maximally survivorship-exposed. Real among survivors ≠ tradeable
+  ex-ante (you can't pre-pick the coins that live). That caveat is a data limit, not framing bias.
+- **rip-short confirmed as the cleanest edge (eq-mega p=1e-7)** — but its BREADTH was over-stated by pooling: eq-battered
+  is only 1/7 significant per-instrument. Correct D-201: rip-short is systematic on liquid mega-caps, thin elsewhere.
+- **bbfade_lo is weaker per-instrument** (mega p=6e-3 leans, not systematic) than the pooled ETF cells implied.
+
+**Doctrine update:** pooling buys power but imposes homogeneity — when instruments are heterogeneous (esp. across eras),
+pooled both-halves can BOTH manufacture (crypto era-drift) AND mask (crypto per-coin momentum) real structure. The
+de-biased default going forward: judge each instrument on its own regime vs its own random control; infer by COUNT with
+a binomial null; report pooled only as a secondary power-boosted view, never as the arbiter over the individual. $0.
