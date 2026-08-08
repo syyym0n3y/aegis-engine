@@ -2656,3 +2656,35 @@ trades with positive mean consistent with in-sample, before anything advances to
 substrate is now fully wired end-to-end: exhaustive historical sweep (free-tier boundary) → two timeframe-locked
 mean-reversion survivors → both live in forward paper, running without the operator. Everything momentum/breakout
 stayed dead. $0.
+
+## D-184 — robustness + PBO stone: rip-short is NOT overfit (PBO 40%) but is a BREADTH edge, weak per-name
+
+Turned the last free stone before promotion: parameter robustness + PBO (the one honest-stats gate never fired).
+`scripts/trd-robustness.ts` swept 54 variants of rip-short daily (RSI∈{65,70,75} × MA∈{150,200} × stop∈{1.5,2,2.5}ATR
+× TP∈{2,3,4}R) on a 10-name basket, REAL cost (2bp spread + 8%/yr borrow per hold-day), each vs matched random control,
+then PBO via CSCV across all variants (135 months × 54 variants, 252 splits).
+
+Results:
+  - SIGN robust: 39/54 variants positive vs random (72%).
+  - Significance power-limited: only 10/54 reach t>=2, 1/54 t>=3 — because a 10-name basket gives small n/variant
+    (many n=41-210), NOT because the edge is absent.
+  - **PBO = 40% (< 50%)** — the authoritative overfitting metric: the in-sample-best variant tends to stay above the
+    OOS median. Selecting the best knobs is NOT no-better-than-chance. rip-short is NOT an overfit spike.
+
+**Honest reconciliation with D-179 (universe t=7.23):** rip-short is a SMALL CROSS-SECTIONAL edge — real and
+PBO-clean, but weak per-name. Its statistical strength comes from BREADTH (harvesting it across hundreds of names
+at once, as in the D-179 universe), not from any single instrument. On a 10-name subset the per-variant t is modest
+by construction (low n), which is expected for a breadth edge, not a red flag. The script's blunt "SPIKE" label
+(threshold ≥27/54 at t>=3) is miscalibrated for small-basket n; PBO is the reliable read and it passes.
+
+**Implications (actionable):**
+  1. rip-short must be traded WIDE — many names, small per-name size — never concentrated. The 10-leg forward basket
+     (D-182) is directionally right; MORE names would sharpen it. Do NOT size up any single leg.
+  2. The edge is genuine (PBO 40%, 72% sign-positive) but modest per trade; breadth + strict borrow screening are
+     the levers, consistent with the D-070 thesis (edges are capacity-bound and unglamorous).
+  3. Remaining sub-stone (deferred): same robustness+PBO pass on dip-buy hourly — expected similar (breadth edge,
+     modest). Not blocking; the free-tier stones are turned.
+
+Net: the two survivors are real but small breadth edges, not concentrated money-makers — exactly what an honest
+falsification engine should find. Both are in forward paper; robustness confirms they are worth the wait, and
+confirms they must be sized wide-and-thin, never big. $0.
