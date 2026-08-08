@@ -2636,3 +2636,23 @@ borrow proxy. Proper borrow accounting is a tracker enhancement (deferred).
 minute ceiling, all intraday sessions, the survivorship-free US-equity universe + crypto. Two timeframe-locked
 mean-reversion edges stand (rip-short daily+crypto, dip-buy hourly); both are in or entering forward paper; every
 momentum/breakout setup is dead. Further breadth (minute-universe, non-US, futures/FX intraday) is a spend decision.
+
+## D-183 — dip-buy HOURLY registered in forward paper; both surviving edges now forward-tracked (24 candidates)
+
+Registered the second survivor, dip-buy hourly (D-180, edge +0.053R vs random, t=3.73, H1 2.96/H2 2.24 — MODEST),
+as 10 per-symbol legs (SPY,QQQ,IWM,XLE,XLF,SMH,AAPL,NVDA,TSLA,AMD): timeframe=1h, dir=1 (RSI<30 & >200MA),
+tpMult=3, maxBars=20, yahoo_range=2y, fee_bps_side=2 (long → no borrow, spread-only is realistic). Verified: all
+10 legs tick clean on the Yahoo 1h/2y feed (that feed now confirmed edge-runtime-reachable), forward clock started,
+accumulating 0/30, no errors.
+
+**Forward-paper roster now complete for every survivor the sweep produced — 24 candidates, all $0 paper, no order path:**
+  - crypto: btc-5m-short-v1, btc-5m-short-5R-v1, eth-5m-short-v1 (control), btc-5m-long-v1 (control)   [D-171/172]
+  - rip-short DAILY equities: 10 legs, fee 10bp spread+partial-borrow proxy (borrow-optimistic caveat)   [D-182]
+  - dip-buy HOURLY equities: 10 legs, fee 2bp long spread                                                [D-183]
+
+Honesty notes carried on the rows: rip-short-daily forward net is optimistic (no per-day borrow modeled);
+dip-buy-hourly is a tentative/modest edge (both-halves only just clear 2). Promotion gate unchanged: ≥30 forward
+trades with positive mean consistent with in-sample, before anything advances toward micro. The falsification
+substrate is now fully wired end-to-end: exhaustive historical sweep (free-tier boundary) → two timeframe-locked
+mean-reversion survivors → both live in forward paper, running without the operator. Everything momentum/breakout
+stayed dead. $0.

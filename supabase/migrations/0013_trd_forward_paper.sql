@@ -99,3 +99,14 @@ select 'ripshort-1d-'||sym||'-v1', sym, '1d', 'short',
 from unnest(array['SPY','QQQ','IWM','XLE','XLF','SMH','AAPL','NVDA','TSLA','AMD']) as sym
 on conflict (candidate) do nothing;
 insert into trd_forward_state (candidate) select candidate from trd_forward where candidate like 'ripshort-1d-%' on conflict do nothing;
+
+-- D-183: dip-buy HOURLY equities (D-180 survivor, t=3.73 — MODEST) registered as a per-symbol basket, long side
+-- (RSI<30 & >200MA), timeframe 1h, no borrow (long), spread-only cost realistic. Tentative edge (both-halves just >2).
+insert into trd_forward (candidate, symbol, timeframe, direction, setup, fee_bps_side, yahoo_range, in_sample_evidence)
+select 'dipbuy-1h-'||sym||'-v1', sym, '1h', 'long',
+  '{"rsiLen":14,"rsiThresh":70,"lowThresh":30,"maLen":200,"atrLen":14,"stopAtr":2,"tpMult":3,"maxBars":20,"dir":1}'::jsonb,
+  2, '2y',
+  '{"universe_evidence":"D-180 dip-buy hourly: edge +0.053R vs random, t=3.73, H1 2.96 H2 2.24","note":"per-symbol leg; MODEST/tentative; long, spread-only cost realistic"}'::jsonb
+from unnest(array['SPY','QQQ','IWM','XLE','XLF','SMH','AAPL','NVDA','TSLA','AMD']) as sym
+on conflict (candidate) do nothing;
+insert into trd_forward_state (candidate) select candidate from trd_forward where candidate like 'dipbuy-1h-%' on conflict do nothing;
