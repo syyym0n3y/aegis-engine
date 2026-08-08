@@ -16,6 +16,17 @@ async function yahoo(sym: string, tf: string, range: string): Promise<Bar[]> {
   return out;
 }
 const mean = (a: number[]) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const smaLast = (a: number[], n: number) => a.length >= n ? a.slice(-n).reduce((x, y) => x + y, 0) / n : NaN;
+
+// Bear-regime map: SPY close < its own trailing 200-day MA, keyed by date (YYYY-MM-DD). Cached per tick.
+// Used to gate band candidates whose setup carries {regime:"bear"} (bbfade_lo/bear, D-194/197). No look-ahead:
+// the 200MA on date d uses only closes through d.
+async function spyBearMap(): Promise<Map<string, boolean>> {
+  const bars = await yahoo("SPY", "1d", "2y");
+  const m = new Map<string, boolean>(); const cl: number[] = [];
+  for (const b of bars) { cl.push(b.c); const ma = smaLast(cl, 200); if (Number.isFinite(ma)) m.set(b.ts.slice(0, 10), b.c < ma); }
+  return m;
+}
 
 Deno.serve(async () => {
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
@@ -25,18 +36,24 @@ Deno.serve(async () => {
     if (ks?.[0]?.active) return new Response(JSON.stringify({ ok: true, skipped: "kill-switch active" }), { headers: cors });
 
     const cands = await fetch(`${SB}/rest/v1/trd_forward?active=eq.true&select=*`, { headers: hdr }).then((r) => r.json());
+    // build the SPY bear map ONCE, only if some candidate needs a regime gate
+    const needsRegime = (cands as Record<string, unknown>[]).some((c) => (c.setup as Record<string, unknown>)?.regime);
+    const bearMap = needsRegime ? await spyBearMap() : null;
     const report: unknown[] = [];
     for (const c of cands as Record<string, unknown>[]) {
       const setup = c.setup as SetupParams;
+      const regime = (c.setup as Record<string, unknown>).regime as string | undefined;
       const bars = await yahoo(c.symbol as string, c.timeframe as string, (c.yahoo_range as string) ?? "60d");
       if (bars.length < (setup.maLen + 50)) { report.push({ candidate: c.candidate, err: `only ${bars.length} bars` }); continue; }
+      // regime mask (aligned to this symbol's bar dates); absent-date defaults to FALSE (fail-closed: don't trade an unknown regime)
+      const regimeMask = regime === "bear" && bearMap ? bars.map((b) => bearMap.get(b.ts.slice(0, 10)) === true) : undefined;
 
       // forward floor = strictly after registration AND after the last entry we already recorded
       const stRows = await fetch(`${SB}/rest/v1/trd_forward_state?candidate=eq.${c.candidate}&select=last_entry_ts`, { headers: hdr }).then((r) => r.json()).catch(() => []);
       const lastTs = stRows?.[0]?.last_entry_ts as string | null;
       const floor = lastTs && lastTs > (c.registered_at as string) ? lastTs : (c.registered_at as string);
 
-      const fresh = detectTrades(bars, setup, Number(c.fee_bps_side ?? 5), floor);
+      const fresh = detectTrades(bars, setup, Number(c.fee_bps_side ?? 5), floor, regimeMask);
       if (fresh.length) {
         const rows = fresh.map((t) => ({ candidate: c.candidate, entry_ts: t.entryTs, exit_ts: t.exitTs, side: t.side, entry: t.entry, stop: t.stop, target: t.target, exit_price: t.exit, gross_r: t.grossR, cost_r: t.costR, net_r: t.netR, outcome: t.outcome }));
         // idempotent append: duplicates on (candidate, entry_ts) are ignored

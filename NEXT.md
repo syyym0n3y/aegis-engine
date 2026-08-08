@@ -65,7 +65,7 @@ See [`docs/trd/STAGE1.md`](./docs/trd/STAGE1.md) for the full spec + VERIFY per 
 ## Parallel (financier track — separate, in YGS/CC)
 - YGS finance channel consuming the REJECTED list as honest content; funds R&D.
 
-## FORWARD-WIRE bbfade_lo/bear (D-194/197 — validated + survivorship-checked; pre-register the clock before the next bear)
+## FORWARD-WIRE bbfade_lo/bear — ✅ DONE (D-198): detector band-mode + SPY-bear regime gate + 8 legs registered + deployed; 0 fires in bull (correct)
 - [ ] Extend `_shared/trd-forward-setup.ts` detectTrades: add optional band entry
       (`entry:"band"`, `bandLen:20`, `bandK:2` → fire long when close < lowerBB) alongside the RSI path;
       keep RSI default so existing candidates are untouched. Mirror the file into `trd-forward-tick/`.

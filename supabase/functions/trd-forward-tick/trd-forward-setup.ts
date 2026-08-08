@@ -17,6 +17,9 @@ export interface SetupParams {
   lowThresh?: number;  // 30 for longs; defaults to 100-rsiThresh
   borrowAnnual?: number; // e.g. 0.08 = 8%/yr short borrow; charged per hold-day on SHORTS only (D-185)
   barDays?: number;      // calendar-days per bar for borrow accrual: 1d=1, 1h≈1/6.5, 5m≈1/78 (default 1)
+  entry?: "rsi" | "band"; // signal family. default "rsi" (RSI-vs-MA). "band" = Bollinger fade (D-194/197 bbfade).
+  bandLen?: number;      // band mode only: SMA/σ window (20)
+  bandK?: number;        // band mode only: σ multiplier (2); long fires when close < lowerBand = mid − bandK·σ
 }
 
 export interface ForwardTrade {
@@ -49,21 +52,38 @@ export function sma(cl: number[], n: number): number[] {
   return o;
 }
 
+/** Lower Bollinger band = SMA(n) − k·σ(n) (population σ over the same window). NaN before warmup. */
+export function bollLower(cl: number[], n: number, k: number): number[] {
+  const mid = sma(cl, n), o = new Array(cl.length).fill(NaN);
+  for (let i = n - 1; i < cl.length; i++) { let v = 0; for (let j = i - n + 1; j <= i; j++) v += (cl[j] - mid[i]) ** 2; o[i] = mid[i] - k * Math.sqrt(v / n); }
+  return o;
+}
+
 /**
  * Detect every setup fire and simulate it to a resolved outcome. `feeBpsSide` is the per-side cost in basis
  * points (round-trip = 2×); it is charged as a fraction of the stop distance, exactly as in the D-170 fee test.
  * Only fires whose ENTRY bar (i+1) timestamp is strictly greater than `afterTs` are returned — this is how the
  * forward tracker counts ONLY post-registration trades (a single un-deflated trial).
  */
-export function detectTrades(bars: Bar[], p: SetupParams, feeBpsSide: number, afterTs?: string): ForwardTrade[] {
+export function detectTrades(bars: Bar[], p: SetupParams, feeBpsSide: number, afterTs?: string, regimeMask?: boolean[]): ForwardTrade[] {
   const cl = bars.map((x) => x.c);
   const at = atr(bars, p.atrLen), r = rsi(cl, p.rsiLen), ma = sma(cl, p.maLen);
+  const band = p.entry === "band" ? bollLower(cl, p.bandLen ?? 20, p.bandK ?? 2) : null;
   const low = p.lowThresh ?? (100 - p.rsiThresh);
   const feeFrac = feeBpsSide / 10000;
   const out: ForwardTrade[] = [];
-  for (let i = p.maLen + 1; i < bars.length - 1; i++) {
-    if (!(at[i] > 0) || !(ma[i] > 0) || !Number.isFinite(r[i])) continue;
-    const fire = p.dir === 1 ? (r[i] < low && cl[i] > ma[i]) : (r[i] > p.rsiThresh && cl[i] < ma[i]);
+  const start = Math.max(p.maLen, band ? (p.bandLen ?? 20) : 0) + 1;
+  for (let i = start; i < bars.length - 1; i++) {
+    if (!(at[i] > 0)) continue;
+    if (regimeMask && !regimeMask[i]) continue;                 // regime gate (e.g. SPY<200MA for bbfade bear-long)
+    let fire: boolean;
+    if (band) {                                                  // Bollinger fade (D-194/197): long the lower band, no MA-direction gate (regime supplies context)
+      if (!Number.isFinite(band[i])) continue;
+      fire = p.dir === 1 ? cl[i] < band[i] : cl[i] > (2 * ma[i] - band[i]);
+    } else {
+      if (!(ma[i] > 0) || !Number.isFinite(r[i])) continue;
+      fire = p.dir === 1 ? (r[i] < low && cl[i] > ma[i]) : (r[i] > p.rsiThresh && cl[i] < ma[i]);
+    }
     if (!fire) continue;
     const sd = p.stopAtr * at[i];
     if (!(sd > bars[i].c * 1e-4)) continue;         // degenerate-ATR guard (D-169)

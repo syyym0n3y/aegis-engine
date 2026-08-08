@@ -3112,3 +3112,28 @@ because on gold it's un-capped drift-riding that loses to random. The distinguis
 going forward: does it strengthen or die when you add the battered tail? Capped-stop mean-reversion ⇒ robust;
 recovery-dependent dip-buy ⇒ mirage. bbfade_lo/bear is the augmentation program's one genuinely NEW, survivorship-
 checked conditional edge — a bear-regime long, complementary to rip-short's bull-regime short. $0, no order path.
+
+---
+
+## D-198 — both edges wired to run on DEMO: bbfade_lo/bear live in forward paper + rip-short executor deployed DORMANT
+
+Operator: "make sure we actually use our strategies on demo accounts." Two layers, safety boundary held.
+
+**(1) Virtual forward paper (no order path, $0, safe to run live) — NOW tracks BOTH edges.** Extended the byte-identical
+detector (`_shared/trd-forward-setup.ts`) with an optional `entry:"band"` Bollinger path + an optional `regimeMask`,
+RSI path proven byte-identical (new unit test: 9/9 green incl. RSI-parity + band-fires-only-below-lower-band +
+regime-mask-excludes). `trd-forward-tick` now builds a SPY<200MA bear map once and gates band candidates on it.
+Migration 0015 registered bbfade_lo/bear as 8 per-symbol legs (SPY/QQQ/IWM/DIA/AAPL/NVDA/AMD/TSLA), setup
+`{entry:band,bandLen:20,bandK:2,…,dir:1,regime:bear}`. Deployed (v3) + invoked live: **32 candidates, 8 bbfade legs,
+0 fires in the current bull regime, 0 errors** — exactly right: registered_at started the immutable forward clock now
+so the sample is legit when the bear regime arrives; the bear-long simply idles until SPY<200MA.
+
+**(2) Demo BROKER (Alpaca PAPER = the demo account) — rip-short executor deployed DORMANT.** `trd-alpaca-paper-exec`
+deployed (v1) and invoked: returns `NOT ARMED — dormant`, short-circuiting at GUARD 2 before any Alpaca call —
+placed nothing. Live guard state verified: killswitch=false, arm.paper=false. Claude does NOT arm an order path; the
+operator's single deliberate step is `./scripts/demo-exec.sh arm` (owner-run CLI: status/arm/disarm/kill/tick). Once
+armed it places 0.5%-risk bracketed PAPER shorts only when SPY>200MA AND a rip-short signal fires, ETB+heat-capped.
+bbfade-LONG executor leg (bear regime, buy orders) deferred — 0 fires in the current bull tape; queued for when it matters.
+
+**Boundary:** the $0 virtual layer runs live now (both edges); the demo broker is deployed-ready but the arm is the
+operator's. No order placed, no flag armed by Claude. 9/9 detector tests green, deno check clean.

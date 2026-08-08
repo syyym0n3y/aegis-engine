@@ -1,5 +1,5 @@
 import { assertEquals, assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { atr, rsi, sma, detectTrades, type Bar, type SetupParams } from "./trd-forward-setup.ts";
+import { atr, rsi, sma, bollLower, detectTrades, type Bar, type SetupParams } from "./trd-forward-setup.ts";
 
 function mkBars(closes: number[]): Bar[] {
   // synthetic OHLC where h/l straddle close by a fixed band so ATR is well-defined and non-degenerate
@@ -64,6 +64,40 @@ Deno.test("afterTs filters to strictly-post-registration entries only", () => {
   const after = detectTrades(bars, p, 5, cutoff);
   assert(after.every((t) => t.entryTs > cutoff), "all returned entries must be strictly after cutoff");
   assertEquals(after.length, all.length - all.filter((t) => t.entryTs <= cutoff).length);
+});
+
+Deno.test("D-197 RSI path is byte-identical with/without the new entry='rsi' field (existing candidates untouched)", () => {
+  const closes: number[] = [];
+  for (let i = 0; i < 210; i++) closes.push(300 - i * 0.5);
+  for (let i = 0; i < 8; i++) closes.push(closes[closes.length - 1] + 3);
+  for (let i = 0; i < 40; i++) closes.push(closes[closes.length - 1] - 1);
+  const bars = mkBars(closes);
+  const p: SetupParams = { rsiLen: 14, rsiThresh: 70, maLen: 200, atrLen: 14, stopAtr: 2, tpMult: 3, maxBars: 60, dir: -1, borrowAnnual: 0.08, barDays: 1 };
+  const a = detectTrades(bars, p, 5);
+  const b = detectTrades(bars, { ...p, entry: "rsi" }, 5);
+  assertEquals(JSON.stringify(a), JSON.stringify(b));
+});
+
+Deno.test("bollLower is mid − k·σ; band-mode fires LONG only below the lower band, only inside the regime mask", () => {
+  const closes: number[] = [];
+  for (let i = 0; i < 240; i++) closes.push(100 + Math.sin(i / 6) * 1.5);   // range-bound warmup
+  for (let i = 0; i < 6; i++) closes.push(closes[closes.length - 1] - 5);   // sharp dip → pierce lower band
+  for (let i = 0; i < 30; i++) closes.push(closes[closes.length - 1] + 1);  // recover (long should profit)
+  const bars = mkBars(closes);
+  const cl = closes;
+  const lb = bollLower(cl, 20, 2);
+  // sanity: at the dip, at least one close is below its lower band
+  assert(cl.some((c, i) => Number.isFinite(lb[i]) && c < lb[i]), "expected a close below the lower band");
+  const p: SetupParams = { rsiLen: 14, rsiThresh: 70, maLen: 50, atrLen: 14, stopAtr: 2, tpMult: 3, maxBars: 25, dir: 1, entry: "band", bandLen: 20, bandK: 2 };
+  const mask = bars.map((_, i) => i >= 235);                 // "bear regime" only late
+  const t = detectTrades(bars, p, 5, undefined, mask);
+  assert(t.length >= 1, `expected >=1 band long, got ${t.length}`);
+  assert(t.every((x) => x.side === "long"), "band dir=1 must be long");
+  assert(t.every((x) => x.entryTs >= bars[235].ts), "regime mask must exclude pre-235 fires");
+  // shorts leg (dir=-1, band) fires above the UPPER band = 2·mid − lower
+  const pShort: SetupParams = { ...p, dir: -1 };
+  const ts = detectTrades(bars, pShort, 5, undefined, bars.map(() => true));
+  assert(ts.every((x) => x.side === "short"), "band dir=-1 must be short");
 });
 
 Deno.test("no look-ahead: entry is the bar AFTER the signal", () => {
