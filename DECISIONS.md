@@ -2709,3 +2709,35 @@ Correction to my earlier framing: I was too quick to stamp these "paid." Three o
 fourth (borrow) was code I owned. The only genuinely money-cheaper item is delisted-GLOBAL survivorship-free data,
 and even that has a free-with-quantified-bias path. No frontier is a bottleneck — the engine researches every
 timeframe/asset-class/geography for $0; money buys convenience, not capability. $0 spent.
+
+## D-186 — dip-buy hourly robustness: FRAGILE / unconfirmed out-of-window; it is the WEAK survivor
+
+Completed the deferred D-184 sub-stone: robustness+PBO on dip-buy hourly (`scripts/trd-robustness-dipbuy.ts`,
+54 variants, 10-name basket, Yahoo 1h/2y, real spread cost, vs random control + PBO/CSCV).
+
+  - Only 17/54 variants positive (vs rip-short's 39/54); 1/54 t>=2; 0/54 t>=3.
+  - Worst variants are significantly NEGATIVE (t=-2.15..-2.60, looser RSI/shorter MA).
+  - PBO 44% (<50%, selection not overfit per CSCV) — but the SIGN is not robust, so PBO is moot here.
+  - (RSI<25 rows show NaN/n=5 — the 2y Yahoo hourly window is too short for that rare trigger; a data-window
+    artifact, not a bug.)
+
+**Interpretation:** dip-buy hourly passed the in-sample universe gate (D-180, t=3.73 over 16y/200 names — already
+flagged MODEST) but does NOT confirm on the recent 2-year out-of-window hourly data — most param variants go flat
+or negative. This points to a REGIME-SPECIFIC edge (worked historically, not lately), which for an already-tentative
+setup means: treat dip-buy as LOW-CONFIDENCE. rip-short (sign-robust 39/54, PBO 40%, two independent markets) is
+clearly the stronger of the two survivors; dip-buy is the weak link.
+
+Action: dip-buy stays in forward paper (D-183) — the forward test is the honest arbiter — but expectations are
+now correctly LOW; do not size it. Robustness is complete for BOTH survivors: rip-short = real breadth edge;
+dip-buy = fragile/regime-suspect. This is the falsification engine working: it demoted the weaker candidate before
+any money moved.
+
+## Status: "everything across the board" — what is DONE vs operator-gated
+DONE (free, autonomous, this session-arc): full historical sweep to the minute ceiling; all sessions (D-170);
+US-equity survivorship-free universe + crypto; both survivors gated, robustness-tested, and in forward paper with
+borrow modeled; free-solution map for every frontier (D-185); borrow bottleneck fixed.
+OPERATOR-GATED (not a bottleneck of effort — needs a credential/endpoint I am forbidden to create):
+  - Alpaca free minute-universe pull → needs an Alpaca API key (operator creates the account + key).
+  - Dukascopy bulk multi-instrument pull → needs the datafeed host added to the endpoint allowlist.
+  - Stooq global run → free, but survivorship-biased; usable with the measured discount.
+These are one-step provisions, not walls. Everything I can complete for $0 without a new credential is complete.
