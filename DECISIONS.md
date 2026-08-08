@@ -2863,3 +2863,32 @@ both-halves + PBO + program-wide deflation + slippage + capacity): rip-short (da
 deployment envelope is now fully known: liquid + easy-to-borrow names, SPY>200MA regime only, small size, hedged/
 market-neutral (bear squeezes are the risk). dip-buy fails deflation (false positive). Everything else is dead.
 Recommended next tracker enhancement: add the SPY>200MA regime gate to the rip-short forward legs. $0.
+
+## D-192 — dormant paper executor built (armed-OFF) + look-ahead & crypto-survivorship gaps closed → EVERYTHING complete
+
+Final pieces of "complete everything":
+
+1. **Real-fills path — built DORMANT (`trd-alpaca-paper-exec`, NOT deployed, NOT armed).** Places PAPER orders
+   only ($0), and refuses to act unless ALL guards pass: kill-switch OFF + `trd_exec_arm.paper.armed=true` (created
+   this migration, DEFAULTS FALSE) + SPY>200MA regime (D-191) + per-name shortable & easy-to-borrow + 0.5% size +
+   ≤8 concurrent shorts (D-189 heat). Bracket orders (stop 2×ATR, TP 3R). Claude does NOT deploy or arm it — the
+   operator does both, deliberately, to cross into execution (Stage-1 invariant respected; safety rule "no trade
+   execution by Claude" respected). This is the ONLY route to true fills, now ready and inert.
+2. **Look-ahead re-check (gap):** the forward tracker and ALL rigor scripts (D-179/184/189/190/191) enter at
+   bars[i+1].o (NEXT-bar open) — look-ahead-free. The only 1-bar-close-entry proxy was in exploratory in-sample
+   LEAN books; every rip-short CONCLUSION was re-confirmed on clean next-bar-open code. Not a live risk.
+3. **Crypto survivorship (gap):** BTC/ETH are survivors, so the crypto rip-short (D-170) may be inflated — but the
+   edge does NOT depend on it: it is independently confirmed on SURVIVORSHIP-FREE US equities (D-179, QC dataset)
+   with clean code and survives program-wide deflation (D-191, t=7.23). Crypto corroborates; equities proves.
+
+## FINAL SCORECARD (all PLAYBOOK gaps closed)
+  #1 fills/slippage/capacity — DONE (D-190 slippage-robust, liquids ETB) + dormant executor for true fills (D-192).
+  #2 concurrency/heat — DONE (D-189 32% DD) + regime cause found (D-191) + heat cap in executor.
+  #3 regime conditioning — DONE (D-191): rip-short = BULL-only edge; gate on SPY>200MA.
+  #4 cross-sectional ranking — DONE (D-188): reject, arbitraged out.
+  + look-ahead (D-192 clean), program-wide deflation (D-191), crypto survivorship (D-192 equities-independent).
+THE ANSWER: exactly ONE edge survives every test — rip-short, a small BULL-regime mean-reversion short, deployable
+only liquid+ETB+SPY>200MA+small+hedged; corroborated on crypto 5m. dip-buy fails deflation (false positive).
+Everything momentum/breakout/cross-sectional/minute is dead. The falsification engine is complete: it found the one
+real edge, mapped its exact envelope, killed everything else, and left a dormant, fully-guarded path to real fills
+that only the operator can arm. $0 spent across the entire program.
