@@ -3044,3 +3044,36 @@ D-194) — but he teaches it universal + confluence-stacked, both of which we fa
 approach per the engine is the near-opposite of the course: fade extremes, one regime-conditioned setup, judge vs
 random, size small/wide. $0. Third social strategy triaged by the repeatable social-claim→mechanize→gate→verdict
 flow (after D-193, D-194). No order path touched.
+
+---
+
+## D-196 — tradesbysci (@tradesbysci, 539k subs) S/R price-action strategy: REJECT on his instrument; dip-buy-family mirage on biased data
+
+Viral IG/YouTube ("Best Simple Price Action Trading Course": Trends / Indication / Liquidity & Corrections; the flex:
+"$8.5M in gold buys"). The mechanic from the screenshots: horizontal SUPPORT level + demand zone → buy the bounce
+(stop below zone, target ~3R), and "no trade until price breaks above resistance" → breakout long. Mechanized both
+(`trd-alpaca-sr` H4, `scripts/trd-sr-daily.ts` full daily), gated vs matched random LONG (D-146).
+
+**On GOLD at H4 (his exact instrument + timeframe), his setup LOSES to a coin flip:**
+```
+GLD bounce   n=30  setupR +0.600  randR +0.713  edge -0.113  (random long BEATS his demand-zone bounce)
+GLD breakout n=47  setupR +0.889  randR +0.713  edge +0.176  t=0.51 (not sig)
+```
+Gold's parabolic 2024-26 uptrend makes ANY long print ~+0.7R — the "$8.5M in gold buys" is that drift, not the S/R
+levels. No symbol/variant cleared t≥2 at H4 (n thin, 18-65).
+
+**On broad daily history (30 names incl. gold, power restored) the bounce shows a RAW edge — but it's the dip-buy family:**
+```
+demand-bounce    n= 9515  setupR +0.249  randR +0.179  edge +0.070  t=4.46
+resist-breakout  n=15622  setupR +0.216  randR +0.179  edge +0.037  t=2.40
+```
+Skeptic's read (advisor duty): the demand-zone bounce = pull-back-to-support-after-downtrend-then-close-green = the
+DIP-BUY mean-reversion family, which scored t=5.63 on survivorship-BIASED Yahoo survivors and DIED at t=1.15 on QC's
+survivorship-free universe (D-176/177). This universe is survivorship-biased (no delisted names) and the +0.070R
+magnitude is exactly the range that evaporates (PLAYBOOK #6). **Verdict: UNPROVEN — do not credit until re-run
+survivorship-free (QC/LEAN).** The breakout variant (t=2.40) is momentum-long, already dead survivorship-free (D-188).
+
+**Bottom line for the trader:** on the instrument he markets (gold), his method underperforms buying randomly; the
+apparent broad-universe edge is the already-falsified dip-buy family riding survivorship bias. AUGMENTATION angle:
+the ONLY conditional rescue for a support-bounce long is the same one dip-buy has — bear/stress selloffs (D-194) —
+not gold uptrends. $0, no order path.
