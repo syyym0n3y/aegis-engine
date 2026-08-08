@@ -1,6 +1,17 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — COMPLETE MULTI-ASSET PICTURE (D-200/201).** Built the per-instance "trade the chart" engine
+(`trd-instances.ts`, D-200): 240 instances/8 charts → 0 survive program-wide deflation — per-instance is the DEPLOYMENT
+model (=trd_forward), a false-positive factory as naive discovery. Then the COMPLETE SWEEP (`trd-complete.ts`, D-201):
+154 instruments × 9 asset classes (equities mega/mid/battered, sector+intl ETFs, commodities, FX, crypto, rates) × 6
+setups, gated+deflated+both-halves. Funnel 132 cells→32 raw→10 deflated→**4 robust (all rip-short**, now proven across
+cap tiers incl the battered tail, both-halves stable = capped-short survivorship-immunity confirmed). Crypto momentum
+t=6.17 EXPOSED as survivorship/era mirage (both-halves half-flip) — the trap the gate caught. One new lead: etf-intl
+donch_L/bear (t=4.43, both-halves ✓, needs survivorship-free check). Updated status artifact:
+claude.ai/code/artifact/0874b850-4772-489b-9fbf-6e3aad33d34f. Thesis CONFIRMED not overturned: across the whole tested
+market, ONE edge family (rip-short) clears every honest filter. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — BOTH edges wired + verified dormant-by-market (D-197…D-199).** Two survivorship-checked
 edges now run live on the $0 virtual forward tracker (cron 6h): rip-short (bull-regime short) + bbfade_lo/bear
 (bear-regime long, D-197 — edge GROWS on a battered universe, opposite of dip-buy's mirage; 8 legs registered,
