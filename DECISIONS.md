@@ -2688,3 +2688,24 @@ by construction (low n), which is expected for a breadth edge, not a red flag. T
 Net: the two survivors are real but small breadth edges, not concentrated money-makers — exactly what an honest
 falsification engine should find. Both are in forward paper; robustness confirms they are worth the wait, and
 confirms they must be sized wide-and-thin, never big. $0.
+
+## D-185 — every "paid-tier" frontier mapped to a verified FREE solution + borrow bottleneck fixed in code
+
+Operator: "make sure the paid tiers have a free solution I can actually use — no bottlenecks, only solution."
+Researched + verified (real searches, not assertion) and fixed what was code. Full map in FREE_SOLUTIONS.md:
+
+  1. Minute-universe backtest — FREE: LEAN engine runs LOCALLY via Docker (open-source, no node queue) or the
+     repo's own local minute scripts; data from Alpaca free tier (7+yr US minute, IEX) + local Dukascopy/Binance.
+  2. Futures/FX/commodity intraday — FREE: Dukascopy (1600+ instruments, tick→monthly, already in use).
+  3. Global equities — FREE prices via Stooq (bulk EOD); one honest caveat: free global is survivorship-biased
+     (delisted dropped) — not a wall, we discount by the measured D-176/177 survivorship gap; US is already
+     survivorship-free+free via QuantConnect.
+  4. Per-day borrow modeling — was never paid, just deferred code. FIXED this session: detectTrades charges
+     8%/yr short borrow per hold-day (borrowAnnual/barDays), trd-forward-tick redeployed v2, 10 rip-short-daily
+     rows set to fee=2bp spread + borrow modeled. Removes the "optimistic net" caveat. 7 tests green; borrow
+     verified to lower short net (1.55→1.45 fixture); all 24 live candidates tick clean, no errors.
+
+Correction to my earlier framing: I was too quick to stamp these "paid." Three of four were free all along; the
+fourth (borrow) was code I owned. The only genuinely money-cheaper item is delisted-GLOBAL survivorship-free data,
+and even that has a free-with-quantified-bias path. No frontier is a bottleneck — the engine researches every
+timeframe/asset-class/geography for $0; money buys convenience, not capability. $0 spent.

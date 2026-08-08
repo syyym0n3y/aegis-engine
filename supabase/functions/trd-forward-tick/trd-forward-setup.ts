@@ -15,6 +15,8 @@ export interface SetupParams {
   maxBars: number;     // 144 for 5m ≈ 12h hold
   dir: 1 | -1;         // 1 long (RSI<lowThresh & c>MA), -1 short (RSI>rsiThresh & c<MA)
   lowThresh?: number;  // 30 for longs; defaults to 100-rsiThresh
+  borrowAnnual?: number; // e.g. 0.08 = 8%/yr short borrow; charged per hold-day on SHORTS only (D-185)
+  barDays?: number;      // calendar-days per bar for borrow accrual: 1d=1, 1h≈1/6.5, 5m≈1/78 (default 1)
 }
 
 export interface ForwardTrade {
@@ -68,16 +70,21 @@ export function detectTrades(bars: Bar[], p: SetupParams, feeBpsSide: number, af
     const entryBar = bars[i + 1];
     if (afterTs && !(entryBar.ts > afterTs)) continue;
     const entry = entryBar.o, stop = entry - p.dir * sd, target = entry + p.dir * sd * p.tpMult;
-    let grossR: number | null = null, exit = entry, exitTs = entryBar.ts, outcome: ForwardTrade["outcome"] = "timeout";
+    let grossR: number | null = null, exit = entry, exitTs = entryBar.ts, outcome: ForwardTrade["outcome"] = "timeout", heldBars = 0;
     const last = Math.min(i + p.maxBars, bars.length - 1);
     for (let k = i + 1; k <= last; k++) {
       const hitStop = p.dir === 1 ? bars[k].l <= stop : bars[k].h >= stop;
       const hitTgt = p.dir === 1 ? bars[k].h >= target : bars[k].l <= target;
-      if (hitStop) { grossR = -1; exit = stop; exitTs = bars[k].ts; outcome = "stop"; break; }   // pessimistic: stop first
-      if (hitTgt) { grossR = p.tpMult; exit = target; exitTs = bars[k].ts; outcome = "target"; break; }
+      if (hitStop) { grossR = -1; exit = stop; exitTs = bars[k].ts; outcome = "stop"; heldBars = k - i; break; }   // pessimistic: stop first
+      if (hitTgt) { grossR = p.tpMult; exit = target; exitTs = bars[k].ts; outcome = "target"; heldBars = k - i; break; }
     }
-    if (grossR === null) { exit = bars[last].c; exitTs = bars[last].ts; grossR = p.dir * (exit - entry) / sd; outcome = "timeout"; }
-    const costR = (entry * feeFrac * 2) / sd;
+    if (grossR === null) { exit = bars[last].c; exitTs = bars[last].ts; grossR = p.dir * (exit - entry) / sd; outcome = "timeout"; heldBars = last - i; }
+    // cost = round-trip spread + (SHORTS only) per-hold-day borrow, both as a fraction of the stop distance (D-185)
+    let costR = (entry * feeFrac * 2) / sd;
+    if (p.dir === -1 && p.borrowAnnual && p.borrowAnnual > 0) {
+      const holdDays = heldBars * (p.barDays ?? 1);
+      costR += (entry * p.borrowAnnual * (holdDays / 365)) / sd;
+    }
     out.push({ entryTs: entryBar.ts, exitTs, side: p.dir === 1 ? "long" : "short", entry, stop, target, exit, grossR: +grossR.toFixed(4), costR: +costR.toFixed(4), netR: +(grossR - costR).toFixed(4), outcome });
   }
   return out;
