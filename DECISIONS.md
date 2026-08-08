@@ -3359,3 +3359,34 @@ bbfade_lo  any        —    —    —    ~0       p=1.0      —      none (me
 **Verified tradeable set now = THREE edges:** rip-short (daily equity, p=1e-7), bbfade_lo/bear (daily equity, D-197),
 crypto momentum (daily donch_L, survivorship-checked p=1.4e-10; also 1h net+0.05R D-204). Residual: fully-delisted-to-
 zero coins are untestable free, but the capped-stop argument bounds that exposure structurally. $0, no order path.
+
+---
+
+## D-206 — framework grid COMPLETE (weekly + 4h) + commodities/options honest close-out
+
+Operator: "sort out everything — commodities, options, futures — in every framework." Ran weekly (1wk) + 4h
+(resampled) de-biased per-instrument (`scripts/trd-frameworks.ts`), completing the grid weekly→daily→4h→1h→30m→15m→5m
+across equity-mega/commod/fx/crypto. Dual criterion (systematic vs random AND net>0), tradeable bar p<1e-3.
+```
+tf      class    best (k/N, medNet, binom p)          read
+weekly  commod   donch_L 3/14 +0.438R p=4.6e-3        LEANS (commodity momentum, underpowered N=14)
+weekly  eq-mega  bbfade_lo 2/18 +0.468R p=7.3e-2      no
+4h      crypto   donch_L 2/8  +0.028R p=1.6e-2        leans, net tiny (cost)
+4h/wk   fx/rest  — no systematic edge
+```
+Nothing clears p<1e-3 on weekly/4h. **The 3 verified tradeable edges are unchanged** (rip-short eq daily, bbfade_lo/
+bear eq daily, crypto momentum daily+1h).
+
+**Commodities (the specific ask), across ALL frameworks:** no edge daily (D-202), none intraday 5m–1h (D-203/204),
+one LEAN — momentum (donch_L) on WEEKLY (p=4.6e-3, net +0.438R). Consistent with commodities being slow-trending: the
+edge, if any, lives at the CTA/managed-futures horizon (weeks–months), not intraday. Logged as a LEAD (like etf-intl,
+D-201), not a verified edge — N=14 is underpowered; needs a broader commodity/futures universe to confirm.
+
+**Options — honest treatment (no free historical-chain data exists):** options are NOT backtestable for $0. But the
+framework decomposes any option strategy into (a) a DIRECTIONAL bet on the underlying — whose edge our gate already
+tests; if the underlying has no edge, an option adds only leverage + theta + wider spread, never creates one — and
+(b) a VOLATILITY bet (sell IV vs realized = the variance-risk-premium). The vol premium is a real, known RISK premium
+(paid for bearing tail risk), not a free edge, and it needs options data + margin to test and carries exactly the
+fat-tail blow-up our risk gate exists to flag. Verdict: options directional edges inherit the underlying's verdict
+(so: rip-short/bbfade/crypto-momentum could be expressed via options, nothing new); the vol-premium is UNTESTED-BY-
+NECESSITY (no free data), NOT rejected — flagged for a paid-data pass if ever justified. $0, no order path.
