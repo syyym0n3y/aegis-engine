@@ -2838,3 +2838,28 @@ not by better execution.
   true fills — that last one is an ORDER PATH, deliberately NOT auto-built (Stage-1 invariant); build it DORMANT
   and operator-armed when ready. Net honest picture: rip-short is a real-but-marginal edge, deployable only
   liquid+ETB+hedged+small; dip-buy is weak/regime-suspect; everything else is dead. $0.
+
+## D-191 — regime conditioning + program-wide deflation: rip-short is a BULL-regime edge; dip-buy fails deflation (demoted)
+
+`scripts/trd-regime-deflation.ts` — two rigor stones:
+
+REGIME (rip-short daily split by SPY-vs-its-200MA at entry, real cost+borrow):
+  BULL (SPY>200MA): n=377  setupR +0.054  vs random -0.305  edge +0.359  t=3.87  → EDGE HOLDS
+  BEAR (SPY<200MA): n=161  setupR +0.021  vs random +0.009  edge +0.013  t=0.09  → DEAD
+  Interpretation: rip-short fades weak (below-own-200MA) names that bounce; in a BULL tape capital rotates away
+  from them so the short works, but in a BEAR tape everything falls together and "overbought" bounces are violent
+  relief SQUEEZES → edge vanishes. This is the SAME mechanism behind D-189's 32% drawdown (bear-market squeezes).
+  ACTIONABLE: gate rip-short on SPY>200MA (disable in bear regimes) — should preserve the edge AND cut the drawdown.
+
+PROGRAM-WIDE DEFLATION (random-control t vs Bonferroni z for trial count N):
+  N=10→2.81, 100→3.48, 1000→4.06, 10000→4.56, 100000→5.03
+  rip-short DAILY t=7.23 → survives even N=100,000. DEFLATION-ROBUST. The one true edge.
+  dip-buy HOURLY t=3.73 → FAILS beyond ~N=100. NOT deflation-robust → DEMOTE dip-buy from "weak survivor" to
+  LIKELY FALSE POSITIVE. Keep it in forward paper as the arbiter, but expectations ≈ 0.
+  cross-sectional / minute / momentum / breakout: t<2, fail trivially.
+
+**Net after full rigor — the honest final scorecard:** exactly ONE edge survives everything (random-control +
+both-halves + PBO + program-wide deflation + slippage + capacity): rip-short (daily equities + crypto 5m). Its
+deployment envelope is now fully known: liquid + easy-to-borrow names, SPY>200MA regime only, small size, hedged/
+market-neutral (bear squeezes are the risk). dip-buy fails deflation (false positive). Everything else is dead.
+Recommended next tracker enhancement: add the SPY>200MA regime gate to the rip-short forward legs. $0.
