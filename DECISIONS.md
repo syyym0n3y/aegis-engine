@@ -2892,3 +2892,28 @@ only liquid+ETB+SPY>200MA+small+hedged; corroborated on crypto 5m. dip-buy fails
 Everything momentum/breakout/cross-sectional/minute is dead. The falsification engine is complete: it found the one
 real edge, mapped its exact envelope, killed everything else, and left a dormant, fully-guarded path to real fills
 that only the operator can arm. $0 spent across the entire program.
+
+## D-193 — evaluated two viral IG/TikTok strategies: both reduce to families Aegis already falsified
+
+Operator shared two creator strategies; assessed both against our gate.
+
+**Strategy 1 — kashfutures ICT (sweep → FVG → inverse FVG → 1-min BOS → enter), on gold/MGC.** Textbook ICT/SMC
+liquidity-sweep-reversal. ALREADY in our falsified space: D-080 faithfully implemented the viral "XAU 15m
+liquidity-grab 76.53% win" → real gold 44% win, -0.192R, t=-3.34; D-081 built sweep/FVG/breakout/pullback as a
+grammar and swept 2,160 strategies × 4 markets = 8,640 trials → 0 cleared deflation. This exact 7-step recipe is
+one composition in that already-empty space. Testable (can run the precise recipe) but prior is strongly negative.
+
+**Strategy 2 — aabandzfx Anchored-VWAP 2-3SD band MEAN-REVERSION (fade extreme → target VWAP), on gold.** BUILT +
+TESTED this turn (`trd-alpaca-vwap` edge fn, Alpaca free IEX 1-min, 10 names incl. GLD/SLV/USO, 1.8M bars, 2y,
+session-anchored VWAP + running SD, fade 2SD, stop 2×ATR, target=VWAP, vs random):
+  short-fade @+2SD: setupR -0.333 (NET NEGATIVE) | long-fade @-2SD: setupR -0.173 (NET NEGATIVE)
+  (the t=99/136 vs random is a CONTROL ARTIFACT of the VWAP-target mechanic — random entries far from VWAP take
+  huge losses reaching it, so the setup only "beats random" by losing less; both lose.)
+  Verdict: REJECT. Targeting VWAP = tiny reward vs 2×ATR stop = negative expectancy (PLAYBOOK #9, cut-winners-short).
+  The ENTRY (fade a 2SD volume-weighted band) is a VWAP-flavoured Bollinger fade = our `bbmr`, already rejected
+  (D-178 bbmr t=1.03/-1.57). VWAP anchor did not rescue it.
+
+**Meta-point:** both viral "make $10k/month" recipes collapse into families the engine already killed — ICT
+liquidity (D-080/81) and mean-reversion-band-fade (D-178). The gate evaluated both in one session for $0 and neither
+beats a random entry with positive expectancy. This is the falsification engine's highest-leverage use: instantly
+triaging the endless stream of social-media strategies. rip-short remains the only survivor. $0.
