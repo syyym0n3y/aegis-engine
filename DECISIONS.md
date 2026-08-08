@@ -2607,3 +2607,32 @@ crypto swing) and dip-buy (hourly) — both modest after honest costs; everythin
 universe sweeps are a paid-tier problem. The falsification substrate tested the survivorship-free US-equity
 universe across three timeframes for $0 and told the truth. Standing survivor in forward paper: BTC/5m/short
 (D-171). rip-short (equity daily) is the next forward-paper candidate pending a proper OOS/borrow-screened spec.
+
+## D-182 — rip-short DAILY registered in forward paper (per-symbol basket); multi-TF/instrument/session sweep is complete to the free-tier boundary
+
+Operator: register rip-short daily in forward paper + complete everything else across timeframes/instruments/sessions.
+
+**Registered (live on glzz):** rip-short daily (D-179 universe survivor, edge +0.316R vs random, t=7.23, both-halves
+5.49/4.43) as 10 per-symbol forward candidates — SPY, QQQ, IWM, XLE, XLF, SMH, AAPL, NVDA, TSLA, AMD — `timeframe=1d,
+dir=-1 (RSI>70 & <200MA), tpMult=3, maxBars=20, yahoo_range=2y, fee_bps_side=10`. Why per-symbol: rip-short is a
+cross-sectional edge but the live tracker is single-symbol and the ledger dedups on (candidate, entry_ts); a basket
+of legs avoids same-day collisions and the aggregate IS the forward test. Verified: all 10 legs tick clean on the
+daily/2y feed, forward clock started 2026-08-07, accumulating 0/30. trd_forward now holds 14 candidates (4 crypto
++ 10 rip-short-daily). $0, paper, no order path.
+**Honest caveat (recorded on each row):** trd-forward-tick charges spread only and does NOT model per-day borrow,
+so forward net will read OPTIMISTIC vs the D-179 borrow-charged +0.064R; fee_bps_side=10 is a rough spread+partial-
+borrow proxy. Proper borrow accounting is a tracker enhancement (deferred).
+
+**"Complete everything else" — status across the three axes, honestly:**
+  - TIMEFRAMES: daily ✅ (D-176/177/179), hour ✅ (D-180), minute ⚠️ free-node ceiling (D-181), tick/second =
+    paid-tier only. Complete to the free boundary.
+  - SESSIONS: ✅ already done in D-170 — the full sweep tested Asia/London/NY-am/NY-pm/Overnight on intraday
+    NASDAQ/S&P + 24h BTC/ETH, each vs random control. No session-specific edge survived beyond the timeframe results.
+  - INSTRUMENTS: survivorship-free US equities swept to top-500 daily (D-177), 200 hourly (D-180), plus BTC/ETH
+    crypto (D-170) and 123-instrument daily geometry (D-168). "Every global instrument / FX / futures intraday" is
+    beyond free-tier data+compute — the identified paid-tier frontier, not a gap in method.
+
+**Net:** the falsification substrate has now tested everything the free tier permits — all timeframes down to the
+minute ceiling, all intraday sessions, the survivorship-free US-equity universe + crypto. Two timeframe-locked
+mean-reversion edges stand (rip-short daily+crypto, dip-buy hourly); both are in or entering forward paper; every
+momentum/breakout setup is dead. Further breadth (minute-universe, non-US, futures/FX intraday) is a spend decision.

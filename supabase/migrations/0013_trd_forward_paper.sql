@@ -86,3 +86,16 @@ insert into trd_forward (candidate, symbol, timeframe, direction, setup, fee_bps
    5, '{"n":1182,"netR5bp":0.212,"vsRandT":6.33,"totalR":250,"note":"D-172 exit study"}'::jsonb)
 on conflict (candidate) do nothing;
 insert into trd_forward_state (candidate) values ('btc-5m-short-5R-v1') on conflict do nothing;
+
+-- D-182: rip-short DAILY equities (D-179 universe survivor, t=7.23) registered to forward paper as a per-symbol
+-- basket (the cross-sectional edge decomposed into single-symbol legs so the (candidate,entry_ts) ledger dedup
+-- holds). Tracker charges spread only (fee_bps_side=10 as a spread+partial-borrow proxy); it does NOT model
+-- per-day borrow, so forward net is OPTIMISTIC vs the D-179 borrow-charged +0.064R. dir=-1, RSI>70 & <200MA.
+insert into trd_forward (candidate, symbol, timeframe, direction, setup, fee_bps_side, yahoo_range, in_sample_evidence)
+select 'ripshort-1d-'||sym||'-v1', sym, '1d', 'short',
+  '{"rsiLen":14,"rsiThresh":70,"maLen":200,"atrLen":14,"stopAtr":2,"tpMult":3,"maxBars":20,"dir":-1}'::jsonb,
+  10, '2y',
+  '{"universe_evidence":"D-179 rip-short daily: edge +0.316R vs random, t=7.23, H1 5.49 H2 4.43","note":"per-symbol leg; spread-only cost, borrow not modeled -> optimistic vs D-179"}'::jsonb
+from unnest(array['SPY','QQQ','IWM','XLE','XLF','SMH','AAPL','NVDA','TSLA','AMD']) as sym
+on conflict (candidate) do nothing;
+insert into trd_forward_state (candidate) select candidate from trd_forward where candidate like 'ripshort-1d-%' on conflict do nothing;
