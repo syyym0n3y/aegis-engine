@@ -42,5 +42,13 @@ case "$cmd" in
   tick)
     curl -s "${SB}/functions/v1/trd-alpaca-paper-exec" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
     ;;
-  *) echo "usage: $0 {status|arm|disarm|kill|tick}"; exit 1;;
+  forward)
+    need_srk
+    echo "FORWARD-PAPER SCOREBOARD (virtual R, $0, no order path) — fwd_n / mean_r / verdict per candidate:"
+    curl -s "${SB}/rest/v1/trd_forward_state?select=candidate,fwd_n,fwd_net_r_mean,verdict&order=fwd_n.desc" "${h_srk[@]}" \
+      | python3 -c "import json,sys;[print(f\"  {r['candidate']:<26} n={r['fwd_n']:<4} meanR={str(r['fwd_net_r_mean']):<8} {r['verdict']}\") for r in json.load(sys.stdin)]" 2>/dev/null || echo "  (install python3 or query trd_forward_state directly)"
+    echo "NOTE: 0 fires across rip-short/bbfade is EXPECTED in a bull tape — rip-short needs overbought-in-downtrend"
+    echo "names (absent when most names are above their 200MA), bbfade needs SPY<200MA. Both edges are dormant-by-market."
+    ;;
+  *) echo "usage: $0 {status|arm|disarm|kill|tick|forward}"; exit 1;;
 esac

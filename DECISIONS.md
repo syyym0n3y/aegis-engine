@@ -3137,3 +3137,20 @@ bbfade-LONG executor leg (bear regime, buy orders) deferred — 0 fires in the c
 
 **Boundary:** the $0 virtual layer runs live now (both edges); the demo broker is deployed-ready but the arm is the
 operator's. No order placed, no flag armed by Claude. 9/9 detector tests green, deno check clean.
+
+---
+
+## D-199 — live verification: both edges are dormant-BY-MARKET (0 forward trades is honest scarcity, not a bug)
+
+After wiring both edges (D-198), the forward scoreboard showed ~0 forward trades across every family (only eth-5m-short
+had 1, +0.229R). Verified rather than assumed (checked the 10 rip-short legs against live Yahoo daily): 9/10 names are
+ABOVE their 200MA (bull tape), so the rip-short signal (RSI>70 AND close<200MA = overbought-in-downtrend) STRUCTURALLY
+cannot fire; the one name below its 200MA (TSLA) has RSI 35, not overbought. 0/10 fired in the last 40 days, 0 total
+signal-days. bbfade_lo/bear likewise needs SPY<200MA (absent). Conclusion: the tracker is correct; BOTH edges are
+dormant-by-market — the market is not offering either regime's setup.
+
+**Operational consequence:** arming the demo executor right now would place ZERO trades — not broken, no regime. This
+is the D-070 thesis in practice: "nothing cleared / nothing to trade" is the expected state and a success of the
+discipline, not a failure. Added `./scripts/demo-exec.sh forward` (owner-run scoreboard) so this is visible anytime.
+The edges activate on their regimes: rip-short when names go overbought-in-downtrend (bull pullbacks / early bear),
+bbfade when SPY loses its 200MA. Nothing to do but wait for the market — $0, no order path armed.
