@@ -11,7 +11,7 @@
 | Setup | Direction | FIRE IT when… | DON'T when… | Status |
 |---|---|---|---|---|
 | **rip-short** (RSI14>70 & close<200MA) | short | **bull regime + high vol** (SPY>200MA, name in stress) → +0.109R, t=4.38 | calm regimes (setupR ~0, dead); bear tape (D-191, edge collapses) | ✓✓ **deployable, conditioned** |
-| **Bollinger-fade-long** (close<lower 2SD band) | long | **bear regime** (SPY<200MA) → +0.078R, t=3.69, n=7,230 | bull/calm (edge vanishes into drift) | ✓✓ **new conditional candidate** |
+| **Bollinger-fade-long** (close<lower 2SD band) | long | **bear regime** (SPY<200MA) → +0.078R, t=3.69, n=7,230; survivorship-de-risked (D-197: edge GROWS to +0.091 t=5.73 on a battered/near-death universe, both-halves stable) | bull/calm (edge vanishes into drift) | ✓✓ **new conditional candidate, survivorship-checked** |
 | **dip-buy** (RSI14<30 & close>200MA) | long | *maybe* bear/stress selloffs → +0.215R raw, t=2.24 | any blanket use (dead overall, edge −0.002) | ~ **promising, not proven** |
 | **Bollinger-fade-short** (close>upper band) | short | — (setupR stays negative in every cell) | always, as a standalone | ✗ **no rescue** |
 | **7-step ICT** (sweep→FVG→inverse→BOS) | either | — (worse than random on GLD/SPY/QQQ/SLV, t=−3 to −7) | always | ✗ **anti-edge** |
@@ -31,8 +31,13 @@
    additive.** The only "when to trade" that helps is single-setup regime *selection* (rule 1), not multi-signal
    stacking. (An orthogonal *non-stress* axis — flow/positioning — is the last untested lever; no free source in hand.)
 
-3. **A falsified strategy can hold a real conditional edge.** Bollinger-fade-long is rejected as a blanket rule
-   (D-178) yet is a deflated edge in bear regimes. The honest message to a trader running it: *"it loses on average
+3. **A falsified strategy can hold a real conditional edge — but capped-loss structure is what makes it survive
+   (D-197).** Bollinger-fade-long and dip-buy share the SAME "buy the oversold decline" instinct, yet one is real and
+   one is a survivorship mirage. The distinguishing test: add the battered/delisted tail to the universe. dip-buy
+   *dies* (it rides recovery = unbounded downside on names that never recover); Bollinger-fade *strengthens* (1R stop
+   + ≤20-bar exit caps the tail — a name crashing to zero just stops out). For any counter-trend long, ask "does it
+   strengthen or die when you add the tail?" before crediting it. Bollinger-fade-long is rejected as a blanket rule
+   (D-178) yet is a deflated, survivorship-checked edge in bear regimes. The honest message to a trader running it: *"it loses on average
    because you run it in every tape — restrict it to down-markets and it beats random."* That is augmentation, not
    falsification. But the discipline is identical: the conditional edge must clear the deflated gate, or it's just a
    nicer-looking overfit.

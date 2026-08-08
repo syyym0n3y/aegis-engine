@@ -3019,6 +3019,13 @@ after two failures is low. $0, no order path touched.
 
 ## D-196 — DECODE: Trades By Sci (@tradesbysci) "simple price action" method — 6/6 pillars land in falsified space
 
+> **SUPERSEDED (same session) — kept for trail.** Two premises here were corrected below: (1) transcripts WERE pulled
+> (7 videos, 22.7k words via `scripts/decode-channel.sh`; method decoded as the ICC = Indication·Correction·Continuation
+> framework — see the current `DECODE_tradesbysci.md`), so the "copyrighted + redundant, syllabus only" note is wrong;
+> (2) the pooled-metals gold-sr numbers below were replaced by the more rigorous H4-GLD + broad-daily-survivorship test
+> in the authoritative D-196 entry further down. Verdict (REJECT/UNPROVEN) is unchanged; the numbers and method-source
+> in the lower D-196 entry + `DECODE_tradesbysci.md` are the current record.
+
 Operator asked to run the channel through YGS/CC decode + extract "best-probability" market approach. Triaged the
 method (not the transcripts — copyrighted + redundant; syllabus via thecoursepedia: Supply&Demand, Liquidity, Market
 Structure, Order Blocks, Price Imbalance/FVG). Every pillar = a family already gated. Full map in `DECODE_tradesbysci.md`.
@@ -3077,3 +3084,31 @@ survivorship-free (QC/LEAN).** The breakout variant (t=2.40) is momentum-long, a
 apparent broad-universe edge is the already-falsified dip-buy family riding survivorship bias. AUGMENTATION angle:
 the ONLY conditional rescue for a support-bounce long is the same one dip-buy has — bear/stress selloffs (D-194) —
 not gold uptrends. $0, no order path.
+
+---
+
+## D-197 — bbfade_lo/bear survives the survivorship stress that killed dip-buy (the capped-stop distinction)
+
+Consistency check triggered by my own D-196: I flagged the tradesbysci demand-bounce long as survivorship-UNPROVEN
+(+0.070R = the magnitude that evaporated dip-buy t=5.63→1.15, D-176/177) — but had credited bbfade_lo/bear (D-194,
+same counter-trend-oversold-long family, same ~+0.078R, same survivorship-biased 50-survivor Yahoo set) as a ✓✓ edge.
+Same family + same magnitude + same biased data demanded the same test. Ran it (`scripts/trd-bbfade-verify.ts`):
+both-time-halves stability + a ROUGH universe adding 38 battered/near-death names (airlines, cruise lines, meme,
+deep-drawdown) as a proxy for the delisted tail a survivor set drops.
+```
+CLEAN (50 survivors)   n=7230  edge +0.054 t=3.02  | H1 +0.048 t=1.95  H2 +0.049 t=1.87  both-halves +
+ROUGH (+38 battered)   n=9142  edge +0.091 t=5.73  | H1 +0.084 t=3.93  H2 +0.086 t=3.63  both-halves +
+```
+**Edge GREW on the rough set** — the OPPOSITE of dip-buy's survivorship signature (strong on survivors, dies when the
+dead are added). Mechanistic reason: bbfade_lo caps loss at 1R via a 2×ATR stop and exits in ≤20 bars, so a name
+crashing toward delisting just hits the stop — it never generates the unbounded loss that made survivorship bias
+inflate dip-buy. dip-buy RIDES the recovery (unbounded downside on names that never recover); bbfade HARVESTS a
+capped bounce (bounded downside). Same entry instinct, opposite tail exposure — that is WHY one is a survivorship
+mirage and the other isn't.
+
+**Reconciliation:** D-194's credit of bbfade_lo/bear stands and is now survivorship-de-risked (not QC-survivorship-free
+yet, but strengthens toward the tail + both-halves stable). The demand-bounce (D-196) remains survivorship-suspect
+because on gold it's un-capped drift-riding that loses to random. The distinguishing test for ANY counter-trend-long
+going forward: does it strengthen or die when you add the battered tail? Capped-stop mean-reversion ⇒ robust;
+recovery-dependent dip-buy ⇒ mirage. bbfade_lo/bear is the augmentation program's one genuinely NEW, survivorship-
+checked conditional edge — a bear-regime long, complementary to rip-short's bull-regime short. $0, no order path.
