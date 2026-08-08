@@ -2769,3 +2769,22 @@ documented (D-185) but EXERCISED — minute-universe run on Alpaca free, futures
 global via Stooq (allowlisted). The engine has tested every timeframe (incl. minute) across the US-equity universe
 + crypto for $0. Verdict stands: two mean-reversion edges (daily rip-short strong, hourly dip-buy weak), everything
 faster or momentum-based is dead. $0 spent.
+
+## D-188 — cross-sectional reversal (PLAYBOOK gap #4, "biggest lever") TESTED → REJECT across all horizons
+
+Built `scripts/trd-xsectional.ts`: canonical cross-sectional short-term REVERSAL — each period rank 50 liquid
+mega-caps by past-k-day return, LONG bottom quintile (losers) / SHORT top quintile (winners), market-neutral,
+forward H-day spread net of cost (2bp/side both legs + 8%/yr borrow short leg), vs a random quintile-selection
+control. Market-neutral construction CANCELS the drift confound (PLAYBOOK #2), so the t is cleaner than any
+single-name directional test. Swept k/h ∈ {1/1,1/3,1/5,3/3,5/5,10/10,20/20}, 5,527 aligned days (~22y):
+
+  k1/h1 t=-0.76 | k1/h3 t=-0.52 | k1/h5 t=1.68 | k3/h3 t=1.09 | k5/h5 t=1.58 | k10/h10 t=-0.24 | k20/h20 t=-1.53
+  NONE clears the gate; best (k1/h5) t=1.68 with negative setup mean net of cost.
+
+**Verdict:** cross-sectional short-term reversal is ARBITRAGED OUT of the liquid mega-cap universe — real in the
+1990s literature, decayed since, survives only in small/illiquid names where transaction cost eats it. Same fate
+as momentum/breakout (PLAYBOOK #3, #11: default REJECT holds). The #4 "biggest unexplored lever" is now explored
+and empty here; it does not change the standing conclusion. The only survivors remain the TIME-SERIES mean-reversion
+pair: rip-short (daily + crypto5m) and dip-buy (hourly, weak). To revive cross-sectional would need a
+survivorship-free small/mid-cap universe (Alpaca free covers those names — a future run) where the effect + its
+cost are both larger. $0.
