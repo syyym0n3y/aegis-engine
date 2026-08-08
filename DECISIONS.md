@@ -3292,3 +3292,35 @@ locked). FX intraday is structurally worst (cost-in-R 0.167: tiny 1h ATR vs 2bp 
 minute cost-wall (D-187) + the monotonic cost trend here (faster = worse) — not re-run, would only confirm the wall.
 The edges remain DAILY-locked: rip-short (equity daily, systematic per-instrument p=1e-7, D-202) and crypto momentum
 (daily, systematic p=5e-7 but survivor-caveated). Intraday coverage now complete; no new edge. $0, no order path.
+
+---
+
+## D-204 — ALL TIMEFRAMES: the cost wall kills PROFIT, not SKILL (measured 5m→1h) + corrects D-203's mechanism
+
+Operator: "across all timeframes." Ran the de-biased per-instrument engine (D-202) on the full intraday ladder
+(`scripts/trd-tfladder.ts`, 5m/15m/30m/1h × crypto/fx/futures), reporting for each cell BOTH edge-vs-random (SKILL —
+cost cancels since setup and random both pay it) AND median NET setupR (PROFIT after cost). Tradeable ⇔ systematic
+(p<0.001) AND net>0.
+```
+tf   class    cost-R  best setup: edge-vs-rand / NET-after-cost / p          read
+5m   crypto   0.313   bbfade_lo +0.136 / NET -0.143R / p2.5e-5   SKILL real, NET<0 (cost wall)
+5m   fx       0.803   bbfade_lo +0.100 / NET -0.754R / p1.3e-5   SKILL real, NET<0 (fx 5m catastrophic)
+15m  futures  0.110   bbfade_hi +0.005 / NET -0.121R / p1.2e-3   skill, NET<0
+30m  crypto   0.113   bbfade_hi +0.136 / NET -0.025R / p1.6e-2   near, NET<0
+1h   crypto   0.068   donch_L   +0.111 / NET +0.050R / p2.5e-5   << ONLY TRADEABLE (systematic & net>0)
+1h   fx       0.161   ripshort  +0.090 / NET -0.050R / p9.6e-2   not systematic, NET<0
+```
+Cost-in-R ladder MEASURED (monotonic): 5m 0.31 → 15m 0.17 → 30m 0.11 → 1h 0.068 → daily ~0.03.
+
+**Two honest findings:**
+1. **Mean-reversion SKILL persists at fast bars** — 5m crypto/fx bbfade_lo systematically beats random (real signal
+   information) — but is NOT tradeable: cost exceeds the skill margin, net R is negative. Skill ≠ profit.
+2. **The only tradeable intraday edge on the whole ladder is 1h crypto momentum** (donch_L, net +0.050R, p=2.5e-5) —
+   thin, and survivorship-caveated (8 surviving coins). So crypto momentum is tradeable on 1h AND daily; everything
+   equity/fx/futures intraday is skill-without-profit or nothing.
+
+**Corrects D-203:** I wrote there that cost "eats the edge vs random" — WRONG mechanism. Cost cancels in the edge-vs-
+random (both sides pay it); it kills NET profitability, not skill. The right frame: fast bars keep the skill, lose the
+profit. Edges are daily-locked because only slow-enough bars let skill clear the spread. Full timeframe ladder now
+complete: daily (rip-short eq p=1e-7, crypto momentum p=5e-7) + 1h (crypto momentum net+0.050R) are the tradeable set;
+5m/15m/30m are skill-but-unprofitable. $0, no order path.
