@@ -64,3 +64,18 @@ See [`docs/trd/STAGE1.md`](./docs/trd/STAGE1.md) for the full spec + VERIFY per 
 
 ## Parallel (financier track — separate, in YGS/CC)
 - YGS finance channel consuming the REJECTED list as honest content; funds R&D.
+
+## FORWARD-WIRE bbfade_lo/bear (D-194/197 — validated + survivorship-checked; pre-register the clock before the next bear)
+- [ ] Extend `_shared/trd-forward-setup.ts` detectTrades: add optional band entry
+      (`entry:"band"`, `bandLen:20`, `bandK:2` → fire long when close < lowerBB) alongside the RSI path;
+      keep RSI default so existing candidates are untouched. Mirror the file into `trd-forward-tick/`.
+- [ ] Add a REGIME gate: tick fn fetches SPY daily once, computes SPY<200MA per date, passes a
+      `regimeOk(date)` predicate into detectTrades; bbfade_lo/bear only fires when SPY<200MA.
+- [ ] Migration `0015_*`: insert one `trd_forward` row — candidate `bbfadelo-bear-1d`, symbol basket
+      (register per-name or a representative liquid set), timeframe `1d`, direction `long`,
+      setup `{entry:"band",bandLen:20,bandK:2,maLen:200,atrLen:14,stopAtr:2,tpMult:3,maxBars:20,dir:1,regime:"bear"}`,
+      in_sample_evidence `{n:9142,edgeRough:0.091,tRough:5.73,bothHalves:true,ref:"D-197"}`.
+- [ ] `deno check` + deploy `trd-forward-tick`; confirm bull-regime tick reports 0 fires (correct — dormant until SPY<200MA).
+  NOTE: won't fire in the current bull regime — that is the POINT; registered_at starts the immutable forward
+  clock now so the forward sample is legitimate when the bear regime arrives. Do as its own focused pass (touches the
+  evidence ledger — must be right, not crammed).
