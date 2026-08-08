@@ -3154,3 +3154,36 @@ is the D-070 thesis in practice: "nothing cleared / nothing to trade" is the exp
 discipline, not a failure. Added `./scripts/demo-exec.sh forward` (owner-run scoreboard) so this is visible anytime.
 The edges activate on their regimes: rip-short when names go overbought-in-downtrend (bull pullbacks / early bear),
 bbfade when SPY loses its 200MA. Nothing to do but wait for the market — $0, no order path armed.
+
+---
+
+## D-200 — the PER-INSTANCE "trade the chart" engine, built — and it proves why discipline must sit on top of it
+
+Operator: coverage feels incomplete + "create instances for each setup/strategy per instrument at a point in time,
+instead of everything in one instance… test the way we'd analyse and trade the charts." Built exactly that
+(`scripts/trd-instances.ts`): for ONE instrument at a time it spawns an INSTANCE for every (setup × regime) —
+6 setups (ripshort, dipbuy, bbfade_lo/hi, donchian L/S) × 5 regimes (any/bull/bear/hivol/lovol) — evaluates each on
+that instrument's own history point-in-time (next-open, no look-ahead) vs its OWN matched random control (D-146),
+deflated per-instrument.
+
+**Result (8 charts: AAPL/NVDA/TSLA/SPY/GLD/AMD/META/JPM): 240 instances → 12 raw-pass (t≥2) → 1 survives per-instrument
+deflation → 0 survive PROGRAM-WIDE deflation.** The lone per-instrument survivor (META donch_brkL/bear, n=31, t=3.66)
+is the expected 1-in-240 small-sample fluke (a bull-breakout "winning" in a bear regime — contradicts everything);
+program-wide deflation for N=240 raises the bar to |t|≥3.70, and 3.66 < 3.70 → it dies too. ZERO real per-chart edges.
+
+**The architecture verdict (the answer to the ask):**
+- Per-instance is the correct DEPLOYMENT model and is ALREADY built — `trd_forward` is one row per (instrument,
+  timeframe, direction, setup); the demo executor trades each chart point-in-time. That layer already "trades the chart."
+- Per-instance is the WRONG DISCOVERY model used naively: enumerating instance-per-(instrument×setup×time) is running
+  millions of trials; the raw-pass count IS the false-positive factory (12/240 here looked good, 0 real). It only
+  yields truth if EACH instance beats its own random control AND the population is deflated by the TOTAL instance count
+  — under which nothing single-chart survived.
+- Correct engine = DISCOVER with pooled+deflated power (trd-augment: pooling BUYS the power per-chart throws away →
+  that's how rip-short/bbfade were found) → PROMOTE survivors to per-instance live forward instances (trd_forward) →
+  each instance carries its regime/augmentation condition and trades point-in-time. Discovery pooled; deployment per-chart.
+
+**Coverage gap (honest):** the engine scales to ANY instrument list — the limiter is (a) survivorship-free data breadth
+(free: Stooq global EOD [biased], Alpaca, Dukascopy; the real fix is a survivorship-free feed) and (b) the deflation
+math itself: every instrument/setup you add RAISES the program-wide bar, so "test everything" makes the survival
+threshold harder, not easier. That is not a limitation to engineer away — it is the multiple-testing tax being charged
+honestly. $0, no order path touched.
