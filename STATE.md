@@ -1,6 +1,16 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — FOUR verified edge families + options wall OVERCOME + merged to main (D-206/207).** Framework
+grid completed (weekly+4h, D-206): commodity momentum leans on weekly, nothing else new. OPTIONS now testable for free
+(D-207): variance risk premium is real at every horizon/asset (implied>realized 80-87%), and CBOE's 34yr option-selling
+indices (PutWrite/BuyWrite) beat SPY risk-adjusted (Sharpe 0.71/0.61 vs 0.55) — a 4th edge family (variance-premium
+harvest, crash-gated). Overnight-drift anomaly tested (real for ETFs +10.3% vs +0.7% intraday, cost-gated). **Verified
+edge families = 4: rip-short · bbfade_lo/bear · crypto momentum · variance-risk-premium (option-selling).** Research arc
+D-146→D-207 MERGED to main (537e217) — main now holds all research + the updated live app (web/aegis-app/index.html,
+3-edges content, checksum 7d3124d6; deploys via Vercel git pipeline on push to main). NEXT research agenda (queued, not
+blocked): pairs/cointegration, seasonality, carry, term-structure roll-yield. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — THREE verified edges + the capped-stop survivorship principle (D-202…D-205).** Operator
 caught a real bias (SPY-regime imposed on all assets + pooling dictating individuals); de-biased to per-instrument-own-
 regime + count-inference (D-202). All timeframes tested (D-204, 5m→1h ladder): cost wall kills PROFIT not SKILL (5m
