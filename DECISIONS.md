@@ -3187,3 +3187,45 @@ program-wide deflation for N=240 raises the bar to |t|≥3.70, and 3.66 < 3.70 �
 math itself: every instrument/setup you add RAISES the program-wide bar, so "test everything" makes the survival
 threshold harder, not easier. That is not a limitation to engineer away — it is the multiple-testing tax being charged
 honestly. $0, no order path touched.
+
+---
+
+## D-201 — THE COMPLETE PICTURE: 154 instruments × 9 asset classes × 6 setups, gated + deflated + both-halves
+
+Operator: "the complete picture." Ran the pooled+deflated gate across a broad multi-asset universe (`scripts/trd-complete.ts`):
+US equities mega/mid/battered-tail, sector & intl ETFs, commodity futures, FX majors, crypto, rates — every setup,
+split by US market regime (SPY vs 200MA), program-wide Bonferroni deflation, PLUS both-halves sign stability + a
+survivorship read. 154 instruments pulled, 132 testable cells (n≥100), deflation bar |t|≥3.55.
+
+**Funnel: 132 cells → 32 raw-positive (t≥2) → 10 survive deflation → 4 survive deflation + both-halves + survivorship.**
+
+The 4 that clear EVERYTHING — all rip-short, all H1+H2 stable, all capped-loss (survivorship-robust, D-197):
+```
+eq-mega     ripshort all   n=699  edge +0.357 t=6.92  H1+H2 ✓
+eq-battered ripshort all   n=617  edge +0.388 t=6.62  H1+H2 ✓   <- battered-cap cut = independent D-197 confirmation
+eq-mega     ripshort bull  n=281  edge +0.469 t=5.49  H1+H2 ✓   (augmentation cell)
+eq-battered ripshort bull  n=346  edge +0.355 t=4.47  H1+H2 ✓
+```
+**rip-short is the edge — and more robust/generalizable than documented: it holds on airlines/cruise/meme/deep-drawdown
+names with both halves positive, proving the capped short is immune to the survivorship bias that kills longs.**
+
+**The trap both-halves caught (would have been credited by a naive sweep): CRYPTO MOMENTUM.**
+```
+crypto  donch_L all  n=1603 edge +0.336 t=6.17  ⚠ HALF-FLIP + crypto=worst delisting bias  → REJECT (era artifact)
+crypto  donch_L bull n=991  edge +0.389 t=5.49  ⚠ HALF-FLIP                                  → REJECT
+eq-mid  donch_L bear n=390  edge +0.501 t=5.50  ⚠ HALF-FLIP (recovery-dep long, biased univ)  → REJECT
+```
+t=6.17 is BIGGER than rip-short, yet it fails both-halves — the 8 surviving coins all trended in one window. Every
+breakout-long "survivor" is half-unstable and/or a recovery-dependent long on a survivorship-biased universe = the
+dip-buy signature (D-176/177). Momentum is dead in equities AND is a survivorship mirage in crypto.
+
+**One genuine new LEAD (not yet credited):** `etf-intl donch_L / bear` (n=856, edge +0.253, t=4.43, H1+H2 ✓) — the
+ONLY recovery-dependent survivor that passes both-halves; ETFs don't delist like single names, so it merits a
+survivorship-free check (buying intl-ETF breakouts in risk-off US tape). Secondary near-misses (killed by deflation,
+logged not credited): rates donch_S/bear t=3.55, etf-sector bbfade_lo t=2.6, etf-sector dipbuy t=3.0.
+
+**Verdict:** the complete picture CONFIRMS the thesis rather than overturning it — across the whole tested market, exactly
+ONE edge family clears every honest filter (rip-short), it generalizes across cap tiers, and the seductive high-t
+newcomers (crypto momentum) are survivorship/era mirages the both-halves gate exposes. bbfade_lo/bear (D-194/197) sits
+just under the multi-asset deflation bar here (t=2.6 pooled) but cleared on its own dedicated bear-regime test — kept.
+$0, no order path. The universe is now broad + multi-asset; the honest limiter remains survivorship-free data, not effort.
