@@ -1,6 +1,17 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — THREE verified edges + the capped-stop survivorship principle (D-202…D-205).** Operator
+caught a real bias (SPY-regime imposed on all assets + pooling dictating individuals); de-biased to per-instrument-own-
+regime + count-inference (D-202). All timeframes tested (D-204, 5m→1h ladder): cost wall kills PROFIT not SKILL (5m
+mean-rev beats random but nets negative; edges daily-locked). Crypto momentum survivorship-STRESSED (D-205): holds on
+coins that cratered 54–100% (p=1.4e-10) → **the 1R-capped stop is STRUCTURALLY survivorship-proof in ANY direction**
+(corrects my over-caution). **Verified tradeable set = 3: rip-short (equity daily, p=1e-7) · bbfade_lo/bear (equity
+daily) · crypto momentum (daily Donchian-L, survivorship-checked; also 1h net+0.05R).** Crypto=momentum, equities=mean-
+reversion (opposite). Status artifact: claude.ai/code/artifact/0874b850-4772-489b-9fbf-6e3aad33d34f. Live app is on
+Vercel: aegis-engine-psi.vercel.app. Residual limiter: fully-delisted-to-zero names untestable free, but capped-stop
+bounds that exposure structurally. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — COMPLETE MULTI-ASSET PICTURE (D-200/201).** Built the per-instance "trade the chart" engine
 (`trd-instances.ts`, D-200): 240 instances/8 charts → 0 survive program-wide deflation — per-instance is the DEPLOYMENT
 model (=trd_forward), a false-positive factory as naive discovery. Then the COMPLETE SWEEP (`trd-complete.ts`, D-201):
