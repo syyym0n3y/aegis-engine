@@ -1,61 +1,74 @@
-# DECODE — Trades By Sci (@tradesbysci, 539k YT subs, $199 "Simple Price Action" course)
+# DECODE — Trades By Sci (@tradesbysci, 539k subs)
 
-> The operator asked to extract "as much value as we can… how to approach the market in ways that give the best
-> probability." The honest value is not the transcripts (copyrighted, and redundant — one method taught 126 ways).
-> It is the METHOD run through the aegis gate. Every pillar of the course maps to a family we have already tested.
-> Sources: course syllabus via [thecoursepedia listing](https://thecoursepedia.com/product/tradebysci-price-action-course-2023/),
-> [channel](https://www.youtube.com/@tradesbysci), the 3 clips (XAUUSD H4/D1 demand-zone buy), and this session's D-196 test.
+> Decoded from his own free teaching (7 core transcripts pulled via `yt-dlp`, 22,767 words: Day Trading Crash Course
+> #1–6, "Market Structure", "Indication", "Corrections", "identify market structure shift"), cross-referenced to the
+> screenshots and gated against everything Aegis has already tested (D-146…D-196). This is the template for decoding
+> any trading-education channel: **extract the exact mechanical rule → map it to a tested family → report what's real,
+> what's marketing, and the highest-probability way to actually use it.**
 
-## The claim on the tin
-Two MT5 panels showing ~€18.6M / €11.2M equity, "how I'm holding $8.5M of gold buys," `BUY 100` lots XAUUSD.
+## 1. The method, in his own words (not the hype — the mechanics)
 
-**What the numbers actually say (advisor read):** balance ≠ withdrawn profit; on panel 2, equity €11.17M vs balance
-€6.87M = a large *unrealized* open position, margin level **260%** — one adverse swing from a margin call. `BUY 100`
-= 100 lots long gold during a 3,900→4,250 rally. That is **drift × leverage**, the single easiest number to
-manufacture in a bull market, and the same leverage that prints it erases it on reversal. The screenshot is the
-course's marketing, not evidence of edge. No claim about win-rate or risk-adjusted return is falsifiable from it.
+His entire system is **ICC — Indication · Correction · Continuation**, applied on 4H/1H (his words: "1–2 trades a week"):
+- **Indication** = price prints a new swing high (uptrend) or new swing low (downtrend). "The indication level is
+  where your entry is going to be." It marks BOTH direction and the entry level.
+- **Correction** = the pullback against the impulse (lower-highs/higher-lows). "You can't tell when a correction
+  starts, only when it's over" — he drops to a smaller timeframe (15m/1H) to see the correction end.
+- **Continuation** = price reclaims the indication level → enter in the impulse direction, target the prior high/low.
 
-## The method, pillar by pillar → aegis verdict
+Two hard rules he repeats:
+1. **"Never buy a higher high; never sell a lower low. Buy the higher-LOW, sell the lower-HIGH."** = fade the pullback
+   in the direction of the trend.
+2. **Multi-timeframe alignment** ("you need a team — multiple timeframes matching = strength"): Daily/4H/1H must all
+   agree before entry.
 
-| Course pillar (what he teaches) | Family it reduces to | aegis verdict | Evidence |
+Support/resistance he reframes as "buyers/sellers"; corrections are "buyers going back to grab more orders." It's
+standard trend-pullback price action with an SMC vocabulary.
+
+## 2. Decode → our verdicts (every pillar already tested)
+
+| His pillar | Mechanical translation | Aegis verdict | Evidence |
 |---|---|---|---|
-| **Supply & Demand zones** (buy demand / sell supply) | S/R + mean-reversion at a level | **REJECT as taught** | D-196: demand-zone long on gold/metals = **random** (+0.25R setupR is gold drift; random long matches it; edge +0.03R t=0.83). D-172: S/R catches no move better than random. |
-| **Liquidity concepts / sweeps** (the "stop hunt") | ICT liquidity grab | **REJECT** | D-080 gold 15m sweep −0.192R t=−3.34; D-081 sweep/FVG grammar 8,640 trials → **0 cleared**. |
-| **Market structure / BOS** (break of structure = confirmation) | trend-confirm after reversal | **REJECT (worse than random)** | D-194: the precise sweep→FVG→inverse→**BOS**→enter recipe = **−0.12 to −0.21R while random earns +0.05 to +0.14R** (t=−3 to −7) on GLD/SPY/QQQ/SLV. BOS makes you enter *late*. |
-| **Order blocks / Price imbalance (FVG)** | 3-bar gap entry | **REJECT** | Same 7-step test (D-194); FVG/inverse-FVG is the anti-edge leg. |
-| **Trend direction rules** (Day 1 "Trends" — trade with the trend) | trend-following / breakout | **REJECT** | Every breakout/Donchian setup was dead or anti-edge at every timeframe (PLAYBOOK #3). |
-| **"No-trade until price breaks above resistance"** (Day-1 filter) | breakout-confirmed entry | **REJECT (never fires)** | D-196: the same-bar break-above filter reduced signals to <30 — the confirmation is so tight it barely triggers, and when relaxed adds no edge. |
+| **Sell the lower-high in a downtrend** | fade a rally inside a downtrend (short) | ✓ **THIS IS OUR ONE SURVIVOR** | rip-short (RSI>70 & <200MA, short), t=7.23 daily / 8.07 crypto (D-179/170), the only edge that clears every gate |
+| **Buy the higher-low in an uptrend** | buy a dip inside an uptrend (long) | ✗ dead survivorship-free | dip-buy family: t=5.63 biased → t=1.15 survivorship-free (D-176/177) |
+| **ICC continuation entry** (buy the reclaim of the indication level after a correction) | breakout / trend-continuation long | ✗ falsified every timeframe | momentum/breakout dead (D-188); resist-breakout = drift (D-196, t=2.40 = survivorship) |
+| **Demand-zone / support bounce** (the gold screenshots) | S/R mean-reversion long | ✗ loses to random on gold | D-196: GLD random long +0.71R **beats** his bounce +0.60R; broad-daily "edge" is dip-buy on biased data |
+| **Multi-timeframe alignment** = the winning confluence | stack agreeing timeframes/signals | ✗ confluence adds nothing | D-195: even *orthogonal* confluence gives zero incremental lift; correlated stacking is *worse* (D-194) |
+| **7-step sweep/FVG (his ICT cousin)** | liquidity-grab reversal | ✗ worse than random | D-193/195 precise 7-step: −0.12 to −0.21R, t=−3 to −7 |
 
-**Result: 6 of 6 pillars land in already-falsified space.** There is no component of the taught method that beats a
-matched random entry once drift is removed.
+## 3. What is REAL vs what is MARKETING
 
-## The one grain of truth — and how he gets it wrong
-His instinct — *buy oversold at support after a decline* — is directionally the SAME family as the one conditional
-edge we DID find: **Bollinger-fade-LONG in a bear regime** (D-194: +0.078R, t=3.69, n=7,230, deflated). But:
-- He teaches it as a **universal** rule ("buy the demand zone"). Measured, it only beats random in a **specific
-  regime cell** (down-market oversold), and on his own instrument (gold) the specific swing-low mechanic **fails**
-  (D-196) — it's weaker than the Bollinger definition and drowned by gold's drift.
-- He stacks **confluence** (S/D + liquidity + structure + order block on one trade) as if more confirmations = higher
-  probability. We proved the opposite twice: correlated confluence (D-194) and even *orthogonal* confluence (D-195)
-  give **zero incremental lift** and can be net-negative. His "everything lines up" trade is statistically weaker,
-  not stronger, than a single well-conditioned setup.
+**Real (the one thing he's right about):** his *sell-side* instinct — **sell the lower-high in a downtrend** — is
+mechanically identical to rip-short, the single edge that survived our entire falsification program. Fading rallies in
+a downtrend beats a random short because shorts fight drift (PLAYBOOK #2). Directionally, half his method points at the
+only real edge in the building.
 
-## What actually gives "best probability" (the deliverable answer)
-From the full aegis program (D-146…D-196), the honest best-probability approach is the near-opposite of the course:
-1. **Fade extremes, don't chase structure.** Every survivor mean-reverts; every breakout/BOS/trend-confirm setup is
-   dead. The single deployable edge is **rip-short** (short RSI>70 while <200MA) — and only in a **bull + high-vol**
-   regime (+0.109R, D-194). Gold longs are not on the list.
-2. **One conditioned setup, not a confluence stack.** More confirmations reduce your sample and, if correlated to
-   stress, select the regime where you lose. Simplicity + regime selection beats the "everything aligns" trade.
-3. **Judge every setup against a random entry in the same regime**, never against zero. A +0.25R gold long that a
-   coin-flip also earns is not a strategy — it is the market's drift wearing your indicator's hat.
-4. **Size small and wide, cap loss at 1R, target 3–5R**, and discount for drift (longs), borrow (shorts), and
-   survivorship — the exact discipline the leveraged `BUY 100` violates.
+**Marketing (where the probability isn't):**
+- **The $8.5M gold longs** (screenshot 1) are the *buy* side (buy higher-low in a gold uptrend) = the dead dip-buy
+  family. It's printing only because gold went parabolic — that's **drift × leverage**, not edge. The tell is in his
+  own panel: **Margin Level 260%** and **Free Margin < Margin** means he's near-fully margined. That is the exact
+  full-margin behaviour of "Tape 002 — i full margin my first xauusd trade" and "Tape 004 — LOST $366,000." Leverage
+  turns gold's drift into an 8-figure equity screenshot *and* into a blow-up when gold corrects — which his own D1
+  chart shows it repeatedly does.
+- **ICC continuation entries** are breakouts, which we've killed at every timeframe.
+- **Multi-timeframe "alignment"** is sold as the source of the edge; measured, confluence adds nothing.
+- The value/volume, buyers-vs-sellers, "corrections = grabbing orders" narrative is a *story* that fits any chart in
+  hindsight — none of it survives a random-entry control.
 
-## For the CC cockpit — the repeatable "strategy decode"
-This channel is the 3rd social strategy triaged this way (D-193 ICT/VWAP, D-194 precise ICT, D-196 this). The flow is
-now a repeatable substrate: **social claim → mechanize the exact recipe → gate vs same-regime random (deflated) →
-verdict in one session for $0.** The gate is the moat: it turns the endless feed of "$8.5M / easy" content into a
-falsifiable verdict instead of an argument. The trading-decode lives here (aegis); the *content*-decode (why this
-format wins 539k subs — narrative-rich, unfalsifiable, aspiration-priced) is a YGS/CC job in the command-centre repo,
-not this one.
+## 4. Highest-probability way to actually approach this (augmentation, not imitation)
+
+1. **Keep his sell-side, drop his buy-side.** Sell lower-highs in confirmed downtrends (= rip-short) — the real edge.
+   Ignore "buy the dip in the uptrend"; that's where his own account is most fragile.
+2. **Condition it by regime, don't stack timeframes.** rip-short's edge nearly doubles in high-vol bull regimes
+   (+0.057→+0.109R, D-194); multi-timeframe confluence adds nothing (D-195). "When" beats "how many confirmations."
+3. **Size small and wide, never full-margin.** The real edge is +0.06–0.11R/trade across many names (D-184). His 260%
+   margin level is the opposite of this — one gold reversal wipes the screenshot. Cap loss at 1R, target 3R.
+4. **Treat any "buy support in an uptrend" setup as unproven** until it's run survivorship-free; on the instrument he
+   markets (gold) it loses to buying randomly.
+
+## 5. Reproduce
+```bash
+yt-dlp --skip-download --write-auto-sub --sub-lang "en.*" -o "%(id)s.%(ext)s" "https://www.youtube.com/watch?v=<id>"
+deno run --allow-net scripts/trd-gold-sr.ts        # the S/R / demand-zone gate (D-196)
+```
+Core method video IDs: Market Structure `3NDqGuITSpk` · Indication `fDtZbxeNWyw` · Corrections `lcodvDq2jx4` ·
+Crash Course #1 `PYVr6O6p_V4` · #5 Daily&4H `NQY6xAL4SuU` · Day 14 Structure `Y7Q37vTbuNg`.
