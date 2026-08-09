@@ -4107,3 +4107,21 @@ crypto-momentum · pairs · VRP-proxy). Pairs holds USO/BNO + NKE/LULU (GLD/SLV 
 crypto/rip-short dormant-by-market awaiting real signals. This is the D-231 machine actually running: N growing across
 independent edges, each with its 1R stop, one kill-switch flattening the book. $0 real (Alpaca paper); real money
 still gated behind the staged rungs (D-070).
+
+---
+
+## D-236 — 4-edge executor fleet wired into the app cockpit (live Vercel)
+
+Wired the executor fleet into the live app's Live-cockpit view. New READ-ONLY aggregator `trd-exec-cockpit`
+(`supabase/functions/trd-exec-cockpit/index.ts` v3) — the static app can't read Alpaca (creds are server-only), so
+this one call joins account+positions+open-orders with the durable state (trd_pairs_pos, trd_exec_arm,
+trd_killswitch) and the live signal snapshot (trd_edge_snapshot), ATTRIBUTES every open position and pending order to
+its edge (crypto→momentum, SVXY→VRP, paired legs→pairs, equity shorts→rip-short), and returns per-edge
+{live, n, pending, pnl, signal}. NO order path. App: new `doExec()` renders a "Live executor — 4 edges (paper)"
+panel at the top of the cockpit — armed/kill-switch status, paper equity + total P&L, a 4-card grid (open/queued/idle
+per edge), a positions table (sym·edge·side·qty·px·unreal-P&L), and per-edge live-signal rows. Verified in-browser
+(local + LIVE production) — console clean, real data (ARMED · $101,701 +1.7% · 0 open / 12 queued: rip-short 5
+[ORCL/IBM/ACN/NFLX/AEM], pairs 6, VRP 1). The "0 open / 12 queued" is honest weekend state — orders queued to Monday's
+open. Deployed via the git pipeline (deploy-live9 → origin/main c0295c2, Vercel dpl READY). Surgical +29-line diff.
+Note the cockpit surfaces the known monitor-vs-scan gap truthfully: rip-short shows "0/20 firing" (edge-monitor's
+20-name mega-cap sample) alongside 5 real queued shorts (full-universe scan) — different samples, not a bug. $0 real.
