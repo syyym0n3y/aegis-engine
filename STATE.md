@@ -1,6 +1,17 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — DEFINITIVE GLOBAL VERDICT (FX-normalized, D-220).** Expanded intl universe to 693 liquid
+names (18 exchanges) + FX-NORMALIZED the sweep (14 live FX pairs, GBp/ZAc handled → correct USD tiers). rip-short FAILS
+at EVERY international tier (even large flat: -0.010, t=-0.30); D-219's positive was a currency artifact. **DEFINITIVE:
+rip-short is US-quality-large-cap-SPECIFIC** — works only on a narrow pocket of liquid quality US large-caps (curated 30
+= +0.342R t=6.77), marginal on broad US large, negative US mid/small/micro, and dead across ALL international tiers.
+Likely a US-microstructure phenomenon (borrow depth / options-hedging flow / index mean-reversion) that doesn't
+replicate abroad. Coverage: 100% US (9,850) + 693 FX-normalized intl / 18 exchanges → the illiquid ~50k global tail is
+EMPTY; no new edge anywhere beyond the narrow US pocket. The BROAD edges are the factor/index ones (VRP, pairs, term-
+structure, XS-momentum); rip-short/bbfade/crypto-momentum are narrow technical patterns. Global coverage program
+COMPLETE. Sweeps resumable (`data/*_pool*.csv`). ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — INTERNATIONAL grind + coverage verdict SETTLED (D-219).** Sourced liquid intl universe
 (357 large/mid-caps, 18 exchanges via Yahoo suffixes; Yahoo serves any ticker, bulk LISTS were the only gap — no free
 keyless global-listing API). Grind: rip-short WEAK/not-significant on intl large-caps (t=0.98) — reinforces D-218:
