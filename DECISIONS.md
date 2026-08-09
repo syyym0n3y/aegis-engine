@@ -3558,3 +3558,27 @@ cross-sectional momentum. REJECTED (run honestly through the gate): dip-buy, bbm
 REVERSAL, seasonality, intermarket lead-lag, FX carry, time-series momentum, low-vol(this universe), equity breakout,
 minute edges. Still-queued (need event data / broad universe): PEAD, pre-FOMC drift, value/quality, low-vol-broad.
 The map: documented risk premia + a few conditioned technical patterns survive; all folklore rejects. $0.
+
+---
+
+## D-213 — documented factor sweep (capturable form) + low-vol CORRECTED; PEAD/pre-FOMC remain
+
+Tested documented equity factors via real ETFs vs SPY, full history (`scripts/trd-factors.ts`), fixing D-212's
+mega-cap-only artifact by using broad factor constructions:
+```
+factor ETF        Sharpe  vs SPY      long-short spread
+momentum MTUM      0.77   +0.22       momentum−market +1.6%/yr   ✓ REAL (corroborates 7th edge)
+quality  QUAL      0.76   +0.21       —                          ✓ REAL
+min-vol  USMV      0.76   +0.21       min-vol lower-vol/Sharpe↑  ✓ REAL (broad) — CORRECTS D-212
+value    VTV       0.46   -0.10       value−growth (lg) -4.2%/yr ✗ decayed (value drought)
+small val IWN      0.43   -0.13       value−growth (sm) +1.0%/yr ~ weak
+size     IWM       0.42   -0.13       small−large +0.7%/yr       ✗ flat/gone
+```
+**Momentum, Quality, Min-vol are real, capturable, risk-adjusted premia on a broad basis** — the "factor book" the app
+references, best captured passively via ETFs / the allocator (long-horizon, not discrete setups). **CORRECTION to D-212:
+the low-vol anomaly IS real** — D-212's negative was a mega-cap-tech-winner artifact; broad min-vol (USMV) beats SPY
+risk-adjusted (+0.21 Sharpe). Value and Size have decayed (post-2010 value drought; size arbitraged). These factors
+complement the 7 discrete tradeable-setup edges as a distinct class (systematic long-horizon factor premia).
+
+Still genuinely untested (need event data): PEAD (earnings-surprise dates), pre-FOMC drift (FOMC calendar). Running
+pre-FOMC next. $0.
