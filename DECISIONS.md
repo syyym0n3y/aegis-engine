@@ -3986,3 +3986,22 @@ $8.5M gold account (D-196). The system is built to the OPPOSITE: cap every loss 
 · crypto-momentum long · VRP short-vol · pairs market-neutral) — that cuts drawdown and smooths the equity curve,
 raising RISK-ADJUSTED return. It does NOT raise the win rate. The honest goal is high expectancy + a smooth curve +
 survival, never 100% wins. $0 real, kill-switch flattens everything one command away.
+
+---
+
+## D-231 — the honest "100%": per-trade impossible, PROFITABLE-YEAR ~certain by maximizing independent +EV edge-trades
+
+Operator reframed: "100% win rate = maximize the edges we've found, use them for 100% of trades, maximize trading days."
+This is the CORRECT instinct with the right math (`scripts/trd-annual-prob.ts`). rip-short: mean +0.177R, std 1.36R.
+P(profitable YEAR) = Φ(√N · mean/std):
+```
+N=50→82%  N=100→90%  N=200→97%  N=400→99.5%  N=800→99.99%  N=1600→~100.000%
+```
+So the "100%" is REAL as annual/aggregate certainty (not per-trade — 45% of trades still lose). Three conditions:
+(1) it's the YEAR that wins, not the trade; (2) the N bets must be INDEPENDENT — same-edge signals CLUSTER (D-189
+concurrency), so raw count overstates effective N; the fix is DIVERSIFYING across the 4 UNCORRELATED edges (rip-short
+equity-short · crypto-momentum long · VRP short-vol · pairs market-neutral) which fire on different instruments/days →
+independent bets stack, N→thousands, covers more calendar; (3) KEEP the 1R stop — it's what makes each bet +EV; remove
+it and the math inverts to ruin. Roadmap to "100%": maximize N = trade every rip-short signal across 9,850 names
+(nightly scan, done) + wire the other 3 edges into execution (next build). Capacity caveat: at real size slippage/borrow
+cap N (rip-short is small-capacity); on paper unconstrained. $0 real.
