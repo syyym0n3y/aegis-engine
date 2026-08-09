@@ -3660,3 +3660,13 @@ international Yahoo suffixes (.L/.TO/.HK/.T/.DE/.AX…) toward the global ~50k. 
 shows the pattern clearly. The 50k ask did its job: it exposed that our best edge is curated-universe-specific. The
 other edges (VRP, pairs, term-structure, XS-momentum) are index/factor/ETF-level and not universe-breadth-dependent;
 crypto momentum and bbfade were tested on their own universes. QUEUED: continue the sweep + intl extension. $0.
+
+## D-216b — VERIFIED: the broad-universe negative is genuine narrowness (not a cost artifact)
+Ran the 30 curated liquid mega-caps through the EXACT universe-sweep cost model (`scripts/trd-verify-curated.ts`,
+8bp spread + 8%/yr borrow): setupR +0.087, edge +0.342, **t=6.77 → edge HOLDS.** So rip-short works strongly on
+curated liquid quality mega-caps under identical cost, but is negative/weak on the broad universe (D-216) → the
+narrowness is REAL, not a harsh-cost artifact. rip-short is deployable ONLY on liquid + borrowable + quality
+mega-caps (a small set); on small/micro caps the reversion often doesn't come (real fundamental decline) and they're
+unborrowable. This SHARPENS the edge's deployment envelope honestly rather than killing it. The other verified edges
+are index/ETF/factor-level (VRP, term-structure, XS-momentum, pairs) — not single-name-breadth-dependent, so the 50k
+sweep doesn't threaten them. Full-universe sweep remains queued/resumable for completeness. $0.
