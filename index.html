@@ -146,6 +146,7 @@ QQQ long 12000</textarea>
 <section class="view" data-view="cockpit">
   <h1>Live cockpit</h1>
   <p class="sub">The autonomous paper engine — trading 10 markets across every session, macro-throttled, firewall-protected. Updates every 6h on its own. <span id="c_upd" class="muted"></span></p>
+  <div id="c_scan"></div>
   <div id="c_out">loading…</div>
 </section>
 
@@ -180,7 +181,7 @@ const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
 function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
-  if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
+  if(k==="allocate")doAllocate(); if(k==="cockpit"){doCockpit();doScan();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
 async function doProp(){
@@ -289,6 +290,19 @@ async function doAllocate(){
   }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
 }
 function card(l,v,s,c){return `<div class="card"><div class="lbl">${l}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div><div class="s">${s||""}</div></div>`}
+async function doScan(){
+  const o=document.getElementById("c_scan");o.innerHTML='<h2>Nightly full-universe rip-short scan</h2><div class="panel"><span class=muted>reading scan…</span></div>';
+  try{const d=await(await fetch(API+"/trd-scan-latest",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
+    const pr=d.progress,done=pr.status==="done";
+    const rows=(d.actionable||[]).map(a=>`<tr><td class="mono">${esc(a.ticker)}</td><td class="mono num">$${(+a.px).toFixed(2)}</td><td class="mono num" style="color:var(--red)">${(+a.rsi).toFixed(0)}</td><td class="mono num">$${(+a.ma200).toFixed(0)}</td><td class="mono">${esc(a.tier)}</td></tr>`).join("")||'<tr><td colspan=5 class=muted>no actionable candidates in the latest scan</td></tr>';
+    o.innerHTML=`<h2>Nightly full-universe rip-short scan</h2>
+    <div class="panel" style="font-size:13px"><div class="row" style="border:0;padding:0"><span>All 9,850 US names scanned nightly for the rip-short signal. <b>Actionable = liquid large-caps only</b> (the edge is US-quality-large-cap-specific; smaller firings are logged but not tradeable).</span></div>
+      <div class="row"><span class="mono">scan ${esc(d.scan_date||"—")}</span><span class="mono" style="color:${done?'var(--accent)':'var(--amber)'}">${done?'complete':(pr.status+' · '+pr.pct+'%')} · ${pr.idx}/${pr.total}</span></div>
+      <div class="row"><span>firing (all tiers)</span><span class="mono">${d.firingAll}</span></div>
+      <div class="row"><span>actionable candidates</span><span class="mono" style="color:${d.actionableCount?'var(--accent)':'var(--faint)'}">${d.actionableCount}</span></div></div>
+    <table style="margin-top:10px"><thead><tr><th>ticker</th><th class="num">price</th><th class="num">RSI</th><th class="num">200MA</th><th>tier</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(err){o.innerHTML=`<h2>Nightly full-universe rip-short scan</h2><div class="panel"><span style="color:var(--red)">${esc(err.message)}</span></div>`}
+}
 async function doEdges(){
   const o=document.getElementById("ed_out");o.innerHTML="<span class=muted>reading live edge state…</span>";
   try{const d=await(await fetch(API+"/trd-edge-monitor",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");const e=d.edges;
