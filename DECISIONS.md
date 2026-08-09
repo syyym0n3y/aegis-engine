@@ -3631,3 +3631,32 @@ No family remains untested. PEAD is now RUN (inconclusive on free data, deep-tes
 7 discrete edges (rip-short, bbfade_lo/bear, crypto momentum, VRP, pairs/stat-arb, term-structure roll, cross-sectional
 momentum) + 3 factor premia (momentum, quality, min-vol). Everything else — folklore, decayed anomalies, and PEAD-on-
 shallow-data — does not clear. The D-070 thesis is proven at the fullest scope the free data allows. $0, no order path.
+
+---
+
+## D-216 — FULL-UNIVERSE COVERAGE (the 50k ask): rip-short does NOT generalize broadly — it's a curated-liquid-name edge
+
+Operator: "coverage over all 50000 stocks." Sourced the real universe (SEC company_tickers.json = 9,850 US filers,
+free+keyless) and built a RESUMABLE pooled sweep (`scripts/trd-universe-sweep.ts` → `data/univ_pool.csv`): rip-short
+(the #1 edge) pooled across the universe by LIQUIDITY TIER with realistic per-signal cost (price-tier spread 8–200bp +
+8%/yr borrow). First batch: 459 stocks, ~12,100 signals.
+```
+tier    stocks signals setupR  randR   edge     t     verdict
+large      46   1242  -0.271 -0.204 -0.067  -1.81   ✗ net-negative
+mid       131   3922  -0.319 -0.215 -0.104  -2.48   ✗ net-negative
+small     105   2855  -0.193 -0.270 +0.077  +1.74   pos-vs-rand but net-negative absolute
+micro     177   4113  -0.699 -0.542 -0.158  -1.99   ✗ cost/borrow wall (brutal)
+```
+**HONEST CORRECTION — the headline edge is narrower than stated.** rip-short's t=6–7 was on ~30 CURATED liquid quality
+mega-caps at 2bp cost (D-179/202) — a favourable subset. On the BROAD uncurated universe with tier-realistic cost +
+borrow, the edge is negative (large/mid/micro) or weak-and-net-negative (small); and most signals fire on small/micro
+names (282 of 459 stocks) that are largely UNBORROWABLE — untradeable as shorts regardless of signal. So rip-short is a
+NARROW edge on select liquid, borrowable, quality names — NOT a universe-wide phenomenon. Its real capacity/breadth is
+smaller than the curated result implied. (Survivorship note: for a capped SHORT, missing delisted-losers biases the
+measured edge DOWN, so this isn't survivorship-inflated — if anything pessimistic.)
+
+**Coverage status:** the sweep is RESUMABLE (skips done tickers) — re-run to cover all 9,850 US at stride=1, and add
+international Yahoo suffixes (.L/.TO/.HK/.T/.DE/.AX…) toward the global ~50k. This first stratified batch (459) already
+shows the pattern clearly. The 50k ask did its job: it exposed that our best edge is curated-universe-specific. The
+other edges (VRP, pairs, term-structure, XS-momentum) are index/factor/ETF-level and not universe-breadth-dependent;
+crypto momentum and bbfade were tested on their own universes. QUEUED: continue the sweep + intl extension. $0.
