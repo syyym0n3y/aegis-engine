@@ -149,6 +149,12 @@ QQQ long 12000</textarea>
   <div id="c_out">loading…</div>
 </section>
 
+<section class="view" data-view="edges">
+  <h1>Edges now</h1>
+  <p class="sub">Live state of all seven verified edges — is each actionable right now, and its current reading. The broad risk premia (vol, pairs, term-structure, momentum) plus the narrow technical patterns. Updates on load.</p>
+  <div id="ed_out">loading…</div>
+</section>
+
 <section class="view" data-view="doctrine">
   <h1>What we found</h1>
   <div class="panel"><ul>
@@ -168,13 +174,13 @@ QQQ long 12000</textarea>
 
 <script>
 const API = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
-const VIEWS = [["home","Home"],["copilot","Co-pilot"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
+const VIEWS = [["home","Home"],["edges","Edges now"],["copilot","Co-pilot"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
 const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
 function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
-  if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); if(k==="copilot")doCopilot(); location.hash=k; window.scrollTo(0,0);}
+  if(k==="allocate")doAllocate(); if(k==="cockpit")doCockpit(); if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
 async function doProp(){
@@ -283,6 +289,27 @@ async function doAllocate(){
   }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
 }
 function card(l,v,s,c){return `<div class="card"><div class="lbl">${l}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div><div class="s">${s||""}</div></div>`}
+async function doEdges(){
+  const o=document.getElementById("ed_out");o.innerHTML="<span class=muted>reading live edge state…</span>";
+  try{const d=await(await fetch(API+"/trd-edge-monitor",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");const e=d.edges;
+    const bull=/BULL/.test(e.regime.state);
+    const row=(name,tag,tagc,note,on)=>`<div class="row"><span><b>${esc(name)}</b> <span class="pill" style="color:${tagc};border-color:${tagc}55">${esc(tag)}</span> — ${esc(note)}</span><span class="mono" style="color:${on?'var(--accent)':'var(--faint)'}">${on?'● live':'○ idle'}</span></div>`;
+    o.innerHTML=`<div class="grid">${card("Regime",bull?"BULL":"BEAR","SPY "+e.regime.spy+" vs 200MA "+e.regime.ma200,bull?'var(--accent)':'var(--red)')}
+      ${card("VRP",e.vrp.rich?"+"+e.vrp.premium:"−","VIX "+e.vrp.vix+" vs realized "+e.vrp.realized21d,e.vrp.rich?'var(--accent)':'var(--amber)')}
+      ${card("Vol curve",e.termStructure.contango?"contango":"backwardn","VIX "+e.termStructure.vix+" / 3M "+e.termStructure.vix3m,e.termStructure.contango?'var(--accent)':'var(--amber)')}
+      ${card("Pairs",e.pairs.diverged,"at |z|>2 now",e.pairs.diverged?'var(--accent)':'var(--faint)')}</div>
+    <div class="panel" style="margin-top:14px">
+      ${row("Variance risk premium","vol · broad","var(--accent)",e.vrp.note,e.vrp.rich)}
+      ${row("Pairs / stat-arb","neutral · broad","var(--accent)",e.pairs.note,e.pairs.diverged>0)}
+      ${row("Term-structure roll","carry · broad","var(--accent)",e.termStructure.note,e.termStructure.contango)}
+      ${row("Cross-sectional momentum","factor · broad","var(--accent)","long "+e.crossSecMomentum.longWinners.join(", ")+" / short "+e.crossSecMomentum.shortLosers.join(", "),true)}
+      ${row("rip-short","narrow · US","var(--amber)",e.ripShort.note+" — "+esc(e.ripShort.narrow||"US quality large-caps only"),e.ripShort.actionable)}
+      ${row("bbfade_lo / bear","narrow · US","var(--amber)",e.bbfadeBear.note,e.bbfadeBear.actionable)}
+      ${row("crypto momentum","narrow · crypto","var(--amber)",e.cryptoMomentum.note,e.cryptoMomentum.firing>0)}
+    </div>
+    <p class="muted" style="margin-top:10px">generated ${esc((d.generated_at||"").slice(0,16))} UTC · broad edges = documented risk premia (global); narrow = condition/liquidity-specific.</p>`;
+  }catch(err){o.innerHTML=`<span style="color:var(--red)">${esc(err.message)}</span>`}
+}
 async function doCockpit(){
   const o=document.getElementById("c_out");
   try{const d=await(await fetch(API+"/aegis-cockpit?format=json",{cache:"no-store"})).json();const s=d.summary||{},da=d.data||{},m=da.macro||{};
