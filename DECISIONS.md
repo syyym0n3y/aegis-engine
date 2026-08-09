@@ -3821,3 +3821,19 @@ VRP (implied vs realized), pairs at |z|>2, vol term-structure contango, momentum
 PEAD. Optional depth (not gaps): full virtual-R forward trackers per broad edge (the monitor gives current-state; the
 risk premia are already 34yr-proven so R-accrual matters most for single-name setups, which ARE wired); international
 borrow/spread refinement (verdict already clear). Everything else is complete. $0, no order path armed.
+
+---
+
+## D-222 — edge monitor wired to a 30-min cron (keeps the market pulse current + builds an edge-state time series)
+
+Operator: "wire the edge monitor into a 30-min cron / whatever keeps up with the entire market." Done:
+- **Table** `trd_edge_snapshot` (migration 0016): immutable rows (no UPDATE), DELETE allowed for retention. Stores each
+  snapshot's `generated_at` + full `edges` jsonb.
+- **`trd-edge-monitor` v2** now PERSISTS its snapshot (service-role insert) on every invocation, still returns it live.
+- **pg_cron `trd_edge_monitor_30m`** (jobid 25, `*/30 * * * *`, active) invokes the fn every 30 min via net.http_post +
+  `_cc_cron_bearer()` (same pattern as the CC crons), timeout 120s.
+Verified: manual invoke wrote a snapshot (VRP note captured). 30 min is appropriate for these edges — daily/weekly
+signals refresh well within it, and 24/7 crypto + intraday vol stay current; the monitor samples the market-
+representative instruments per edge (SPY/VIX for VRP + term-structure, 20 large-caps for rip-short/momentum, 8 majors
+for crypto, 8 sector pairs), so it keeps the whole edge-state current without a full 10k-name scan (unnecessary for
+daily edges). The cockpit can read the latest snapshot instantly; the history is an edge-state time series. $0.

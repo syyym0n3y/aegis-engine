@@ -39,4 +39,8 @@ async function monitor(){
   out.crossSecMomentum={longWinners:rets.slice(0,q).map(x=>x.s),shortLosers:rets.slice(-q).map(x=>x.s),note:"long top / short bottom quintile (12-1m), market-neutral"};
   return out;
 }
-Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{const r=await monitor();return new Response(JSON.stringify({ok:true,generated_at:new Date().toISOString(),edges:r},null,2),{headers:cors});}catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
+Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{const gen=new Date().toISOString();const r=await monitor();
+  // persist snapshot (append-only history; the 30-min cron feeds this so the cockpit reads a fresh cached state)
+  const SB=Deno.env.get("SUPABASE_URL"),SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if(SB&&SRK){await fetch(`${SB}/rest/v1/trd_edge_snapshot`,{method:"POST",headers:{apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({generated_at:gen,edges:r})}).catch(()=>{});}
+  return new Response(JSON.stringify({ok:true,generated_at:gen,edges:r},null,2),{headers:cors});}catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
