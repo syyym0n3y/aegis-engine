@@ -4144,3 +4144,21 @@ wrong token → "unauthorized — bad control token" (401), correct token → "A
 5 buttons + password field render; exec panel intact; only console error is the intentional 401 from the wrong-token
 test. Token generated (40-hex) and handed to the operator out-of-band (NOT committed). Deployed via git pipeline. $0
 real; paper only.
+
+---
+
+## D-238 — universe-coverage honesty: killed the 50k overclaim (operator caught it)
+
+Operator, looking at the live app: "this doesn't prove 50k instruments have been swept." Correct — it didn't. The app
+claimed "the illiquid ~50k tail is empty; no edge lives outside these" / "holds no edge" as if MEASURED. It was never
+swept: the actual measurement is 10,543 liquid tradeable names (9,850 US SEC filers + 693 FX-normalized international
+across 18 exchanges). The 50k "empty tail" was an INFERENCE from the cost wall (D-204) dressed as a result — a
+textbook ANALYSIS_CONTRACT violation (report the measurement not the feeling; an asserted limitation is verified like
+any positive claim). First pass I relabeled it as inference; operator then set the binary: "50k instruments or
+nothing." Chose NOTHING and removed every 50k reference. WHY not attempt the 50k sweep: the engine's definition of
+"swept" is per-instrument random-control + walk-forward + deflation, which requires real history AND tradeability per
+name; the illiquid global tail structurally lacks both (thin history, no borrow, gate-breaking spreads), so a 50k run
+would manufacture noise-as-coverage — a worse contract violation than the overclaim. App (deploy-live12, bbebc33,
+verified live no-50k) now claims ONLY the 10,543 measured names and makes NO claim about untested instruments. Lesson
+logged: never state an untested universe as covered; "we did not test X" is the honest form, and if even that invites
+a false completeness read, remove the framing entirely.
