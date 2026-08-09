@@ -3956,3 +3956,33 @@ Operator: "wire the executor to the nightly scan's actionable candidates." Done 
 The rip-short edge is now trading live on paper, sourced from the full-universe scan, guarded end-to-end. NOT auto-
 cronned — invoked on tick; a daily execution cron (post-open, post-scan) is the deliberate next step, flagged not done.
 $0 real, kill-switch + disarm one command away.
+
+---
+
+## D-230 — autonomous execution + P&L + thesis-exit risk overlay; and the 100%-WIN-RATE reality
+
+Operator: wire daily execution cron, track P&L, kill positions when analysis flips, best TP/SL; "combination of edges…
+100% win rate." Built the risk system; corrected the impossible ask.
+
+**Built:**
+- **Execution cron** `trd_exec_daily` (0 14 * * 1-5) — daily post-open, trades the nightly scan's actionable candidates.
+- **Position manager** `trd-position-manager` + cron `trd_manager_daily` (5 14,20 * * 1-5) — post-open + pre-close.
+  P&L snapshot (equity, unrealized, total-vs-$100k deposit, per-position) → trd_pnl_snapshot. THESIS EXITS: closes a
+  position when price crosses its 200MA AGAINST it (short recovers >200MA / long breaks <200MA) — the directional-
+  invalidation exit beyond the hard bracket. KILL-SWITCH = true FLATTEN; ?flat=1 forces it. demo-exec.sh + pnl/flat/manage.
+- **TP/SL** (already optimal, D-154/172): bracket stop +2ATR (=−1R), target −3ATR (=+3R). Cap loss at 1R, let winners
+  run to 3R. That geometry IS the edge. Verified live: manager shows +$1,962 (1.96%) on the pre-existing crypto book.
+
+**The 100%-win-rate correction (the most important honest call of the program):** a 100% win rate is IMPOSSIBLE and the
+belief itself is the account-killer. Measured reality (`scripts/trd-winrate.ts`): **rip-short wins 45.2% of trades**
+(322 wins / 391 losses over 713) — avg win +1.47R, avg loss −0.89R → **expectancy +0.177R/trade. The edge LOSES the
+majority of its trades and is still profitable, because of the payoff asymmetry.** Every real edge is like this. A 100%
+win rate requires never taking a stop = unbounded loss on the one trade that keeps going = the martingale that wiped the
+$8.5M gold account (D-196). The system is built to the OPPOSITE: cap every loss at 1R, harvest 3R winners, size small.
+
+**Combination of edges — what it ACTUALLY does (already tested):** confluence on the SAME position does NOT help
+(D-194/195: correlated AND orthogonal confluence = zero incremental lift; stacking can be net-negative). What helps is
+(a) regime-selection (right edge for the regime) and (b) DIVERSIFICATION across the UNCORRELATED edges (rip-short short
+· crypto-momentum long · VRP short-vol · pairs market-neutral) — that cuts drawdown and smooths the equity curve,
+raising RISK-ADJUSTED return. It does NOT raise the win rate. The honest goal is high expectancy + a smooth curve +
+survival, never 100% wins. $0 real, kill-switch flattens everything one command away.

@@ -50,5 +50,16 @@ case "$cmd" in
     echo "NOTE: 0 fires across rip-short/bbfade is EXPECTED in a bull tape — rip-short needs overbought-in-downtrend"
     echo "names (absent when most names are above their 200MA), bbfade needs SPY<200MA. Both edges are dormant-by-market."
     ;;
-  *) echo "usage: $0 {status|arm|disarm|kill|tick|forward}"; exit 1;;
+  pnl)
+    echo "P&L + positions (via position manager):"
+    curl -s "${SB}/functions/v1/trd-position-manager" -H "Authorization: Bearer ${ANON:-$SRK}" | python3 -m json.tool 2>/dev/null || echo "(needs python3)"
+    ;;
+  flat)
+    read -p "FLATTEN ALL positions? type FLAT to confirm: " c; [ "$c" = "FLAT" ] || exit 1
+    curl -s "${SB}/functions/v1/trd-position-manager?flat=1" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
+    ;;
+  manage)
+    curl -s "${SB}/functions/v1/trd-position-manager" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
+    ;;
+  *) echo "usage: $0 {status|arm|disarm|kill|tick|forward|pnl|flat|manage}"; exit 1;;
 esac
