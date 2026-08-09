@@ -3541,3 +3541,20 @@ VWAP, seasonality, lead-lag, carry, chart patterns) rejects.** This is precisely
 Remaining documented factors NOT yet independently gated (free-testable, queued): post-earnings drift (PEAD, needs
 earnings dates), pre-FOMC drift (needs FOMC calendar), low-volatility anomaly, value/quality/size (the long-horizon
 factor book, partly the allocator). $0, no order path.
+
+---
+
+## D-212 — low-vol anomaly rejects on this universe (artifact) + factor sweep closed; final count SEVEN edges
+
+Low-volatility / betting-against-beta (`scripts/trd-lowvol.ts`, long low-vol / short high-vol mega-cap quintile,
+monthly, market-neutral): spread −1.52%/mo, t=−4.16 — REVERSED. But this is a universe artifact: the mega-cap set is
+dominated by high-vol tech winners (NVDA/TSLA/AMD), and the documented low-vol factor needs a broad beta-sorted
+universe (incl. small/low-quality names) to show. Not a clean test → not credited either way (flagged for a broad-
+universe re-run). Time-series momentum (D-211) also not systematic. Factor sweep closed.
+
+**FINAL: SEVEN verified edge families.** Technical/regime-conditioned: rip-short, bbfade_lo/bear, crypto momentum.
+Documented risk premia/factors independently gated: variance risk premium, pairs/stat-arb, term-structure roll,
+cross-sectional momentum. REJECTED (run honestly through the gate): dip-buy, bbmr, ICT/SMC, VWAP-fade, cross-sectional
+REVERSAL, seasonality, intermarket lead-lag, FX carry, time-series momentum, low-vol(this universe), equity breakout,
+minute edges. Still-queued (need event data / broad universe): PEAD, pre-FOMC drift, value/quality, low-vol-broad.
+The map: documented risk premia + a few conditioned technical patterns survive; all folklore rejects. $0.
