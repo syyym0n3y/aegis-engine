@@ -3704,3 +3704,30 @@ With 56% of the US universe swept, the pattern is STABLE and well-powered: rip-s
 liquid+borrowable equities (large/mid/small, ~3,460 names, +0.06R net of realistic tier-cost + 8% borrow) — real
 capacity, not 30 names. Micro-caps (<$5) fail hard and are untradeable as shorts. This is the definitive breadth
 verdict; remaining US + international only add coverage, not change the tiered conclusion. Grind continues. $0.
+
+---
+
+## D-218 — DEFINITIVE (100% US coverage, 6,932 stocks / 198k signals): rip-short is NARROW; D-217 was an ordering artifact
+
+Full US universe swept. The verdict flipped back to D-216 — and this is the definitive one:
+```
+tier   stocks signals  edge     t        verdict
+large   789   20887  +0.031  +2.75   marginal (diluted vs curated quality mega-caps' +0.342/t6.77)
+mid    1885   55054  -0.063  -6.43   ✗ NEGATIVE
+small  1794   49778  -0.158 -12.11   ✗ NEGATIVE
+micro  2464   72111  -0.519 -15.70   ✗ NEGATIVE
+```
+**HONEST ACCOUNTING OF A FLIP-FLOP:** I concluded 3× from partial samples — D-216 (narrow, stratified n=459), D-217/217b
+(generalizes, n=3,016→5,545), now D-218 (narrow, full n=6,932). D-217 was WRONG: the SEC file is ordered
+largest-company-first, so early stride=1 chunks were the liquid quality names where rip-short works (t~6); the long
+tail of smaller/junkier companies dragged the pooled edge negative as coverage completed. **The full universe is the
+arbiter: rip-short does NOT generalize.** It is CONCENTRATED in liquid, high-quality large-caps (curated 30 = +0.342R
+t=6.77, D-216b) — across the broad universe mid/small/micro are all significantly NEGATIVE, and even price-tier "large"
+is only marginal (+0.031) once junky high-priced names dilute the quality ones. Price is a poor liquidity proxy; the
+real conditioning variable is liquidity/quality (mkt-cap/volume), where the edge lives.
+
+**META-LESSON (paid for twice): never conclude from a partial or order-biased sample.** The 50k-coverage ask was
+exactly right — only 100% coverage settled it. **Final rip-short envelope: a NARROW edge, deployable only on liquid +
+borrowable + high-quality large-caps (a small curated set, ~dozens of names), NOT universe-wide.** Its real capacity is
+small (D-070/PLAYBOOK #7: edges are small, breadth-LIMITED). D-217/217b SUPERSEDED. Coverage: 9,850/9,850 US = 100%;
+intl suffixes remain for the global 50k but the US result is definitive. $0, no order path.
