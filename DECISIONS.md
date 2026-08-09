@@ -4005,3 +4005,25 @@ independent bets stack, N→thousands, covers more calendar; (3) KEEP the 1R sto
 it and the math inverts to ruin. Roadmap to "100%": maximize N = trade every rip-short signal across 9,850 names
 (nightly scan, done) + wire the other 3 edges into execution (next build). Capacity caveat: at real size slippage/borrow
 cap N (rip-short is small-capacity); on paper unconstrained. $0 real.
+
+---
+
+## D-232 — 2nd edge into execution: crypto-momentum executor (Donchian-20 breakout LONG, Alpaca crypto paper)
+
+Executing the D-231 roadmap ("maximize N = diversify across the uncorrelated edges"). Built `trd-crypto-exec`
+(`supabase/functions/trd-crypto-exec/index.ts`, deployed v1) — the 2nd of the 4 uncorrelated edges into the paper
+book. It trades the crypto MOMENTUM edge (D-205, survivorship-checked among survivors): Donchian-20 daily-high
+breakout LONG on 11 Alpaca-supported coins (BTC/ETH/SOL/AVAX/LTC/BCH/LINK/UNI/AAVE/DOGE/DOT), signals from Yahoo,
+orders on Alpaca. WHY crypto first: it's uncorrelated with rip-short's equity shorts (different instruments AND
+different regime driver) → its wins/losses are INDEPENDENT bets that stack N without clustering with the equity edge,
+and it trades 24/7 → more calendar coverage (the operator's explicit lever). Guards are the SAME fail-closed pattern:
+killswitch OFF + arm `paper` ON (shares the one paper-book arm) + per-name dedup (positions ∪ open orders) + 0.5%
+risk sizing (qty = equity·0.005 / 2ATR) + 8-position crypto heat cap. NO equity-regime gate (crypto momentum is
+unconditional — it's a crypto-internal breakout, not SPY-driven). Crypto can't bracket on Alpaca, so a protective
+STOP sell at 2×ATR below entry is attached after the market buy (the 1R stop, kept per D-231/invariant); exits also
+covered by the killswitch-flatten in `trd-position-manager` and its P&L snapshot reads all positions incl. crypto.
+Cron `trd_crypto_exec_daily` @ 00:30 UTC (after the daily bar closes; dedup makes re-ticks no-ops). Owner CLI:
+`demo-exec.sh crypto`. FIRST TICK (armed): `{armed:true, equity:102005.99, cryptoOpen:2, placed:[]}` — 0 new orders
+because no coin is above its 20-day high right now (matches edge-monitor cryptoMomentum firing=0). Correct
+dormant-by-market; the order path + all guards verified live end-to-end. $0 real (Alpaca paper). Next edges: pairs
+(market-neutral), then short-vol/VRP.

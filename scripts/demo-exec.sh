@@ -42,6 +42,10 @@ case "$cmd" in
   tick)
     curl -s "${SB}/functions/v1/trd-alpaca-paper-exec" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
     ;;
+  crypto)
+    # 2nd edge (D-232): crypto MOMENTUM Donchian-20 breakout LONG on Alpaca crypto (24/7, paper). Same arm/killswitch.
+    curl -s "${SB}/functions/v1/trd-crypto-exec" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
+    ;;
   forward)
     need_srk
     echo "FORWARD-PAPER SCOREBOARD (virtual R, $0, no order path) — fwd_n / mean_r / verdict per candidate:"
@@ -61,5 +65,5 @@ case "$cmd" in
   manage)
     curl -s "${SB}/functions/v1/trd-position-manager" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
     ;;
-  *) echo "usage: $0 {status|arm|disarm|kill|tick|forward|pnl|flat|manage}"; exit 1;;
+  *) echo "usage: $0 {status|arm|disarm|kill|tick|crypto|forward|pnl|flat|manage}"; exit 1;;
 esac
