@@ -146,6 +146,7 @@ QQQ long 12000</textarea>
 <section class="view" data-view="cockpit">
   <h1>Live cockpit</h1>
   <p class="sub">The autonomous paper engine — trading 10 markets across every session, macro-throttled, firewall-protected. Updates every 6h on its own. <span id="c_upd" class="muted"></span></p>
+  <div id="c_exec"></div>
   <div id="c_scan"></div>
   <div id="c_out">loading…</div>
 </section>
@@ -182,7 +183,7 @@ const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
 function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
-  if(k==="allocate")doAllocate(); if(k==="cockpit"){doCockpit();doScan();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
+  if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
 async function doProp(){
@@ -291,6 +292,33 @@ async function doAllocate(){
   }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
 }
 function card(l,v,s,c){return `<div class="card"><div class="lbl">${l}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div><div class="s">${s||""}</div></div>`}
+async function doExec(){
+  const o=document.getElementById("c_exec");o.innerHTML='<h2>Live executor — 4 edges (paper)</h2><div class="panel"><span class=muted>reading broker + edge state…</span></div>';
+  try{const d=await(await fetch(API+"/trd-exec-cockpit",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
+    const pnlc=v=>v>0?'var(--accent)':v<0?'var(--red)':'var(--faint)';
+    const armc=d.killed?'var(--red)':d.armed?'var(--accent)':'var(--faint)';
+    const armt=d.killed?'KILL-SWITCH':d.armed?'ARMED':'disarmed';
+    const cards=d.edges.map(e=>{
+      const has=e.n>0||e.pending>0;
+      const state=e.n>0?`${e.n} open`:(e.pending>0?`${e.pending} queued`:(e.live?'live · flat':'idle'));
+      const col=e.n>0?pnlc(e.pnl):(e.live?'var(--accent)':'var(--faint)');
+      return `<div class="card"><div class="lbl">${esc(e.label)}</div><div class="v" style="color:${col};font-size:16px">${esc(state)}</div><div class="s">${esc(e.kind)}${e.n>0?` · P&L ${e.pnl>=0?'+':''}${e.pnl}`:''}</div></div>`;
+    }).join("");
+    const allPos=d.edges.flatMap(e=>e.positions.map(p=>({...p,label:e.label})));
+    const posRows=allPos.length?allPos.map(p=>`<tr><td class="mono">${esc(p.sym)}</td><td>${esc(p.label)}</td><td class="mono">${esc(p.side)}</td><td class="mono num">${p.qty}</td><td class="mono num">$${(+p.px).toFixed(2)}</td><td class="mono num" style="color:${pnlc(p.pnl)}">${p.pnl>=0?'+':''}${p.pnl} (${p.pnlPct>=0?'+':''}${p.pnlPct}%)</td></tr>`).join("")
+      :`<tr><td colspan=6 class=muted>no open fills — ${d.pendingOrders} order(s) queued to the next market open</td></tr>`;
+    o.innerHTML=`<h2>Live executor — 4 edges (paper)</h2>
+    <div class="panel" style="font-size:13px">
+      <div class="row"><span>status</span><span class="mono" style="color:${armc}">● ${armt}</span></div>
+      <div class="row"><span>paper equity</span><span class="mono">$${d.equity.toLocaleString()} <span style="color:${pnlc(d.totalPnl)}">(${d.totalPnl>=0?'+':''}${d.totalPnl} · ${d.totalPnlPct>=0?'+':''}${d.totalPnlPct}%)</span></span></div>
+      <div class="row"><span>open positions / queued orders</span><span class="mono">${d.openPositions} / ${d.pendingOrders}</span></div>
+    </div>
+    <div class="grid" style="margin-top:12px">${cards}</div>
+    <table style="margin-top:12px"><thead><tr><th>symbol</th><th>edge</th><th>side</th><th class="num">qty</th><th class="num">price</th><th class="num">unreal. P&L</th></tr></thead><tbody>${posRows}</tbody></table>
+    <div class="panel" style="margin-top:10px;font-size:12px">${d.edges.map(e=>`<div class="row"><span><b>${esc(e.label)}</b> — ${esc(e.signal)}</span><span class="mono" style="color:${e.live?'var(--accent)':'var(--faint)'}">${e.live?'● signal live':'○ dormant'}</span></div>`).join("")}</div>
+    <p class="muted" style="margin-top:8px">$0 real — Alpaca paper. Each edge keeps its 1R stop; one kill-switch flattens the book. Attribution: crypto→momentum, SVXY→VRP, paired legs→stat-arb, equity shorts→rip-short.</p>`;
+  }catch(err){o.innerHTML=`<h2>Live executor — 4 edges (paper)</h2><div class="panel"><span style="color:var(--red)">${esc(err.message)}</span></div>`}
+}
 async function doScan(){
   const o=document.getElementById("c_scan");o.innerHTML='<h2>Nightly full-universe rip-short scan</h2><div class="panel"><span class=muted>reading scan…</span></div>';
   try{const d=await(await fetch(API+"/trd-scan-latest",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
