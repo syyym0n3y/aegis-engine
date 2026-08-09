@@ -1,6 +1,16 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — 100% US UNIVERSE SWEPT (9,850): rip-short is NARROW — DEFINITIVE (D-218).** Full sweep
+settled a flip-flop I made 3× from partial samples: rip-short does NOT generalize across the universe. On full US
+coverage (6,932 scored / 198k signals), mid/small/micro are all significantly NEGATIVE net of realistic cost+borrow;
+only price-tier "large" is marginal (+0.031), and the real edge lives in liquid HIGH-QUALITY large-caps (curated 30 =
++0.342R t=6.77). D-217's "generalizes" was a largest-company-first ordering artifact (SEC file is size-ordered).
+**Final envelope: rip-short = a NARROW edge on liquid+borrowable+quality large-caps (~dozens of names), small capacity —
+NOT universe-wide.** Meta-lesson (paid 2×): never conclude from a partial/order-biased sample; 100% coverage is the
+arbiter — the 50k ask was right. Sweep resumable; intl suffixes remain for global 50k but US verdict is definitive.
+Other edges (VRP, pairs, term-structure, XS-momentum) are index/factor-level, unaffected. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — FULL-UNIVERSE COVERAGE (the 50k ask) + honest edge-narrowness correction (D-216).**
 Sourced SEC 9,850 US filers (keyless) + built RESUMABLE liquidity-aware sweep (`scripts/trd-universe-sweep.ts` →
 `data/univ_pool.csv`). First batch 459 stocks / 12k signals: **rip-short does NOT generalize broadly** — edge
