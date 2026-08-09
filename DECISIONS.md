@@ -4053,3 +4053,31 @@ stop-exit path (z>3.5) and closes both legs; market-neutral + tracked throughout
 `trd_pairs_exec_daily` @ 14:10 UTC weekdays (after the 13:30 open; equity legs need market hours). Owner CLI:
 `demo-exec.sh pairs`. Now 3 of 4 edges execute (rip-short · crypto-momentum · pairs); short-vol/VRP is the last. $0
 real (Alpaca paper).
+
+---
+
+## D-234 — 4th edge deployed (VRP short-vol PROXY) + the concentration finding that blocks diversification
+
+Completing the 4-edge fleet. Built `trd-vrp-exec` (`supabase/functions/trd-vrp-exec/index.ts` v2, deployed) — the
+VRP/short-vol edge (D-207). HONESTY LABEL, decided against forcing the literal instrument: D-207 measured VRP on the
+CBOE ^PUT/^BXM indices, which are UNTRADEABLE, and the faithful execution (selling options) is naked short vol =
+UNBOUNDED loss, which breaks the non-negotiable 1R-stop invariant. So it's executed via a BOUNDED-RISK PROXY: long
+SVXY (short-VIX-futures ETF, floors at 0 → a 2×ATR/1R stop is real), timed by the standard short-vol carry rule —
+long only when the VIX curve is in CONTANGO (VIX3M>VIX, premium paid) AND VIX<30 (not spiking); thesis-EXIT on
+backwardation (VIX>VIX3M) or VIX>35 (vol stress). Labelled a proxy because SVXY roll/decay ≠ the measured put-write
+edge. Guards: killswitch + arm `paper` + dedup + 5% notional cap. Cron `trd_vrp_exec_daily` @ 14:15 UTC weekdays;
+CLI `demo-exec.sh vrp`.
+
+FIRST TICK verified the signal path end-to-end: VIX=14.9, VIX3M=20.54, ratio=1.379 (deep contango) → entry gated
+ON, sized qty, 1R stop computed. But the order REJECTED: **insufficient buying power ($637 available)**. Root cause
+(via trd-position-manager) is a REAL PORTFOLIO FINDING, not a VRP bug: **the paper book is 88% concentrated in two
+LEGACY crypto longs** — BTCUSD ~$59.9k + ETHUSD ~$30.2k = ~$90k of $102k equity (+$2,159 unrealized). These are
+pre-existing longs with NO current edge thesis (crypto-momentum firing=0 → neither is above its 20-day high), yet
+they starve buying power so the diversified edges (pairs/VRP/rip-short) can't fill. This is EXACTLY the failure mode
+D-231 names: N cannot grow across uncorrelated edges when 88% of capital sits in one stale bet. Two fixes shipped:
+(1) 5% notional cap on VRP (risk-based sizing ballooned to $12.7k notional on SVXY's tight stop — every edge needs
+this cap; VRP has it now). (2) The reallocation itself is an OPERATOR allocation decision (trimming winning positions
+= surface, don't silently execute) — flagged with recommendation: let the position-manager thesis-exit the stale
+crypto (no-signal longs) OR cap crypto at ~40% and trim, freeing ~$50k for the 4-edge diversification. FLEET STATUS:
+all 4 edges DEPLOYED + signal-verified + cronned (rip-short · crypto-momentum · pairs · VRP-proxy); actual multi-edge
+fills await the concentration decision. $0 real throughout.

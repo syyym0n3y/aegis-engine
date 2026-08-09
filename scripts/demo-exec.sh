@@ -50,6 +50,10 @@ case "$cmd" in
     # 3rd edge (D-233): pairs/stat-arb, market-neutral. Fade |z|>2 on 24 verified pairs; entry+z-managed exit in one tick.
     curl -s "${SB}/functions/v1/trd-pairs-exec" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
     ;;
+  vrp)
+    # 4th edge (D-234): VRP short-vol PROXY (long SVXY) — contango-gated, 1R stop, term-structure thesis-exit.
+    curl -s "${SB}/functions/v1/trd-vrp-exec" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
+    ;;
   forward)
     need_srk
     echo "FORWARD-PAPER SCOREBOARD (virtual R, $0, no order path) — fwd_n / mean_r / verdict per candidate:"
@@ -69,5 +73,5 @@ case "$cmd" in
   manage)
     curl -s "${SB}/functions/v1/trd-position-manager" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
     ;;
-  *) echo "usage: $0 {status|arm|disarm|kill|tick|crypto|pairs|forward|pnl|flat|manage}"; exit 1;;
+  *) echo "usage: $0 {status|arm|disarm|kill|tick|crypto|pairs|vrp|forward|pnl|flat|manage}"; exit 1;;
 esac
