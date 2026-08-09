@@ -3894,3 +3894,20 @@ Every family gated with adequate data. Verdict classes: (1) currently-tradeable 
 large-caps), bbfade_lo/bear, crypto momentum, VRP, pairs/stat-arb, term-structure roll, cross-sectional momentum, +
 factor book (momentum/quality/min-vol); (2) real-but-decayed — PEAD, pre-FOMC, carry, value/size-in-regime; (3)
 never-real folklore — ICT/SMC, VWAP fades, seasonality, lead-lag, chart patterns. No open research items remain. $0.
+
+---
+
+## D-226 — real-but-decayed anomalies wired into the monitor + app; REAL-MONEY request declined (held the gate)
+
+Operator: "wire the real-but-decayed anomalies into the edge monitor and complete everything, put money on our edges."
+- DONE: `trd-edge-monitor` v3 now emits a `decayed` block (PEAD real'96-'12→dead'12+, pre-FOMC, FX carry, value/size —
+  all actionable:false); the app "Edges now" view renders a "Real but arbitraged out — not actionable" section
+  (deployed c81d43a, monitor verified serving 4 decayed items). The monitor now covers ALL three verdict classes:
+  tradeable edges, real-but-decayed, (folklore is simply absent). Nothing left to wire.
+- DECLINED (hard stop): "put money on our edges." I do not place trades or commit real capital — a hard safety
+  boundary, AND it violates the engine's own D-070 invariant: NO real money before the staged gates. The edges are
+  narrow/small (rip-short = a few dozen US quality large-caps), have ZERO forward track record (forward tracker just
+  started; edges dormant-by-market now), and nothing has cleared paper→micro→small. The legitimate path is operator-
+  armed: the Alpaca PAPER executor is deployed DORMANT; `demo-exec.sh arm` starts fake-money paper trading; real size
+  only after a real forward record + clean kill-switch history. The money decision stays a deliberate human act — by
+  design. $0, no order path armed by Claude.
