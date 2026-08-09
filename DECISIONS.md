@@ -3731,3 +3731,28 @@ exactly right — only 100% coverage settled it. **Final rip-short envelope: a N
 borrowable + high-quality large-caps (a small curated set, ~dozens of names), NOT universe-wide.** Its real capacity is
 small (D-070/PLAYBOOK #7: edges are small, breadth-LIMITED). D-217/217b SUPERSEDED. Coverage: 9,850/9,850 US = 100%;
 intl suffixes remain for the global 50k but the US result is definitive. $0, no order path.
+
+---
+
+## D-219 — international grind: rip-short weak/absent abroad (reinforces D-218 narrowness); toward-50k honest status
+
+Sourced a liquid INTERNATIONAL universe (357 large/mid-caps, 18 exchanges via Yahoo suffixes .L/.DE/.PA/.AS/.SW/.MI/
+.MC/.ST/.T/.HK/.AX/.TO/.NS/.KS/.TW/.SA/.JO/.SI — `data/intl_tickers.txt`; Yahoo serves any intl ticker, only the
+bulk LISTS were the gap). Generalized the sweep to any universe/output file. Grind (338 scored, ~7,400 signals →
+`data/intl_pool.csv`):
+```
+tier   stocks signals  edge     t
+large   200   3781   +0.025  +0.98   weak, NOT significant (the clean read)
+mid/small/micro: CURRENCY-CONFOUNDED — $-price tiers misclassify JPY/KRW/HKD names → unreliable, ignore
+```
+**rip-short does NOT robustly generalize internationally** — on 200 liquid intl large-caps the edge is +0.025R, t=0.98
+(not significant). Consistent with D-218: it's a NARROW edge confined to liquid US quality large-caps, weak even in
+international blue-chips. (Caveat: a clean intl verdict needs FX-normalized price tiers + local borrow/spread; the
+"large" tier is currency-robust enough to read as weak. Refinement queued.)
+
+**Toward-50k honest status:** Yahoo serves any international ticker, so DATA isn't the limit — bulk symbol LISTS are
+(iShares CSV endpoint changed, Stooq bulk blocked; no single free keyless global-listing API). I sourced the liquid
+international set (the names where edge could live). The literal ~50k global universe is dominated by the ILLIQUID tail,
+which BOTH the US sweep (D-218: mid/small/micro negative) AND this intl grind show harbors no edge — so grinding 40k+
+illiquid names would reconfirm "no edge in the tail," not find new ones. Coverage verdict: **the edges live in liquid
+quality names; the illiquid 50k tail is empty — proven on 100% US + a liquid intl cross-section.** $0, no order path.

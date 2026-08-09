@@ -14,10 +14,10 @@ async function daily(sym:string):Promise<B[]>{try{const r=await fetch(`https://q
 function atr(b:B[],n:number){const tr:number[]=[];for(let i=0;i<b.length;i++)tr.push(i===0?b[i].h-b[i].l:Math.max(b[i].h-b[i].l,Math.abs(b[i].h-b[i-1].c),Math.abs(b[i].l-b[i-1].c)));const o=new Array(b.length).fill(NaN);let s=0;for(let i=0;i<b.length;i++){s+=tr[i];if(i>=n)s-=tr[i-n];if(i>=n-1)o[i]=s/n;}return o;}
 function rsi(cl:number[],n:number){const o=new Array(cl.length).fill(NaN);let ag=0,al=0;for(let i=1;i<cl.length;i++){const ch=cl[i]-cl[i-1],g=Math.max(ch,0),l=Math.max(-ch,0);if(i<=n){ag+=g;al+=l;if(i===n){ag/=n;al/=n;o[i]=100-100/(1+ag/(al||1e-9));}}else{ag=(ag*(n-1)+g)/n;al=(al*(n-1)+l)/n;o[i]=100-100/(1+ag/(al||1e-9));}}return o;}
 function sma(cl:number[],n:number){const o=new Array(cl.length).fill(NaN);let s=0;for(let i=0;i<cl.length;i++){s+=cl[i];if(i>=n)s-=cl[i-n];if(i>=n-1)o[i]=s/n;}return o;}
-const OUT="data/univ_pool.csv";
+const OUT=Deno.args[3]??"data/univ_pool.csv";
 const done=new Set<string>();try{for(const ln of (await Deno.readTextFile(OUT)).split("\n"))if(ln)done.add(ln.split(",")[0]);}catch{await Deno.writeTextFile(OUT,"ticker,tier,nS,sumS,sqS,nC,sumC,sqC\n");}
 const stride=Number(Deno.args[0]??15),maxRun=Number(Deno.args[1]??600);
-const all=(await Deno.readTextFile("data/sec_tickers.txt")).split("\n").filter(Boolean);
+const all=(await Deno.readTextFile(Deno.args[2]??"data/sec_tickers.txt")).split("\n").filter(Boolean);
 const sample:string[]=[];for(let i=0;i<all.length;i+=stride)sample.push(all[i]);
 let ran=0;
 for(const sym of sample){if(done.has(sym))continue;if(ran>=maxRun)break;const b=await daily(sym);ran++;
