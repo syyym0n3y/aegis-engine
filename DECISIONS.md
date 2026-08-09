@@ -3855,3 +3855,15 @@ edge-fn call (>>time limit), so built as a RESUMABLE CURSOR-DRIVEN CHUNKER:
 Verified: force-run chunk 1 scanned the 200 largest caps → 6 firing (HCA, IBM, AEM, ACN, ORCL large + NFLX mid), cursor
 advanced 200/9,850, rows persisted. Read the morning candidate list: `select ticker,px,rsi from trd_ripshort_scan where
 scan_date=(select max(scan_date) from trd_ripshort_scan) and actionable order by rsi desc`. Prunable. $0, no order path.
+
+---
+
+## D-224 — nightly scan wired into the cockpit UI
+
+Operator: "wire the scan results into the app's cockpit view." Deployed `trd-scan-latest` (edge fn: serves latest scan
+session's actionable candidates + progress from trd_ripshort_scan/trd_scan_cursor). Added a "Nightly full-universe
+rip-short scan" panel to the app's Live cockpit view (`doScan()` fires on cockpit load): shows scan date, progress
+(idx/total/%, status), firing count (all tiers), and a table of ACTIONABLE candidates (liquid large-caps only, per
+D-220) with ticker/price/RSI/200MA/tier. Deployed via git pipeline → Vercel dpl_GhYKsWV2LK (READY, commit 9f419bb);
+JS syntax-checked (node --check), tools untouched, fn verified (6 candidates: AEM/NFLX/ACN/IBM/ORCL/HCA). The cockpit
+now surfaces the nightly full-9,850 rip-short scan alongside the 30-min live edge pulse. $0, no order path.
