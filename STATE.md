@@ -4,7 +4,7 @@
 **2026-08-08 (Opus 4.8) — ANOMALY SPACE EXHAUSTED: 7 setup edges + 3 factor premia; live app at 7 (D-210…214).**
 Term-structure roll (6th, USCI Sharpe 0.37 vs naive 0.02, roll drag 7-13%/yr) + cross-sectional momentum (7th, t=2.61)
 added. Documented factors confirmed via ETFs: momentum/quality/min-vol REAL (corrects D-212 low-vol mega-cap artifact);
-value/size decayed. Rejected: TS-momentum, pre-FOMC (decayed t=1.14), seasonality, lead-lag, carry. Data-gated: PEAD.
+value/size decayed. Rejected: TS-momentum, pre-FOMC (decayed t=1.14), seasonality, lead-lag, carry. PEAD RUN (D-215, inconclusive on 1yr free Nasdaq data — fails magnitude signature; deep 20yr test needs keyed feed).
 **7 discrete edges: rip-short · bbfade_lo/bear · crypto momentum · VRP · pairs/stat-arb · term-structure roll ·
 cross-sectional momentum. + factor book (momentum/quality/min-vol).** Live app deployed at 7 edges via git pipeline
 (github syyym0n3y/aegis-engine → aegis-engine-psi.vercel.app, dpl 6c87287 READY). Pattern definitive: risk premia +

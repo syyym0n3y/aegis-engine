@@ -3606,3 +3606,28 @@ min-vol — the passive "factor book"). **REJECTED:** all undocumented folklore 
 VWAP, seasonality, lead-lag, FX carry, TS-momentum, pre-FOMC, value/size in the current regime). **DATA-GATED (1):**
 PEAD. The pattern is definitive: real economic risk premia + a few regime-conditioned technical patterns survive;
 everything without a mechanism dies. This is the D-070 thesis, proven at exhaustive scope. $0, no order path armed.
+
+---
+
+## D-215 — PEAD sourced (keyless) + run → INCONCLUSIVE on 1yr free data; anomaly sweep now literally COMPLETE
+
+Operator: "source PEAD data and run it." SOURCED free+keyless — Nasdaq `earnings-surprise` (dateReported + consensus +
+actual + %surprise) × Yahoo prices (`scripts/trd-pead.ts`). 108 stocks, 429 events. Post-report entry (skip the jump,
+capture drift), long positive-surprise / short negative, vs random direction:
+```
+20-day  drift +0.19%  edge -0.55 vs random  t=-0.82   ✗
+60-day  drift +3.05%  edge +2.84 vs random  t=2.18    ~ weak raw pass
+magnitude signature:  small |surp| (2%)  20d +0.62%   vs   large |surp| (27%)  20d +0.27%   ← BACKWARDS
+```
+**Verdict: INCONCLUSIVE (not credited).** The 60-day t=2.18 fails the PEAD SIGNATURE — genuine PEAD drifts MORE for
+bigger surprises; here large surprises drift LESS. And Nasdaq's depth is only ~4 quarters → a single 2025-26 up-market
+era, so surprise-direction (~70% long) captures market beta, not surprise drift (the drift confound isn't neutralized).
+PEAD is well-documented in 40yr of literature; this FREE 1-year test can neither confirm nor deny it — a clean verdict
+needs deep (20yr) history with a proper SUE, i.e. a KEYED feed (AlphaVantage/FMP free key — operator-provided, since
+account creation is not mine to do). Offered: paste a free key → I run the 20yr version.
+
+### THE ANOMALY SWEEP IS LITERALLY COMPLETE — every family run through the gate.
+No family remains untested. PEAD is now RUN (inconclusive on free data, deep-test path defined). Final standing:
+7 discrete edges (rip-short, bbfade_lo/bear, crypto momentum, VRP, pairs/stat-arb, term-structure roll, cross-sectional
+momentum) + 3 factor premia (momentum, quality, min-vol). Everything else — folklore, decayed anomalies, and PEAD-on-
+shallow-data — does not clear. The D-070 thesis is proven at the fullest scope the free data allows. $0, no order path.
