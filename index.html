@@ -52,15 +52,20 @@ a{color:var(--accent)}
   <h1>The falsification engine for traders.</h1>
   <p class="sub">Aegis is not a signal service. It's the opposite: it tries to <b>disprove</b> every strategy before it ever risks a dollar — deflating for the estimation error, the costs, and the thousands of variations tried to find it. Most "edges" don't survive. Knowing which is the whole product.</p>
   <div class="grid" style="margin-top:22px">
-    <div class="card"><div class="lbl">Strategies tested</div><div class="v">1.01M</div><div class="s">conditional cells, deflated</div></div>
-    <div class="card"><div class="lbl">Survived honest gate</div><div class="v" style="color:var(--red)">0</div><div class="s">chart/timing setups</div></div>
-    <div class="card"><div class="lbl">Durable edge found</div><div class="v" style="color:var(--accent)">1</div><div class="s">global factor book</div></div>
+    <div class="card"><div class="lbl">Universe swept</div><div class="v">170+</div><div class="s">instruments, 9 asset classes</div></div>
+    <div class="card"><div class="lbl">Timeframes</div><div class="v">7</div><div class="s">5m → weekly</div></div>
+    <div class="card"><div class="lbl">Verified edges</div><div class="v" style="color:var(--accent)">4</div><div class="s">after deflation + survivorship</div></div>
     <div class="card"><div class="lbl">Cost of finding out</div><div class="v">$0</div><div class="s">so you don't blow up</div></div>
   </div>
-  <div class="panel"><b>Use it three ways →</b> <span class="muted">tabs above</span>
-    <div class="row"><span><b>Risk X-ray</b> — will your position sizing blow up the account? (the one near-certain edge)</span><a href="#" onclick="go('protect');return false">open →</a></div>
+  <div class="panel"><b>The 4 that survived — each on its own terms</b> <span class="muted">every other setup rejected</span>
+    <div class="row"><span><b>rip-short</b> · equity daily · short overbought-below-200MA — 6/11 mega-caps individually, p=1×10⁻⁷</span><span class="mono" style="color:var(--accent)">bull · short</span></div>
+    <div class="row"><span><b>bbfade_lo / bear</b> · equity daily · buy the lower band in a down-market — survivorship-checked (D-197)</span><span class="mono" style="color:var(--accent)">bear · long</span></div>
+    <div class="row"><span><b>crypto momentum</b> · daily + 1h · Donchian breakout — holds on coins down 54–100%, p=1.4×10⁻¹⁰</span><span class="mono" style="color:var(--accent)">crypto · long</span></div>
+    <div class="row"><span><b>variance risk premium</b> · options, all horizons · sell vol (implied &gt; realized 80–87%) — CBOE PutWrite/BuyWrite beat SPY risk-adjusted over 34yr</span><span class="mono" style="color:var(--accent)">vol · short</span></div>
+  </div>
+  <div class="panel"><b>Use it →</b> <span class="muted">tabs above</span>
+    <div class="row"><span><b>Risk X-ray</b> — will your position sizing blow up the account?</span><a href="#" onclick="go('protect');return false">open →</a></div>
     <div class="row"><span><b>Authenticity check</b> — is your backtest a real edge or overfit luck?</span><a href="#" onclick="go('verify');return false">open →</a></div>
-    <div class="row"><span><b>Global allocator</b> — the one book that actually compounds (Sharpe ~1)</span><a href="#" onclick="go('allocate');return false">open →</a></div>
     <div class="row"><span><b>Live cockpit</b> — the autonomous paper engine, running now</span><a href="#" onclick="go('cockpit');return false">open →</a></div>
   </div>
 </section>
@@ -143,12 +148,12 @@ QQQ long 12000</textarea>
 <section class="view" data-view="doctrine">
   <h1>What we found</h1>
   <div class="panel"><ul>
-    <li><b>No chart/timing signal survives</b> honest testing — ~1.01M conditional strategies across the tradeable universe, deflated by trial count. Zero cleared.</li>
-    <li><b>Risk management is the durable edge</b> — sane sizing keeps an account alive even trading a losing strategy. That's the near-certain positive-expectancy component.</li>
-    <li><b>Compounding comes from the global factor book</b> (Sharpe ~1), not setups.</li>
-    <li><b>Macro measures fragility, not direction</b> — the overlay only ever shrinks size when the system is primed to break.</li>
-    <li><b>The one cyclic regularity is the BTC halving</b> (halving→top ≈530d, n=3) — pre-registered as a forward prediction, not backfit.</li>
-    <li><b>Rauf is right about one thing:</b> the edge fires in specific conditions, not every day. Overtrading is how you give it back. Aegis quantifies exactly <i>which</i> conditions — and proves most "conditions" are noise.</li>
+    <li><b>Four edges survive the full gate</b> — across 170+ instruments and 7 timeframes (5m→weekly), judged per-instrument vs its own random entry, deflated, and stress-tested for survivorship: <b>rip-short</b> (equity daily short), <b>bbfade_lo/bear</b> (equity daily long in down-markets), <b>crypto momentum</b> (Donchian breakout), and the <b>variance risk premium</b> (option-selling — implied vol beats realized 80–87% of the time; CBOE PutWrite/BuyWrite beat SPY risk-adjusted over 34 years). Every other setup was rejected.</li>
+    <li><b>Judge each instrument on its OWN terms</b> — not the market's regime, not a pooled average. Pooling can both manufacture and mask real structure; a market-wide (SPY) regime imposed on gold/FX/crypto is a bias. Count how many instruments individually beat their own random entry (binomial null).</li>
+    <li><b>A 1R-capped stop is structurally survivorship-proof, in any direction</b> — a name going to zero contributes bounded −1R stop-outs, never catastrophic loss, so the missing dead names can't inflate the edge. That's why crypto momentum holds even on coins that cratered 54–100%.</li>
+    <li><b>Crypto is a momentum market; equities are mean-reversion</b> — opposite structures. Match the setup family to the asset's character; the old "mean-reversion beats momentum" rule was equity-specific.</li>
+    <li><b>The cost wall kills profit, not skill</b> — mean-reversion beats random even at 5m, but the spread makes it net-negative. Edges are daily-locked because only slow bars let skill clear the cost (cost-in-R: 5m 0.31 → daily 0.03).</li>
+    <li><b>Beating a RANDOM entry is everything</b> — positive expectancy is worthless (a random long earns +0.15–0.25R on drift alone). A setup is real only if it beats a matched random entry in the same regime, deflated for how many things were tried.</li>
   </ul></div>
   <p class="muted" style="margin-top:14px">Single-operator research tool. Not investment advice. No signals are sold.</p>
 </section>
