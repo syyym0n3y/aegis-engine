@@ -147,6 +147,7 @@ QQQ long 12000</textarea>
   <h1>Live cockpit</h1>
   <p class="sub">The autonomous paper engine — trading 10 markets across every session, macro-throttled, firewall-protected. Updates every 6h on its own. <span id="c_upd" class="muted"></span></p>
   <div id="c_exec"></div>
+  <div id="c_ctl"></div>
   <div id="c_scan"></div>
   <div id="c_out">loading…</div>
 </section>
@@ -183,7 +184,7 @@ const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
 function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
-  if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
+  if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();renderCtl();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
 async function doProp(){
@@ -292,6 +293,30 @@ async function doAllocate(){
   }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)}</span>`}
 }
 function card(l,v,s,c){return `<div class="card"><div class="lbl">${l}</div><div class="v"${c?` style="color:${c}"`:""}>${v}</div><div class="s">${s||""}</div></div>`}
+function setCtlMsg(t,c){const m=document.getElementById("ctl_msg");if(m){m.textContent=t;m.style.color=c||"var(--mut)"}}
+function renderCtl(){
+  const o=document.getElementById("c_ctl");if(o.dataset.built)return;o.dataset.built="1";
+  const tok=localStorage.getItem("trd_ctl_token")||"";
+  const btn=(id,label,danger)=>`<button onclick="ctl('${id}')" style="font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;cursor:pointer;background:var(--sf);color:${danger?'var(--red)':'var(--tx,inherit)'};border:1px solid ${danger?'var(--red)':'var(--ln)'};margin:0 6px 6px 0">${label}</button>`;
+  o.innerHTML=`<h2 style="margin-top:20px">Operator controls <span class="muted" style="font-weight:400;font-size:13px">— token-gated</span></h2>
+  <div class="panel" style="font-size:13px">
+    <div class="row" style="border:0;padding-bottom:8px"><span>Requires your control token — the public app never stores it server-side. Arming places PAPER orders only ($0).</span></div>
+    <div style="margin:6px 0 12px"><input id="ctl_tok" type="password" placeholder="control token" value="${esc(tok)}" oninput="localStorage.setItem('trd_ctl_token',this.value)" style="font-family:var(--mono);font-size:12px;padding:7px 10px;border-radius:6px;border:1px solid var(--ln);background:var(--bg,#fff);color:inherit;width:280px;max-width:100%"></div>
+    <div>${btn("arm","● Arm")}${btn("disarm","Disarm")}${btn("kill","⛔ Kill-switch",true)}${btn("unkill","Clear kill")}${btn("flat","Flatten all",true)}</div>
+    <div id="ctl_msg" class="mono" style="margin-top:10px;font-size:12px;min-height:16px">—</div>
+  </div>`;
+}
+async function ctl(action){
+  const tok=(document.getElementById("ctl_tok")||{}).value||localStorage.getItem("trd_ctl_token")||"";
+  if(!tok){setCtlMsg("enter the control token first","var(--red)");return;}
+  const warn={arm:"ARM the paper executors? They will place orders on the next tick.",kill:"TRIP the kill-switch? Halts trading; the position manager flattens the book on its next run.",flat:"FLATTEN all positions now (closes everything, cancels open orders)?"};
+  if(warn[action]&&!confirm(warn[action]))return;
+  setCtlMsg("sending "+action+"…","var(--mut)");
+  try{const r=await fetch(API+"/trd-exec-control",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,token:tok})});const d=await r.json();
+    if(!d.ok){setCtlMsg((d.err||"failed")+(r.status===401?"":""),"var(--red)");return;}
+    setCtlMsg(d.result,"var(--accent)");doExec();
+  }catch(e){setCtlMsg(String(e&&e.message||e),"var(--red)")}
+}
 async function doExec(){
   const o=document.getElementById("c_exec");o.innerHTML='<h2>Live executor — 4 edges (paper)</h2><div class="panel"><span class=muted>reading broker + edge state…</span></div>';
   try{const d=await(await fetch(API+"/trd-exec-cockpit",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
