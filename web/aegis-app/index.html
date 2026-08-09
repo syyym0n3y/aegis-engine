@@ -322,6 +322,7 @@ async function doEdges(){
       ${row("bbfade_lo / bear","narrow · US","var(--amber)",e.bbfadeBear.note,e.bbfadeBear.actionable)}
       ${row("crypto momentum","narrow · crypto","var(--amber)",e.cryptoMomentum.note,e.cryptoMomentum.firing>0)}
     </div>
+    ${(e.decayed&&e.decayed.length)?`<h2>Real but arbitraged out — not actionable</h2><div class="panel">${e.decayed.map(x=>`<div class="row"><span><b>${esc(x.name)}</b> — ${esc(x.status)}</span><span class="mono" style="color:var(--faint)">decayed</span></div>`).join("")}<div class="muted" style="margin-top:8px">genuine effects the market learned; monitored for completeness, no capital.</div></div>`:""}
     <p class="muted" style="margin-top:10px">generated ${esc((d.generated_at||"").slice(0,16))} UTC · broad edges = documented risk premia (global); narrow = condition/liquidity-specific.</p>`;
   }catch(err){o.innerHTML=`<span style="color:var(--red)">${esc(err.message)}</span>`}
 }
