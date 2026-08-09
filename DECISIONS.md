@@ -3788,3 +3788,36 @@ The OTHER verified edges are unaffected and remain the broad ones: variance risk
 arb (market-neutral), term-structure roll (commodities, global), cross-sectional momentum (equity factor). rip-short,
 bbfade, crypto-momentum are the narrow technical patterns. Global sweep is the definitive coverage — grinding literal
 50k illiquid names would only reconfirm emptiness. $0, no order path. Sweeps resumable (`data/*_pool*.csv`).
+
+---
+
+## D-221 — GAP AUDIT + closure: durable edges now wired live; one item remains data-gated
+
+Operator: "what's left? close all gaps." Honest audit of the full arc (D-146→D-220):
+
+**CLOSED this turn:** the broad/durable edges (VRP, pairs, term-structure, cross-sectional momentum) had NO live wiring —
+only the narrow technical setups (rip-short, bbfade, btc) were forward-tracked, and rip-short is now known-narrow (D-220).
+Built + deployed `trd-edge-monitor` (edge fn, live, cron-able, `scripts/trd-edge-monitor.ts` mirror) — a current-state
+pulse on ALL 7 edges from free data: regime, rip-short firing count (bull only), bbfade on/off (bear), crypto breakouts,
+VRP (implied vs realized), pairs at |z|>2, vol term-structure contango, momentum long/short quintiles. Verified live
+(ok:true; e.g. VRP implied-rich +1.2, contango, MSFT/AAPL z=2.2).
+
+**Status of everything:**
+| Item | Status |
+|---|---|
+| Anomaly space (all families) | CLOSED — every family gated (D-146→215) |
+| Global universe coverage | CLOSED — 100% US (9,850) + 693 FX-norm intl (D-216→220) |
+| rip-short envelope | CLOSED — narrow, US quality large-caps only (D-218/220) |
+| 7 edges + factor book | CLOSED — verified, classified broad vs narrow |
+| Live app | CLOSED — deployed at definitive verdict (f1071f4) |
+| Forward paper (rip-short, bbfade) | CLOSED — wired, cron 6h |
+| Broad-edge live monitoring | **CLOSED this turn — trd-edge-monitor deployed** |
+| Test guards | GREEN (9/9 detector; honest-stats core tested) |
+| **PEAD deep test** | **DATA-GATED (open)** — needs 20yr keyed earnings-surprise feed; account creation is operator-only |
+| Live broker execution | BY DESIGN operator-only — dormant executor + arm flag (not a gap) |
+
+**The ONLY genuinely-open item is the PEAD deep test** — it needs a keyed earnings feed (AlphaVantage/FMP free key,
+1-min signup, operator-only since I can't create accounts). Paste a key → I run the definitive 20yr magnitude-sorted
+PEAD. Optional depth (not gaps): full virtual-R forward trackers per broad edge (the monitor gives current-state; the
+risk premia are already 34yr-proven so R-accrual matters most for single-name setups, which ARE wired); international
+borrow/spread refinement (verdict already clear). Everything else is complete. $0, no order path armed.
