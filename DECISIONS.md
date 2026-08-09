@@ -3867,3 +3867,30 @@ rip-short scan" panel to the app's Live cockpit view (`doScan()` fires on cockpi
 D-220) with ticker/price/RSI/200MA/tier. Deployed via git pipeline → Vercel dpl_GhYKsWV2LK (READY, commit 9f419bb);
 JS syntax-checked (node --check), tools untouched, fn verified (6 candidates: AEM/NFLX/ACN/IBM/ORCL/HCA). The cockpit
 now surfaces the nightly full-9,850 rip-short scan alongside the 30-min live edge pulse. $0, no order path.
+
+---
+
+## D-225 — PEAD DEFINITIVE (deep 30yr keyed data): real historically, DECAYED post-2012; supersedes D-215
+
+Operator provided an AlphaVantage key → ran the definitive deep PEAD (`scripts/trd-pead-deep.ts`, keyed data read from
+env, key NOT stored/committed). Real earnings surprises (AlphaVantage EARNINGS, 30yr) × Yahoo prices, 22 large-caps,
+**2,288 real earnings events**, standardized-unexpected-earnings SUE, MARKET-ADJUSTED drift (stock − SPY, removes the
+drift confound), enter day-after-report (capture drift not jump).
+```
+20-day  mkt-adj drift +0.363%  t=2.97   significant
+60-day  +0.398%  t=1.80
+magnitude signature (genuine PEAD ⇒ bigger surprise drifts MORE):
+  small |SUE| +0.366% t1.66   mid +0.537% t2.69   large +0.206% t0.96   ← FAILS (large drifts least)
+both-halves:  H1 1996-2012 +0.686% t=3.89   |   H2 2012-2026 +0.041% t=0.24   ← DECAYED to nothing
+```
+**Verdict: PEAD is a REAL anomaly historically (H1 t=3.89, confirming 40yr of literature) that has DECAYED to
+insignificance post-2012 (H2 t=0.24) — arbitraged out by algorithmic/faster information incorporation.** NOT currently
+tradeable. The magnitude signature also fails (modern drift is front-loaded into the announcement jump). PEAD joins the
+"real but arbitraged out" pile (pre-FOMC drift, carry, once-real seasonality) — distinct from mechanism-free folklore
+(ICT/VWAP) which was never real. Supersedes D-215's inconclusive free-data run.
+
+### THE ANOMALY SWEEP IS NOW LITERALLY, DEFINITIVELY COMPLETE.
+Every family gated with adequate data. Verdict classes: (1) currently-tradeable edges — rip-short (narrow US quality
+large-caps), bbfade_lo/bear, crypto momentum, VRP, pairs/stat-arb, term-structure roll, cross-sectional momentum, +
+factor book (momentum/quality/min-vol); (2) real-but-decayed — PEAD, pre-FOMC, carry, value/size-in-regime; (3)
+never-real folklore — ICT/SMC, VWAP fades, seasonality, lead-lag, chart patterns. No open research items remain. $0.
