@@ -1,6 +1,15 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — QUEUE COMPLETE: FIVE verified edge families + live app deployed (D-208/209).** Research
+queue run: seasonality REJECTED (arbitraged out), pairs/stat-arb VERIFIED (5th edge — market-neutral spread reversion,
+24/24 pairs net-positive both-halves at pessimistic cost), lead-lag REJECTED (0/16), carry REJECTED (DBV Sharpe 0.03),
+term-structure = VRP (no new edge). **FIVE verified edges: rip-short · bbfade_lo/bear · crypto momentum · variance
+risk premium (options) · pairs/stat-arb.** Everything else rejects. LIVE APP DEPLOYED via git pipeline: github
+syyym0n3y/aegis-engine main ← merged content commits (a6a455b 4-edges, a62a333 5-edges); Vercel auto-deployed to
+aegis-engine-psi.vercel.app (dpl READY, tools intact, your 8 commits preserved). Remote `origin` now configured here.
+↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — FOUR verified edge families + options wall OVERCOME + merged to main (D-206/207).** Framework
 grid completed (weekly+4h, D-206): commodity momentum leans on weekly, nothing else new. OPTIONS now testable for free
 (D-207): variance risk premium is real at every horizon/asset (implied>realized 80-87%), and CBOE's 34yr option-selling
