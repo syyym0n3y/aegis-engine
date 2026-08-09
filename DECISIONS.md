@@ -3504,3 +3504,40 @@ rates, 5m→weekly, de-biased per-instrument, survivorship-stressed.
 (crypto daily+1h) · variance risk premium (option-selling, all horizons) · pairs/stat-arb (market-neutral relative
 value). Everything else, run honestly through the gate, REJECTS. The default verdict held; the survivors are the
 unglamorous, capacity-constrained, condition-specific handful the D-070 thesis predicted. $0, no order path armed.
+
+---
+
+## D-210 — commodity TERM-STRUCTURE roll-yield: REAL & capturable (6th edge family)
+
+Operator: "source the commodity-curve futures data and run it." Dated Yahoo contracts (CLF26.NYM…) return 0 bars, so
+tested the edge in its CAPTURABLE form via real ETFs (`scripts/trd-curve.ts`):
+```
+roll-OPTIMIZED (hold backwardated)   USCI Sharpe 0.37  DBC 0.14
+naive FRONT-month                    GSG 0.02  DJP 0.08  USO -0.01
+direct roll drag (front vs 12m-laddered): oil USO −8.1%/yr vs USL −0.4% = +7.7%/yr drag; natgas UNG vs UNL = +13%/yr
+```
+Roll-selection (USCI) beats naive front-month by ~0.35 Sharpe, and the direct measurement is decisive: front-month
+rolling of contangoed commodities bleeds 7–13%/yr to roll, which laddering/backwardation-selection recovers. **The
+term-structure / commodity-carry roll premium is REAL and capturable — 6th edge family.** Risk premium (modest Sharpe,
+66% maxDD, like the VRP); best expressed long-backwardation / short-contango or via roll-optimized indices. The pure
+cross-sectional per-commodity carry needs the dated curve (not free); the ETF evidence is the capturable proxy.
+
+## D-211 — the missed MOMENTUM families: cross-sectional REAL (7th edge), time-series NOT systematic
+
+Checked the canonical momentum anomalies we'd never run with the current method (`scripts/trd-momentum.ts`):
+- **CROSS-SECTIONAL momentum** (Jegadeesh-Titman 12-1m relative strength, long top / short bottom quintile, monthly,
+  market-neutral): spread **+0.77%/mo, edge +0.855 vs random, t=2.61, L/S Sharpe 0.37 → REAL.** The classic momentum
+  factor (we'd only tested cross-sectional REVERSAL before, D-188). Modest + crash-prone (momentum crashes), market-
+  neutral = drift-clean. **7th edge family.**
+- **TIME-SERIES momentum** (per-asset trend, long past-12m>0): 2/20 assets significant, p=0.09 → NOT systematic per-asset
+  (confirms old D-071 weak-TSMOM); only aggregates in a diversified 50+ market managed-futures book, not standalone.
+
+### SEVEN verified edge families — and the pattern is now clear
+Technical/conditioned: rip-short · bbfade_lo/bear · crypto momentum. Documented risk premia/factors: variance risk
+premium (options) · pairs/stat-arb · term-structure roll · cross-sectional momentum. **The survivors are exactly the
+known academic risk premia + a few regime-conditioned technical patterns; every piece of undocumented folklore (ICT,
+VWAP, seasonality, lead-lag, carry, chart patterns) rejects.** This is precisely what D-070 predicted.
+
+Remaining documented factors NOT yet independently gated (free-testable, queued): post-earnings drift (PEAD, needs
+earnings dates), pre-FOMC drift (needs FOMC calendar), low-volatility anomaly, value/quality/size (the long-horizon
+factor book, partly the allocator). $0, no order path.
