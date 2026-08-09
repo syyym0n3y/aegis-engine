@@ -3837,3 +3837,21 @@ signals refresh well within it, and 24/7 crypto + intraday vol stay current; the
 representative instruments per edge (SPY/VIX for VRP + term-structure, 20 large-caps for rip-short/momentum, 8 majors
 for crypto, 8 sector pairs), so it keeps the whole edge-state current without a full 10k-name scan (unnecessary for
 daily edges). The cockpit can read the latest snapshot instantly; the history is an edge-state time series. $0.
+
+---
+
+## D-223 — nightly full-universe rip-short scan (the slow-cadence full coverage the 30-min monitor skips)
+
+Operator: "add the nightly full-universe rip-short scan." The 30-min `trd-edge-monitor` samples ~20 representative
+large-caps (right for a live pulse); this adds the FULL 9,850-name US scan on a nightly cadence — infeasible in one
+edge-fn call (>>time limit), so built as a RESUMABLE CURSOR-DRIVEN CHUNKER:
+- `trd-ripshort-scan` fn (migration 0017 tables `trd_scan_cursor` + `trd_ripshort_scan`): fetches the SEC universe,
+  processes 200 names/call, writes names firing rip-short NOW (RSI>70 & close<200MA), tier by price, `actionable`=
+  liquid large-cap (px≥$50) in bull regime — honest per D-220 (the edge only works there; micro/small firing is logged
+  but flagged non-actionable).
+- Session-date logic: the night spans 23:00→~02:00 UTC crossing midnight; the scan is keyed to a stable session date so
+  it does NOT reset at 00:00. Cheap no-op outside the window / when done (skips the universe fetch).
+- pg_cron `trd_ripshort_scan_nightly` (jobid 26, `*/3 23,0,1,2 * * *`): ~49 chunks complete one full pass per night.
+Verified: force-run chunk 1 scanned the 200 largest caps → 6 firing (HCA, IBM, AEM, ACN, ORCL large + NFLX mid), cursor
+advanced 200/9,850, rows persisted. Read the morning candidate list: `select ticker,px,rsi from trd_ripshort_scan where
+scan_date=(select max(scan_date) from trd_ripshort_scan) and actionable order by rsi desc`. Prunable. $0, no order path.
