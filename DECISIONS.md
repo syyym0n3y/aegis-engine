@@ -3691,3 +3691,16 @@ micro-caps (cost/borrow wall; unshortable regardless). Small-cap is marginal (t=
 short's breadth (bigger capacity than D-216 implied) while keeping the real micro-cap limit. Lesson (again): do not
 conclude from a small stratified sample — the full sweep is why the 50k-coverage ask mattered. D-216 superseded by this.
 Sweep at 3,016/9,850 US; grind continues (resumable). $0.
+
+## D-217b — firmed at 5,545 stocks / 136k signals: rip-short survives large+mid+SMALL; only micro fails
+```
+tier   stocks signals  edge     t
+large   661   15962  +0.062  +5.66  ✓
+mid    1440   36384  +0.070  +6.82  ✓
+small  1357   29840  +0.063  +5.86  ✓  (now clearly positive with more data)
+micro  2087   54315  -0.387  -9.50  ✗  (cost/borrow wall, definitive; unshortable)
+```
+With 56% of the US universe swept, the pattern is STABLE and well-powered: rip-short is a genuine BROAD edge across
+liquid+borrowable equities (large/mid/small, ~3,460 names, +0.06R net of realistic tier-cost + 8% borrow) — real
+capacity, not 30 names. Micro-caps (<$5) fail hard and are untradeable as shorts. This is the definitive breadth
+verdict; remaining US + international only add coverage, not change the tiered conclusion. Grind continues. $0.
