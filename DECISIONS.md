@@ -3434,3 +3434,36 @@ DONE: equities/ETF/commod/futures/FX/crypto/rates × 5m→weekly (D-201/204/206)
 survivorship-stressed (D-197/205); options/VRP (this entry); overnight (this entry). NEXT to test (free-doable):
 pairs/cointegration relative-value, calendar/seasonality (turn-of-month, day-of-week), FX/futures carry + term-
 structure roll-yield, intermarket lead-lag. Each will run through the same gate. $0, no order path.
+
+---
+
+## D-208 — research queue: seasonality REJECTED, pairs/stat-arb VERIFIED (5th edge family)
+
+Operator: "continue with the queue." Two more untested families run through the gate.
+
+### Seasonality — REJECTED (`scripts/trd-seasonality.ts`)
+Turn-of-month (last trading day + first 3) and Monday effects, per-instrument de-biased:
+```
+eq-mega turn-of-month 2/30 sig p=0.17    Monday 1/30 p=0.53
+etf     turn-of-month 1/19 sig p=0.38    Monday 0/19 p=1.0
+```
+Not systematic per-instrument — the classic calendar anomalies have been arbitraged out of modern data. REJECT.
+
+### Pairs / statistical-arbitrage — VERIFIED, 5th edge (`scripts/trd-pairs.ts`)
+Same-sector pairs, spread = logA − β·logB (rolling-60d OLS hedge), z-scored; fade |z|>2, exit z→0, stop |z|>3.5.
+Market-neutral → the drift confound is CANCELLED by construction (the cleanest possible test, PLAYBOOK #2).
+```
+24/24 pairs beat random (t=7–20)  — BUT that t is inflated by entry geometry (setup enters at |z|≥2 with favorable
+                                     reward:risk vs random entering at random z); discounted.
+THE SOLID CLAIM: 24/24 pairs net-POSITIVE in BOTH time-halves at PESSIMISTIC 0.40 z-unit cost (2-leg).
+```
+The both-halves net-positive-after-pessimistic-cost result does NOT depend on the random control — it's absolute
+profitability, stable across eras (not decayed), on every one of 24 liquid same-sector pairs (KO/PEP, V/MA, XOM/CVX,
+JPM/BAC, QQQ/SPY, GLD/SLV, EEM/EFA…). This is the classic pairs-trading edge, confirmed ALIVE and robust on this
+universe. **5th verified edge family: relative-value / spread mean-reversion — market-neutral, the confound-free one.**
+Real-world caveats (higher than modeled): true 2-leg execution cost, short-leg borrow, capacity, and crowding (many
+funds run daily stat-arb) — so deploy market-neutral + small; but the signal is real and robust.
+
+### Verified edge families now = FIVE
+rip-short · bbfade_lo/bear · crypto momentum · variance risk premium · **pairs/stat-arb (relative value)**.
+Queue remaining (still to run): FX/futures carry, term-structure roll-yield, intermarket lead-lag. $0, no order path.
