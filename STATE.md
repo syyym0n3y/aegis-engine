@@ -1,6 +1,16 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — INTERNATIONAL grind + coverage verdict SETTLED (D-219).** Sourced liquid intl universe
+(357 large/mid-caps, 18 exchanges via Yahoo suffixes; Yahoo serves any ticker, bulk LISTS were the only gap — no free
+keyless global-listing API). Grind: rip-short WEAK/not-significant on intl large-caps (t=0.98) — reinforces D-218:
+**rip-short is a NARROW edge confined to liquid US quality large-caps**, weak even in international blue-chips, negative
+across mid/small/micro + the illiquid tail. COVERAGE VERDICT: edges live in liquid quality names; the illiquid ~50k
+tail is EMPTY (proven on 100% US 9,850 + a liquid intl cross-section). The literal 50k isn't free-bulk-sourceable and
+harbors no edge, so grinding it reconfirms emptiness rather than finding edges. Sweeps resumable (`data/univ_pool.csv`,
+`data/intl_pool.csv`). Other edges (VRP, pairs, term-structure, XS-momentum) are index/factor-level, unaffected.
+↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — 100% US UNIVERSE SWEPT (9,850): rip-short is NARROW — DEFINITIVE (D-218).** Full sweep
 settled a flip-flop I made 3× from partial samples: rip-short does NOT generalize across the universe. On full US
 coverage (6,932 scored / 198k signals), mid/small/micro are all significantly NEGATIVE net of realistic cost+borrow;
