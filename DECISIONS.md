@@ -3938,3 +3938,21 @@ firing names (HCA/IBM/AEM/ACN/ORCL/NFLX) — so the armed executor is blind to t
 Next enhancement (flagged, not done unasked — it changes what gets traded): wire the executor to read candidates from
 trd_ripshort_scan.actionable instead of the hardcoded legs, so it trades the live edge. $0 real, kill-switch armed-off
 one command away.
+
+---
+
+## D-229 — executor wired to the nightly scan; FIRST PAPER FILLS + dedup hardening
+
+Operator: "wire the executor to the nightly scan's actionable candidates." Done (trd-alpaca-paper-exec v4):
+- Candidate source changed from the fixed 10-leg basket → the latest `trd_ripshort_scan` actionable rows (liquid
+  large-caps firing rip-short across the full 9,850, D-223), ordered by RSI, limit 40; falls back to the registered
+  forward legs if no scan exists. Each still passes shortable/ETB + fresh RSI>70&<200MA re-verify + 0.5% size + heat cap.
+- FIRST REAL PAPER FILLS: tick placed 5 bracketed paper shorts — AEM x37, NFLX x119, ACN x30, IBM x34, ORCL x36
+  (HCA skipped: not shortable/ETB or failed fresh re-verify). Paper account ~$102k, 0.5% risk each, stop +2ATR, tgt −3ATR.
+- SAFETY FIX (caught on re-tick): the executor capped total count but did NOT dedup by name → re-ticking would STACK
+  duplicate shorts. Added per-name dedup against BOTH open positions AND pending open orders (day-orders queue when the
+  market is closed, so position-only dedup was insufficient). Verified: re-tick now placed:[] (heldNames reflects the
+  pending orders) — no stacking. 
+The rip-short edge is now trading live on paper, sourced from the full-universe scan, guarded end-to-end. NOT auto-
+cronned — invoked on tick; a daily execution cron (post-open, post-scan) is the deliberate next step, flagged not done.
+$0 real, kill-switch + disarm one command away.

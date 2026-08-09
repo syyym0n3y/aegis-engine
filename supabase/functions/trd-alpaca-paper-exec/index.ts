@@ -42,14 +42,27 @@ Deno.serve(async () => {
     const equity = Number(acct.equity); if (!(equity > 0)) throw new Error("no account equity");
     const positions = await fetch(`${PAPER}/v2/positions`, { headers: AH }).then((r) => r.json());
     const openShorts = (positions as { side: string }[]).filter((p) => p.side === "short").length;
+    const openOrders = await fetch(`${PAPER}/v2/orders?status=open&limit=100`, { headers: AH }).then((r) => r.json()).catch(() => []);
+    const held = new Set([                                                            // per-name dedup: never stack —
+      ...(positions as { symbol: string }[]).map((p) => p.symbol),                    // filled positions AND
+      ...(Array.isArray(openOrders) ? (openOrders as { symbol: string }[]).map((o) => o.symbol) : []),  // pending orders
+    ]);
     if (openShorts >= MAX_CONCURRENT) return new Response(JSON.stringify({ ok: true, skipped: `heat cap: ${openShorts}/${MAX_CONCURRENT} shorts open` }), { headers: cors });
 
-    // candidate legs = active rip-short daily forward rows
-    const legs = await fetch(`${SB}/rest/v1/trd_forward?candidate=like.ripshort-1d-*&active=eq.true&select=symbol`, { headers: H }).then((r) => r.json());
+    // candidates = the latest NIGHTLY FULL-UNIVERSE SCAN's actionable rip-short names (liquid large-caps firing the
+    // signal across all 9,850, D-223) — not a fixed basket. Falls back to the registered forward legs if no scan yet.
+    const latest = (await fetch(`${SB}/rest/v1/trd_ripshort_scan?select=scan_date&order=scan_date.desc&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []))?.[0]?.scan_date;
+    let legs: { symbol: string }[] = [];
+    if (latest) {
+      const scan = await fetch(`${SB}/rest/v1/trd_ripshort_scan?scan_date=eq.${latest}&actionable=eq.true&select=ticker&order=rsi.desc&limit=40`, { headers: H }).then((r) => r.json()).catch(() => []);
+      legs = (scan as { ticker: string }[]).map((r) => ({ symbol: r.ticker }));
+    }
+    if (!legs.length) legs = await fetch(`${SB}/rest/v1/trd_forward?candidate=like.ripshort-1d-*&active=eq.true&select=symbol`, { headers: H }).then((r) => r.json());
     const placed: string[] = [];
     for (const leg of legs as { symbol: string }[]) {
       if (openShorts + placed.length >= MAX_CONCURRENT) break;
       const sym = leg.symbol;
+      if (held.has(sym)) continue;                            // already short this name — don't stack
       // asset must be shortable + easy-to-borrow
       const a = await fetch(`${PAPER}/v2/assets/${sym}`, { headers: AH }).then((r) => r.json()).catch(() => null);
       if (!a?.shortable || !a?.easy_to_borrow) continue;
@@ -74,6 +87,6 @@ Deno.serve(async () => {
       const resp = await fetch(`${PAPER}/v2/orders`, { method: "POST", headers: AH, body: JSON.stringify(order) });
       if (resp.ok) placed.push(`${sym} x${qty}`);
     }
-    return new Response(JSON.stringify({ ok: true, armed: true, regime: "bull", equity, openShorts, placed }), { headers: cors });
+    return new Response(JSON.stringify({ ok: true, armed: true, regime: "bull", equity, openShorts, source: latest ? `scan ${latest}` : "forward-legs (no scan yet)", candidates: legs.length, placed }), { headers: cors });
   } catch (e) { return new Response(JSON.stringify({ ok: false, err: String(e).slice(0, 300) }), { status: 500, headers: cors }); }
 });
