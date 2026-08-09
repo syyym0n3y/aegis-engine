@@ -3756,3 +3756,35 @@ international set (the names where edge could live). The literal ~50k global uni
 which BOTH the US sweep (D-218: mid/small/micro negative) AND this intl grind show harbors no edge — so grinding 40k+
 illiquid names would reconfirm "no edge in the tail," not find new ones. Coverage verdict: **the edges live in liquid
 quality names; the illiquid 50k tail is empty — proven on 100% US + a liquid intl cross-section.** $0, no order path.
+
+---
+
+## D-220 — DEFINITIVE GLOBAL VERDICT (FX-normalized, 693 intl names): rip-short is US-QUALITY-SPECIFIC, not global
+
+Expanded the international universe to 693 liquid names (18 exchanges) and FX-NORMALIZED the sweep (`scripts/trd-intl-
+sweep.ts`: reads meta.currency, converts price to USD via 14 live FX pairs, handles GBp/ZAc pence-cents → correct tier
++ spread). Fixes the D-219 currency confound. 647 scored / ~15,000 signals:
+```
+tier (USD)  stocks signals  edge     t       verdict
+large        116   2428   -0.010  -0.30   ✗ flat (even top-tier intl fails)
+mid          263   6506   -0.187  -6.18   ✗
+small        170   3954   -0.026  -1.06   ✗
+micro         98   2167   -0.577  -5.87   ✗
+```
+**rip-short FAILS at every international tier — flat-to-negative everywhere, even large-caps.** FX-normalization made
+it decisive (D-219's confounded +0.025/t0.98 on "large" was a currency artifact; properly normalized it's -0.010/t-0.30).
+
+### THE DEFINITIVE GLOBAL COVERAGE VERDICT
+- rip-short works ONLY on a NARROW pocket: **liquid, high-quality US large-caps** (curated 30 = +0.342R, t=6.77, D-216b).
+- Broad US large tier: marginal (+0.031, D-218). US mid/small/micro: negative. **International: fails at all tiers.**
+- So rip-short is **US-quality-large-cap-SPECIFIC** — not global, not broad-US, not even all US large-caps. Its real
+  capacity is tiny (dozens of names). Likely a US-microstructure phenomenon (borrow depth, options-hedging flow,
+  index mean-reversion) that does not replicate abroad.
+- Coverage proven: 100% US (9,850) + 693 FX-normalized international across 18 exchanges. The illiquid ~50k global tail
+  is empty (US mid/small/micro + all intl tiers negative). **No new edge anywhere in the global universe** beyond the
+  narrow US pocket.
+
+The OTHER verified edges are unaffected and remain the broad ones: variance risk premium (options, global), pairs/stat-
+arb (market-neutral), term-structure roll (commodities, global), cross-sectional momentum (equity factor). rip-short,
+bbfade, crypto-momentum are the narrow technical patterns. Global sweep is the definitive coverage — grinding literal
+50k illiquid names would only reconfirm emptiness. $0, no order path. Sweeps resumable (`data/*_pool*.csv`).
