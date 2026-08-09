@@ -4125,3 +4125,22 @@ per edge), a positions table (sym·edge·side·qty·px·unreal-P&L), and per-edg
 open. Deployed via the git pipeline (deploy-live9 → origin/main c0295c2, Vercel dpl READY). Surgical +29-line diff.
 Note the cockpit surfaces the known monitor-vs-scan gap truthfully: rip-short shows "0/20 firing" (edge-monitor's
 20-name mega-cap sample) alongside 5 real queued shorts (full-universe scan) — different samples, not a bug. $0 real.
+
+---
+
+## D-237 — cockpit arm/kill/flatten controls, token-gated (safe on a public URL)
+
+Operator asked to wire the kill-switch + arm controls into the cockpit. PUSHED BACK on the naive version and built
+the safe one: the app is a PUBLIC URL, so an unauthenticated button that arms the order path or trips the kill-switch
+is a real hole (a griefer could ARM the executor or spam-flatten). Design: a CONTROL TOKEN gate. `trd_control`
+(migration 0020) holds the token with RLS ENABLED and NO policy → anon REST is default-denied (verified: anon
+`select token` returns `[]`); only the service-role fn reads it. New fn `trd-exec-control` (verify_jwt=false, but
+every action re-checks the token with a CONSTANT-TIME compare → wrong/absent = 401): actions arm | disarm | kill |
+unkill | flat (flat delegates to trd-position-manager?flat=1). App: an "Operator controls — token-gated" panel in the
+cockpit with a password token field (persisted to localStorage, never sent to any server but this checked endpoint),
+5 buttons, and a status line; arm/kill/flat each require a JS confirm(). Arming stays the operator's deliberate act
+(token + confirm) — the invariant holds; kill/flatten are fail-safe (they disable/close). VERIFIED live in-browser:
+wrong token → "unauthorized — bad control token" (401), correct token → "ARMED …" (idempotent no-op, state unchanged);
+5 buttons + password field render; exec panel intact; only console error is the intentional 401 from the wrong-token
+test. Token generated (40-hex) and handed to the operator out-of-band (NOT committed). Deployed via git pipeline. $0
+real; paper only.
