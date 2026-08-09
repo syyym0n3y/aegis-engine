@@ -4027,3 +4027,29 @@ Cron `trd_crypto_exec_daily` @ 00:30 UTC (after the daily bar closes; dedup make
 because no coin is above its 20-day high right now (matches edge-monitor cryptoMomentum firing=0). Correct
 dormant-by-market; the order path + all guards verified live end-to-end. $0 real (Alpaca paper). Next edges: pairs
 (market-neutral), then short-vol/VRP.
+
+---
+
+## D-233 — 3rd edge into execution: pairs/stat-arb executor (market-neutral, the confound-free one)
+
+Continuing the D-231 roadmap. Built `trd-pairs-exec` (`supabase/functions/trd-pairs-exec/index.ts` v2, deployed) —
+the 3rd of the 4 uncorrelated edges, and the CLEANEST one (D-208: market-neutral by construction → the drift
+confound is cancelled, both-time-halves net-positive after pessimistic 0.40 z-unit cost on all 24 pairs). Spec copied
+verbatim from the verified `scripts/trd-pairs.ts`: 24 same-sector pairs (KO/PEP, V/MA, XOM/CVX, JPM/BAC, GS/MS,
+HD/LOW, GOOGL/META, MSFT/AAPL, NVDA/AMD, UPS/FDX, WMT/TGT, CAT/DE, T/VZ, COP/SLB, DUK/SO, GLD/SLV, XLE/XOP, EEM/EFA,
+QQQ/SPY, USO/BNO, WFC/C, ADBE/CRM, PFE/MRK, NKE/LULU); spread=logA−β·logB (rolling-60d OLS β), z-scored; fade |z|>2,
+exit z→0 (|z|<0.5), stop |z|>3.5, max-hold 28 calendar days. WHY it's the best N to add: market-neutral → its returns
+are orthogonal to BOTH rip-short (directional equity) AND crypto AND the market itself → maximally independent bets,
+exactly what Φ(√N·mean/std) needs to converge (D-231). One IDEMPOTENT tick does entry AND exit (Alpaca has no native
+stop on a computed spread, so exits are z-managed each tick) — durable state in `trd_pairs_pos` (migration 0019).
+Guards: killswitch + arm `paper` + per-pair dedup + SKIP a pair if either leg is already held by another edge (no
+conflicting orders on one name) + 6-pair heat cap + short leg must be shortable/ETB + market-neutral β-weighted sizing
+(2% gross/pair, ~1% each leg). FIRST TICK (armed, Sunday): entered 3 pairs — USO/BNO z=−2.58, NKE/LULU z=−2.20
+(both in-band, queued to Monday open), and GLD/SLV z=3.81. The GLD/SLV entry exposed a real DEFECT vs the backtest:
+the backtest enters on the *first* crossing of |z|>2, but a live standing-z executor was entering at z=3.81 — already
+PAST the 3.5 stop, i.e. no reward:risk room. FIX (v2): enter only in the 2..3.5 band (`az0<ZENTRY||az0>=ZSTOP`
+skips). The already-queued GLD/SLV self-heals — it's tracked in `trd_pairs_pos`, so Monday's 14:10 UTC tick hits the
+stop-exit path (z>3.5) and closes both legs; market-neutral + tracked throughout, negligible paper cost. Cron
+`trd_pairs_exec_daily` @ 14:10 UTC weekdays (after the 13:30 open; equity legs need market hours). Owner CLI:
+`demo-exec.sh pairs`. Now 3 of 4 edges execute (rip-short · crypto-momentum · pairs); short-vol/VRP is the last. $0
+real (Alpaca paper).
