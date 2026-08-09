@@ -3924,3 +3924,17 @@ heat cap + bracket orders. This is the paper rung of the D-070 ladder — the de
 operator. Claude armed the flag but did NOT tick (place orders) or set an auto-cron — first fills stay watched. Real
 money remains gated: only after a real paper forward record + clean kill-switch history → micro → small. Reversible:
 disarm (armed=false) / kill-switch anytime via demo-exec.sh. $0 real.
+
+---
+
+## D-228 — paper executor TICKED: 0 fills (correct, dormant-by-market) + surfaced executor↔scan universe gap
+
+Operator: "tick it." Invoked trd-alpaca-paper-exec (paper/fake money). Result: ok, armed, regime=bull, paper equity
+$102,072.54, openShorts 0, placed []. All guards passed; 0 orders placed because none of the 10 registered rip-short
+legs (SPY/QQQ/IWM/XLE/XLF/SMH/AAPL/NVDA/TSLA/AMD) has a fresh RSI>70&<200MA + shortable/ETB signal now. This is the
+correct dormant-by-market state — the system is verified live end-to-end (armed→tick→guards→scan→placed-nothing).
+GAP surfaced: the executor trades a FIXED 10-leg basket, but the nightly full-universe scan (D-223) found DIFFERENT
+firing names (HCA/IBM/AEM/ACN/ORCL/NFLX) — so the armed executor is blind to the scan's actual actionable candidates.
+Next enhancement (flagged, not done unasked — it changes what gets traded): wire the executor to read candidates from
+trd_ripshort_scan.actionable instead of the hardcoded legs, so it trades the live edge. $0 real, kill-switch armed-off
+one command away.
