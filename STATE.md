@@ -1,6 +1,16 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — FULL-UNIVERSE COVERAGE (the 50k ask) + honest edge-narrowness correction (D-216).**
+Sourced SEC 9,850 US filers (keyless) + built RESUMABLE liquidity-aware sweep (`scripts/trd-universe-sweep.ts` →
+`data/univ_pool.csv`). First batch 459 stocks / 12k signals: **rip-short does NOT generalize broadly** — edge
+negative/weak across all liquidity tiers with realistic per-tier cost + borrow; most signals fire on unborrowable
+micro/small caps. VERIFIED (D-216b): curated 30 mega-caps HOLD at t=6.77 under identical cost → the narrowness is
+GENUINE, not a cost artifact. **rip-short is deployable ONLY on liquid + borrowable + quality mega-caps** (a small set),
+not universe-wide — sharpens the envelope honestly. Other edges (VRP, pairs, term-structure, XS-momentum) are
+index/ETF/factor-level, not single-name-breadth-dependent. QUEUED/resumable: full 9,850 US at stride=1 + intl suffixes
+toward global 50k. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — ANOMALY SPACE EXHAUSTED: 7 setup edges + 3 factor premia; live app at 7 (D-210…214).**
 Term-structure roll (6th, USCI Sharpe 0.37 vs naive 0.02, roll drag 7-13%/yr) + cross-sectional momentum (7th, t=2.61)
 added. Documented factors confirmed via ETFs: momentum/quality/min-vol REAL (corrects D-212 low-vol mega-cap artifact);
