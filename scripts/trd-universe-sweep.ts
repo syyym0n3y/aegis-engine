@@ -17,7 +17,7 @@ function sma(cl:number[],n:number){const o=new Array(cl.length).fill(NaN);let s=
 const OUT="data/univ_pool.csv";
 const done=new Set<string>();try{for(const ln of (await Deno.readTextFile(OUT)).split("\n"))if(ln)done.add(ln.split(",")[0]);}catch{await Deno.writeTextFile(OUT,"ticker,tier,nS,sumS,sqS,nC,sumC,sqC\n");}
 const stride=Number(Deno.args[0]??15),maxRun=Number(Deno.args[1]??600);
-const all=(await Deno.readTextFile("/tmp/sec_tickers.txt")).split("\n").filter(Boolean);
+const all=(await Deno.readTextFile("data/sec_tickers.txt")).split("\n").filter(Boolean);
 const sample:string[]=[];for(let i=0;i<all.length;i+=stride)sample.push(all[i]);
 let ran=0;
 for(const sym of sample){if(done.has(sym))continue;if(ran>=maxRun)break;const b=await daily(sym);ran++;
