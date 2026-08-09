@@ -3467,3 +3467,40 @@ funds run daily stat-arb) — so deploy market-neutral + small; but the signal i
 ### Verified edge families now = FIVE
 rip-short · bbfade_lo/bear · crypto momentum · variance risk premium · **pairs/stat-arb (relative value)**.
 Queue remaining (still to run): FX/futures carry, term-structure roll-yield, intermarket lead-lag. $0, no order path.
+
+---
+
+## D-209 — queue continued: lead-lag REJECTED, carry REJECTED, term-structure resolved → queue COMPLETE
+
+### Intermarket lead-lag — REJECTED (`scripts/trd-leadlag.ts`)
+Does leader[t] predict follower[t+1]? 16 classic links (bonds→stocks, credit→stocks, oil→energy, copper→industrials,
+semis→tech, vol→stocks, dollar→gold, oil→airlines, gold→miners, yields→banks…):
+```
+0/16 predictive at t≥2 (all |t|<2, most negative). binom p=1.0 → efficiently priced out.
+```
+Obvious cross-asset lead-lag is the first thing arbitraged; no free next-day predictability. REJECT.
+
+### Carry — REJECTED (`scripts/trd-leadlag.ts`, DBV FX-carry ETF)
+```
+FX carry (DBV, G10 harvest)  15yr  CAGR −0.4%  Sharpe 0.03  maxDD 34%
+SPY (bench)                  34yr  CAGR  8.9%  Sharpe 0.55
+```
+FX carry is dead — crushed post-GFC as rate differentials compressed to ~0 (confirms the old D-071 "carry ~0 OOS
+post-2010"). REJECT.
+
+### Term-structure roll-yield — RESOLVED (no new edge)
+Decomposes into: (a) VOL roll (short VXX/VIX-futures contango bleed) = the SAME variance risk premium already verified
+(D-207, 4th edge) — not separate; (b) COMMODITY curve (long backwardation / short contango) — the one piece needing
+front-vs-back futures curve data (not cleanly free per-instrument); flagged for a curve-data pass, prior modest
+(commodity carry is a known but capacity/cost-constrained premium). No new tradeable edge from term-structure beyond VRP.
+
+### RESEARCH QUEUE COMPLETE. Final coverage:
+Tested families: mean-reversion (rip-short✓, bbfade✓, dip-buy✗, bbmr✗), momentum/breakout (equities✗, crypto✓),
+ICT/SMC (✗), VWAP-fade (✗), cross-sectional reversal (✗), options/VRP (✓), overnight (real, cost-gated), seasonality
+(✗), pairs/stat-arb (✓), lead-lag (✗), carry (✗), term-structure (=VRP). Across equities/ETF/commod/futures/FX/crypto/
+rates, 5m→weekly, de-biased per-instrument, survivorship-stressed.
+
+**FIVE verified edge families:** rip-short (equity daily short) · bbfade_lo/bear (equity daily long) · crypto momentum
+(crypto daily+1h) · variance risk premium (option-selling, all horizons) · pairs/stat-arb (market-neutral relative
+value). Everything else, run honestly through the gate, REJECTS. The default verdict held; the survivors are the
+unglamorous, capacity-constrained, condition-specific handful the D-070 thesis predicted. $0, no order path armed.
