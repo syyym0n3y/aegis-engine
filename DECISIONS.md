@@ -3670,3 +3670,24 @@ mega-caps (a small set); on small/micro caps the reversion often doesn't come (r
 unborrowable. This SHARPENS the edge's deployment envelope honestly rather than killing it. The other verified edges
 are index/ETF/factor-level (VRP, term-structure, XS-momentum, pairs) — not single-name-breadth-dependent, so the 50k
 sweep doesn't threaten them. Full-universe sweep remains queued/resumable for completeness. $0.
+
+---
+
+## D-217 — CORRECTION to D-216: with 6× more data, rip-short DOES generalize (large+mid caps); micro fails
+
+D-216 concluded "rip-short doesn't generalize" from a 459-stock batch (only 46 large / 131 mid) — that was a SMALL-
+SAMPLE artifact. Grinding the sweep to 3,016 stocks / 67,376 signals reverses it:
+```
+tier    stocks  signals  edge     t       verdict
+large    648    15267   +0.076  +7.10   ✓ survives (net of cost+borrow)
+mid     1236    28695   +0.072  +7.16   ✓ survives
+small    804    16412   +0.020  +1.30   weak
+micro    328     7002   -0.158  -3.03   ✗ cost/borrow wall (+ unborrowable anyway)
+```
+**rip-short GENERALIZES across the liquid+borrowable universe** — ~1,900 large+mid-cap names, edge +0.07R net of
+realistic tier-cost + 8%/yr borrow, t=7.1. NOT just the 30 curated mega-caps (D-216b) — it's broad. It fails ONLY on
+micro-caps (cost/borrow wall; unshortable regardless). Small-cap is marginal (t=1.30). So the honest envelope:
+**deployable across liquid, borrowable large+mid caps (thousands of names); excluded on micro.** This RESTORES rip-
+short's breadth (bigger capacity than D-216 implied) while keeping the real micro-cap limit. Lesson (again): do not
+conclude from a small stratified sample — the full sweep is why the 50k-coverage ask mattered. D-216 superseded by this.
+Sweep at 3,016/9,850 US; grind continues (resumable). $0.
