@@ -4249,3 +4249,31 @@ and the honest terminal state — "nothing cleared the gates" — is a SUCCESS o
 delivered is negative knowledge that PREVENTS deploying a losing strategy. The genuine edges remain the documented
 broad risk premia (VRP, pairs/stat-arb, term-structure roll, cross-sectional momentum at the portfolio/factor level)
 + the narrow US-large-cap rip-short — none of which is a per-name technical-timing signal. $0, no order path.
+
+---
+
+## D-244 — 24-setup global sweep result: ONE survivor (bblo_long), routed to execution as the 5th edge
+
+Operator: "test 20 more setup variants... research many more... when a setup doesn't work, identify the appropriate
+setups and utilise at maximum capacity." Built + swept a 24-setup LIBRARY (trd-global-setups, D-243) across the entire
+46k universe — mean-reversion (RSI14/RSI2/Bollinger/consecutive/gap-fade), momentum (Donchian20/55, 52wk hi/lo,
+golden/death, gap-cont), volatility/volume (NR7/ATR-exp/inside/vol-spike) — each vs its OWN random control in
+currency-neutral R. Deflation frame: 24 setups × ~40 markets ≈ 960 tests → require Bonferroni-level significance +
+economic median >0.05R + tradeable on a liquid market.
+
+RESULT — on the liquid tier, 23 of 24 setups are coin-flips or worse (all the momentum + most MR setups NEGATIVE,
+consistent with D-242). Exactly ONE clears decisively: **bblo_long — buy the 2σ lower Bollinger band, long: 58.1%
+beat-random on 25,350 liquid names, median +0.078R (~26σ, survives Bonferroni easily), long-only (no borrow).**
+Robustness: UNIFORMLY positive on 16/16 major liquid exchanges — TSX 61.7 · NYSE 61.8 · KRX 62.4 · STO 61.9 · SIX 62.0
+· TSE 57.3 · HKEX 58.1 · NASDAQ 57.5 · SZSE 57.5 · XETRA 58.3 · SSE 57.1 · LSE 56.9 · NSE 56.7 · Euronext 54.5 · TWSE
+53.5 · B3 51.7. Not concentrated, not a junk artifact — a genuinely GLOBAL mean-reversion edge. It confirms + GENERAL-
+ISES the existing bbfade_lo (D-194/197), and is STRONGER than that bear-only version: it holds UNCONDITIONALLY (no SPY
+regime gate) in every market. Note: rsi2/bbhi_short were marginal (~51%); nothing else real.
+
+UTILISE AT MAX CAPACITY: built `trd-bblo-exec` (5th edge) — Bollinger lower-band fade LONG, UNCONDITIONAL, on the
+liquid US large/mid-cap set (Alpaca; the executable slice of the global edge). Same fleet guards (killswitch/arm/dedup/
+0.5%-risk/8-cap) + bracket (2ATR stop=−1R, 3R target), long-only. Cron `trd_bblo_exec_daily` @ 14:20 UTC weekdays; CLI
+`demo-exec.sh bblo`. First armed tick: checked 85 names, 0 firing (nothing below its band in the strong tape — correct
+dormant-by-market), order path + guards verified. Global scope beyond US awaits non-US broker access; the edge is
+proven market-wide, execution is infra-bound. Fleet now = 5 edges (rip-short · crypto-momentum · pairs · VRP · bblo).
+Migration 0023. $0 paper.
