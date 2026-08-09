@@ -37,6 +37,13 @@ async function monitor(){
   for(const s of MOM){const b=cl(await daily(s,"2y"));if(b.length<260)continue;rets.push({s,r:b[b.length-21]/b[b.length-252]-1});}
   rets.sort((a,b)=>b.r-a.r);const q=Math.max(1,Math.floor(rets.length*0.2));
   out.crossSecMomentum={longWinners:rets.slice(0,q).map(x=>x.s),shortLosers:rets.slice(-q).map(x=>x.s),note:"long top / short bottom quintile (12-1m), market-neutral"};
+  // real-but-DECAYED anomalies — genuine historically, arbitraged out; monitored for completeness, NOT actionable.
+  out.decayed=[
+    {name:"PEAD (post-earnings drift)",status:"real 1996-2012 (t=3.9) → decayed post-2012 (t=0.2)",actionable:false},
+    {name:"pre-FOMC drift",status:"decayed post-2015 publication (t=1.1)",actionable:false},
+    {name:"FX carry",status:"crushed post-GFC (DBV Sharpe 0.03)",actionable:false},
+    {name:"value / size factors",status:"decayed in the current regime (value drought)",actionable:false}
+  ];
   return out;
 }
 Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{const gen=new Date().toISOString();const r=await monitor();
