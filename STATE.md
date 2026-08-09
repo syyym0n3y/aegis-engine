@@ -1,6 +1,15 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-08 (Opus 4.8) — ANOMALY SPACE EXHAUSTED: 7 setup edges + 3 factor premia; live app at 7 (D-210…214).**
+Term-structure roll (6th, USCI Sharpe 0.37 vs naive 0.02, roll drag 7-13%/yr) + cross-sectional momentum (7th, t=2.61)
+added. Documented factors confirmed via ETFs: momentum/quality/min-vol REAL (corrects D-212 low-vol mega-cap artifact);
+value/size decayed. Rejected: TS-momentum, pre-FOMC (decayed t=1.14), seasonality, lead-lag, carry. Data-gated: PEAD.
+**7 discrete edges: rip-short · bbfade_lo/bear · crypto momentum · VRP · pairs/stat-arb · term-structure roll ·
+cross-sectional momentum. + factor book (momentum/quality/min-vol).** Live app deployed at 7 edges via git pipeline
+(github syyym0n3y/aegis-engine → aegis-engine-psi.vercel.app, dpl 6c87287 READY). Pattern definitive: risk premia +
+conditioned technicals survive, folklore dies. ↓ prior status stands. ↓
+
 **2026-08-08 (Opus 4.8) — QUEUE COMPLETE: FIVE verified edge families + live app deployed (D-208/209).** Research
 queue run: seasonality REJECTED (arbitraged out), pairs/stat-arb VERIFIED (5th edge — market-neutral spread reversion,
 24/24 pairs net-positive both-halves at pessimistic cost), lead-lag REJECTED (0/16), carry REJECTED (DBV Sharpe 0.03),

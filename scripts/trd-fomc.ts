@@ -1,0 +1,16 @@
+#!/usr/bin/env -S deno run --allow-net
+// trd-fomc — pre-FOMC drift (D-214, Lucca-Moench): equities allegedly drift up in the 24h before scheduled FOMC
+// statement releases. Daily proxy: SPY return on the trading day BEFORE each announcement vs all other days.
+// FOMC dates hand-compiled (2015-2024, 8/yr scheduled) — CAVEAT: verify vs the Fed calendar before trusting.
+import { mean, sampleStd } from "../supabase/functions/_shared/trd-stats.ts";
+const FOMC=["2015-01-28","2015-03-18","2015-04-29","2015-06-17","2015-07-29","2015-09-17","2015-10-28","2015-12-16","2016-01-27","2016-03-16","2016-04-27","2016-06-15","2016-07-27","2016-09-21","2016-11-02","2016-12-14","2017-02-01","2017-03-15","2017-05-03","2017-06-14","2017-07-26","2017-09-20","2017-11-01","2017-12-13","2018-01-31","2018-03-21","2018-05-02","2018-06-13","2018-08-01","2018-09-26","2018-11-08","2018-12-19","2019-01-30","2019-03-20","2019-05-01","2019-06-19","2019-07-31","2019-09-18","2019-10-30","2019-12-11","2020-01-29","2020-04-29","2020-06-10","2020-07-29","2020-09-16","2020-11-05","2020-12-16","2021-01-27","2021-03-17","2021-04-28","2021-06-16","2021-07-28","2021-09-22","2021-11-03","2021-12-15","2022-01-26","2022-03-16","2022-05-04","2022-06-15","2022-07-27","2022-09-21","2022-11-02","2022-12-14","2023-02-01","2023-03-22","2023-05-03","2023-06-14","2023-07-26","2023-09-20","2023-11-01","2023-12-13","2024-01-31","2024-03-20","2024-05-01","2024-06-12","2024-07-31","2024-09-18","2024-11-07","2024-12-18"];
+async function daily(sym:string){const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&period1=1420000000&period2=${Math.floor(Date.now()/1000)}`,{headers:{"User-Agent":"Mozilla/5.0"}});const j=await r.json();const res=j.chart.result[0];const t=res.timestamp,q=res.indicators.quote[0];const o:{d:string;c:number}[]=[];for(let i=0;i<t.length;i++){const c=q.close[i];if(c!=null&&Number.isFinite(c))o.push({d:new Date(t[i]*1000).toISOString().slice(0,10),c});}return o;}
+const b=await daily("SPY");const idx=new Map(b.map((x,i)=>[x.d,i]));const rets=b.map((x,i)=>i?x.c/b[i-1].c-1:0);
+const pre:number[]=[],rest:number[]=[];const preDays=new Set<number>();
+for(const f of FOMC){let fi=idx.get(f);if(fi==null){const cand=b.findIndex(x=>x.d>=f);if(cand>0)fi=cand;}if(fi==null||fi<1)continue;preDays.add(fi-1);} // day before announcement
+for(let i=1;i<b.length;i++){if(preDays.has(i))pre.push(rets[i]*100);else rest.push(rets[i]*100);}
+const t=(mean(pre)-mean(rest))/Math.sqrt(sampleStd(pre)**2/pre.length+sampleStd(rest)**2/rest.length);
+console.log(`PRE-FOMC DRIFT (SPY, day before scheduled statement, 2015-2024, ${pre.length} events)`);
+console.log(`  pre-FOMC mean daily: ${(mean(pre)>=0?"+":"")+mean(pre).toFixed(3)}%   other days: ${(mean(rest)>=0?"+":"")+mean(rest).toFixed(3)}%   diff ${(mean(pre)-mean(rest)>=0?"+":"")+(mean(pre)-mean(rest)).toFixed(3)}%   t=${t.toFixed(2)}`);
+console.log(`  annualized from ${pre.length} pre-days/yr(~8): pre-FOMC captures ${(mean(pre)*8).toFixed(1)}% vs holding all year ${(mean(rest)*252).toFixed(1)}%`);
+console.log(`  ${t>=2?"✓ pre-FOMC drift PRESENT":t>=1?"~ weak/directional":"✗ not significant (decayed post-publication — Lucca-Moench 2015 popularized it)"}`);

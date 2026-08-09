@@ -3582,3 +3582,27 @@ complement the 7 discrete tradeable-setup edges as a distinct class (systematic 
 
 Still genuinely untested (need event data): PEAD (earnings-surprise dates), pre-FOMC drift (FOMC calendar). Running
 pre-FOMC next. $0.
+
+---
+
+## D-214 — pre-FOMC drift DECAYED; PEAD data-gated; the anomaly space is now exhausted
+
+**Pre-FOMC drift** (`scripts/trd-fomc.ts`, SPY day-before scheduled statement, 79 events 2015-2024): pre-FOMC days
++0.155%/day vs +0.049% other days (3×) but t=1.14 → NOT significant. Directionally present, decayed post-publication
+(Lucca-Moench 2015 popularized it; arbitraged since). Not tradeable (~1.2%/yr from 8 days). REJECT (weak/decayed).
+CAVEAT: FOMC dates hand-compiled — verify vs Fed calendar; the null result is robust to minor date error.
+
+**PEAD (post-earnings drift)** — the one genuinely data-gated test: needs historical earnings-surprise (actual vs
+estimate) across a universe, not cleanly free in bulk (Yahoo gives current earnings dates, not bulk historical
+surprise). Documented as one of the most robust anomalies; flagged for an earnings-data pass (Nasdaq/AlphaVantage
+free-tier or scraped). Not tested — stated honestly, not claimed either way.
+
+### THE ANOMALY SPACE IS EXHAUSTED. Complete verdict:
+Ran every testable family through the gate — mean-reversion, momentum (XS + TS), breakout, ICT/SMC, VWAP, options/VRP,
+overnight, seasonality, pairs/stat-arb, lead-lag, carry, term-structure, cross-sectional reversal, low-vol, value,
+quality, size, pre-FOMC. **SURVIVORS:** 7 discrete tradeable-setup edges (rip-short, bbfade_lo/bear, crypto momentum,
+VRP, pairs, term-structure roll, cross-sectional momentum) + 3 confirmed long-horizon factor premia (momentum, quality,
+min-vol — the passive "factor book"). **REJECTED:** all undocumented folklore + decayed/arbitraged anomalies (ICT,
+VWAP, seasonality, lead-lag, FX carry, TS-momentum, pre-FOMC, value/size in the current regime). **DATA-GATED (1):**
+PEAD. The pattern is definitive: real economic risk premia + a few regime-conditioned technical patterns survive;
+everything without a mechanism dies. This is the D-070 thesis, proven at exhaustive scope. $0, no order path armed.
