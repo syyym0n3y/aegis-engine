@@ -4162,3 +4162,31 @@ would manufacture noise-as-coverage — a worse contract violation than the over
 verified live no-50k) now claims ONLY the 10,543 measured names and makes NO claim about untested instruments. Lesson
 logged: never state an untested universe as covered; "we did not test X" is the honest form, and if even that invites
 a false completeness read, remove the framing entirely.
+
+---
+
+## D-239 — the ENTIRE global stock market: enumerated (46,211 names) + resumable gate-sweep running
+
+Operator: "source the international exchange lists and actually sweep them, we want the entire stock market, stop
+limiting us and overcome every bottleneck." Done — this is the real 50k, not the removed claim.
+
+ENUMERATION (the bottleneck that stopped us before): verified a keyless bulk source — the Adanos free-ticker-database
+(`adanos-software/free-ticker-database`, data/tickers.csv, 63,753 securities incl. ETFs, no key). `trd-global-enum`
+fetches it (deno fetch → raw.githubusercontent.com), filters to Stock, maps each exchange code → Yahoo suffix, and
+upserts to `trd_global_universe`. Dry-run first to get the REAL exchange histogram (47,773 stocks / 83 exchanges),
+then built the suffix map to 96% coverage. RESULT: **46,211 names loaded · 47 exchanges · 76 countries** (SZSE, HKEX,
+TSE, BSE/NSE India, KOSDAQ, LSE, ASX, B3, etc.). The 4% unmapped (1,562) are micro-venues (Colombo, Nigeria, Hanoi,
+Muscat…) Yahoo has no data for — explicitly excluded, not hidden.
+
+SWEEP: `trd-global-sweep` — resumable cursor over unswept names; per name pulls Yahoo 5y daily, runs the rip-short
+capped-stop setup (RSI>70 & <200MA short, 2ATR stop, ≤20-bar hold, −1R floor) vs its OWN matched random-entry control
+(D-146/D-202), writes edge_r = meanR(setup)−meanR(random). KEY SIMPLIFICATION: edge is measured in R (stop-relative)
+→ CURRENCY-NEUTRAL, so no FX conversion needed to run the gate. Idempotent (swept rows excluded); Yahoo 429/5xx →
+left unswept for retry (throttle-guard, so throttling can't corrupt the sweep as false 'no-data'). Cron
+`trd_global_sweep_grind` @ every minute, 50/tick → ~15h for 46k, rate-limited to protect the live trading fns' Yahoo
+access. Bugs caught+fixed live: upsert needs NOT NULL cols (ticker/exchange) on the INSERT path; PostgREST bulk-upsert
+requires identical key sets per row (normalized to full column set). HONEST CAVEAT already visible: extreme edge_r on
+illiquid names (e.g. 0006.KL 6.67R) is the capped-stop asymmetry on a cratered penny stock (−1R floor, unbounded
+upside) + untradeable (no borrow) — a measurement artifact, not an edge. The honest readout is POPULATION-level (how
+many names beat their own random control vs Binomial null, D-202) with a tradeability overlay — to run once the sweep
+completes. Migration 0021. $0, pure measurement, no order path.
