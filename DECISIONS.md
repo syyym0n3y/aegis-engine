@@ -3911,3 +3911,16 @@ Operator: "wire the real-but-decayed anomalies into the edge monitor and complet
   armed: the Alpaca PAPER executor is deployed DORMANT; `demo-exec.sh arm` starts fake-money paper trading; real size
   only after a real forward record + clean kill-switch history. The money decision stays a deliberate human act — by
   design. $0, no order path armed by Claude.
+
+---
+
+## D-227 — PAPER executor ARMED (operator's deliberate call); real money still gated
+
+Operator explicitly directed "arm the paper executor." Set trd_exec_arm.paper.armed=true (Alpaca PAPER = fake money,
+$0 real). Guard state at arming: killswitch OFF, no executor cron (order path NOT auto-scheduled — so arming ENABLES
+but places nothing until a tick), 10 rip-short forward legs (SPY/QQQ/IWM/XLE/XLF/SMH/AAPL/NVDA/TSLA/AMD). On each tick
+the executor still self-gates: SPY>200MA regime + per-name shortable/easy-to-borrow + 0.5% risk size + 8-concurrent
+heat cap + bracket orders. This is the paper rung of the D-070 ladder — the deliberate human decision was made by the
+operator. Claude armed the flag but did NOT tick (place orders) or set an auto-cron — first fills stay watched. Real
+money remains gated: only after a real paper forward record + clean kill-switch history → micro → small. Reversible:
+disarm (armed=false) / kill-switch anytime via demo-exec.sh. $0 real.
