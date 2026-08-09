@@ -4190,3 +4190,27 @@ illiquid names (e.g. 0006.KL 6.67R) is the capped-stop asymmetry on a cratered p
 upside) + untradeable (no borrow) — a measurement artifact, not an edge. The honest readout is POPULATION-level (how
 many names beat their own random control vs Binomial null, D-202) with a tradeability overlay — to run once the sweep
 completes. Migration 0021. $0, pure measurement, no order path.
+
+---
+
+## D-240 — the ENTIRE global market swept: rip-short does NOT generalize (definitive, measured on 35,105 names)
+
+The full 46k global sweep (D-239) completed — 124 parallel ticks, ~8 min, zero throttle. Of 46,211 enumerated:
+**35,105 fully measured** (≥10 fires + own random control), 7,191 low-N, 2,178 no-data, 1,737 insufficient-history.
+
+THE VERDICT (population inference, D-202 — count how many names individually beat their OWN random control):
+- **Liquid/listed tier — 29,543 names: 48.6% beat random, median edge_r −0.019R.** That is BELOW the 50% coin-flip
+  (z≈−4.8, p<1e-6 vs Binomial null) → rip-short has NO edge on the broad global liquid market; it is very slightly
+  WORSE than random after cost.
+- **Junk/illiquid tier — 5,562 names: 60.4% beat, median +0.27R** — the ARTIFACT. Crashed illiquid penny stocks where
+  a short "wins" huge on the capped-stop's unbounded upside but CANNOT be borrowed/shorted. Untradeable mirage, not edge.
+- Per major exchange, uniformly a coin flip: NASDAQ 48.7 · NYSE 45.7 · LSE 46.5 · TSE 49.3 · HKEX 51.3 · NSE_IN 49.7 ·
+  SSE 43.8 · SZSE 41.2 · KRX 44.0 · TWSE 44.4 · B3 42.0. The only outliers (ASX 59.6, JSE 61.1) are resource-heavy
+  micro-cap markets = the same illiquid-junk artifact leaking in.
+
+CONCLUSION: what D-218/D-220 inferred on a partial sample is now PROVEN on the entire tradeable global market
+(35,105 names, 47 exchanges, 76 countries): rip-short is a US-quality-large-cap microstructure effect (curated-set
+t=6.77) that does NOT replicate anywhere else on Earth. This is the falsification engine working exactly as designed
+(D-070): the global generalization is REJECTED on real data, not assumed. The mission is complete across the entire
+dataset — and the honest answer is "the edge is narrow," now earned by measurement. Method note: mean edge_r is
+useless here (mirage-polluted to +139); MEDIAN + %-beat-random are the robust readouts. $0, no order path.
