@@ -12,8 +12,11 @@ const H={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/js
 const MALEN=200,DEPOSIT=100000;
 async function ma200(sym:string):Promise<{close:number,ma:number}|null>{const start=new Date(Date.now()-400*864e5).toISOString().slice(0,10);const r=await fetch(`${DATA}/v2/stocks/${sym}/bars?timeframe=1Day&start=${start}&feed=iex&limit=400`,{headers:AH}).then(x=>x.json()).catch(()=>null);const bs=r?.bars??[];if(bs.length<MALEN+1)return null;const cl=bs.map((b:{c:number})=>b.c);const ma=cl.slice(-MALEN).reduce((a:number,x:number)=>a+x,0)/MALEN;return{close:cl[cl.length-1],ma};}
 async function closePos(sym:string){return (await fetch(`${PAPER}/v2/positions/${sym}?percentage=100`,{method:"DELETE",headers:AH}).catch(()=>null))?.ok;}
+// crypto momentum trailing exit: hold while above the 20-day low, exit when close < 20d-low (Donchian trail). Yahoo (BTCUSD→BTC-USD).
+async function donchianLow(sym:string):Promise<{close:number,dl:number}|null>{const y=sym.replace(/USD$/,"-USD");const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${y}?interval=1d&range=3mo`,{headers:{"User-Agent":"Mozilla/5.0"}}).then(x=>x.json()).catch(()=>null);const res=r?.chart?.result?.[0];if(!res?.timestamp)return null;const q=res.indicators.quote[0];const lows:number[]=[],closes:number[]=[];for(let i=0;i<res.timestamp.length;i++){const l=q.low[i],c=q.close[i];if(l!=null&&c!=null&&Number.isFinite(l)&&Number.isFinite(c)){lows.push(l);closes.push(c);}}if(closes.length<21)return null;const close=closes[closes.length-1];let dl=1e18;for(let k=lows.length-1-20;k<lows.length-1;k++)dl=Math.min(dl,lows[k]);return{close,dl};}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const flatParam=new URL(req.url).searchParams.get("flat")==="1";
+  const flatCrypto=new URL(req.url).searchParams.get("flatcrypto")==="1";  // one-time: close ALL crypto (operator thesis-exit, D-235)
   const ks=await fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   const killed=!!ks?.[0]?.active;
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json());
@@ -24,8 +27,14 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     await fetch(`${PAPER}/v2/positions?cancel_orders=true`,{method:"DELETE",headers:AH}).catch(()=>null);
     for(const p of positions)actions.push(`FLATTEN ${p.symbol} (${killed?"kill-switch":"manual flat"})`);
   } else if(Array.isArray(positions)){
-    // thesis exits: close when price crosses 200MA against the position
-    for(const p of positions as {symbol:string,side:string,unrealized_pl:string}[]){
+    // thesis exits: crypto → Donchian-20-low trail (or one-time flatcrypto); equity → 200MA cross against the position
+    for(const p of positions as {symbol:string,side:string,unrealized_pl:string,asset_class?:string}[]){
+      if(p.asset_class==="crypto"){
+        if(flatCrypto){const ok=await closePos(p.symbol);if(ok)actions.push(`FLATTEN ${p.symbol} crypto — operator thesis-exit (no active breakout signal), P&L ${(+p.unrealized_pl).toFixed(2)}`);continue;}
+        const d=await donchianLow(p.symbol);if(!d)continue;
+        if(d.close<d.dl){const ok=await closePos(p.symbol);if(ok)actions.push(`EXIT ${p.symbol} crypto — momentum trail broke (close ${d.close.toFixed(2)} < 20d-low ${d.dl.toFixed(2)}), P&L ${(+p.unrealized_pl).toFixed(2)}`);}
+        continue;
+      }
       const m=await ma200(p.symbol);if(!m)continue;
       const against = p.side==="short" ? m.close>m.ma : m.close<m.ma;   // short wants downtrend; long wants uptrend
       if(against){const ok=await closePos(p.symbol);if(ok)actions.push(`EXIT ${p.symbol} ${p.side} — thesis flipped (close ${m.close.toFixed(2)} ${p.side==="short"?">":"<"} 200MA ${m.ma.toFixed(2)}), P&L ${(+p.unrealized_pl).toFixed(2)}`);}

@@ -4081,3 +4081,29 @@ this cap; VRP has it now). (2) The reallocation itself is an OPERATOR allocation
 crypto (no-signal longs) OR cap crypto at ~40% and trim, freeing ~$50k for the 4-edge diversification. FLEET STATUS:
 all 4 edges DEPLOYED + signal-verified + cronned (rip-short · crypto-momentum · pairs · VRP-proxy); actual multi-edge
 fills await the concentration decision. $0 real throughout.
+
+---
+
+## D-235 — reallocation: full crypto thesis-exit unblocks the 4-edge diversification (operator decision)
+
+Operator chose "full thesis-exit crypto" on the D-234 concentration finding. Rationale (their call, my recommendation
+matched): the two legacy BTCUSD/ETHUSD longs had NO active edge thesis (crypto-momentum firing=0 → neither above its
+20-day high), so by the system's own rule — hold only while the edge fires — they shouldn't exist; and at 88% of
+equity they starved the diversification that is the entire point of the 4 edges (D-231).
+
+Shipped in `trd-position-manager` v2 (deployed): (a) one-time `?flatcrypto=1` control that closes all crypto
+positions; (b) a DURABLE ongoing crypto exit so this isn't a manual one-off — crypto positions now get a Donchian-20-
+LOW momentum trail (hold while above the 20-day low, exit when close < 20d-low). Critically NOT "exit unless above the
+20d-HIGH" — that would kill every fresh crypto-momentum breakout entry the day after it fires; the 20d-LOW trail lets
+winners run and only cuts a broken uptrend. Equity positions keep the 200MA-cross thesis exit; both are additive to
+the hard bracket SL/TP.
+
+EXECUTED `?flatcrypto=1`: closed BTCUSD (+$1,349.34) and ETHUSD (+$889.91) = +$2,239 realized into equity
+($102,018.73, +2.02% total). Book flat, ~full buying power freed. Immediately re-ticked VRP → it now ENTERS: 85 SVXY
+(notional-capped 5% ≈ $5k), 1R stop 56.99, contango 1.379 — the 4th edge fills where it rejected minutes earlier.
+
+NET STATE: all 4 uncorrelated edges deployed + cronned + signal-verified + now UNBLOCKED to fill (rip-short ·
+crypto-momentum · pairs · VRP-proxy). Pairs holds USO/BNO + NKE/LULU (GLD/SLV self-heals Monday); VRP holds SVXY;
+crypto/rip-short dormant-by-market awaiting real signals. This is the D-231 machine actually running: N growing across
+independent edges, each with its 1R stop, one kill-switch flattening the book. $0 real (Alpaca paper); real money
+still gated behind the staged rungs (D-070).
