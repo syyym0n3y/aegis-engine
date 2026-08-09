@@ -4214,3 +4214,38 @@ t=6.77) that does NOT replicate anywhere else on Earth. This is the falsificatio
 (D-070): the global generalization is REJECTED on real data, not assumed. The mission is complete across the entire
 dataset — and the honest answer is "the edge is narrow," now earned by measurement. Method note: mean edge_r is
 useless here (mirage-polluted to +139); MEDIAN + %-beat-random are the robust readouts. $0, no order path.
+
+---
+
+## D-242 — multi-setup global edge hunt: NOTHING exploitable (the honest terminal state, D-070)
+
+Operator: "analyse the entire dataset for edges we can exploit." Ran 5 orthogonal capped-stop setups across the entire
+global universe (trd-global-edges, D-241), each vs its OWN random-entry control in currency-neutral R. ~46k names swept;
+23k–32k measurable per setup. Population verdict on the LIQUID tier (major markets, junk/penny venues excluded):
+
+```
+setup                names   %beat-random   median edge_r
+mr_short (rip-short)  27,629     47.8%         -0.033R
+mr_long (bounce)      27,758     42.3%         -0.119R
+bo_long (breakout)    31,626     41.8%         -0.096R
+bd_short (breakdown)  31,923     33.9%         -0.140R
+hi52_long (momentum)  23,198     38.8%         -0.192R
+```
+
+**Every setup LOSES to a random entry on the liquid global market — all <50% beat-rate, all negative median edge.**
+My prior (momentum would survive) was WRONG: breakout-long and 52wk-high are among the WORST. Why: the random baseline
+already captures drift via the unbounded-upside capped-stop; the "signals" (overbought/oversold/breakout/breakdown/new-
+high) systematically time the 20-bar horizon WORSE than random (52wk-high → post-run mean-reversion; breakout → false
+breaks). The capped-stop random baseline is genuinely hard to beat.
+
+Segment scan (any exchange×setup clearing >55% beat + median >0.05R): the ONLY positives are untradeable artifacts —
+mr_short on TSXV/ASX/OTC/FSX/Bursa/SGX (short-the-crashed-pennystock, no borrow) and bo_long/hi52 on BSE_IN + BIST
+(Bombay small-caps + Turkish-lira hyperinflation nominal drift). NO major liquid developed market (NASDAQ, NYSE, LSE,
+Tokyo, Xetra, HKEX, Euronext, SIX, TSX) clears any setup.
+
+CONCLUSION: across the entire tradeable global market and 5 orthogonal setup families, there is NO exploitable
+technical-timing edge. This is the falsification engine working exactly as designed (D-070): the base rate is brutal,
+and the honest terminal state — "nothing cleared the gates" — is a SUCCESS of the engine, not a failure. The value
+delivered is negative knowledge that PREVENTS deploying a losing strategy. The genuine edges remain the documented
+broad risk premia (VRP, pairs/stat-arb, term-structure roll, cross-sectional momentum at the portfolio/factor level)
++ the narrow US-large-cap rip-short — none of which is a per-name technical-timing signal. $0, no order path.
