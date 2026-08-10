@@ -42,6 +42,11 @@ Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Contr
   for(const m of wantLong)target.set(m.sym,{side:"long",px:m.px,mom:m.mom});
   for(const m of wantShort)target.set(m.sym,{side:"short",px:m.px,mom:m.mom});
   const exited:string[]=[],entered:string[]=[];
+  // D-270 REGIME GATE (OOS-validated in BOTH halves): 12-1 momentum INVERTS in bear markets (the momentum crash).
+  // Trade the basket ONLY when the market is bull (median universe 12-1 momentum > 0). In bear → flatten, stay flat.
+  const medMom=moms[Math.floor(moms.length/2)].mom;
+  if(medMom<=0){for(const[sym,v]of xsecOpen){await closePos(sym);await patch(sym,{open:false,exit_date:new Date().toISOString()});exited.push(`${sym} ${v.side} (bear-flat)`);}
+    return new Response(JSON.stringify({ok:true,armed:true,edge:"xsec-momentum",action:"BEAR-FLAT",medMom:+medMom.toFixed(4),reason:"median 12-1 momentum <=0 → bear regime; momentum crashes (D-270), stay flat",exited}),{headers:cors});}
   // EXITS: open xsec positions not matching the new target (sym+side) → close
   for(const[sym,v]of xsecOpen){const t=target.get(sym);if(!t||t.side!==v.side){await closePos(sym);await patch(sym,{open:false,exit_date:new Date().toISOString()});exited.push(`${sym} ${v.side}`);}}
   // ENTRIES: target names not already open in the right side → open (skip if held by another edge)

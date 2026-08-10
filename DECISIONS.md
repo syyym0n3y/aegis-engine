@@ -4676,3 +4676,19 @@ FINDINGS — both pooled near-misses (t≈1.95) resolve into a favourable regime
 Both gates are literature-backed (momentum crashes in bear regimes; trend/vol conditioning) — not pure data-mining.
 This is the operator's "favourable conditions → highest success" made concrete. NEXT: OOS-validate each regime
 split (does bull/hivol hold in BOTH halves?) then gate the crypto/xsec executors to their favourable regime.
+
+## D-270 — Regime gates OOS-validated; only ONE survives → xsec executor gated bull-only (momentum-crash protection)
+Extended scoreByRegime with split-half OOS per bucket (h1Edge/h2Edge/holdsBoth; guards in-sample regime mining).
+Re-ran crypto+xsec. RESULT — the pooled-significant regime cells mostly DO NOT survive OOS:
+  crypto hivol: pooled t=2.64 but H1 +2.14 / H2 -2.08 → INVERTS, holds_both=FALSE.
+  crypto uptrend: pooled t=2.01 but H1 +4.01 / H2 -3.71 → INVERTS, holds_both=FALSE.
+  xsec bull-market: pooled t=3.06, H1 +0.0131 / H2 +0.0049 → HOLDS BOTH = TRUE. ✓
+  xsec hidisp: pooled t=2.34 but thin recent n → holds_both=FALSE (fails closed).
+CRITICAL DISCIPLINE WIN: had I gated crypto on the pooled t-stats (hivol/uptrend "PASS"), the gates would have
+LOST in 2025-26 — they were in-sample artifacts. The OOS split caught it. crypto gets NO gate (stays honest
+near-miss). The ONLY OOS-robust gate is xsec bull-market (inverse of the documented momentum crash).
+ACTION: trd-xsec-mom-exec gated bull-only — computes median universe 12-1 momentum; if <=0 (bear) it FLATTENS the
+basket and stays flat (action:BEAR-FLAT), else rebalances as before. This avoids the bear-market inversion
+(-1.71%/mo) where naive momentum blows up. Verified deployed (returns hold on fresh basket = cadence guard fires
+first; gate engages on next rebalance). Migration 0036. crypto/vrp unchanged; orbfollow regime = optional future
+futures re-pull; this closes the C7 regime-matrix workstream.

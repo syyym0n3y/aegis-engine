@@ -41,14 +41,16 @@ export interface EdgeScorecard {
 export interface RegimeCell {
   dimension: string; bucket: string; n: number;
   absR: number; netR: number; vsRandomEdge: number; vsRandomT: number; passes: boolean;
+  h1Edge: number; h2Edge: number; holdsBoth: boolean; // OOS: does the bucket's vs-random edge hold in BOTH halves?
 }
 /** C7 regime matrix: for each regime dimension, bucket setup+control by the AT-ENTRY tag and measure the
  * vs-random edge PER BUCKET. Answers "WHEN does this edge fire best?" — the favourable-condition gate.
  * Control trades must carry the SAME regime tag at their random entry so buckets are matched (drift cancels
  * within a bucket). Thin buckets fail closed (minN). */
-export function scoreByRegime(setup: HarnessTrade[], control: HarnessTrade[], costBps: number, dims: string[], minN = 20): RegimeCell[] {
+export function scoreByRegime(setup: HarnessTrade[], control: HarnessTrade[], costBps: number, dims: string[], minN = 20, oosCut = "2025"): RegimeCell[] {
   const costFrac = costBps / 1e4;
   const netOf = (t: HarnessTrade) => t.r - (t.stopFrac > 0 ? costFrac / t.stopFrac : 0);
+  const halfEdge = (s: HarnessTrade[], c: HarnessTrade[]) => (s.length && c.length) ? mean(s.map((t) => t.r)) - mean(c.map((t) => t.r)) : NaN;
   const out: RegimeCell[] = [];
   for (const dim of dims) {
     const buckets = new Set<string>();
@@ -57,10 +59,16 @@ export function scoreByRegime(setup: HarnessTrade[], control: HarnessTrade[], co
       const s = setup.filter((t) => t.regime?.[dim] === b);
       const c = control.filter((t) => t.regime?.[dim] === b);
       const vr = edgeVsRandom(s.map((t) => t.r), c.map((t) => t.r), 2, minN);
+      // OOS: the bucket's vs-random edge must survive in BOTH time halves (guards against in-sample regime mining)
+      const inH1 = (t: HarnessTrade) => !!t.period && t.period < oosCut;
+      const e1 = halfEdge(s.filter(inH1), c.filter(inH1)), e2 = halfEdge(s.filter((t) => !inH1(t)), c.filter((t) => !inH1(t)));
+      const h1n = s.filter(inH1).length, h2n = s.length - h1n;
       out.push({
         dimension: dim, bucket: b, n: s.length,
         absR: +mean(s.map((t) => t.r)).toFixed(4), netR: +mean(s.map(netOf)).toFixed(4),
         vsRandomEdge: vr.edge, vsRandomT: vr.tStat, passes: vr.passes,
+        h1Edge: Number.isFinite(e1) ? +e1.toFixed(4) : NaN, h2Edge: Number.isFinite(e2) ? +e2.toFixed(4) : NaN,
+        holdsBoth: h1n >= 10 && h2n >= 10 && e1 > 0 && e2 > 0,
       });
     }
   }

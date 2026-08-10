@@ -150,7 +150,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
       detail:{universe:UNIV.length,control:"random baskets",months:setup.length,span:`${spanLo}→${spanHi}`,note:"monthly LS return per trade; survivor universe (momentum less survivorship-sensitive than MR)"}};
     await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(row)}).catch(()=>{});
     const rcells=scoreByRegime(setup,ctrl,costBps,["market","dispersion"]);
-    await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rcells.map(c=>({edge:"xsec",dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,run_at:new Date().toISOString()})))}).catch(()=>{});
+    await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rcells.map(c=>({edge:"xsec",dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,h1_edge:Number.isFinite(c.h1Edge)?c.h1Edge:null,h2_edge:Number.isFinite(c.h2Edge)?c.h2Edge:null,holds_both:c.holdsBoth,run_at:new Date().toISOString()})))}).catch(()=>{});
     return new Response(JSON.stringify({ok:true,scorecard:row,regime:rcells},null,2),{headers:cors});
   }
 
@@ -191,6 +191,6 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   // C7 regime matrix (D-269): where is this edge favourable?
   const regDims=[...new Set(setup.flatMap(t=>t.regime?Object.keys(t.regime):[]))];let regime:RegimeCell[]=[];
   if(regDims.length){regime=scoreByRegime(setup,ctrl,costBps,regDims);
-    await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(regime.map(c=>({edge,dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,run_at:new Date().toISOString()})))}).catch(()=>{});}
+    await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(regime.map(c=>({edge,dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,h1_edge:Number.isFinite(c.h1Edge)?c.h1Edge:null,h2_edge:Number.isFinite(c.h2Edge)?c.h2Edge:null,holds_both:c.holdsBoth,run_at:new Date().toISOString()})))}).catch(()=>{});}
   return new Response(JSON.stringify({ok:true,scorecard:row,regime},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
