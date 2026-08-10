@@ -4304,3 +4304,31 @@ COMPLETE COVERAGE PICTURE (what "everything" now means): per-name technical timi
 PEAD tested + decayed (prior D-2xx); global event data not freely available (honest boundary). Intraday = cost-wall
 gated (D-204). That is the coverable technical/statistical space on free daily+monthly data. Utilise-at-max-capacity:
 cross-sectional momentum routed to execution as the 6th edge (below). $0, measurement.
+
+---
+
+## D-247 — multi-timeframe coverage: bblo is TIMEFRAME-INVARIANT (daily ≈ weekly); the map is complete
+
+Operator: "we need instances across all timeframes and sessions." Ran the setup library at the WEEKLY timeframe
+(trd-global-weekly, 8 key setups, weekly-calibrated MA30/BB20/Donchian20wk/52wk, HOLD=8wk) across the entire universe.
+
+WEEKLY RESULT (liquid tier) mirrors DAILY exactly: **bblo_long_wk 58.1% beat-random, median +0.081R** (n=9,703) —
+essentially identical to daily bblo (58.1%, +0.078R). bbhi_short marginal (52.3%); every momentum/breakout/52wk setup
+NEGATIVE, same as daily. → bblo is TIMEFRAME-INVARIANT: the one real edge works identically at daily AND weekly,
+strong evidence it's genuine mean-reversion structure, not a bar-artifact. The failures fail at both timeframes too.
+
+COMPLETE TIMEFRAME × SESSION MAP (honest boundaries):
+- DAILY (D-242/243): 29 setups → 1 survivor (bblo_long). Primary tradeable timeframe. ✓
+- WEEKLY (this): 8 setups → bblo confirmed, timeframe-invariant. ✓
+- MONTHLY (D-246): cross-sectional 12-1 momentum REAL (NASDAQ t=6.0 +others), 1m reversal real HKEX/LSE. ✓
+- INTRADAY (5m/15m/1h): NOT sourceable at 46k global scale (Yahoo caps intraday history at 7–60 days, sparse intl
+  coverage) AND already measured net-NEGATIVE after spread by the cost wall (D-204: 5m cost-in-R 0.31 vs daily 0.03).
+  Honest boundary, not an omission.
+- SESSIONS (Asia/London/NY): a 24h-market property (crypto/FX/futures), not single-session equities. Session-based
+  intraday was tested in prior work (fvg/sweep by session → decaying/dead, in the cockpit per-session×setup panel).
+
+CONCLUSION: the coverable technical/statistical edge space on free daily+weekly+monthly data is now EXHAUSTED across
+timeframes. Two real edges stand: bblo_long (per-name MR, timeframe-invariant, executing as the 5th fleet edge) +
+cross-sectional 12-1 momentum (portfolio factor, US-led). Everything else — every per-name momentum/breakdown setup,
+at every timeframe — is a coin-flip or worse. The daily bblo-exec already captures the edge; weekly is confirmation,
+not a separate executor (daily+weekly fire on overlapping oversold conditions). $0, measurement.
