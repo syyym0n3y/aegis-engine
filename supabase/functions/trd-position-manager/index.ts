@@ -25,7 +25,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     fetch(`${SB}/rest/v1/trd_xsec_pos?open=eq.true&select=sym`,{headers:H}).then(r=>r.json()).catch(()=>[]),
   ]);
   const killed=!!ks?.[0]?.active;
-  const ownedElsewhere=new Set<string>(["SVXY"]);
+  const ownedElsewhere=new Set<string>(["SVXY","SPY","QQQ","DIA","GLD"]);  // SVXY=vrp; SPY/QQQ/DIA/GLD=orbfollow (own bracket exit)
   for(const p of (pairsOpen as {leg_a:string,leg_b:string}[]))for(const s of [p.leg_a,p.leg_b])ownedElsewhere.add(s);
   for(const x of (xsecOpen as {sym:string}[]))ownedElsewhere.add(x.sym);
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json());

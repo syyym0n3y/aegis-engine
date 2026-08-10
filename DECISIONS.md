@@ -4544,3 +4544,15 @@ WHEN); trial-counter not wired into new backtests; no queryable provenance ledge
 futures-ORB-follow have cleared vs-random+OOS; crypto/pairs/vrp are deployed on THESIS ONLY (never
 gauntlet-run — a D-070 violation). Build queue P0→P2 defined. Reframed "highest % certainty / 100% win"
 → positive expectancy net of pessimistic cost, OOS-surviving, regime-gated, bounded-risk. See CONSISTENCY_AUDIT.md.
+
+## D-262 — Edge #7 SHIPPED: ORB-follow ETF-proxy paper executor (trd-orbfollow-exec)
+Built the executor for the validated breakout-follow. Instruments SPY/QQQ/DIA/GLD (proxies for ES/NQ/YM/GC),
+traded in liquid regular-hours on the 09:30–10:30 ET opening range — the executable window validated at
++0.138R vs random, holds split-half both halves, 23.5k trades (D-260). Geometry EXACTLY matches the backtest:
+range hi/lo over 09:30–10:30 ET; on first break after 10:30, enter break direction; stop=OPPOSITE extreme
+(R=range width); target=entry±1R; bracket order self-manages exit. Fires once/day/symbol (dedup via trd_trades),
+guards killswitch+arm+risk(0.5%)+notional(10%) caps. DST-aware ET via same arithmetic offset as the engine.
+Debug run verified geometry live (SPY up-break r772.5-774.46 w1.96 qty13 stop772.5 tgt776.42; QQQ down-break; etc).
+Wired: cron trd_orbfollow_30m (jobid 37, */30 14-20 * * 1-5) — DORMANT until armed. Position-manager patched to
+skip SPY/QQQ/DIA/GLD (D-252 over-reach class: its rip-short 200MA cover would otherwise corrupt an orbfollow short).
+Pre-cost edge; paper fills are the cost test toward the 30-trade PAPER→MICRO gate. NO real money.
