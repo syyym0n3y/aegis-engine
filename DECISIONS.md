@@ -4641,3 +4641,24 @@ After the full uniform gauntlet (trd_edge_scorecard) + reconciliations:
   REJECTED/DEMOTED: bblo (D-264 survivorship drift) · pairs (D-266 cost-negative, no skill) · rip-short (D-252).
 NET: 1 fully-cleared executable edge (orbfollow) + 1 separately-validated (xsec) + 1 promising (crypto) + 3 dead.
 This is D-070 in action — most "edges" don't survive a matched random control net of cost.
+
+## D-268 — xsec momentum added to the unified scorecard via a cross-sectional adapter; scorecard now COMPLETE
+Built a cross-sectional adapter (?edge=xsec): monthly 12-1 momentum, long top-quintile / short bottom-quintile of a
+40-name liquid universe, each month's long-short return = one trade, vs a RANDOM-basket control (same sizes), cost =
+full-rotation turnover ~40bp. 55 years (1971-2026), 473 months. RESULT: gross +0.76%/mo, NET +0.36%/mo (positive
+after cost), vs-random +0.8%/mo t=1.97 — JUST under t≥2 (fails closed), both OOS halves positive but h2 ~0 (recent
+decay). RECONCILIATION vs the prior "NASDAQ t=6.0": not a contradiction — prior was NASDAQ-CONCENTRATED (strong tech
+momentum); this broad 40-name cross-section is the more conservative honest number. Keep LIVE + flagged (near-miss,
+net-positive, well-established factor), NOT demoted.
+
+COMPLETE UNIFIED SCORECARD (trd_edge_scorecard, ranked by vs-random t):
+| edge      | n      | vs-random | t      | net       | gate | verdict |
+| orbfollow | 23,498 | +0.138R   | +11.92 | (R)       | PASS | REAL — clean survivor |
+| xsec      |    473 | +0.8%/mo  | +1.97  | +0.36%/mo | fail | near-miss, real tilt, decaying |
+| crypto    |    973 | +2.43R    | +1.93  | +4.95R    | fail | near-miss, real tilt, high-variance |
+| bblo      |  3,234 | -0.017R   | -0.36  | +0.38R    | fail | DEMOTED (drift) |
+| pairs     |    999 | -0.0006   | -0.37  | -0.4%/tr  | fail | DEMOTED (no skill, cost-negative) |
+vrp: <30 trades, insufficient (data-blocked). PATTERN: the two momentum edges (equity xsec + crypto) BOTH land at
+t≈1.95 — a real but sub-threshold tilt, consistent with momentum being real-but-modest-and-post-publication-decayed
+(McLean-Pontiff). Only orbfollow clears decisively. This is the honest complete map: 1 gate-clearing edge, 2 real
+near-misses (keep+power-up), 2 dead, 1 unproven. The falsification engine holds: default REJECT, few survive.

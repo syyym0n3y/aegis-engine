@@ -102,6 +102,43 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   }
 
   const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];const spreads:number[]=[];let spanLo="9999",spanHi="0",bars=0;
+  // xsec 12-1 cross-sectional momentum: monthly long-top-quintile / short-bottom-quintile, vs RANDOM baskets.
+  // Each month's long-short return is one "trade"; cost = turnover (full monthly rotation, 2 sides) × round-trip.
+  if(edge==="xsec"){
+    const UNIV=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","JPM","XOM","JNJ","WMT","V","UNH","HD","PG","KO","BAC","CVX","MA","AVGO","COST","PEP","MRK","ABBV","CRM","ADBE","NFLX","AMD","QCOM","TXN","DIS","INTC","CAT","GS","MS","BA","GE","F","T","VZ"];
+    const series=await Promise.all(UNIV.map(s=>daily(s)));
+    // month-end close per name → aligned month grid
+    const meMaps=series.map(b=>{const m=new Map<string,number>();for(const x of b)m.set(x.d.slice(0,7),x.c);return m;});
+    const monthsSet=new Set<string>();meMaps.forEach(m=>m.forEach((_,k)=>monthsSet.add(k)));const months=[...monthsSet].sort();
+    const rnd=mulberry(4242);const Q=Math.max(3,Math.floor(UNIV.length/5)); // quintile basket size
+    for(let i=13;i<months.length-1;i++){
+      const cand:{idx:number,mom:number,fwd:number}[]=[];
+      for(let n=0;n<UNIV.length;n++){const m=meMaps[n];const p1=m.get(months[i-1]),p12=m.get(months[i-12]),p0=m.get(months[i]),pf=m.get(months[i+1]);
+        if(p1&&p12&&p0&&pf&&p12>0&&p0>0)cand.push({idx:n,mom:p1/p12-1,fwd:pf/p0-1});}
+      if(cand.length<Q*3)continue; // need enough cross-section
+      cand.sort((a,b)=>b.mom-a.mom);const longs=cand.slice(0,Q),shorts=cand.slice(-Q);
+      const ls=longs.reduce((s,x)=>s+x.fwd,0)/Q - shorts.reduce((s,x)=>s+x.fwd,0)/Q;
+      setup.push({r:ls,stopFrac:1,period:`${months[i].slice(0,4)}Q${Math.floor((+months[i].slice(5,7)-1)/3)+1}`});
+      // control: RANDOM long/short baskets from the same candidates, same sizes
+      const sh=[...cand];for(let k=sh.length-1;k>0;k--){const j=Math.floor(rnd()*(k+1));[sh[k],sh[j]]=[sh[j],sh[k]];}
+      const rls=sh.slice(0,Q).reduce((s,x)=>s+x.fwd,0)/Q - sh.slice(Q,2*Q).reduce((s,x)=>s+x.fwd,0)/Q;
+      ctrl.push({r:rls,stopFrac:1,period:`${months[i].slice(0,4)}Q${Math.floor((+months[i].slice(5,7)-1)/3)+1}`});
+    }
+    spanLo=months[13]||"?";spanHi=months[months.length-1]||"?";bars=months.length;
+    if(setup.length<30)return new Response(JSON.stringify({ok:false,edge,err:`too few months (${setup.length})`}),{headers:cors});
+    const costBps=40; // full monthly rotation both sides ≈ 2×2 half-spreads ~ 40bp on liquid names (pessimistic)
+    const runKey=`edge-backtest:xsec:${new Date().toISOString().slice(0,13)}`;
+    await fetch(`${SB}/rest/v1/trd_trial_counter`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({family:"edge-backtest:xsec",run_key:runKey})}).catch(()=>{});
+    const tr=await fetch(`${SB}/rest/v1/trd_trial_counter?family=eq.edge-backtest:xsec&select=id`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+    const sc=scoreEdge("xsec",setup,ctrl,{costBps,nTrials:Math.max(1,Array.isArray(tr)?tr.length:1),benchmarkSharpe:0.5});
+    const row={edge:"xsec",run_at:new Date().toISOString(),n:sc.n,n_trials:sc.nTrials,abs_r:sc.absR,cost_r:sc.costR,net_r:sc.netR,cost_bps:costBps,
+      vs_random_edge:sc.vsRandomEdge,vs_random_t:sc.vsRandomT,vs_random_passes:sc.vsRandomPasses,deflated_sharpe:sc.deflatedSharpe,sharpe:sc.sharpe,max_dd:sc.maxDrawdown,min_trl:Number.isFinite(sc.minTRL)?sc.minTRL:null,
+      oos_h1:Number.isFinite(sc.oosH1)?sc.oosH1:null,oos_h2:Number.isFinite(sc.oosH2)?sc.oosH2:null,holds_both:sc.holdsBoth,gate_passed:sc.gatePassed,gate_failing:sc.gateFailing,
+      detail:{universe:UNIV.length,control:"random baskets",months:setup.length,span:`${spanLo}→${spanHi}`,note:"monthly LS return per trade; survivor universe (momentum less survivorship-sensitive than MR)"}};
+    await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(row)}).catch(()=>{});
+    return new Response(JSON.stringify({ok:true,scorecard:row},null,2),{headers:cors});
+  }
+
   if(edge==="bblo"||edge==="crypto"){
     const uni=edge==="bblo"?EQUITY_UNIVERSE:CRYPTO;const gen=edge==="bblo"?genBblo:genCrypto;
     const series=await Promise.all(uni.map(s=>daily(s)));
