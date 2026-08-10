@@ -4418,3 +4418,21 @@ AUDIT CONCLUSION: the ONLY strategy positive on BOTH the decades-long per-instan
 vs-random test is bblo (executing as the 5th edge). The absolute backtest confirms it robustly (30/30, 47y). The
 "other positives" are drift artifacts the vs-random control correctly rejects — consistency, not contradiction. One
 real flag raised (rip-short geometry/regime). Migration 0028. $0, measurement.
+
+---
+
+## D-254 — time-based range trade (8:12-9:12 window) on futures: FADE beats breakout — a real LEAD (small sample)
+
+Operator's thesis: a daily recurring intraday pattern (market "picks a side" in the 8:12-9:12 window) exploitable as
+TIME-BASED RANGE trading. Built trd-futures-orb (5m Yahoo, ES/NQ/YM/RTY/CL/GC). DATA REALITY (verified, not asserted):
+Yahoo serves only ~49 trading days of 5m futures (2026-05-31→08-10) and 7 days of 1m — "all history at 1m/2m" is NOT
+free-sourceable; true multi-year 1m needs a paid feed (Databento/CME/Polygon). RESULT on the ~49-day sample:
+- BREAKOUT-follow of the 8:12-9:12 range is NEGATIVE on index futures (ES −0.09 / NQ −0.09 / YM −0.12 / RTY −0.27 edge
+  vs random). The breakout FAILS → the range holds.
+- FADE (reversion) is POSITIVE: ES +0.19R (56% win), YM +0.13R (57%), GC +0.19R (59%), NQ +0.06R (53%). Confirms the
+  operator's instinct — range holds, fade the extremes. Exception: CL (crude) TRENDS (breakout +0.19, fade −); oil runs.
+HONEST STATUS = LEAD, not a cleared edge: 49 days = one summer regime (tiny, no OOS); timezone assumed 8:12-9:12 ET/EDT
+(UTC 12:12-13:12) — unverified, results shift if a different window/zone was meant; RTY's random baseline was a +0.20
+outlier (small-sample noise); NOT Alpaca-executable (no futures). To promote this needs a PAID intraday-futures feed
+(years of 1m across the requested timeframes) + OOS validation + the deflation gate. The pattern is real on what we can
+see; proving it to tradeable standard is data-blocked on free sources. $0, measurement.
