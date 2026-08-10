@@ -4527,3 +4527,20 @@ breakout-follow signal → a Stage-1 paper executor (edge #7). Build next.
 
 **Artifacts:** trd-futures-backtest-hist (engine), trd-databento (connector, key in RLS-denied trd_secrets),
 trd_futures_orb_results (results table, migration 0032). Databento key NEVER committed.
+
+## D-260 — Consistency upgrade: DST-aware ET windowing + uniform fade/follow + 7 windows
+Found a real consistency bug while auditing: futures windows were hard-coded in fixed UTC minutes, so
+"8:12 ET" drifted 1h across DST (8:12 EDT summer vs 7:12 EST winter) — mixed clocks contaminated every
+window over the 4yr span. Fixed to true America/New_York local time via a fast arithmetic DST offset
+(2nd-Sun-Mar 07:00 UTC → 1st-Sun-Nov 06:00 UTC = EDT), no per-bar Intl (that blew WORKER_RESOURCE_LIMIT).
+Engine now stores BOTH fade and follow uniformly and tests 7 ET session windows incl cash_open (09:30 =
+the executable equity/ETF window). Table PK includes `mode`. Old drifted data truncated & re-pulled.
+
+## D-261 — CONSISTENCY_AUDIT.md: one uniform 7-column standard for every edge
+Operator asked what's missing for uniformity before real money. Verified the gaps: skill-metric (vs-random)
+and equity-metric (absolute) live in different engines; NO cost/slippage model in ANY historical test;
+random-control uneven (futures+bblo only); no regime/metric matrix (we measure IF an edge works, never
+WHEN); trial-counter not wired into new backtests; no queryable provenance ledger. Scorecard: only bblo +
+futures-ORB-follow have cleared vs-random+OOS; crypto/pairs/vrp are deployed on THESIS ONLY (never
+gauntlet-run — a D-070 violation). Build queue P0→P2 defined. Reframed "highest % certainty / 100% win"
+→ positive expectancy net of pessimistic cost, OOS-surviving, regime-gated, bounded-risk. See CONSISTENCY_AUDIT.md.
