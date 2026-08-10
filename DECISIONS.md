@@ -4618,3 +4618,26 @@ backtest before demotion; kept live meanwhile (4 open positions ride to their z-
 SVXY history. NET after the full gauntlet: 1 clean edge (orbfollow) + 1 promising (crypto) + xsec (separate) + 2
 rejected (bblo, rip-short) + 2 unproven (pairs pending faithful test, vrp pending history). This is D-070 in action:
 most "edges" don't survive a matched random control cost-net.
+
+## D-266 — pairs SETTLED and DEMOTED on a faithful spread-P&L backtest
+Operator asked to settle pairs faithfully. Replaced the approximate z-capture proxy (which gave a misleading
+t=-11.44) with the REAL dollar-neutral two-leg log-return per $ gross: dir·[(logA_j−logA_i)−β·(logB_j−logB_i)]/
+(1+|β|), β frozen at entry, exit on |z|<0.5 / |z|>3.5 / 28d, vs matched random-day-entry control. 24 pairs,
+999 trades, 2021-2026. RESULT: gross +0.0002 (~0.02%/trade — the spread capture is essentially ZERO), vs-random
+edge -0.0006 t=-0.37 (NO skill — indistinguishable from random, NOT "worse"), and NET -0.4%/trade after realistic
+42bp 2-leg round-trip cost, both OOS halves negative, sharpe -0.12. The ~2bp gross capture cannot cover 2-leg
+costs. Well-founded REJECT on a faithful metric. ACTION: pairs DEMOTED — trd_edge_disable('pairs')=true; executor
+patched to EXIT-ONLY when disabled (manages the 4 open pairs to their natural z-exit, places no new entries; cron
+left running for that management, goes inert once all close — avoids orphaning positions). Correction to D-265: the
+proxy's "worse than random" was a metric artifact; the faithful truth is "no edge + cost-negative."
+
+## D-267 — POST-HARNESS VERIFIED EDGE STATE (the honest roster before real money)
+After the full uniform gauntlet (trd_edge_scorecard) + reconciliations:
+  REAL (cleared vs-random cost-net OOS): orbfollow (t=11.92) · xsec 12-1 momentum (t=6.0, validated separately,
+    NOT yet in the unified scorecard — needs a cross-sectional adapter).
+  PROMISING (near-miss, keep live, unproven): crypto momentum (+2.43R vs random but t=1.93<2; Donchian trail →
+    high skew → modest t; needs more power/instruments or forward data).
+  UNPROVEN (data-blocked): vrp (only 28 SVXY round-trips; SVXY history ~2016+ & long contango holds).
+  REJECTED/DEMOTED: bblo (D-264 survivorship drift) · pairs (D-266 cost-negative, no skill) · rip-short (D-252).
+NET: 1 fully-cleared executable edge (orbfollow) + 1 separately-validated (xsec) + 1 promising (crypto) + 3 dead.
+This is D-070 in action — most "edges" don't survive a matched random control net of cost.

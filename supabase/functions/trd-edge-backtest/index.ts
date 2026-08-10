@@ -57,20 +57,24 @@ function genVrp(svxy:Bar[],vix:Map<string,number>,vix3m:Map<string,number>,seed:
       inpos=false;}}
   return{setup,ctrl};}
 // pairs: spread s=logA−β·logB, rolling-60 OLS+z. Fade |z|>2 (short spread if z>0), exit |z|<0.5 / stop |z|>3.5 /
-// maxhold 28. R = z captured toward 0 / (stop 3.5−2=1.5). Control = enter at a RANDOM day's z with same exit rules.
+// maxhold 28. FAITHFUL P&L (D-266): the realized DOLLAR-NEUTRAL two-leg log-return over the hold, per $ gross —
+// dir·[(logA_j−logA_i) − β·(logB_j−logB_i)]/(1+|β|), β frozen at entry. r is a FRACTIONAL return; the runner sets
+// stopFrac=1 so the harness applies cost as a flat 2-leg round-trip drag. Control = random-day entries, same exit.
 function genPairs(A:Bar[],B:Bar[],seed:number){const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];
   const ma=new Map(A.map(x=>[x.d,x.c])),mb=new Map(B.map(x=>[x.d,x.c]));const ds=[...ma.keys()].filter(d=>mb.has(d)).sort();
   const W=60;if(ds.length<W+40)return{setup,ctrl};const la=ds.map(d=>Math.log(ma.get(d)!)),lb=ds.map(d=>Math.log(mb.get(d)!));const rnd=mulberry(seed);
-  const zAt=(i:number)=>{if(i<W)return null;let sx=0,sy=0,sxx=0,sxy=0;for(let k=i-W;k<i;k++){sx+=lb[k];sy+=la[k];sxx+=lb[k]*lb[k];sxy+=lb[k]*la[k];}const beta=(W*sxy-sx*sy)/(W*sxx-sx*sx||1e-9);const spr:number[]=[];for(let k=i-W;k<=i;k++)spr.push(la[k]-beta*lb[k]);const m=spr.slice(0,W).reduce((x,y)=>x+y,0)/W;let v=0;for(let k=0;k<W;k++)v+=(spr[k]-m)**2;const sd=Math.sqrt(v/W)||1e-9;return (spr[W]-m)/sd;};
-  const run=(startFn:(i:number)=>boolean,into:HarnessTrade[])=>{let openUntil=-1;
-    for(let i=W;i<ds.length-1;i++){const z=zAt(i);if(z==null)continue;if(i<=openUntil)continue;
-      if(startFn(i)){const dir=z>0?-1:1;const z0=z;let exitZ=z0,held=0;
-        for(let k=i+1;k<ds.length&&held<28;k++,held++){const zk=zAt(k);if(zk==null)break;exitZ=zk;if(Math.abs(zk)<0.5||Math.abs(zk)>3.5)break;}
-        // R = (|z0|−|exitZ|) signed toward mean, in units of 1.5 (the 2→3.5 stop room)
-        const captured=(Math.abs(z0)-Math.abs(exitZ))*Math.sign(z0)*dir; // positive if reverted toward 0
-        into.push({r:captured/1.5,stopFrac:0.01,period:q4(ds[i])});openUntil=i+held;}}};
-  run((i)=>{const z=zAt(i)!;return Math.abs(z)>=2&&Math.abs(z)<3.5;},setup);          // the real setup
-  run((i)=>rnd()<0.03,ctrl);                                                           // random-day entries, same exit logic
+  // precompute rolling z and beta ONCE (O(n·W))
+  const zs=new Array<number|null>(ds.length).fill(null),bs=new Array<number>(ds.length).fill(0);
+  for(let i=W;i<ds.length;i++){let sx=0,sy=0,sxx=0,sxy=0;for(let k=i-W;k<i;k++){sx+=lb[k];sy+=la[k];sxx+=lb[k]*lb[k];sxy+=lb[k]*la[k];}
+    const beta=(W*sxy-sx*sy)/(W*sxx-sx*sx||1e-9);const spr:number[]=[];for(let k=i-W;k<=i;k++)spr.push(la[k]-beta*lb[k]);
+    const m=spr.slice(0,W).reduce((x,y)=>x+y,0)/W;let v=0;for(let k=0;k<W;k++)v+=(spr[k]-m)**2;const sd=Math.sqrt(v/W)||1e-9;
+    zs[i]=(spr[W]-m)/sd;bs[i]=beta;}
+  const trade=(i:number,into:HarnessTrade[])=>{const z0=zs[i]!,beta=bs[i],dir=z0>0?-1:1;let j=i,held=0;
+    for(let k=i+1;k<ds.length&&held<28;k++,held++){j=k;const zk=zs[k];if(zk==null)continue;if(Math.abs(zk)<0.5||Math.abs(zk)>3.5)break;}
+    const ret=dir*((la[j]-la[i])-beta*(lb[j]-lb[i]))/(1+Math.abs(beta)); // dollar-neutral log-return per $ gross
+    into.push({r:ret,stopFrac:1,period:q4(ds[i])});return j;};
+  let openUntil=-1;for(let i=W;i<ds.length-1;i++){const z=zs[i];if(z==null||i<=openUntil)continue;if(Math.abs(z)>=2&&Math.abs(z)<3.5)openUntil=trade(i,setup);}
+  openUntil=-1;for(let i=W;i<ds.length-1;i++){const z=zs[i];if(z==null||i<=openUntil)continue;if(rnd()<0.03)openUntil=trade(i,ctrl);} // random-day control, same exit
   return{setup,ctrl};}
 
 async function vixMaps(){const v=await daily("^VIX",false),v3=await daily("^VIX3M",false);

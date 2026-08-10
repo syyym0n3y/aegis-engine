@@ -23,6 +23,9 @@ Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Contr
   if(ks?.[0]?.active)return new Response(JSON.stringify({ok:true,skipped:"kill-switch active"}),{headers:cors});
   const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   if(!arm?.[0]?.armed)return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});
+  // D-266: when disabled, EXIT-ONLY — manage open pairs to their z-exit, place NO new entries.
+  const dis=await fetch(`${SB}/rest/v1/trd_edge_disable?edge=eq.pairs&select=disabled`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+  const disabled=!!(dis?.[0]?.disabled);
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json());const equity=Number(acct.equity);if(!(equity>0))throw new Error("no equity");
   const positions=await fetch(`${PAPER}/v2/positions`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
   const heldSyms=new Set((positions as {symbol:string}[]).map(p=>p.symbol));
@@ -41,6 +44,7 @@ Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Contr
   // ---- ENTRIES: open fresh pairs at |z|>2 ----
   let openCount=openByPair.size-exited.length;
   for(const[a,b]of PAIRS){
+    if(disabled)break;                                                         // D-266: demoted — exit-only, no new entries
     const pair=`${a}/${b}`;
     if(openCount>=MAXPAIRS)break;
     if(openByPair.has(pair))continue;                                          // open (or just-managed) this tick — wait a tick before re-entry
