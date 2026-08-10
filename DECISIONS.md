@@ -4662,3 +4662,17 @@ vrp: <30 trades, insufficient (data-blocked). PATTERN: the two momentum edges (e
 t≈1.95 — a real but sub-threshold tilt, consistent with momentum being real-but-modest-and-post-publication-decayed
 (McLean-Pontiff). Only orbfollow clears decisively. This is the honest complete map: 1 gate-clearing edge, 2 real
 near-misses (keep+power-up), 2 dead, 1 unproven. The falsification engine holds: default REJECT, few survive.
+
+## D-269 — C7 regime matrix SHIPPED: the two near-misses are conditionally-significant edges with clear gates
+Built the regime layer: _shared/trd-harness.ts scoreByRegime (pure, +1 test → 7 pass) buckets setup+control by
+observable-AT-ENTRY tags and measures vs-random edge PER bucket (matched control per bucket, drift cancels within).
+Runner tags crypto trades {vol,trend} and xsec months {market,dispersion}; stores trd_edge_regime (mig 0035).
+FINDINGS — both pooled near-misses (t≈1.95) resolve into a favourable regime that PASSES and noise/inversion outside:
+  crypto (Donchian breakout): high-vol t=2.64 PASS (+1.90R) · uptrend t=2.01 PASS (+3.12R) · downtrend t=0.62 ·
+    low-vol t=0.99. → gate to high-vol / uptrend.
+  xsec (12-1 momentum): bull-market t=3.06 PASS (+1.27%/mo) · high-dispersion t=2.34 PASS (+1.44%/mo) ·
+    low-dispersion t=0.31 · BEAR-market t=-1.34 INVERTS (-1.71%/mo, the classic momentum crash). → gate to
+    bull / high-dispersion; NEVER run momentum in bear markets.
+Both gates are literature-backed (momentum crashes in bear regimes; trend/vol conditioning) — not pure data-mining.
+This is the operator's "favourable conditions → highest success" made concrete. NEXT: OOS-validate each regime
+split (does bull/hivol hold in BOTH halves?) then gate the crypto/xsec executors to their favourable regime.

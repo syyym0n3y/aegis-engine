@@ -1,7 +1,7 @@
 // Tests for the unified edge scorecard (D-263). Verifies it COMPOSES the cores correctly:
 // cost→R conversion, vs-random cost-neutrality, split-half OOS, and fail-closed on thin samples.
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { scoreEdge, type HarnessTrade } from "./trd-harness.ts";
+import { scoreEdge, scoreByRegime, type HarnessTrade } from "./trd-harness.ts";
 
 // deterministic pseudo-trades: a setup with a real +0.3R gross edge over random, both with stopFrac=0.01
 function make(n: number, meanR: number, seed: number): HarnessTrade[] {
@@ -45,6 +45,18 @@ Deno.test("fails closed on a thin sample (<30) — no accidental promotion", () 
   const sc = scoreEdge("thin", make(10, 0.5, 9), make(10, 0.0, 10), { costBps: 5, nTrials: 1 });
   assert(!sc.vsRandomPasses, "under 30 trades must not pass the random control");
   assert(!sc.gatePassed, "thin sample must not pass the gate");
+});
+
+Deno.test("regime matrix isolates the favourable bucket (edge in 'up' only, not 'down')", () => {
+  // setup: +0.4R edge over control in regime up; ~0 in regime down. control ~0 everywhere.
+  const setup: HarnessTrade[] = [], control: HarnessTrade[] = [];
+  let s = 99; const rand = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  for (let i = 0; i < 60; i++) { setup.push({ r: 0.4 + (rand() - 0.5) * 2, stopFrac: 0.01, regime: { trend: "up" } }); control.push({ r: (rand() - 0.5) * 2, stopFrac: 0.01, regime: { trend: "up" } }); }
+  for (let i = 0; i < 60; i++) { setup.push({ r: (rand() - 0.5) * 2, stopFrac: 0.01, regime: { trend: "down" } }); control.push({ r: (rand() - 0.5) * 2, stopFrac: 0.01, regime: { trend: "down" } }); }
+  const cells = scoreByRegime(setup, control, 5, ["trend"]);
+  const up = cells.find((c) => c.bucket === "up")!, down = cells.find((c) => c.bucket === "down")!;
+  assert(up.passes, `up bucket should pass (t=${up.vsRandomT})`);
+  assert(!down.passes, `down bucket should not pass (t=${down.vsRandomT})`);
 });
 
 Deno.test("trial count inflation deflates the Sharpe (DSR falls as nTrials rises)", () => {

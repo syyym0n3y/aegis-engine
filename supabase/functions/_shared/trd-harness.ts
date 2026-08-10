@@ -17,6 +17,7 @@ export interface HarnessTrade {
   r: number;          // realized R multiple (gross, pre-cost)
   stopFrac: number;   // stop distance / entry price — converts a price-fraction cost into R
   period?: string;    // e.g. "2024Q1" — used for split-half OOS
+  regime?: Record<string, string>; // observable-AT-ENTRY tags, e.g. {vol:"high", trend:"up", dir:"long"} — for C7
 }
 export interface ScoreOpts {
   costBps: number;            // round-trip cost of the instrument, in bps (from the cost model)
@@ -35,6 +36,35 @@ export interface EdgeScorecard {
   oosH1: number; oosH2: number; holdsBoth: boolean;
   gatePassed: boolean; gateFailing: string[];
   costBps: number;
+}
+
+export interface RegimeCell {
+  dimension: string; bucket: string; n: number;
+  absR: number; netR: number; vsRandomEdge: number; vsRandomT: number; passes: boolean;
+}
+/** C7 regime matrix: for each regime dimension, bucket setup+control by the AT-ENTRY tag and measure the
+ * vs-random edge PER BUCKET. Answers "WHEN does this edge fire best?" — the favourable-condition gate.
+ * Control trades must carry the SAME regime tag at their random entry so buckets are matched (drift cancels
+ * within a bucket). Thin buckets fail closed (minN). */
+export function scoreByRegime(setup: HarnessTrade[], control: HarnessTrade[], costBps: number, dims: string[], minN = 20): RegimeCell[] {
+  const costFrac = costBps / 1e4;
+  const netOf = (t: HarnessTrade) => t.r - (t.stopFrac > 0 ? costFrac / t.stopFrac : 0);
+  const out: RegimeCell[] = [];
+  for (const dim of dims) {
+    const buckets = new Set<string>();
+    for (const t of setup) { const b = t.regime?.[dim]; if (b) buckets.add(b); }
+    for (const b of [...buckets].sort()) {
+      const s = setup.filter((t) => t.regime?.[dim] === b);
+      const c = control.filter((t) => t.regime?.[dim] === b);
+      const vr = edgeVsRandom(s.map((t) => t.r), c.map((t) => t.r), 2, minN);
+      out.push({
+        dimension: dim, bucket: b, n: s.length,
+        absR: +mean(s.map((t) => t.r)).toFixed(4), netR: +mean(s.map(netOf)).toFixed(4),
+        vsRandomEdge: vr.edge, vsRandomT: vr.tStat, passes: vr.passes,
+      });
+    }
+  }
+  return out;
 }
 
 /** Score one edge from its setup trades + a MATCHED random-control set (same instrument/regime/geometry). */

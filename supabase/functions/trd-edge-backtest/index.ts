@@ -7,7 +7,7 @@
 //   vrp    — SVXY long while VIX3M>VIX (contango), exit on backwardation  (trd-vrp-exec geometry)
 //   pairs  — spread z=logA−β·logB fade |z|>2, exit |z|<0.5               (trd-pairs-exec geometry)
 // orbfollow is scored from trd_futures_orb_results (already vs-random on 4yr futures 1m) — see ?edge=orbfollow.
-import { scoreEdge, type HarnessTrade } from "../_shared/trd-harness.ts";
+import { scoreEdge, scoreByRegime, type HarnessTrade, type RegimeCell } from "../_shared/trd-harness.ts";
 import { corwinSchultzSpread, type Bar as CBar } from "../_shared/trd-cost.ts";
 const SB=Deno.env.get("SUPABASE_URL")!,SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json"};
@@ -39,11 +39,16 @@ function genBblo(b:Bar[],seed:number){const setup:HarnessTrade[]=[],ctrl:Harness
     if(!(a[i]>0))continue;if(b[i].c<lower&&i>openUntil){const entry=b[i].c,sdist=2*a[i],r=bracketR(b,i,entry,sdist);if(r==null)continue;
       setup.push({r,stopFrac:sdist/entry,period:q4(b[i].d)});const ri=N+Math.floor(rnd()*(b.length-1-N));if(a[ri]>0){const re=b[ri].c,rsd=2*a[ri],rr=bracketR(b,ri,re,rsd);if(rr!=null)ctrl.push({r:rr,stopFrac:rsd/re,period:q4(b[i].d)});}openUntil=i+10;}}
   return{setup,ctrl};}
-function genCrypto(b:Bar[],seed:number){const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];if(b.length<60)return{setup,ctrl};
-  const a=atrArr(b,14),rnd=mulberry(seed),DON=20;let openUntil=-1;
+function smaArr(b:Bar[],n:number){const o=new Array(b.length).fill(NaN);let s=0;for(let i=0;i<b.length;i++){s+=b[i].c;if(i>=n)s-=b[i-n].c;if(i>=n-1)o[i]=s/n;}return o;}
+function genCrypto(b:Bar[],seed:number){const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];if(b.length<120)return{setup,ctrl};
+  const a=atrArr(b,14),sma=smaArr(b,100),rnd=mulberry(seed),DON=20;
+  const vr:number[]=[];for(let i=0;i<b.length;i++)if(a[i]>0&&b[i].c>0)vr.push(a[i]/b[i].c);vr.sort((x,y)=>x-y);const medVol=vr.length?vr[Math.floor(vr.length/2)]:0;
+  const reg=(i:number):Record<string,string>=>({vol:(a[i]/b[i].c)>medVol?"hivol":"lovol",trend:(Number.isFinite(sma[i])&&b[i].c>sma[i])?"uptrend":"downtrend"});
+  let openUntil=-1;
   for(let i=DON;i<b.length-1;i++){let hh=-Infinity;for(let j=i-DON;j<i;j++)hh=Math.max(hh,b[j].h);
     if(!(a[i]>0))continue;if(b[i].c>hh&&i>openUntil){const entry=b[i].c,sdist=2*a[i],r=trailR(b,i,entry,sdist,DON);if(r==null)continue;
-      setup.push({r,stopFrac:sdist/entry,period:q4(b[i].d)});const ri=DON+Math.floor(rnd()*(b.length-1-DON));if(a[ri]>0){const re=b[ri].c,rsd=2*a[ri],rr=trailR(b,ri,re,rsd,DON);if(rr!=null)ctrl.push({r:rr,stopFrac:rsd/re,period:q4(b[i].d)});}openUntil=i+5;}}
+      setup.push({r,stopFrac:sdist/entry,period:q4(b[i].d),regime:reg(i)});
+      const ri=DON+Math.floor(rnd()*(b.length-1-DON));if(a[ri]>0){const re=b[ri].c,rsd=2*a[ri],rr=trailR(b,ri,re,rsd,DON);if(rr!=null)ctrl.push({r:rr,stopFrac:rsd/re,period:q4(b[i].d),regime:reg(ri)});}openUntil=i+5;}}
   return{setup,ctrl};}
 // vrp: long SVXY while VIX3M>VIX (contango); exit when VIX3M<=VIX (backwardation). Setup vs random SVXY entry.
 function genVrp(svxy:Bar[],vix:Map<string,number>,vix3m:Map<string,number>,seed:number){const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];
@@ -111,6 +116,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     const meMaps=series.map(b=>{const m=new Map<string,number>();for(const x of b)m.set(x.d.slice(0,7),x.c);return m;});
     const monthsSet=new Set<string>();meMaps.forEach(m=>m.forEach((_,k)=>monthsSet.add(k)));const months=[...monthsSet].sort();
     const rnd=mulberry(4242);const Q=Math.max(3,Math.floor(UNIV.length/5)); // quintile basket size
+    const monthDisp:number[]=[];
     for(let i=13;i<months.length-1;i++){
       const cand:{idx:number,mom:number,fwd:number}[]=[];
       for(let n=0;n<UNIV.length;n++){const m=meMaps[n];const p1=m.get(months[i-1]),p12=m.get(months[i-12]),p0=m.get(months[i]),pf=m.get(months[i+1]);
@@ -118,12 +124,19 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
       if(cand.length<Q*3)continue; // need enough cross-section
       cand.sort((a,b)=>b.mom-a.mom);const longs=cand.slice(0,Q),shorts=cand.slice(-Q);
       const ls=longs.reduce((s,x)=>s+x.fwd,0)/Q - shorts.reduce((s,x)=>s+x.fwd,0)/Q;
-      setup.push({r:ls,stopFrac:1,period:`${months[i].slice(0,4)}Q${Math.floor((+months[i].slice(5,7)-1)/3)+1}`});
-      // control: RANDOM long/short baskets from the same candidates, same sizes
+      // regime AT DECISION: market state (median momentum sign) + cross-sectional dispersion of momentum
+      const moms=cand.map(x=>x.mom).sort((a,b)=>a-b);const medMom=moms[Math.floor(moms.length/2)];
+      const mMean=moms.reduce((s,x)=>s+x,0)/moms.length;const disp=Math.sqrt(moms.reduce((s,x)=>s+(x-mMean)**2,0)/moms.length);
+      const mkt=medMom>0?"bull":"bear";const per=`${months[i].slice(0,4)}Q${Math.floor((+months[i].slice(5,7)-1)/3)+1}`;
+      setup.push({r:ls,stopFrac:1,period:per,regime:{market:mkt}});monthDisp.push(disp);
       const sh=[...cand];for(let k=sh.length-1;k>0;k--){const j=Math.floor(rnd()*(k+1));[sh[k],sh[j]]=[sh[j],sh[k]];}
       const rls=sh.slice(0,Q).reduce((s,x)=>s+x.fwd,0)/Q - sh.slice(Q,2*Q).reduce((s,x)=>s+x.fwd,0)/Q;
-      ctrl.push({r:rls,stopFrac:1,period:`${months[i].slice(0,4)}Q${Math.floor((+months[i].slice(5,7)-1)/3)+1}`});
+      ctrl.push({r:rls,stopFrac:1,period:per,regime:{market:mkt}});
     }
+    // second pass: tag dispersion bucket vs the median month dispersion
+    const dmed=[...monthDisp].sort((a,b)=>a-b)[Math.floor(monthDisp.length/2)]||0;
+    setup.forEach((t,k)=>{t.regime!.dispersion=monthDisp[k]>dmed?"hidisp":"lodisp";});
+    ctrl.forEach((t,k)=>{t.regime!.dispersion=monthDisp[k]>dmed?"hidisp":"lodisp";});
     spanLo=months[13]||"?";spanHi=months[months.length-1]||"?";bars=months.length;
     if(setup.length<30)return new Response(JSON.stringify({ok:false,edge,err:`too few months (${setup.length})`}),{headers:cors});
     const costBps=40; // full monthly rotation both sides ≈ 2×2 half-spreads ~ 40bp on liquid names (pessimistic)
@@ -136,7 +149,9 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
       oos_h1:Number.isFinite(sc.oosH1)?sc.oosH1:null,oos_h2:Number.isFinite(sc.oosH2)?sc.oosH2:null,holds_both:sc.holdsBoth,gate_passed:sc.gatePassed,gate_failing:sc.gateFailing,
       detail:{universe:UNIV.length,control:"random baskets",months:setup.length,span:`${spanLo}→${spanHi}`,note:"monthly LS return per trade; survivor universe (momentum less survivorship-sensitive than MR)"}};
     await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(row)}).catch(()=>{});
-    return new Response(JSON.stringify({ok:true,scorecard:row},null,2),{headers:cors});
+    const rcells=scoreByRegime(setup,ctrl,costBps,["market","dispersion"]);
+    await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rcells.map(c=>({edge:"xsec",dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,run_at:new Date().toISOString()})))}).catch(()=>{});
+    return new Response(JSON.stringify({ok:true,scorecard:row,regime:rcells},null,2),{headers:cors});
   }
 
   if(edge==="bblo"||edge==="crypto"){
@@ -173,5 +188,9 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     oos_h1:Number.isFinite(sc.oosH1)?sc.oosH1:null,oos_h2:Number.isFinite(sc.oosH2)?sc.oosH2:null,holds_both:sc.holdsBoth,
     gate_passed:sc.gatePassed,gate_failing:sc.gateFailing,detail:{control_n:ctrl.length,span:`${spanLo}→${spanHi}`,bars,vs_random_verdict:sc.vsRandomVerdict}};
   await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(row)}).catch(()=>{});
-  return new Response(JSON.stringify({ok:true,scorecard:row},null,2),{headers:cors});
+  // C7 regime matrix (D-269): where is this edge favourable?
+  const regDims=[...new Set(setup.flatMap(t=>t.regime?Object.keys(t.regime):[]))];let regime:RegimeCell[]=[];
+  if(regDims.length){regime=scoreByRegime(setup,ctrl,costBps,regDims);
+    await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(regime.map(c=>({edge,dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,run_at:new Date().toISOString()})))}).catch(()=>{});}
+  return new Response(JSON.stringify({ok:true,scorecard:row,regime},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
