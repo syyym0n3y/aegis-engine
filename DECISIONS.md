@@ -4277,3 +4277,30 @@ liquid US large/mid-cap set (Alpaca; the executable slice of the global edge). S
 dormant-by-market), order path + guards verified. Global scope beyond US awaits non-US broker access; the edge is
 proven market-wide, execution is infra-bound. Fleet now = 5 edges (rip-short · crypto-momentum · pairs · VRP · bblo).
 Migration 0023. $0 paper.
+
+---
+
+## D-246 — cross-sectional coverage: 12-1 momentum is REAL globally (NASDAQ t=6.0); reversal real on HKEX/LSE
+
+Operator: "go and cover everything." Built the cross-sectional family (the last untouched orthogonal signal space):
+trd-global-monthly pulled monthly close series for the ENTIRE 46k universe into trd_monthly (D-245), then SQL ranks
+names WITHIN each market into quintiles and measures the market-neutral long-short spread (drift cancels → the spread
+t-stat vs 0 is the clean test, ~monthly, 47-48 months, Bonferroni over 32 market×factor tests → |t|>2.9).
+
+METHODOLOGY CATCH: the naive run was dominated by penny-stock/bad-tick ARTIFACTS (JSE −428%/mo, Euronext −486%/mo,
+LSE −245%). WINSORIZING forward returns at ±30% + proper 12-1 skip-month momentum was essential; only then are the
+numbers honest.
+
+RESULT (liquid majors, winsorized):
+- **12-1 cross-sectional MOMENTUM is REAL**: NASDAQ +3.99%/mo t=6.01 · B3 +2.04 t=4.13 · Stockholm +1.71 t=3.79 ·
+  NSE India +1.51 t=3.38 · LSE +1.21 t=3.25 (all clear Bonferroni). NYSE/TSE/KRX/HKEX not significant for momentum.
+  Confirms + globally quantifies the classic momentum factor (D-209). CAVEAT: +4%/mo is small-cap-inflated (winsor
+  still allows big moves); sign+significance robust, tradeable large-cap magnitude ~1%/mo.
+- **1-month REVERSAL is real but market-specific**: HKEX +2.09%/mo t=4.71, LSE +1.70 t=4.06 (SZSE t=2.52 marginal).
+  Elsewhere insignificant.
+
+COMPLETE COVERAGE PICTURE (what "everything" now means): per-name technical timing = 29 setups tested (5 in D-242 +
+24 in D-243), 1 survivor (bblo_long). Cross-sectional = momentum (real, US-led) + reversal (HKEX/LSE). Event-driven =
+PEAD tested + decayed (prior D-2xx); global event data not freely available (honest boundary). Intraday = cost-wall
+gated (D-204). That is the coverable technical/statistical space on free daily+monthly data. Utilise-at-max-capacity:
+cross-sectional momentum routed to execution as the 6th edge (below). $0, measurement.
