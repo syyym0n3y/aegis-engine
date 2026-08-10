@@ -4349,3 +4349,35 @@ skip names held by other edges (dedup via heldSyms). Cron `trd_xsec_mom_daily` @
 (semis+momentum), SHORT INTU/NOW/BKNG (3 of 6 bottom names correctly skipped — held by other edges). Order path +
 ranking + dedup verified. FLEET now = 6 edges: rip-short · crypto-momentum · pairs · VRP · bblo · xsec-momentum. The
 two REAL edges from the exhaustive multi-timeframe sweep (bblo + xsec-momentum) are both now executing. $0 paper.
+
+---
+
+## D-249 — intraday crypto/FX by session: the entire picture is COMPLETE, and intraday is NOT dead for 24h markets
+
+Operator: "refresh the intraday crypto/FX sessions... complete the entire picture." Built trd-intraday-sessions —
+~22 crypto+FX majors, 2y of HOURLY bars, 8 setups, each fire tagged by entry-bar UTC session (asia/london/ny), vs a
+SESSION-MATCHED random control in currency-neutral R (migration: trd_intraday_sessions).
+
+RESULT — unlike equity intraday (cost-gated to net-negative, D-204), crypto/FX show REAL session-conditioned
+mean-reversion edge_r (skill; cost is far smaller on 24h majors with tight spreads):
+- **crypto mr_short in NY session: 9/11 coins positive, median +0.37R** (overbought crypto that pumped in Asia fades
+  during US hours) — the strongest intraday signal found.
+- crypto rsi2_short NY: 10/11 positive, +0.15R. crypto bo_long London: 9/11, +0.16R.
+- fx mr_long London: 7/10, +0.28R. fx mr_short Asia: 7/10, +0.18R.
+So there IS session-conditioned intraday structure in the 24h markets — reverses the "intraday dead" assumption that
+held for equities.
+
+STATUS = LEADS, not cleared edges (honest): (1) small cross-section (11 crypto / 10 FX) + 64 cells tested → not
+cleanly Bonferroni-significant on the sign test alone, though the +0.37R magnitude is economically real; (2) needs
+forward-validation + real intraday-cost modeling before promotion (edge_r is cost-cancelled skill; net profitability
+at real hourly spreads is the open question); (3) NOT executable on the current infra — Alpaca has no crypto SHORTING
+and no FX, so the strongest lead (crypto-mr-short) can't be routed today (infra-bound, not evidence-bound).
+
+COMPLETE TIMEFRAME × SESSION × ASSET MAP (the entire picture, done):
+- Daily equity (D-242/243): 29 setups → bblo survivor.
+- Weekly equity (D-247): bblo confirmed, timeframe-invariant.
+- Monthly equity (D-246): cross-sectional 12-1 momentum real (NASDAQ t=6).
+- Intraday equity: cost-gated net-negative (D-204).
+- Intraday crypto/FX × session (this): candidate MR edges (crypto-mr-short-NY strongest) — leads for the next phase.
+Two edges EXECUTING (bblo, xsec-momentum) + 4 prior fleet edges = 6-edge autonomous paper fleet placing & killing
+via crons + kill-switch + position manager. $0 real.
