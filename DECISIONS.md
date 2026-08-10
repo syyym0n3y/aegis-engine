@@ -4478,3 +4478,21 @@ is real multi-year 1m data (Databento $125 free credits / FirstRate 19yr) → pr
 timeframe/session grid. That requires an operator-provided Databento API key (Claude cannot create accounts). Until
 then this stays a LEAD, unvalidated. The engine did its job: a tantalising in-sample signal, correctly demoted by OOS.
 $0, measurement.
+
+---
+
+## D-257 — multi-timeframe distillation engine built + proven (1m → 2/4/5/10/15/30m). Ready for real data.
+
+"Don't stop" continuation that is neither p-hacking (free 49d already shown insufficient, D-256) nor guessing a paid
+API (Databento docs not verifiable via WebFetch → NOT built, per Hard Rules). Built trd-futures-distill — the exact
+multi-timeframe DISTILLATION the operator asked for: takes 1m bars, resamples clock-aligned to 2/4/5/10/15/30m
+(o=first/h=max/l=min/c=last). VERIFIED on Yahoo 1m (ES 7,627 1m → 3,820/1,914/1,534/770/514/257 — correct ratios).
+Data-source-AGNOSTIC → scales unchanged to years of 1m from Databento/FirstRate. The 7-day fade readout is NOISE (as
+flagged); the deliverable is the engine, ready.
+
+STATE OF THE FUTURES THREAD (honest): the range-fade is a LEAD that FAILED OOS on free data (D-256) and is
+data-blocked. Everything buildable on free/verified data is built (ORB/fade tester, all-session sweep, OOS validator,
+distillation engine). The ONLY next step is real multi-year 1m data → requires an operator-provided Databento API key
+(free $125 credits); I will then verify the API against a live key and build the loader (not guess it). Holding here
+is integrity, not laziness: more free-data mining = p-hacking; guessing the paid API = Hard-Rule violation. The live
+paper fleet keeps accruing the gate sample meanwhile. $0.
