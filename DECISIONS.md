@@ -4332,3 +4332,20 @@ timeframes. Two real edges stand: bblo_long (per-name MR, timeframe-invariant, e
 cross-sectional 12-1 momentum (portfolio factor, US-led). Everything else — every per-name momentum/breakdown setup,
 at every timeframe — is a coin-flip or worse. The daily bblo-exec already captures the edge; weekly is confirmation,
 not a separate executor (daily+weekly fire on overlapping oversold conditions). $0, measurement.
+
+---
+
+## D-248 — 6th edge: cross-sectional 12-1 momentum executor (the NASDAQ t=6.0 edge, routed to execution)
+
+Utilised the strong cross-sectional survivor (D-246) at capacity. Built `trd-xsec-mom-exec` — a MONTHLY long-short
+quintile momentum basket on the liquid US set: rank the universe by 12-1 momentum (return t-252→t-21, skip-month),
+LONG the top-6, SHORT the bottom-6 (shortable/ETB only). It's a PORTFOLIO edge, not a single signal, so — like pairs
+— it has its own durable state (trd_xsec_pos) and a different, standard risk model: market-neutral + diversified +
+MONTHLY rebalance is the risk control (no per-name ATR stop; small 1%/name size bounds single-name risk). Self-
+reconciling (state rows for positions the manager/bracket closed get marked closed) + ~monthly cadence (rebalances only
+when the basket is empty or >21d old, so the daily cron self-gates to monthly). Guards: killswitch + arm 'paper' +
+skip names held by other edges (dedup via heldSyms). Cron `trd_xsec_mom_daily` @ 14:25 UTC weekdays; CLI
+`demo-exec.sh xsec`. FIRST armed rebalance (Sunday, queued to Mon): ranked 88 names → LONG MU/INTC/LRCX/AMD/AMAT/MRNA
+(semis+momentum), SHORT INTU/NOW/BKNG (3 of 6 bottom names correctly skipped — held by other edges). Order path +
+ranking + dedup verified. FLEET now = 6 edges: rip-short · crypto-momentum · pairs · VRP · bblo · xsec-momentum. The
+two REAL edges from the exhaustive multi-timeframe sweep (bblo + xsec-momentum) are both now executing. $0 paper.

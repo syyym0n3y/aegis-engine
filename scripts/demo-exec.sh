@@ -58,6 +58,10 @@ case "$cmd" in
     # 5th edge (D-244): Bollinger lower-band fade LONG — the survivor of the 24-setup global sweep (16/16 markets).
     curl -s "${SB}/functions/v1/trd-bblo-exec" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
     ;;
+  xsec)
+    # 6th edge (D-248): cross-sectional 12-1 MOMENTUM, monthly long-short basket (NASDAQ t=6.0). ~monthly rebalance.
+    curl -s "${SB}/functions/v1/trd-xsec-mom-exec" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
+    ;;
   forward)
     need_srk
     echo "FORWARD-PAPER SCOREBOARD (virtual R, $0, no order path) — fwd_n / mean_r / verdict per candidate:"
@@ -77,5 +81,5 @@ case "$cmd" in
   manage)
     curl -s "${SB}/functions/v1/trd-position-manager" -H "Authorization: Bearer ${ANON:-$SRK}"; echo
     ;;
-  *) echo "usage: $0 {status|arm|disarm|kill|tick|crypto|pairs|vrp|bblo|forward|pnl|flat|manage}"; exit 1;;
+  *) echo "usage: $0 {status|arm|disarm|kill|tick|crypto|pairs|vrp|bblo|xsec|forward|pnl|flat|manage}"; exit 1;;
 esac
