@@ -10,14 +10,16 @@ const SB=Deno.env.get("SUPABASE_URL")!,SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_K
 const H={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json"};
 const DEPOSIT=100000;
 Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
-  const [arm,ks,pairsOpen,xsecOpen,snapArr]=await Promise.all([
+  const [arm,ks,pairsOpen,xsecOpen,snapArr,disArr]=await Promise.all([
     fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]),
     fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`,{headers:H}).then(r=>r.json()).catch(()=>[]),
     fetch(`${SB}/rest/v1/trd_pairs_pos?open=eq.true&select=pair,leg_a,leg_b,dir,entry_z`,{headers:H}).then(r=>r.json()).catch(()=>[]),
     fetch(`${SB}/rest/v1/trd_xsec_pos?open=eq.true&select=sym,side`,{headers:H}).then(r=>r.json()).catch(()=>[]),
     fetch(`${SB}/rest/v1/trd_edge_snapshot?select=edges,generated_at&order=generated_at.desc&limit=1`,{headers:H}).then(r=>r.json()).catch(()=>[]),
+    fetch(`${SB}/rest/v1/trd_edge_disable?disabled=eq.true&select=edge`,{headers:H}).then(r=>r.json()).catch(()=>[]),
   ]);
   const armed=!!arm?.[0]?.armed, killed=!!ks?.[0]?.active;
+  const disabledSet=new Set((disArr as {edge:string}[]).map(d=>d.edge));  // edge keys w/o punctuation, e.g. 'ripshort'
   const e=(snapArr?.[0]?.edges)||{};
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json()).catch(()=>({}));
   const equity=Number(acct.equity)||0, cash=Number(acct.cash)||0, bp=Number(acct.buying_power)||0;
@@ -62,7 +64,7 @@ Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Contr
     {key:"xsec-momentum",label:"Cross-sectional momentum",kind:"factor L/S · monthly",
      signal:`12-1 momentum long-short quintile basket (NASDAQ t=6.0)`,
      live:cntP("xsec-momentum")>0||cntPend("xsec-momentum")>0, positions:posOut.filter(p=>p.edge==="xsec-momentum"), n:cntP("xsec-momentum"), pending:cntPend("xsec-momentum"), pnl:+sumP("xsec-momentum").toFixed(2)},
-  ];
+  ].map(ed=>({...ed,disabled:disabledSet.has(ed.key.replace(/[^a-z0-9]/gi,""))}));  // D-252: reflect per-edge disable (rip-short paused)
   return new Response(JSON.stringify({ok:true,armed,killed,equity:+equity.toFixed(2),cash:+cash.toFixed(2),buyingPower:+bp.toFixed(2),
     totalPnl:+(equity-DEPOSIT).toFixed(2),totalPnlPct:+(((equity-DEPOSIT)/DEPOSIT)*100).toFixed(2),
     openPositions:posOut.length,pendingOrders:pend.length,pending:pend,edges,generated_at:new Date().toISOString()}),{headers:cors});
