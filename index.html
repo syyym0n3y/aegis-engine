@@ -161,7 +161,7 @@ QQQ long 12000</textarea>
 <section class="view" data-view="doctrine">
   <h1>What we found</h1>
   <div class="panel"><ul>
-    <li><b>The exhaustive multi-timeframe sweep (the whole planet, every timeframe):</b> we tested 29 per-name setups across the entire 46,211-name global market at <b>daily and weekly</b>, plus <b>monthly</b> cross-sectional factors and <b>intraday</b> crypto/FX by session — each vs its own random control, deflated for the thousands of tests. Two edges clear cleanly and are now <b>executing live (paper)</b>: <b>bblo</b> (buy the 2σ Bollinger lower band — mean-reversion long, 58% beat-random, uniform on 16/16 major markets, identical at daily and weekly) and <b>cross-sectional 12-1 momentum</b> (long-short factor, NASDAQ t=6.0). Intraday crypto/FX shows real session-conditioned mean-reversion (crypto fade-shorts in the NY session, 9/11 coins) — a lead, not yet cleared. <b>Everything else — every momentum/breakout/breakdown chart setup, at every timeframe — is a coin flip or worse.</b> A 6-edge autonomous paper fleet places &amp; kills on its own; see the Live cockpit.</li>
+    <li><b>The exhaustive multi-timeframe sweep (the whole planet, every timeframe):</b> we tested 29 per-name setups across the entire 46,211-name global market at <b>daily and weekly</b>, plus <b>monthly</b> cross-sectional factors and <b>intraday</b> crypto/FX by session — each vs its own random control, deflated for the thousands of tests. Two edges clear cleanly and are now <b>executing live (paper)</b>: <b>bblo</b> (buy the 2σ Bollinger lower band — mean-reversion long, 58% beat-random, uniform on 16/16 major markets, identical at daily and weekly) and <b>cross-sectional 12-1 momentum</b> (long-short factor, NASDAQ t=6.0). Intraday crypto/FX shows real session-conditioned mean-reversion (crypto fade-shorts in the NY session, 9/11 coins) — a lead, not yet cleared. <b>Everything else — every momentum/breakout/breakdown chart setup, at every timeframe — is a coin flip or worse.</b> A 6-edge autonomous paper fleet places &amp; kills on its own; see the Live cockpit. (A 47-year per-instance backtest audit since <b>disabled rip-short</b> — it lost on decades of mega-caps under both stop geometries; its earlier edge did not generalise. The gate cuts both ways.)</li>
     <li><b>Seven edges survive the full gate</b> — across 170+ instruments and 7 timeframes (5m→weekly), judged per-instrument vs its own random entry, deflated, and stress-tested for survivorship: <b>rip-short</b> (equity daily short), <b>bbfade_lo/bear</b> (equity daily long in down-markets), <b>crypto momentum</b> (Donchian breakout), the <b>variance risk premium</b> (option-selling — implied vol beats realized 80–87% of the time; CBOE PutWrite/BuyWrite beat SPY risk-adjusted over 34 years), <b>pairs / stat-arb</b> (market-neutral spread reversion), the <b>commodity term-structure roll</b> premium (long backwardation / short contango — front-month rolling bleeds 7–13%/yr), and <b>cross-sectional momentum</b> (the classic 12-1m relative-strength factor). The pattern: documented risk premia plus a few regime-conditioned technical patterns survive — every piece of undocumented folklore (ICT/liquidity, VWAP fades, chart seasonality, intermarket lead-lag, FX carry, equity breakouts) was rejected.</li>
     <li><b>The global verdict — the ENTIRE market, measured (46,211 names · 47 exchanges · 76 countries):</b> we enumerated every listed equity Yahoo serves and swept 35,105 of them (those with enough signal history) against each name's OWN random-entry control. rip-short is <b>US-quality-large-cap-specific</b> — strong on the curated liquid US set (t=6.77) and <b>a coin flip everywhere else</b>: on the 29,543 liquid global names it beats random just 48.6% of the time (median −0.02R), uniform across NASDAQ (48.7%), NYSE (45.7%), LSE (46.5%), Tokyo (49.3%), Hong Kong (51.3%), India (49.7%), Shanghai (43.8%), Korea (44.0%). The only tier where it "wins" is untradeable illiquid junk (crashed penny stocks, no borrow) — a capped-stop artifact, not an edge. The broad risk-premia edges (VRP, pairs, term-structure, momentum) are global; this technical pattern is narrow — now PROVEN at full scale, not inferred.</li>
     <li><b>Judge each instrument on its OWN terms</b> — not the market's regime, not a pooled average. Pooling can both manufacture and mask real structure; a market-wide (SPY) regime imposed on gold/FX/crypto is a bias. Count how many instruments individually beat their own random entry (binomial null).</li>
@@ -319,21 +319,20 @@ async function ctl(action){
   }catch(e){setCtlMsg(String(e&&e.message||e),"var(--red)")}
 }
 async function doExec(){
-  const o=document.getElementById("c_exec");o.innerHTML='<h2>Live executor — 4 edges (paper)</h2><div class="panel"><span class=muted>reading broker + edge state…</span></div>';
+  const o=document.getElementById("c_exec");o.innerHTML='<h2>Live executor — 6 edges (paper)</h2><div class="panel"><span class=muted>reading broker + edge state…</span></div>';
   try{const d=await(await fetch(API+"/trd-exec-cockpit",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
     const pnlc=v=>v>0?'var(--accent)':v<0?'var(--red)':'var(--faint)';
     const armc=d.killed?'var(--red)':d.armed?'var(--accent)':'var(--faint)';
     const armt=d.killed?'KILL-SWITCH':d.armed?'ARMED':'disarmed';
     const cards=d.edges.map(e=>{
-      const has=e.n>0||e.pending>0;
-      const state=e.n>0?`${e.n} open`:(e.pending>0?`${e.pending} queued`:(e.live?'live · flat':'idle'));
-      const col=e.n>0?pnlc(e.pnl):(e.live?'var(--accent)':'var(--faint)');
-      return `<div class="card"><div class="lbl">${esc(e.label)}</div><div class="v" style="color:${col};font-size:16px">${esc(state)}</div><div class="s">${esc(e.kind)}${e.n>0?` · P&L ${e.pnl>=0?'+':''}${e.pnl}`:''}</div></div>`;
+      const state=e.disabled?'⏸ disabled':(e.n>0?`${e.n} open`:(e.pending>0?`${e.pending} queued`:(e.live?'live · flat':'idle')));
+      const col=e.disabled?'var(--red)':(e.n>0?pnlc(e.pnl):(e.live?'var(--accent)':'var(--faint)'));
+      return `<div class="card"${e.disabled?' style="opacity:.6"':''}><div class="lbl">${esc(e.label)}</div><div class="v" style="color:${col};font-size:16px">${esc(state)}</div><div class="s">${esc(e.kind)}${e.n>0?` · P&L ${e.pnl>=0?'+':''}${e.pnl}`:''}</div></div>`;
     }).join("");
     const allPos=d.edges.flatMap(e=>e.positions.map(p=>({...p,label:e.label})));
     const posRows=allPos.length?allPos.map(p=>`<tr><td class="mono">${esc(p.sym)}</td><td>${esc(p.label)}</td><td class="mono">${esc(p.side)}</td><td class="mono num">${p.qty}</td><td class="mono num">$${(+p.px).toFixed(2)}</td><td class="mono num" style="color:${pnlc(p.pnl)}">${p.pnl>=0?'+':''}${p.pnl} (${p.pnlPct>=0?'+':''}${p.pnlPct}%)</td></tr>`).join("")
       :`<tr><td colspan=6 class=muted>no open fills — ${d.pendingOrders} order(s) queued to the next market open</td></tr>`;
-    o.innerHTML=`<h2>Live executor — 4 edges (paper)</h2>
+    o.innerHTML=`<h2>Live executor — 6 edges (paper)</h2>
     <div class="panel" style="font-size:13px">
       <div class="row"><span>status</span><span class="mono" style="color:${armc}">● ${armt}</span></div>
       <div class="row"><span>paper equity</span><span class="mono">$${d.equity.toLocaleString()} <span style="color:${pnlc(d.totalPnl)}">(${d.totalPnl>=0?'+':''}${d.totalPnl} · ${d.totalPnlPct>=0?'+':''}${d.totalPnlPct}%)</span></span></div>
@@ -343,7 +342,7 @@ async function doExec(){
     <table style="margin-top:12px"><thead><tr><th>symbol</th><th>edge</th><th>side</th><th class="num">qty</th><th class="num">price</th><th class="num">unreal. P&L</th></tr></thead><tbody>${posRows}</tbody></table>
     <div class="panel" style="margin-top:10px;font-size:12px">${d.edges.map(e=>`<div class="row"><span><b>${esc(e.label)}</b> — ${esc(e.signal)}</span><span class="mono" style="color:${e.live?'var(--accent)':'var(--faint)'}">${e.live?'● signal live':'○ dormant'}</span></div>`).join("")}</div>
     <p class="muted" style="margin-top:8px">$0 real — Alpaca paper. Each edge keeps its 1R stop; one kill-switch flattens the book. Attribution: crypto→momentum, SVXY→VRP, paired legs→stat-arb, equity shorts→rip-short.</p>`;
-  }catch(err){o.innerHTML=`<h2>Live executor — 4 edges (paper)</h2><div class="panel"><span style="color:var(--red)">${esc(err.message)}</span></div>`}
+  }catch(err){o.innerHTML=`<h2>Live executor — 6 edges (paper)</h2><div class="panel"><span style="color:var(--red)">${esc(err.message)}</span></div>`}
 }
 async function doScan(){
   const o=document.getElementById("c_scan");o.innerHTML='<h2>Nightly full-universe rip-short scan</h2><div class="panel"><span class=muted>reading scan…</span></div>';
