@@ -4578,3 +4578,22 @@ its own comment), never a matched-random daily test. No contradiction in the dat
 asked the vs-random question on daily bblo. FLAG not final verdict: bblo stays live pending (a) a second harness
 run on a survivorship-free universe, (b) checking whether the ORIGINAL bblo vs-random pass (D-244 "58% beat-random")
 used intraday/different geometry. If it fails vs-random there too, bblo is drift-harvesting and must be demoted.
+
+## D-264 — bblo RECONCILED and DEMOTED: survivorship-inflated drift, not skill (the harness confirmed the engine's own D-176/D-177)
+Operator asked to reconcile the harness's bblo red flag before trusting it. Reconciliation from the engine's OWN log:
+- D-146: dip-buy (RSI/oversold MR long) passed vs-random +0.122R t=5.63 — on CURATED YAHOO SURVIVORS.
+- D-176: on SURVIVORSHIP-FREE data (QuantConnect, 983 names incl. delisted, 2010-26), the SAME dip-buy → +0.107R
+  t=1.15 FAILS vs-random. "Survivorship bias was inflating the edge."
+- D-177: top-500 wider sweep CONFIRMS the kill, WELL-POWERED — "survivorship-inflated drift, not a setup."
+- D-244 (the ONLY pass that put bblo LIVE as edge #5): "58.1% beat-random on 25,350 LIQUID names, +0.078R." LIQUID
+  = survivors → the exact bias D-176 had already flagged as flaw #1. D-247's "timeframe-invariant" weekly confirm was
+  ALSO survivor-only (same bias).
+- D-263 (the new unified harness): bblo fails vs-random on 18 mega-cap survivors too (t=-0.36), abs +0.41R = pure
+  3:1-bracket drift-harvest.
+VERDICT: bblo IS a dip-buy; the dip-buy structure was already falsified survivorship-free (D-176/D-177). bblo was
+re-promoted on survivor-only data, OVERRIDING the engine's own falsification. The harness did NOT contradict the
+engine — it CONFIRMED D-176/D-177. Four converging lines; the one contrary result (D-244) has an identified fatal
+flaw. ACTION: bblo DEMOTED — trd_edge_disable('bblo')=true + both crons unscheduled (trd_bblo_exec_daily jobid34,
+trd_bblo_scanner_20m jobid36). Open bblo paper longs self-exit via their brackets. Fleet real edges now: cross-
+sectional 12-1 momentum + orbfollow (pending its own harness pass). LESSON: survivorship bias is flaw #1; any
+"beat-random" on a curated/liquid/survivor universe is suspect until re-run survivorship-free.
