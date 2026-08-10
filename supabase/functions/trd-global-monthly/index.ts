@@ -7,9 +7,9 @@ async function monthly(sym:string):Promise<{month:string,close:number}[]|null|"t
   const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1mo&range=5y`,{headers:{"User-Agent":"Mozilla/5.0"}});
   if(r.status===429||r.status>=500)return "throttle";
   if(!r.ok)return null;const j=await r.json();const res=j?.chart?.result?.[0];if(!res?.timestamp)return null;
-  const cl=res.indicators.quote[0].close,o:{month:string,close:number}[]=[];
-  for(let i=0;i<res.timestamp.length;i++){const c=cl[i];if(c==null||!Number.isFinite(c))continue;const d=new Date(res.timestamp[i]*1000);o.push({month:`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-01`,close:c});}
-  return o;}catch{return null;}}
+  const cl=res.indicators.quote[0].close,mp=new Map<string,number>();
+  for(let i=0;i<res.timestamp.length;i++){const c=cl[i];if(c==null||!Number.isFinite(c))continue;const d=new Date(res.timestamp[i]*1000);mp.set(`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-01`,c);}  // dedupe: one row per month (last wins)
+  return [...mp.entries()].map(([month,close])=>({month,close}));}catch{return null;}}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const u=new URL(req.url);const N=+(u.searchParams.get("limit")||"180");const CONC=+(u.searchParams.get("conc")||"30");
   const batch=await fetch(`${SB}/rest/v1/trd_global_universe?xsec_swept=eq.false&has_data=eq.true&select=yahoo_sym,exchange&order=yahoo_sym&limit=${N}`,{headers:H}).then(r=>r.json()).catch(()=>[]);
