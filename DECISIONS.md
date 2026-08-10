@@ -4381,3 +4381,40 @@ COMPLETE TIMEFRAME × SESSION × ASSET MAP (the entire picture, done):
 - Intraday crypto/FX × session (this): candidate MR edges (crypto-mr-short-NY strongest) — leads for the next phase.
 Two edges EXECUTING (bblo, xsec-momentum) + 4 prior fleet edges = 6-edge autonomous paper fleet placing & killing
 via crons + kill-switch + position manager. $0 real.
+
+---
+
+## D-251 — per-INSTANCE backtests over ~47 years (not pooled) + a consistency AUDIT that found real issues
+
+Operator: "years of data to backtest in instances instead of all pools; no inconsistencies." Built
+trd-backtest-instances — 30 long-history liquid instruments (period1=0 → back to 1962 for the old names, ~47y
+average), each backtested per-instance with the EXACT executor geometry (2ATR stop=−1R, 3R target, 20-bar hold).
+Full trade accounting per (instrument, edge). This is the ABSOLUTE equity-curve view (includes drift), distinct from
+the vs-random SKILL metric of the sweeps.
+
+BUG FOUND + FIXED (the audit working): first run returned only 2 rows — `range=max` is unreliable + no throttle
+handling on 30 sequential large fetches. Fixed to period1=0 + 429-retry → all 30 load (120 backtests).
+
+RESULTS (per-instance, ~47y each, avg across 30 instruments):
+- **bblo_long: +0.216R expectancy, 46.7% win, 30/30 instruments POSITIVE, +124R total, 28R maxDD.** Worst instance
+  (BA, 57y, 762 trades) still +0.078R — which ≈ the pooled vs-random +0.078R EXACTLY. Confirmed by BOTH the absolute
+  backtest AND the skill test. THE edge.
+- rsi2_long: +0.193R, 30/30 positive. bo20_long: +0.121R, 28/30 positive. rip_short: −0.106R, only 12/30 positive.
+
+THREE APPARENT INCONSISTENCIES, RECONCILED HONESTLY:
+1. bo20_long +0.121R ABSOLUTE here vs NEGATIVE vs-random in the sweep — NOT a contradiction: absolute backtest
+   includes 47y of market DRIFT (a random long also wins); vs-random isolates skill. bo20 rides drift, no skill. This
+   VALIDATES why the sweeps used a random control — an absolute-only backtest over-blesses every long strategy in a
+   rising market. rsi2 similarly: big absolute number, but mostly drift (not a clean vs-random survivor).
+2. bblo positive under BOTH tests (+0.216R absolute, +0.078R vs-random) → the one strategy that is skill AND profit.
+   Fully consistent.
+3. rip_short −0.106R here vs the validated +0.177R (scripts/trd-winrate.ts) — a GENUINE FLAG: (a) geometry differs
+   (validation used capped-stop / unbounded win +1.47R avg; this + the EXECUTOR use a 3R-target bracket), (b) this
+   backtest is UNGATED (the executor has a SPY>200MA regime gate + scan-sourced liquid names) and over 47y incl. many
+   bull decades where shorting overbought mega-caps loses. NOT proven a bug, but the rip-short executor's bracket
+   geometry may not realise its capped-stop validation — flagged for reconciliation before any real-money rung.
+
+AUDIT CONCLUSION: the ONLY strategy positive on BOTH the decades-long per-instance backtest AND the skill-isolating
+vs-random test is bblo (executing as the 5th edge). The absolute backtest confirms it robustly (30/30, 47y). The
+"other positives" are drift artifacts the vs-random control correctly rejects — consistency, not contradiction. One
+real flag raised (rip-short geometry/regime). Migration 0028. $0, measurement.
