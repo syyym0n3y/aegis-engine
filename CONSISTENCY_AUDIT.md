@@ -43,9 +43,13 @@ put through the gauntlet at all — they are running on plausibility, which is e
    absolute equity curve, NO random control, NO cost (its own comment: "not the vs-random skill metric").
    `trd-futures-backtest-hist` = vs-random, NO cost. **Neither computes both. Nothing computes cost.**
    → Build ONE harness that emits {absolute R, vs-random edge, cost-net R, trial N} for every edge.
-2. **Cost/slippage is nowhere in any historical test.** The "costs pessimistic by default" invariant is
-   documented but UNENFORCED offline. An intraday +0.1R edge can be entirely eaten by spread — untested.
-   → Add a per-instrument cost model (tick size × spread + slippage) subtracted in every backtest.
+2. **Cost/slippage MODEL EXISTS but is not wired into the backtests.** CORRECTION (verified 2026-08-10):
+   `_shared/trd-cost-model.ts` (pessimistic prior) AND `_shared/trd-cost.ts` (Corwin-Schultz MEASURED
+   spread) both exist and are tested — my earlier "nowhere" was wrong; it's true only for the two ENGINES
+   I'd inspected (trd-backtest-instances, trd-futures-backtest-hist), which bypass the library. The entire
+   honest-stats core (evaluateStrategy/DSR/minTRL, gateVerdict, edgeVsRandom) also exists and is imported by
+   NOTHING except trd-copilot. → The gap is WIRING, not creation: one runner that drives every edge through
+   these cores cost-net. (This is D-263, trd-edge-backtest.)
 3. **Random control is uneven.** Only futures + (partially) bblo. crypto/pairs/vrp have none.
    → Port the matched-random-entry control (already in futures-hist) into the unified harness.
 4. **No regime/metric matrix (C7).** We measure IF an edge works, never WHEN. This is the whole of the

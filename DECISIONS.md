@@ -4556,3 +4556,25 @@ Debug run verified geometry live (SPY up-break r772.5-774.46 w1.96 qty13 stop772
 Wired: cron trd_orbfollow_30m (jobid 37, */30 14-20 * * 1-5) — DORMANT until armed. Position-manager patched to
 skip SPY/QQQ/DIA/GLD (D-252 over-reach class: its rip-short 200MA cover would otherwise corrupt an orbfollow short).
 Pre-cost edge; paper fills are the cost test toward the 30-trade PAPER→MICRO gate. NO real money.
+
+## D-263 — Unified backtest harness SHIPPED (trd-harness + trd-edge-backtest) + first finding: bblo has NO vs-random skill
+Built the P0 from the consistency audit. HONEST CORRECTION first: the audit's "no cost model anywhere" was wrong —
+_shared/trd-cost-model.ts (pessimistic) + trd-cost.ts (Corwin-Schultz measured) + the full honest-stats core
+(trd-backtest-core evaluateStrategy/DSR/minTRL/gateVerdict, trd-random-control edgeVsRandom, trd-stats) ALL exist
+and are tested; they were just imported by NOTHING except trd-copilot. The gap was WIRING, not creation.
+BUILT: _shared/trd-harness.ts (pure, 6 tests pass) COMPOSES those cores into one comparable cost-net EdgeScorecard
+{absR, costR, netR, vsRandomEdge+t, deflatedSharpe, maxDD, split-half OOS, gateVerdict}. Cost→R via costR=costFrac/
+stopFrac; vs-random is cost-neutral (cancels) so skill is on gross R, profitability on net R. Runner trd-edge-backtest
+(?edge=bblo) reproduces the executor geometry exactly (BB(20,2) lower-band fade long, 2ATR=1R stop, +3R target) over
+MAX daily history (18 liquid names, 1970-2026, 3234 trades), matched random-entry control per D-146, MEASURED cost
+(Corwin-Schultz on recent clean bars ~14bps), bumps trd_trial_counter, stores trd_edge_scorecard. Deployed via
+supabase CLI (bundles _shared). Migration 0034.
+FIRST FINDING (verified, 1 rigorous run): bblo abs_r +0.413R, net +0.378R (survives cost, both OOS halves +),
+BUT vs_random_edge -0.017R t=-0.36 → FAILS the random control, gate REJECTS. The +0.4R is the 3:1 bracket
+harvesting drift; oversold-band entry timing does NOT beat a random long with the same bracket. Immune to my
+universe's survivorship because vs-random cancels drift. RECONCILIATION: this does NOT match "bblo bulletproof" —
+because that prior claim (trd-backtest-instances +0.216R 30/30) was ABSOLUTE R ("not the vs-random skill metric",
+its own comment), never a matched-random daily test. No contradiction in the data — the prior test simply never
+asked the vs-random question on daily bblo. FLAG not final verdict: bblo stays live pending (a) a second harness
+run on a survivorship-free universe, (b) checking whether the ORIGINAL bblo vs-random pass (D-244 "58% beat-random")
+used intraday/different geometry. If it fails vs-random there too, bblo is drift-harvesting and must be demoted.
