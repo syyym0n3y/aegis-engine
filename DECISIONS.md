@@ -4597,3 +4597,24 @@ flaw. ACTION: bblo DEMOTED — trd_edge_disable('bblo')=true + both crons unsche
 trd_bblo_scanner_20m jobid36). Open bblo paper longs self-exit via their brackets. Fleet real edges now: cross-
 sectional 12-1 momentum + orbfollow (pending its own harness pass). LESSON: survivorship bias is flaw #1; any
 "beat-random" on a curated/liquid/survivor universe is suspect until re-run survivorship-free.
+
+## D-265 — All edges pushed through the unified harness: ONE clean survivor (orbfollow), the rest reject/unproven
+Ran every reproducible edge through trd-edge-backtest (uniform cost-net vs-random gauntlet). Comparative scorecard
+(trd_edge_scorecard), ranked by vs-random t:
+| edge      | n      | abs_r  | net_r  | vs-random | t      | OOS both | gate | verdict |
+| orbfollow | 23,498 | +0.140 | (R)    | +0.138    | +11.92 | yes      | PASS | REAL EDGE — the clean survivor |
+| crypto    |    973 | +5.06  | +4.95  | +2.43     | +1.93  | no       | fail | PROMISING near-miss (t<2), huge but high-variance (trail exits) |
+| bblo      |  3,234 | +0.413 | +0.378 | -0.017    | -0.36  | yes(abs) | fail | DEMOTED D-264 (drift, not skill) |
+| pairs     |    999 | -0.85  | -1.27  | -0.54     | -11.44 | no       | fail | FLAGGED — worse than random on proxy metric |
+vrp: only 28 trades (SVXY history ~2016+ & long contango holds) → INSUFFICIENT SAMPLE, cannot judge on this data.
+xsec 12-1 momentum: NOT run — monthly cross-sectional, needs a different harness adapter (validated separately,
+NASDAQ t=6.0).
+DECISIONS: (a) orbfollow CONFIRMED as the real edge (consistent with the futures validation). (b) crypto momentum
+is the most promising unproven edge — +2.43R vs random is large but t=1.93 just misses; the Donchian trail creates a
+few massive winners → high skew → modest t. Keep LIVE, flag for a power/fixed-target follow-up. (c) pairs fails the
+harness (t=-11.44 worse than random) BUT the pairs R-metric is an APPROXIMATE z-capture proxy, not true spread P&L —
+so FLAGGED not demoted (unlike bblo which had 4 converging verified lines). Needs a faithful 2-leg spread-P&L
+backtest before demotion; kept live meanwhile (4 open positions ride to their z-exit). (d) vrp unproven — needs more
+SVXY history. NET after the full gauntlet: 1 clean edge (orbfollow) + 1 promising (crypto) + xsec (separate) + 2
+rejected (bblo, rip-short) + 2 unproven (pairs pending faithful test, vrp pending history). This is D-070 in action:
+most "edges" don't survive a matched random control cost-net.
