@@ -24,6 +24,10 @@ function roll(a:number[],W:number,mode:"max"|"min"){const out=new Float64Array(a
 function tradeR(b:Bar[],i:number,e:number,sd:number,dir:number){const stop=e-dir*sd,tgt=e+dir*sd*TP,end=Math.min(i+HOLD,b.length-1);
   for(let k=i+1;k<=end;k++){if(dir>0){if(b[k].l<=stop)return -1;if(b[k].h>=tgt)return TP;}else{if(b[k].h>=stop)return -1;if(b[k].l<=tgt)return TP;}}
   return dir*(b[end].c-e)/sd;}
+// capped-stop (the VALIDATED rip-short geometry): −1R stop, NO target, unbounded upside, exit at HOLD
+function cappedR(b:Bar[],i:number,e:number,sd:number,dir:number){const stop=e-dir*sd,end=Math.min(i+HOLD,b.length-1);
+  for(let k=i+1;k<=end;k++){if(dir>0?b[k].l<=stop:b[k].h>=stop)return -1;}
+  return dir*(b[end].c-e)/sd;}
 function stats(rs:number[]){const n=rs.length;if(!n)return null;const wins=rs.filter(r=>r>0),losses=rs.filter(r=>r<=0);
   const sum=rs.reduce((a,x)=>a+x,0);const gw=wins.reduce((a,x)=>a+x,0),gl=Math.abs(losses.reduce((a,x)=>a+x,0));
   let cum=0,peak=0,dd=0;for(const r of rs){cum+=r;if(cum>peak)peak=cum;if(peak-cum>dd)dd=peak-cum;}
@@ -31,16 +35,16 @@ function stats(rs:number[]){const n=rs.length;if(!n)return null;const wins=rs.fi
     avg_win_r:+(wins.length?gw/wins.length:0).toFixed(3),avg_loss_r:+(losses.length?-gl/losses.length:0).toFixed(3),
     profit_factor:+(gl>0?gw/gl:gw>0?99:0).toFixed(2),max_dd_r:+dd.toFixed(1)};}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
-  const rows:Record<string,unknown>[]=[];const summ:Record<string,number[]>={bblo_long:[],rip_short:[],rsi2_long:[],bo20_long:[]};
-  for(const sym of INSTR){const b=await bars(sym);if(!b||b.length<START+HOLD+5)continue;const c=b.map(x=>x.c),n=b.length;const years=+(n/252).toFixed(1);
+  const rows:Record<string,unknown>[]=[];const summ:Record<string,number[]>={bblo_long:[],rip_short:[],rip_short_capped:[],rsi2_long:[],bo20_long:[]};let loaded=0;
+  for(const sym of INSTR){const b=await bars(sym);if(!b||b.length<START+HOLD+5)continue;loaded++;const c=b.map(x=>x.c),n=b.length;const years=+(n/252).toFixed(1);
     const ma200=sma(c,MA),ma20=sma(c,BB),rsi14=rsiArr(c,RSIN),rsi2=rsiArr(c,2);
     const atr=new Float64Array(n).fill(NaN);{let s=0;for(let i=1;i<n;i++){const tr=Math.max(b[i].h-b[i].l,Math.abs(b[i].h-b[i-1].c),Math.abs(b[i].l-b[i-1].c));s+=tr;if(i>ATRN){const p=Math.max(b[i-ATRN].h-b[i-ATRN].l,Math.abs(b[i-ATRN].h-b[i-ATRN-1].c),Math.abs(b[i-ATRN].l-b[i-ATRN-1].c));s-=p;}if(i>=ATRN)atr[i]=s/ATRN;}}
     const bbStd=new Float64Array(n).fill(NaN);{let s=0,ss=0;for(let i=0;i<n;i++){s+=c[i];ss+=c[i]*c[i];if(i>=BB){s-=c[i-BB];ss-=c[i-BB]*c[i-BB];}if(i>=BB-1){const m=s/BB;bbStd[i]=Math.sqrt(Math.max(ss/BB-m*m,0));}}}
     const donH=roll(b.map(x=>x.h),DON,"max");
-    const R:Record<string,number[]>={bblo_long:[],rip_short:[],rsi2_long:[],bo20_long:[]};
+    const R:Record<string,number[]>={bblo_long:[],rip_short:[],rip_short_capped:[],rsi2_long:[],bo20_long:[]};
     for(let i=START;i<n-HOLD;i++){const sd=STOP*atr[i];if(!(sd>0))continue;const px=c[i],m=ma200[i];
       if(px<ma20[i]-2*bbStd[i])R.bblo_long.push(tradeR(b,i,px,sd,1));
-      if(rsi14[i]>70&&px<m)R.rip_short.push(tradeR(b,i,px,sd,-1));
+      if(rsi14[i]>70&&px<m){R.rip_short.push(tradeR(b,i,px,sd,-1));R.rip_short_capped.push(cappedR(b,i,px,sd,-1));}
       if(rsi2[i]<5&&px>m)R.rsi2_long.push(tradeR(b,i,px,sd,1));
       if(px>donH[i])R.bo20_long.push(tradeR(b,i,px,sd,1));
     }
@@ -50,5 +54,5 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const mean=(a:number[])=>a.length?+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(4):null;
   const posPct=(a:number[])=>a.length?+(a.filter(x=>x>0).length/a.length*100).toFixed(0):null;
   const digest=Object.fromEntries(Object.entries(summ).map(([k,v])=>[k,{instances:v.length,mean_expectancy_r:mean(v),pct_positive:posPct(v)}]));
-  return new Response(JSON.stringify({ok:true,instruments:INSTR.length,rows:rows.length,digest}),{headers:cors});
+  return new Response(JSON.stringify({ok:true,instruments:INSTR.length,loaded,rows:rows.length,digest}),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
