@@ -4460,3 +4460,21 @@ DATA SOLUTION (the real blocker, now with concrete options):
 - CME DataMine — official, enterprise-priced.
 NEXT: with a Databento key (free credits), build the full multi-year, all-timeframe, all-session validation — converts
 this 49-day lead into a proper test. $0 so far.
+
+---
+
+## D-256 — the futures range-fade FAILS out-of-sample on free data. Selection artifact. Real data required to decide.
+
+Stress-tested the D-255 "best windows" (London 04:30ET, NY 08:30ET) the honest way (trd-futures-validate): SPLIT-HALF
+OOS on the 5m/49d sample + 15m/30m + 12 broad instruments. VERDICT: the fade does NOT hold OOS. Only 3/12 (London)
+and 2/12 (NY) instruments are positive in BOTH halves — ≈ chance. Most FLIP sign between halves (ES NY −0.15→+0.05,
+RTY London +0.83→−0.19). The earlier +0.19–0.22R was IN-SAMPLE SELECTION over ~48 swept windows, not a real edge.
+(30m results void — a 60-min window holds only two 30m bars.)
+
+HONEST CONCLUSION: on ~49 days of free 5m data the pattern is INDISTINGUISHABLE from noise once split — the sample is
+too small to confirm OR refute the operator's 8:12/London/NY thesis. This is NOT proof the pattern is fake; it's proof
+free data CANNOT settle it. Continuing to mine the 49-day sample = p-hacking, not progress. The ONLY productive path
+is real multi-year 1m data (Databento $125 free credits / FirstRate 19yr) → proper OOS + deflation across the full
+timeframe/session grid. That requires an operator-provided Databento API key (Claude cannot create accounts). Until
+then this stays a LEAD, unvalidated. The engine did its job: a tantalising in-sample signal, correctly demoted by OOS.
+$0, measurement.
