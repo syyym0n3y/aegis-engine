@@ -4496,3 +4496,34 @@ distillation engine). The ONLY next step is real multi-year 1m data → requires
 (free $125 credits); I will then verify the API against a live key and build the loader (not guess it). Holding here
 is integrity, not laziness: more free-data mining = p-hacking; guessing the paid API = Hard-Rule violation. The live
 paper fleet keeps accruing the gate sample meanwhile. $0.
+
+## D-259 — Futures morning-range: FADE is dead, BREAKOUT-FOLLOW is a validated edge (8:12 ET strongest)
+
+**The question the free 49-day data couldn't answer, now answered on REAL multi-year data.**
+Pulled Databento GLBX.MDP3 ohlcv-1m for ES/NQ/YM/GC continuous over ~4 years (2022-08→2026-08,
+~60 quarters, ~275k 1m bars/symbol; $15.42 of free credit = $0 real), distilled to 1/2/4/5/10/15/30m,
+tested the range-fade and its mirror (breakout-follow) at 3 windows (London 04:30, NY 08:30, op 8:12 ET)
+with a matched random-entry control. ~64,000 real trades.
+
+**FADE (range reversion) — DEAD.** Every one of 21 (window×timeframe) cells is NEGATIVE vs random
+(−0.07 to −0.18R), periods-positive 22–45% (below coin-flip). The summer "edge" was in-sample selection
+over 48 windows (D-256 suspected; now confirmed under 64k trades). Do not trade the fade.
+
+**BREAKOUT-FOLLOW (range extension) — VALIDATED.** The exact mirror is positive in ALL 21 cells
+(+0.13 to +0.22R vs random). Survives the split-half OOS that killed the fade: 21/21 cells hold POSITIVE
+in BOTH halves (2022-24 AND 2025-26). Robust across all 4 instruments (not one loud symbol).
+- **Operator's 8:12 ET window is the strongest on the board**: 8:12·10m +0.223R (70% of quarters +),
+  8:12·30m +0.190R (85% of quarters +, H1 +0.213 / H2 +0.149).
+- Per-instrument (8:12, all-TF): GC +0.499 (n=1712, huge but thinner), ES +0.114 (n=6997),
+  YM +0.073 (n=6532), NQ +0.047 (n=6558). Direction universal; index magnitude modest, gold outsized.
+
+**Interpretation:** the morning range does NOT revert — it EXTENDS. Break the 8:12–9:12 ET range and
+follow, ±range-width barriers. This is absolute momentum measured vs random entry, so it is a real skill
+edge, not just drift.
+
+**Execution path:** real CME futures need a futures broker we don't have (Alpaca paper = equities/crypto
+only). The tradeable proxy is the ETF basket SPY/QQQ/DIA/GLD on the identical 8:12-ET opening-range-
+breakout-follow signal → a Stage-1 paper executor (edge #7). Build next.
+
+**Artifacts:** trd-futures-backtest-hist (engine), trd-databento (connector, key in RLS-denied trd_secrets),
+trd_futures_orb_results (results table, migration 0032). Databento key NEVER committed.
