@@ -147,6 +147,7 @@ QQQ long 12000</textarea>
   <h1>Live cockpit</h1>
   <p class="sub">The autonomous paper engine — trading 10 markets across every session, macro-throttled, firewall-protected. Updates every 6h on its own. <span id="c_upd" class="muted"></span></p>
   <div id="c_exec"></div>
+  <div id="c_score"></div>
   <div id="c_ctl"></div>
   <div id="c_scan"></div>
   <div id="c_out">loading…</div>
@@ -185,7 +186,7 @@ const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
 function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
-  if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();renderCtl();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
+  if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();doScorecard();renderCtl();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
 async function doProp(){
@@ -343,6 +344,22 @@ async function doExec(){
     <div class="panel" style="margin-top:10px;font-size:12px">${d.edges.map(e=>`<div class="row"><span><b>${esc(e.label)}</b> — ${esc(e.signal)}</span><span class="mono" style="color:${e.live?'var(--accent)':'var(--faint)'}">${e.live?'● signal live':'○ dormant'}</span></div>`).join("")}</div>
     <p class="muted" style="margin-top:8px">$0 real — Alpaca paper. Each edge keeps its 1R stop; one kill-switch flattens the book. Attribution: crypto→momentum, SVXY→VRP, paired legs→stat-arb, equity shorts→rip-short.</p>`;
   }catch(err){o.innerHTML=`<h2>Live executor — 6 edges (paper)</h2><div class="panel"><span style="color:var(--red)">${esc(err.message)}</span></div>`}
+}
+async function doScorecard(){
+  const o=document.getElementById("c_score");o.innerHTML='<h2>Edge scorecard — judge each edge</h2><div class="panel"><span class=muted>reconciling closed trades…</span></div>';
+  try{const d=await(await fetch(API+"/trd-scorecard",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
+    const pnlc=v=>v>0?'var(--accent)':v<0?'var(--red)':'var(--faint)';
+    const rows=(d.perEdge||[]).map(e=>`<tr><td>${esc(e.edge)}</td><td class="mono num">${e.closed_trades}</td><td class="mono num">${e.win_pct==null?'—':e.win_pct+'%'}</td><td class="mono num" style="color:${pnlc(e.realized_pnl)}">${e.realized_pnl>=0?'+':''}$${e.realized_pnl}</td><td class="mono num">${e.open_positions}</td><td class="mono num" style="color:${pnlc(e.open_unreal)}">${e.open_unreal>=0?'+':''}$${e.open_unreal}</td></tr>`).join("");
+    const g=d.gate||{};const wk=(d.weekly||[]).map(w=>`${w.d.slice(5)}: ${w.pl>=0?'+':''}$${w.pl}`).join(" · ");
+    o.innerHTML=`<h2>Edge scorecard — judge each edge</h2>
+    <div class="panel" style="font-size:13px">
+      <div class="row"><span><b>Edge P&L (excl. legacy crypto)</b></span><span class="mono" style="color:${pnlc(d.edge_realized_excl_legacy)};font-size:15px">${d.edge_realized_excl_legacy>=0?'+':''}$${d.edge_realized_excl_legacy}</span></div>
+      <div class="row"><span>legacy crypto (one-time, not alpha)</span><span class="mono muted">+$${d.legacy_crypto_gain}</span></div>
+      <div class="row"><span>gate progress — closed edge trades vs ≥30</span><span class="mono">${g.closed_edge_trades}/30 · ${g.pct}%</span></div>
+    </div>
+    <table style="margin-top:10px"><thead><tr><th>edge</th><th class="num">closed</th><th class="num">win%</th><th class="num">realized</th><th class="num">open</th><th class="num">unreal.</th></tr></thead><tbody>${rows||'<tr><td colspan=6 class=muted>no trades yet</td></tr>'}</tbody></table>
+    <p class="muted" style="margin-top:8px">Weekly P&L: ${esc(wk||'—')}. Judge an edge only after ≥30 <b>closed</b> trades — open unrealised and small samples are noise. $0 paper.</p>`;
+  }catch(err){o.innerHTML=`<h2>Edge scorecard — judge each edge</h2><div class="panel"><span style="color:var(--red)">${esc(err.message)}</span></div>`}
 }
 async function doScan(){
   const o=document.getElementById("c_scan");o.innerHTML='<h2>Nightly full-universe rip-short scan</h2><div class="panel"><span class=muted>reading scan…</span></div>';
