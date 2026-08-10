@@ -4436,3 +4436,27 @@ HONEST STATUS = LEAD, not a cleared edge: 49 days = one summer regime (tiny, no 
 outlier (small-sample noise); NOT Alpaca-executable (no futures). To promote this needs a PAID intraday-futures feed
 (years of 1m across the requested timeframes) + OOS validation + the deflation gate. The pattern is real on what we can
 see; proving it to tradeable standard is data-blocked on free sources. $0, measurement.
+
+---
+
+## D-255 — range-fade across ALL sessions (NY-based): strongest at London-open + 8:30 NY; inverts midday. Data path found.
+
+Operator: NY-based, search the pattern across other sessions, find better data. Built trd-futures-sessions — sweeps
+the range-FADE over every 60-min window (30-min step) across the 24h futures day, edge aggregated across ES/NQ/YM/GC.
+RESULT (5m Yahoo ~49d): the fade is BROAD (4/4 instruments) and strongest at economically-meaningful windows —
+- **04:30 ET (London open): +0.222R, 4/4** (best)
+- **08:30 ET (NY pre-open / 8:30 econ-data release): +0.192R, 4/4** — contains the operator's 8:12-9:12 window
+- 15:00 ET (late NY): +0.158, 4/4 · 02:00 ET: +0.144, 4/4
+- INVERTS midday: 12:00 ET −0.371R (0/4) — that window TRENDS, don't fade.
+So the pattern is session-specific + present across multiple sessions (London open, NY data-release reversion, late
+NY); the 8:30 data-release fade is economically sensible (over-reaction to data then reversion). Still a LEAD: 49-day
+sample, multiple-testing over ~48 windows (4/4-broad + sensible times mitigate but don't eliminate; needs OOS).
+
+DATA SOLUTION (the real blocker, now with concrete options):
+- **Databento** (RECOMMENDED) — CME 1m/tick via API, $125 free credits for new users → free-first pull of YEARS of 1m
+  ES/NQ/YM/GC, cleanest fit for our edge-fn/Supabase stack (programmatic load → resample 1m to 2m/4m/5m/10m/15m/30m,
+  map every session, validate with OOS + deflation). Needs an operator-provided API key.
+- FirstRate Data — one-time bulk 1m download, 130 futures back to 2007 (19yr), no API (load once). Cheaper long-run.
+- CME DataMine — official, enterprise-priced.
+NEXT: with a Databento key (free credits), build the full multi-year, all-timeframe, all-session validation — converts
+this 49-day lead into a proper test. $0 so far.
