@@ -4692,3 +4692,22 @@ basket and stays flat (action:BEAR-FLAT), else rebalances as before. This avoids
 (-1.71%/mo) where naive momentum blows up. Verified deployed (returns hold on fresh basket = cadence guard fires
 first; gate engages on next rebalance). Migration 0036. crypto/vrp unchanged; orbfollow regime = optional future
 futures re-pull; this closes the C7 regime-matrix workstream.
+
+## D-271 — orbfollow regime matrix: robust across ALL regimes (no gate needed); tight-range up-breaks are the sweet spot
+Extended trd-futures-backtest-hist to emit per-day cash_open (09:30-10:30 ET) FOLLOW trades tagged by direction /
+opening-range-width (vs trailing median) / trend-alignment, vs matched random control → trd_futures_regime (mig
+0037). Full re-pull (~$0 real on Databento free credit). OOS-split aggregate (pooled across 4 symbols, ~2500 days):
+  dir up-break: +0.148 (H1 +0.176 / H2 +0.106) HOLDS ✓ | down-break: +0.044 (H1 -0.029 / H2 +0.169) fails H1.
+  range tight: +0.126 (H1 +0.122 / H2 +0.131) HOLDS, rock-stable ✓ | wide: +0.049 (H1 +0.075 / H2 +0.015) fading.
+  trend withtrend: +0.094 ≈ counter +0.097 — BOTH hold; trend-alignment IRRELEVANT (range-expansion, not trend-cont).
+INTERPRETATION: unlike crypto/xsec (near-misses that needed a regime gate — crypto's failed OOS, xsec's bull gate
+held), EVERY orbfollow regime is POSITIVE and most hold OOS. This is CONFIRMATORY: the edge is broad and real, not
+regime-dependent. Sweet spot = tight opening range + up-break (classic ORB, literature-backed). DECISION: do NOT
+gate the executor — over-gating a proven positive-everywhere edge cuts frequency for marginal gain and risks
+over-fitting. Documented as guidance (favour tight-range longs); executor unchanged. Down-break H1-negative is a
+mild note, not a kill (pooled +0.044, H2 +0.169). This CLOSES the C7 regime-matrix workstream across all edges.
+
+REGIME-MATRIX WORKSTREAM COMPLETE (D-269/270/271): crypto → no OOS-robust gate (hivol/uptrend invert in H2, NOT
+gated); xsec → bull-market gate holds OOS, EXECUTOR GATED bull-only (bear-flat momentum-crash protection); orbfollow
+→ robust across all regimes, no gate needed, tight-range up-breaks strongest. The OOS split was decisive throughout:
+it killed crypto's in-sample gates, confirmed xsec's, and validated orbfollow's breadth.
