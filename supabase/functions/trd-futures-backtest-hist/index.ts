@@ -54,6 +54,31 @@ function rowset(symbol:string,tf:number,wn:string,period:string,R:number[],rr:nu
     {symbol,timeframe:`${tf}m`,win:wn,period,mode:"follow",n:R.length,mean_r:+(-rMean).toFixed(4),edge_r:+(-rMean-rrMean).toFixed(4),win_pct:+followWin.toFixed(0)},
   ];
 }
+function q4d(d:string){return `${d.slice(0,4)}Q${Math.floor((+d.slice(5,7)-1)/3)+1}`;}
+// Per-day FOLLOW trade + matched random control + regime tags (dir / range-width vs trailing median / trend-align).
+function followRegime(b:Bar[],ws:number,we:number,seed:number){
+  const days=new Map<string,Bar[]>();for(const x of b){(days.get(x.d!)||days.set(x.d!,[]).get(x.d!))!.push(x);}
+  const keys=[...days.keys()].sort();const rnd=mulberry(seed);const widths:number[]=[],pcl:number[]=[];
+  const out:{R:number,rr:number,dir:string,rw:string,tr:string,period:string}[]=[];
+  for(const dk of keys){const day=days.get(dk)!;const dc=day[day.length-1].c;
+    const win=day.filter(x=>x.m!>=ws&&x.m!<we);const post=day.filter(x=>x.m!>=we);
+    if(win.length<2||post.length<3){pcl.push(dc);continue;}
+    const rH=Math.max(...win.map(x=>x.h)),rL=Math.min(...win.map(x=>x.l)),w=rH-rL;
+    if(!(w>0)){widths.push(w);pcl.push(dc);continue;}
+    let dir=0,entry=0,bi=-1;for(let i=0;i<post.length;i++){if(post[i].h>rH){dir=1;entry=rH;bi=i;break;}if(post[i].l<rL){dir=-1;entry=rL;bi=i;break;}}
+    if(dir===0){widths.push(w);pcl.push(dc);continue;}
+    const stop=entry-dir*w,tgt=entry+dir*w;let R=null as number|null; // FOLLOW: stop=opposite extreme, tgt=+1w
+    for(let k=bi;k<post.length;k++){if(dir>0){if(post[k].l<=stop){R=-1;break;}if(post[k].h>=tgt){R=1;break;}}else{if(post[k].h>=stop){R=-1;break;}if(post[k].l<=tgt){R=1;break;}}}
+    if(R===null)R=dir*(post[post.length-1].c-entry)/w;
+    const ri=Math.floor(rnd()*Math.max(1,post.length-2)),rd=rnd()<0.5?1:-1,re=post[ri].c;let rr=null as number|null;
+    for(let k=ri;k<post.length;k++){if(rd>0){if(post[k].l<=re-rd*w){rr=-1;break;}if(post[k].h>=re+rd*w){rr=1;break;}}else{if(post[k].h>=re-rd*w){rr=-1;break;}if(post[k].l<=re+rd*w){rr=1;break;}}}
+    if(rr===null)rr=rd*(post[post.length-1].c-re)/w;
+    const dirB=dir>0?"up":"down";let rwB="normal";
+    if(widths.length>=10){const sw=[...widths].sort((a,b)=>a-b);const med=sw[Math.floor(sw.length/2)];rwB=w<med*0.8?"tight":w>med*1.2?"wide":"normal";}
+    let trB="na";if(pcl.length>=3){const up=pcl[pcl.length-1]>pcl[pcl.length-3];trB=((up&&dir>0)||(!up&&dir<0))?"withtrend":"counter";}
+    out.push({R,rr,dir:dirB,rw:rwB,tr:trB,period:q4d(dk)});widths.push(w);pcl.push(dc);}
+  return out;
+}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const key=(await fetch(`${SB}/rest/v1/trd_secrets?name=eq.databento_key&select=value`,{headers:H}).then(r=>r.json()).catch(()=>[]))?.[0]?.value;
   if(!key)throw new Error("no key");const AUTH={Authorization:`Basic ${btoa(key+":")}`};
@@ -67,5 +92,12 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const rows:Record<string,unknown>[]=[];
   for(const tf of TFS){const rb=resample(b1,tf);for(const [wn,ws,we] of WINS){const {R,rr}=test(rb,ws,we,symbol.length*13+tf);rows.push(...rowset(symbol,tf,wn,period,R,rr));}}
   if(rows.length)await fetch(`${SB}/rest/v1/trd_futures_orb_results?on_conflict=symbol,timeframe,win,period,mode`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)});
-  return new Response(JSON.stringify({ok:true,symbol,period,bars_1m:b1.length,span:`${etOf(b1[0].t).d}→${etOf(b1[b1.length-1].t).d}`,stored:rows.length}),{headers:cors});
+  // REGIME MATRIX for the executable cash_open (09:30-10:30 ET) follow, on 5m — per dir / range-width / trend-align
+  const rb5=resample(b1,5);const fr=followRegime(rb5,570,630,symbol.length*17+5);
+  const acc=new Map<string,{n:number,sf:number,sr:number}>();
+  const add=(dim:string,bkt:string,per:string,R:number,rr:number)=>{const k=`${dim}|${bkt}|${per}`;const a=acc.get(k)||{n:0,sf:0,sr:0};a.n++;a.sf+=R;a.sr+=rr;acc.set(k,a);};
+  for(const d of fr){add("dir",d.dir,d.period,d.R,d.rr);if(d.rw!=="normal")add("rangewidth",d.rw,d.period,d.R,d.rr);if(d.tr!=="na")add("trend",d.tr,d.period,d.R,d.rr);}
+  const rrows=[...acc.entries()].filter(([,a])=>a.n>=3).map(([k,a])=>{const p=k.split("|");return {symbol,dim:p[0],bucket:p[1],period:p[2],n:a.n,follow_mean:+(a.sf/a.n).toFixed(4),rand_mean:+(a.sr/a.n).toFixed(4),edge:+((a.sf-a.sr)/a.n).toFixed(4)};});
+  if(rrows.length)await fetch(`${SB}/rest/v1/trd_futures_regime?on_conflict=symbol,dim,bucket,period`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rrows)});
+  return new Response(JSON.stringify({ok:true,symbol,period,bars_1m:b1.length,span:`${etOf(b1[0].t).d}→${etOf(b1[b1.length-1].t).d}`,stored:rows.length,regime:rrows.length}),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
