@@ -58,9 +58,12 @@ put through the gauntlet at all — they are running on plausibility, which is e
    report edge-per-bucket. The edge's tradeable window is where it's positive net-of-cost OOS.
 5. **Trial counting not wired into the new backtests.** `trd_trial_counter` exists but instances/futures
    don't increment it. → Every backtest run bumps it; every reported edge carries N.
-6. **No provenance ledger.** DECISIONS.md is prose, not queryable. → `trd_lineage` table: one row per lead
-   with {hypothesis, test, verdict, killed_by/survived, decision_ref} so the entire development of the
-   system — every fork and why — is auditable in SQL. This is the "track the entire development" ask.
+6. **~~No provenance ledger.~~ CLOSED (D-272).** `trd_lineage` ships: one row per lead with {hypothesis,
+   test_method, key_metric, verdict, status, killed_by, parent/superseded_by, decision_refs}, plus the
+   `trd_lineage_roster` view. The entire development — every fork and why — is now queryable in SQL.
+   Backfilled with all 9 leads (orbfollow/xsec validated · crypto near-miss · vrp data-blocked · bblo/pairs/
+   ripshort demoted · dip-buy/futures-range-fade rejected). CONVENTION: every new edge decision appends/updates
+   a row here alongside its DECISIONS.md entry.
 
 ## Build queue (priority order — each is a gate, not a nicety)
 

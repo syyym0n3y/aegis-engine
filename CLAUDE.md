@@ -62,6 +62,10 @@ which is a SUCCESS of the engine, not a failure.** See [`DECISIONS.md`](./DECISI
 - **Idempotency end-to-end + append-only evidence.** Re-runs are no-ops; the
   ledger is immutable. Broker creds live in Vault (`cc_trd_*`), NOT provisioned
   until staged gates pass.
+- **Every edge decision updates `trd_lineage`** (the provenance ledger, D-272)
+  alongside its DECISIONS.md entry — one row per lead with its hypothesis, test,
+  key metric, verdict, status, and decision trail. `trd_lineage_roster` is the
+  queryable current state; the whole development is auditable in SQL, not prose.
 - **The kill-switch is durable state** (a Postgres row) that survives daemon
   restarts — a crash must never silently re-enable trading.
 

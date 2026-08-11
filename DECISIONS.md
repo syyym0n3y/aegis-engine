@@ -4711,3 +4711,20 @@ REGIME-MATRIX WORKSTREAM COMPLETE (D-269/270/271): crypto → no OOS-robust gate
 gated); xsec → bull-market gate holds OOS, EXECUTOR GATED bull-only (bear-flat momentum-crash protection); orbfollow
 → robust across all regimes, no gate needed, tight-range up-breaks strongest. The OOS split was decisive throughout:
 it killed crypto's in-sample gates, confirmed xsec's, and validated orbfollow's breadth.
+
+## D-272 — trd_lineage provenance ledger SHIPPED: the entire falsification history is now queryable in SQL
+Built the last open audit item (CONSISTENCY_AUDIT gap #6). trd_lineage: one row per lead/hypothesis with
+{hypothesis, test_method, key_metric, verdict, status, regime_gate, killed_by, parent, superseded_by,
+decision_refs[]}, + trd_lineage_roster view (ordered validated→near-miss→data-blocked→demoted→rejected). Migration
+0038. Backfilled all 9 leads from the verified decision history:
+  validated:  orbfollow (vs-random t=11.92, robust) · xsec-momentum (bull-gated, OOS-held)
+  near-miss:  crypto-momentum (t=1.93, no OOS-robust regime)
+  data-blocked: vrp (28 trades)
+  demoted:    bblo (survivorship drift) · pairs (cost-negative) · ripshort (no generalization)
+  rejected:   dip-buy (survivorship, ancestor of bblo) · futures-range-fade (in-sample, superseded_by orbfollow)
+Lineage forks captured: bblo.parent=dip-buy (same MR family, same survivorship flaw); orbfollow.parent=
+futures-range-fade + fade.superseded_by=orbfollow (the fade's mirror IS the edge). CONVENTION (added to CLAUDE.md
+invariants): every new edge decision appends/updates a trd_lineage row alongside its DECISIONS.md entry — keeps
+the ledger a living machine-readable record, not a one-time backfill. This CLOSES the CONSISTENCY_AUDIT build queue
+(P0 harness+cost D-263, P1 regime matrix D-269/270/271 + faithful pairs D-266, P2 lineage D-272). The engine now
+has: one uniform cost-net vs-random gauntlet, an OOS-validated regime layer, and a queryable provenance ledger.
