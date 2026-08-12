@@ -79,6 +79,22 @@ function followRegime(b:Bar[],ws:number,we:number,seed:number){
     out.push({R,rr,dir:dirB,rw:rwB,tr:trB,period:q4d(dk)});widths.push(w);pcl.push(dc);}
   return out;
 }
+// Intraday microstructure factors (D-275), distinct from ORB: (1) overnight-GAP follow — does the RTH open gap vs
+// prior RTH close predict the day's direction? (2) FIRST-HOUR continuation — does the 09:30-10:30 return sign predict
+// the rest of the RTH day? Each a directional factor vs a random-sign control on the same day's move.
+function intraday(b:Bar[],seed:number){const days=new Map<string,Bar[]>();for(const x of b){(days.get(x.d!)||days.set(x.d!,[]).get(x.d!))!.push(x);}
+  const keys=[...days.keys()].sort();const rnd=mulberry(seed);let prevClose:number|null=null;
+  const acc=new Map<string,{n:number,sf:number,sr:number}>();
+  const add=(k:string,r:number,rr:number)=>{const a=acc.get(k)||{n:0,sf:0,sr:0};a.n++;a.sf+=r;a.sr+=rr;acc.set(k,a);};
+  for(const dk of keys){const day=days.get(dk)!;const rth=day.filter(x=>x.m!>=570&&x.m!<960);
+    if(rth.length<20){if(rth.length)prevClose=rth[rth.length-1].c;continue;}
+    const open=rth[0].o,close=rth[rth.length-1].c,per=q4d(dk);
+    const fh=rth.filter(x=>x.m!<630),rest=rth.filter(x=>x.m!>=630);
+    if(prevClose!=null&&open!==prevClose){const g=Math.sign(open-prevClose)*(close-open)/open;add(`gapfollow|${per}`,g,(rnd()<0.5?1:-1)*(close-open)/open);}
+    if(fh.length&&rest.length){const f=fh[fh.length-1].c-open,rr=close-fh[fh.length-1].c;if(f!==0)add(`firsthour|${per}`,Math.sign(f)*rr/open,(rnd()<0.5?1:-1)*rr/open);}
+    prevClose=close;}
+  return acc;
+}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const key=(await fetch(`${SB}/rest/v1/trd_secrets?name=eq.databento_key&select=value`,{headers:H}).then(r=>r.json()).catch(()=>[]))?.[0]?.value;
   if(!key)throw new Error("no key");const AUTH={Authorization:`Basic ${btoa(key+":")}`};
@@ -99,5 +115,9 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   for(const d of fr){add("dir",d.dir,d.period,d.R,d.rr);if(d.rw!=="normal")add("rangewidth",d.rw,d.period,d.R,d.rr);if(d.tr!=="na")add("trend",d.tr,d.period,d.R,d.rr);}
   const rrows=[...acc.entries()].filter(([,a])=>a.n>=3).map(([k,a])=>{const p=k.split("|");return {symbol,dim:p[0],bucket:p[1],period:p[2],n:a.n,follow_mean:+(a.sf/a.n).toFixed(4),rand_mean:+(a.sr/a.n).toFixed(4),edge:+((a.sf-a.sr)/a.n).toFixed(4)};});
   if(rrows.length)await fetch(`${SB}/rest/v1/trd_futures_regime?on_conflict=symbol,dim,bucket,period`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rrows)});
+  // intraday microstructure factors (gap-follow, first-hour continuation)
+  const ida=intraday(rb5,symbol.length*23+9);
+  const idrows=[...ida.entries()].filter(([,a])=>a.n>=3).map(([k,a])=>{const p=k.split("|");return {symbol,dim:"intraday",bucket:p[0],period:p[1],n:a.n,follow_mean:+(a.sf/a.n).toFixed(5),rand_mean:+(a.sr/a.n).toFixed(5),edge:+((a.sf-a.sr)/a.n).toFixed(5)};});
+  if(idrows.length)await fetch(`${SB}/rest/v1/trd_futures_regime?on_conflict=symbol,dim,bucket,period`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(idrows)});
   return new Response(JSON.stringify({ok:true,symbol,period,bars_1m:b1.length,span:`${etOf(b1[0].t).d}→${etOf(b1[b1.length-1].t).d}`,stored:rows.length,regime:rrows.length}),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
