@@ -238,6 +238,20 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     return new Response(JSON.stringify({ok:true,scorecard:row,regime:cells},null,2),{headers:cors});
   }
 
+  // fear — PRE-REGISTERED consolidated VRP test (D-277): long SPY on elevated fear (VIX>=80pct OR backwardation),
+  // hold 10d, vs random. Single confirmatory test of the VRP thread; fixed rule, judged once (bar: t>=2 AND OOS both).
+  if(edge==="fear"){
+    const spy=await daily("SPY"),vix=await daily("^VIX"),vix3=await daily("^VIX3M");
+    const vm=new Map(vix.map(x=>[x.d,x.c])),v3=new Map(vix3.map(x=>[x.d,x.c]));
+    const va=spy.map(x=>vm.get(x.d)),v3a=spy.map(x=>v3.get(x.d));
+    const isSig=(i:number)=>{const v=va[i];if(v==null)return false;const V3=v3a[i];if(V3!=null&&V3<v)return true;
+      const w:number[]=[];for(let k=Math.max(0,i-252);k<i;k++){const vv=va[k];if(vv!=null)w.push(vv);}if(w.length<50)return false;w.sort((a,b)=>a-b);return v>=w[Math.floor(w.length*0.8)];};
+    const g=timingTrades(spy,isSig,10,1234);setup.push(...g.setup);ctrl.push(...g.ctrl);
+    if(setup.length<30)return new Response(JSON.stringify({ok:false,edge,err:`too few (${setup.length})`}),{headers:cors});
+    const row=await runScore("fear",setup,ctrl,10,{note:"PRE-REGISTERED consolidated VRP: long SPY on elevated fear (VIX>=80pct OR backwardation), hold 10d, vs random. Confirmatory single test (D-277)."});
+    return new Response(JSON.stringify({ok:true,scorecard:row},null,2),{headers:cors});
+  }
+
   const GEN:Record<string,(b:Bar[],s:number)=>{setup:HarnessTrade[],ctrl:HarnessTrade[]}>={bblo:genBblo,crypto:genCrypto,rsi2:genRsi2,bbhi:genBbhi,hi52:genHi52,rev5:genRev5,down3:genDown3};
   if(GEN[edge]){
     const uni=edge==="crypto"?CRYPTO:EQUITY_UNIVERSE;const gen=GEN[edge];

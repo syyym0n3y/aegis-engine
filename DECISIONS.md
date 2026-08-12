@@ -4801,3 +4801,17 @@ fear-reversion/VRP family is the strongest unexploited thread — worth ONE pre-
 level + term-structure into a single signal, fixed rules, then judge once) + forward tracking, NOT more mining.
 This is the honest frontier: the price-factor space is exhausted; implied-vol shows a real modest premium that needs
 a clean consolidated formulation to confirm, not another sweep. vixts logged near-miss in trd_lineage.
+
+## D-277 — Pre-registered consolidated VRP test CLEARS the naive bar (t=2.23, OOS both halves) → forward-track it
+Ran ONE pre-registered, untuned, fixed-rule consolidation of the VRP/fear thread: long SPY when elevated fear
+(VIX>=trailing-252 80th pct OR VIX3M<VIX backwardation), hold 10d, vs matched random 10d holds. Rule fixed BEFORE
+running; bar pre-committed at t>=2 AND OOS both halves.
+RESULT: n=1930, vs-random +0.0028 (0.28%/10d) t=2.23 PASSES; OOS H1 +0.0058 / H2 +0.0132 HOLDS BOTH (H2 stronger,
+NOT decaying); Sharpe 0.136; DSR gate still FAILS.
+HONEST VERDICT (held to the pre-commitment): clears the NAIVE bar but NOT the strict bar — at test ~21 the
+Bonferroni-95 threshold is ~t>=3.0 and DSR<0.95. In-sample stats cannot promote it. BUT it is the strongest, cleanest
+signal in the engine: pre-registered, untuned, economically grounded (VRP is a documented premium), consolidates 3
+independent fear indicators (volspike/vixts/vrp), passes t>=2, holds OOS with the RECENT half stronger. The only
+honest promotion path is FORWARD data — so deploy this exact rule as a forward-tracked PAPER candidate (flagged
+unvalidated) to accumulate independent forward trades toward its own verdict, alongside orbfollow + xsec. NOT real
+money; NOT more in-sample mining. This is how a near-miss honestly graduates (the ladder's Stage-0->1 forward step).
