@@ -4728,3 +4728,20 @@ invariants): every new edge decision appends/updates a trd_lineage row alongside
 the ledger a living machine-readable record, not a one-time backfill. This CLOSES the CONSISTENCY_AUDIT build queue
 (P0 harness+cost D-263, P1 regime matrix D-269/270/271 + faithful pairs D-266, P2 lineage D-272). The engine now
 has: one uniform cost-net vs-random gauntlet, an OOS-validated regime layer, and a queryable provenance ledger.
+
+## D-273 — First sweep batch: 5 new daily setups, ZERO survivors (all drift, confirms D-070/072 rigorously)
+Used the wait-for-verdict window to sweep new candidate patterns through the unified gauntlet (trd-edge-backtest
+now has a GEN map — each setup is a one-line generator; cost-net vs-random OOS + trial-penalized). Batch:
+  rsi2  (RSI(2)<10 long):        abs +0.46R, vs-random +0.041 t=1.29  → drift
+  rev5  (5-day loser bounce):    abs +0.67R, vs-random +0.146 t=1.37  → drift (closest, n=680, still fails)
+  down3 (3 down closes bounce):  abs +0.46R, vs-random +0.045 t=1.40  → drift
+  hi52  (52wk-high breakout):    abs +0.36R, vs-random -0.074 t=-1.59 → WORSE than random
+  bbhi  (Bollinger-upper short): abs -0.29R, vs-random -0.002 t=-0.07 → no skill, absolutely negative
+PATTERN (definitive): every MR-long setup shows a LARGE absolute return (+0.4..+0.67R) that is almost entirely
+market DRIFT — vs a matched random long with the same 3:1 bracket, the trigger adds only +0.04..+0.15R, none
+significant. Same mechanism that killed bblo (D-264), now reproduced 3x more. Momentum-breakout (hi52) and short
+(bbhi) are outright non-edges. With ~14 setups now harness-tested, the trial-deflation bar is higher still → 0
+survivors. All 5 logged to trd_lineage as rejected (per the D-272 convention). LESSON RE-CONFIRMED: absolute R on a
+survivor universe is meaningless; only vs-random is skill, and simple daily technical triggers have none. NEXT (if
+continuing the sweep): test STRUCTURALLY-DIFFERENT classes — cross-sectional short-term reversal, calendar/seasonality
+(turn-of-month), volatility-conditioned entries — not more MR-long variants (all will show the same drift).

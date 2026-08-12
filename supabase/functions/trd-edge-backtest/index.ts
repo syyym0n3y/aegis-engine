@@ -50,6 +50,26 @@ function genCrypto(b:Bar[],seed:number){const setup:HarnessTrade[]=[],ctrl:Harne
       setup.push({r,stopFrac:sdist/entry,period:q4(b[i].d),regime:reg(i)});
       const ri=DON+Math.floor(rnd()*(b.length-1-DON));if(a[ri]>0){const re=b[ri].c,rsd=2*a[ri],rr=trailR(b,ri,re,rsd,DON);if(rr!=null)ctrl.push({r:rr,stopFrac:rsd/re,period:q4(b[i].d),regime:reg(ri)});}openUntil=i+5;}}
   return{setup,ctrl};}
+// ---- SWEEP battery (D-273): new candidate setups, each tested through the SAME gauntlet (cost-net vs-random OOS).
+function rsiArr(b:Bar[],n:number){const o=new Array(b.length).fill(NaN);let ag=0,al=0;
+  for(let i=1;i<b.length;i++){const ch=b[i].c-b[i-1].c,g=ch>0?ch:0,l=ch<0?-ch:0;
+    if(i<=n){ag+=g;al+=l;if(i===n){ag/=n;al/=n;o[i]=100-100/(1+ag/(al||1e-9));}}
+    else{ag=(ag*(n-1)+g)/n;al=(al*(n-1)+l)/n;o[i]=100-100/(1+ag/(al||1e-9));}}return o;}
+function bracketRshort(b:Bar[],i0:number,entry:number,sd:number){const stop=entry+sd,tgt=entry-3*sd;
+  for(let k=i0+1;k<b.length;k++){if(b[k].h>=stop)return -1;if(b[k].l<=tgt)return 3;}return (entry-b[b.length-1].c)/sd;}
+function longScan(b:Bar[],sig:(i:number)=>boolean,seed:number,gap=10){const a=atrArr(b,14),rnd=mulberry(seed);const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];let ou=-1;
+  for(let i=20;i<b.length-1;i++){if(!(a[i]>0))continue;if(sig(i)&&i>ou){const e=b[i].c,sd=2*a[i],r=bracketR(b,i,e,sd);if(r==null)continue;
+    setup.push({r,stopFrac:sd/e,period:q4(b[i].d)});const rj=20+Math.floor(rnd()*(b.length-1-20));if(a[rj]>0){const re=b[rj].c,rs=2*a[rj],rr=bracketR(b,rj,re,rs);if(rr!=null)ctrl.push({r:rr,stopFrac:rs/re,period:q4(b[i].d)});}ou=i+gap;}}
+  return{setup,ctrl};}
+function shortScan(b:Bar[],sig:(i:number)=>boolean,seed:number,gap=10){const a=atrArr(b,14),rnd=mulberry(seed);const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];let ou=-1;
+  for(let i=20;i<b.length-1;i++){if(!(a[i]>0))continue;if(sig(i)&&i>ou){const e=b[i].c,sd=2*a[i],r=bracketRshort(b,i,e,sd);if(r==null)continue;
+    setup.push({r,stopFrac:sd/e,period:q4(b[i].d)});const rj=20+Math.floor(rnd()*(b.length-1-20));if(a[rj]>0){const re=b[rj].c,rs=2*a[rj],rr=bracketRshort(b,rj,re,rs);if(rr!=null)ctrl.push({r:rr,stopFrac:rs/re,period:q4(b[i].d)});}ou=i+gap;}}
+  return{setup,ctrl};}
+function genRsi2(b:Bar[],s:number){const r=rsiArr(b,2);return longScan(b,i=>r[i]<10,s);}              // Connors RSI(2) mean-reversion long
+function genHi52(b:Bar[],s:number){return longScan(b,i=>{let hh=-Infinity;for(let j=Math.max(0,i-252);j<i;j++)hh=Math.max(hh,b[j].h);return hh>-Infinity&&b[i].c>=hh;},s,5);} // 52w-high breakout long
+function genRev5(b:Bar[],s:number){return longScan(b,i=>i>=6&&(b[i].c/b[i-5].c-1)<-0.12,s);}           // 5-day biggest-loser reversal long
+function genDown3(b:Bar[],s:number){return longScan(b,i=>i>=3&&b[i].c<b[i-1].c&&b[i-1].c<b[i-2].c&&b[i-2].c<b[i-3].c,s);} // 3 consecutive down closes → bounce
+function genBbhi(b:Bar[],s:number){const N=20;return shortScan(b,i=>{if(i<N)return false;const w=b.slice(i-N+1,i+1).map(x=>x.c);const m=w.reduce((a,x)=>a+x,0)/N;const sd=Math.sqrt(w.reduce((a,x)=>a+(x-m)**2,0)/N);return b[i].c>m+2*sd;},s);} // Bollinger UPPER-band fade short
 // vrp: long SVXY while VIX3M>VIX (contango); exit when VIX3M<=VIX (backwardation). Setup vs random SVXY entry.
 function genVrp(svxy:Bar[],vix:Map<string,number>,vix3m:Map<string,number>,seed:number){const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];
   const a=atrArr(svxy,14),rnd=mulberry(seed);let inpos=false,entry=0,ei=0,sdist=0,pd="";
@@ -154,8 +174,9 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     return new Response(JSON.stringify({ok:true,scorecard:row,regime:rcells},null,2),{headers:cors});
   }
 
-  if(edge==="bblo"||edge==="crypto"){
-    const uni=edge==="bblo"?EQUITY_UNIVERSE:CRYPTO;const gen=edge==="bblo"?genBblo:genCrypto;
+  const GEN:Record<string,(b:Bar[],s:number)=>{setup:HarnessTrade[],ctrl:HarnessTrade[]}>={bblo:genBblo,crypto:genCrypto,rsi2:genRsi2,bbhi:genBbhi,hi52:genHi52,rev5:genRev5,down3:genDown3};
+  if(GEN[edge]){
+    const uni=edge==="crypto"?CRYPTO:EQUITY_UNIVERSE;const gen=GEN[edge];
     const series=await Promise.all(uni.map(s=>daily(s)));
     series.forEach((b,idx)=>{if(b.length<60)return;bars+=b.length;spanLo=b[0].d<spanLo?b[0].d:spanLo;spanHi=b[b.length-1].d>spanHi?b[b.length-1].d:spanHi;
       const g=gen(b,idx*7919+13);setup.push(...g.setup);ctrl.push(...g.ctrl);
