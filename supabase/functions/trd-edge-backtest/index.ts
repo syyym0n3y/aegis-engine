@@ -222,6 +222,22 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     return new Response(JSON.stringify({ok:true,scorecard:await runScore("volspike",setup,ctrl,10,{note:"post-VIX-spike (>=trailing 90pct) SPY long, hold 5d, vs random 5d holds"})},null,2),{headers:cors});
   }
 
+  // vixts — NEW DATA CLASS (implied vol): does the VIX term structure (VIX3M/VIX) predict forward SPY returns?
+  // Backwardation (ratio<1 = fear extreme) is the tradeable signal per the VRP thread (volspike/vrp). Regime-tagged.
+  if(edge==="vixts"){
+    const spy=await daily("SPY"),vix=await daily("^VIX"),vix3=await daily("^VIX3M");
+    const vm=new Map(vix.map(x=>[x.d,x.c])),v3=new Map(vix3.map(x=>[x.d,x.c]));const rnd=mulberry(555);const holdN=5;
+    for(let i=1;i<spy.length-holdN;i++){const d=spy[i].d,v=vm.get(d),V3=v3.get(d);if(v==null||V3==null||v<=0)continue;
+      const ratio=V3/v,bkt=ratio<1?"backwardation":ratio<1.05?"flat":"contango",per=q4(d);
+      setup.push({r:spy[i+holdN].c/spy[i].c-1,stopFrac:1,period:per,regime:{ts:bkt}});
+      const rj=1+Math.floor(rnd()*(spy.length-holdN-1));ctrl.push({r:spy[rj+holdN].c/spy[rj].c-1,stopFrac:1,period:per,regime:{ts:bkt}});}
+    if(setup.length<30)return new Response(JSON.stringify({ok:false,edge,err:`too few (${setup.length})`}),{headers:cors});
+    const row=await runScore("vixts",setup,ctrl,10,{note:"VIX term-structure regimes → forward 5d SPY return vs random; the edge is CONDITIONAL (see regime)"});
+    const cells=scoreByRegime(setup,ctrl,10,["ts"]);
+    await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(cells.map(c=>({edge:"vixts",dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,h1_edge:Number.isFinite(c.h1Edge)?c.h1Edge:null,h2_edge:Number.isFinite(c.h2Edge)?c.h2Edge:null,holds_both:c.holdsBoth,run_at:new Date().toISOString()})))}).catch(()=>{});
+    return new Response(JSON.stringify({ok:true,scorecard:row,regime:cells},null,2),{headers:cors});
+  }
+
   const GEN:Record<string,(b:Bar[],s:number)=>{setup:HarnessTrade[],ctrl:HarnessTrade[]}>={bblo:genBblo,crypto:genCrypto,rsi2:genRsi2,bbhi:genBbhi,hi52:genHi52,rev5:genRev5,down3:genDown3};
   if(GEN[edge]){
     const uni=edge==="crypto"?CRYPTO:EQUITY_UNIVERSE;const gen=GEN[edge];

@@ -4784,3 +4784,20 @@ technical/statistical/seasonal/microstructural factor space in free+futures data
 found. HONEST BOUNDARY: "every possible factor" is unbounded, but every factor class IN THE DATA WE HOLD is now
 accounted for. Further edges would require NEW data classes (options/IV surface, order-flow, fundamentals, alt-data)
 — a data-acquisition question, not a sweep question. The sweep is done; the ledger (trd_lineage) is the full record.
+
+## D-276 — NEW DATA CLASS (implied vol): VIX term-structure confirms the VRP/fear-reversion family as the strongest near-miss thread
+Pushed past the price-only sweep into implied-vol data (Yahoo VIX complex — a genuinely new data class). Tested the
+VIX term structure (VIX3M/VIX) as a predictor of forward 5d SPY returns, regime-tagged:
+  backwardation (VIX>VIX3M, fear extreme): vs-random +0.0041 t=1.79, H1 +0.0040 / H2 +0.0054 HOLDS both halves.
+  contango (normal): +0.0006 t=1.25 (just drift).  flat: ~0, fails OOS.
+CONVERGENCE (the real finding): TWO independent implied-vol "buy fear" signals now agree —
+  volspike (VIX level top-10%): +0.28%/5d vs random, t=2.07, holds OOS.
+  vixts backwardation (VIX>VIX3M): +0.41%/5d vs random, t=1.79, holds OOS.
+Both positive, both OOS-stable, both the variance-risk-premium / overreaction-to-fear effect (same family as vrp
+contango). Neither clears the strict single-test bar (t>=2/DSR), and the ~20-setup multiple-testing penalty applies —
+so this is a NEAR-MISS CLASS, not a validated edge. BUT the convergence of independent formulations is more credible
+than any single one, and it's economically grounded (VRP is a documented, partially-arbed premium). VERDICT: the
+fear-reversion/VRP family is the strongest unexploited thread — worth ONE pre-registered consolidated test (combine
+level + term-structure into a single signal, fixed rules, then judge once) + forward tracking, NOT more mining.
+This is the honest frontier: the price-factor space is exhausted; implied-vol shows a real modest premium that needs
+a clean consolidated formulation to confirm, not another sweep. vixts logged near-miss in trd_lineage.
