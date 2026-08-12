@@ -4762,3 +4762,25 @@ HONEST NOTE on the trial counter: it keys per-edge-family, so each setup shows n
 ~17 cross-setup trials. The true multiple-testing penalty is larger than the per-edge DSR reflects — accounted for
 here manually (Bonferroni ~t>=2.9). Net: exhaustive sweep of daily/cross-sectional/calendar/vol classes → 0 clean
 new edges; volspike the lone marginal candidate. Confirms the engine's brutal base rate yet again.
+
+## D-275 — Intraday microstructure (last dataset): gap-follow DEAD, first-hour a weak echo of ORB → sweep COMPLETE
+Extended the futures engine with two intraday factors vs random-sign control, full 4yr re-pull (~$0 real):
+  gapfollow (overnight gap predicts day direction): edge -0.00008 t=0.34 — NO edge, gaps neither follow nor fade.
+  firsthour (09:30-10:30 sign predicts rest-of-day): edge +0.00045, H1 +0.0007 / H2 +0.0001 holds_both but t=1.77
+    (<2), tiny magnitude, H2 near-zero — a WEAK, DECAYING ECHO of orbfollow (same intraday-momentum mechanism,
+    already captured by the validated ORB edge). Not a new tradeable edge.
+→ REJECTED both. This was the last un-mined dataset.
+
+## EXHAUSTIVE SWEEP COMPLETE — final map (D-273/274/275 + prior)
+Every enumerable factor class in the data we hold has been tested through the uniform gauntlet:
+  Daily single-name technical (rsi2/rev5/down3/hi52/bbhi): ALL drift → rejected.
+  Cross-sectional: momentum (xsec) REAL bull-conditional ✓ | reversal (xrev) dead.
+  Calendar/seasonality (turn-of-month): decayed → rejected.
+  Volatility (post-VIX-spike): skeptical near-miss (VRP family; fails multiple-testing/DSR).
+  Intraday futures: ORB-follow VALIDATED ✓ | gap-follow dead | first-hour weak echo of ORB.
+SURVIVORS after the ENTIRE sweep: orbfollow (validated) + xsec-momentum (validated, bull-gated). NEAR-MISSES:
+crypto-momentum, volspike. Everything else (15+ setups) REJECTED. This is D-070 proven exhaustively: the observable
+technical/statistical/seasonal/microstructural factor space in free+futures data yields ~2 real edges, both already
+found. HONEST BOUNDARY: "every possible factor" is unbounded, but every factor class IN THE DATA WE HOLD is now
+accounted for. Further edges would require NEW data classes (options/IV surface, order-flow, fundamentals, alt-data)
+— a data-acquisition question, not a sweep question. The sweep is done; the ledger (trd_lineage) is the full record.
