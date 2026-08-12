@@ -105,6 +105,24 @@ function genPairs(A:Bar[],B:Bar[],seed:number){const setup:HarnessTrade[]=[],ctr
 async function vixMaps(){const v=await daily("^VIX",false),v3=await daily("^VIX3M",false);
   return[new Map(v.map(x=>[x.d,x.c])),new Map(v3.map(x=>[x.d,x.c]))] as const;}
 
+// shared: bump trial counter, score through the harness, upsert scorecard, return the row (DRY for sweep classes)
+async function runScore(edge:string,setup:HarnessTrade[],ctrl:HarnessTrade[],costBps:number,detail:Record<string,unknown>){
+  const runKey=`edge-backtest:${edge}:${new Date().toISOString().slice(0,13)}`;
+  await fetch(`${SB}/rest/v1/trd_trial_counter`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({family:`edge-backtest:${edge}`,run_key:runKey})}).catch(()=>{});
+  const tr=await fetch(`${SB}/rest/v1/trd_trial_counter?family=eq.edge-backtest:${edge}&select=id`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+  const sc=scoreEdge(edge,setup,ctrl,{costBps,nTrials:Math.max(1,Array.isArray(tr)?tr.length:1),benchmarkSharpe:0.5});
+  const row={edge:sc.edge,run_at:new Date().toISOString(),n:sc.n,n_trials:sc.nTrials,abs_r:sc.absR,cost_r:sc.costR,net_r:sc.netR,cost_bps:+costBps.toFixed(2),
+    vs_random_edge:sc.vsRandomEdge,vs_random_t:sc.vsRandomT,vs_random_passes:sc.vsRandomPasses,deflated_sharpe:sc.deflatedSharpe,sharpe:sc.sharpe,max_dd:sc.maxDrawdown,
+    min_trl:Number.isFinite(sc.minTRL)?sc.minTRL:null,oos_h1:Number.isFinite(sc.oosH1)?sc.oosH1:null,oos_h2:Number.isFinite(sc.oosH2)?sc.oosH2:null,holds_both:sc.holdsBoth,
+    gate_passed:sc.gatePassed,gate_failing:sc.gateFailing,detail:{...detail,vs_random_verdict:sc.vsRandomVerdict}};
+  await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(row)}).catch(()=>{});
+  return row;
+}
+// single-series calendar/timing test: on each signal day, hold N days → fractional return; matched random-day control
+function timingTrades(b:Bar[],isSig:(i:number)=>boolean,holdN:number,seed:number){const rnd=mulberry(seed);const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];
+  for(let i=1;i<b.length-holdN;i++){if(isSig(i)){setup.push({r:b[i+holdN].c/b[i].c-1,stopFrac:1,period:q4(b[i].d)});
+    const rj=1+Math.floor(rnd()*(b.length-holdN-1));ctrl.push({r:b[rj+holdN].c/b[rj].c-1,stopFrac:1,period:q4(b[i].d)});}}
+  return{setup,ctrl};}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const edge=new URL(req.url).searchParams.get("edge")||"bblo";
   // orbfollow is scored directly from the futures vs-random results (already 4yr, matched random, split-half OOS)
@@ -172,6 +190,36 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     const rcells=scoreByRegime(setup,ctrl,costBps,["market","dispersion"]);
     await fetch(`${SB}/rest/v1/trd_edge_regime?on_conflict=edge,dimension,bucket`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rcells.map(c=>({edge:"xsec",dimension:c.dimension,bucket:c.bucket,n:c.n,abs_r:c.absR,net_r:c.netR,vs_random_edge:c.vsRandomEdge,vs_random_t:c.vsRandomT,passes:c.passes,h1_edge:Number.isFinite(c.h1Edge)?c.h1Edge:null,h2_edge:Number.isFinite(c.h2Edge)?c.h2Edge:null,holds_both:c.holdsBoth,run_at:new Date().toISOString()})))}).catch(()=>{});
     return new Response(JSON.stringify({ok:true,scorecard:row,regime:rcells},null,2),{headers:cors});
+  }
+
+  // xrev — cross-sectional 1-month REVERSAL (long losers / short winners), the opposite horizon to xsec momentum
+  if(edge==="xrev"){
+    const UNIV=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","JPM","V","MA","UNH","HD","PG","COST","JNJ","ABBV","WMT","KO","PEP","BAC","CRM","AMD","NFLX","ADBE","CSCO","ACN","MCD","LIN","TMO","ABT","DHR","INTC","QCOM","TXN","NKE","DIS","VZ","CMCSA","XOM"];
+    const series=await Promise.all(UNIV.map(s=>daily(s)));const me=series.map(b=>{const m=new Map<string,number>();for(const x of b)m.set(x.d.slice(0,7),x.c);return m;});
+    const ms=new Set<string>();me.forEach(m=>m.forEach((_,k)=>ms.add(k)));const months=[...ms].sort();const rnd=mulberry(777);const Q=Math.max(3,Math.floor(UNIV.length/5));
+    for(let i=2;i<months.length-1;i++){const cand:{rev:number,fwd:number}[]=[];
+      for(let n=0;n<UNIV.length;n++){const m=me[n];const p1=m.get(months[i-1]),p0=m.get(months[i]),pf=m.get(months[i+1]);if(p1&&p0&&pf&&p1>0&&p0>0)cand.push({rev:p0/p1-1,fwd:pf/p0-1});}
+      if(cand.length<Q*3)continue;cand.sort((a,b)=>a.rev-b.rev);const L=cand.slice(0,Q),S=cand.slice(-Q);
+      const per=`${months[i].slice(0,4)}Q${Math.floor((+months[i].slice(5,7)-1)/3)+1}`;
+      setup.push({r:L.reduce((s,x)=>s+x.fwd,0)/Q-S.reduce((s,x)=>s+x.fwd,0)/Q,stopFrac:1,period:per});
+      const sh=[...cand];for(let k=sh.length-1;k>0;k--){const j=Math.floor(rnd()*(k+1));[sh[k],sh[j]]=[sh[j],sh[k]];}
+      ctrl.push({r:sh.slice(0,Q).reduce((s,x)=>s+x.fwd,0)/Q-sh.slice(Q,2*Q).reduce((s,x)=>s+x.fwd,0)/Q,stopFrac:1,period:per});}
+    if(setup.length<30)return new Response(JSON.stringify({ok:false,edge,err:`too few (${setup.length})`}),{headers:cors});
+    return new Response(JSON.stringify({ok:true,scorecard:await runScore("xrev",setup,ctrl,40,{universe:UNIV.length,months:setup.length,note:"cross-sectional 1-month reversal: long losers/short winners vs random baskets"})},null,2),{headers:cors});
+  }
+  // tom — turn-of-month seasonality: long the index on the last trading day, hold 4 days, vs random 4-day holds
+  if(edge==="tom"){
+    for(const sym of ["SPY","QQQ","DIA"]){const b=await daily(sym);if(b.length<100)continue;const g=timingTrades(b,i=>i+1<b.length&&b[i+1].d.slice(5,7)!==b[i].d.slice(5,7),4,sym.length*31+3);setup.push(...g.setup);ctrl.push(...g.ctrl);}
+    if(setup.length<30)return new Response(JSON.stringify({ok:false,edge,err:`too few (${setup.length})`}),{headers:cors});
+    return new Response(JSON.stringify({ok:true,scorecard:await runScore("tom",setup,ctrl,10,{note:"turn-of-month: long index last trading day, hold 4d, vs random (SPY/QQQ/DIA)"})},null,2),{headers:cors});
+  }
+  // volspike — post-volatility-spike reversion: long SPY when VIX >= trailing-252 90th pct, hold 5 days
+  if(edge==="volspike"){
+    const spy=await daily("SPY");const vx=await daily("^VIX");const vmap=new Map(vx.map(x=>[x.d,x.c]));const va=spy.map(x=>vmap.get(x.d));
+    const isSig=(i:number)=>{const v=va[i];if(v==null)return false;const w:number[]=[];for(let k=Math.max(0,i-252);k<i;k++){const vv=va[k];if(vv!=null)w.push(vv);}if(w.length<50)return false;w.sort((a,b)=>a-b);return v>=w[Math.floor(w.length*0.9)];};
+    const g=timingTrades(spy,isSig,5,911);setup.push(...g.setup);ctrl.push(...g.ctrl);
+    if(setup.length<30)return new Response(JSON.stringify({ok:false,edge,err:`too few (${setup.length})`}),{headers:cors});
+    return new Response(JSON.stringify({ok:true,scorecard:await runScore("volspike",setup,ctrl,10,{note:"post-VIX-spike (>=trailing 90pct) SPY long, hold 5d, vs random 5d holds"})},null,2),{headers:cors});
   }
 
   const GEN:Record<string,(b:Bar[],s:number)=>{setup:HarnessTrade[],ctrl:HarnessTrade[]}>={bblo:genBblo,crypto:genCrypto,rsi2:genRsi2,bbhi:genBbhi,hi52:genHi52,rev5:genRev5,down3:genDown3};

@@ -4745,3 +4745,20 @@ survivors. All 5 logged to trd_lineage as rejected (per the D-272 convention). L
 survivor universe is meaningless; only vs-random is skill, and simple daily technical triggers have none. NEXT (if
 continuing the sweep): test STRUCTURALLY-DIFFERENT classes — cross-sectional short-term reversal, calendar/seasonality
 (turn-of-month), volatility-conditioned entries — not more MR-long variants (all will show the same drift).
+
+## D-274 — Sweep batch 2 (structurally-different classes): xrev/tom dead, volspike a skeptical candidate
+Tested three classes NOT reducible to the daily-MR-drift pattern, each through the gauntlet:
+  xrev (cross-sectional 1-month REVERSAL, long losers/short winners): vs-random -0.0047 t=-1.37, NEG both halves
+    → REJECTED. Reversal loses at the monthly horizon (momentum is the effect here; reversal is a shorter/weekly play).
+  tom (turn-of-month, long index last day hold 4d): vs-random +0.0034 t=3.13 POOLED but H1 +0.0034 / H2 -0.0037
+    → REJECTED (decayed). Real historically, gone/negative recently — textbook post-publication decay; OOS caught it.
+  volspike (buy SPY when VIX>=trailing-252 90th pct, hold 5d): vs-random +0.0028 t=2.07, H1 +0.0050 / H2 +0.0020
+    HOLDS both halves — the ONLY sweep candidate to pass vs-random AND survive OOS. BUT: t=2.07 is WITHIN the
+    multiple-testing noise band (~17 setups tested → Bonferroni-95 needs ~t>=2.9), per-trade Sharpe 0.126, FAILS the
+    DSR>=0.95 gate. Economically motivated (post-panic reversion / variance-risk-premium family, same as vrp) and
+    OOS-stable, so NOT rejected — a SKEPTICAL near-miss candidate. Do NOT promote on this alone; needs forward data
+    or a tighter test (proper cross-setup trial deflation, or a purer VRP formulation).
+HONEST NOTE on the trial counter: it keys per-edge-family, so each setup shows n_trials=1 and DSR doesn't see the
+~17 cross-setup trials. The true multiple-testing penalty is larger than the per-edge DSR reflects — accounted for
+here manually (Bonferroni ~t>=2.9). Net: exhaustive sweep of daily/cross-sectional/calendar/vol classes → 0 clean
+new edges; volspike the lone marginal candidate. Confirms the engine's brutal base rate yet again.
