@@ -13,8 +13,10 @@ const SB=Deno.env.get("SUPABASE_URL")!,SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_K
 const H={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json"};
 // ~50 liquid ETFs — sector SPDRs, index, international, bonds, commodities, styles/industries. Close analogs to the
 // validated index/gold futures edge; ETFs (not single stocks) keep the generalization tight.
-const UNIVERSE=["XLK","XLF","XLE","XLV","XLI","XLY","XLP","XLU","XLB","XLRE","XLC","IWM","MDY","IJH","IJR","VTI","VEA","VWO","EFA","EEM","FXI","EWJ","EWZ","INDA","TLT","IEF","SHY","HYG","LQD","TIP","AGG","SLV","USO","GDX","GDXJ","DBC","UNG","VUG","VTV","MTUM","QUAL","IWF","IWD","SMH","XBI","KRE","ITB","XRT","IYR","XME"];
-const RISK_NOTIONAL=0.02,POS_CAP=40,RANGE_START=570,RANGE_END=630,CONC=15;
+const UNIVERSE=["XLK","XLF","XLE","XLV","XLI","XLY","XLP","XLU","XLB","XLRE","XLC","IWM","MDY","IJH","IJR","VTI","VEA","VWO","EFA","EEM","FXI","EWJ","EWZ","INDA","TLT","IEF","SHY","HYG","LQD","TIP","AGG","SLV","USO","GDX","GDXJ","DBC","UNG","VUG","VTV","MTUM","QUAL","IWF","IWD","SMH","XBI","KRE","ITB","XRT","IYR","XME",
+  "VOO","VO","VB","VYM","VIG","USMV","SPLV","SDY","SCHD","DVY","NOBL","PFF","VGT","VFH","VDE","VHT","VIS","VCR","VDC","VPU","VAW","VNQ","IEMG","IEFA","VXUS","ACWI","MCHI","EWG","EWU","EWY","EWT","EWA","EWC","EWH","EWW","VGK","EZU",
+  "BND","JNK","IEI","GOVT","MBB","VCIT","MUB","EMB","IAU","SOXX","IBB","KBE","XHB","XOP","OIH","IGV","JETS","ICLN","TAN"];
+const RISK_NOTIONAL=0.02,POS_CAP=60,RANGE_START=570,RANGE_END=630,CONC=20;
 interface Bar{h:number;l:number;c:number;m:number;d:string}
 function etOffH(t:number):number{const d=new Date(t*1000),y=d.getUTCFullYear();
   const mar1=new Date(Date.UTC(y,2,1)).getUTCDay();const dstStart=Date.UTC(y,2,1+((7-mar1)%7)+7,7)/1000;

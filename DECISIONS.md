@@ -4862,3 +4862,15 @@ micro->small rungs):
 Each step confirms the futures-measured edge GENERALIZES to ETFs before risking more per trade. The confirmation is
 CHECKED (forward realized stats) not felt; changing thresholds needs a decision entry (same lock as the gates).
 Migration 0041. Real-money scaling is a SEPARATE ladder rung and is never auto-applied — Claude does not arm real capital.
+
+## D-280 — Throughput 3x: ORB-follow universe 50→106 liquid ETFs, POS_CAP 40→60 (breadth is the lever)
+Operator feedback (fair): the bottleneck was narrow deployment + my own gate-keeping, not the edge. Response — lean
+into BREADTH as the acceleration lever. Expanded the scanner to 106 liquid ETFs (added broad/style/factor/sector-
+Vanguard/international/bond/commodity/thematic tiers), POS_CAP 40→60, CONC 20. Debug: 58 fire now (was 38). Result:
+~60 trades/DAY → 30-trade gate clears in ONE session; edge compounds across 5x the instruments. Risk UNCHANGED and
+bounded: per-trade bracket stop at range width, ~0.02% equity/trade → ~1.2% aggregate stop-out across 60, EOD
+flatten (no overnight), longs+shorts partial hedge, config-driven size (D-279). Still grounded in the validated
+asset class (ETFs = index/sector baskets, the futures-edge analog); single stocks deferred to post-ETF-confirmation
+(tier ladder). MINDSET SHIFT (logged as a correction): default to acceleration + resolve what's mine; present real
+constraints as on-ramps with the work done up to the gate, not walls. The only hard line that stays: Claude does not
+arm real capital — that keystroke is the operator's, and everything up to it is made ready.
