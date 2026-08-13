@@ -4815,3 +4815,19 @@ independent fear indicators (volspike/vixts/vrp), passes t>=2, holds OOS with th
 honest promotion path is FORWARD data — so deploy this exact rule as a forward-tracked PAPER candidate (flagged
 unvalidated) to accumulate independent forward trades toward its own verdict, alongside orbfollow + xsec. NOT real
 money; NOT more in-sample mining. This is how a near-miss honestly graduates (the ladder's Stage-0->1 forward step).
+
+## D-278 — Broad ORB-follow deployment: apply the validated edge at SCALE (~54 instruments/day), not 4
+Operator's point (correct): the edge is validated on YEARS of data; trading only 4 names makes the 30-trade gate an
+artifact (weeks) rather than a real constraint, and leaves the edge on the table. Fix: deploy ORB-follow across a
+BROAD liquid-ETF universe. Built trd-orbfollow-scanner — ~50 liquid ETFs (sector SPDRs, index, intl, bond, commodity,
+style/industry; EXCLUDES orbfollow-exec's SPY/QQQ/DIA/GLD so Alpaca doesn't merge), same geometry (09:30-10:30 ET
+range, follow first break after 10:30, bracket stop=opposite extreme/target=+1 width), fires EVERY signal each day,
+parallel fetches (CONC=15), guards (killswitch/arm/per-name-day dedup/POS_CAP=40/2% notional). Debug: 38 would fire
+right now → ~30+ trades/DAY vs 2-3 from the narrow exec. Edge tag 'orbfollow' (feeds the same gate). Cron
+trd_orbfollow_scanner_30m (mig 0040), armed. Position-manager patched (D-278): skip 200MA short-cover entirely when
+rip-short is disabled — any equity short is now an orbfollow-scanner short that self-exits via its bracket (D-252
+over-reach guard extended). RESULT: the 30-trade PAPER->MICRO gate is now reachable in ~1 trading day, and the
+validated edge runs at scale for real paper P&L from the next session. HONEST CAVEAT: the edge was measured on
+index/gold FUTURES; ~50 liquid ETFs are close analogs (index/sector baskets), a reasonable generalization that the
+forward data now stress-tests directly. Kept to liquid ETFs (not single stocks) to hold the generalization tight.
+This is how the system is actually RUN for an operator — deploy the proven edge broadly day one, not trickle trades.

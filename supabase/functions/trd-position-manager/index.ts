@@ -19,12 +19,16 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   if(cancelSyms.length){const oo=await fetch(`${PAPER}/v2/orders?status=open&limit=200`,{headers:AH}).then(r=>r.json()).catch(()=>[]);const cancelled:string[]=[];
     for(const o of (Array.isArray(oo)?oo:[]) as {id:string,symbol:string}[]){if(cancelSyms.includes(o.symbol)){const ok=(await fetch(`${PAPER}/v2/orders/${o.id}`,{method:"DELETE",headers:AH}).catch(()=>null))?.ok;if(ok)cancelled.push(o.symbol);}}
     return new Response(JSON.stringify({ok:true,cancelled}),{headers:cors});}
-  const [ks,pairsOpen,xsecOpen]=await Promise.all([
+  const [ks,pairsOpen,xsecOpen,ripDis]=await Promise.all([
     fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`,{headers:H}).then(r=>r.json()).catch(()=>[]),
     fetch(`${SB}/rest/v1/trd_pairs_pos?open=eq.true&select=leg_a,leg_b`,{headers:H}).then(r=>r.json()).catch(()=>[]),
     fetch(`${SB}/rest/v1/trd_xsec_pos?open=eq.true&select=sym`,{headers:H}).then(r=>r.json()).catch(()=>[]),
+    fetch(`${SB}/rest/v1/trd_edge_disable?edge=eq.ripshort&select=disabled`,{headers:H}).then(r=>r.json()).catch(()=>[]),
   ]);
   const killed=!!ks?.[0]?.active;
+  // D-278: rip-short is disabled → NO rip-short positions should exist, so any equity SHORT is an orbfollow-scanner
+  // short that self-exits via its bracket. Skip 200MA short-cover entirely when rip-short is off (avoids over-reach).
+  const ripDisabled=!!(ripDis?.[0]?.disabled);
   const ownedElsewhere=new Set<string>(["SVXY","SPY","QQQ","DIA","GLD"]);  // SVXY=vrp; SPY/QQQ/DIA/GLD=orbfollow (own bracket exit)
   for(const p of (pairsOpen as {leg_a:string,leg_b:string}[]))for(const s of [p.leg_a,p.leg_b])ownedElsewhere.add(s);
   for(const x of (xsecOpen as {sym:string}[]))ownedElsewhere.add(x.sym);
@@ -43,7 +47,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
         continue;
       }
       if(ownedElsewhere.has(p.symbol))continue;
-      if(p.side!=="short")continue;
+      if(p.side!=="short"||ripDisabled)continue;  // orbfollow shorts self-exit via bracket; no rip-short when disabled
       const m=await ma200(p.symbol);if(!m)continue;
       if(m.close>m.ma){const ok=await closePos(p.symbol);if(ok)actions.push(`EXIT ${p.symbol} short — rip-short thesis flipped (close ${m.close.toFixed(2)} > 200MA ${m.ma.toFixed(2)}), P&L ${(+p.unrealized_pl).toFixed(2)}`);}
     }
