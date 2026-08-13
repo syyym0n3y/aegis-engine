@@ -20,15 +20,12 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const doneRows=await fetch(`${SB}/rest/v1/trd_crypto_scan?win=eq.usopen&select=sym`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   const done=new Set((Array.isArray(doneRows)?doneRows:[]).map((r:{sym:string})=>r.sym));
   const next=universe.filter(s=>!done.has(s)).slice(0,batch);
-  // BACKGROUND WORK (EdgeRuntime.waitUntil) — the 100s pull runs AFTER we respond, so pg_net's short timeout doesn't
-  // kill it mid-scan (the stall bug). Respond fast; scan + promote in the background.
-  const work=(async()=>{
-    if(next.length)await fetch(`${FN}?symbols=${next.join(",")}&years=1.5`).then(r=>r.json()).catch(()=>null);
-    await promote();
-  })();
-  // deno-lint-ignore no-explicit-any
-  try{(globalThis as any).EdgeRuntime?.waitUntil?.(work);}catch{/* ignore */}
-  return new Response(JSON.stringify({ok:true,universe:universe.length,scanned_before:done.size,queued:next,note:"scanning in background (EdgeRuntime.waitUntil)"},null,2),{headers:cors});
+  // SYNCHRONOUS (D-291): await the scan+promote before responding, so a caller that holds the connection (the
+  // background sweep driver) reliably completes the store. pg_net/cron can't hold it long enough — a long-running
+  // bash driver does, and covers the universe reliably.
+  if(next.length)await fetch(`${FN}?symbols=${next.join(",")}&years=1.5`).then(r=>r.json()).catch(()=>null);
+  await promote();
+  return new Response(JSON.stringify({ok:true,universe:universe.length,scanned_total:done.size+next.length,remaining:universe.length-done.size-next.length,this_run:next},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
 async function promote(){
   const passers=await fetch(`${SB}/rest/v1/trd_crypto_scan?win=eq.usopen&t=gte.2&holds_both=eq.true&select=sym,t`,{headers:H}).then(r=>r.json()).catch(()=>[]);
