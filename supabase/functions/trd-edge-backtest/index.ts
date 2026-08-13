@@ -70,6 +70,17 @@ function genHi52(b:Bar[],s:number){return longScan(b,i=>{let hh=-Infinity;for(le
 function genRev5(b:Bar[],s:number){return longScan(b,i=>i>=6&&(b[i].c/b[i-5].c-1)<-0.12,s);}           // 5-day biggest-loser reversal long
 function genDown3(b:Bar[],s:number){return longScan(b,i=>i>=3&&b[i].c<b[i-1].c&&b[i-1].c<b[i-2].c&&b[i-2].c<b[i-3].c,s);} // 3 consecutive down closes → bounce
 function genBbhi(b:Bar[],s:number){const N=20;return shortScan(b,i=>{if(i<N)return false;const w=b.slice(i-N+1,i+1).map(x=>x.c);const m=w.reduce((a,x)=>a+x,0)/N;const sd=Math.sqrt(w.reduce((a,x)=>a+(x-m)**2,0)/N);return b[i].c>m+2*sd;},s);} // Bollinger UPPER-band fade short
+// confluence — MULTI-TIMEFRAME momentum agreement: long when 5d/20d/60d momentum ALL up, short when ALL down. Tests
+// the operator's thesis that cross-timeframe agreement predicts direction, vs a random-direction control.
+function genConfluence(b:Bar[],seed:number){const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];if(b.length<80)return{setup,ctrl};
+  const a=atrArr(b,14),rnd=mulberry(seed);let ou=-1;
+  for(let i=60;i<b.length-1;i++){if(!(a[i]>0)||i<=ou)continue;
+    const m5=b[i].c/b[i-5].c-1,m20=b[i].c/b[i-20].c-1,m60=b[i].c/b[i-60].c-1;const up=m5>0&&m20>0&&m60>0,dn=m5<0&&m20<0&&m60<0;
+    if(!up&&!dn)continue;const e=b[i].c,sd=2*a[i];const r=up?bracketR(b,i,e,sd):bracketRshort(b,i,e,sd);if(r==null)continue;
+    setup.push({r,stopFrac:sd/e,period:q4(b[i].d)});
+    const rj=60+Math.floor(rnd()*(b.length-1-60));if(a[rj]>0){const re=b[rj].c,rs=2*a[rj];const rr=rnd()<0.5?bracketR(b,rj,re,rs):bracketRshort(b,rj,re,rs);if(rr!=null)ctrl.push({r:rr,stopFrac:rs/re,period:q4(b[i].d)});}
+    ou=i+10;}
+  return{setup,ctrl};}
 // vrp: long SVXY while VIX3M>VIX (contango); exit when VIX3M<=VIX (backwardation). Setup vs random SVXY entry.
 function genVrp(svxy:Bar[],vix:Map<string,number>,vix3m:Map<string,number>,seed:number){const setup:HarnessTrade[]=[],ctrl:HarnessTrade[]=[];
   const a=atrArr(svxy,14),rnd=mulberry(seed);let inpos=false,entry=0,ei=0,sdist=0,pd="";
@@ -252,7 +263,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     return new Response(JSON.stringify({ok:true,scorecard:row},null,2),{headers:cors});
   }
 
-  const GEN:Record<string,(b:Bar[],s:number)=>{setup:HarnessTrade[],ctrl:HarnessTrade[]}>={bblo:genBblo,crypto:genCrypto,rsi2:genRsi2,bbhi:genBbhi,hi52:genHi52,rev5:genRev5,down3:genDown3};
+  const GEN:Record<string,(b:Bar[],s:number)=>{setup:HarnessTrade[],ctrl:HarnessTrade[]}>={bblo:genBblo,crypto:genCrypto,rsi2:genRsi2,bbhi:genBbhi,hi52:genHi52,rev5:genRev5,down3:genDown3,confluence:genConfluence};
   if(GEN[edge]){
     const uni=edge==="crypto"?CRYPTO:EQUITY_UNIVERSE;const gen=GEN[edge];
     const series=await Promise.all(uni.map(s=>daily(s)));

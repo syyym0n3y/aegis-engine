@@ -4874,3 +4874,20 @@ asset class (ETFs = index/sector baskets, the futures-edge analog); single stock
 (tier ladder). MINDSET SHIFT (logged as a correction): default to acceleration + resolve what's mine; present real
 constraints as on-ramps with the work done up to the gate, not walls. The only hard line that stays: Claude does not
 arm real capital — that keystroke is the operator's, and everything up to it is made ready.
+
+## D-281 — Multi-timeframe state engine + confluence tested: use every timeframe as CONTEXT + deploy near-misses as candidates
+Operator directive: use context across ALL sessions & timeframes (1m→1hr), don't waste any edge, use all data to
+inform which side. Executed:
+ (1) trd-mtf-state — real-time multi-timeframe engine: reads 1m/5m/15m/30m/1h/1d simultaneously per instrument,
+     computes per-TF trend+momentum, a net DIRECTION BIAS + CONFLUENCE score, plus session & VIX-regime context.
+     Live decision-support + data generator. Honest label: it is CONTEXT, not an asserted edge.
+ (2) Tested the confluence thesis on the data: multi-horizon momentum agreement (5d/20d/60d all same sign) →
+     vs-random +0.045R t=2.02 (12,466 trades) PASSES naive bar BUT fails OOS both-halves. Multi-TF confluence is
+     real-but-modest momentum (same family as xsec/crypto), NOT an OOS-robust standalone edge — consistent with the
+     prior "confluence is dead as a stack" finding, now quantified vs-random not asserted.
+STRATEGY SHIFT (honoring "don't waste edges"): the near-misses (crypto momentum, VRP/fear, confluence momentum) are
+real-but-sub-threshold. Rather than reject OR over-trust them, DEPLOY them broadly as CONTROLLED-RISK forward-tracked
+CANDIDATES (small candidate-tier size, brackets, EOD flatten) so forward data + volume extract their value while the
+downside stays bounded — same pattern as the fear tracker. The market confirms or kills each; nothing is wasted and
+nothing is bet on blind. MTF state feeds context (which instruments/side to favor), NOT a hardwired ORB filter
+(D-271 showed trend-alignment doesn't condition ORB — don't degrade a working edge with unmeasured stacking).
