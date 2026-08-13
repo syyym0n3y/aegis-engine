@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -36,7 +36,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -108,6 +108,16 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (r === null || rPrev === null) return null;
       if (rPrev < 30 && r >= 30) return { side: "long", stop: lo };
       if (rPrev > 70 && r <= 70) return { side: "short", stop: hi };
+      return null;
+    }
+    case "inside": { // inside-bar breakout: bar i-1 fully inside the "mother" bar i-2 (a volatility contraction),
+      // then bar i CLOSES beyond the mother's range → trade the expansion, stop at the mother's far side.
+      if (i < 2) return null;
+      const mother = bars[i - 2], insideBar = bars[i - 1];
+      const isInside = insideBar.high <= mother.high && insideBar.low >= mother.low;
+      if (!isInside) return null;
+      if (b.close > mother.high) return { side: "long", stop: mother.low };
+      if (b.close < mother.low) return { side: "short", stop: mother.high };
       return null;
     }
     case "delivery": { // consolidation (balance) → displacement break = Change In State of Delivery

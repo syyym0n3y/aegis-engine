@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { type Bar, enumerate, GRAMMAR, runComponent, specKey } from "./trd-grammar.ts";
+import { type Bar, enumerate, GRAMMAR, runComponent, runComponentTrades, specKey } from "./trd-grammar.ts";
 
 Deno.test("enumerate covers the full product space and keys are unique", () => {
   const specs = enumerate();
@@ -12,6 +12,22 @@ Deno.test("Pranam's strategy is one point in the grammar (sweep + with-EMA + rr1
   const specs = enumerate();
   const hit = specs.find((s) => s.trigger === "sweep" && s.trendMode === "with" && s.rr === 1 && s.emaPeriod === 30);
   assert(hit, "the liquidity-grab strategy must be expressible in the algebra");
+});
+
+Deno.test("inside-bar break: fires only on a real inside bar + break, in the break direction, no look-ahead", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "inside" as const, emaPeriod: 2, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 10 ascending, distinct-range filler bars (each higher H AND higher L → NEVER inside the prior → no trigger)
+  const asc = (n: number): Bar[] => Array.from({ length: n }, (_, i) => { const p = 90 + i; return bar(p - 0.3, p + 0.5, p - 0.5, p + 0.2, i); });
+  // …then a narrow MOTHER (110/104), an INSIDE bar (109/105), an up-BREAK close (111>110), and two bars to
+  // fill (next-open) and resolve at the +1R target (entry 111, stop 104, risk 7, target 118).
+  const up: Bar[] = [...asc(10), bar(105, 110, 104, 106, 10), bar(107, 109, 105, 108, 11), bar(108, 112, 107, 111, 12), bar(111, 114, 110, 113, 13), bar(118, 120, 117, 119, 14)];
+  const tr = runComponentTrades(up, spec, { costRPerSide: 0 });
+  assert(tr.length > 0, "inside-bar break should generate a trade on the up-break");
+  assertEquals(tr[0].side, "long");
+  // pure ascending (no inside bar ever) must produce ZERO inside-break trades
+  const none = runComponentTrades(asc(14), spec, { costRPerSide: 0 });
+  assertEquals(none.length, 0, "no inside bar → no inside-break trade");
 });
 
 Deno.test("runComponent produces trades and applies cost", () => {
