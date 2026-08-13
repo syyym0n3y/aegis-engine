@@ -20,13 +20,19 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const doneRows=await fetch(`${SB}/rest/v1/trd_crypto_scan?win=eq.usopen&select=sym`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   const done=new Set((Array.isArray(doneRows)?doneRows:[]).map((r:{sym:string})=>r.sym));
   const next=universe.filter(s=>!done.has(s)).slice(0,batch);
-  let scanned:string[]=[];
-  if(next.length){await fetch(`${FN}?symbols=${next.join(",")}&years=1.5`).then(r=>r.json()).catch(()=>null);scanned=next;}
-  // auto-promote new Alpaca-supported passers (t>=2 & holds) not already candidates
+  // BACKGROUND WORK (EdgeRuntime.waitUntil) — the 100s pull runs AFTER we respond, so pg_net's short timeout doesn't
+  // kill it mid-scan (the stall bug). Respond fast; scan + promote in the background.
+  const work=(async()=>{
+    if(next.length)await fetch(`${FN}?symbols=${next.join(",")}&years=1.5`).then(r=>r.json()).catch(()=>null);
+    await promote();
+  })();
+  // deno-lint-ignore no-explicit-any
+  try{(globalThis as any).EdgeRuntime?.waitUntil?.(work);}catch{/* ignore */}
+  return new Response(JSON.stringify({ok:true,universe:universe.length,scanned_before:done.size,queued:next,note:"scanning in background (EdgeRuntime.waitUntil)"},null,2),{headers:cors});
+}catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
+async function promote(){
   const passers=await fetch(`${SB}/rest/v1/trd_crypto_scan?win=eq.usopen&t=gte.2&holds_both=eq.true&select=sym,t`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   const existing=new Set((await fetch(`${SB}/rest/v1/trd_crypto_candidates?select=binance_sym`,{headers:H}).then(r=>r.json()).catch(()=>[])as {binance_sym:string}[]).map(c=>c.binance_sym));
-  const promoted:string[]=[];
   for(const p of (Array.isArray(passers)?passers:[]) as {sym:string,t:number}[]){const base=p.sym.replace(/USDT$/,"");
-    if(ALPACA.has(base)&&!existing.has(p.sym)){await fetch(`${SB}/rest/v1/trd_crypto_candidates`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({binance_sym:p.sym,alpaca_order:`${base}/USD`,alpaca_pos:`${base}USD`,tier:"passer",t:p.t})}).catch(()=>{});promoted.push(p.sym);}}
-  return new Response(JSON.stringify({ok:true,universe:universe.length,scanned_total:done.size+scanned.length,remaining:universe.length-done.size-scanned.length,this_run:scanned,promoted},null,2),{headers:cors});
-}catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
+    if(ALPACA.has(base)&&!existing.has(p.sym)){await fetch(`${SB}/rest/v1/trd_crypto_candidates`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({binance_sym:p.sym,alpaca_order:`${base}/USD`,alpaca_pos:`${base}USD`,tier:"passer",t:p.t})}).catch(()=>{});}}
+}

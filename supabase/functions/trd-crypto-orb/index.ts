@@ -36,7 +36,10 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const u=new URL(req.url);const syms=(u.searchParams.get("symbols")||"BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,LINKUSDT").split(",");
   const yrs=+(u.searchParams.get("years")||"2.5");const start=Date.now()-yrs*365*864e5;
   const res=[];const pooled:Record<string,{R:number[],C:number[]}>={utc00:{R:[],C:[]},usopen:{R:[],C:[]}};
-  for(const sym of syms){const b=await klines(sym,start);if(b.length<500){res.push({sym,bars:b.length,skip:"thin"});continue;}
+  for(const sym of syms){const b=await klines(sym,start);if(b.length<500){
+      // mark thin coins DONE (so the universe scanner advances past them instead of re-queueing forever)
+      await fetch(`${SB}/rest/v1/trd_crypto_scan?on_conflict=sym,win`,{method:"POST",headers:{...HH,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([{sym,win:"usopen",n:b.length,t:null,edge_r:null,passes:false,holds_both:false,run_at:new Date().toISOString()}])}).catch(()=>{});
+      res.push({sym,bars:b.length,skip:"thin"});continue;}
     const per:Record<string,unknown>={};const rows:Record<string,unknown>[]=[];
     for(const [wn,ws,we] of WINS){const w=testWin(b,ws,we,sym.length*101+ws);per[wn]=w;
       if((w as {edge?:number}).edge!=null)rows.push({sym,win:wn,n:(w as {n:number}).n,mean_r:(w as {mean_r:number}).mean_r,edge_r:(w as {edge:number}).edge,t:(w as {t:number}).t,passes:(w as {passes:boolean}).passes,holds_both:(w as {holds_both:boolean}).holds_both,h1:(w as {h1:number}).h1,h2:(w as {h2:number}).h2,run_at:new Date().toISOString()});}
