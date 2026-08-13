@@ -4915,3 +4915,12 @@ OPERATING_DOCTRINE.md. IMPACT: the "$30-200/mo Polygon" I proposed for intraday-
 Binance for the entire crypto universe — I reached for paid too early (doctrine violation, corrected). Next: wire
 Binance into the intraday backtester to test ORB/MTF/confluence on crypto across 6+ years of 1m, free. Equities
 intraday-multi-year keyless stays an open hunt (never default to paid).
+
+## D-284 — Crypto ORB via FREE Binance data: US-open window real on ETH/SOL (doctrine D-283 paying off)
+Executed the free+keyless crypto intraday test (Binance 15m, 2.5yr, $0). ORB-follow at the US-equity-open window
+(13:30 UTC): ETH t=2.35 OOS-hold, SOL t=2.35 OOS-hold, BNB t=1.28 hold, XRP t=1.26 hold(+0.05), DOGE +0.027,
+BTC/ADA/LINK dead. Crypto-midnight (00:00 UTC) window: dead universe-wide. VERDICT: altcoins exhibit a US-open
+ORB-follow (they react to US session flow), strongest ETH/SOL — a real near-miss class, instrument-specific, same
+tier as the other momentum/breakout signals (real-but-modest, not universal). BTC is too efficient/global to show
+it. This is the free-data doctrine working: tested intraday across the crypto universe over years for $0 (no
+Polygon). ETH/SOL US-open ORB → controlled-risk forward candidate.
