@@ -4850,3 +4850,15 @@ Sizing DELIBERATELY conservative for the first broad deployment (ETF generalizat
 unproven); scale size only AFTER forward data confirms the ETF application. Profit = edge × volume (~30+ trades/day),
 not leverage. This is "as safe as possible with the most profit": maximal diversified volume, minimal per-trade &
 overnight risk.
+
+## D-279 — Config-driven sizing + tier ladder: "scale once ETF generalization confirms" made concrete & safe
+Made orbfollow size config-driven (trd_exec_config, read live by the scanner; fallback 0.02). Scaling is now a single
+SQL update — no redeploy. Pre-registered, decision-locked tier ladder (paper; real money stays operator-gated on the
+micro->small rungs):
+  T0 (now) 2% notional — conservative first broad ETF deploy (generalization unproven).
+  T0->T1 (4%): >=20 forward ETF trades AND realized mean-R > +0.05 net-of-cost AND maxDD < 4%.
+  T1->T2 (6%): >=50 trades AND mean-R > +0.10 net AND both-half stability.
+  T2->T3 (10%): >=100 trades AND Sharpe consistent w/ backtest AND drawdown within RISK_POLICY.
+Each step confirms the futures-measured edge GENERALIZES to ETFs before risking more per trade. The confirmation is
+CHECKED (forward realized stats) not felt; changing thresholds needs a decision entry (same lock as the gates).
+Migration 0041. Real-money scaling is a SEPARATE ladder rung and is never auto-applied — Claude does not arm real capital.

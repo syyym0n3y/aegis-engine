@@ -51,6 +51,8 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   if(!arm?.[0]?.armed&&!dbg)return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json());const equity=Number(acct.equity)||100000;
+  const cfg=await fetch(`${SB}/rest/v1/trd_exec_config?edge=eq.orbfollow&select=size_notional`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+  const sizeN=Number(cfg?.[0]?.size_notional)>0?Number(cfg[0].size_notional):RISK_NOTIONAL; // config-driven (D-279); scale = update trd_exec_config
   const posList=await fetch(`${PAPER}/v2/positions`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
   const heldSyms=new Set((Array.isArray(posList)?posList:[]).map((p:{symbol:string})=>p.symbol));
   const today=etOf(Math.floor(Date.now()/1000)).d;
@@ -71,7 +73,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     let dir=0;for(const x of post){if(x.h>rH){dir=1;break;}if(x.l<rL){dir=-1;break;}}
     if(dir===0){out.push({sym,skip:"no break"});continue;}
     const px=post[post.length-1].c,entry=dir>0?rH:rL,stop=dir>0?rL:rH,tgt=dir>0?entry+w:entry-w;
-    const qty=Math.max(1,Math.floor((RISK_NOTIONAL*equity)/px));
+    const qty=Math.max(1,Math.floor((sizeN*equity)/px));
     if(dbg){out.push({sym,dir:dir>0?"long":"short",qty,entry:+entry.toFixed(2),stop:+stop.toFixed(2),tgt:+tgt.toFixed(2),w:+w.toFixed(2)});openCount++;continue;}
     const order={symbol:sym,qty,side:dir>0?"buy":"sell",type:"market",time_in_force:"day",order_class:"bracket",stop_loss:{stop_price:+stop.toFixed(2)},take_profit:{limit_price:+tgt.toFixed(2)}};
     const resp=await fetch(`${PAPER}/v2/orders`,{method:"POST",headers:AH,body:JSON.stringify(order)});
