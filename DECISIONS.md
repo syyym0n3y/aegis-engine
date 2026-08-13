@@ -5024,3 +5024,11 @@ forward confirmation (tier ladder), not precede it. Next level = conviction-base
 confluence/regime-favourable setups) — the "increase when confident" framework, a further build. ETF/crypto ORB
 sizing is also config-driven (2% notional) but Alpaca margin-constrains those; the futures broker is where 10-20x
 lot scaling applies cleanly.
+
+## D-295 — Conviction-based sizing (flexes lots/notional by MEASURED setup quality)
+Futures + ETF ORB execs now size by CONVICTION = tightMult(0.6-1.5, range vs trailing-5d median) x dirMult
+(0.85 down / 1.2 up), grounded in D-271 OOS-validated regime (tight range +0.126R most stable; up-break +0.148R
+holds). Futures: lots = base(10) x conv, clamp [1,20]. ETF: notional = 2% x conv. Tight up-break → ~1.8x; wide
+down-break → ~0.5x. So capital concentrates on the validated high-edge setups, not flat across all breaks. Config-
+driven base (trd_exec_config). HONEST: conviction sizing amplifies the edge's dollar impact where it's strongest,
+but on a small forward sample it's still small-sample; and it's built on the DATA-MEASURED regime, not folklore.

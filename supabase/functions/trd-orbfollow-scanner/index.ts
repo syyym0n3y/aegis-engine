@@ -24,7 +24,7 @@ function etOffH(t:number):number{const d=new Date(t*1000),y=d.getUTCFullYear();
   return (t>=dstStart&&t<dstEnd)?-4:-5;}
 function etOf(t:number){const lt=t+etOffH(t)*3600;const d=new Date(lt*1000);return{m:d.getUTCHours()*60+d.getUTCMinutes(),d:d.toISOString().slice(0,10)};}
 async function bars5m(sym:string):Promise<Bar[]>{try{
-  const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=5m&range=1d`,{headers:{"User-Agent":"Mozilla/5.0"}});
+  const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=5m&range=5d`,{headers:{"User-Agent":"Mozilla/5.0"}});
   if(!r.ok)return[];const j=await r.json();const res=j?.chart?.result?.[0];if(!res?.timestamp)return[];
   const q=res.indicators.quote[0],o:Bar[]=[];for(let i=0;i<res.timestamp.length;i++){const h=q.high[i],l=q.low[i],c=q.close[i];if([h,l,c].some((x:number)=>x==null||!Number.isFinite(x)))continue;const e=etOf(res.timestamp[i]);o.push({h,l,c,m:e.m,d:e.d});}
   return o;}catch{return[];}}
@@ -75,7 +75,13 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     let dir=0;for(const x of post){if(x.h>rH){dir=1;break;}if(x.l<rL){dir=-1;break;}}
     if(dir===0){out.push({sym,skip:"no break"});continue;}
     const px=post[post.length-1].c,entry=dir>0?rH:rL,stop=dir>0?rL:rH,tgt=dir>0?entry+w:entry-w;
-    const qty=Math.max(1,Math.floor((sizeN*equity)/px));
+    // CONVICTION SIZING (D-295): flex notional by MEASURED setup quality (D-271: tight range + up-break = high edge).
+    const dHi=new Map<string,number>(),dLo=new Map<string,number>();
+    for(const x of b){if(x.d!==day&&x.m>=RANGE_START&&x.m<RANGE_END){dHi.set(x.d,Math.max(dHi.get(x.d)??-1e18,x.h));dLo.set(x.d,Math.min(dLo.get(x.d)??1e18,x.l));}}
+    const priorW=[...dHi.keys()].map(dd=>dHi.get(dd)!-dLo.get(dd)!).filter(v=>v>0).sort((a,c)=>a-c);
+    const medW=priorW.length?priorW[Math.floor(priorW.length/2)]:w;
+    const conv=(medW>0?(w<0.8*medW?1.5:w>1.3*medW?0.6:1.0):1.0)*(dir>0?1.2:0.85);
+    const qty=Math.max(1,Math.floor((sizeN*conv*equity)/px));
     if(dbg){out.push({sym,dir:dir>0?"long":"short",qty,entry:+entry.toFixed(2),stop:+stop.toFixed(2),tgt:+tgt.toFixed(2),w:+w.toFixed(2)});openCount++;continue;}
     const order={symbol:sym,qty,side:dir>0?"buy":"sell",type:"market",time_in_force:"day",order_class:"bracket",stop_loss:{stop_price:+stop.toFixed(2)},take_profit:{limit_price:+tgt.toFixed(2)}};
     const resp=await fetch(`${PAPER}/v2/orders`,{method:"POST",headers:AH,body:JSON.stringify(order)});
