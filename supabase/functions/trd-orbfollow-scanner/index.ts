@@ -31,8 +31,24 @@ async function pool<T,R>(items:T[],n:number,fn:(x:T)=>Promise<R>):Promise<R[]>{c
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const ks=await fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   if(ks?.[0]?.active)return new Response(JSON.stringify({ok:true,skipped:"kill-switch active"}),{headers:cors});
-  const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   const dbg=new URL(req.url).searchParams.get("debug")==="1";
+  const nowMin=etOf(Math.floor(Date.now()/1000)).m;
+  // EOD FLATTEN (safety + backtest fidelity): the edge is INTRADAY — flatten ALL orbfollow positions just before the
+  // close so no position is carried naked overnight (day-TIF bracket legs cancel at close). Runs even if DISARMED
+  // (positions must never strand); only in the 15:50-16:05 ET window (DST-safe via two cron ticks that no-op else).
+  if(new URL(req.url).searchParams.get("eod")==="1"){
+    if(nowMin<950||nowMin>965)return new Response(JSON.stringify({ok:true,eod:true,skip:`not close window (ET ${nowMin})`}),{headers:cors});
+    const uni=new Set([...UNIVERSE,"SPY","QQQ","DIA","GLD"]);
+    const positions=await fetch(`${PAPER}/v2/positions`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
+    const oo=await fetch(`${PAPER}/v2/orders?status=open&limit=500`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
+    const flat:string[]=[];
+    for(const p of (Array.isArray(positions)?positions:[]) as {symbol:string}[]){if(!uni.has(p.symbol))continue;
+      for(const o of (Array.isArray(oo)?oo:[]) as {id:string,symbol:string}[])if(o.symbol===p.symbol)await fetch(`${PAPER}/v2/orders/${o.id}`,{method:"DELETE",headers:AH}).catch(()=>{});
+      const ok=(await fetch(`${PAPER}/v2/positions/${p.symbol}?percentage=100`,{method:"DELETE",headers:AH}).catch(()=>null))?.ok;if(ok)flat.push(p.symbol);}
+    await fetch(`${SB}/rest/v1/trd_trades?edge=eq.orbfollow&status=eq.open`,{method:"PATCH",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({status:"closed",exit_at:new Date().toISOString()})}).catch(()=>{});
+    return new Response(JSON.stringify({ok:true,eod:true,flattened:flat},null,2),{headers:cors});
+  }
+  const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   if(!arm?.[0]?.armed&&!dbg)return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json());const equity=Number(acct.equity)||100000;
   const posList=await fetch(`${PAPER}/v2/positions`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
@@ -43,6 +59,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const fired=new Set((Array.isArray(firedRows)?firedRows:[]).map((r:{sym:string})=>r.sym));let openCount=fired.size;
   const bars=await pool(UNIVERSE,CONC,bars5m);
   const out:Record<string,unknown>[]=[];let placed=0;
+  if(!dbg&&nowMin>=900)return new Response(JSON.stringify({ok:true,edge:"orbfollow-broad",note:"past 15:00 ET — no NEW entries (positions need room; EOD flatten handles exits)",nowMin}),{headers:cors});
   for(let idx=0;idx<UNIVERSE.length;idx++){const sym=UNIVERSE[idx],b=bars[idx];
     if(openCount>=POS_CAP){out.push({sym,skip:"position cap"});continue;}
     if(fired.has(sym)||heldSyms.has(sym)){out.push({sym,skip:"already/held"});continue;}

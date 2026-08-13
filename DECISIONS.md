@@ -4831,3 +4831,22 @@ validated edge runs at scale for real paper P&L from the next session. HONEST CA
 index/gold FUTURES; ~50 liquid ETFs are close analogs (index/sector baskets), a reasonable generalization that the
 forward data now stress-tests directly. Kept to liquid ETFs (not single stocks) to hold the generalization tight.
 This is how the system is actually RUN for an operator — deploy the proven edge broadly day one, not trickle trades.
+
+## D-278b — ORB-follow SAFETY hardening: intraday-only via EOD flatten (no overnight naked risk) + no-late-entry
+Reviewed the broad scanner for market-open correctness + safety. Timing VERIFIED: entries fire */30 14-20 UTC but
+the scanner does nothing before 10:30 ET (range forming) and fires on breaks after — DST-correct via etOf(). Found &
+fixed a REAL safety hole: day-TIF bracket orders have their stop/target legs CANCELLED by Alpaca at the close, so any
+position not stopped/targeted intraday would carry NAKED overnight — and the validated edge is INTRADAY (backtest
+exits at the close). FIXES:
+ (1) EOD FLATTEN — scanner ?eod=1 cancels each orbfollow symbol's open orders THEN closes the position, for BOTH
+     universes (50 ETFs + SPY/QQQ/DIA/GLD), only in the 15:50-16:05 ET window; runs even if DISARMED (positions must
+     never strand). Crons trd_orbfollow_eod_edt (19:55 UTC) + _est (20:55 UTC) — one fires per season, the other
+     no-ops. Now flat by every close, matching the intraday backtest.
+ (2) NO new entries after 15:00 ET (positions need room to develop before the flatten).
+SAFETY STACK now: killswitch → arm gate → per-trade bracket stop (opposite range extreme) → tiny per-trade risk
+(range-width stop × 2% notional ≈ 0.01-0.03% equity/trade → <1% aggregate stop-out across 40) → POS_CAP=40 →
+longs+shorts partial hedge on whipsaw → EOD flatten → position-manager won't fight brackets (D-278) → paper only.
+Sizing DELIBERATELY conservative for the first broad deployment (ETF generalization of a futures-measured edge is
+unproven); scale size only AFTER forward data confirms the ETF application. Profit = edge × volume (~30+ trades/day),
+not leverage. This is "as safe as possible with the most profit": maximal diversified volume, minimal per-trade &
+overnight risk.
