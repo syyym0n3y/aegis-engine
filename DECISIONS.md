@@ -4962,3 +4962,14 @@ random. The screenshot's winning buy-the-low reversal (SS4) is a WINNING EXAMPLE
 the poster's own chat: "played out everyday last week only once this week" = inconsistent). Consistent with D-286
 (retest/fade folklore fails; breaks FOLLOW). The 8:15 follow window is futures-specific (pre-market for ETFs =
 illiquid), so validated-but-execution-blocked pending a futures broker — same as the other futures ORB windows.
+
+## D-288 — Keyless+free futures paper-broker + 8:15 ORB deployed; crypto-universe edge hunt (free Binance)
+"Keyless free futures broker" — a truly keyless EXTERNAL futures broker can't exist (futures need a regulated FCM +
+account). SOLUTION per no-limitations + free-data doctrine: BUILT our own internal futures paper-broker (trd_futures_
+paper) that simulates fills against real KEYLESS Yahoo futures prices (ES=F/NQ=F/GC=F, $/point P&L). Deployed the
+validated 8:15 ORB-follow (D-287) on it — trd-futures-orb-exec, cron trd_futures_orb815 (*/15 12-17 UTC weekdays),
+armed. Forward-tracks the futures edge with zero broker, zero key, zero cost (live money still needs a real FCM =
+operator's call, but the edge proves forward now). 8:15 ORB logged VALIDATED-CANDIDATE in trd_lineage.
+EDGE HUNT ACROSS INSTRUMENTS (free): Binance = keyless multi-year 1m for the whole crypto universe (D-283). Running
+the US-open ORB across ~24 liquid coins to find more ETH/SOL-class edges — $0. Equities: 46k daily free (done);
+futures: Databento credit for the ~30 liquid. The free coverage is maximized, not gated by dollars.
