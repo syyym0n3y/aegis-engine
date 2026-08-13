@@ -4986,3 +4986,14 @@ auto-sweeping) + ~40 futures (Databento credit). FREE DAILY across-years = ~46k 
 daily edges). "60,000 instruments across years of INTRADAY" does NOT exist in free data (equity intraday is ~60d on
 Yahoo) — this is MAXIMAL free coverage, systematically expanding, not a claim of 60k intraday. Findings so far: ORB
 is an ALTCOIN effect (ETH/SOL pass, NEAR/DOGE/UNI/AVAX candidate, BTC/majors dead).
+
+## D-292 — ENTIRE free crypto universe (484 instruments) scanned for the US-open ORB — $0, keyless, autonomous
+The self-driving loop completed a full sweep of all 484 Binance USDT instruments (US-open ORB, ~1yr each, free
+Binance) after fixing three stall bugs (pg_net can't hold a 100s connection; thin/hanging coins re-queued forever →
+batch=1 + guaranteed skip-marker). VERDICT across the WHOLE free crypto universe: among Alpaca-tradeable coins, ONLY
+ETH (t=2.62) + SOL (t=2.68) clear t>=2 & OOS-hold — both wired & trading. Candidate tier (hold OOS, t 1.5-1.96):
+NEAR/DOGE/UNI/AVAX (wired where Alpaca supports). The obscure micro-caps hitting t>=2 are multiple-testing noise
+(~5% of 484 by chance), correctly filtered by the Alpaca-tradeable + liquidity gate. NET: the US-open ORB is a real
+edge concentrated in the MAJOR liquid altcoins; exhaustively scanning the free universe found nothing new tradeable —
+which is itself the answer, delivered at $0. Autonomous loop proved it can sweep a whole asset-class universe, catch
+its own infra bugs, and self-wire passers.
