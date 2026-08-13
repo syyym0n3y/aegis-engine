@@ -36,6 +36,20 @@ function analyzeTF(b:Bar[]){if(b.length<25)return null;const c=b.map(x=>x.c),las
   const read=score>=2?"bullish":score<=-2?"bearish":"neutral";const vote=score>=2?1:score<=-2?-1:0;
   return{read,vote,rsi:+r.toFixed(0),roc_pct:+roc.toFixed(2),atr_pct:+atrp.toFixed(2),bb_pos:+bbPos.toFixed(2),bb_width:+bbW.toFixed(3),
     vs_sma20:+((last/s20-1)*100).toFixed(2),dist_hi20:+((last/hi20-1)*100).toFixed(2),dist_lo20:+((last/lo20-1)*100).toFixed(2),vol_rel:+vRel.toFixed(2),why:why.join(", ")};}
+// session levels the operator's framework hangs on: prior day/week H/L + Asia/London/NY session ranges, with the
+// live price INTERACTION (above / below / AT within 0.1%, and % distance) — the reference levels for direction.
+function levels(daily:Bar[],i5:Bar[],px:number){
+  const pdH=daily.length>1?daily[daily.length-2].h:null,pdL=daily.length>1?daily[daily.length-2].l:null;
+  const wk=(t:number)=>Math.floor(t/604800);let pwH=null as number|null,pwL=null as number|null;
+  if(daily.length){const cw=wk(daily[daily.length-1].t);const pw=daily.filter(x=>wk(x.t)===cw-1);if(pw.length){pwH=Math.max(...pw.map(x=>x.h));pwL=Math.min(...pw.map(x=>x.l));}}
+  const today=i5.length?new Date(i5[i5.length-1].t*1000).toISOString().slice(0,10):"";
+  const td=i5.filter(x=>new Date(x.t*1000).toISOString().slice(0,10)===today);
+  const sess=(a:number,b:number)=>{const s=td.filter(x=>{const d=new Date(x.t*1000);const h=d.getUTCHours()+d.getUTCMinutes()/60;return h>=a&&h<b;});return s.length?{h:Math.max(...s.map(x=>x.h)),l:Math.min(...s.map(x=>x.l))}:null;};
+  const asia=sess(0,8),london=sess(7,16),ny=sess(13.5,20);
+  const pos=(L:number|null)=>L==null?null:{level:+L.toFixed(2),px_vs:px>L*1.001?"above":px<L*0.999?"below":"AT",dist_pct:+((px/L-1)*100).toFixed(2)};
+  return{prior_day_high:pos(pdH),prior_day_low:pos(pdL),prior_week_high:pos(pwH),prior_week_low:pos(pwL),
+    asia_high:pos(asia?.h??null),asia_low:pos(asia?.l??null),london_high:pos(london?.h??null),london_low:pos(london?.l??null),ny_high:pos(ny?.h??null),ny_low:pos(ny?.l??null)};
+}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const u=new URL(req.url);const syms=(u.searchParams.get("symbols")||u.searchParams.get("symbol")||"SPY").split(",").map(s=>s.trim().toUpperCase()).filter(Boolean).slice(0,15);
   const vlong=await bars("^VIX","1y","1d");const vLast=vlong.length?vlong[vlong.length-1].c:null;const vs=vlong.map(x=>x.c).sort((a,b)=>a-b);const vp80=vs.length?vs[Math.floor(vs.length*0.8)]:null;const vp20=vs.length?vs[Math.floor(vs.length*0.2)]:null;
@@ -45,11 +59,9 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   for(const sym of syms){const perTF:Record<string,unknown>={};let bias=0,votes=0;const daily=await bars(sym,"1d","1y");
     for(const [interval,range,label] of TFS){const b=await bars(sym,interval,range);const a=analyzeTF(b);if(a){perTF[label]=a;bias+=a.vote;if(a.vote!==0)votes++;}}
     const tfN=Object.keys(perTF).length;
-    // key levels from daily
-    const pdH=daily.length>1?daily[daily.length-2].h:null,pdL=daily.length>1?daily[daily.length-2].l:null;
-    const px=daily.length?daily[daily.length-1].c:null;
+    const px=daily.length?daily[daily.length-1].c:0;const i5=await bars(sym,"5m","5d");
     const hi52=daily.length?Math.max(...daily.slice(-252).map(x=>x.h)):null,lo52=daily.length?Math.min(...daily.slice(-252).map(x=>x.l)):null;
     out.push({symbol:sym,price:px,direction_bias:bias>0?"LONG":bias<0?"SHORT":"NEUTRAL",bias_score:bias,confluence:tfN?+(Math.abs(bias)/tfN).toFixed(2):0,aligned_tfs:`${votes}/${tfN}`,
-      key_levels:{prior_day_high:pdH,prior_day_low:pdL,high_52w:hi52,low_52w:lo52},by_timeframe:perTF});}
+      session_levels:levels(daily,i5,px),range_52w:{high:hi52,low:lo52},by_timeframe:perTF});}
   return new Response(JSON.stringify({ok:true,session,vix:vLast,vix_regime:vp80!=null&&vLast!=null?(vLast>=vp80?"elevated-fear":vLast<=(vp20??0)?"complacent-calm":"normal"):null,note:"real-time works on ANY instrument; multi-year intraday backtest is data-bound (D-282)",instruments:out},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
