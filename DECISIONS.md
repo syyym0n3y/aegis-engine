@@ -4949,3 +4949,16 @@ for the retest" folklore: the VALIDATED edge is break-and-FOLLOW (ORB, t=11.92, 
 for the pullback doesn't add (hurts on ES). The session/daily/weekly LEVELS remain valuable as CONTEXT (live in the
 MTF engine, D-285) — but the retest ENTRY on them is not supported by the data. Logged rejected. Gold/silver retest
 untested (thin) — would need a looser definition, but I won't p-hack a folklore pattern the index futures already reject.
+
+## D-287 — Operator's 8:15 ET opening-range method (from chart screenshots) TESTED on ES: FOLLOW real, FADE loses
+Synthesized the method from 4 ES/MES chart screenshots: 15-min opening range from 08:15 ET, then two candidate plays
+— breakout-FOLLOW (SS1) and buy-the-sweep/failed-break FADE (SS4). Added op815 window (495-510 ET) to the futures
+engine, ran ES 2.5yr (2024Q1-2026Q2, 644 trades, DST-aware, vs-random, OOS):
+  FOLLOW: 1m +0.086R (H1 +.089/H2 +.084 HOLDS), 2m +0.081 HOLDS, 5m +0.096 HOLDS — STABLE, real, same family as
+    the validated orbfollow (D-259).
+  FADE (buy-the-sweep): 1m -0.066, 2m -0.083, 5m -0.074 — NEGATIVE all, fails OOS.
+VERDICT: the 8:15 breakout-FOLLOW is a real edge (+0.086R, OOS-stable); the FADE/buy-the-sweep is NOT — it loses vs
+random. The screenshot's winning buy-the-low reversal (SS4) is a WINNING EXAMPLE OF A LOSING METHOD (selection bias;
+the poster's own chat: "played out everyday last week only once this week" = inconsistent). Consistent with D-286
+(retest/fade folklore fails; breaks FOLLOW). The 8:15 follow window is futures-specific (pre-market for ETFs =
+illiquid), so validated-but-execution-blocked pending a futures broker — same as the other futures ORB windows.

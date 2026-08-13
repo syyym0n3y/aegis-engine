@@ -9,6 +9,7 @@ const BASE="https://hist.databento.com/v0";
 const TFS=[1,2,4,5,10,15,30];
 // [name, startMinET, endMinET] — minutes past ET midnight. op812 is the operator's 8:12–9:12 window.
 const WINS:[string,number,number][]=[
+  ["op815",495,510],    // 08:15–08:30 ET, 15-min opening range (operator's method: pre-8:30-data range)
   ["london",270,330],   // 04:30–05:30 ET (London open)
   ["premkt7",420,480],  // 07:00–08:00 ET (early data)
   ["op812",492,552],    // 08:12–09:12 ET (operator's window)
