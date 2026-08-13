@@ -4891,3 +4891,17 @@ CANDIDATES (small candidate-tier size, brackets, EOD flatten) so forward data + 
 downside stays bounded — same pattern as the fear tracker. The market confirms or kills each; nothing is wasted and
 nothing is bet on blind. MTF state feeds context (which instruments/side to favor), NOT a hardwired ORB filter
 (D-271 showed trend-alignment doesn't condition ORB — don't degrade a working edge with unmeasured stacking).
+
+## D-282 — Comprehensive real-time MTF chart-analysis engine + honest coverage boundary
+Enriched trd-mtf-state into a full multi-timeframe chart-analysis system: per TF (1m/5m/15m/30m/1h/1d) it computes
+TREND (px vs SMA20/50 + structure), MOMENTUM (RSI, ROC), MEAN-REV (Bollinger position, stretch), VOLATILITY (ATR%,
+BB width), LEVELS (20-bar S/R, prior-day H/L, 52w H/L, opening range), VOLUME (vs 20-bar avg) → a per-TF read
+{bull/bear/neutral + why} and an overall DIRECTION BIAS + CONFLUENCE + VIX regime + session. Real-time, any
+instrument. This captures what a chart shows regardless of the analysis lens (trend/momentum/mean-rev/vol/levels).
+HONEST COVERAGE (no overclaim — the 50k-sweep overclaim lesson): the engine RUNS on all ~60k instruments live, but
+MULTI-YEAR INTRADAY history across 60k does NOT exist in our free data (Yahoo intraday ~60d; 4yr 1m for 4 futures
+only). What is testable across all names & years is the DAILY-horizon MTF (confluence: t=2.02, fails OOS — D-281).
+True intraday-multi-year backtesting across the universe = a PAID data-acquisition decision (Polygon/Databento
+intraday history, ~$100s-1000s). Real-time coverage of 60k = built; historical intraday breadth = data-bound.
+Next: wire the MTF bias into scanner instrument-selection (favor high-confluence names when position-capped — a
+MEASURED use of context) + surface the engine in the CC cockpit for real-time trader decision-support.
