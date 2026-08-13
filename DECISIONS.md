@@ -5013,3 +5013,14 @@ can't profit if it can't trade; (b) futures 8:15 (the one validated edge that DI
 made +$265 on 3 trades — positive but noise-level sample; (c) the -$821 drag is BTC crypto-MOMENTUM (a near-miss,
 NOT validated); (d) fundamentally a +0.14R edge yields small, noisy returns that only show over a LARGE sample —
 small-sample/legacy P&L is not proof. Total +$1,454 is mostly legacy crypto (~$2,239), not edge.
+
+## D-294 — Futures lot size scaled 15x (config-driven) — dollars come from size×conviction, not just edge
+Operator's correction (valid): money comes from sizing up where favourable + volume when confident, not just the
+R-multiple. Made futures-orb815 lot size CONFIG-DRIVEN (trd_exec_config.size_notional = lots), set to 15 (from 1).
+The futures internal paper-broker has no margin cap, so 15 lots works in sim (real ES margin would hold ~2-7 on
+$100k — flagged; micros/MES are the realistic way to get 10-20x lots live). Scales P&L AND drawdown equally.
+HONEST GUARDRAIL kept: on a 3-trade sample this amplifies NOISE both ways; for REAL money, size-up should FOLLOW
+forward confirmation (tier ladder), not precede it. Next level = conviction-based sizing (bigger lots on higher-
+confluence/regime-favourable setups) — the "increase when confident" framework, a further build. ETF/crypto ORB
+sizing is also config-driven (2% notional) but Alpaca margin-constrains those; the futures broker is where 10-20x
+lot scaling applies cleanly.

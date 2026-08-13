@@ -16,6 +16,8 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const dbg=new URL(req.url).searchParams.get("debug")==="1";
   const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   if(!arm?.[0]?.armed&&!dbg)return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});
+  const cfg=await fetch(`${SB}/rest/v1/trd_exec_config?edge=eq.futures-orb815&select=size_notional`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+  const LOTS=Math.max(1,Math.round(Number(cfg?.[0]?.size_notional)||1)); // config-driven lot size (D-294); scale = update trd_exec_config
   const out:Record<string,unknown>[]=[];
   for(const [sym,mult] of INSTR){const b=await y5m(sym);if(b.length<5){out.push({sym,skip:"no bars"});continue;}
     const px=b[b.length-1].c,today=b[b.length-1].d;
@@ -38,7 +40,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     if(dir===0){out.push({sym,skip:"no break yet"});continue;}
     const entry=dir>0?rH:rL,stop=dir>0?rL:rH,tgt=dir>0?entry+w:entry-w;
     if(dbg){out.push({sym,would:"ENTER",dir:dir>0?"long":"short",entry:+entry.toFixed(2),stop:+stop.toFixed(2),tgt:+tgt.toFixed(2),w:+w.toFixed(2)});continue;}
-    await fetch(`${SB}/rest/v1/trd_futures_paper`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({edge:"futures-orb815",sym,side:dir>0?"long":"short",qty:1,entry_px:+entry.toFixed(2),stop:+stop.toFixed(2),target:+tgt.toFixed(2),status:"open"})}).catch(()=>{});
+    await fetch(`${SB}/rest/v1/trd_futures_paper`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({edge:"futures-orb815",sym,side:dir>0?"long":"short",qty:LOTS,entry_px:+entry.toFixed(2),stop:+stop.toFixed(2),target:+tgt.toFixed(2),status:"open"})}).catch(()=>{});
     out.push({sym,action:"ENTER",dir:dir>0?"long":"short",entry:+entry.toFixed(2)});
   }
   return new Response(JSON.stringify({ok:true,edge:"futures-orb815",broker:"internal keyless paper (Yahoo fills)",results:out},null,2),{headers:cors});
