@@ -8,7 +8,7 @@ const H={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/js
 const FN="https://glzzoomuhnugsiichnub.supabase.co/functions/v1/trd-crypto-orb";
 // Alpaca-tradeable crypto (paper). Passers outside this set are logged but tracked via internal sim later.
 const ALPACA=new Set(["AAVE","AVAX","BAT","BCH","BTC","CRV","DOGE","DOT","ETH","GRT","LINK","LTC","MKR","SHIB","SOL","SUSHI","UNI","XTZ","YFI","PEPE"]);
-const BATCH=2;
+const BATCH=1; // one coin at a time — a slow/hanging coin only blocks itself, not the whole batch
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const batch=+(new URL(req.url).searchParams.get("batch")||BATCH);
   // full universe: USDT spot, TRADING, exclude leveraged/fiat-ish
@@ -23,7 +23,14 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   // SYNCHRONOUS (D-291): await the scan+promote before responding, so a caller that holds the connection (the
   // background sweep driver) reliably completes the store. pg_net/cron can't hold it long enough — a long-running
   // bash driver does, and covers the universe reliably.
-  if(next.length)await fetch(`${FN}?symbols=${next.join(",")}&years=1.5`).then(r=>r.json()).catch(()=>null);
+  if(next.length){
+    await fetch(`${FN}?symbols=${next.join(",")}&years=1.0`).then(r=>r.json()).catch(()=>null);
+    // GUARANTEE advancement: any attempted coin not now stored (pull hung/failed) → skip-marker, so it never re-queues.
+    const nd=await fetch(`${SB}/rest/v1/trd_crypto_scan?win=eq.usopen&sym=in.(${next.join(",")})&select=sym`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+    const stored=new Set((Array.isArray(nd)?nd:[]).map((r:{sym:string})=>r.sym));
+    const skip=next.filter(s=>!stored.has(s)).map(s=>({sym:s,win:"usopen",n:0,t:null,edge_r:null,passes:false,holds_both:false,run_at:new Date().toISOString()}));
+    if(skip.length)await fetch(`${SB}/rest/v1/trd_crypto_scan?on_conflict=sym,win`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(skip)}).catch(()=>{});
+  }
   await promote();
   return new Response(JSON.stringify({ok:true,universe:universe.length,scanned_total:done.size+next.length,remaining:universe.length-done.size-next.length,this_run:next},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
