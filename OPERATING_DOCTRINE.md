@@ -48,3 +48,18 @@ SURVIVE and PROFIT. The honest scaling path, in leverage order:
 
 ## The one line
 Research before you defer. Prove before you claim. Scale the product, not the promise. Free-first, paid-on-ROI.
+
+## FREE + KEYLESS FIRST — no dollar gate on excellence (D-283, operator-locked)
+PRINCIPLE: every data/infra problem gets a FREE, KEYLESS solution first. No dollar amount gates the level of
+excellence we enforce across the stack. Paid/keyed data is a LAST resort, allowed ONLY after a VERIFIED search
+proves no free keyless path AND with explicit ROI justification + operator greenlight — never a default, never a
+reflex. "We'd need to buy X" is a RED FLAG that I stopped hunting too early (as I did reaching for Polygon).
+VERIFIED free+keyless sources (proven, not assumed — D-283 probe):
+  • Yahoo Finance — daily full history (global) + ~60d intraday, keyless. [works]
+  • Binance /api/v3/klines — crypto: MULTI-YEAR 1m intraday, keyless, paginated (startTime). Proven back to 2018. [works]
+  • Coinbase /products/*/candles — crypto candles, keyless. [works — fallback]
+  • Stooq CSV — bot-blocked from edge (returns anti-bot HTML). [FAILED — do not use this way]
+IMPLICATION: intraday-multi-year testing across the CRYPTO universe is now FREE+KEYLESS (Binance) — no paid feed.
+Equities intraday-multi-year keyless remains genuinely scarce (Yahoo ~60d, Stooq blocked) — keep hunting (bulk
+dumps, exchange APIs, archive mirrors) before ever proposing a paid feed. The doctrine binds: research the free
+keyless path and VERIFY it before deferring to any dollar cost.

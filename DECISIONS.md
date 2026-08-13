@@ -4905,3 +4905,13 @@ True intraday-multi-year backtesting across the universe = a PAID data-acquisiti
 intraday history, ~$100s-1000s). Real-time coverage of 60k = built; historical intraday breadth = data-bound.
 Next: wire the MTF bias into scanner instrument-selection (favor high-confluence names when position-capped — a
 MEASURED use of context) + surface the engine in the CC cockpit for real-time trader decision-support.
+
+## D-283 — FREE+KEYLESS-FIRST doctrine + proven crypto intraday unlock (trd-freedata)
+Operator-locked principle: no dollar amount gates excellence; find free+keyless for every problem, paid is last
+resort after a VERIFIED search. Built trd-freedata (keyless connector) and PROVED sources (probe, not assumed):
+Binance /klines = MULTI-YEAR 1m crypto intraday keyless (pulled real BTC 1m from 2018-01-01); Coinbase candles
+keyless; Yahoo daily+60d keyless. Stooq FAILED (bot-blocked, returns HTML — honest, not claimed). Encoded in
+OPERATING_DOCTRINE.md. IMPACT: the "$30-200/mo Polygon" I proposed for intraday-across-years is REPLACED by free
+Binance for the entire crypto universe — I reached for paid too early (doctrine violation, corrected). Next: wire
+Binance into the intraday backtester to test ORB/MTF/confluence on crypto across 6+ years of 1m, free. Equities
+intraday-multi-year keyless stays an open hunt (never default to paid).
