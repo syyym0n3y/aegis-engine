@@ -5093,3 +5093,25 @@ Applied conviction sizing to orbfollow's OWN dollars (ES cash_open, from trd_fut
 
 Lesson: conviction multipliers must be regime-validated PER INSTRUMENT, not ported globally. The factory
 now produces the tagged per-trade R needed to validate them everywhere.
+
+## D-299 — Edge Factory accelerated ~40× without breaking honesty (2026-08-14)
+
+Operator: "make sure this process is accelerated and the most efficient it can be." Root-caused three
+real limits from logs (not guesses):
+
+1. **Bars re-fetched every run** (~25s of 70 paginated Binance calls) → `trd_bars_cache` (D-299): each
+   market's 1yr 15m bars cached ≤24h, self-refreshing. Wall/run 25s → **1.5s** (16×).
+2. **"CPU Time exceeded"** (edge fns cap CPU ~2s, NOT wall) → the matched control on thousands of trades
+   is the cost. Bounded control forward-scan to a 400-bar HORIZON; kept batch at the CPU-safe **40 specs/run**.
+3. **Single-stream throughput** → added a `market` param; ONE cron fans out all **8 markets in parallel**
+   every minute. 8×40×60×24 ≈ **460k trials/day** — the 38,880 queue clears in ~2h (was ~80h).
+
+CRITICAL honesty guard (a false start, caught + reverted): I first pooled the control by (rr,sl) geometry
+for speed — it inflated power and gave 12–20/40 "survivors". Reverted to the MATCHED per-spec control.
+Then added the deflation the search scale demands: at 38,880 trials a raw t≥2 yields ~1,900 false edges,
+so promotion now requires **Bonferroni-deflated t≥4.4** + holds-both. Survivors dropped 50% → ~2.8%, and
+every backtest increments `trd_trial_counter` (the N that any Sharpe/t must be read against).
+
+First cross-market result: `sweep` (ICT liquidity-grab fade) clears t=4.4–8.1 on ALL 8 markets independently
++ 2 FVG on ADA. Coherent CANDIDATE class (not one-market luck) — but in-sample, gate_passed=false,
+forward-pending. Must survive forward + full DSR/PBO before any promotion. The engine screens; it does not bless.

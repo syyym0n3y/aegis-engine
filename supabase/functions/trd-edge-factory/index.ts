@@ -19,6 +19,11 @@ const H = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "applic
 const COST_R = 0.05;          // per-side cost in R (grammar nets it in) — pessimistic, gold-calibrated (D-080)
 const RISK_USD = 500;         // $ risked per 1R (0.5% of a $100k book) — same basis as trd_edge_dollar
 const MIN_N = 30;             // fail closed below 30 trades
+// The falsification bar MUST deflate for the search size, or 38,880 trials manufacture ~1,900 false t≥2 edges.
+// Bonferroni for the grammar sweep (4860 specs × 8 markets ≈ 3.9e4 trials): promote only at p≈0.05/3.9e4 two-sided
+// → t ≈ 4.4. A raw t≥2 is recorded on the queue for analysis, but ONLY t≥DEFLATED_T + holds-both promotes to a
+// candidate. This is what keeps the accelerated factory a falsification engine, not a false-edge factory (D-070).
+const DEFLATED_T = 4.4;
 // Deep-history keyless Binance markets. The queue SELF-SEEDS the full grammar (4860 specs) per market on
 // first sight, so coverage widens by editing this list — no external seed job. Universe expansion (more
 // coins) is additive: add symbols here (or a trd_edge_markets table) and the cron fills them in.
@@ -63,10 +68,25 @@ async function klines(sym: string, years: number): Promise<Bar[]> {
   return out;
 }
 
+// D-299: read cached bars (refreshed ≤24h) instead of re-pulling ~70 paginated Binance calls (~25s) every run.
+async function getBars(market: string, years: number): Promise<Bar[]> {
+  const cached = await fetch(`${SB}/rest/v1/trd_bars_cache?market=eq.${market}&select=bars,updated_at`, { headers: H }).then((r) => r.json()).catch(() => []);
+  if (Array.isArray(cached) && cached.length) {
+    const age = Date.now() - new Date((cached[0] as { updated_at: string }).updated_at).getTime();
+    const b = (cached[0] as { bars: Bar[] }).bars;
+    if (age < 864e5 && Array.isArray(b) && b.length > 500) return b;
+  }
+  const bars = await klines(market, years);
+  if (bars.length >= 500) await fetch(`${SB}/rest/v1/trd_bars_cache?on_conflict=market`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ market, years, bars, updated_at: new Date().toISOString() }) }).catch(() => {});
+  return bars;
+}
+
 function mulberry(seed: number) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 // MATCHED random control: same count as the setup, random entry bar, random side, IDENTICAL stop geometry
 // (swing over stopLookback) and rr, resolved stop-first with the same cost. Drift cancels between the two.
+const HORIZON = 400; // max bars a trade is held before mark-to-market — bounds compute to O(count·HORIZON) and
+                     // is realistic (an intraday setup isn't carried for years). Applies to setup & control alike.
 function randomControl(bars: Bar[], s: ComponentSpec, count: number, seed: number): number[] {
   const rnd = mulberry(seed); const out: number[] = []; const n = bars.length; let guard = 0;
   while (out.length < count && guard < count * 40) {
@@ -79,13 +99,13 @@ function randomControl(bars: Bar[], s: ComponentSpec, count: number, seed: numbe
     const entry = bars[i].open, stop = side === "long" ? lo : hi, dir = side === "long" ? 1 : -1;
     const risk = Math.abs(entry - stop); if (!(risk > 0)) continue;
     const target = entry + dir * s.rr * risk;
-    let r: number | null = null;
-    for (let k = i; k < n; k++) {
+    const end = Math.min(n, i + HORIZON); let r: number | null = null;
+    for (let k = i; k < end; k++) {
       const b = bars[k];
       if (side === "long") { if (b.low <= stop) { r = -1; break; } if (b.high >= target) { r = s.rr; break; } }
       else { if (b.high >= stop) { r = -1; break; } if (b.low <= target) { r = s.rr; break; } }
     }
-    if (r === null) r = dir * (bars[n - 1].close - entry) / risk;
+    if (r === null) r = dir * (bars[Math.min(n, end) - 1].close - entry) / risk; // mark-to-market at horizon
     out.push(r - 2 * COST_R);
   }
   return out;
@@ -99,31 +119,44 @@ Deno.serve(async (req) => {
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
   try {
     const u = new URL(req.url);
-    const batch = Math.min(60, +(u.searchParams.get("batch") || "20"));
-    const years = +(u.searchParams.get("years") || "2.0");
-    const seeded = (u.searchParams.get("seed") === "1" || u.searchParams.get("seed") === null) ? await seedMarkets() : {};
-    // pull next pending trials, grouped by market so we fetch each market's bars ONCE
-    const pending = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&select=spec_key,market,spec&order=priority.asc&limit=${batch}`, { headers: H }).then((r) => r.json()).catch(() => []);
-    if (!Array.isArray(pending) || !pending.length) return new Response(JSON.stringify({ ok: true, done: "queue empty" }), { headers: cors });
-    const byMarket = new Map<string, { spec_key: string; spec: ComponentSpec }[]>();
-    for (const p of pending as { spec_key: string; market: string; spec: ComponentSpec }[]) {
-      (byMarket.get(p.market) || byMarket.set(p.market, []).get(p.market))!.push({ spec_key: p.spec_key, spec: p.spec });
+    const years = +(u.searchParams.get("years") || "1.0"); // 1yr: valid split-half OOS + half the CPU/cache of 2yr
+    const budgetMs = Math.min(140000, +(u.searchParams.get("budgetMs") || "60000")); // wall safety (CPU is the real cap)
+    const page = Math.min(500, +(u.searchParams.get("page") || "40"));
+    const maxSpecs = Math.min(2000, +(u.searchParams.get("maxSpecs") || "40")); // CPU ceiling per run (~2s CPU limit)
+    const t0 = Date.now();
+    const seeded = (u.searchParams.get("seed") === "1") ? await seedMarkets() : {};
+    // ONE market per run (bars cached → no refetch). Explicit ?market= lets 8 crons run all markets in parallel;
+    // otherwise take the first pending market. Each market's specs advance independently.
+    const reqMarket = u.searchParams.get("market");
+    let market: string | null = reqMarket;
+    if (!market) {
+      const first = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&select=market&order=priority.asc,market.asc&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
+      market = Array.isArray(first) && first.length ? (first[0] as { market: string }).market : null;
     }
-    const results: Record<string, unknown>[] = [];
-    for (const [market, items] of byMarket) {
-      const bars = await klines(market, years);
-      if (bars.length < 500) { // thin market — mark its trials thin so the queue advances
-        await fetch(`${SB}/rest/v1/trd_edge_queue?market=eq.${market}&status=eq.pending`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: "thin", run_at: new Date().toISOString() }) }).catch(() => {});
-        results.push({ market, skip: "thin", bars: bars.length }); continue;
-      }
-      for (const { spec_key, spec } of items) {
+    if (!market) return new Response(JSON.stringify({ ok: true, done: "queue empty", seeded }), { headers: cors });
+    const bars = await getBars(market, years);
+    if (bars.length < 500) {
+      await fetch(`${SB}/rest/v1/trd_edge_queue?market=eq.${market}&status=eq.pending`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: "thin", run_at: new Date().toISOString() }) }).catch(() => {});
+      return new Response(JSON.stringify({ ok: true, market, skip: "thin", bars: bars.length }), { headers: cors });
+    }
+    const now = new Date().toISOString();
+    let processed = 0, thin = 0; const survivors: Record<string, unknown>[] = [];
+    const scRows: Record<string, unknown>[] = [], dolRows: Record<string, unknown>[] = [], linRows: Record<string, unknown>[] = [];
+    // page through this market's pending specs; flush each page's status in ONE bulk upsert before the next page
+    while (Date.now() - t0 < budgetMs && processed < maxSpecs) {
+      const specs = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&market=eq.${market}&select=spec_key,spec&limit=${page}`, { headers: H }).then((r) => r.json()).catch(() => []);
+      if (!Array.isArray(specs) || !specs.length) break;
+      const before = processed;
+      const updates: Record<string, unknown>[] = [];
+      for (const { spec_key, spec } of specs as { spec_key: string; spec: ComponentSpec }[]) {
+        if (Date.now() - t0 >= budgetMs || processed >= maxSpecs) break;
         const trades = runComponentTrades(bars, spec, { costRPerSide: COST_R });
-        const upd: Record<string, unknown> = { status: "done", n: trades.length, run_at: new Date().toISOString() };
+        // include spec so the upsert's INSERT path satisfies NOT NULL (on conflict it UPDATEs; the row already exists)
+        const upd: Record<string, unknown> = { spec_key, market, spec, source: "grammar", status: "done", n: trades.length, run_at: now };
         if (trades.length >= MIN_N) {
           const setupR = trades.map((t) => t.r);
-          const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 131 + trades.length);
+          const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 131 + trades.length); // matched-count honest control
           const vr = edgeVsRandom(setupR, ctrlR, 2, MIN_N);
-          // split-half OOS by median entry-month
           const months = [...new Set(trades.map((t) => t.entryTs.slice(0, 7)))].sort();
           const mid = months[Math.floor(months.length / 2)];
           const h1 = trades.filter((t) => t.entryTs.slice(0, 7) < mid).map((t) => t.r);
@@ -133,21 +166,28 @@ Deno.serve(async (req) => {
           const holdsBoth = h1.length >= 10 && h2.length >= 10 && e1 > 0 && e2 > 0;
           const hs = trades.map(toHarness), hc = ctrlR.map((r) => ({ r, stopFrac: 1 } as HarnessTrade));
           const dv = scoreDollar(spec_key, hs, hc, 0, RISK_USD, convOf);
-          Object.assign(upd, { vs_random_edge: +vr.edge.toFixed(4), vs_random_t: +vr.tStat.toFixed(2), holds_both: holdsBoth, skill_usd: dv.skillUsd, skill_frac: dv.n ? +(dv.skillUsd / (dv.flatUsd || 1)).toFixed(3) : null, passes: vr.passes && holdsBoth });
-          // SURVIVOR → promote into the same tables our validated edges live in
-          if (vr.passes && holdsBoth) {
+          const promote = vr.tStat >= DEFLATED_T && holdsBoth; // deflated for the 38,880-trial search
+          Object.assign(upd, { vs_random_edge: +vr.edge.toFixed(4), vs_random_t: +vr.tStat.toFixed(2), holds_both: holdsBoth, skill_usd: dv.skillUsd, skill_frac: dv.n ? +(dv.skillUsd / (dv.flatUsd || 1)).toFixed(3) : null, passes: promote });
+          if (promote) {
             const eid = `fac:${spec_key}@${market}`;
-            await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ edge: eid, run_at: new Date().toISOString(), n: trades.length, n_trials: 1, abs_r: +mean(setupR).toFixed(4), vs_random_edge: +vr.edge.toFixed(4), vs_random_t: +vr.tStat.toFixed(2), vs_random_passes: vr.passes, oos_h1: +e1.toFixed(4), oos_h2: +e2.toFixed(4), holds_both: holdsBoth, gate_passed: false, gate_failing: ["forward-unconfirmed"], detail: { source: "edge-factory grammar", market, spec } }) }).catch(() => {});
-            await fetch(`${SB}/rest/v1/trd_edge_dollar?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ edge: eid, n: trades.length, risk_usd: RISK_USD, flat_usd: dv.flatUsd, skill_usd: dv.skillUsd, drift_usd: dv.driftUsd, skill_frac: dv.flatUsd ? +(dv.skillUsd / dv.flatUsd).toFixed(3) : null, skill_per_100: +(vr.edge * 100 * RISK_USD).toFixed(0), conv_applied: true, frameworks: "vs-random+OOS+skill$+conviction$", note: "DISCOVERED by factory — forward-unconfirmed" }) }).catch(() => {});
-            await fetch(`${SB}/rest/v1/trd_lineage?on_conflict=id`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ id: eid, hypothesis: `${spec_key} on ${market}`, test: "grammar vs matched-random, split-half OOS, dollar skill/drift+conviction", key_metric: `vs-random +${vr.edge.toFixed(4)}R t=${vr.tStat.toFixed(2)}; skill$ ${dv.skillUsd} (${dv.n} trades); conv$ ${dv.convUsd}`, verdict: "candidate", status: "forward-pending", decision_trail: "D-297 auto-discovered; needs forward confirmation before any promotion" }) }).catch(() => {});
-            results.push({ spec_key, market, SURVIVOR: true, t: +vr.tStat.toFixed(2), skill_usd: dv.skillUsd, conv_usd: dv.convUsd });
+            scRows.push({ edge: eid, run_at: now, n: trades.length, n_trials: 1, abs_r: +mean(setupR).toFixed(4), vs_random_edge: +vr.edge.toFixed(4), vs_random_t: +vr.tStat.toFixed(2), vs_random_passes: vr.passes, oos_h1: +e1.toFixed(4), oos_h2: +e2.toFixed(4), holds_both: holdsBoth, gate_passed: false, gate_failing: ["forward-unconfirmed"], detail: { source: "edge-factory grammar", market, spec } });
+            dolRows.push({ edge: eid, n: trades.length, risk_usd: RISK_USD, flat_usd: dv.flatUsd, skill_usd: dv.skillUsd, drift_usd: dv.driftUsd, skill_frac: dv.flatUsd ? +(dv.skillUsd / dv.flatUsd).toFixed(3) : null, skill_per_100: +(vr.edge * 100 * RISK_USD).toFixed(0), conv_applied: true, frameworks: "vs-random+OOS+skill$+conviction$", note: "DISCOVERED by factory — forward-unconfirmed" });
+            linRows.push({ id: eid, hypothesis: `${spec_key} on ${market}`, test: "grammar vs matched-random, split-half OOS, dollar skill/drift+conviction", key_metric: `vs-random +${vr.edge.toFixed(4)}R t=${vr.tStat.toFixed(2)}; skill$ ${dv.skillUsd} (${dv.n} trades); conv$ ${dv.convUsd}`, verdict: "candidate", status: "forward-pending", decision_trail: "D-297 auto-discovered; needs forward confirmation before any promotion" });
+            survivors.push({ spec_key, market, t: +vr.tStat.toFixed(2), skill_usd: dv.skillUsd, conv_usd: dv.convUsd });
           }
-        } else { upd.status = "thin"; }
-        await fetch(`${SB}/rest/v1/trd_edge_queue?spec_key=eq.${encodeURIComponent(spec_key)}&market=eq.${market}`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify(upd) }).catch(() => {});
+        } else { upd.status = "thin"; thin++; }
+        updates.push(upd); processed++;
       }
-      results.push({ market, bars: bars.length, tested: items.length });
+      if (updates.length) await fetch(`${SB}/rest/v1/trd_edge_queue?on_conflict=spec_key,market`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(updates) }).catch(() => {});
+      if (processed === before) break; // no-progress guard: never re-fetch the same page forever
     }
+    // honour the trial-count invariant: every backtest this run increments the global counter (deflation depends on it)
+    if (processed) await fetch(`${SB}/rest/v1/rpc/trd_bump_trials`, { method: "POST", headers: H, body: JSON.stringify({ n: processed }) }).catch(() => {});
+    // flush survivor promotions in bulk (usually 0)
+    if (scRows.length) await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(scRows) }).catch(() => {});
+    if (dolRows.length) await fetch(`${SB}/rest/v1/trd_edge_dollar?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(dolRows) }).catch(() => {});
+    if (linRows.length) await fetch(`${SB}/rest/v1/trd_lineage?on_conflict=id`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(linRows) }).catch(() => {});
     const remain = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&select=spec_key`, { headers: { ...H, Prefer: "count=exact", Range: "0-0" } }).then((r) => r.headers.get("content-range")).catch(() => null);
-    return new Response(JSON.stringify({ ok: true, seeded, batch: pending.length, remaining: remain, results }, null, 2), { headers: cors });
+    return new Response(JSON.stringify({ ok: true, seeded, market, bars: bars.length, processed, thin, survivors: survivors.length, survivorRows: survivors, remaining: remain, elapsedMs: Date.now() - t0 }, null, 2), { headers: cors });
   } catch (e) { return new Response(JSON.stringify({ ok: false, err: String(e).slice(0, 300) }), { status: 500, headers: cors }); }
 });
