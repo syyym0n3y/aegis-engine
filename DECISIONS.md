@@ -4997,3 +4997,19 @@ NEAR/DOGE/UNI/AVAX (wired where Alpaca supports). The obscure micro-caps hitting
 edge concentrated in the MAJOR liquid altcoins; exhaustively scanning the free universe found nothing new tradeable —
 which is itself the answer, delivered at $0. Autonomous loop proved it can sweep a whole asset-class universe, catch
 its own infra bugs, and self-wire passers.
+
+## D-293 — Durable cloud execution routine + live P&L feed + buying-power unblock (post-machine-restart)
+Machine died → local drivers/loop died (Supabase backend durable). Fixes:
+1. BUYING-POWER UNBLOCK: 39 dead-edge positions (bblo 29/ripshort 5/pairs 5 — all demoted edges) flattened via
+   trd-flatsyms. Market was closed → closes queued for the Fri open → frees ~$60k for the validated ETF ORB.
+2. DURABLE CLOUD ROUTINE (trig_01EV5KfzcLag2E6Ps6fouMmH, cron 0 13-20 * * 1-5): runs on Anthropic cloud (survives
+   any local-machine death), fires hourly through RTH, reliably triggers ETF scanner + crypto ORB + futures exec by
+   HOLDING connections (bypasses the flaky pg_cron/pg_net that never fired the scanner), reports P&L. This is the
+   "can't die again" fix — cloud-side, not machine-bound.
+3. LIVE P&L FEED (trd-pnl-daily): equity, total/today P&L, futures-8:15 realized, per-position P&L, daily curve,
+   stored in trd_daily_pnl. Honest labels baked in.
+"WHY NO MONEY YET" answered honestly: (a) the validated ETF ORB has placed 0 trades (buying-power + cron blocked) —
+can't profit if it can't trade; (b) futures 8:15 (the one validated edge that DID trade via the internal broker)
+made +$265 on 3 trades — positive but noise-level sample; (c) the -$821 drag is BTC crypto-MOMENTUM (a near-miss,
+NOT validated); (d) fundamentally a +0.14R edge yields small, noisy returns that only show over a LARGE sample —
+small-sample/legacy P&L is not proof. Total +$1,454 is mostly legacy crypto (~$2,239), not edge.
