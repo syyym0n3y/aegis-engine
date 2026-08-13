@@ -4936,3 +4936,16 @@ across MTF, to read direction + PROBABILITIES per level. Building into trd-mtf-s
 Asia(00-08 UTC)/London(07-16)/NY(13:30-20) session H/L + interaction state (above/below/at, recent rejection).
 The PROBABILITY layer (P(reject) vs P(break-continue) at each level) is a backtest over the free intraday/daily/
 weekly bars — the "yet to compile" data (Binance crypto multi-year + Yahoo) — next build, $0 per doctrine D-283.
+
+## D-286 — Break-and-retest of prior-day levels TESTED on ES/NQ/GC/SI — NOT an edge (data beats folklore)
+Executed the operator's break-and-retest ask on futures (Databento 1m, 5m bars): break PDH (close>PDH), retest
+(bar dips to PDH, closes back above), enter long, stop below retest, +2R target, EOD race; symmetric short at PDL;
+vs matched random. TWO windows:
+  ES: 2026 recent -0.094 (t=-0.55) | 2025H1 -0.164 (t=-1.09) — NEGATIVE both. Win% 25-33.
+  NQ: recent +0.198 (t=1.13) | 2025H1 +0.121 (t=0.77) — positive-ish but SUB-threshold & inconsistent, raw mean neg.
+  GC (gold) / SI (silver): 5-15 signals — the strict retest rarely triggers; INCONCLUSIVE (thin).
+VERDICT: break-and-retest of prior-day H/L is NOT a mechanical edge here. IMPORTANT — this CONTRADICTS the "wait
+for the retest" folklore: the VALIDATED edge is break-and-FOLLOW (ORB, t=11.92, D-259); breaks CONTINUE, and waiting
+for the pullback doesn't add (hurts on ES). The session/daily/weekly LEVELS remain valuable as CONTEXT (live in the
+MTF engine, D-285) — but the retest ENTRY on them is not supported by the data. Logged rejected. Gold/silver retest
+untested (thin) — would need a looser definition, but I won't p-hack a folklore pattern the index futures already reject.
