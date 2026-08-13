@@ -45,7 +45,11 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     for(const x of b){if(x.d!==today&&x.m>=WS&&x.m<WE){dHi.set(x.d,Math.max(dHi.get(x.d)??-1e18,x.h));dLo.set(x.d,Math.min(dLo.get(x.d)??1e18,x.l));}}
     const priorW=[...dHi.keys()].map(d=>dHi.get(d)!-dLo.get(d)!).filter(v=>v>0).sort((a,b)=>a-b);
     const medW=priorW.length?priorW[Math.floor(priorW.length/2)]:w;
-    const tightMult=medW>0?(w<0.8*medW?1.5:w>1.3*medW?0.6:1.0):1.0;
+    // D-298: conviction backtest on ES cash_open showed the DIRECTION axis is validated (up-breaks
+    // +0.048R > down +0.039R → up×1.2/down×0.85 = +5.4% P&L) but the RANGE-tightness multiplier (tuned
+    // on crypto D-271) is NOT validated on futures — tight-range ES buckets are noisy/negative. So range
+    // stays NEUTRAL (1.0) here until per-instrument-validated; only the validated direction axis sizes.
+    const tightMult=1.0;
     const dirMult=dir>0?1.2:0.85;
     const conv=tightMult*dirMult;const lots=Math.max(1,Math.min(LOTS*2,Math.round(LOTS*conv)));
     const rangeQ=w<0.8*medW?"tight":w>1.3*medW?"wide":"normal";

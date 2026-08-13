@@ -5058,3 +5058,38 @@ through every rigorous test in the same way." Two honest gaps closed:
 
 Anchor held: vs-random stays NECESSARY. The dollar/conviction/regime lenses ADD money context;
 they do not replace the skill test. Dollar profit that is all drift is not an edge.
+
+## D-297 — The Edge Factory: automated discovery at scale, wired to compound (2026-08-13)
+
+Operator: "create a system that automatically finds, backtests and validates any edge from any setup
+a human could ever make... research at scale... wire into the routine that keeps progress compounding."
+
+Built `trd-edge-factory` (deployed) around the existing 2160→4860-point setup grammar (trd-grammar.ts:
+trigger × ema × trend × stop × rr × session). Each grammar point × free market = one queued trial in
+`trd_edge_queue` (self-seeds from code — no external seed job). Every run pulls a pending batch, fetches
+deep FREE+KEYLESS history (Binance multi-year 15m, 70k bars = 2yr), runs the strategy → per-trade R with
+regime tags, builds a MATCHED RANDOM control, and scores through the SAME gauntlet as our validated edges:
+vs-random SKILL + split-half OOS + dollar skill/drift + conviction. Survivors (t≥2 & holds-both) promote
+into trd_edge_scorecard + trd_edge_dollar + trd_lineage as forward-pending candidates.
+
+Wiring: cron `trd_edge_factory_5m` (batch 40, every 5 min) → runs 24/7 on Supabase, machine-independent
+(survives the laptop dying). Seeded 38,880 trials (8 coins × 4860 specs). First BTC batch: 0/12 passed
+(best t=1.91) — the brutal base rate working, exactly as D-070 predicts. This is the "over and over"
+engine: it never stops proposing and falsifying.
+
+Reach BEYOND the current grammar: `trd_edge_ingest` holds human-described setups mined from the internet.
+Seeded 8; 3 map to the grammar, 5 need NEW primitives (channel_breakout / vwap_reclaim / inside_bar_break
+/ session_range_sweep / n_bar_reversal) — the named backlog that widens the grammar toward "any human
+setup". Honest scope: this is a compounding PATHWAY judged by the same gate, NOT "the whole internet covered".
+
+## D-298 — Conviction backtest on orbfollow: direction axis validated, range axis is not (2026-08-13)
+
+Applied conviction sizing to orbfollow's OWN dollars (ES cash_open, from trd_futures_regime tagged buckets):
+- DIRECTION axis: up-breaks +0.048R > down +0.039R → sizing up×1.2/down×0.85 lifts P&L $22.0k→$23.2k
+  (**+5.4%**) with skill_frac 0.99. Validated — kept in the live executor.
+- RANGE-tightness axis: the tight×1.5 multiplier (tuned on crypto D-271) is NOT validated on ES — tight
+  buckets are noisy/negative on flat P&L. **Fixed the live `trd-futures-orb-exec`**: range multiplier
+  neutralised to 1.0 for futures (was shipping an unvalidated crypto-tuned multiplier); direction kept.
+
+Lesson: conviction multipliers must be regime-validated PER INSTRUMENT, not ported globally. The factory
+now produces the tagged per-trade R needed to validate them everywhere.
