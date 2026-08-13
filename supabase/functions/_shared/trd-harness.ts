@@ -75,6 +75,49 @@ export function scoreByRegime(setup: HarnessTrade[], control: HarnessTrade[], co
   return out;
 }
 
+export interface DollarView {
+  edge: string; n: number; riskUsd: number;
+  // FRAMEWORK A — flat: every trade risks the same $ (net-R × riskUsd)
+  flatUsd: number; flatPerTrade: number;
+  // FRAMEWORK B — conviction: each trade scaled by MEASURED setup quality (D-295 tight/up → larger)
+  convUsd: number; convPerTrade: number; avgConv: number;
+  // FRAMEWORK C — regime-gated: only trade the favourable regime (skip the rest)
+  gatedUsd: number; gatedN: number; gatedPerTrade: number;
+  // honest anchor: dollars from DRIFT (control) vs dollars from SKILL (edge over control)
+  driftUsd: number; skillUsd: number;
+}
+/** DOLLAR framework (D-296): translate an edge's net-R trades into money under three chart-analysis lenses —
+ * flat, conviction-sized (D-295), and regime-gated — AND split the flat dollars into drift (what a random
+ * control earned) vs skill (edge over control). The anchor the operator must keep: dollar profit that is all
+ * `driftUsd` and ~0 `skillUsd` is NOT an edge, however green the flatUsd looks. riskUsd = $ risked per 1R at
+ * base size (e.g. 0.5% of a $100k book = $500). convOf/favOf read the AT-ENTRY regime tags; defaults are inert
+ * (conv=1, all favourable) so an edge with no tags still gets an honest flat-dollar number. */
+export function scoreDollar(
+  edge: string, setup: HarnessTrade[], control: HarnessTrade[], costBps: number, riskUsd: number,
+  convOf: (r: Record<string, string> | undefined) => number = () => 1,
+  favOf: (r: Record<string, string> | undefined) => boolean = () => true,
+): DollarView {
+  const costFrac = costBps / 1e4;
+  const netOf = (t: HarnessTrade) => t.r - (t.stopFrac > 0 ? costFrac / t.stopFrac : 0);
+  const net = setup.map(netOf);
+  const ctrlNet = control.map(netOf);
+  const flatUsd = net.reduce((s, r) => s + r, 0) * riskUsd;
+  const driftUsd = (ctrlNet.length ? mean(ctrlNet) : 0) * setup.length * riskUsd;
+  const convs = setup.map((t) => convOf(t.regime));
+  const convUsd = net.reduce((s, r, i) => s + r * convs[i], 0) * riskUsd;
+  const gatedIdx = setup.map((t, i) => favOf(t.regime) ? i : -1).filter((i) => i >= 0);
+  const gatedUsd = gatedIdx.reduce((s, i) => s + net[i], 0) * riskUsd;
+  return {
+    edge, n: setup.length, riskUsd,
+    flatUsd: +flatUsd.toFixed(0), flatPerTrade: +(flatUsd / Math.max(1, setup.length)).toFixed(2),
+    convUsd: +convUsd.toFixed(0), convPerTrade: +(convUsd / Math.max(1, setup.length)).toFixed(2),
+    avgConv: +(convs.reduce((s, c) => s + c, 0) / Math.max(1, convs.length)).toFixed(3),
+    gatedUsd: +gatedUsd.toFixed(0), gatedN: gatedIdx.length,
+    gatedPerTrade: +(gatedUsd / Math.max(1, gatedIdx.length)).toFixed(2),
+    driftUsd: +driftUsd.toFixed(0), skillUsd: +(flatUsd - driftUsd).toFixed(0),
+  };
+}
+
 /** Score one edge from its setup trades + a MATCHED random-control set (same instrument/regime/geometry). */
 export function scoreEdge(edge: string, setup: HarnessTrade[], control: HarnessTrade[], opts: ScoreOpts): EdgeScorecard {
   const costFrac = opts.costBps / 1e4;

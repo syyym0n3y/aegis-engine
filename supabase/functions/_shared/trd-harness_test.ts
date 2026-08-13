@@ -1,7 +1,7 @@
 // Tests for the unified edge scorecard (D-263). Verifies it COMPOSES the cores correctly:
 // cost→R conversion, vs-random cost-neutrality, split-half OOS, and fail-closed on thin samples.
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { scoreEdge, scoreByRegime, type HarnessTrade } from "./trd-harness.ts";
+import { scoreEdge, scoreByRegime, scoreDollar, type HarnessTrade } from "./trd-harness.ts";
 
 // deterministic pseudo-trades: a setup with a real +0.3R gross edge over random, both with stopFrac=0.01
 function make(n: number, meanR: number, seed: number): HarnessTrade[] {
@@ -64,4 +64,28 @@ Deno.test("trial count inflation deflates the Sharpe (DSR falls as nTrials rises
   const few = scoreEdge("t", setup, control, { costBps: 5, nTrials: 1 });
   const many = scoreEdge("t", setup, control, { costBps: 5, nTrials: 500 });
   assert(many.deflatedSharpe <= few.deflatedSharpe, "more trials must not increase the deflated Sharpe");
+});
+
+Deno.test("dollar view: flat = net-R × riskUsd; conviction scales it; gate subsets it", () => {
+  const setup = make(80, 0.3, 3), control = make(80, 0.0, 4);
+  // tag half the setups 'tight' so conviction (1.5×) and the regime gate can bite
+  setup.forEach((t, i) => { t.regime = { range: i % 2 === 0 ? "tight" : "wide" }; });
+  const convOf = (r?: Record<string, string>) => r?.range === "tight" ? 1.5 : 1.0;
+  const favOf = (r?: Record<string, string>) => r?.range === "tight";
+  const d = scoreDollar("t", setup, control, 5, 500, convOf, favOf);
+  // conviction dollars must EXCEED flat when some trades are up-weighted and the edge is net-positive
+  assert(d.convUsd > d.flatUsd, `conv ${d.convUsd} should exceed flat ${d.flatUsd}`);
+  assert(d.gatedN === 40, `gate should keep the 40 tight trades, got ${d.gatedN}`);
+  assert(d.avgConv > 1 && d.avgConv < 1.5, `avgConv ${d.avgConv} between 1 and 1.5`);
+});
+
+Deno.test("dollar view HONEST ANCHOR: drift dollars are NOT skill dollars", () => {
+  // a setup that only earns market DRIFT: setup mean = control mean (both +0.3R). flat dollars are green,
+  // but skillUsd (edge over the matched random control) must be ~0 — the exact trap the operator flagged.
+  const driftOnly = scoreDollar("drift", make(200, 0.3, 21), make(200, 0.3, 22), 5, 500);
+  assert(driftOnly.flatUsd > 0, "flat dollars look profitable (drift)");
+  assert(Math.abs(driftOnly.skillUsd) < Math.abs(driftOnly.driftUsd) * 0.5, `skillUsd ${driftOnly.skillUsd} must be small vs driftUsd ${driftOnly.driftUsd}`);
+  // a REAL edge (setup 0.3 over control 0.0): skill dollars ≈ flat dollars
+  const real = scoreDollar("real", make(200, 0.3, 21), make(200, 0.0, 22), 5, 500);
+  assert(real.skillUsd > real.driftUsd, `real edge: skill ${real.skillUsd} should dominate drift ${real.driftUsd}`);
 });

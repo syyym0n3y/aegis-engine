@@ -5032,3 +5032,29 @@ holds). Futures: lots = base(10) x conv, clamp [1,20]. ETF: notional = 2% x conv
 down-break → ~0.5x. So capital concentrates on the validated high-edge setups, not flat across all breaks. Config-
 driven base (trd_exec_config). HONEST: conviction sizing amplifies the edge's dollar impact where it's strongest,
 but on a small forward sample it's still small-sample; and it's built on the DATA-MEASURED regime, not folklore.
+
+## D-296 — Dollar multi-framework view: separate SKILL dollars from DRIFT dollars (2026-08-13)
+
+Operator: "test all edges with the dollar movement... we can't act like every edge went
+through every rigorous test in the same way." Two honest gaps closed:
+
+1. **Coverage was uneven and I'd hidden it.** orbfollow got vs-random+OOS+regime; futures-8:15
+   and crypto-ORB went through DIFFERENT test paths; NO edge had ever had a dollar+conviction
+   backtest. Surfaced the per-edge framework-coverage matrix instead of one flat label.
+
+2. **`scoreDollar()` in trd-harness.ts (D-296)** translates each edge's net-R into money under
+   three chart-analysis lenses — flat / conviction-sized (D-295) / regime-gated — AND splits
+   flat dollars into **skill_usd** (edge over a matched random control) vs **drift_usd** (what a
+   coin-flip earned in the same tape). 2 new tests lock the anchor: drift dollars are NOT skill.
+   Materialized to `trd_edge_dollar` at $500 risk/1R.
+
+**The result vindicates the falsification engine in dollar terms:**
+- **orbfollow: skill_frac 0.992** — $1.64M flat, $1.63M is SKILL. THE edge, in money.
+- **bblo: skill_frac -0.045 / hi52: -0.254** — both look profitable ($612k / $489k flat) but
+  skill is NEGATIVE. Pure drift. The exact trap the operator warned about — a dollar-only view
+  would have promoted them; the skill split kills them.
+- rsi2/down3/rev5: >$1.4M flat each but skill_frac 0.10-0.22 — ~85% drift, not significant.
+- crypto: $2.4M flat but only 49% skill, t=1.93 (not significant) — half the money is BTC drift.
+
+Anchor held: vs-random stays NECESSARY. The dollar/conviction/regime lenses ADD money context;
+they do not replace the skill test. Dollar profit that is all drift is not an edge.
