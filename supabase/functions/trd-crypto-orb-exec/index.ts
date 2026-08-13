@@ -8,7 +8,7 @@ const AH={"APCA-API-KEY-ID":KEYID,"APCA-API-SECRET-KEY":SECRET,"Content-Type":"a
 const PAPER="https://paper-api.alpaca.markets";
 const SB=Deno.env.get("SUPABASE_URL")!,SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json"};
-const SYMS:[string,string,string][]=[["ETHUSDT","ETH/USD","ETHUSD"],["SOLUSDT","SOL/USD","SOLUSD"]]; // binance, alpaca-order, alpaca-pos
+const SYMS:[string,string,string][]=[["ETHUSDT","ETH/USD","ETHUSD"],["SOLUSDT","SOL/USD","SOLUSD"],["DOGEUSDT","DOGE/USD","DOGEUSD"]]; // binance, alpaca-order, alpaca-pos (ETH/SOL passers + DOGE candidate D-289)
 const NOTIONAL=0.02,WS=810,WE=870; // 13:30-14:30 UTC opening range
 async function bnb(sym:string){try{const r=await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=15m&limit=120`);if(!r.ok)return[];const j=await r.json();
   return (j as number[][]).map(k=>{const dt=new Date(k[0]);return{h:+k[2],l:+k[3],c:+k[4],m:dt.getUTCHours()*60+dt.getUTCMinutes(),d:dt.toISOString().slice(0,10)};});}catch{return[];}}

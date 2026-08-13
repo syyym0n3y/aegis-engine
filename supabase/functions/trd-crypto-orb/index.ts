@@ -2,6 +2,8 @@
 // Pulls ~2.5yr of 15m klines per symbol (keyless, paginated), tests the opening-range breakout-FOLLOW at two session
 // windows (00:00 UTC crypto-day, 13:30 UTC US-open) vs a random-direction control, with split-half OOS. $0, no key.
 const WINS:[string,number,number][]=[["utc00",0,60],["usopen",810,870]];
+const SB=Deno.env.get("SUPABASE_URL")!,SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const HH={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json"};
 interface Bar{t:number;h:number;l:number;c:number;m:number;d:string}
 async function klines(sym:string,startMs:number):Promise<Bar[]>{const out:Bar[]=[];let cur=startMs;const now=Date.now();let calls=0;
   while(cur<now&&calls<260){calls++;
@@ -35,7 +37,10 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const yrs=+(u.searchParams.get("years")||"2.5");const start=Date.now()-yrs*365*864e5;
   const res=[];const pooled:Record<string,{R:number[],C:number[]}>={utc00:{R:[],C:[]},usopen:{R:[],C:[]}};
   for(const sym of syms){const b=await klines(sym,start);if(b.length<500){res.push({sym,bars:b.length,skip:"thin"});continue;}
-    const per:Record<string,unknown>={};for(const [wn,ws,we] of WINS)per[wn]=testWin(b,ws,we,sym.length*101+ws);
+    const per:Record<string,unknown>={};const rows:Record<string,unknown>[]=[];
+    for(const [wn,ws,we] of WINS){const w=testWin(b,ws,we,sym.length*101+ws);per[wn]=w;
+      if((w as {edge?:number}).edge!=null)rows.push({sym,win:wn,n:(w as {n:number}).n,mean_r:(w as {mean_r:number}).mean_r,edge_r:(w as {edge:number}).edge,t:(w as {t:number}).t,passes:(w as {passes:boolean}).passes,holds_both:(w as {holds_both:boolean}).holds_both,h1:(w as {h1:number}).h1,h2:(w as {h2:number}).h2,run_at:new Date().toISOString()});}
+    if(rows.length)await fetch(`${SB}/rest/v1/trd_crypto_scan?on_conflict=sym,win`,{method:"POST",headers:{...HH,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)}).catch(()=>{});
     res.push({sym,bars:b.length,span:`${b[0].d}→${b[b.length-1].d}`,...per});}
   return new Response(JSON.stringify({ok:true,source:"Binance 15m (free+keyless)",symbols:syms.length,results:res},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
