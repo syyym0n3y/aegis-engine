@@ -4924,3 +4924,15 @@ ORB-follow (they react to US session flow), strongest ETH/SOL — a real near-mi
 tier as the other momentum/breakout signals (real-but-modest, not universal). BTC is too efficient/global to show
 it. This is the free-data doctrine working: tested intraday across the crypto universe over years for $0 (no
 Polygon). ETH/SOL US-open ORB → controlled-risk forward candidate.
+
+## D-285 — ETH/SOL US-open ORB deployed as forward candidate + session-levels framework begun
+Deployed trd-crypto-orb-exec: ETH/SOL US-open (13:30-14:30 UTC) ORB-follow, signal from FREE Binance, execution
+Alpaca crypto paper, poll-managed bracket (stop=opposite extreme, target=+1 width, 48h stop), small size, per-day
+dedup, guards. Cron trd_crypto_orb_30m (0,30 13-23 UTC daily). Added stop/target cols to trd_trades. Forward-tracked,
+NOT validated. Verified debug (pre-open → holds correctly).
+SESSION-LEVELS FRAMEWORK (operator vision, D-285 begun): what matters across timeframes = daily & weekly highs/lows
+and the Asia/London/NY session ranges; track whether price HITS them, REJECTS, or BREAKS/commits, in real time
+across MTF, to read direction + PROBABILITIES per level. Building into trd-mtf-state: prior-day/prior-week H/L +
+Asia(00-08 UTC)/London(07-16)/NY(13:30-20) session H/L + interaction state (above/below/at, recent rejection).
+The PROBABILITY layer (P(reject) vs P(break-continue) at each level) is a backtest over the free intraday/daily/
+weekly bars — the "yet to compile" data (Binance crypto multi-year + Yahoo) — next build, $0 per doctrine D-283.
