@@ -8,7 +8,9 @@ const AH={"APCA-API-KEY-ID":KEYID,"APCA-API-SECRET-KEY":SECRET,"Content-Type":"a
 const PAPER="https://paper-api.alpaca.markets";
 const SB=Deno.env.get("SUPABASE_URL")!,SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H={apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json"};
-const SYMS:[string,string,string][]=[["ETHUSDT","ETH/USD","ETHUSD"],["SOLUSDT","SOL/USD","SOLUSD"],["DOGEUSDT","DOGE/USD","DOGEUSD"]]; // binance, alpaca-order, alpaca-pos (ETH/SOL passers + DOGE candidate D-289)
+// SYMS are CONFIG-DRIVEN from trd_crypto_candidates (D-289): the scan/loop inserts new OOS-holding passers and they
+// auto-trade here — no redeploy. Fallback to ETH/SOL if the table is unreachable.
+const FALLBACK:[string,string,string][]=[["ETHUSDT","ETH/USD","ETHUSD"],["SOLUSDT","SOL/USD","SOLUSD"]];
 const NOTIONAL=0.02,WS=810,WE=870; // 13:30-14:30 UTC opening range
 async function bnb(sym:string){try{const r=await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=15m&limit=120`);if(!r.ok)return[];const j=await r.json();
   return (j as number[][]).map(k=>{const dt=new Date(k[0]);return{h:+k[2],l:+k[3],c:+k[4],m:dt.getUTCHours()*60+dt.getUTCMinutes(),d:dt.toISOString().slice(0,10)};});}catch{return[];}}
@@ -21,6 +23,8 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   if(!arm?.[0]?.armed&&!dbg)return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json());const equity=Number(acct.equity)||100000;
   const today=new Date().toISOString().slice(0,10);const utcMin=new Date().getUTCHours()*60+new Date().getUTCMinutes();
+  const cand=await fetch(`${SB}/rest/v1/trd_crypto_candidates?active=eq.true&select=binance_sym,alpaca_order,alpaca_pos`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+  const SYMS:[string,string,string][]=Array.isArray(cand)&&cand.length?cand.map((c:{binance_sym:string,alpaca_order:string,alpaca_pos:string})=>[c.binance_sym,c.alpaca_order,c.alpaca_pos]):FALLBACK;
   const out:Record<string,unknown>[]=[];
   for(const [bsym,osym,psym] of SYMS){
     const b=await bnb(bsym);if(b.length<10){out.push({sym:psym,skip:"no bars"});continue;}

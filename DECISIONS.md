@@ -4973,3 +4973,16 @@ operator's call, but the edge proves forward now). 8:15 ORB logged VALIDATED-CAN
 EDGE HUNT ACROSS INSTRUMENTS (free): Binance = keyless multi-year 1m for the whole crypto universe (D-283). Running
 the US-open ORB across ~24 liquid coins to find more ETH/SOL-class edges — $0. Equities: 46k daily free (done);
 futures: Databento credit for the ~30 liquid. The free coverage is maximized, not gated by dollars.
+
+## D-289/290 — Config-driven crypto candidates + SELF-EXPANDING universe scan (all free instruments across years)
+Mission-driver loop wiring: crypto-orb-exec now reads its symbols from trd_crypto_candidates (config-driven) — new
+OOS-holding passers auto-trade with no redeploy. Seeded ETH/SOL (passers) + DOGE/UNI/AVAX (candidates, hold OOS).
+trd-crypto-universe-scan (D-290): self-expanding scan of the ENTIRE free Binance USDT universe = 484 instruments.
+Each cron run (trd_crypto_universe_5m, */5) pulls the full list keyless, scans the next un-scanned coins' US-open ORB
+(1.5yr, stores trd_crypto_scan), and AUTO-PROMOTES Alpaca-tradeable passers (t>=2 & OOS-hold) into candidates →
+auto-traded. Covers all 484 across years in ~19h, $0, no key.
+HONEST COVERAGE (no 60k overclaim — the flaw-#1 lesson): FREE INTRADAY across-years = 484 crypto (Binance, now
+auto-sweeping) + ~40 futures (Databento credit). FREE DAILY across-years = ~46k global equities (Yahoo, swept for
+daily edges). "60,000 instruments across years of INTRADAY" does NOT exist in free data (equity intraday is ~60d on
+Yahoo) — this is MAXIMAL free coverage, systematically expanding, not a claim of 60k intraday. Findings so far: ORB
+is an ALTCOIN effect (ETH/SOL pass, NEAR/DOGE/UNI/AVAX candidate, BTC/majors dead).
