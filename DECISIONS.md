@@ -5213,3 +5213,17 @@ the real cost back near the 0.05R/side the factory assumed. The grammar currentl
 Concurrency note: a parallel factory run authored its own `trd-edge-stage2` at the same path; it has since
 adopted this riskFrac cost model (at a 20bp stress fee) and owns `trd_stage2_results` /
 `trd_forward_candidates`. Left in place — the cost model is now consistent across both.
+
+## D-303 — Stage-2 full-gauntlet validation engine + realistic cost model (2026-08-14)
+
+Built `trd-edge-stage2`: factory candidates (skill+profit, in-sample) get re-tested with the heavy artillery
+the factory's t-screen skips — (1) DSR deflated by the TRUE trial count (trd_trial_counter), (2) K-fold
+WALK-FORWARD OOS (net-positive in ≥60% of out-of-sample folds), (3) PESSIMISTIC cost (20bp/side = 2× the
+factory's realistic 10bp, covering spread+slippage). Survivors → trd_forward_candidates (paper, operator-armed);
+verdicts → trd_stage2_results + trd_lineage. Wired to BOTH cloud (cron trd_edge_stage2_3m) and the local Routine.
+
+Cost model correction (autonomous loop, folded in): cost is now bps-of-notional per trade via CTrade.riskFrac
+(costR/side = (feeBps/1e4)/riskFrac), NOT a flat 0.05R. On 15m crypto the median stop is ~0.1-0.3% of notional,
+so a 10bp fee is really 0.4-4R/side — the flat constant understated it up to 7×. This killed all 147 optimistic-
+cost candidates. First stage-2 run: 12/12 killed, net_r_pess −1.6..−4.2R (micro-stop sweeps are pure fee-bleed —
+they beat random but fees several× exceed the range). 0 survivors = the gauntlet working (D-070), not a failure.
