@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 22·3·3·3·5·4·5 = 59,400. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 24·3·3·3·5·4·5 = 64,800. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -385,6 +385,65 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (p.close < p.open && b.close > b.open) return { side: "long", stop: Math.min(p.low, b.low) };
       if (p.close > p.open && b.close < b.open) return { side: "short", stop: Math.max(p.high, b.high) };
       return null;                                                // same colour, or a flat body → fails closed
+    }
+    case "doubletop": { // Double top / double bottom (ingest id=22, web:tradingsim) — the 24th primitive, and the
+      // first whose SIGNAL LEVEL is neither the current bar's own geometry, an indicator, nor the extreme that
+      // DEFINES the pattern. Every other structural trigger enters at the level it just cleared: `breakout` and
+      // `channel` break the window extreme, `sweep`/`ssweep` fade the extreme they just wicked, `choch` breaks the
+      // most recent swing pivot. Here the two defining extremes (the twin peaks) are never traded at all — the
+      // entry is a close through the NECKLINE, the swing low BETWEEN them, which sits below both peaks and earlier
+      // in time than one of them. The read is a level that rejected price TWICE, followed by the failure of the
+      // support that held between the attempts: the second rejection is what makes the neckline break mean
+      // something, and nothing in the grammar can express "twice" — a rejection count is not a shape, a level, a
+      // window, a ratio, or a derivative.
+      // Why it is not `choch`. Their preconditions are opposite reads of the SAME two swing highs: `choch` requires
+      // the highs to be UNEQUAL (a lower high after a higher one = an established down structure) and fires LONG on
+      // a close ABOVE the most recent one. This requires the two highs to be EQUAL within a tolerance, and fires
+      // SHORT on a close BELOW the low between them. They cannot produce the same trade on the same bar.
+      // Why it is not `breakout`. A break of the neckline is a range break, so `breakout` fires on the identical
+      // bar with NO precondition at all — the test pins exactly that (negative control A is silent here and
+      // produces a trade under `breakout`), so what this trigger contributes is the twice-rejected precondition.
+      // The tolerance is the one free constant: the peaks must differ by less than EQ_TOL of the pattern's own
+      // HEIGHT (peak − neckline), so the test is scale-free and needs no absolute price unit. It is held FIXED at
+      // 0.10 — as `pinbar`'s 2× wick, `orderblock`'s 1.4× impulse and `harami`'s 2× body ratio are — rather than
+      // exposed as a grammar axis, so it cannot multiply the trial count and deflate every other candidate's DSR.
+      // Choice-free by construction: the pattern is ALWAYS the two most recent confirmed pivots of that kind (no
+      // scanning back for the best-fitting pair — that would be a per-bar optimisation the trial counter cannot
+      // see), and the neckline is the LOWEST low pivot between them, which is the textbook definition rather than a
+      // pick. Only the pivots within KPIV/MAXBACK are considered, so a pattern whose neckline is older than that is
+      // simply not detected — it fails closed, never guesses.
+      // Point-in-time by construction: a fractal pivot at bar k needs L bars on EITHER side, so it is not knowable
+      // until k+L; the scan starts at i−L, so nothing after the current closed bar is read. The break test uses
+      // bars[i-1].close, also closed, which makes the entry a CROSSING event — the trigger fires on the bar that
+      // takes out the neckline, not on every bar of the decline that follows.
+      const L = 2, MAXBACK = 300, KPIV = 3, EQ_TOL = 0.10;
+      const hiIdx: number[] = [], loIdx: number[] = [];
+      for (let k = i - L; k >= L && k >= i - MAXBACK && (hiIdx.length < KPIV || loIdx.length < KPIV); k--) {
+        let isHi = true, isLo = true;
+        for (let j = 1; j <= L; j++) {
+          if (!(bars[k].high > bars[k - j].high && bars[k].high > bars[k + j].high)) isHi = false;
+          if (!(bars[k].low < bars[k - j].low && bars[k].low < bars[k + j].low)) isLo = false;
+        }
+        if (isHi && hiIdx.length < KPIV) hiIdx.push(k);
+        if (isLo && loIdx.length < KPIV) loIdx.push(k);
+      }
+      if (hiIdx.length >= 2) {                                  // DOUBLE TOP → short the neckline break
+        const a = hiIdx[1], z = hiIdx[0];                       // the two most recent swing highs, a earlier than z
+        let neck = Infinity;
+        for (const k of loIdx) if (k > a && k < z && bars[k].low < neck) neck = bars[k].low; // lowest trough between
+        const h0 = bars[z].high, h1 = bars[a].high, peak = Math.max(h0, h1), amp = peak - neck;
+        if (Number.isFinite(neck) && amp > 0 && Math.abs(h0 - h1) <= EQ_TOL * amp && bars[i - 1].close >= neck && b.close < neck)
+          return { side: "short", stop: peak };
+      }
+      if (loIdx.length >= 2) {                                  // DOUBLE BOTTOM → the exact mirror
+        const a = loIdx[1], z = loIdx[0];
+        let neck = -Infinity;
+        for (const k of hiIdx) if (k > a && k < z && bars[k].high > neck) neck = bars[k].high; // highest peak between
+        const l0 = bars[z].low, l1 = bars[a].low, trough = Math.min(l0, l1), amp = neck - trough;
+        if (Number.isFinite(neck) && amp > 0 && Math.abs(l0 - l1) <= EQ_TOL * amp && bars[i - 1].close <= neck && b.close > neck)
+          return { side: "long", stop: trough };
+      }
+      return null;
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.

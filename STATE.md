@@ -1,6 +1,44 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-319: grammar widened to 24 triggers — `doubletop`, the first trigger that enters at
+a level it did NOT test; and the stage-2 ledger was found RESET, not complete.** Loop healthy and writing:
+queue `max(run_at)` **47 s** old with **5,640 rows written in the trailing 10 min**, `done` 404,007 →
+**416,462** since the prior session — writes LAND, not merely "processed:N" (the D-300b/D-302 silent-write
+class this check exists for). Queue now **1,036,800** total (993,600 + this session's 43,200 seed) — 416,462
+done / 156,587 thin. **Correction to the prior entry, measured not assumed:** `trd_stage2_results` does NOT
+hold the cumulative 566-tested record it claimed. `pg_stat_user_tables` reports **`n_tup_del` = 566** on that
+table and every surviving row's `run_at` falls inside a single 11-minute window (17:44:55 → 17:55:47Z), so the
+566 stage-2 verdicts were **deleted** — consistent with a deliberate purge to re-test everything under D-313's
+new effective-N deflation (`nTrials` is now the Nyholt effective count **572,538**, not the raw counter), but
+it was never recorded as such. Live state: **566 fac:* candidates, 240 stage-2 tested, 326 still untested**,
+201 stage2-killed / 15 thin / **0 survivors**, `trd_forward_candidates` = **0**. Stage-2 fired once this
+session: 12 computed, 12 persisted, 0 lost, **0 survivors**. Shipped `doubletop` (ingest id=22,
+web:tradingsim): two swing highs equal within 10% of the pattern's own height, separated by a swing low, and
+the trade is the close THROUGH that low. **Every other structural trigger enters at the level it just cleared**
+(`breakout`/`channel` the window extreme, `sweep`/`ssweep` the wicked extreme, `choch` the most recent pivot);
+here the two defining peaks are never traded at all — the entry is the neckline BETWEEN them. The information
+is a rejection COUNT, which is not a shape, a level, a window, a ratio or a derivative. `choch` reads the same
+two highs and requires them UNEQUAL, firing LONG above the recent one — opposite precondition, opposite
+direction. **Control A carries the weight:** same neckline, same break bar, second peak 105.5 instead of 110.5
+→ `doubletop` silent, and the test ASSERTS the identical bars under `breakout` do trade, so the silence is the
+twice-rejected precondition and not the absence of a break. Control B leaves the pattern intact and never
+closes through the neckline → silent (the trigger is the crossing event, so it fires once, not on every bar of
+the decline). The 12 identical filler bars are provably pivot-free. The one free constant (10% of pattern
+height) is held FIXED as `pinbar`/`orderblock`/`harami`'s ratios are. 24/24 grammar tests, **266/266
+`_shared`**, `deno check` clean, both edge fns redeployed. **Seed proved byte-exact, not asserted:** the 2,700
+seeded `spec_key`s hash to `md5 2d2670a6e1cccf4b4dd17a80c87337f0`, identical to the md5 of `enumerate()` /
+`specKey()` output from the TS grammar itself; 43,200 rows × 16 markets, 0 trigger/key disagreements.
+**Deploy verified by OUTPUT:** `?market=BTCUSDT&trigger=doubletop` over 35,040 real 15m bars → **37 rows
+`done`, all non-null `n`, avg 123 trades (32–293), 3 thin, 0 passing the gate** — ~4× rarer than `harami`, as
+a two-pivot precondition should be. **Honest status: `doubletop` has produced nothing — 0 candidates, 0
+stage-2 survivors, 0 forward candidates; 43,160 rows still pending, its hypothesis is UNTESTED.** Known ledger
+defect, unfixed: **12 duplicate `## D-NNN` ids in DECISIONS.md** (D-180/181/196/216/217/278/300/303/312/313/
+314/315) — renumbering would break existing `decision_refs`, so it needs its own decision, not a silent edit.
+↓ prior stands. ↓
+
+## Prior
+
 **2026-08-14 (Opus 5) — D-318: grammar widened to 23 triggers — `harami`, the first condition that is
 CONTRACTION OF THE BODY against the prior bar; stage-2 record 566 tested / 0 survivors.** Loop healthy and
 writing: queue `max(run_at)` **24 s** old, `done` **404,007** of **950,400** (391,131 pending / 155,262 thin) —

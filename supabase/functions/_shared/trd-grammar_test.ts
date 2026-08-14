@@ -678,3 +678,65 @@ Deno.test("harami: fires on BODY contraction against the prior bar — not range
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("doubletop: enters at the NECKLINE between two equal peaks — not at either peak, and not on a bare break", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "doubletop" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 NEUTRAL filler bars, all with IDENTICAL highs and lows → the strict fractal comparisons can never hold, so
+  // the filler contains no pivots and no pattern. Provably signal-free before anything is built on top of it.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100.1, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+
+  // DOUBLE TOP: peak 110 (idx 14) → neckline low 100 (17) → peak 110.5 (20), the two peaks 0.5 apart against a
+  // pattern height of 10.5 (well inside the 10% tolerance) → bar 23 closes 99.5, THROUGH the neckline, while bar 22
+  // closed 103.5 above it → the crossing bar fires SHORT with the stop at the higher peak, 110.5.
+  const seq: Bar[] = [...flat,
+    bar(101, 102, 100.8, 101.8, 12), bar(103, 104, 102.8, 103.8, 13),
+    bar(108, 110, 107, 109.5, 14),   // P1 = 110
+    bar(106, 107, 105, 106.5, 15), bar(104, 105, 103, 104.5, 16),
+    bar(101, 102, 100, 101.5, 17),   // NECKLINE = 100
+    bar(103, 104, 102, 103.5, 18), bar(105, 106, 104, 105.5, 19),
+    bar(108, 110.5, 107, 109, 20),   // P2 = 110.5 → |110.5 − 110| = 0.5 <= 0.10 × (110.5 − 100)
+    bar(106, 107, 105, 106.5, 21), bar(103, 104, 102, 103.5, 22),
+    bar(101, 102, 99, 99.5, 23),     // close 99.5 < 100 → SHORT, stop 110.5
+    bar(99.5, 100, 99, 99.6, 24),    // fill at open 99.5 → risk 11.0, target 88.5; neither touched
+    bar(99.6, 100, 88, 88.2, 25)];   // low 88 <= 88.5 → +1R
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "short");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // NEGATIVE CONTROL A — isolates the TWICE-REJECTED precondition, and pins the difference from `breakout`. The
+  // neckline (100) and the identical break bar are kept; only the second peak changes, from 110.5 to 105.5, so the
+  // two highs now differ by 4.5 against a pattern height of 10 — one rejection at 110 and a lower failure, not a
+  // level that rejected twice. `doubletop` must be silent, while a plain range-break detector on the SAME bars
+  // trades — so the silence is the precondition, not the absence of a break.
+  const unequal: Bar[] = [...flat,
+    bar(101, 102, 100.8, 101.8, 12), bar(103, 104, 102.8, 103.8, 13),
+    bar(108, 110, 107, 109.5, 14),   // P1 = 110
+    bar(106, 107, 105, 106.5, 15), bar(104, 105, 103, 104.5, 16),
+    bar(101, 102, 100, 101.5, 17),   // NECKLINE = 100
+    bar(101.5, 102.5, 101, 102, 18), bar(103, 104, 102.5, 103.5, 19),
+    bar(104, 105.5, 103.5, 105, 20), // P2 = 105.5 → |105.5 − 110| = 4.5 > 0.10 × (110 − 100)
+    bar(103, 104, 102, 103.5, 21), bar(101, 102, 100.5, 101.5, 22),
+    bar(100.5, 101, 99, 99.5, 23),   // same close THROUGH the neckline as the positive case
+    bar(99.5, 100, 99, 99.6, 24), bar(99.6, 100, 88, 88.2, 25)];
+  assertEquals(runComponentTrades(unequal, spec, { costRPerSide: 0 }).length, 0);
+  const asBreakout = runComponentTrades(unequal, { ...spec, trigger: "breakout" as const }, { costRPerSide: 0 });
+  assert(asBreakout.length > 0, "control A must contain a real range break — otherwise it proves nothing");
+
+  // NEGATIVE CONTROL B — isolates the BREAK. The identical twin-peak pattern is left intact and only the last three
+  // bars change: price sags towards the neckline but every close stays above 100. The pattern alone is not a trade;
+  // the trigger is the crossing event.
+  const noBreak: Bar[] = [...seq.slice(0, 23),
+    bar(101, 102, 100.2, 100.5, 23), bar(100.5, 101, 100.1, 100.6, 24), bar(100.6, 101, 100.2, 100.8, 25)];
+  assertEquals(runComponentTrades(noBreak, spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — the double bottom is the exact reflection: two equal troughs, entry on the close back ABOVE the peak
+  // between them, stop at the lower trough.
+  const mir = seq.map((b) => ({ ts: b.ts, open: 200 - b.open, high: 200 - b.low, low: 200 - b.high, close: 200 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "long");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

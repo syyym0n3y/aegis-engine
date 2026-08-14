@@ -5803,6 +5803,71 @@ ignore the one alert that matters.
 
 ---
 
+## D-319 — 24th grammar trigger `doubletop`: the first trigger that enters at a level it did NOT test
+
+**2026-08-14.** `doubletop` (ingest id=22, web:tradingsim) — two swing highs at the same level within a
+tolerance, separated by a swing low, and the trade is a close **through that low**, the neckline. Mirror for
+the double bottom. Stop at the far peak/trough, so 1R is the full height of the pattern.
+
+**What makes it a different primitive, stated precisely.** Every other structural trigger in the grammar
+enters at the level it just cleared: `breakout` and `channel` break the window extreme, `sweep`/`ssweep` fade
+the extreme they just wicked, `choch` breaks the most recent swing pivot, `inside`/`nr7`/`delivery` break the
+contracted range. Here **the two defining extremes are never traded at all** — the entry is at the swing low
+BETWEEN them, which sits below both peaks and earlier in time than one of them. The information being read is
+a *rejection count*: a level that turned price away TWICE, then the failure of the support that held between
+the attempts. A count is not a shape, a level, a window, a ratio (`squeeze`) or a derivative (`macd`), and
+nothing already in the grammar can express "twice".
+
+**Against its two nearest neighbours, and the controls that pin it.**
+- **`choch`** reads the SAME two swing highs and requires them to be **unequal** (a lower high after a higher
+  one = an established down structure), then fires **long** on a close **above** the most recent one. This
+  requires them **equal** and fires **short** on a close **below** the low between them. Opposite
+  precondition, opposite direction — they cannot produce the same trade on the same bar.
+- **`breakout`** fires on the identical neckline bar with **no precondition at all**. Negative control A keeps
+  the neckline (100) and the identical break bar and changes only the second peak (110.5 → 105.5, so the highs
+  differ by 4.5 against a 10-point pattern height): `doubletop` is **silent**, and the test asserts that the
+  SAME bars under `trigger: breakout` **do** trade. The silence is the twice-rejected precondition, not the
+  absence of a break — which is the whole contribution of the primitive.
+- Negative control B keeps the twin-peak pattern intact and lets price sag towards the neckline without a
+  close through it → silent. The pattern alone is not a trade; the trigger is the crossing event
+  (`bars[i-1].close >= neck && b.close < neck`), so it fires once, on the bar that takes the level out, not on
+  every bar of the decline that follows.
+- The 12 identical NEUTRAL filler bars are provably signal-free: the strict fractal comparisons cannot hold on
+  equal highs/lows, so the fixture contains no pivots at all before the pattern is built on top of it.
+
+**Choice-free by construction (the part that protects the trial count).** The pattern is ALWAYS the two most
+recent confirmed pivots of that kind — no scanning back for the best-fitting pair, which would be a per-bar
+optimisation the trial counter cannot see. The neckline is the LOWEST low pivot between them (the textbook
+definition, not a pick). The one free constant — the peaks must differ by less than **10% of the pattern's own
+height** (peak − neckline), which makes the test scale-free and unit-free — is held **FIXED**, exactly as
+`pinbar`'s 2× wick, `orderblock`'s 1.4× impulse and `harami`'s 2× body ratio are, rather than exposed as a
+grammar axis where it would multiply the trial count and deflate every other candidate's DSR.
+
+**Point-in-time by construction.** A fractal pivot at bar *k* needs L=2 bars on either side, so it is not
+knowable until *k+L*; the scan starts at *i−L*, and the break test reads `bars[i-1].close` — every input is a
+closed bar ≤ *i*. Only pivots within KPIV=3 / MAXBACK=300 are considered, so a pattern whose neckline is older
+than that is simply **not detected** — it fails closed, it never guesses.
+
+**Verification (evidence, not assertion).**
+- **24/24** `trd-grammar_test.ts` and **266/266** `_shared` green; `deno check` clean on the grammar,
+  `trd-edge-factory` and `trd-edge-stage2`. Both edge functions redeployed via the Supabase CLI.
+- **Seed proved byte-exact BEFORE trusting it**, not asserted: the 2,700 seeded `spec_key`s hash to
+  `md5 = 2d2670a6e1cccf4b4dd17a80c87337f0`, **identical** to the md5 of the 2,700 keys produced by
+  `enumerate()`/`specKey()` in the TypeScript grammar itself (C-collation sort on both sides). 43,200 rows
+  (2,700 keys × 16 markets), 0 rows whose `spec->>'trigger'` disagrees with the key.
+- **Deploy verified by OUTPUT, not by "deployed successfully":**
+  `?market=BTCUSDT&trigger=doubletop` over 35,040 real 15m bars → **37 rows `done`, all non-null `n`, avg 123
+  trades (32–293), 3 thin, 0 passing the stage-1 gate.** The firing rate is ~4× rarer than `harami`'s (avg
+  502), which is what a two-pivot precondition should do.
+
+**Honest status: `doubletop` has produced NOTHING.** 0 candidates, 0 stage-2 survivors, 0 forward candidates;
+43,160 of 43,200 rows still pending — the hypothesis is **UNTESTED**, not supported. D-303's diagnosis still
+stands: the binding constraint is STOP GEOMETRY (fees against `riskFrac`), not trigger vocabulary, and a
+neckline stop at the full pattern height is one of the wider stops in the grammar — which is the only reason
+this primitive is interesting beyond breadth.
+
+---
+
 ## D-318 — 23rd grammar trigger `harami`: the first condition that is CONTRACTION OF THE BODY
 
 **2026-08-14.** `harami` (ingest id=13, web:ig) — a large directional body immediately answered by a small
