@@ -151,8 +151,11 @@ Deno.serve(async (req) => {
       for (const { spec_key, spec } of specs as { spec_key: string; spec: ComponentSpec }[]) {
         if (Date.now() - t0 >= budgetMs || processed >= maxSpecs) break;
         const trades = runComponentTrades(bars, spec, { costRPerSide: COST_R });
-        // include spec so the upsert's INSERT path satisfies NOT NULL (on conflict it UPDATEs; the row already exists)
-        const upd: Record<string, unknown> = { spec_key, market, spec, source: "grammar", status: "done", n: trades.length, run_at: now };
+        // UNIFORM columns across every row — PostgREST merge-duplicates rejects a batch whose rows differ in shape,
+        // so thin and scored rows MUST carry the same keys (metrics null-defaulted). `spec` satisfies the INSERT-path
+        // NOT NULL; `source` is omitted so provenance (grammar vs ingest:*) is preserved on update.
+        const upd: Record<string, unknown> = { spec_key, market, spec, status: "done", n: trades.length, run_at: now,
+          vs_random_edge: null, vs_random_t: null, holds_both: null, skill_usd: null, skill_frac: null, passes: false };
         if (trades.length >= MIN_N) {
           const setupR = trades.map((t) => t.r);
           const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 131 + trades.length); // matched-count honest control

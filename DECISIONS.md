@@ -5124,3 +5124,15 @@ confirms dispatch, not completion). A SOLO manual invocation processed 40 fine �
 8 concurrent heavy invocations exceed the shared worker/CPU budget and get killed before flushing. Fix:
 `trd_edge_factory_rot_1m` rotates 2 markets/min (all 8 every 4 min) — ~4,800 trials/hr, reliable. Lesson:
 cron "succeeded" ≠ work done for fire-and-forget net.http_post; watch queue run_at, not job_run_details.
+
+## D-300b — CORRECTION: the stall was a silent WRITE bug, not concurrency (2026-08-14)
+
+D-300 blamed the stall on 8-way cron concurrency. That was WRONG — a rushed diagnosis. Real root cause:
+the queue bulk-upsert sent HETEROGENEOUS rows (thin rows lacked the 6 metric columns that scored rows had),
+and PostgREST merge-duplicates rejects a batch whose rows differ in shape. The `.catch(()=>{})` swallowed
+the 400, so the function reported processed:40 while writing NOTHING. Scorecard writes kept working (survivor
+rows are uniform), which is why fac_promoted advanced while the queue froze at 13,320 for ~1h — the exact
+tell I should have read first. Fix: every queue row now carries identical keys (metrics null-defaulted);
+`source` omitted so provenance survives. Verified: 8-parallel processes 640 rows/90s across all 8 markets.
+Restored `trd_edge_factory_par_1m` (full parallel, ~19k trials/hr). Lesson: a swallowed error mimics a
+resource stall — check whether writes LAND before blaming the scheduler.
