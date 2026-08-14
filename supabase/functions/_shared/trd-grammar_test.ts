@@ -896,3 +896,51 @@ Deno.test("aroon: reads HOW LONG AGO the extremes happened — the same prices, 
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("psar: the SAME 22 bars decide differently depending on a path that ended long before them", () => {
+  const T = (i: number) => new Date(Date.UTC(2026, 0, 1, 0, i * 15)).toISOString();
+  const mk = (o: number, h: number, l: number, c: number) => ({ open: o, high: h, low: l, close: c });
+  type P = ReturnType<typeof mk>;
+  const spec = { trigger: "psar" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  const asBars = (ps: P[]): Bar[] => ps.map((p, i) => ({ ts: T(i), ...p }));
+  const seed: P[] = [mk(100, 100.5, 99.5, 100.2), mk(100.2, 100.4, 99.0, 99.2)]; // close[1] < close[0] → seed dir = down
+
+  // PREFIX A — 12 bars, each printing a NEW high. Every new extreme steps the acceleration factor (0.02 → 0.20 cap),
+  // so by the end of the leg the trail is closing on price fast and sits just under it.
+  const prefixA = (): P[] => { const out = [...seed]; let p = 99.5; for (let k = 0; k < 12; k++) { out.push(mk(p, p + 2, p - 0.2, p + 1.8)); p += 2; } return out; };
+  // PREFIX B — the SAME number of bars arriving at the SAME price, but in ONE jump followed by 11 bars that make no
+  // new high at all. The AF never steps past its reset, so the trail is still crawling and sits far below price.
+  const prefixB = (): P[] => { const out = [...seed]; const top = 99.5 + 12 * 2; out.push(mk(99.5, top + 1.8, 99.3, top + 1.5)); for (let k = 0; k < 11; k++) out.push(mk(top + 1.5, top + 1.7, top + 1.3, top + 1.5)); return out; };
+  // TAIL — 22 bars appended verbatim to both: a drift, then a decline that breaches a CLOSE trail but not a FAR one.
+  const tail = (): P[] => {
+    const out: P[] = []; const p = 125.3;
+    for (let k = 0; k < 14; k++) out.push(mk(p, p + 0.4, p - 0.4, p));
+    for (const d of [3.0, 3.2, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0]) out.push(mk(p - (d === 3.0 ? 0 : d - 3), p - (d === 3.0 ? -0.2 : d - 3.3), p - d, p - (d - 0.2)));
+    return out;
+  };
+  const A = asBars([...prefixA(), ...tail()]), B = asBars([...prefixB(), ...tail()]);
+
+  // POSITIVE — the accelerated trail is breached on the first hard down bar: flip SHORT, stop at the previous leg's
+  // extreme point (the canonical stop-and-reverse level), entry at the next open, target 1R below.
+  const tr = runComponentTrades(A, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "short");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // CONTROL — THE PATH-DEPENDENCE CONTROL, and the whole reason this class earns a trial budget. The last 22 bars of
+  // A and B are byte-identical (asserted, not asserted-by-comment), and the signal bar sits 14 bars INSIDE that
+  // identical tail — so every trigger whose window is 15 bars or shorter (all the candle families, `nbar`, `inside`,
+  // `nr7`, `aroon`(14)) is reading exactly the same numbers in both series at that bar. B is silent anyway, because
+  // its acceleration factor never left its reset value: the divergence is carried entirely by a state variable with
+  // no window, accumulated over bars that scrolled out of every fixed lookback long ago.
+  assertEquals(JSON.stringify(A.slice(-22)), JSON.stringify(B.slice(-22)), "the control is only a control if the tails are identical");
+  assertEquals(runComponentTrades(B, spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — reflecting every price about 300 swaps the roles of the two extremes exactly, so the same accumulation
+  // runs on the other side and the short becomes a long. A rule that is not symmetric cannot survive this.
+  const mir = A.map((b) => ({ ts: b.ts, open: 300 - b.open, high: 300 - b.low, low: 300 - b.high, close: 300 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "long");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

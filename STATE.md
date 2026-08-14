@@ -1,6 +1,32 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-324: grammar widened to 28 triggers — `psar`, the first condition carrying UNBOUNDED
+PATH-DEPENDENT STATE rather than a window.** Wilder's Parabolic SAR trails at SAR := SAR + AF·(EP − SAR); the
+acceleration factor starts at 0.02 and steps +0.02 (cap 0.20) **every time the leg prints a new extreme**,
+resetting only on a flip. Every other trigger is a function of a bounded slice — candles 1–3 bars,
+`channel`/`squeeze` 20, `aroon` 14 — and even the recursive ones decay (`supertrend`'s ratchet resets each flip,
+`macd`'s EMAs decay geometrically). The AF does not decay at all: it is a COUNT OF PROGRESS over an unbounded
+span, so two legs reaching the same price with a different NUMBER of new extremes flip on different bars. The
+trade is the flip (stop-and-reverse), stopped at the post-flip SAR = the previous leg's extreme, clamped to the
+far side of the signal bar so the stop fails closed WIDER, never narrower.
+
+**The path-dependence control is the class:** two series share a **byte-identical 22-bar tail** (asserted in the
+test, not claimed in a comment) with the signal bar 14 bars inside it — so every trigger reading ≤15 bars sees
+identical numbers there. The 12-new-highs prefix flips SHORT (+1R); the one-jump-then-flat prefix, same price and
+same tail, is SILENT. Seed quarantine is exact (`warm` = index of the first flip, after which no seeded state
+survives). **28/28 grammar + 270/270 `_shared` tests + `deno check` green**, `trd-edge-factory` and
+`trd-edge-stage2` both redeployed, **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets;
+34,560 non-swing stopMode, 8,640 swing) — verified STRUCTURALLY: the DB's 2,700 distinct `spec_key`s are
+byte-identical to `enumerate()+specKey()` run locally (md5 `37ec7cfd...`, C collation). Ingest id=29 ->
+`queued`; `trd_lineage.grammar-psar` written.
+
+**Honest status:** a live BTCUSDT run via the `?trigger=psar` filter scored 40 of the new specs against 35,040
+real 15m bars — **36 done / 4 thin** (n 34–1,103 closed trades, max |skill t| 16.1, so it provably did not fall
+through the `switch`) — and promoted **ZERO** stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict:
+**UNTESTED**. Pipeline totals: 580 fac:* candidates, 580 stage-2 verdicts (564 killed / 16 thin), **0 stage-2
+survivors, 0 forward candidates**, trial counter 721,954, queue 470,332 done / 558,237 pending.
+
 **2026-08-14 (Opus 5) — D-323: grammar widened to 27 triggers — `aroon`, the first condition that reads NO PRICE
 MAGNITUDE AT ALL, only HOW LONG AGO the extremes printed.** Aroon Up/Down over N=14 measure bars-since-the-
 highest-high and bars-since-the-lowest-low; the signal is Up newly crossing above Down with the textbook

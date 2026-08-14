@@ -6297,3 +6297,50 @@ Cron trd_funding_exec_8h (every 8h at :05 UTC), in trd_cron_health_v. Seeded 3 p
 funding currently extreme-negative = crowded shorts → fade long). This starts accumulating the LIVE out-of-sample
 evidence that resolves D-317's two open questions (data-informed gate + DSR-per-trade-framing) — the only honest
 way to promote a confirmatory lead. Real money stays gated behind the ladder; this is paper only.
+
+## D-324 — 28th grammar trigger `psar`: the first condition carrying UNBOUNDED PATH-DEPENDENT STATE, not a window (2026-08-14)
+
+Added `psar` (trd_edge_ingest id=29, web:quantifiedstrategies+cmc) to `trd-grammar.ts`, taking the grammar to 28
+triggers and |GRAMMAR| to 75,600. Wilder's Parabolic SAR: the trail advances SAR := SAR + AF·(EP − SAR), clamped
+so it can never sit inside the last two bars' range; the ACCELERATION FACTOR starts at 0.02 and steps +0.02
+(cap 0.20) **every time the leg prints a new extreme**, resetting to 0.02 on each flip. The trade is the flip
+itself — the indicator's own stop-and-reverse semantics — entered at the next open, stopped at the post-flip SAR
+(the previous leg's extreme point, the canonical SAR stop), clamped to the far side of the signal bar so a flip
+bar that also printed a new extreme can never emit a stop on the wrong side of entry (fails closed WIDER).
+
+**Why this is a real gap and not a re-skin.** Every other trigger in the grammar is a function of a BOUNDED slice
+of bars: the candle families read 1–3, `channel`/`squeeze` read 20, `aroon` 14, `stoch`/`rsi` a fixed N. Even the
+two recursive ones are effectively windowed — `supertrend`'s bands are ATR(10) plus a ratchet that RESETS on every
+flip, `macd` is a fixed EMA blend whose state decays geometrically. The SAR's acceleration factor decays not at
+all: it is a COUNT OF PROGRESS accumulated over an unbounded span, so two legs arriving at the same price having
+printed a different NUMBER of new extremes put the trail in different places and flip on different bars.
+
+Guard (deno test, 28/28 grammar, 270/270 `_shared`) — the control IS the class:
+- Two series share a **byte-identical 22-bar tail** (the test asserts the equality, it does not assert it in a
+  comment), and the signal bar sits 14 bars INSIDE that identical tail, so every trigger reading 15 bars or fewer
+  — all the candle families, `nbar`, `inside`, `nr7`, `aroon`(14) — is looking at the same numbers at that bar.
+  Prefix A prints 12 consecutive new highs (AF ratchets to the 0.20 cap, trail hugs price) and flips SHORT on the
+  first hard down bar, +1R. Prefix B reaches the SAME price in one jump then makes no new high for 11 bars (AF
+  never leaves its reset, trail crawls far below) and is SILENT on the identical tail. Nothing about the visible
+  bars differs; only state that scrolled out of every fixed lookback long ago.
+- Mirror: reflecting every price about 300 turns the short into a long, +1R. A rule that is not symmetric in the
+  two extremes cannot survive it.
+- Seed quarantine is EXACT rather than a guessed bar count: `warm` = the index of the FIRST flip, because a flip
+  overwrites every state variable with measured quantities (SAR := EP, EP := this bar's extreme, AF := 0.02), so
+  from the bar after it no part of the seeded direction survives.
+
+AF0/step/cap held FIXED at Wilder's 0.02/0.02/0.20 — as `supertrend`'s 10/3 and `aroon`'s 14/70/30 — so the class
+cannot multiply the trial count and deflate every other candidate's DSR.
+
+Shipped: `deno check` green, 28/28 grammar + 270/270 `_shared` tests, `trd-edge-factory` AND `trd-edge-stage2`
+redeployed (both import the grammar), 43,200 rows seeded (2,700 spec points × 16 markets; 34,560 non-swing
+stopMode, 8,640 swing). Seed verified STRUCTURALLY, not by eye: the 2,700 distinct `spec_key`s in the DB are
+byte-identical to `enumerate()+specKey()` run locally over the psar slice — same md5 (`37ec7cfd22dffdda067ff2656a94831e`)
+of the sorted list under C collation. `trd_edge_ingest` id=29 → status='queued'. `trd_lineage.grammar-psar` written.
+
+MEASUREMENT, not a claim: a live BTCUSDT run via the `?trigger=psar` filter scored 40 of the new specs against
+35,040 real 15m bars — **36 done / 4 thin**, n per scored spec 34–1,103 closed trades, max |skill t| 16.1 — which
+is the D-308 check that the trigger did not fall through the `switch` (a fall-through marks every row thin at
+n≈0). It promoted **ZERO** stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict: **UNTESTED**.
+Totals after this unit: 580 fac:* stage-1 candidates, 580 stage-2 verdicts (564 killed / 16 thin), **0 stage-2
+survivors, 0 forward candidates**, `trd_trial_counter` = 721,954, queue 470,332 done / 558,237 pending.

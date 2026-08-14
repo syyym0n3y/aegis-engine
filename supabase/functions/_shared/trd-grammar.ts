@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 27·3·3·3·5·4·5 = 72,900. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 28·3·3·3·5·4·5 = 75,600. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -251,6 +251,32 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       // Stop at the ACTIVE band on the flip bar — the canonical Supertrend trailing stop, on the far side of entry.
       if (d === 1) return { side: "long", stop: st.lo[i] };
       return { side: "short", stop: st.up[i] };
+    }
+    case "psar": { // Parabolic SAR flip (ingest id=29, web:quantifiedstrategies+cmc) — the 28th primitive, and the
+      // first whose condition depends on the ENTIRE PATH since the last regime change rather than on a window.
+      // Every other trigger in the grammar is a function of a BOUNDED slice of bars: the candle families read 1–3
+      // bars, `channel`/`aroon`/`squeeze`/`stoch`/`rsi` read a fixed N, and even the two recursive ones are
+      // effectively windowed — `supertrend`'s bands are ATR(10) plus a ratchet that resets on every flip, and
+      // `macd` is a fixed EMA blend. Parabolic SAR carries a state variable with no window at all: the
+      // ACCELERATION FACTOR starts at 0.02 and steps up by 0.02 (capped 0.20) EVERY TIME the trend makes a new
+      // extreme, so the trail closes on price at a rate set by HOW MANY new extremes the leg printed. Two legs
+      // that arrive at the same place having made a different number of new highs put the SAR in different places
+      // and therefore flip on different bars. That is a genuinely new kind of information for this grammar: not a
+      // shape, not a level, not a ratio, not a recency — a COUNT OF PROGRESS accumulated over an unbounded span.
+      // Negative control B in the test pins exactly this: the last 20 bars are byte-identical and only the older
+      // path differs, so every windowed trigger sees the same data and only `psar` changes its mind.
+      // The trade is the flip itself (this is the "stop and reverse" — the indicator's own semantics), and the
+      // stop is the post-flip SAR, i.e. the previous leg's extreme point, which is the canonical SAR stop. It is
+      // clamped to the far side of the signal bar so a flip that also printed a new extreme cannot emit a stop on
+      // the wrong side of entry (fails closed into a wider, never a narrower, risk).
+      // AF0/step/max are held FIXED at Wilder's 0.02/0.02/0.20 — as `supertrend`'s 10/3 and `aroon`'s 14/70/30 are
+      // — so this class cannot inflate the trial count with parameters the sources state as constants.
+      // Point-in-time: the recursion at bar k reads only bars k, k-1, k-2, so `flip[i]` is knowable at the close of
+      // bar i and nothing at or after i+1 is read. Memoised identity-keyed (WeakMap), never by bars.length (D-310).
+      const ps = psarSeries(bars);
+      if (i <= ps.warm || ps.flip[i] === 0) return null;    // the seed direction is an assumption — quarantine it
+      if (ps.flip[i] === 1) return { side: "long", stop: Math.min(ps.sar[i], b.low) };
+      return { side: "short", stop: Math.max(ps.sar[i], b.high) };
     }
     case "squeeze": { // Bollinger-in-Keltner squeeze RELEASE (ingest id=21, web:chartink) — the 19th primitive, and
       // the first whose condition is a RATIO of two volatility measures rather than a level, a shape, or a range.
@@ -663,6 +689,53 @@ function supertrendSeries(bars: Bar[]): STSeries {
   }
   const s: STSeries = { dir, up, lo, warm };
   _stCache.set(bars, s); return s;
+}
+
+// Parabolic SAR state (D-324). Wilder's constants, held FIXED (see the `psar` case for why).
+const PS_AF0 = 0.02, PS_STEP = 0.02, PS_AF_MAX = 0.20;
+interface PSSeries { flip: Int8Array; sar: Float64Array; warm: number }
+let _psCache = new WeakMap<Bar[], PSSeries>();
+/** Causal Parabolic SAR: bar k reads only bars k, k-1 and k-2, so `flip[k]` is knowable at the close of bar k.
+ * `flip[k]` is +1 when the trail was breached from below (state turns long), -1 for the mirror, 0 otherwise;
+ * `sar[k]` is the trail AFTER bar k's update, so on a flip bar it is the previous leg's extreme point — the
+ * canonical stop-and-reverse level.
+ * `warm` is the index of the FIRST flip, and callers must ignore everything at or before it. The seed (direction
+ * from close[1] vs close[0], EP/SAR from the first two bars' extremes) is an assumption, not a measurement — but a
+ * flip overwrites every state variable with measured quantities (SAR := EP, EP := this bar's extreme, AF := 0.02),
+ * so from the bar after the first flip onward NO part of the seed survives. That is an exact quarantine rather than
+ * a guessed bar count. */
+function psarSeries(bars: Bar[]): PSSeries {
+  const hit = _psCache.get(bars); if (hit) return hit;
+  const n = bars.length;
+  const flip = new Int8Array(n), sar = new Float64Array(n);
+  let warm = n;                                          // n → no seed-free state at all unless a flip happens below
+  if (n >= 2) {
+    let up = bars[1].close >= bars[0].close;
+    let ep = up ? Math.max(bars[0].high, bars[1].high) : Math.min(bars[0].low, bars[1].low);
+    let s = up ? Math.min(bars[0].low, bars[1].low) : Math.max(bars[0].high, bars[1].high);
+    let af = PS_AF0;
+    sar[1] = s;
+    for (let k = 2; k < n; k++) {
+      let next = s + af * (ep - s);                       // the trail closes on the extreme point at rate AF
+      // Wilder's clamp: the trail may never sit inside the last two bars' range, so it cannot be hit by a move
+      // that already happened.
+      if (up) next = Math.min(next, bars[k - 1].low, bars[k - 2].low);
+      else next = Math.max(next, bars[k - 1].high, bars[k - 2].high);
+      if (up && bars[k].low < next) { up = false; s = ep; ep = bars[k].low; af = PS_AF0; flip[k] = -1; }
+      else if (!up && bars[k].high > next) { up = true; s = ep; ep = bars[k].high; af = PS_AF0; flip[k] = 1; }
+      else {
+        s = next;
+        // AF steps up ONLY on a new extreme — this is the accumulating, unbounded-span state that makes the class
+        // path-dependent rather than windowed.
+        if (up && bars[k].high > ep) { ep = bars[k].high; af = Math.min(af + PS_STEP, PS_AF_MAX); }
+        else if (!up && bars[k].low < ep) { ep = bars[k].low; af = Math.min(af + PS_STEP, PS_AF_MAX); }
+      }
+      sar[k] = s;
+      if (flip[k] !== 0 && warm === n) warm = k;
+    }
+  }
+  const out: PSSeries = { flip, sar, warm };
+  _psCache.set(bars, out); return out;
 }
 
 // Bollinger-in-Keltner squeeze state (D-313). Canonical TTM-squeeze parameters, held FIXED for the same reason
