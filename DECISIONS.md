@@ -5329,3 +5329,49 @@ once the head was tested the filtered todo was always empty and it returned `ok:
 hundreds of lower-ranked candidates were never tested. Now bounded at 100k and confirmed reaching the tail:
 stage-2 is at **91 tested / 91 killed / 0 survivors** against 160 candidates (was silently stuck at ~37).
 Hazard recorded: concurrent agents sharing one working tree must not `git add -A`.
+
+## D-306 — Grammar widened to 16 triggers: `soldiers` (three white soldiers / three black crows) (2026-08-14)
+
+**Unit:** the next `trd_edge_ingest` primitive (id=12, `web:strike.money`), OHLC-expressible, no volume needed.
+
+`soldiers` is the canonical 3-candle CONTINUATION pattern and the deliberate counterpart to `nbar` (three
+same-direction closes then a REVERSAL). Both read the same three bars; they take opposite sides. Testing the
+pair on identical data is the only way to say which reading the tape actually supports — so this is not a 16th
+arbitrary vocabulary item, it is the falsification of an existing one.
+
+**Detector (point-in-time; only closed bars ≤ i):** bars i-2, i-1, i are the same colour; closes advance
+monotonically; each body ≥ half its own bar's range ("strong" — a doji or long-wicked candle is not a soldier);
+and each candle OPENS inside the prior candle's real body (the classic staircase constraint that excludes
+gapped runs). Enter in the run's direction, stop at the far extreme of the formation. Zero-range bars cannot
+pass the body test. Mirror logic for three black crows → short.
+
+**Tests:** one positive (three soldiers → long, resolves +1R) plus TWO negative controls that each isolate a
+single requirement — control A gaps the middle candle above the prior body (staircase broken), control B makes
+the middle candle a long-wicked doji (body 0.6 of range 2.1) while keeping every other condition satisfied.
+Both must produce 0 trades. 12 neutral filler bars (body 0.1 of range 1.0) can never form a soldier, so the
+suite has no spurious triggers. 15/15 grammar tests green, 257/257 `_shared` green, `deno check` clean, both
+`trd-edge-factory` and `trd-edge-stage2` redeployed.
+
+**Seed verified, not assumed.** 540 swing specs + 4 stop modes × 540 = 2,700 specs × 16 markets = **43,200
+rows**. The seeded `spec_key` set was checked against the TypeScript `specKey()` by SHA-256 over the sorted
+distinct keys on both sides: `528aae4c…847178` on 2,700 keys, **identical**. A near-miss in the `rr` string form
+(`rr1` vs `rr1.0`) would have produced 2,700 permanently-orphaned rows; the hash rules that out.
+
+**Scheduling, measured — soldiers is queued behind the D-305 block, not starved.** The factory's per-market page
+fetch carries no `ORDER BY`, so specs are consumed in heap/insertion order. Measured over a 5-minute window:
+~215 rows per trigger across all 15 pre-existing triggers, 100% of them `widestop` geometry, 0 legacy-swing and
+0 soldiers — i.e. the scan is currently inside the D-305 518,400-row block, which was inserted before these
+rows. Throughput ~38k rows/hr against 615,070 pending, so `soldiers` starts scoring in roughly 13–15 hours.
+This is the D-303b tail-starvation class, checked rather than assumed: the scan is advancing monotonically
+through insertion order, so the tail is reached, just last. Not fixed here — adding an ORDER BY to the page
+fetch would change factory behaviour globally and is its own unit.
+
+**Also this run:** stage-2 fired once, 12 tested, **0 survivors**; cumulative **139 tested / 139 killed / 0
+survivors**, `trd_forward_candidates` still **0**. Every kill is `unprofitable@pess-cost` with deflated Sharpe
+0.000 and walk-forward 0–3 of 5 folds; the least-bad is −0.018R net at the pessimistic 20bp/side. Queue health:
+62,417 done, max `run_at` 0.78 min old, 4,302 rows written in the trailing 10 minutes — writes landing, not
+merely processed. 160 `fac:*` candidates, unchanged.
+
+**Honest status:** a 16th trigger is vocabulary, and D-303's diagnosis that the binding constraint is STOP
+GEOMETRY still stands. `soldiers` has produced **nothing** — 0 scored rows, 0 candidates, 0 survivors — and
+will not produce a measurement for ~13-15 hours. Its value is the `nbar` head-to-head, not a new hope.

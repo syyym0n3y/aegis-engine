@@ -1,6 +1,23 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-306: grammar widened to 16 triggers (`soldiers`); stage-2 record 139 tested / 0
+survivors.** Loop healthy and writing: queue 62,417 done, max `run_at` 0.78 min old, 4,302 rows in the trailing
+10 min. Stage-2 fired once (12 tested, 0 survivors); cumulative **139 tested, 0 survivors, 0 rows in
+`trd_forward_candidates`** — every kill `unprofitable@pess-cost`, deflated Sharpe 0.000, walk-forward 0–3 of 5,
+least-bad −0.018R at 20bp/side. Shipped `soldiers` (three white soldiers / three black crows — 3 strong
+same-colour advancing bodies, each opening inside the prior body; point-in-time, + TWO negative controls each
+isolating one requirement; 15/15 grammar + 257/257 `_shared` green, both edge fns redeployed) and seeded 2,700
+specs × 16 markets = 43,200 rows. **Seed verified by SHA-256** against the TypeScript `specKey()` over the
+sorted distinct keys — `528aae4c…847178` on both sides, so no orphaned rows. Its point is the head-to-head with
+`nbar`, which reads the SAME three bars as a reversal: only one of the two readings can be right.
+**Scheduling measured, not assumed:** the factory's page fetch has no ORDER BY, so it consumes heap order — a
+5-min sample shows ~215 rows per trigger across all 15 pre-existing triggers, 100% `widestop`, 0 soldiers, i.e.
+the scan is inside the D-305 block; at ~38k rows/hr against 615,070 pending, `soldiers` starts scoring in ~13–15
+hours. Behind, not starved. **D-303's diagnosis stands — the binding constraint is STOP GEOMETRY, not trigger
+vocabulary.** `soldiers` has produced nothing yet: 0 scored, 0 candidates, 0 survivors. ↓ prior status stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-305: STOP GEOMETRY is now a grammar axis + the random control was a false-positive
 engine (found & fixed).** The constraint D-303 named is now expressible. MEASURED on live 15m bars first
 (median ATR/price 0.16–0.25%; trigger stops 0.25–0.79% of notional → 1.85R round trip at the stage-2

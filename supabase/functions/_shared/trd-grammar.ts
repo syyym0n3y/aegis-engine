@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 15·3·3·3·5·4·5 = 40,500. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 16·3·3·3·5·4·5 = 43,200. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -181,6 +181,27 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       const mid2 = (b2.open + b2.close) / 2;
       if (b2.close < b2.open && b.close > b.open && b.close > mid2) return { side: "long", stop: Math.min(b2.low, b1.low, b.low) };
       if (b2.close > b2.open && b.close < b.open && b.close < mid2) return { side: "short", stop: Math.max(b2.high, b1.high, b.high) };
+      return null;
+    }
+    case "soldiers": { // three white soldiers / three black crows (ingest id=12, web:strike.money) — the canonical
+      // 3-candle CONTINUATION pattern, and the direct counterpart to `nbar` (3 same-direction closes then a
+      // REVERSAL). Canonical requirements, all evaluated on CLOSED bars ≤ i:
+      //   1. bars i-2, i-1, i are all the same colour (three up bodies / three down bodies),
+      //   2. closes advance monotonically in that direction (each close beyond the prior close),
+      //   3. each body is at least half its own bar's range — "strong" closes, so a doji/long-wick candle
+      //      cannot count as a soldier (this is what separates the pattern from any three drifting bars),
+      //   4. each candle OPENS inside the prior candle's real body — the classic "staircase" constraint that
+      //      excludes gapped runs. Enter in the run's direction, stop at the far extreme of the formation.
+      // A zero-range bar cannot pass (3) since body >= 0.5*range is `0 >= 0` — guarded explicitly instead.
+      const c2 = bars[i - 2], c1 = bars[i - 1];
+      const strong = (x: Bar) => { const rng = x.high - x.low; return rng > 0 && Math.abs(x.close - x.open) >= 0.5 * rng; };
+      if (!strong(c2) || !strong(c1) || !strong(b)) return null;
+      const up = (x: Bar) => x.close > x.open, dn = (x: Bar) => x.close < x.open;
+      const inBody = (x: Bar, p: Bar) => x.open > Math.min(p.open, p.close) && x.open < Math.max(p.open, p.close);
+      if (up(c2) && up(c1) && up(b) && c1.close > c2.close && b.close > c1.close && inBody(c1, c2) && inBody(b, c1))
+        return { side: "long", stop: Math.min(c2.low, c1.low, b.low) };
+      if (dn(c2) && dn(c1) && dn(b) && c1.close < c2.close && b.close < c1.close && inBody(c1, c2) && inBody(b, c1))
+        return { side: "short", stop: Math.max(c2.high, c1.high, b.high) };
       return null;
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting

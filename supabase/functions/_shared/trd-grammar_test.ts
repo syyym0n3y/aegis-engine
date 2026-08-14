@@ -154,6 +154,41 @@ Deno.test("star: morning star fires only on large-down → small-body → up-clo
   assertEquals(runComponentTrades(weak, spec, { costRPerSide: 0 }).length, 0);
 });
 
+Deno.test("soldiers: three white soldiers fire only on 3 strong same-colour advancing bodies opening inside the prior body", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "soldiers" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 NEUTRAL filler bars: body 0.1 on a range of 1.0 → `strong` (body >= half range) fails → no soldier ever fires.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100.1, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+  const seq: Bar[] = [...flat,
+    bar(100.2, 101.1, 100.1, 101.0, 12), // soldier 1: body 0.8 of range 1.0
+    bar(100.6, 101.9, 100.5, 101.8, 13), // soldier 2: opens inside (100.2,101.0), body 1.2 of range 1.4, closes higher
+    bar(101.2, 102.8, 101.1, 102.7, 14), // soldier 3: opens inside (100.6,101.8), body 1.5 of range 1.7 → LONG, stop 100.1
+    bar(102.8, 103.2, 102.5, 103.0, 15), // fill at open 102.8 → risk 2.7, target 105.5; neither touched here
+    bar(103.0, 105.6, 102.9, 105.5, 16)]; // high 105.6 >= target → +1R
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+  // NEGATIVE control A — the staircase is broken: soldier 2 GAPS above soldier 1's body instead of opening inside it.
+  const gapped: Bar[] = [...flat,
+    bar(100.2, 101.1, 100.1, 101.0, 12),
+    bar(101.3, 101.9, 101.2, 101.8, 13), // open 101.3 is ABOVE soldier 1's body top (101.0) → must NOT fire
+    bar(101.4, 102.8, 101.3, 102.7, 14),
+    bar(102.8, 103.8, 102.7, 102.9, 15), // deliberately weak-bodied so no later triple can fire either
+    bar(102.9, 103.9, 102.8, 103.0, 16)];
+  assertEquals(runComponentTrades(gapped, spec, { costRPerSide: 0 }).length, 0);
+  // NEGATIVE control B — same staircase and advancing closes, but the middle candle is a long-wicked doji
+  // (body 0.6 of range 2.1) → it is not a "soldier", so the continuation is unconfirmed.
+  const weakBody: Bar[] = [...flat,
+    bar(100.2, 101.6, 100.1, 101.5, 12), // body 1.3 of range 1.5
+    bar(101.0, 103.0, 100.9, 101.6, 13), // opens inside, closes higher, but body 0.6 < 0.5*2.1 → must NOT fire
+    bar(101.3, 102.8, 101.2, 102.7, 14),
+    bar(102.8, 103.8, 102.7, 102.9, 15),
+    bar(102.9, 103.9, 102.8, 103.0, 16)];
+  assertEquals(runComponentTrades(weakBody, spec, { costRPerSide: 0 }).length, 0);
+});
+
 // ---- D-305: stop GEOMETRY as a grammar axis -------------------------------------------------------------
 // Deterministic LCG walk → realistic oscillating bars (no Math.random, so the tests are reproducible).
 function walkBars(n: number, seed = 12345): Bar[] {
@@ -174,13 +209,13 @@ Deno.test("specKey + enumerate are backwards-compatible: swing mode keys exactly
   assertEquals(specKey({ ...legacy, stopMode: "swing" as const }), specKey(legacy)); // absent === "swing"
   assertEquals(specKey({ ...legacy, stopMode: "atr12" as const }), "sweep|ema20|with|sl5|rr1|all|atr12");
   const specs = enumerate();
-  // swing rung is untouched: the full 15·3·3·3·5·4 product, and every one of its keys is a legacy 6-part key.
+  // swing rung is untouched: the full 16·3·3·3·5·4 product, and every one of its keys is a legacy 6-part key.
   const swing = specs.filter((x) => x.stopMode === "swing");
-  assertEquals(swing.length, 15 * 3 * 3 * 3 * 5 * 4);
+  assertEquals(swing.length, 16 * 3 * 3 * 3 * 5 * 4);
   assert(swing.every((x) => specKey(x).split("|").length === 6), "swing keys must stay 6-part");
   assertEquals(new Set(specs.map(specKey)).size, specs.length, "all spec keys unique");
   // every stop mode carries the FULL product (the dedup shortcut was falsified — see the regression guard).
-  for (const m of GRAMMAR.stopMode) assertEquals(specs.filter((x) => x.stopMode === m).length, 15 * 3 * 3 * 3 * 5 * 4, `mode ${m}`);
+  for (const m of GRAMMAR.stopMode) assertEquals(specs.filter((x) => x.stopMode === m).length, 16 * 3 * 3 * 3 * 5 * 4, `mode ${m}`);
 });
 
 Deno.test("REGRESSION GUARD: stopLookback is NOT a no-op outside swing mode (the falsified dedup shortcut)", () => {
