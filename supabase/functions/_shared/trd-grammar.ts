@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 21·3·3·3·5·4·5 = 56,700. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 22·3·3·3·5·4·5 = 59,400. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -331,6 +331,32 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (k1 >= d1 && k0 < d0 && k1 > STO_OB) return { side: "short", stop: hi };  // cross DOWN, out of overbought
       return null;
     }
+    case "macd": { // MACD signal-line cross (ingest id=23, web:tradersagency) — the 22nd primitive, and the first
+      // whose condition is a SECOND-ORDER quantity. Every other trigger reads a FIRST-ORDER property of the
+      // series: price geometry (candles, windows, pivots), an indicator's LEVEL (`rsi`), its STATE (`supertrend`),
+      // its POSITION in a range (`stoch`), a RATIO of two volatility measures of the same bars (`squeeze`), or a
+      // disagreement between price shape and momentum shape (`rsidiv`). The MACD line is none of those: it is the
+      // SPREAD BETWEEN TWO TREND ESTIMATES OF DIFFERENT SPEEDS (EMA12 − EMA26), i.e. how fast trend is separating
+      // from itself, and the trade is that spread crossing its OWN 9-bar average — the spread turning, not the
+      // price turning.
+      // The distinction from `pullback` (the only other EMA-reading trigger) is exactly what the negative control
+      // pins, and it is not cosmetic: `pullback` reads a LEVEL RELATION between price and ONE EMA, so it can only
+      // fire when price is AT that EMA. `macd` can fire a SHORT while price is above every moving average on the
+      // chart — a still-rising but DECELERATING advance, where fast and slow EMAs are converging even though
+      // neither has been touched. No price-geometry trigger and no single-MA relation can express that bar.
+      // Canonical 12/26/9 on closes, held FIXED for the same reason as Supertrend's 10/3, the squeeze's 20/2/1.5
+      // and the stochastic's 14/3/3: the grammar already varies five axes, and freeing the periods would multiply
+      // the trial count (deflating every other candidate's DSR) for constants the source states as fixed.
+      // Point-in-time: an EMA at bar k reads only bars ≤ k, and the signal EMA only MACD values ≤ k, so reading
+      // either at i uses nothing after i. Memoised identity-keyed (WeakMap), never by bars.length (D-310).
+      const m = macdSeries(bars);
+      if (i < MACD_WARM + 1) return null;                   // need line/sig at i-1 as well as at i
+      const m0 = m.line[i], s0 = m.sig[i], m1 = m.line[i - 1], s1 = m.sig[i - 1];
+      if (!(Number.isFinite(m0) && Number.isFinite(s0) && Number.isFinite(m1) && Number.isFinite(s1))) return null;
+      if (m1 <= s1 && m0 > s0) return { side: "long", stop: lo };   // spread turns UP through its own average
+      if (m1 >= s1 && m0 < s0) return { side: "short", stop: hi };  // spread turns DOWN through its own average
+      return null;
+    }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
       const pr = priorSessionRange(bars, i); if (!pr) return null;
@@ -495,6 +521,27 @@ function stochSeries(bars: Bar[]): STOSeries {
   _stoCache.set(bars, s); return s;
 }
 
+// MACD line + signal (D-317). Canonical 12/26/9 on closes, held FIXED — see the `macd` case.
+const MACD_FAST = 12, MACD_SLOW = 26, MACD_SIG = 9;
+// `ema()` SEEDS at vals[0], so the earliest values carry the seed rather than the data. The seed's weight decays
+// as (1−k)^i with k = 2/(SLOW+1); after 3·SLOW bars it is (24/27)^78 ≈ 0.24%, i.e. below any price resolution we
+// measure. Quarantining 3·SLOW + SIG bars means the first reported cross is produced by the data, never by the
+// arbitrary starting value — the same discipline as Supertrend's `warm` (D-312).
+const MACD_WARM = 3 * MACD_SLOW + MACD_SIG; // = 87
+interface MACDSeries { line: Float64Array; sig: Float64Array }
+let _macdCache = new WeakMap<Bar[], MACDSeries>();
+/** Causal MACD: both EMAs at bar k read only closes ≤ k, and the signal EMA only MACD values ≤ k. */
+function macdSeries(bars: Bar[]): MACDSeries {
+  const hit = _macdCache.get(bars); if (hit) return hit;
+  const n = bars.length, closes = bars.map((b) => b.close);
+  const fast = ema(closes, MACD_FAST), slow = ema(closes, MACD_SLOW);
+  const raw: number[] = new Array(n);
+  for (let i = 0; i < n; i++) raw[i] = fast[i] - slow[i];
+  const sig = ema(raw, MACD_SIG);
+  const s: MACDSeries = { line: Float64Array.from(raw), sig: Float64Array.from(sig) };
+  _macdCache.set(bars, s); return s;
+}
+
 // EMA-at-i helper. Identity-keyed for the same reason as the RSI cache above (D-310).
 let _emaCache = new WeakMap<Bar[], Map<number, number[]>>();
 function triggerSignal_ema(bars: Bar[], i: number, period: number): number {
@@ -602,4 +649,4 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
 /** Drops every memoized indicator series. With identity keying (D-310) this is no longer required for
  * CORRECTNESS — it exists so a test can force a cold recompute. Nothing in the live path calls it, and
  * nothing needs to: two different markets are two different array objects. */
-export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); _stoCache = new WeakMap(); }
+export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); _stoCache = new WeakMap(); _macdCache = new WeakMap(); }

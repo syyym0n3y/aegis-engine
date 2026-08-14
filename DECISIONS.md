@@ -5803,6 +5803,68 @@ ignore the one alert that matters.
 
 ---
 
+## D-317 — 22nd grammar trigger `macd`: the first condition that is a SECOND-ORDER quantity
+
+**2026-08-14.** Every one of the 21 existing triggers reads a FIRST-ORDER property of the series: price
+geometry (candles, rolling windows, fractal pivots), an indicator's LEVEL (`rsi`), its STATE (`supertrend`),
+its POSITION in a range (`stoch`), a RATIO of two volatility measures of the same bars (`squeeze`), or a
+disagreement between price shape and momentum shape (`rsidiv`). The MACD line is none of those: it is the
+**spread between two trend estimates of different speeds** (EMA12 − EMA26) — how fast trend is separating
+from itself — and the trade is that spread crossing its OWN 9-bar average. The spread turning, not the price
+turning. `macd` (ingest id=23, web:tradersagency) adds it; stop at the `stopLookback` swing, as `rsi` does.
+
+**The distinction from `pullback` is structural, not cosmetic.** `pullback` is the only other EMA-reading
+trigger, and it reads a LEVEL RELATION between price and ONE EMA, so it can fire only when a bar TAGS that
+EMA. `macd` can fire a SHORT while price is above every moving average on the chart — a still-rising but
+DECELERATING advance, where fast and slow EMAs converge although neither has been touched.
+
+**Canonical 12/26/9 on closes, held FIXED.** Same reasoning as Supertrend's 10/3, the squeeze's 20/2/1.5 and
+the stochastic's 14/3/3: the grammar already varies five axes; freeing the periods would multiply the trial
+count — deflating every other candidate's DSR — for constants the source states as fixed.
+
+**Warm-up is quarantined, not assumed.** `ema()` seeds at `vals[0]`, so the earliest values carry the seed
+rather than the data. The seed's weight decays as (1−k)^i with k = 2/27; after 3·26 bars it is ≈0.24%, below
+any price resolution measured here. `MACD_WARM = 3·26 + 9 = 87` means the first reported cross is produced by
+the data, never by the arbitrary starting value — the same discipline as Supertrend's `warm` (D-312).
+Point-in-time: an EMA at bar *k* reads only closes ≤ *k*, and the signal EMA only MACD values ≤ *k*.
+Memoised identity-keyed (WeakMap), never by `bars.length` — the D-310 cross-market-bleed bug must not return.
+
+**The control that carries the weight removes ONLY the deceleration.** Base fixture: 92 bars of identical
+closes (two speeds that have not separated cannot cross — the warm-up window is provably signal-free, since
+`m0 > s0` is `0 > 0`), then a 20-bar +4/bar advance, then 8 bars of +0.2/bar. Price rises on every single bar
+and never prints a lower low. MEASURED: a LONG cross at index 93 (filled 94, +1R, `riskFrac` 0.0395604…) as
+the ramp separates the speeds; then a SHORT cross at index 118 (filled 119, +1R, `riskFrac` 0.0767743…) as
+the fast EMA collapses back while the signal line lags. At that short, close 181.40 is a 26-bar HIGH sitting
+**10.5% above EMA20** (164.13 / EMA30 153.53 / EMA50 139.41) — price has not touched a trend filter in 26
+bars, and `pullback` on the identical bars takes exactly one trade, a LONG. **The control keeps the same
+prelude, the same ramp, the same bar shapes and the same resolution bar, and changes one thing: the advance
+never decelerates (+4/bar throughout instead of +0.2). The SHORT vanishes; only the long survives.** The
+short is therefore caused by the second derivative of the series — not by a bar's shape, its level, or its
+distance from an average. The fixture uses `atr6` stop mode deliberately: with a swing stop the short would
+need an upper WICK, and a wick closing back inside the prior range is exactly what `sweep` fades, which would
+confound the control. With an ATR stop every bar is a clean monotone up-bar and no wick-fade trigger can fire.
+
+**Stated honestly rather than asserted around: `macd` is NOT the only trigger that shorts the base fixture.**
+`stoch` also takes one short, for an unrelated reason — as the ramp's low rolls out of the 14-bar window the
+range compresses faster than price advances, so %K drifts down out of the overbought zone. The two co-fire on
+decelerating advances. They are not the same condition, and the control separates neither (it removes both,
+because it removes the deceleration). The primitive's novelty is the QUANTITY it reads, not exclusivity on
+one fixture. A mirror through 200 covers the opposite branch (sides invert, both +1R).
+
+**Shipped:** 22/22 grammar tests + 264/264 `_shared` green, `deno check` clean, `trd-edge-factory` and
+`trd-edge-stage2` redeployed. Seeded 2,700 specs × 16 markets = **43,200 rows**, verified two ways: the
+SHA-256 of the `spec_key` set is byte-identical computed independently in Postgres and in TypeScript over
+`enumerate()+specKey()` (`3411d6bf…91ef6d08`), and **every seeded `spec` jsonb equals an existing `stoch`
+spec with only the trigger swapped** (0 unmatched of 43,200), which pins the row shape as well as the key.
+
+**Deploy verified by OUTPUT, not by the deploy message:** `?market=BTCUSDT&trigger=macd` over 35,040 real
+15m bars → **39 rows `done`, all non-null `n`, avg 373 trades (31–1349), 1 thin, 0 passing the factory gate.**
+
+**Honest status: `macd` has produced nothing.** 0 candidates, 0 stage-2 survivors, 0 forward candidates;
+43,160 rows still pending — its hypothesis is UNTESTED. D-303's diagnosis stands unchanged: the binding
+constraint is STOP GEOMETRY, not trigger vocabulary. Widening the vocabulary is cheap and is worth doing
+because it is the only way to falsify that diagnosis, but it is not evidence against it.
+
 ## D-316 — 21st grammar trigger `stoch`: the first condition that reads a bar's POSITION WITHIN ITS RANGE
 
 **2026-08-14.** The grammar's 20 triggers cover price geometry (candles, rolling windows, fractal pivots) and

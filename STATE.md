@@ -1,6 +1,46 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-317: grammar widened to 22 triggers — `macd`, the first condition that is a
+SECOND-ORDER quantity; stage-2 record 566 tested / 0 survivors.** Loop healthy and writing: queue
+`max(run_at)` **49 s** old with **6,000 rows written in the trailing 10 min**, and `done` 392,724 → **397,703**
+inside this session (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class is what this
+check exists for). Queue **950,400** total — 397,703 done / 398,411 pending / 154,286 thin. Stage-2 fired once
+and is **caught up** at a true trial count of **619,580**: cumulative **566 candidates, 566 tested — 508
+stage2-killed, 58 thin, 0 survivors, `trd_forward_candidates` = 0.** Shipped `macd` (ingest id=23,
+web:tradersagency): all 21 prior triggers read a FIRST-ORDER property — price geometry, an indicator's LEVEL
+(`rsi`), STATE (`supertrend`), POSITION in a range (`stoch`), a volatility RATIO (`squeeze`), or a two-series
+disagreement (`rsidiv`). The MACD line is none of those: it is the SPREAD BETWEEN TWO TREND ESTIMATES OF
+DIFFERENT SPEEDS (EMA12 − EMA26) crossing its OWN 9-bar average — the spread turning, not the price turning.
+The structural difference from `pullback`, the only other EMA-reading trigger, is that `pullback` needs a bar
+to TAG the EMA, while `macd` can short a still-rising advance that is decelerating far above every average.
+Canonical 12/26/9 held FIXED (as with Supertrend's 10/3) — freeing the periods would multiply the trial count
+and deflate every other candidate's DSR. `MACD_WARM = 3·26+9 = 87` quarantines the `ema()` seed (its weight
+decays to ≈0.24% by then), so the first reported cross comes from data, never the starting value.
+**The control that carries the weight removes ONLY the deceleration.** Base — 92 identical closes (two speeds
+that have not separated cannot cross, so the warm-up window is provably signal-free), a 20-bar +4/bar advance,
+then 8 bars of +0.2/bar: price rises on EVERY bar and never prints a lower low, yet `macd` takes a long at the
+acceleration (+1R, `riskFrac` 0.0395604…) and a **SHORT at the deceleration** (+1R, `riskFrac` 0.0767743…) —
+at a 26-bar HIGH sitting **10.5% above EMA20** (164.13 / EMA30 153.53 / EMA50 139.41), where `pullback` on the
+identical bars takes one trade and it is a LONG. The control keeps the same prelude, ramp, bar shapes and
+resolution bar and changes one thing — the advance never decelerates (+4/bar throughout) — and **the SHORT
+vanishes**. The short is caused by the second derivative, not by any bar's shape, level, or MA distance.
+`atr6` stop mode is used deliberately so the fixture needs no upper wicks, which `sweep` would otherwise fade
+and confound the control. **Stated rather than asserted around: `stoch` also shorts the base fixture**, for an
+unrelated reason (the 14-bar range compresses as the ramp's low rolls out), and the control removes both — the
+novelty is the QUANTITY read, not exclusivity on one fixture. A mirror through 200 covers the other branch.
+22/22 grammar + **264/264 `_shared`** green, `deno check` clean, both edge fns redeployed. Seeded 2,700 specs
+× 16 markets = **43,200 rows**, verified TWO ways: SHA-256 of the `spec_key` set byte-identical computed
+independently in Postgres and in TypeScript over `enumerate()+specKey()` (`3411d6bf…91ef6d08`), AND every
+seeded `spec` jsonb equals an existing `stoch` spec with only the trigger swapped (**0 unmatched of 43,200**),
+pinning the row shape as well as the key. **Deploy verified by OUTPUT:** `?market=BTCUSDT&trigger=macd` over
+35,040 real 15m bars → **39 rows `done`, all non-null `n`, avg 373 trades (31–1349), 1 thin, 0 passing the
+gate.** **Honest status: `macd` has produced nothing — 0 candidates, 0 stage-2 survivors, 0 forward
+candidates; 43,160 rows still pending, its hypothesis is UNTESTED.** D-303's diagnosis stands: the binding
+constraint is STOP GEOMETRY, not trigger vocabulary. ↓ prior stands. ↓
+
+## Prior
+
 **2026-08-14 (Opus 5) — D-316: grammar widened to 21 triggers — `stoch`, the first condition that reads a
 bar's POSITION WITHIN ITS RANGE; stage-2 record 566 tested / 0 survivors.** Loop healthy and writing: queue
 `max(run_at)` 46 s old and `done` **374,597 → 375,108 inside one minute** (writes LAND, not merely
@@ -30,7 +70,6 @@ TypeScript over `enumerate()+specKey()`. **Deploy verified by OUTPUT:** `?market
 pending, its hypothesis is UNTESTED.** D-303's diagnosis stands: the binding constraint is STOP GEOMETRY, not
 trigger vocabulary. ↓ prior stands. ↓
 
-## Prior
 **2026-08-14 (Opus 5) — D-314: completion probes on the other 24 crons — `trd_cron_health_v` went from
 verifying 6 of 30 jobs to 30/30 mapped.** pg_cron's `succeeded` only ever meant `net.http_post` enqueued a
 request; 24 jobs read `dispatch-only` and could have 500'd on every run without the monitor noticing. The 24

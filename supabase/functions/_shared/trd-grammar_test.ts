@@ -560,3 +560,76 @@ Deno.test("stoch: fires on POSITION-within-range, a quantity `rsi` structurally 
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("macd: fires on the SECOND DERIVATIVE — a decelerating advance, not a price level or an MA touch", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  // `atr6` stop mode is used deliberately: the SHORT below happens while price is printing a new high on every
+  // bar, so a swing-high stop would have to come from an upper WICK — and a wick that closes back inside the
+  // prior range is exactly what `sweep` fades, confounding the control. With an ATR stop the fixture needs no
+  // wicks at all, so every bar is a clean monotone up-bar and no wick-fade trigger can fire.
+  const spec = { trigger: "macd" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const, stopMode: "atr6" as const };
+  // 92 bars of IDENTICAL closes: EMA12 and EMA26 are seeded at the same value and fed the same constant, so
+  // they are equal bar-for-bar → the MACD line is exactly 0 and so is its 9-bar signal. Two speeds that have
+  // not separated cannot cross, so the warm-up window is provably signal-free (m0 > s0 is 0 > 0 = false).
+  // It also clears MACD_WARM = 3·26 + 9 = 87 before the first tradeable bar.
+  // Then a 20-bar +4/bar advance, then `slope2` per bar for 8 bars, then one resolution bar.
+  const build = (slope2: number): Bar[] => {
+    const bs: Bar[] = []; let i = 0;
+    for (; i < 92; i++) bs.push(bar(100, 100.2, 99.8, 100, i));
+    let c = 100;
+    for (let k = 0; k < 20; k++, i++) { const p = c; c = p + 4; bs.push(bar(p, c + 0.2, p - 0.2, c, i)); }
+    for (let k = 0; k < 8; k++, i++) { const p = c; c = p + slope2; bs.push(bar(p, c + 0.2, p - 0.2, c, i)); }
+    return [...bs, bar(c, c + 0.2, c - 25, c - 24, i)];
+  };
+
+  // BASE — the advance DECELERATES from +4/bar to +0.2/bar at index 112. Price still rises on every single bar
+  // and never prints a lower low. MEASURED: the +4 ramp separates the two speeds (a LONG cross at index 93,
+  // filled at 94, +1R); then the fast EMA collapses back toward the slow one while the signal line lags, and
+  // the MACD line crosses DOWN through its own average at index 118 → SHORT, filled at index 119's open.
+  const base = build(0.2);
+  const tr = runComponentTrades(base, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 2);
+  assertEquals(tr.map((t) => t.side), ["long", "short"]);
+  assert(tr.every((t) => Math.abs(t.r - 1) < 1e-9), `expected +1R on both, got ${tr.map((t) => t.r)}`);
+  // Pin the entry bar of each (riskFrac = |entry − stop| / entry, so it moves if the detector fires elsewhere).
+  assert(Math.abs(tr[0].riskFrac - 0.03956043956043983) < 1e-12, `long entry moved: ${tr[0].riskFrac}`);
+  assert(Math.abs(tr[1].riskFrac - 0.07677435914223771) < 1e-12, `short entry moved: ${tr[1].riskFrac}`);
+
+  // WHAT MAKES THE SHORT UNREACHABLE FOR AN MA-RELATION TRIGGER. At the signal bar 118 the close is 181.40 —
+  // a 26-bar high — while EMA20 = 164.13, EMA30 = 153.53, EMA50 = 139.41. Price is 10.5% ABOVE the nearest
+  // trend filter in the grammar and has not touched one in 26 bars. `pullback` is the only other trigger that
+  // reads an EMA, and it fires only when a bar TAGS the EMA and closes back through it, so it structurally
+  // cannot express this bar: on the identical bars it takes exactly one trade, and it is a LONG.
+  const pb = runComponentTrades(base, { ...spec, trigger: "pullback" as const }, { costRPerSide: 0 });
+  assertEquals(pb.length, 1);
+  assertEquals(pb[0].side, "long");
+
+  // THE CONTROL THAT CARRIES THE WEIGHT. Same 92-bar prelude, same 20-bar ramp, same bar SHAPES (every bar is
+  // a clean up-bar with the same 0.2 wicks), same resolution bar — the ONLY change is that the advance never
+  // decelerates: `slope2` stays at +4 instead of dropping to +0.2. First-order price geometry is otherwise
+  // unchanged in kind, and macd's SHORT vanishes entirely; only the long survives. The short is therefore
+  // caused by the second derivative of the series, not by any bar's shape, its level, or its distance from
+  // an average. No first-order trigger in the grammar can make that distinction.
+  const ctrl = build(4);
+  const ctr = runComponentTrades(ctrl, spec, { costRPerSide: 0 });
+  assertEquals(ctr.length, 1);
+  assertEquals(ctr[0].side, "long");
+
+  // HONEST LIMIT — `macd` is NOT the only trigger that shorts the base fixture. `stoch` also takes one short,
+  // for an unrelated reason: as the +4 ramp's low rolls out of the 14-bar window the range compresses faster
+  // than price advances, so %K drifts down out of the overbought zone. The two co-fire on decelerating
+  // advances; they are not the same condition (stoch reads position-in-range, macd reads the spread between
+  // two speeds), and the control separates neither — it removes both, because it removes the deceleration.
+  // This is stated rather than asserted-around: the primitive's novelty is the QUANTITY it reads, not
+  // exclusivity on this one fixture.
+  assertEquals(runComponentTrades(base, { ...spec, trigger: "stoch" as const }, { costRPerSide: 0 }).map((t) => t.side), ["short"]);
+  assertEquals(runComponentTrades(ctrl, { ...spec, trigger: "stoch" as const }, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — the opposite branch, without a hand-built second fixture. Reflecting every price through 200 maps
+  // highs↔lows exactly, so EMA12−EMA26 ↦ −(EMA12−EMA26) and each cross flips: the decelerating DECLINE hands
+  // over to the upside and the sides invert.
+  const mir = base.map((b) => ({ ts: b.ts, open: 200 - b.open, high: 200 - b.low, low: 200 - b.high, close: 200 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.map((t) => t.side), ["short", "long"]);
+  assert(mtr.every((t) => Math.abs(t.r - 1) < 1e-9), `expected +1R on both, got ${mtr.map((t) => t.r)}`);
+});
