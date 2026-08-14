@@ -81,6 +81,23 @@ Deno.test("ssweep: fades a sweep of the PRIOR session's high (Asia high swept in
   assertEquals(runComponentTrades(asia, spec, { costRPerSide: 0 }).length, 0);
 });
 
+Deno.test("nr7: fires only when the prior bar is the narrowest of 7 and this bar breaks it, resolves long", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "nr7" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 11 flat filler bars (range 2, identical → no break of any prior bar → no trigger)…
+  const flat: Bar[] = Array.from({ length: 11 }, (_, i) => bar(100, 101, 99, 100, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+  // …then a NARROW bar (range 0.5 = narrowest of the last 7), an up-break of its range, fill, and +1R resolve.
+  const seq: Bar[] = [...flat,
+    bar(100, 100.25, 99.75, 100, 11),   // NR7 bar (range 0.5)
+    bar(100, 101.5, 100, 101, 12),      // break: close 101 > 100.25 → long, stop 99.75
+    bar(101, 102, 100.5, 101.5, 13),    // fill at open ~101, risk ~1.25, target ~102.25
+    bar(101.5, 103, 101, 102.5, 14)];   // high 103 >= target → +1R
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assert(tr.length > 0, "NR7 compression break should trade");
+  assertEquals(tr[0].side, "long");
+});
+
 Deno.test("runComponent produces trades and applies cost", () => {
   // synthetic trending bars with noise → breakout trigger should fire some trades
   const bars: Bar[] = [];
