@@ -14,7 +14,26 @@ const N_LEG=6,ALLOC=0.01,LOOK=252,SKIP=21,STALE_D=21;
 const UNIV=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","JPM","V","MA","UNH","HD","PG","COST","JNJ","ABBV","WMT","KO","PEP","BAC","CRM","AMD","NFLX","ADBE","CSCO","ACN","MCD","LIN","TMO","ABT","DHR","INTC","QCOM","TXN","NKE","DIS","VZ","CMCSA","PM","WFC","MS","GS","CAT","DE","BA","HON","UNP","LOW","INTU","AMAT","MU","LRCX","NOW","ISRG","BKNG","GILD","REGN","VRTX","PANW","SNPS","CDNS","ORCL","IBM","GE","F","T","PFE","MRK","XOM","CVX","COP","SLB","UPS","FDX","TGT","SBUX","BLK","C","SCHW","AXP","PYPL","UBER","SHOP","MRNA","LULU","ROKU","SNAP"];
 async function closePos(sym:string){await fetch(`${PAPER}/v2/positions/${sym}?percentage=100`,{method:"DELETE",headers:AH}).catch(()=>{});}
 async function patch(sym:string,body:Record<string,unknown>){await fetch(`${SB}/rest/v1/trd_xsec_pos?sym=eq.${sym}`,{method:"PATCH",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify(body)}).catch(()=>{});}
-Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
+// D-314 completion probe — wraps the handler so trd_cron_health_v can verify this fn actually COMPLETED,
+// not merely that pg_cron dispatched it. Fire-and-forget: it can never alter the response or raise.
+const __SBB = Deno.env.get("SUPABASE_URL") ?? "", __SRKB = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const __beat = (o: string) =>
+  fetch(`${__SBB}/rest/v1/rpc/trd_beat`, {
+    method: "POST",
+    headers: { apikey: __SRKB, Authorization: `Bearer ${__SRKB}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_fn: "trd-xsec-mom-exec", p_outcome: o.slice(0, 180) }),
+  }).catch(() => {});
+const SERVE = (h: (r: Request) => Response | Promise<Response>) =>
+  Deno.serve(async (r: Request) => {
+    let res: Response;
+    try { res = await h(r); } catch (e) { await __beat("THREW " + String(e).slice(0, 150)); throw e; }
+    let body = "";
+    try { body = (await res.clone().text()).replace(/\s+/g, " ").slice(0, 150); } catch { /* unreadable body */ }
+    await __beat(`${res.status} ${body}`);
+    return res;
+  });
+
+SERVE(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const ks=await fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   if(ks?.[0]?.active)return new Response(JSON.stringify({ok:true,skipped:"kill-switch active"}),{headers:cors});
   const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);

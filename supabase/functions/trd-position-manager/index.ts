@@ -12,7 +12,26 @@ const MALEN=200,DEPOSIT=100000;
 async function ma200(sym:string):Promise<{close:number,ma:number}|null>{const start=new Date(Date.now()-400*864e5).toISOString().slice(0,10);const r=await fetch(`${DATA}/v2/stocks/${sym}/bars?timeframe=1Day&start=${start}&feed=iex&limit=400`,{headers:AH}).then(x=>x.json()).catch(()=>null);const bs=r?.bars??[];if(bs.length<MALEN+1)return null;const cl=bs.map((b:{c:number})=>b.c);const ma=cl.slice(-MALEN).reduce((a:number,x:number)=>a+x,0)/MALEN;return{close:cl[cl.length-1],ma};}
 async function closePos(sym:string){return (await fetch(`${PAPER}/v2/positions/${sym}?percentage=100`,{method:"DELETE",headers:AH}).catch(()=>null))?.ok;}
 async function donchianLow(sym:string):Promise<{close:number,dl:number}|null>{const y=sym.replace(/USD$/,"-USD");const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${y}?interval=1d&range=3mo`,{headers:{"User-Agent":"Mozilla/5.0"}}).then(x=>x.json()).catch(()=>null);const res=r?.chart?.result?.[0];if(!res?.timestamp)return null;const q=res.indicators.quote[0];const lows:number[]=[],closes:number[]=[];for(let i=0;i<res.timestamp.length;i++){const l=q.low[i],c=q.close[i];if(l!=null&&c!=null&&Number.isFinite(l)&&Number.isFinite(c)){lows.push(l);closes.push(c);}}if(closes.length<21)return null;const close=closes[closes.length-1];let dl=1e18;for(let k=lows.length-1-20;k<lows.length-1;k++)dl=Math.min(dl,lows[k]);return{close,dl};}
-Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
+// D-314 completion probe — wraps the handler so trd_cron_health_v can verify this fn actually COMPLETED,
+// not merely that pg_cron dispatched it. Fire-and-forget: it can never alter the response or raise.
+const __SBB = Deno.env.get("SUPABASE_URL") ?? "", __SRKB = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const __beat = (o: string) =>
+  fetch(`${__SBB}/rest/v1/rpc/trd_beat`, {
+    method: "POST",
+    headers: { apikey: __SRKB, Authorization: `Bearer ${__SRKB}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_fn: "trd-position-manager", p_outcome: o.slice(0, 180) }),
+  }).catch(() => {});
+const SERVE = (h: (r: Request) => Response | Promise<Response>) =>
+  Deno.serve(async (r: Request) => {
+    let res: Response;
+    try { res = await h(r); } catch (e) { await __beat("THREW " + String(e).slice(0, 150)); throw e; }
+    let body = "";
+    try { body = (await res.clone().text()).replace(/\s+/g, " ").slice(0, 150); } catch { /* unreadable body */ }
+    await __beat(`${res.status} ${body}`);
+    return res;
+  });
+
+SERVE(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const flatParam=new URL(req.url).searchParams.get("flat")==="1";
   const flatCrypto=new URL(req.url).searchParams.get("flatcrypto")==="1";
   const cancelSyms=(new URL(req.url).searchParams.get("cancelsyms")||"").split(",").map(s=>s.trim()).filter(Boolean);

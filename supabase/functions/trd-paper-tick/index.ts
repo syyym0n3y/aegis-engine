@@ -17,7 +17,26 @@ const POLICY = { maxRiskPerTradeFrac: 0.01, maxDailyLossFrac: 0.04, maxDrawdownF
 const BOT = { portfolioTargetVolAnnual: 0.20, maxRiskPerTradeFrac: 0.01, minTradesToTrust: 30, tradesPerYear: 35040, kellyFraction: 0.5 };
 function sess(h: number) { return h >= 0 && h < 7 ? "asia" : h < 13 ? "london" : h < 21 ? "ny" : "asia"; }
 async function fetchBars() { const start = new Date(Date.now() - 4 * 86400000).toISOString(); const u = `https://data.alpaca.markets/v1beta3/crypto/us/bars?symbols=${encodeURIComponent(SYMBOLS.join(","))}&timeframe=15Min&start=${start}&limit=10000`; const r = await fetch(u); const j = await r.json(); const out: Record<string, any[]> = {}; for (const s of SYMBOLS) out[s] = (j.bars?.[s] ?? []).map((b: any) => ({ ts: b.t, open: b.o, high: b.h, low: b.l, close: b.c })); return out; }
-Deno.serve(async () => {
+// D-314 completion probe — wraps the handler so trd_cron_health_v can verify this fn actually COMPLETED,
+// not merely that pg_cron dispatched it. Fire-and-forget: it can never alter the response or raise.
+const __SBB = Deno.env.get("SUPABASE_URL") ?? "", __SRKB = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const __beat = (o: string) =>
+  fetch(`${__SBB}/rest/v1/rpc/trd_beat`, {
+    method: "POST",
+    headers: { apikey: __SRKB, Authorization: `Bearer ${__SRKB}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_fn: "trd-paper-tick", p_outcome: o.slice(0, 180) }),
+  }).catch(() => {});
+const SERVE = (h: (r: Request) => Response | Promise<Response>) =>
+  Deno.serve(async (r: Request) => {
+    let res: Response;
+    try { res = await h(r); } catch (e) { await __beat("THREW " + String(e).slice(0, 150)); throw e; }
+    let body = "";
+    try { body = (await res.clone().text()).replace(/\s+/g, " ").slice(0, 150); } catch { /* unreadable body */ }
+    await __beat(`${res.status} ${body}`);
+    return res;
+  });
+
+SERVE(async () => {
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
   try {
     const sr = await fetch(`${SB}/rest/v1/trd_paper_state?id=eq.default&select=*`, { headers: hdr }); const rows = await sr.json(); const st = rows[0] ?? null;

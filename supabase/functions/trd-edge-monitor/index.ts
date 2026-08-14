@@ -46,7 +46,26 @@ async function monitor(){
   ];
   return out;
 }
-Deno.serve(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{const gen=new Date().toISOString();const r=await monitor();
+// D-314 completion probe — wraps the handler so trd_cron_health_v can verify this fn actually COMPLETED,
+// not merely that pg_cron dispatched it. Fire-and-forget: it can never alter the response or raise.
+const __SBB = Deno.env.get("SUPABASE_URL") ?? "", __SRKB = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const __beat = (o: string) =>
+  fetch(`${__SBB}/rest/v1/rpc/trd_beat`, {
+    method: "POST",
+    headers: { apikey: __SRKB, Authorization: `Bearer ${__SRKB}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_fn: "trd-edge-monitor", p_outcome: o.slice(0, 180) }),
+  }).catch(() => {});
+const SERVE = (h: (r: Request) => Response | Promise<Response>) =>
+  Deno.serve(async (r: Request) => {
+    let res: Response;
+    try { res = await h(r); } catch (e) { await __beat("THREW " + String(e).slice(0, 150)); throw e; }
+    let body = "";
+    try { body = (await res.clone().text()).replace(/\s+/g, " ").slice(0, 150); } catch { /* unreadable body */ }
+    await __beat(`${res.status} ${body}`);
+    return res;
+  });
+
+SERVE(async()=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{const gen=new Date().toISOString();const r=await monitor();
   // persist snapshot (append-only history; the 30-min cron feeds this so the cockpit reads a fresh cached state)
   const SB=Deno.env.get("SUPABASE_URL"),SRK=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if(SB&&SRK){await fetch(`${SB}/rest/v1/trd_edge_snapshot`,{method:"POST",headers:{apikey:SRK,Authorization:`Bearer ${SRK}`,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({generated_at:gen,edges:r})}).catch(()=>{});}

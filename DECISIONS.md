@@ -5698,3 +5698,34 @@ instead: **35 rows already `done`, all non-null `n`, avg 161 trades, range 33–
 and 43,160 of its rows are still pending. The hypothesis that a volatility-normalised entry carries a payable
 `riskFrac` is UNTESTED until those drain. D-303's diagnosis stands until the data says otherwise.
 `trd_edge_ingest` now holds 10 `status=new` rows (above the 3-row refill floor), ingest id=20 → `queued`.
+
+---
+
+## D-314 — completion probes for the other 24 crons: pg_cron's "succeeded" was never evidence the work happened
+
+`trd_cron_health_v` covered 30 `trd_*` crons and could only *verify* 6 of them. The other 24 read
+`dispatch-only (no completion probe yet)` — which sounds like a minor telemetry gap and is not. pg_cron's
+`succeeded` means **`net.http_post` enqueued a request**, nothing more. Every one of those 24 functions could
+have 500'd on every run for weeks and the health view would have reported exactly what it reported. This is
+the D-310/D-311 failure class (a write that never lands, a report that never notices) one level up: the
+monitor itself was asserting health it had not measured.
+
+**Fix, both halves.** (1) The 22 distinct edge functions behind those jobs now wrap their handler in a
+`SERVE()` shim that writes a `trd_beat()` heartbeat carrying the **HTTP status + a 150-char response
+snippet**. Wrapping beats hand-placing a beat before each `return`: an early return cannot bypass it, and a
+throw is recorded as `THREW …` before it propagates. It is fire-and-forget (`.catch(() => {})`) and cannot
+alter or delay the response. (2) The view's job→function map was a hand-maintained `VALUES` list — *that list
+is why the gap existed*, and it would have silently reopened on the next cron added. It now derives from
+`substring(cron.job.command from 'functions/v1/([a-zA-Z0-9_-]+)')`: **30/30 jobs map, 0 unmapped**, and any
+future `trd_*` cron is covered the moment it is created.
+
+**Verified live, not by deploy message.** `trd-alpaca-equity-tick` wrote `200 { "ok": true, "equity":
+100927.28 …}` at 16:15:10 UTC **from its own `*/15` cron**, unprompted — the probe proven on the scheduled
+path, not just a manual curl. `deno check` green on all 22; `verify_jwt=false` preserved on every redeploy.
+
+**Stated limitation, not hidden.** The heartbeat is keyed by FUNCTION, so jobs sharing a function share a
+row — `trd_orbfollow_eod_edt` / `_est` / `_scanner_30m` all read `trd-orbfollow-scanner`. Their verdict
+proves "that function completed recently", not "this schedule's invocation completed". Per-job attribution
+would require rewriting 30 live cron commands to pass their jobname through; risking the dispatch path to
+sharpen a monitor is the wrong trade. **The daily/nightly jobs stay `dispatch-only` until their next
+scheduled fire** — that is the probe working, not a gap.

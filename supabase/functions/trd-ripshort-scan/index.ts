@@ -10,7 +10,26 @@ const sma=(a:number[],n:number)=>a.length<n?NaN:a.slice(-n).reduce((x,y)=>x+y,0)
 function rsi(a:number[],n=14){if(a.length<n+1)return NaN;let ag=0,al=0;for(let i=a.length-n;i<a.length;i++){const ch=a[i]-a[i-1];ag+=Math.max(ch,0);al+=Math.max(-ch,0);}return 100-100/(1+(ag/n)/((al/n)||1e-9));}
 async function universe():Promise<string[]>{try{const r=await fetch("https://www.sec.gov/files/company_tickers.json",{headers:{"User-Agent":"aegis-research ona@revitalise.io"}});const j=await r.json();return (Object.values(j) as {ticker:string}[]).map(x=>x.ticker).filter(t=>/^[A-Z]{1,5}$/.test(t));}catch{return[];}}
 
-Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
+// D-314 completion probe — wraps the handler so trd_cron_health_v can verify this fn actually COMPLETED,
+// not merely that pg_cron dispatched it. Fire-and-forget: it can never alter the response or raise.
+const __SBB = Deno.env.get("SUPABASE_URL") ?? "", __SRKB = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const __beat = (o: string) =>
+  fetch(`${__SBB}/rest/v1/rpc/trd_beat`, {
+    method: "POST",
+    headers: { apikey: __SRKB, Authorization: `Bearer ${__SRKB}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_fn: "trd-ripshort-scan", p_outcome: o.slice(0, 180) }),
+  }).catch(() => {});
+const SERVE = (h: (r: Request) => Response | Promise<Response>) =>
+  Deno.serve(async (r: Request) => {
+    let res: Response;
+    try { res = await h(r); } catch (e) { await __beat("THREW " + String(e).slice(0, 150)); throw e; }
+    let body = "";
+    try { body = (await res.clone().text()).replace(/\s+/g, " ").slice(0, 150); } catch { /* unreadable body */ }
+    await __beat(`${res.status} ${body}`);
+    return res;
+  });
+
+SERVE(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const force=new URL(req.url).searchParams.get("force")==="1";
   const now=new Date();const hour=now.getUTCHours();
   // session date: the night spans 23:00 (day D) → ~02:00 (day D+1); label the whole window by day D so the scan
