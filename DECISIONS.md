@@ -5115,3 +5115,12 @@ every backtest increments `trd_trial_counter` (the N that any Sharpe/t must be r
 First cross-market result: `sweep` (ICT liquidity-grab fade) clears t=4.4–8.1 on ALL 8 markets independently
 + 2 FVG on ADA. Coherent CANDIDATE class (not one-market luck) — but in-sample, gate_passed=false,
 forward-pending. Must survive forward + full DSR/PBO before any promotion. The engine screens; it does not bless.
+
+## D-300 — Edge Factory cron: 8-concurrent stalled the workers → rotate 2/min (2026-08-14)
+
+The parallel cron (`trd_edge_factory_par_1m`, 8 markets fired simultaneously each minute) STALLED after
+~13,320 trials: 47 min with 0 queue rows advancing, though pg_cron kept "succeeding" (fire-and-forget only
+confirms dispatch, not completion). A SOLO manual invocation processed 40 fine → the function is healthy;
+8 concurrent heavy invocations exceed the shared worker/CPU budget and get killed before flushing. Fix:
+`trd_edge_factory_rot_1m` rotates 2 markets/min (all 8 every 4 min) — ~4,800 trials/hr, reliable. Lesson:
+cron "succeeded" ≠ work done for fire-and-forget net.http_post; watch queue run_at, not job_run_details.

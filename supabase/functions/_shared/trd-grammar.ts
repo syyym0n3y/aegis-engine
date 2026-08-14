@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -36,7 +36,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -108,6 +108,16 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (r === null || rPrev === null) return null;
       if (rPrev < 30 && r >= 30) return { side: "long", stop: lo };
       if (rPrev > 70 && r <= 70) return { side: "short", stop: hi };
+      return null;
+    }
+    case "nbar": { // N-consecutive-close reversal: 3 down-closes then an up-close = exhaustion reversal LONG (and
+      // mirror for short). "down" = close below the prior close. Stop at the stopLookback swing. A mean-reversion primitive.
+      const N = 3; if (i < N + 1) return null;
+      let downs = 0, ups = 0;
+      for (let k = i - N; k < i; k++) { if (bars[k].close < bars[k - 1].close) downs++; else if (bars[k].close > bars[k - 1].close) ups++; }
+      const curUp = b.close > bars[i - 1].close, curDown = b.close < bars[i - 1].close;
+      if (downs === N && curUp) return { side: "long", stop: lo };
+      if (ups === N && curDown) return { side: "short", stop: hi };
       return null;
     }
     case "channel": { // Donchian/Turtle: break of the prior 20-bar high/low channel (a longer, FIXED lookback than

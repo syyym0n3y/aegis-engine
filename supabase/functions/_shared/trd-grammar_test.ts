@@ -44,6 +44,24 @@ Deno.test("channel (Donchian): fires only on a break of the prior 20-bar high, r
   assertEquals(tr[0].side, "long");
 });
 
+Deno.test("nbar reversal: fires only after 3 consecutive down-closes then an up-close, resolves long", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "nbar" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // pure ascending (never a down-close) must produce ZERO nbar trades…
+  const asc: Bar[] = Array.from({ length: 14 }, (_, i) => { const p = 90 + i; return bar(p - 0.3, p + 0.5, p - 0.5, p + 0.2, i); });
+  assertEquals(runComponentTrades(asc, spec, { costRPerSide: 0 }).length, 0);
+  // …FLAT-close filler (no close change → no spurious up/down runs), then exactly 3 down-closes (99<100, 98.5<99,
+  // 98<98.5) and an up-close trigger (99.5>98) → LONG, stop = 3-bar swing low (96). Fill next open (~99.6, risk ~3.6),
+  // resolve at +1R (target ~103.2, reached by high 104).
+  const flat: Bar[] = Array.from({ length: 10 }, (_, i) => bar(100, 101, 99, 100, i));
+  const seq: Bar[] = [...flat,
+    bar(100, 100.5, 96, 99.0, 10), bar(99.0, 99.2, 96, 98.5, 11), bar(98.5, 98.7, 96, 98.0, 12),
+    bar(98.0, 100, 97.5, 99.5, 13), bar(99.6, 101, 99, 100.5, 14), bar(101, 104, 100, 103.5, 15)];
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assert(tr.length > 0, "3-down-then-up should trigger a reversal trade");
+  assertEquals(tr[0].side, "long");
+});
+
 Deno.test("runComponent produces trades and applies cost", () => {
   // synthetic trending bars with noise → breakout trigger should fire some trades
   const bars: Bar[] = [];
