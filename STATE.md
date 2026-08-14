@@ -1,6 +1,27 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-310: the `pullback` and `rsi` triggers were scored on ANOTHER COIN's EMA/RSI.**
+Loop healthy and writing: queue `done` 319,951 → 327,779, `max(run_at)` 0.76 min old, 6,160 rows in the
+trailing 10 min. Stage-2 **caught up** — fired once, returned `"all candidates stage-2 tested"` at a true
+trial count of **489,960**; cumulative **200 candidates tested — 185 killed, 15 thin, 0 survivors,
+`trd_forward_candidates` = 0.** Instead of an 18th trigger (D-303: trigger vocabulary is not the binding
+constraint), fixed a silent correctness bug found while reading the grammar: the EMA/RSI memo caches were
+keyed `` `${bars.length}:${period}` `` with **no market in the key**, and `trd_bars_cache` holds **exactly
+35,040 bars for all 16 markets** — so every market collided, and a warm edge-function isolate served the
+first market's indicator series to every market after it. `clearEmaCache()` existed and was called from
+**nowhere**. Confined to the two triggers that read the cache (`passesTrend` computes its EMA locally and was
+always correct), and it corrupts in **both directions** — measured pre-fix: `rsi` fabricated **10 trades on a
+market whose own RSI yields 0**, `pullback` had all **36 of its real trades erased**. Fingerprint in live
+data: two SOLUSDT `pullback` candidates identical at n=33 / abs_r=0.3276 / t=4.50 across *different* ema and
+stopLookback settings. Fixed with `WeakMap` identity keying (exact, uncollidable, hit-rate-neutral) + a
+regression test that is red on the old key. 259/259 `_shared` green, both edge fns redeployed. **4 `fac:*`
+candidates quarantined** (all had already died in stage-2 — no false edge reached forward) and **58,396 queue
+rows reset to pending**; verified by OUTPUT — 149 rows rescored in 3 min, 64 `done` with real counts (30–387).
+**This found no edge; it destroyed and fabricated evidence, and the rescore may kill as many rows as it
+revives.** D-303's diagnosis stands: the binding constraint is STOP GEOMETRY. ↓ prior status stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-308: grammar widened to 17 triggers (`choch`) — the first STRUCTURE-based primitive;
 stage-2 record 199 tested / 0 survivors.** Loop healthy and writing: queue `done` 319,479 → 319,951 across this
 session's checks, `max(run_at)` 0.85 min old, 6,400 rows in the trailing 10 min. Stage-2 is **caught up** —

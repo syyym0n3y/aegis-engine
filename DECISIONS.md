@@ -5488,3 +5488,42 @@ CONCURRENCY HAZARD (live): this work was done in the SAME working tree the auton
 edits. The loop's `git add -A` for D-308 swept my 3 executor edits into its commit — code intact, provenance
 muddled. The loop already documented this hazard in D-305. Interactive + scheduled agent sharing one checkout
 is fragile; a dedicated worktree for the loop (or the interactive session) would end it.
+
+## D-310 — Cross-market indicator-cache collision: `pullback` and `rsi` were scored on ANOTHER coin's EMA/RSI (2026-08-14)
+
+**The defect.** `trd-grammar.ts` memoized its EMA and RSI series in a module-level `Map` keyed
+`` `${bars.length}:${period}` `` — the market is not in the key. Measured, not assumed: every row in
+`trd_bars_cache` holds **exactly 35,040 bars** for all 16 markets (a fixed 1-year 15m window, not
+"whatever history exists"), so all 16 collided on one key. Edge-function isolates are reused across
+requests and each request scores ONE market, so the first market to warm an isolate donated its indicator
+series to every market served after it. `clearEmaCache()` existed, was exported, and was **called from
+nowhere** — not the factory, not stage-2, not the tests.
+
+**Blast radius: exactly two triggers, and it cuts both ways.** `runComponentTrades` computes its own EMA
+locally for the trend filter, so `passesTrend` was always correct; only `triggerSignal_ema` (the `pullback`
+trigger) and `triggerSignal_rsi` (the `rsi` trigger) read the shared cache. Proven on the pre-fix code with
+two synthetic markets of identical length: `rsi` on market B truthfully produces **0 trades** but produced
+**10 fabricated ones** after market A warmed the cache; `pullback` on market B truthfully produces **36**
+and was **erased to 0**. Corroborating fingerprint in live data: two promoted SOLUSDT `pullback` candidates
+carried identical n=33 / abs_r=0.3276 / t=4.50 across *different* ema and stopLookback settings — which is
+only possible if the signal never read its own EMA.
+
+**Fix.** Both caches are now `WeakMap<Bar[], Map<period, series>>` — keyed on the bars ARRAY IDENTITY.
+Exact, uncollidable, and hit-rate-neutral (the factory reuses one array object per market, so every spec of
+a market still shares one computed series). `clearEmaCache()` is retained for tests only and documented as
+not required for correctness. Guard: a regression test scores market B cold, warms the cache with market A,
+re-scores B, and requires the trade lists to be byte-identical — it is red on the old key and green on the
+new one. 259/259 `_shared` tests green, `deno check` clean, both edge fns redeployed.
+
+**Data consequence.** Which rows were contaminated depends on isolate warmth and is unknowable per-row from
+outside, so every `pullback`/`rsi` row is treated as suspect (the D-305 precedent): **4 `fac:*` candidates
+quarantined** (`gate_failing += quarantined-contaminated-D310`; all 4 had already been killed in stage-2, so
+no false edge escaped to forward) and **58,396 queue rows reset to pending** (29,452 `done` + 28,944 `thin`).
+Verified live by OUTPUT, not by the deploy message: 149 `pullback`/`rsi` rows rescored within 3 minutes,
+64 `done` with real trade counts (30–387, avg 129/167) and 85 `thin`.
+
+**Honest framing.** This found no edge — it destroyed and fabricated evidence in both directions, and the
+rescore may kill as many rows as it revives. It is the same class as D-300b/D-302/D-307: the computation
+reported success while being silently wrong. Nothing here changes the D-303 diagnosis that the binding
+constraint is stop geometry, and the standing result is unchanged: **200 candidates stage-2 tested, 185
+killed, 15 thin, 0 survivors, `trd_forward_candidates` = 0** at a true trial count of 489,960.

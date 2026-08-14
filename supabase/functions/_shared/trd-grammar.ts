@@ -286,24 +286,34 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
   }
 }
 
-const _rsiCache = new Map<string, number[]>();
+// D-310: these caches are keyed on the bars ARRAY ITSELF (WeakMap identity), never on a string derived from
+// bars.length. The old key was `${bars.length}:${period}`, and every market in trd_bars_cache holds EXACTLY
+// 35,040 bars (a fixed 1-year 15m window, not "whatever history exists"), so all 16 markets collided on one
+// key. Edge-function isolates are reused across requests and each request scores a DIFFERENT market, so the
+// first market to warm the isolate donated its EMA/RSI series to every market after it. Measured, both
+// directions: a market whose own RSI yields 0 trades produced 10 fabricated ones, and a `pullback` market
+// whose own EMA yields 36 trades produced 0. WeakMap identity is exact (the factory reuses one array object
+// per market, so the hit-rate is unchanged) and cannot collide. A length-keyed cache must never come back.
+let _rsiCache = new WeakMap<Bar[], Map<number, number[]>>();
 function triggerSignal_rsi(bars: Bar[], i: number, period: number): number | null {
   if (i < period) return null;
-  const key = `${bars.length}:rsi${period}`; let arr = _rsiCache.get(key);
+  let per = _rsiCache.get(bars); if (!per) { per = new Map(); _rsiCache.set(bars, per); }
+  let arr = per.get(period);
   if (!arr) {
     arr = new Array(bars.length).fill(NaN); let gain = 0, loss = 0;
     for (let k = 1; k <= period; k++) { const d = bars[k].close - bars[k - 1].close; if (d >= 0) gain += d; else loss -= d; }
     let ag = gain / period, al = loss / period; arr[period] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
     for (let k = period + 1; k < bars.length; k++) { const d = bars[k].close - bars[k - 1].close; const g = d > 0 ? d : 0, l = d < 0 ? -d : 0; ag = (ag * (period - 1) + g) / period; al = (al * (period - 1) + l) / period; arr[k] = al === 0 ? 100 : 100 - 100 / (1 + ag / al); }
-    _rsiCache.set(key, arr);
+    per.set(period, arr);
   }
   const v = arr[i]; return Number.isFinite(v) ? v : null;
 }
-// tiny memoized-ish EMA-at-i helper (recompute cheap for the grammar's small period set)
-const _emaCache = new Map<string, number[]>();
+// EMA-at-i helper. Identity-keyed for the same reason as the RSI cache above (D-310).
+let _emaCache = new WeakMap<Bar[], Map<number, number[]>>();
 function triggerSignal_ema(bars: Bar[], i: number, period: number): number {
-  const key = `${bars.length}:${period}`; let arr = _emaCache.get(key);
-  if (!arr) { arr = ema(bars.map((x) => x.close), period); _emaCache.set(key, arr); }
+  let per = _emaCache.get(bars); if (!per) { per = new Map(); _emaCache.set(bars, per); }
+  let arr = per.get(period);
+  if (!arr) { arr = ema(bars.map((x) => x.close), period); per.set(period, arr); }
   return arr[i];
 }
 
@@ -402,4 +412,7 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
   return runComponentTrades(bars, s, cfg).map((t) => t.r);
 }
 
-export function clearEmaCache() { _emaCache.clear(); _rsiCache.clear(); }
+/** Drops every memoized indicator series. With identity keying (D-310) this is no longer required for
+ * CORRECTNESS — it exists so a test can force a cold recompute. Nothing in the live path calls it, and
+ * nothing needs to: two different markets are two different array objects. */
+export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); }

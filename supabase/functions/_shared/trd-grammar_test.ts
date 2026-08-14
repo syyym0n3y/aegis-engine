@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { type Bar, enumerate, GRAMMAR, runComponent, runComponentTrades, specKey } from "./trd-grammar.ts";
+import { type Bar, clearEmaCache, enumerate, GRAMMAR, runComponent, runComponentTrades, specKey } from "./trd-grammar.ts";
 const WIDE100_MIN = 100;
 
 Deno.test("enumerate covers the full product space and keys are unique", () => {
@@ -340,4 +340,37 @@ Deno.test("wide100 needs 100 bars of history and never returns a stop tighter th
   assert(compared > 0, "expected overlapping entries to compare");
   // signals inside the first 100 bars are DROPPED (history requirement), never silently narrowed
   assert(wd.every((t) => new Date(t.entryTs).getTime() >= new Date(bars[WIDE100_MIN].ts).getTime()), "wide100 must not fill before 100 bars of history");
+});
+
+// D-310 — the indicator caches must be keyed on the bars ARRAY, never on bars.length. Every market in
+// trd_bars_cache holds exactly 35,040 bars, so a length-derived key collided across all 16 markets and a
+// warm edge-function isolate served the FIRST market's EMA/RSI to every market after it. Measured on the
+// pre-fix code: `rsi` fabricated 10 trades on a market whose own RSI produced 0, and `pullback` erased all
+// 36 of a market's real trades. This test scores market B cold, then scores market A to warm the cache, then
+// re-scores B on the SAME warm state — the two B runs must be byte-identical trade-for-trade.
+Deno.test("indicator caches are market-identity-keyed, not length-keyed (no cross-market bleed)", () => {
+  const series = (n: number, f: (i: number) => number): Bar[] =>
+    Array.from({ length: n }, (_, i) => {
+      const c = f(i), o = f(Math.max(0, i - 1));
+      return { ts: new Date(Date.UTC(2026, 0, 1, 0, i * 15)).toISOString(), open: o, high: Math.max(o, c) + 0.5, low: Math.min(o, c) - 0.5, close: c };
+    });
+  const N = 400; // identical length for both markets — the exact condition that made the old key collide
+  const A = series(N, (i) => 100 + 10 * Math.sin(i / 7) + i * 0.01);
+  const B = series(N, (i) => 250 + 40 * Math.sin(i / 3.1) - i * 0.05);
+  const sig = (ts: { entryTs: string; exitTs: string; r: number }[]) => ts.map((t) => `${t.entryTs}>${t.exitTs}:${t.r.toFixed(6)}`).join(",");
+  // both cache consumers: `rsi` reads the RSI series, `pullback` reads the EMA series
+  for (const trigger of ["rsi", "pullback"] as const) {
+    const spec = { trigger, emaPeriod: 20, trendMode: "none" as const, stopLookback: 5, rr: 1, session: "all" as const };
+    clearEmaCache();
+    const cold = sig(runComponentTrades(B, spec, { costRPerSide: 0 }));
+    clearEmaCache();
+    runComponentTrades(A, spec, { costRPerSide: 0 });                  // market A warms the shared cache
+    const warm = sig(runComponentTrades(B, spec, { costRPerSide: 0 })); // market B on that warm cache
+    assertEquals(warm, cold, `${trigger}: market B's trades changed after market A warmed the cache`);
+  }
+  // and the memoization still HITS (same array object → one computed series reused across specs)
+  clearEmaCache();
+  const s1 = { trigger: "pullback" as const, emaPeriod: 20, trendMode: "none" as const, stopLookback: 5, rr: 1, session: "all" as const };
+  const first = sig(runComponentTrades(A, s1, { costRPerSide: 0 }));
+  assertEquals(sig(runComponentTrades(A, s1, { costRPerSide: 0 })), first, "same market must be stable across repeat runs");
 });
