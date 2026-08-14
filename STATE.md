@@ -1,6 +1,27 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-311: factory swallowed-write audit — the scorecard promotion flush had stranded
+1,005 gate-survivors before stage-2 could test them.** Audited all 8 `.catch(() => {})` write sites in
+`trd-edge-factory`. A PostgREST 4xx/5xx does not throw, so the swallow reported false success (the D-307
+class). CRITICAL site = the scorecard survivor flush: **measured 1,005 queue rows with `passes=true`
+(`vs_random_t` 4.4–11.69, holds_both, ≥180 trades) in NEITHER scorecard NOR stage2_results** — stage-2 reads
+candidates from scorecard, so it never tested them. Ruled out format-mismatch / stage-2-deletion / stale-flags
+before calling it loss. Root cause is an **atomicity gap**: `passes=true` committed per-page, promotions
+buffered to an end-of-request flush; the cron scores 40 specs/run at ~2.0s (a 200-spec batch returns
+`WORKER_RESOURCE_LIMIT`), so any failure or isolate-kill between the two stranded the survivor silently. Fix:
+ported stage-2's `writeRows`/`countPersisted`; **scorecard now leads** — a promoting row's `passes=true` is
+committed only after its scorecard row is confirmed landed, else the spec is left pending (self-healing) and
+counted; response reports `promoLost`/`queueLost`/`writeErrs` and returns HTTP 500 on any loss. The 3 other
+dangerous sites (queue flush, trial-bump, seed, thin-PATCH) are now `res.ok`-checked; the benign bars-cache
+write is left swallowed with a comment. **Machine guard: migration `0017` `trd_factory_promo_integrity_v`**
+(passes=true ⇒ in scorecard OR stage2_results; flags `orphaned_after_fix` as a REGRESSION). **Recovery:** the
+1,005 reset to pending for atomic re-scoring. Verified: post-fix live runs `promoLost:0 / queueLost:0`, guard
+**CLEAN** (0 orphans), 259/259 `_shared` green, both fns redeployed. **Found no edge** — these are in-sample
+first-pass survivors; stage-2's gauntlet will almost certainly kill them all, as it has all 200 so far. The
+bug was destroying the engine's ability to test its own candidates, not hiding a strategy. ↓ prior stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-310: the `pullback` and `rsi` triggers were scored on ANOTHER COIN's EMA/RSI.**
 Loop healthy and writing: queue `done` 319,951 → 327,779, `max(run_at)` 0.76 min old, 6,160 rows in the
 trailing 10 min. Stage-2 **caught up** — fired once, returned `"all candidates stage-2 tested"` at a true

@@ -16,6 +16,29 @@ import { edgeVsRandom } from "../_shared/trd-random-control.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
+
+// D-311: a write that returns HTTP 4xx/5xx does NOT throw — `.catch(()=>{})` never fires, so a failed write
+// looked identical to a success and the function returned ok:true. This is the D-307 failure class (stage-2
+// wrote nothing for 5.6h under swallowed 400s). `writeRows` surfaces status+body; `countPersisted` reads
+// back what actually landed before we believe it. Ported verbatim from trd-edge-stage2.
+type WriteResult = { table: string; attempted: number; ok: boolean; status: number; err: string | null };
+async function writeRows(table: string, rows: Record<string, unknown>[], onConflict: string): Promise<WriteResult> {
+  if (!rows.length) return { table, attempted: 0, ok: true, status: 200, err: null };
+  try {
+    const r = await fetch(`${SB}/rest/v1/${table}?on_conflict=${onConflict}`, {
+      method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows),
+    });
+    if (r.ok) return { table, attempted: rows.length, ok: true, status: r.status, err: null };
+    return { table, attempted: rows.length, ok: false, status: r.status, err: (await r.text().catch(() => "")).slice(0, 400) };
+  } catch (e) { return { table, attempted: rows.length, ok: false, status: 0, err: String(e).slice(0, 300) }; }
+}
+async function countPersisted(table: string, edges: string[]): Promise<number> {
+  if (!edges.length) return 0;
+  const list = edges.map((e) => `"${e.replace(/"/g, '""')}"`).join(",");
+  const r = await fetch(`${SB}/rest/v1/${table}?edge=in.(${encodeURIComponent(list)})&select=edge`, { headers: H })
+    .then((x) => x.json()).catch(() => []);
+  return Array.isArray(r) ? r.length : 0;
+}
 // D-303: cost is charged in BPS OF NOTIONAL, converted per-trade through the trade's own riskFrac
 // (costR/side = (FEE_BPS/1e4)/riskFrac) — NOT a flat R constant. The old flat 0.05R/side was calibrated on
 // gold; on 15m crypto the median stop is ~0.28% of notional, so a 10bp Binance spot taker fee is really
@@ -43,11 +66,14 @@ async function seedMarkets(): Promise<Record<string, number>> {
     const existing = await fetch(`${SB}/rest/v1/trd_edge_queue?market=eq.${market}&select=spec_key&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
     if (Array.isArray(existing) && existing.length) continue;
     const rows = specs.map((s) => ({ spec_key: specKey(s), market, spec: s, source: "grammar", status: "pending", priority: 5 }));
-    // chunked insert to stay under payload limits (4860 rows/market)
+    // chunked insert to stay under payload limits (4860 rows/market). D-311: report chunks that did NOT land so a
+    // partially-seeded market (silent coverage gap) is visible in the response rather than swallowed.
+    let ins = 0, failed = 0;
     for (let i = 0; i < rows.length; i += 1500) {
-      await fetch(`${SB}/rest/v1/trd_edge_queue?on_conflict=spec_key,market`, { method: "POST", headers: { ...H, Prefer: "resolution=ignore-duplicates,return=minimal" }, body: JSON.stringify(rows.slice(i, i + 1500)) }).catch(() => {});
+      const w = await writeRows("trd_edge_queue", rows.slice(i, i + 1500), "spec_key,market");
+      if (w.ok) ins += w.attempted; else failed += w.attempted;
     }
-    seeded[market] = rows.length;
+    seeded[market] = failed ? -(failed) : ins; // negative = a seed chunk failed to land for this market
   }
   return seeded;
 }
@@ -82,6 +108,9 @@ async function getBars(market: string, years: number): Promise<Bar[]> {
     if (age < 864e5 && Array.isArray(b) && b.length > 500) return b;
   }
   const bars = await klines(market, years);
+  // D-311: this swallow is INTENTIONALLY kept — a failed cache write is self-healing (the next run re-fetches
+  // from Binance and retries the cache). It cannot corrupt state or hide a lost result, unlike the promotion
+  // and queue-status writes, so it needs no res.ok gate.
   if (bars.length >= 500) await fetch(`${SB}/rest/v1/trd_bars_cache?on_conflict=market`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ market, years, bars, updated_at: new Date().toISOString() }) }).catch(() => {});
   return bars;
 }
@@ -157,18 +186,23 @@ Deno.serve(async (req) => {
     const bars = await getBars(market, years);
     const atrBars = atr14(bars); // computed once per market; shared by the setup leg and its matched control
     if (bars.length < 500) {
-      await fetch(`${SB}/rest/v1/trd_edge_queue?market=eq.${market}&status=eq.pending`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: "thin", run_at: new Date().toISOString() }) }).catch(() => {});
-      return new Response(JSON.stringify({ ok: true, market, skip: "thin", bars: bars.length }), { headers: cors });
+      // D-311: checked (this never fires today — all 16 markets carry 35,040 bars — but the same swallow pattern
+      // must not sit dormant waiting to hide a failed status write). HTTP 500 on failure, no false ok:true.
+      const pw = await fetch(`${SB}/rest/v1/trd_edge_queue?market=eq.${market}&status=eq.pending`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: "thin", run_at: new Date().toISOString() }) }).catch(() => null);
+      const ok = !!pw && pw.ok;
+      return new Response(JSON.stringify({ ok, market, skip: "thin", bars: bars.length, err: ok ? undefined : "thin-patch-failed" }), { status: ok ? 200 : 500, headers: cors });
     }
     const now = new Date().toISOString();
     let processed = 0, thin = 0; const survivors: Record<string, unknown>[] = [];
-    const scRows: Record<string, unknown>[] = [], dolRows: Record<string, unknown>[] = [], linRows: Record<string, unknown>[] = [];
+    let promoLost = 0, queueLost = 0; const writeErrs: string[] = []; // D-311: track writes that did NOT land
     // page through this market's pending specs; flush each page's status in ONE bulk upsert before the next page
     while (Date.now() - t0 < budgetMs && processed < maxSpecs) {
       const specs = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&market=eq.${market}&select=spec_key,spec&limit=${page}`, { headers: H }).then((r) => r.json()).catch(() => []);
       if (!Array.isArray(specs) || !specs.length) break;
       const before = processed;
       const updates: Record<string, unknown>[] = [];
+      const scRows: Record<string, unknown>[] = [], dolRows: Record<string, unknown>[] = [], linRows: Record<string, unknown>[] = [];
+      const promoteUpds: Record<string, unknown>[] = []; // queue rows that promote — committed ONLY after scorecard lands
       for (const { spec_key, spec } of specs as { spec_key: string; spec: ComponentSpec }[]) {
         if (Date.now() - t0 >= budgetMs || processed >= maxSpecs) break;
         // run GROSS (costRPerSide 0) then re-cost each trade from its own riskFrac (D-303)
@@ -205,18 +239,48 @@ Deno.serve(async (req) => {
             survivors.push({ spec_key, market, t: +vr.tStat.toFixed(2), skill_usd: dv.skillUsd, conv_usd: dv.convUsd });
           }
         } else { upd.status = "thin"; thin++; }
-        updates.push(upd); processed++;
+        // D-311 ATOMICITY: a promoting row's queue commit (passes=true) is DEFERRED until its scorecard row is
+        // confirmed landed. Non-promoting rows commit immediately. Previously passes=true was committed per-page
+        // but the scorecard flush was buffered to end-of-request and swallowed, so any failure in between stranded
+        // the survivor: passes=true, no scorecard, never stage-2 tested. 1,005 real survivors (t up to 11.69) were
+        // lost this way. Now scorecard leads; the queue flag can never claim a promotion the scorecard doesn't hold.
+        if (upd.passes === true) promoteUpds.push(upd); else updates.push(upd);
+        processed++;
       }
-      if (updates.length) await fetch(`${SB}/rest/v1/trd_edge_queue?on_conflict=spec_key,market`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(updates) }).catch(() => {});
+      // (A) promotions FIRST, checked + read-back. Scorecard is the source of truth stage-2 reads.
+      if (scRows.length) {
+        const scW = await writeRows("trd_edge_scorecard", scRows, "edge");
+        const landed = scW.ok ? await countPersisted("trd_edge_scorecard", scRows.map((r) => String(r.edge))) : 0;
+        if (landed === scRows.length) {
+          // scorecard holds every survivor → safe to commit their queue passes flag + the satellite tables
+          await writeRows("trd_edge_dollar", dolRows, "edge");
+          await writeRows("trd_lineage", linRows, "id");
+          updates.push(...promoteUpds);
+        } else {
+          // scorecard did NOT fully land → DO NOT set passes=true; leave those specs pending so the next run
+          // retries the whole promotion. Self-healing instead of silent permanent loss.
+          promoLost += scRows.length - landed;
+          writeErrs.push(`scorecard ${landed}/${scRows.length} status=${scW.status} ${scW.err ?? ""}`.trim());
+        }
+      }
+      // (B) queue status flush, checked + read-back
+      if (updates.length) {
+        const qW = await writeRows("trd_edge_queue", updates, "spec_key,market");
+        if (!qW.ok) { queueLost += updates.length; writeErrs.push(`queue status=${qW.status} ${qW.err ?? ""}`.trim()); }
+      }
       if (processed === before) break; // no-progress guard: never re-fetch the same page forever
     }
-    // honour the trial-count invariant: every backtest this run increments the global counter (deflation depends on it)
-    if (processed) await fetch(`${SB}/rest/v1/rpc/trd_bump_trials`, { method: "POST", headers: H, body: JSON.stringify({ n: processed }) }).catch(() => {});
-    // flush survivor promotions in bulk (usually 0)
-    if (scRows.length) await fetch(`${SB}/rest/v1/trd_edge_scorecard?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(scRows) }).catch(() => {});
-    if (dolRows.length) await fetch(`${SB}/rest/v1/trd_edge_dollar?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(dolRows) }).catch(() => {});
-    if (linRows.length) await fetch(`${SB}/rest/v1/trd_lineage?on_conflict=id`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(linRows) }).catch(() => {});
+    // honour the trial-count invariant: every backtest this run increments the global counter (deflation depends on
+    // it). D-311: was swallowed — a silent under-count makes DSR deflation too PERMISSIVE. Now checked.
+    if (processed) {
+      const tb = await fetch(`${SB}/rest/v1/rpc/trd_bump_trials`, { method: "POST", headers: H, body: JSON.stringify({ n: processed }) }).catch(() => null);
+      if (!tb || !tb.ok) writeErrs.push(`trial-bump status=${tb ? tb.status : 0}`);
+    }
     const remain = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&select=spec_key`, { headers: { ...H, Prefer: "count=exact", Range: "0-0" } }).then((r) => r.headers.get("content-range")).catch(() => null);
-    return new Response(JSON.stringify({ ok: true, seeded, market, bars: bars.length, processed, thin, survivors: survivors.length, survivorRows: survivors, remaining: remain, elapsedMs: Date.now() - t0 }, null, 2), { headers: cors });
+    // D-311: a lost promotion or queue write is a HARD failure (HTTP 500), never a false ok:true. `promoLost`
+    // rows were deliberately left pending for the next run to retry, so no survivor is dropped silently.
+    const clean = promoLost === 0 && queueLost === 0 && !writeErrs.length;
+    const body = { ok: clean, seeded, market, bars: bars.length, processed, thin, survivors: survivors.length, survivorRows: survivors, promoLost, queueLost, writeErrs, remaining: remain, elapsedMs: Date.now() - t0 };
+    return new Response(JSON.stringify(body, null, 2), { status: clean ? 200 : 500, headers: cors });
   } catch (e) { return new Response(JSON.stringify({ ok: false, err: String(e).slice(0, 300) }), { status: 500, headers: cors }); }
 });

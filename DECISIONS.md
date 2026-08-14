@@ -5527,3 +5527,52 @@ rescore may kill as many rows as it revives. It is the same class as D-300b/D-30
 reported success while being silently wrong. Nothing here changes the D-303 diagnosis that the binding
 constraint is stop geometry, and the standing result is unchanged: **200 candidates stage-2 tested, 185
 killed, 15 thin, 0 survivors, `trd_forward_candidates` = 0** at a true trial count of 489,960.
+
+## D-311 — Factory audit: swallowed writes stranded 1,005 gate-survivors before they could be validated (2026-08-14)
+
+**Task: audit the 8 swallowed-write sites in `trd-edge-factory`.** Each mutating `fetch` ended in
+`.catch(() => {})`. A PostgREST write that returns HTTP 4xx/5xx does NOT throw, so `.catch` never fires —
+a failed write was indistinguishable from success and the function still returned `ok:true`. This is the
+D-307 class (stage-2 wrote nothing for 5.6h under swallowed 400s), audited here across all 8 sites.
+
+**Ranking (by whether a silent failure corrupts/hides state):**
+- **CRITICAL — scorecard survivor flush (was line 216).** LIVE CONSEQUENCE, measured: **1,005 factory-gate
+  survivors** (643 scored today, `vs_random_t` 4.4–11.69, `holds_both`, ≥180 trades) sat in the queue with
+  `passes=true` but existed in NEITHER `trd_edge_scorecard` NOR `trd_stage2_results` — so stage-2, which reads
+  candidates from scorecard, never tested them. Ruled out (not assumed): edge-string format mismatch (checked a
+  concrete row — sibling specs on the same market WERE present), stage-2 deletion (stage-2 does not delete
+  scorecard rows), and stale pre-gate flags (they carry today's timestamps and today's gate metrics).
+- **HIGH — queue status flush + `trd_bump_trials` RPC.** The queue flush reported `processed:N` while `done`
+  could stay flat; a swallowed trial-bump under-counts trials → DSR deflation becomes too PERMISSIVE (violates
+  the "increment on EVERY backtest" invariant).
+- **MED — dollar / lineage flushes** (survivor $ + provenance).  **LOW — seed insert** (coverage gap).
+  **BENIGN — `trd_bars_cache` upsert** (self-healing: next run re-fetches from Binance; kept swallowed, now
+  commented as deliberate).
+
+**Root cause = an atomicity gap, not just a swallow.** `passes=true` was committed per-page INSIDE the loop;
+the scorecard/dollar/lineage promotions were buffered and flushed ONCE at end-of-request. The cron scores 40
+specs/run and a 40-spec batch runs ~2.0s — at the edge isolate's CPU wall (a 200-spec batch returns
+`WORKER_RESOURCE_LIMIT` outright). Any failure OR isolate-kill between the per-page queue commit and the tail
+flush stranded the survivor: `passes=true`, no scorecard, no trace, `ok:true`.
+
+**Fix.** Ported stage-2's `writeRows`/`countPersisted` (surface status+body, read back what landed). Restructured
+so **scorecard leads**: per page, promotions are written and read-back FIRST; a promoting row's queue
+`passes=true` is committed ONLY after its scorecard row is confirmed present. If scorecard doesn't fully land,
+those specs are left `pending` (self-healing retry next run) and counted in `promoLost`; the response reports
+`promoLost`/`queueLost`/`writeErrs` and returns **HTTP 500** when anything was lost. The queue flag can no
+longer claim a promotion the scorecard doesn't hold. The 3 other dangerous sites (queue flush, trial-bump,
+seed, thin-PATCH) are now `res.ok`-checked; the benign cache write is left swallowed with a comment saying why.
+
+**Machine guard (migration `0017`).** `trd_factory_promo_integrity_v`: `passes=true` ⇒ present in scorecard OR
+stage2_results. Splits orphans before/after the fix timestamp — any `orphaned_after_fix > 0` is a REGRESSION;
+the historical backlog reads `BACKLOG-rescoring` and drains to `CLEAN`.
+
+**Recovery.** The 1,005 stranded survivors were reset to `pending` (`passes=false`, metrics cleared) so the
+fixed code re-scores and re-promotes them atomically — they get the stage-2 gauntlet they were denied.
+Verified: post-fix live runs return `promoLost:0 / queueLost:0 / writeErrs:[]` at the cron's real params;
+guard view **CLEAN** (0 orphans); 259/259 `_shared` tests green; both edge fns type-check + redeployed.
+
+**Honest framing.** This found no edge. The 1,005 are in-sample factory-gate survivors — the loose FIRST pass;
+stage-2's full gauntlet (DSR deflated by the true 489,960 trial count, K-fold WF, 20bp/side) will almost
+certainly kill them all, as it has all 200 tested so far (0 survivors). The bug was destroying the ENGINE's
+ability to even test its own candidates, not hiding a profitable strategy.
