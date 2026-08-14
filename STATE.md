@@ -1,6 +1,32 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-308: grammar widened to 17 triggers (`choch`) — the first STRUCTURE-based primitive;
+stage-2 record 199 tested / 0 survivors.** Loop healthy and writing: queue `done` 319,479 → 319,951 across this
+session's checks, `max(run_at)` 0.85 min old, 6,400 rows in the trailing 10 min. Stage-2 is **caught up** —
+fired once, returned `"all candidates stage-2 tested"` at a true trial count of **483,880**; cumulative **199
+candidates, 199 tested — 184 killed, 15 thin, 0 survivors, `trd_forward_candidates` = 0.** Shipped `choch`
+(change of character): all 16 prior triggers read a CANDLE or a ROLLING WINDOW — none read MARKET STRUCTURE.
+`choch` fires only when a range break **reverses** an established swing-pivot structure (lower-high + lower-low,
+then a close back above the last swing high). Point-in-time by construction: a fractal pivot at bar *k* needs
+L=2 bars either side so it is not knowable until *k+L*; only pivots with `k+L <= i` are read, and it fails
+closed under 2 highs + 2 lows. **Two negative controls carry the weight** — one breaks the same level inside an
+UP structure (plain BOS continuation → must not fire; this is what proves `choch` is not a re-skinned
+`breakout`), the other contracts the lows so no structure exists. 15/15 grammar + **258/258 `_shared`** green,
+both edge fns redeployed. Closed out `bos` as a duplicate (it is `breakout`/`channel` minus the structure
+precondition; seeding it would add 43,200 trials and deflate every other candidate's DSR for no information —
+the D-304 `nr4` rationale). Seeded 2,700 specs × 16 markets = **43,200 rows**, **verified by SHA-256**
+(`c50cdc67…07816d`) computed independently in Postgres and in TypeScript over `enumerate()`+`specKey()`, so no
+orphaned rows. **Deploy verified by OUTPUT, not by the CLI message** — an undeployed trigger falls through the
+`switch` and marks every row `thin`, which reads like progress; measured instead: **40 rows already `done`, all
+non-null `n`, avg 718 trades, max 1,276, 0 passing the gate.** Also replaced the D-305 compat test's hardcoded
+`16 * …` with `GRAMMAR.trigger.length * …` so a new trigger can never again silently drop a stop-mode rung.
+**Honest status: `choch` has produced nothing — 0 candidates, 0 stage-2 survivors, 0 forward candidates**, and
+43,160 of its rows are still pending (the factory's page fetch has no ORDER BY, so it consumes heap order —
+behind, not starved). **D-303's diagnosis stands: the binding constraint is STOP GEOMETRY, not trigger
+vocabulary.** ↓ prior status stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-307: stage-2 had written NOTHING for 5.6h; PostgREST was rejecting every
 mixed-shape batch, silently.** Stage-2's last persisted row was 07:33Z; the 3-minute cron fired **140 times,
 all HTTP 200**, and wrote **zero rows** (~113 wasted invocations reporting `ok:true, tested:12`). Root cause,

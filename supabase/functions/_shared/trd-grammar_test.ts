@@ -189,6 +189,69 @@ Deno.test("soldiers: three white soldiers fire only on 3 strong same-colour adva
   assertEquals(runComponentTrades(weakBody, spec, { costRPerSide: 0 }).length, 0);
 });
 
+Deno.test("choch: fires only when a range break REVERSES an established structure", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "choch" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 NEUTRAL filler bars, all with IDENTICAL highs and lows → the strict fractal comparisons
+  // (`high > neighbour.high`) can never hold, so the filler contains no pivots and defines no structure.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100.1, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+
+  // DOWN structure: swing high 108 (idx 14) → low 98 (17) → LOWER high 106 (20) → LOWER low 96 (23),
+  // then bar 26 closes 107.5, back above the most recent swing high → CHoCH long, stop at the 96 swing low.
+  const down: Bar[] = [...flat,
+    bar(101, 102, 101, 101.8, 12), bar(103, 104, 103, 103.8, 13),
+    bar(107, 108, 107, 107.8, 14), // H1 = 108
+    bar(104, 105, 104, 104.8, 15), bar(102, 103, 102, 102.8, 16),
+    bar(100, 101, 98, 100.5, 17), // L1 = 98
+    bar(101, 103, 100, 102.5, 18), bar(103, 104, 102, 103.5, 19),
+    bar(105, 106, 104, 105.5, 20), // H0 = 106 (lower high)
+    bar(102, 103, 101, 102.5, 21), bar(100, 101, 99, 100.5, 22),
+    bar(98, 99, 96, 98.5, 23), // L0 = 96 (lower low) → structure is DOWN
+    bar(99, 101, 98, 100.5, 24), bar(101, 103, 100, 102, 25),
+    bar(105, 108, 104, 107.5, 26), // close 107.5 > H0 106 → CHoCH LONG, stop 96
+    bar(107.5, 108, 107, 107.8, 27), // fill at open 107.5 → risk 11.5, target 119.0; neither touched
+    bar(107.8, 119.5, 107.5, 119.2, 28)]; // high 119.5 >= target → +1R
+  const tr = runComponentTrades(down, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // NEGATIVE CONTROL A — isolates the STRUCTURE-DIRECTION requirement. Identical mechanics, but the pivots
+  // form an UP structure (higher high 108 after 106, higher low 100.5 after 99) and price breaks ABOVE the
+  // most recent swing high. That is a plain BOS/continuation, not a change of character → must NOT fire.
+  const up: Bar[] = [...flat,
+    bar(101, 102, 101, 101.8, 12), bar(103, 104, 103, 103.8, 13),
+    bar(105, 106, 105, 105.8, 14), // H1 = 106
+    bar(103, 104, 103, 103.8, 15), bar(102, 103, 102, 102.8, 16),
+    bar(101, 102, 99, 101.5, 17), // L1 = 99
+    bar(102, 104, 101, 103.5, 18), bar(104, 105, 103, 104.5, 19),
+    bar(107, 108, 106, 107.5, 20), // H0 = 108 (HIGHER high)
+    bar(104, 105, 103, 104.5, 21), bar(103, 104, 102, 103.5, 22),
+    bar(101, 103, 100.5, 102.5, 23), // L0 = 100.5 (HIGHER low) → structure is UP
+    bar(102, 104, 101, 103.5, 24), bar(104, 106, 103, 105, 25),
+    bar(107, 110, 106, 109.5, 26), // breaks above H0 108 — continuation, not a reversal
+    bar(109.5, 110, 109, 109.8, 27), bar(109.8, 111, 109.5, 110.5, 28)];
+  assertEquals(runComponentTrades(up, spec, { costRPerSide: 0 }).length, 0);
+
+  // NEGATIVE CONTROL B — isolates the STRUCTURE-EXISTS requirement. Same lower-high (106 after 108) and the
+  // same break above it, but the lows CONTRACT instead of falling (99 after 98) → neither an up nor a down
+  // structure is established, so there is no character to change → must NOT fire.
+  const mixed: Bar[] = [...flat,
+    bar(101, 102, 101, 101.8, 12), bar(103, 104, 103, 103.8, 13),
+    bar(107, 108, 107, 107.8, 14), // H1 = 108
+    bar(104, 105, 104, 104.8, 15), bar(102, 103, 102, 102.8, 16),
+    bar(100, 101, 98, 100.5, 17), // L1 = 98
+    bar(101, 103, 100, 102.5, 18), bar(103, 104, 102, 103.5, 19),
+    bar(105, 106, 104, 105.5, 20), // H0 = 106 (lower high — same as the positive case)
+    bar(102, 103, 101, 102.5, 21), bar(100.8, 101, 100.5, 100.9, 22),
+    bar(100, 100.2, 99, 99.5, 23), // L0 = 99 — HIGHER than L1, so the lows contract
+    bar(99.6, 101, 99.5, 100.5, 24), bar(101, 103, 100, 102, 25),
+    bar(105, 108, 104, 107.5, 26), // same break above 106, but structure is neither up nor down
+    bar(107.5, 108, 107, 107.8, 27), bar(107.8, 109, 107.5, 108.5, 28)];
+  assertEquals(runComponentTrades(mixed, spec, { costRPerSide: 0 }).length, 0);
+});
+
 // ---- D-305: stop GEOMETRY as a grammar axis -------------------------------------------------------------
 // Deterministic LCG walk → realistic oscillating bars (no Math.random, so the tests are reproducible).
 function walkBars(n: number, seed = 12345): Bar[] {
@@ -209,13 +272,15 @@ Deno.test("specKey + enumerate are backwards-compatible: swing mode keys exactly
   assertEquals(specKey({ ...legacy, stopMode: "swing" as const }), specKey(legacy)); // absent === "swing"
   assertEquals(specKey({ ...legacy, stopMode: "atr12" as const }), "sweep|ema20|with|sl5|rr1|all|atr12");
   const specs = enumerate();
-  // swing rung is untouched: the full 16·3·3·3·5·4 product, and every one of its keys is a legacy 6-part key.
+  // swing rung is untouched: the full |trigger|·3·3·3·5·4 product, every key a legacy 6-part key. Derived from
+  // GRAMMAR.trigger.length, not hardcoded, so adding a trigger cannot silently drop the rung out of the product.
+  const perMode = GRAMMAR.trigger.length * 3 * 3 * 3 * 5 * 4;
   const swing = specs.filter((x) => x.stopMode === "swing");
-  assertEquals(swing.length, 16 * 3 * 3 * 3 * 5 * 4);
+  assertEquals(swing.length, perMode);
   assert(swing.every((x) => specKey(x).split("|").length === 6), "swing keys must stay 6-part");
   assertEquals(new Set(specs.map(specKey)).size, specs.length, "all spec keys unique");
   // every stop mode carries the FULL product (the dedup shortcut was falsified — see the regression guard).
-  for (const m of GRAMMAR.stopMode) assertEquals(specs.filter((x) => x.stopMode === m).length, 16 * 3 * 3 * 3 * 5 * 4, `mode ${m}`);
+  for (const m of GRAMMAR.stopMode) assertEquals(specs.filter((x) => x.stopMode === m).length, perMode, `mode ${m}`);
 });
 
 Deno.test("REGRESSION GUARD: stopLookback is NOT a no-op outside swing mode (the falsified dedup shortcut)", () => {

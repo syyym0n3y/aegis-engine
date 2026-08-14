@@ -57,5 +57,6 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     await fetch(`${SB}/rest/v1/trd_futures_paper`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({edge:"futures-orb815",sym,side:dir>0?"long":"short",qty:lots,entry_px:+entry.toFixed(2),stop:+stop.toFixed(2),target:+tgt.toFixed(2),status:"open"})}).catch(()=>{});
     out.push({sym,action:"ENTER",dir:dir>0?"long":"short",lots,conviction:+conv.toFixed(2),range:rangeQ});
   }
+  await fetch(`${SB}/rest/v1/rpc/trd_beat`,{method:"POST",headers:H,body:JSON.stringify({p_fn:"trd-futures-orb-exec",p_outcome:out.map(o=>o.action||o.skip||"?").join(",").slice(0,180)||"ran"})}).catch(()=>{}); // D-304 completion heartbeat
   return new Response(JSON.stringify({ok:true,edge:"futures-orb815",broker:"internal keyless paper (Yahoo fills)",results:out},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});

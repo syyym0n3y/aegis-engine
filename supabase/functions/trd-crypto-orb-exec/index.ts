@@ -53,5 +53,6 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     if(ok)await fetch(`${SB}/rest/v1/trd_trades`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({edge:"crypto-orb",sym:psym,side:dir>0?"long":"short",qty,entry_px:+px.toFixed(2),stop:+stop.toFixed(2),target:+tgt.toFixed(2),status:"open"})}).catch(()=>{});
     out.push({sym:psym,action:ok?"ENTER":"reject",dir:dir>0?"long":"short",qty,detail:ok?undefined:(await resp.text()).slice(0,140)});
   }
+  await fetch(`${SB}/rest/v1/rpc/trd_beat`,{method:"POST",headers:H,body:JSON.stringify({p_fn:"trd-crypto-orb-exec",p_outcome:out.map(o=>o.action||o.skip||"?").join(",").slice(0,180)||"ran"})}).catch(()=>{}); // D-304 completion heartbeat
   return new Response(JSON.stringify({ok:true,edge:"crypto-orb",utcMin,results:out},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});

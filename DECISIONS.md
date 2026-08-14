@@ -5419,3 +5419,56 @@ not promotions. D-070 stands.
 `trd-edge-factory` (queue, bars cache, scorecard, dollar, lineage) and across other `trd-*` functions. The
 factory is currently writing (verified: queue advancing, `run_at` 47s old), so it is not in outage — but it is
 the same landmine and wants the same `writeRows()` treatment. That is its own unit of work.
+
+---
+
+## D-308 — Grammar widened to 17 triggers: `choch` (change of character), the first STRUCTURE-based primitive; `bos` closed out (2026-08-14)
+
+**Health first (measured, not assumed).** Queue advancing and writing: 319,479 → 319,951 `done` across this
+session's checks, `max(run_at)` 0.85 min old, 6,400 rows in the trailing 10 minutes. Stage-2 is **caught up** —
+fired once, returned `"all candidates stage-2 tested"` against a true trial count of **483,880**. Cumulative
+record: **199 candidates, 199 tested — 184 killed, 15 thin, 0 survivors, `trd_forward_candidates` = 0.**
+
+**What was added and why this one.** All 16 existing triggers read either a CANDLE (`star`, `soldiers`,
+`engulfing`, `pinbar`, `orderblock`) or a ROLLING WINDOW (`breakout`, `channel`, `delivery`, `nr7`, `inside`).
+None reads MARKET STRUCTURE — the sequence of confirmed swing pivots. `choch` is the first: it fires only when
+a range break **reverses** an established structure.
+
+- Structure DOWN = the last two confirmed swing highs AND the last two confirmed swing lows are both falling.
+  A close above the most recent swing high is then the first counter-trend break. Mirror for short.
+- **Point-in-time by construction:** a fractal pivot at bar *k* needs L=2 bars on either side, so it is not
+  knowable until bar *k+L*. Only pivots with `k+L <= i` are accepted — nothing after the current closed bar is
+  read. Fails closed: fewer than 2 highs + 2 lows → no trade.
+- Backward scan capped at 300 bars.
+
+**`bos` (ingest id=17) closed out as `skipped-dup`.** Break-of-structure is `breakout`/`channel` *without* the
+structure precondition — the grammar already contains it twice. Seeding it would add 2,700 specs × 16 markets
+to `trd_trial_counter` and deflate every other candidate's DSR for zero new information. Same rationale that
+killed `nr4` in D-304.
+
+**Tests — the negative controls are the point.** The positive case fires a CHoCH long on a lower-high /
+lower-low structure and returns exactly +1R. Two negative controls each isolate ONE requirement:
+- *Control A* — same mechanics, but the pivots form an UP structure (higher high, higher low) and price breaks
+  above the swing high. That is plain BOS continuation → must not fire. **This is the control that proves
+  `choch` is not a re-skinned `breakout`.**
+- *Control B* — same lower-high and the same break, but the lows CONTRACT instead of falling, so no structure
+  is established → must not fire.
+15/15 grammar tests + **258/258 `_shared`** green, `deno check` clean. The D-305 backwards-compat test's
+hardcoded `16 * 3 * 3 * 3 * 5 * 4` was replaced with `GRAMMAR.trigger.length * …` so adding a trigger can never
+again silently drop a stop-mode rung out of the product.
+
+**Seed verified by SHA-256, not by row count.** Both edge fns redeployed, then 2,700 specs × 16 markets =
+**43,200 rows** seeded (540 swing keys at priority 4 + 2,160 stop-mode keys at priority 3, mirroring D-306).
+The SHA-256 over the sorted distinct `spec_key`s is **`c50cdc67da47e22e046fd59ffe10e7a2dda15b0aaf29725ef573b68cac07816d`**
+computed independently in Postgres and in TypeScript from `enumerate()`+`specKey()` — identical, so there are no
+orphaned rows that no code path will ever key.
+
+**Deploy verified by OUTPUT, not by the CLI's success message.** This matters: an *undeployed* trigger falls
+through the `switch`, generates no signals, and marks every row `thin` — which reads like progress. Measured
+instead: **40 `choch` rows already `done`, all with non-null `n`, avg 718 trades, max 1,276.** Real trades, so
+the detector is live. **0 pass the factory gate.**
+
+**Honest status: `choch` has produced nothing.** 0 candidates, 0 stage-2 survivors, 0 forward candidates.
+43,160 of its 43,200 rows are still pending, and the factory's page fetch has no ORDER BY (D-306), so it
+consumes heap order — `choch` is behind, not starved. **D-303's diagnosis still stands: the binding constraint
+is STOP GEOMETRY, not trigger vocabulary.** A 17th trigger widens the search space; it does not address that.

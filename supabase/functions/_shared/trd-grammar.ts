@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 16·3·3·3·5·4·5 = 43,200. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 17·3·3·3·5·4·5 = 45,900. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -202,6 +202,36 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
         return { side: "long", stop: Math.min(c2.low, c1.low, b.low) };
       if (dn(c2) && dn(c1) && dn(b) && c1.close < c2.close && b.close < c1.close && inBody(c1, c2) && inBody(b, c1))
         return { side: "short", stop: Math.max(c2.high, c1.high, b.high) };
+      return null;
+    }
+    case "choch": { // Change of Character (ingest id=18, web:ict) — the SMC trend-flip, and the first member of a
+      // family the grammar had NO representative of: every other trigger reads CANDLES (star/soldiers/engulfing/
+      // pinbar) or a ROLLING WINDOW (breakout/channel/delivery/nr7). This one reads MARKET STRUCTURE — the
+      // sequence of confirmed swing pivots.
+      // Point-in-time by construction: a fractal pivot at bar k needs L bars on EITHER side, so it is not KNOWN
+      // until bar k+L. We only accept pivots with k+L <= i, so nothing after the current closed bar is used.
+      //   structure DOWN = the last two swing highs are falling AND the last two swing lows are falling
+      //   (lower-high + lower-low). A close ABOVE the most recent swing high is then the FIRST counter-trend
+      //   break — the character of the market has changed. Enter long, stop at the most recent swing low.
+      // What separates this from `breakout`/`channel` (and from raw BOS, which is why BOS is NOT worth its own
+      // trigger) is the PRECONDITION: those fire on any range break in any context; this fires ONLY when the
+      // break reverses an established structure. The negative controls in the test pin exactly that difference.
+      const L = 2, MAXBACK = 300;
+      const hiP: number[] = [], loP: number[] = [];
+      for (let k = i - L; k >= L && k >= i - MAXBACK && (hiP.length < 2 || loP.length < 2); k--) {
+        let isHi = true, isLo = true;
+        for (let j = 1; j <= L; j++) {
+          if (!(bars[k].high > bars[k - j].high && bars[k].high > bars[k + j].high)) isHi = false;
+          if (!(bars[k].low < bars[k - j].low && bars[k].low < bars[k + j].low)) isLo = false;
+        }
+        if (isHi && hiP.length < 2) hiP.push(bars[k].high);
+        if (isLo && loP.length < 2) loP.push(bars[k].low);
+      }
+      if (hiP.length < 2 || loP.length < 2) return null; // structure undefined → no trade (fail closed)
+      const structUp = hiP[0] > hiP[1] && loP[0] > loP[1];
+      const structDown = hiP[0] < hiP[1] && loP[0] < loP[1];
+      if (structDown && b.close > hiP[0]) return { side: "long", stop: loP[0] };
+      if (structUp && b.close < loP[0]) return { side: "short", stop: hiP[0] };
       return null;
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
