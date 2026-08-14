@@ -6266,3 +6266,22 @@ MEASUREMENT, not a claim: a live BTCUSDT run scored 60 of the new specs against 
 `switch` — and promoted **ZERO** stage-1 candidates. 43,140 of 43,200 rows remain pending. Verdict: **UNTESTED**.
 Totals after this unit: 575 fac:* stage-1 candidates, 575 stage-2 verdicts (559 killed / 16 thin), **0 stage-2
 survivors, 0 forward candidates**, `trd_trial_counter` = 706,994.
+
+## D-317 — Pre-registered alt-gated funding carry: STRONGEST lead of the session; DSR-framing question open (2026-08-14)
+
+Built `trd-funding-validate`: structural gate = exclude top-K crypto by market cap (institutional majors), test the
+funding-fade z84|h9 family on the ALT basket through skill-vs-random + DSR(nTrials=funding trials) + 5-fold walk-forward
++ per-alt breadth. K∈{2,3,4} each a trial. RESULT — the edge STRENGTHENS monotonically with the gate:
+- top4|z84|thr1.5|h9: n=3557, skill t=4.53, breadth 10/12 alts+, WF 4/5, +0.38%/trade net of 20bp fee.
+- top4|z84|thr2|h9: n=1884, t=3.0, breadth 10/12, WF 5/5, +0.76%/trade.
+- top3|z84|thr2|h9: t=2.99, WF 5/5, breadth 10/13, +0.58%.
+Skill clears the ~3.0 Bonferroni; breadth strong (10/12); walk-forward 5/5; net-positive. The most robust result all session.
+
+BUT 0 survivors — every config fails on DSR=0 ONLY. Diagnosis: scoreEdge deflates a PER-TRADE Sharpe (~0.17, high per-
+trade variance) against a per-period benchmark of 0.5 — mis-scaled for a ~800-trade/yr carry strategy whose ANNUALIZED
+Sharpe is high. This is a likely DSR-FREQUENCY mis-application, NOT evidence the edge is fake. Did NOT loosen the gate to
+force a pass (anti-gaming, decision-locked). Instead recorded as trd_lineage 'funding:alt-gated-carry',
+status=forward-paper-watch: forward paper (touches $0) is the true OOS test and resolves the DSR-framing question with
+live data. HONEST caveats: (1) the gate is data-informed → confirmatory, forward is the only clean OOS; (2) DSR-framing
+unresolved. This is the first lead genuinely worth forward paper — a positioning/carry risk premium with an economic
+mechanism, alt-specific, skill+breadth+walk-forward-clean, large-n. Next: build the forward-paper executor for it.
