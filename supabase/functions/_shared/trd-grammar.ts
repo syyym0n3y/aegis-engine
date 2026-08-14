@@ -281,6 +281,31 @@ function atrSeries(bars: Bar[], period = 14): number[] {
   return out;
 }
 function median(xs: number[]): number { const s = [...xs].filter((x) => x > 0).sort((a, b) => a - b); return s.length ? s[s.length >> 1] : 0; }
+export function atr14(bars: Bar[]): number[] { return atrSeries(bars, 14); }
+
+// Tradeability floor on 1R as a fraction of notional (D-305). A degenerate swing range can put the stop a
+// rounding error from entry; costR = (feeBps/1e4)/riskFrac then explodes to HUNDREDS of R, and a single such
+// trade drags a mean to −1,228R (observed in trd_edge_queue). Such a "trade" is not real — a 2bp stop is
+// inside the spread on 15m crypto. Scorers drop trades below this floor from the setup AND control legs
+// symmetrically, so the filter cannot bias one side. It lives here (not in runComponentTrades) so the trade
+// GENERATOR stays byte-identical for the 62k already-scored swing specs.
+export const MIN_RISK_FRAC = 2e-4;
+
+/** The protective stop for a chosen geometry. Point-in-time: ATR(14) at the SIGNAL bar, or the swing extreme
+ * strictly BEFORE it, applied to the next bar's fill price. Returns null when the mode's history requirement
+ * isn't met → the caller drops the signal rather than silently narrowing it.
+ * SHARED by the setup leg and the matched-random control so their stop mechanics can never diverge — an
+ * unmatched control is precisely the D-146 false-positive engine that ANALYSIS_CONTRACT Rule 7 exists to stop. */
+export function stopForMode(bars: Bar[], sigIdx: number, side: "long" | "short", entry: number, triggerStop: number, mode: StopMode, atr: number[]): number | null {
+  if (mode === "swing") return triggerStop;
+  const dir = side === "long" ? 1 : -1;
+  const mult = STOP_MODE_ATR[mode];
+  if (mult !== null) { const a = atr[sigIdx]; return a > 0 ? entry - dir * mult * a : null; }
+  if (sigIdx < WIDE_LOOKBACK) return null;
+  let wHi = -Infinity, wLo = Infinity;
+  for (let j = sigIdx - WIDE_LOOKBACK; j < sigIdx; j++) { if (bars[j].high > wHi) wHi = bars[j].high; if (bars[j].low < wLo) wLo = bars[j].low; }
+  return side === "long" ? Math.min(wLo, triggerStop) : Math.max(wHi, triggerStop);
+}
 
 /** Core: run one composed strategy → trades with R, exit index, and the entry REGIME (trend/vol/
  * session) so callers can find WHEN the strategy works. Pure, no look-ahead. */
@@ -291,21 +316,8 @@ export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCf
   const out: CTrade[] = [];
   let open: { side: "long" | "short"; entry: number; stop: number; target: number; riskFrac: number; entryTs: string; trend: TrendState; vol: VolState; session: Session } | null = null;
   let queued: (Sig & { sigIdx: number }) | null = null; // signal fired on prior bar → enter at this bar's open
-  // Resolve the protective stop for the chosen geometry. Point-in-time: every input is read at the SIGNAL bar
-  // (ATR(14) at sigIdx, or the swing extreme strictly BEFORE sigIdx) and applied to the next bar's fill price.
-  // Returns null when the mode's history requirement isn't met → the signal is dropped, never silently narrowed.
-  const resolveStop = (q: { side: "long" | "short"; stop: number; sigIdx: number }, entry: number): number | null => {
-    const mode = s.stopMode ?? "swing";
-    if (mode === "swing") return q.stop;
-    const dir = q.side === "long" ? 1 : -1;
-    const mult = STOP_MODE_ATR[mode];
-    if (mult !== null) { const a = atr[q.sigIdx]; return a > 0 ? entry - dir * mult * a : null; }
-    // wide100: the extreme of the WIDE_LOOKBACK bars before the signal bar, never tighter than the trigger's own stop.
-    if (q.sigIdx < WIDE_LOOKBACK) return null;
-    let wHi = -Infinity, wLo = Infinity;
-    for (let j = q.sigIdx - WIDE_LOOKBACK; j < q.sigIdx; j++) { if (bars[j].high > wHi) wHi = bars[j].high; if (bars[j].low < wLo) wLo = bars[j].low; }
-    return q.side === "long" ? Math.min(wLo, q.stop) : Math.max(wHi, q.stop);
-  };
+  const resolveStop = (q: { side: "long" | "short"; stop: number; sigIdx: number }, entry: number): number | null =>
+    stopForMode(bars, q.sigIdx, q.side, entry, q.stop, s.stopMode ?? "swing", atr);
   for (let i = 0; i < n; i++) {
     const bar = bars[i];
     if (open) { // resolve open (stop-first, pessimistic)

@@ -1,6 +1,25 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-305: STOP GEOMETRY is now a grammar axis + the random control was a false-positive
+engine (found & fixed).** The constraint D-303 named is now expressible. MEASURED on live 15m bars first
+(median ATR/price 0.16–0.25%; trigger stops 0.25–0.79% of notional → 1.85R round trip at the stage-2
+pessimistic fee), then built to that measurement: 4 new stop modes — `atr2` (0.45% riskFrac, 0.883R, the rung
+kept as a FAILING control), `atr6` (1.37%, 0.292R), `atr12` (2.72%, **0.147R**), `wide100` (0.85%, 0.471R, the
+same widths via a non-ATR mechanic). Stop widening happens AFTER the trigger fires, so it never changes which
+bars signal. Seeded 518,400 rows at priority 3; grammar is now 40,500 specs. **Backwards compat proven, not
+assumed** — `stopMode` defaults to `swing`, `specKey` is byte-identical when absent, and a differential harness
+(657 swing specs × 3 real markets vs the pre-change code) returned **0 mismatches**, so the 62k scored rows
+stand. **Bug found in the process:** `randomControl` hardcoded the swing stop, so a wide-stop setup beat random
+on fee asymmetry alone (D-146's exact failure, inside the gate meant to prevent it); plus a pre-existing
+exploding-cost defect that let one degenerate control trade produce a −1,228R mean. Fixed via one shared
+`stopForMode` for both legs, closed-only control trades, and a symmetric `MIN_RISK_FRAC` floor in the SCORERS
+(not the generator, to preserve the scored rows). Quarantined 154 contaminated `fac:*` candidates (none had
+reached stage-2) + reset 2,726 rows. **Verified: atr12 went from 44 passes/315 scored → 0 passes/26 scored** —
+the passes were entirely the artifact. **The axis exists, is fee-payable, and has produced nothing yet: 0
+candidates, 0 stage-2 survivors, 0 forward candidates.** ↓ prior status stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-304: grammar widened to 15 triggers (`star`); stage-2 record 36 tested / 0 survivors.**
 Full-gauntlet loop healthy and writing: queue 53.7k/121k done, 6,400 rows written in a 10-min window, max
 `run_at` 0.1 min old. Stage-2 fired once (11 tested, 0 survivors); cumulative 36 tested, **0 survivors, 0 rows

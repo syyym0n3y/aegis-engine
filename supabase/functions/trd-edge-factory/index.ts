@@ -9,7 +9,7 @@
 // Idempotent (queue status guards re-runs), cron-driven → the human setup space is covered over time, $0.
 // This does NOT trade. It discovers and judges. The base rate is brutal; almost nothing survives — that
 // is the engine working, not failing (D-070).
-import { runComponentTrades, enumerate, specKey, type ComponentSpec, type CTrade } from "../_shared/trd-grammar.ts";
+import { runComponentTrades, enumerate, specKey, stopForMode, atr14, MIN_RISK_FRAC, type ComponentSpec, type CTrade } from "../_shared/trd-grammar.ts";
 import type { Bar } from "../_shared/trd-liquidity-grab.ts";
 import { scoreDollar, type HarnessTrade } from "../_shared/trd-harness.ts";
 import { edgeVsRandom } from "../_shared/trd-random-control.ts";
@@ -88,12 +88,20 @@ async function getBars(market: string, years: number): Promise<Bar[]> {
 
 function mulberry(seed: number) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-// MATCHED random control: same count as the setup, random entry bar, random side, IDENTICAL stop geometry
-// (swing over stopLookback) and rr, resolved stop-first with the same cost. Drift cancels between the two.
-const HORIZON = 400; // max bars a trade is held before mark-to-market — bounds compute to O(count·HORIZON) and
-                     // is realistic (an intraday setup isn't carried for years). Applies to setup & control alike.
-function randomControl(bars: Bar[], s: ComponentSpec, count: number, seed: number): number[] {
+// MATCHED random control: same count as the setup, random entry bar, random side, the SAME stop geometry
+// (via the shared stopForMode — swing / atrN / wide100, whatever the spec asks for) and the same rr, resolved
+// stop-first with the same bps-of-notional cost. Drift cancels between the two.
+// D-305 fixed two matching violations that made this a false-positive engine:
+//  (1) the stop was hardcoded to the swing extreme, so a wide-stop setup (cheap in R) was compared against a
+//      tight-stop control (expensive in R) and "beat random" purely on fee asymmetry;
+//  (2) unresolved trades were marked-to-market at the horizon while the setup leg records CLOSED trades only,
+//      so the control carried a leg the setup never had. Unresolved control trades are now DROPPED to match.
+// Both legs also drop trades below MIN_RISK_FRAC — symmetrically, so the filter cannot favour either side.
+const HORIZON = 400; // max bars a trade is held before it is discarded as unresolved — bounds compute to
+                     // O(count·HORIZON) and is realistic (an intraday setup isn't carried for years).
+function randomControl(bars: Bar[], s: ComponentSpec, count: number, seed: number, atr: number[]): number[] {
   const rnd = mulberry(seed); const out: number[] = []; const n = bars.length; let guard = 0;
+  const mode = s.stopMode ?? "swing";
   while (out.length < count && guard < count * 40) {
     guard++;
     const i = Math.floor(rnd() * (n - s.stopLookback - 5)) + s.stopLookback;
@@ -101,8 +109,12 @@ function randomControl(bars: Bar[], s: ComponentSpec, count: number, seed: numbe
     let hi = -Infinity, lo = Infinity;
     for (let j = i - s.stopLookback; j < i; j++) { if (bars[j].high > hi) hi = bars[j].high; if (bars[j].low < lo) lo = bars[j].low; }
     const side: "long" | "short" = rnd() < 0.5 ? "long" : "short";
-    const entry = bars[i].open, stop = side === "long" ? lo : hi, dir = side === "long" ? 1 : -1;
+    const entry = bars[i].open, dir = side === "long" ? 1 : -1;
+    const stop = stopForMode(bars, i, side, entry, side === "long" ? lo : hi, mode, atr);
+    if (stop === null) continue;
+    if (!(side === "long" ? stop < entry : stop > entry)) continue;
     const risk = Math.abs(entry - stop); if (!(risk > 0)) continue;
+    const riskFrac = risk / entry; if (!(riskFrac >= MIN_RISK_FRAC)) continue; // same tradeability floor as the setup leg
     const target = entry + dir * s.rr * risk;
     const end = Math.min(n, i + HORIZON); let r: number | null = null;
     for (let k = i; k < end; k++) {
@@ -110,8 +122,8 @@ function randomControl(bars: Bar[], s: ComponentSpec, count: number, seed: numbe
       if (side === "long") { if (b.low <= stop) { r = -1; break; } if (b.high >= target) { r = s.rr; break; } }
       else { if (b.high >= stop) { r = -1; break; } if (b.low <= target) { r = s.rr; break; } }
     }
-    if (r === null) r = dir * (bars[Math.min(n, end) - 1].close - entry) / risk; // mark-to-market at horizon
-    out.push(r - 2 * (FEE_BPS / 1e4) / (risk / entry)); // same bps-of-notional costing as the setup leg
+    if (r === null) continue; // unresolved within the horizon → DROP, matching the setup leg's closed-only rule
+    out.push(r - 2 * (FEE_BPS / 1e4) / riskFrac); // same bps-of-notional costing as the setup leg
   }
   return out;
 }
@@ -143,6 +155,7 @@ Deno.serve(async (req) => {
     }
     if (!market) return new Response(JSON.stringify({ ok: true, done: "queue empty", seeded }), { headers: cors });
     const bars = await getBars(market, years);
+    const atrBars = atr14(bars); // computed once per market; shared by the setup leg and its matched control
     if (bars.length < 500) {
       await fetch(`${SB}/rest/v1/trd_edge_queue?market=eq.${market}&status=eq.pending`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: "thin", run_at: new Date().toISOString() }) }).catch(() => {});
       return new Response(JSON.stringify({ ok: true, market, skip: "thin", bars: bars.length }), { headers: cors });
@@ -159,7 +172,7 @@ Deno.serve(async (req) => {
       for (const { spec_key, spec } of specs as { spec_key: string; spec: ComponentSpec }[]) {
         if (Date.now() - t0 >= budgetMs || processed >= maxSpecs) break;
         // run GROSS (costRPerSide 0) then re-cost each trade from its own riskFrac (D-303)
-        const trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac > 0);
+        const trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac >= MIN_RISK_FRAC);
         // UNIFORM columns across every row — PostgREST merge-duplicates rejects a batch whose rows differ in shape,
         // so thin and scored rows MUST carry the same keys (metrics null-defaulted). `spec` satisfies the INSERT-path
         // NOT NULL; `source` is omitted so provenance (grammar vs ingest:*) is preserved on update.
@@ -167,7 +180,7 @@ Deno.serve(async (req) => {
           vs_random_edge: null, vs_random_t: null, holds_both: null, skill_usd: null, skill_frac: null, passes: false };
         if (trades.length >= MIN_N) {
           const setupR = trades.map(netR);
-          const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 131 + trades.length); // matched-count honest control
+          const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 131 + trades.length, atrBars); // matched-count, matched-geometry control
           const vr = edgeVsRandom(setupR, ctrlR, 2, MIN_N);
           const months = [...new Set(trades.map((t) => t.entryTs.slice(0, 7)))].sort();
           const mid = months[Math.floor(months.length / 2)];

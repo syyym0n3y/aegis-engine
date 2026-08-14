@@ -5255,3 +5255,66 @@ stands at 36 tested / 0 survivors / 0 rows in `trd_forward_candidates`; every ki
 `unprofitable@pess-cost` with WF 0-1 of 5 folds. The D-303 diagnosis is unchanged and unrefuted — the binding
 constraint is STOP GEOMETRY (1R too small vs notional to pay the fee), not the trigger vocabulary. Adding a 15th
 trigger does not address it; the stop/timeframe axis still does.
+
+## D-305 — STOP GEOMETRY becomes a grammar axis; and the random control was a false-positive engine (2026-08-14)
+
+**The ask (operator, direct):** add wider stop geometry to the grammar — the axis D-303 named as the binding
+constraint and that the grammar could not express.
+
+**Measured first, built second.** On 1,000 live 15m bars (BTC/ETH/SOL/DOGE): median ATR(14)/price = 0.16–0.25%,
+and the stops the triggers emit sit at 0.25–0.79% of notional. That is why a 20bp/side round trip costs ~1.9R —
+larger than any gross expectancy the factory has ever measured. Four new stop modes, sized from that
+measurement, now sit alongside the existing behaviour:
+
+| mode | med riskFrac (measured, real bars) | round trip @ stage-2 pessimistic 20bp/side |
+|---|---|---|
+| `swing` (unchanged default) | 0.216% | **1.852R** — structurally unpayable |
+| `atr2` (control rung) | 0.453% | 0.883R — still lethal, as predicted |
+| `atr6` | 1.371% | **0.292R** |
+| `atr12` | 2.716% | **0.147R** |
+| `wide100` | 0.849% | 0.471R |
+
+`atr2` is deliberately kept as the rung that should still die: a gradient with a failing control is
+interpretable, a set of winners is not. `wide100` reaches the same widths by a NON-ATR mechanic so we can tell
+whether width or volatility-normalisation is what matters. The stop is widened AFTER the trigger fires, so a
+mode change never alters WHICH bars signal — the axis is clean. Seeded 4 × 8,100 specs × 16 markets = 518,400
+rows at priority 3 (ahead of the legacy backlog). Grammar is now 15·3·3·3·5·4·5 = 40,500 specs.
+
+**Backwards compatibility is proven, not assumed.** `stopMode` defaults to `swing` and `specKey` emits the
+identical 6-part key when absent, so all 129,600 pre-existing spec_keys stay valid. A differential harness ran
+657 swing specs × 3 real markets against the pre-change code: **0 mismatches**. The 62k already-scored rows
+stand.
+
+### The bug this uncovered — the matched-random control was NOT matched
+
+Adding the axis exposed that `randomControl` hardcoded the swing stop. An `atr12` setup (riskFrac 2.7%, cheap
+in R) was therefore compared against a control paying tight-stop fees (riskFrac 0.2%, 0.46R/side) — it "beat
+random" on fee asymmetry alone. That is exactly the D-146 failure ANALYSIS_CONTRACT Rule 7 exists to prevent,
+reappearing inside the gate meant to enforce it. A second, PRE-EXISTING defect compounded it: a degenerate
+near-zero swing range makes `costR = (feeBps/1e4)/riskFrac` explode, and one such control trade dragged a
+control mean to −1,228R, so the setup "beat random" by +1,228R. 858 already-scored swing rows carried
+arithmetically impossible values (|edge| > 4 when per-trade R is bounded by rr ≤ 3).
+
+**Fixed:** stop resolution is now ONE shared exported function (`stopForMode`) used by both the setup leg and
+the control, so the mechanics cannot drift again; unresolved control trades are DROPPED to match the setup
+leg's closed-only rule instead of being marked-to-market; and both legs drop trades below `MIN_RISK_FRAC`
+(2bp of notional — inside the spread, not a real trade) symmetrically, so the filter cannot favour either side.
+The floor lives in the SCORERS, not in `runComponentTrades`, precisely so the trade generator stays
+byte-identical for the already-scored rows.
+
+**Quarantined, not buried:** deleted all 154 `fac:*` candidates that came from non-swing specs under the
+mismatched control (none had reached stage-2 — caught in time), and reset 1,868 non-swing + 858 impossible
+swing rows to `pending` for honest re-scoring.
+
+**Verification (the number, not the hope):** under the fixed control, `atr12` goes from **44 passes / 315
+scored → 0 passes / 26 scored**, median vs-random −0.077R, max +0.249R, and no out-of-range value survives
+anywhere in the table. Those 44 passes were entirely the artifact.
+
+**Honest status:** the axis D-303 asked for now exists, is measured to be fee-payable, and is queued across the
+full grammar — and it has produced **nothing** so far. 0 candidates, 0 stage-2 survivors, 0 forward candidates.
+A grammar that CAN express a payable setup is a precondition for finding one, not evidence of one.
+
+**Self-correction (D-304):** I justified skipping `nr4` partly on trial-count inflation deflating other
+candidates' DSR. That reason is weak — deflation grows with sqrt(2·ln N), so 121k → 510k trials raises the
+required z by ~6%. The sound reason was the one I listed first: `nr4` is a strictly weaker `nr7` and adds no
+information. The verdict stands; the stated reasoning was overweighted.

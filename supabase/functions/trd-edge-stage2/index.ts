@@ -6,7 +6,7 @@
 //       target strategies that only worked at optimistic cost die here. Survivors → trd_forward_candidates (paper,
 //       operator-armed). Verdicts → trd_stage2_results + trd_lineage. Almost nothing survives = D-070 working.
 // $0 (cached keyless bars + own DB). Idempotent (trd_stage2_results guards re-runs). CPU-safe small batches.
-import { runComponentTrades, type ComponentSpec } from "../_shared/trd-grammar.ts";
+import { runComponentTrades, MIN_RISK_FRAC, type ComponentSpec } from "../_shared/trd-grammar.ts";
 import type { Bar } from "../_shared/trd-liquidity-grab.ts";
 import { scoreEdge, type HarnessTrade } from "../_shared/trd-harness.ts";
 
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       const spec = (Array.isArray(specRow) && specRow.length ? (specRow[0] as { spec: ComponentSpec }).spec : null);
       if (!spec || bars.length < 500) { stageRows.push({ edge, spec_key, market, verdict: "thin", killed_by: "no spec/bars", run_at: new Date().toISOString() }); continue; }
       // run GROSS then re-cost each trade from its own riskFrac at the STRESS fee (D-303, matches factory model)
-      const trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac > 0);
+      const trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac >= MIN_RISK_FRAC); // D-305 tradeability floor
       if (trades.length < MIN_N) { stageRows.push({ edge, spec_key, market, n: trades.length, verdict: "thin", killed_by: `<${MIN_N} trades`, run_at: new Date().toISOString() }); continue; }
       const setupR = trades.map(netR), netRpess = mean(setupR);
       const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 197 + trades.length);
