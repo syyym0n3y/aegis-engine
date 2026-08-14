@@ -6298,6 +6298,57 @@ funding currently extreme-negative = crowded shorts → fade long). This starts 
 evidence that resolves D-317's two open questions (data-informed gate + DSR-per-trade-framing) — the only honest
 way to promote a confirmatory lead. Real money stays gated behind the ladder; this is paper only.
 
+## D-325 — 29th grammar trigger `kumo`: the first reference level that is FORWARD-DISPLACED, not a window ending now (2026-08-14)
+
+Added `kumo` (trd_edge_ingest id=28, web:avatrade+oanda) to `trd-grammar.ts`, taking the grammar to 29 triggers.
+Ichimoku Kumo breakout: Tenkan(9) and Kijun(26) are MIDPOINTS of their period high–low range, Senkou A =
+(Tenkan+Kijun)/2 and Senkou B = (HH52+LL52)/2, both plotted **26 bars FORWARD**. The cloud standing at bar *i* was
+therefore computed at bar *i−26*; bars *i−25…i−1* contribute NOTHING to it.
+
+**Why it is not a re-skin of anything already in the grammar — two independent structural differences:**
+
+1. **Displacement.** Every other level in the grammar comes from a window that ENDS at the signal bar or the one
+   before it — `channel` reads *i−20…i−1*, `breakout` *i−lb…i−1*, `squeeze`'s bands the last 20, `psar` the live
+   leg. `kumo` breaks a barrier that is stale by construction: recent trading was structurally unable to move it.
+2. **Midpoints of extremes, not averages of closes.** Every moving average in the grammar averages CLOSES
+   (`pullback`'s EMA, `macd`'s two EMAs, `squeeze`'s SMA basis, `stoch`'s %D). Tenkan/Kijun/Senkou B are
+   (HH+LL)/2 — functions of the two extremes only, blind to where every other bar closed. `channel` is the one
+   other extremes-only construct and it takes the extreme itself, never the midpoint of the pair.
+
+**The control carries the weight and is the displacement claim made falsifiable.** Base and control A share a
+**byte-identical 28-bar tail** (asserted in the test, not claimed in a comment) with the signal bar sitting **25
+bars inside it** — so `channel`(20), `squeeze`(20), `aroon`(14), `stoch`(14), `rsi`(14) and every candle family
+read exactly the same numbers at the bar under test. Only the block 26+ bars earlier moved (104 → 112), lifting
+the standing cloud above the rally, and `kumo` goes silent. The test then asserts the identical control bars DO
+trade under `breakout`, so the silence is the stale barrier and not an absent move. Control B stops the rally
+INSIDE the cloud (102 < 103.5 < 104) — the sources' "no man's land" is not a breakout. A price mirror covers the
+short branch. The trade is the CROSSING event (prior close not already beyond the cloud), so it fires once per
+regime change, not on every bar spent above the cloud.
+
+Stop at the OPPOSITE cloud edge — the canonical Ichimoku invalidation and the same mechanic as `squeeze`'s
+opposite-Keltner stop, so 1R is scaled by structure rather than by a 3-bar swing (the D-303 riskFrac argument).
+It cannot land on the wrong side of entry: a long requires close > top >= bot. 9/26/52/26 are held FIXED at their
+textbook values, as `supertrend`'s 10/3, `macd`'s 12/26/9 and `aroon`'s 14/70/30 are, so the class cannot inflate
+the trial count with parameters the sources state as constants. Point-in-time by construction — the cloud at index
+*t* is written only from bar *t−26*, so forward displacement moves a PAST computation forward and never reads the
+future; NaN inside warm-up makes both comparisons false, so it fails closed. Memoised identity-keyed (WeakMap),
+never by `bars.length` (D-310); `clearEmaCache()` now also resets `_kumoCache` and `_psCache`, which it had missed.
+
+**Verification.** 29/29 grammar + **271/271 `_shared`** tests green, `deno check` clean; `trd-edge-factory` and
+`trd-edge-stage2` both redeployed. **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets;
+34,560 non-swing stopMode, 8,640 swing, 0 rows with a non-`kumo` trigger) — verified STRUCTURALLY, not by eye: the
+DB's 2,700 distinct `spec_key`s hash to md5 `660bdb671e057c6fd4d6dc4fe65e0a1f`, byte-identical to
+`enumerate()+specKey()` run locally over the TypeScript grammar (C collation). Seeded by cloning the `psar` rows
+and substituting the trigger, so the row SHAPE is structural rather than hand-typed. Ingest id=28 → `queued`;
+`trd_lineage.grammar-kumo` written.
+
+**Honest status: UNTESTED.** A live BTCUSDT run via the `?trigger=kumo` filter scored 40 of the new specs against
+35,040 real 15m bars — **36 done / 4 thin** (n 32–804, avg 279, max |skill t| 7.73, so it provably did not fall
+through the `switch`, the D-308 failure mode) — and promoted **ZERO** stage-1 candidates. 43,160 of 43,200 rows
+remain pending. Nothing has cleared the full gauntlet: 584 fac:* candidates, 584 stage-2 verdicts (567 killed /
+17 thin), **0 stage-2 survivors, 0 forward candidates**. D-303's diagnosis stands — the binding constraint is
+STOP GEOMETRY, not trigger vocabulary.
+
 ## D-324 — 28th grammar trigger `psar`: the first condition carrying UNBOUNDED PATH-DEPENDENT STATE, not a window (2026-08-14)
 
 Added `psar` (trd_edge_ingest id=29, web:quantifiedstrategies+cmc) to `trd-grammar.ts`, taking the grammar to 28
@@ -6344,3 +6395,17 @@ is the D-308 check that the trigger did not fall through the `switch` (a fall-th
 n≈0). It promoted **ZERO** stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict: **UNTESTED**.
 Totals after this unit: 580 fac:* stage-1 candidates, 580 stage-2 verdicts (564 killed / 16 thin), **0 stage-2
 survivors, 0 forward candidates**, `trd_trial_counter` = 721,954, queue 470,332 done / 558,237 pending.
+
+## D-318b — Monitor caught a real silent failure: pool crash-loop retired; health-view false-positive fixed (2026-08-14)
+
+The chat-coordination monitor + trd_cron_health_v flagged 2 SILENT-FAIL-SUSPECT crons. Verified before blaming
+the scheduler (D-300b rule):
+- trd_edge_pool_5m: REAL silent failure — dispatched every 5min but heartbeat 211min stale. It CPU-crashes
+  (WORKER_RESOURCE_LIMIT) on heavy/hyper-frequent specs × 16 markets, before marking them done → re-selects &
+  crash-loops forever. Added heavy-trigger skip + hard trade caps (TRADE_CAP 4000 / PER_MKT_CAP 600), but it still
+  crashed on marginal leads. Decision: RETIRE the cron (unscheduled) — the pool's value is spent (price-action leads
+  confirmed single-market flukes, D-314); crash-looping on marginal leads is pure waste and masks future real
+  silent-fails. Function kept for manual re-run if a strong new lead appears.
+- trd_funding_exec_8h: FALSE POSITIVE — the funding cron hasn't fired yet (first run 00:05 UTC); the view mislabeled
+  a never-dispatched cron (NULL last_dispatch) as silent-fail. Fixed the view: NULL last_dispatch → 'not-yet-dispatched'.
+Health view now clean (0 problem crons). The monitor working exactly as designed — catch silent failures, verify, fix.

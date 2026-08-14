@@ -56,16 +56,24 @@ Deno.serve(async (req) => {
     const BAR_CAP = 15000;
     const getBars = async (m: string) => { const c = await fetch(`${SB}/rest/v1/trd_bars_cache?market=eq.${m}&select=bars`, { headers: H }).then((r) => r.json()).catch(() => []); const b = Array.isArray(c) && c.length ? (c[0] as { bars: Bar[] }).bars : []; return b.length > BAR_CAP ? b.slice(-BAR_CAP) : b; };
     const rows: Record<string, unknown>[] = [], fwd: Record<string, unknown>[] = [], lin: Record<string, unknown>[] = [], out: Record<string, unknown>[] = [];
+    // HEAVY-trigger guard (D-318b): indicator-computing triggers × 16 markets blow the CPU budget and the run crashes
+    // BEFORE marking the spec done → it re-selects the same spec every 5min and crash-loops (caught by trd_cron_health_v).
+    // These leads are single-market (AVAX-only) per stage-2 anyway, so record a skip and advance instead of crashing.
+    const HEAVY = new Set(["supertrend", "macd", "stoch", "rsidiv", "squeeze"]);
     for (const spec_key of todo) {
+      if (HEAVY.has(spec_key.split("|")[0])) { rows.push({ spec_key, verdict: "pool-killed", killed_by: "heavy-indicator trigger — skipped 16-market pool (CPU); single-market per stage-2", run_at: new Date().toISOString() }); continue; }
       const specRow = await fetch(`${SB}/rest/v1/trd_edge_queue?spec_key=eq.${encodeURIComponent(spec_key)}&select=spec&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
       const spec = Array.isArray(specRow) && specRow.length ? (specRow[0] as { spec: ComponentSpec }).spec : null;
       if (!spec) { rows.push({ spec_key, verdict: "thin", killed_by: "no spec", run_at: new Date().toISOString() }); continue; }
       const pooled: HarnessTrade[] = [], ctrl: HarnessTrade[] = []; let nMkt = 0, mktsPos = 0;
+      const TRADE_CAP = 4000, PER_MKT_CAP = 600; // hard caps → no single spec can blow the CPU/memory budget (crash-loop guard)
       for (const m of MARKETS) {
+        if (pooled.length >= TRADE_CAP) break;   // enough cross-market sample; stop before the worker limit
         const bars = await getBars(m); if (bars.length < 500) continue;
-        const trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac > 0);
+        let trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac > 0);
         if (trades.length < 10) continue;
         nMkt++; const mNet = trades.map(netR); if (mean(mNet) > 0) mktsPos++;
+        if (trades.length > PER_MKT_CAP) trades = trades.slice(-PER_MKT_CAP); // cap a hyper-frequent market's contribution
         trades.forEach((t) => pooled.push({ r: netR(t), stopFrac: 1, period: t.entryTs.slice(0, 7) }));
         randomControl(bars, spec, trades.length, spec_key.length * 131 + trades.length + m.length).forEach((r) => ctrl.push({ r, stopFrac: 1 }));
       }
