@@ -1,6 +1,30 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-321: grammar widened to 26 triggers — `marubozu`, the first condition on the BODY'S
+SHARE OF ITS OWN BAR'S RANGE.** Loop healthy and writing: queue `max(run_at)` **1 s** old, `done` **446,265 →
+453,754** within the session (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this
+check exists for). Stage-2 fired once: **12 tested, 12/12 persisted (lost 0), 0 survivors**; the 3-minute cron
+also advanced `trd_stage2_results` 456 → 528 unattended. Totals: **574 fac:\* stage-1 candidates, 528 stage-2
+verdicts (440 killed / 16 thin at the session-start read), 0 stage-2 survivors, 0 `trd_forward_candidates`**,
+`trd_trial_counter` = **688,654**.
+
+Shipped `marubozu` (ingest id=15, web:strike.money): a bar whose real body is >= 90% of its own high–low range
+never traded against its own direction all period → continue in the bar's OWN direction, stop at its opposite
+extreme, so 1R is the body. It is the exact CONVERSE of `pinbar` (wick > 2x body → fade) and mutually exclusive
+with it by arithmetic; not `soldiers` (whose 0.5 body-share is an anti-doji qualifier on three staircased bars);
+not `engulfing`/`harami`/`nbar` (which relate one bar to the PRIOR bar and are blind to a bar's own body share);
+and not `breakout` (a location condition — this one is location-free). Control A asserts the identical bars trade
+under `breakout` while `marubozu` is silent, so the silence is the wicks and not a missing move; control B pins
+BODY_FRAC by rejecting an 85%-body bar. **26/26 grammar tests + `deno check` green**, `trd-edge-factory` and
+`trd-edge-stage2` both redeployed, **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets;
+34,560 non-swing stopMode, 8,640 swing) — seeded by cloning the `tweezer` rows and substituting the trigger, so
+the `specKey()` match is structural rather than hand-typed.
+
+**Honest status:** a live BTCUSDT run scored 40 of the new specs (37 done + 3 thin), max vs-random t = **4.68**,
+and promoted **ZERO** stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict: **UNTESTED**. Nothing
+has cleared the full gauntlet; 0 forward candidates stands.
+
 **2026-08-14 (Opus 5) — D-320: grammar widened to 25 triggers — `tweezer`, the first condition on the EQUALITY
 OF AN EXTREME between two ADJACENT bars.** Loop healthy and writing: queue `max(run_at)` **0.7 min** old, `done`
 **441,020** of **1,036,800** (was 416,462 last session — writes LAND, not merely "processed:N", which is the

@@ -6108,3 +6108,50 @@ lifetime trials. That is a stage-1 fac:* candidate, NOT an edge: it has not face
 deflated by the true trial count, K-fold walk-forward, 20bp/side pessimistic cost), and D-314 established that
 single-market leads of exactly this shape evaporate when pooled across independent markets. 43,160 of 43,200 rows
 remain pending. Verdict: UNTESTED. Current totals unchanged: 0 stage-2 survivors, 0 forward candidates.
+
+## D-321 — 26th grammar trigger `marubozu`: the first condition on the BODY'S SHARE OF ITS OWN BAR'S RANGE (2026-08-14)
+
+Added `marubozu` (trd_edge_ingest id=15, web:strike.money) to `trd-grammar.ts`, taking the grammar to 26 triggers
+and |GRAMMAR| to 70,200. A bar whose real body is >= 90% of its own high–low range (both wicks together <= 10%)
+never traded against its own direction for the whole period → continue in the bar's OWN direction at the next
+open, stop at the bar's opposite extreme, so 1R is approximately the body itself and the trade dies exactly when
+the bar that defined control is fully given back.
+
+Why it is not already in the grammar — the near neighbours, and how each disagrees:
+- `pinbar` is the exact CONVERSE and the only other trigger reading one bar's internal geometry: it needs a wick
+  to DOMINATE the body (wick > 2x body) and reads that as rejection → fade. This needs the body to dominate and
+  reads it as acceptance → continue. Mutually exclusive by construction: at body >= 0.90 x range the wicks sum to
+  <= 0.11 x body, so neither wick can exceed 2x it.
+- `soldiers` does carry a body-share term, but at 0.5 and only as an anti-doji qualifier on each of THREE bars
+  that must also advance monotonically and open inside the prior body. A single strong bar cannot fire it, and a
+  0.5-share bar is not a marubozu — this is the one-bar case its 0.5 floor deliberately admits.
+- `engulfing` / `harami` compare one body to the PRIOR body; `nbar` / `soldiers` compare closes across bars. All
+  are blind to how much of a bar's own range its body occupies. This reads that ratio and nothing else.
+- `breakout` conditions the close against a prior RANGE — a location condition. This is location-free: a marubozu
+  mid-range signals exactly as one clearing a high does.
+
+Guards (deno test, 26/26 green):
+- Filler is provably signal-free by an order of magnitude: 12 identical bars at a 10% body share against a 90%
+  floor.
+- Control A pins the NEGLIGIBLE-WICK precondition against the location triggers: bar 12 keeps the identical open
+  and close (100.00 → 101.00) but trades 101.50 / 99.00 inside the bar (40% body share). Same direction, same
+  close, same clean break of the filler's high — the test ASSERTS `breakout` trades those EXACT bars while
+  `marubozu` stays silent. The silence is the wicks, not a missing move.
+- Control B pins BODY_FRAC as a real constraint rather than a synonym for "a strong bar": an 85%-body bar —
+  comfortably strong by the 50% floor `soldiers` uses — must stay silent.
+- Mirror: the bear marubozu is the exact reflection, short, +1R.
+
+ONE free constant held FIXED (BODY_FRAC = 0.90 of the bar's range, scale-free) rather than exposed as a grammar
+axis — as `pinbar`'s 2x wick, `orderblock`'s 1.4x impulse, `harami`'s 2x body and `doubletop`/`tweezer`'s 0.10
+tolerance are — so it cannot multiply the trial count and deflate every other candidate's DSR.
+
+Shipped: `deno check` + 26/26 tests green, `trd-edge-factory` AND `trd-edge-stage2` redeployed (both import the
+grammar), 43,200 rows seeded (2,700 spec points x 16 markets; 34,560 carry a non-swing stopMode, 8,640 swing) and
+VERIFIED landed with spec_key/spec shapes matching `specKey()` exactly — seeded by cloning the `tweezer` rows and
+substituting the trigger, so the format match is structural rather than hand-typed. `trd_edge_ingest` id=15 →
+status='queued'. `trd_lineage.grammar-marubozu` written.
+
+MEASUREMENT, not a claim: a live factory run on BTCUSDT scored 40 of the new specs (37 done + 3 thin), max
+vs-random t = 4.68, and promoted ZERO stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict:
+UNTESTED. Current totals unchanged: 574 fac:* stage-1 candidates, 456 stage-2 verdicts (440 killed / 16 thin),
+0 stage-2 survivors, 0 forward candidates.

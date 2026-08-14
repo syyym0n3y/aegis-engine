@@ -794,3 +794,55 @@ Deno.test("tweezer: fades a level two ADJACENT bars stopped at — not a one-bar
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("marubozu: continues a bar whose BODY IS ITS RANGE — not a wick rejection, and not merely a strong bar", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "marubozu" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 NEUTRAL filler bars, all identical: body 0.1 against a range of 1.0 = a 10% body share. The trigger needs 90%,
+  // so the filler is provably signal-free by an order of magnitude before anything is built on top of it.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100.1, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+
+  // BULL MARUBOZU: bar 12 opens at 100.00 and closes at 101.00 having wicked only 0.02 either side — body 1.00 against a
+  // range of 1.04 = 96%, clear of the 90% floor. Nothing traded against the buyers for the whole bar → continue LONG at
+  // the next open, stop at the bar's own low 99.98, so 1R is the body itself and the trade dies if the bar is given back.
+  const seq: Bar[] = [...flat,
+    bar(100.0, 101.02, 99.98, 101.0, 12),  // i: body 1.00 / range 1.04 = 0.96 → LONG, stop 99.98
+    bar(101.0, 101.3, 100.9, 101.2, 13),   // fill at open 101.0 → risk 1.02, target 102.02; neither touched here
+    bar(101.2, 102.10, 101.10, 102.0, 14), // high 102.10 >= 102.02 → +1R (low 101.10 never revisits the stop)
+    bar(102.0, 102.3, 101.7, 102.1, 15)];
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // NEGATIVE CONTROL A — isolates the NEGLIGIBLE-WICK precondition and pins the difference from the location triggers.
+  // Bar 12 keeps the identical open and close (100.00 → 101.00) but trades 101.50 / 99.00 inside the bar: body 1.00
+  // against a range of 2.50 = 40%. Same direction, same close, same clean break of the filler's 100.50 high — so
+  // `breakout` trades these EXACT bars, and the test asserts it does. `marubozu` must be silent: the silence is the
+  // wicks, not a missing move.
+  const wicky: Bar[] = [...flat,
+    bar(100.0, 101.5, 99.0, 101.0, 12),   // body 1.00 / range 2.50 = 0.40 → not a marubozu
+    bar(101.0, 101.2, 100.8, 101.1, 13),
+    bar(101.1, 102.6, 100.9, 102.5, 14),  // body 1.40 / range 1.70 = 0.82 → still not a marubozu
+    bar(102.5, 102.7, 102.3, 102.6, 15)];
+  assertEquals(runComponentTrades(wicky, spec, { costRPerSide: 0 }).length, 0);
+  const asBreakout = runComponentTrades(wicky, { ...spec, trigger: "breakout" as const }, { costRPerSide: 0 });
+  assert(asBreakout.length > 0, "control A must contain a real range break — otherwise it proves nothing");
+
+  // NEGATIVE CONTROL B — pins BODY_FRAC as a real constraint rather than a synonym for "a strong bar". Bar 12 has an 85%
+  // body share: comfortably "strong" by the 50% floor `soldiers` uses to exclude dojis, and directionally identical to
+  // the positive case. It is below 90%, so it must stay silent — the threshold is doing work, not decoration.
+  const nearMiss: Bar[] = [...flat,
+    bar(100.0, 100.90, 99.90, 100.85, 12), // body 0.85 / range 1.00 = 0.85 → just under the floor
+    bar(100, 100.5, 99.5, 100.1, 13), bar(100, 100.5, 99.5, 100.1, 14), bar(100, 100.5, 99.5, 100.1, 15)];
+  assertEquals(runComponentTrades(nearMiss, spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — the bear marubozu is the exact reflection: a bar that opened at its high and closed at its low, continued
+  // SHORT with the stop at that high.
+  const mirM = seq.map((b) => ({ ts: b.ts, open: 200 - b.open, high: 200 - b.low, low: 200 - b.high, close: 200 - b.close }));
+  const mtrM = runComponentTrades(mirM, spec, { costRPerSide: 0 });
+  assertEquals(mtrM.length, 1);
+  assertEquals(mtrM[0].side, "short");
+  assert(Math.abs(mtrM[0].r - 1) < 1e-9, `expected +1R, got ${mtrM[0].r}`);
+});

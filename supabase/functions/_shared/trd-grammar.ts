@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 25·3·3·3·5·4·5 = 67,500. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 26·3·3·3·5·4·5 = 70,200. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -484,6 +484,36 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (Math.abs(b.low - p.low) <= tol && botLvl <= lo && p.close < p.open && b.close > b.open)
         return { side: "long", stop: botLvl };
       return null;                                                     // same colour, unequal extreme, or mid-range
+    }
+    case "marubozu": { // Marubozu (ingest id=15, web:strike.money) — the 26th primitive, and the first whose condition is
+      // the BODY'S SHARE OF ITS OWN BAR'S RANGE. Every existing single-bar and multi-bar condition sits somewhere else:
+      //   · `pinbar` is the exact CONVERSE and the only other trigger reading one bar's internal geometry: it requires a
+      //     wick to DOMINATE the body (wick > 2× body) on one side, and reads that as rejection → fade. This requires the
+      //     body to dominate and both wicks to vanish, and reads it as acceptance → continue. The two are mutually
+      //     exclusive by construction: at body ≥ 0.90 × range the wicks sum to ≤ 0.11 × body, so neither can exceed 2×.
+      //   · `soldiers` does carry a body-share term, but at 0.5 and only as an anti-doji qualifier on each of THREE bars
+      //     that must also advance monotonically and open inside the prior body. A single strong bar cannot fire it, and
+      //     a 0.5-share bar is not a marubozu — the pattern here is the one-bar case its 0.5 floor deliberately admits.
+      //   · `engulfing` and `harami` compare one body to the PRIOR body; `nbar` and `soldiers` compare closes across bars.
+      //     All are blind to how much of a bar's own range its body occupies. This reads that ratio and nothing else.
+      //   · `breakout` conditions the close against a prior RANGE — a location condition. This is a location-free shape
+      //     condition: a marubozu mid-range signals exactly as one clearing a high does.
+      // The read is that a bar which opened at one extreme and closed at the other never traded against its direction for
+      // the whole period — one side had uncontested control of the bar — so the next period is more likely to continue
+      // than to reverse. Direction is therefore the bar's OWN direction (bull → long), not a fade. The stop is the bar's
+      // opposite extreme, so 1R ≈ the marubozu's own body: the trade dies exactly when the bar that defined control is
+      // fully given back, which is the event that falsifies the read.
+      // ONE free constant, held FIXED — as `pinbar`'s 2× wick, `orderblock`'s 1.4× impulse, `harami`'s 2× body,
+      // `doubletop`'s and `tweezer`'s 0.10 tolerance are — so it cannot multiply the trial count and deflate every other
+      // candidate's DSR: BODY_FRAC = 0.90 of the bar's range, scale-free and needing no absolute price unit.
+      // Point-in-time: reads bar i's own OHLC only, all of it known at its close. Nothing at or after i+1.
+      const BODY_FRAC = 0.90;
+      const rng = b.high - b.low;
+      if (!(rng > 0)) return null;                                     // a zero-range bar → fails closed
+      if (Math.abs(b.close - b.open) < BODY_FRAC * rng) return null;   // wicks too large → not a marubozu
+      if (b.close > b.open) return { side: "long", stop: b.low };      // bull marubozu → continue up, stop at its low
+      if (b.close < b.open) return { side: "short", stop: b.high };    // bear marubozu → continue down, stop at its high
+      return null;                                                     // a doji (body 0) can never clear BODY_FRAC>0 anyway
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
