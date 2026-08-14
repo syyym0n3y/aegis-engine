@@ -5136,3 +5136,21 @@ tell I should have read first. Fix: every queue row now carries identical keys (
 `source` omitted so provenance survives. Verified: 8-parallel processes 640 rows/90s across all 8 markets.
 Restored `trd_edge_factory_par_1m` (full parallel, ~19k trials/hr). Lesson: a swallowed error mimics a
 resource stall — check whether writes LAND before blaming the scheduler.
+
+## D-301 — Stage-2 triage: cross-market robustness surfaces the top lead (FVG rr0.5) (2026-08-14)
+
+The factory produced 982 t>=4.4 candidates — too many to trust; most are in-sample-lucky on 1yr crypto
+trend. Ranked them by CROSS-MARKET robustness (a spec surviving on N independent markets is far less
+likely to be luck than a one-market flier). Result is stark and coherent:
+- **FVG (fair-value-gap fill), rr0.5, sl3** is the standout class. `fvg|ema20|none|sl3|rr0.5|all` clears
+  t>=4.4 on ALL 16 markets (avg t=7.71, min 6.47, both OOS halves positive on every one); the entire
+  top-10 is fvg|rr0.5|sl3 variants. sweep best on 11 markets, breakout 8, orderblock 6; pullback/engulfing
+  survive on only 1 (= noise).
+Recorded as trd_lineage `fac-class:fvg-rr0.5-sl3`, verdict strong-lead, status stage2-pending. CAVEATS
+before ANY belief (not yet an edge): IN-SAMPLE 1yr — needs DSR deflated by the true ~112k trial count +
+PBO; rr0.5 = tiny 0.5R targets so REAL crypto fees/spread may eat it (factory's 0.1R round-trip cost is
+optimistic — re-test pessimistic); then forward. Base rate says most leads die; this one earned the test.
+
+Also fixed a silent write bug: the factory's trd_lineage inserts used non-existent columns (`test`,
+`decision_trail`) so every lineage write failed silently (same class as D-300b). Corrected to
+`test_method`/`decision_refs`/`name`/`family`; redeployed.
