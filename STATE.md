@@ -1,6 +1,22 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-314: completion probes on the other 24 crons — `trd_cron_health_v` went from
+verifying 6 of 30 jobs to 30/30 mapped.** pg_cron's `succeeded` only ever meant `net.http_post` enqueued a
+request; 24 jobs read `dispatch-only` and could have 500'd on every run without the monitor noticing. The 24
+edge functions behind them now wrap their handler in a `SERVE()` shim writing a `trd_beat()` heartbeat with
+**HTTP status + a 150-char response snippet**, and the view derives job→fn from `cron.job.command` by regex
+instead of a hand-maintained list (**30/30 mapped, 0 unmapped**; any future `trd_*` cron is covered on
+creation). Verified on the SCHEDULED path, not by deploy message: `trd-alpaca-equity-tick`, `trd-alpaca-tick`,
+`trd_orbfollow_30m`, `trd_edge_factory_par_1m` and `trd_edge_stage2_3m` all beat from their own crons,
+unprompted. **The new probe immediately caught a false alarm**: `trd_edge_stage2_3m` had flipped to
+SILENT-FAIL-SUSPECT while healthy — its old `eng` probe inferred completion from OUTPUT rows, so "nothing to
+test" looked identical to "crashed"; it now reads VERIFIED carrying `{"ok":true,"done":"all candidates stage-2
+tested","nTrials":598740}`. **Live count: 14 VERIFIED-COMPLETING, 16 dispatch-only, 0 SILENT-FAIL-SUSPECT, 0
+DISPATCH-FAILED.** The 16 are daily/weekly/nightly jobs that have not fired since deploy — that is the probe
+working, not a gap; they clear on their next scheduled run. `deno check` green on all 24, `verify_jwt=false`
+preserved, all 24 ACTIVE.
+
 **2026-08-14 (Opus 5) — D-315: grammar widened to 20 triggers — `rsidiv`, the first condition that is a
 DISAGREEMENT BETWEEN TWO SERIES; stage-2 record 538 tested / 0 survivors.** Loop healthy and writing: queue
 `max(run_at)` 0.11 min old, 5,800 rows in the trailing 10 min, `done` 318,967 → **361,907** since the D-313

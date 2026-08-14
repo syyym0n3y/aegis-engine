@@ -5789,3 +5789,14 @@ proves "that function completed recently", not "this schedule's invocation compl
 would require rewriting 30 live cron commands to pass their jobname through; risking the dispatch path to
 sharpen a monitor is the wrong trade. **The daily/nightly jobs stay `dispatch-only` until their next
 scheduled fire** — that is the probe working, not a gap.
+
+**The new probe immediately caught a false alarm the old one was generating.** Minutes after the map went
+live, `trd_edge_stage2_3m` flipped to `SILENT-FAIL-SUSPECT`. It was not failing: invoking it returned
+`{"ok":true,"done":"all candidates stage-2 tested","nTrials":598740}`. Its probe was the `eng` fallback —
+`max(run_at) from trd_stage2_results` — which infers completion from OUTPUT, so a run that legitimately has
+nothing to test is indistinguishable from a crash. An output-table probe can only ever answer "did work
+appear", never "did the function finish". `trd-edge-factory` and `trd-edge-stage2` therefore got the same
+`SERVE()` heartbeat; it takes precedence over `eng` in the coalesce, so idle-but-healthy now reads
+VERIFIED-COMPLETING with the actual response as evidence, and `eng` stays only as a legacy fallback. A
+monitor that cries wolf on a healthy idle component is worse than no monitor — it trains the operator to
+ignore the one alert that matters.
