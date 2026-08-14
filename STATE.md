@@ -1,6 +1,37 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-315: grammar widened to 20 triggers — `rsidiv`, the first condition that is a
+DISAGREEMENT BETWEEN TWO SERIES; stage-2 record 538 tested / 0 survivors.** Loop healthy and writing: queue
+`max(run_at)` 0.11 min old, 5,800 rows in the trailing 10 min, `done` 318,967 → **361,907** since the D-313
+session (writes LAND, not merely "processed:N"). Queue 820,800 total — 361,907 done / 309,771 pending /
+149,122 thin. Stage-2 fired once and **caught up**: 7 computed / 7 persisted / 0 lost at a true trial count of
+**584,540**; cumulative **538 candidates, 538 tested — 523 stage2-killed, 15 thin, 0 survivors,
+`trd_forward_candidates` = 0.** Shipped `rsidiv` (ingest id=25, web:tradersagency): all 19 prior triggers read
+price geometry alone or an indicator ALONE — `rsi` a LEVEL cross, `supertrend` a STATE flip, `squeeze` a RATIO
+of two volatility measures of the same bars. None compared the SHAPE of price against the SHAPE of momentum.
+Bullish divergence = a LOWER swing low with a HIGHER RSI at that swing. **Entry timing has no free parameter:**
+a fractal pivot (L=2) is not knowable until *k+L*, so the trigger fires on exactly one bar — the pivot's
+confirmation bar — the first instant the divergence exists as information; nearest prior same-kind pivot only,
+because scanning back for the best match is cherry-picking the trial counter cannot see. **Fixtures were
+MEASURED, then asserted:** base pivot A low 89.30/RSI 16.77 vs B low 88.80/RSI 30.08 → 1 long +1R, with
+`riskFrac` pinned at 3.8/92.6 so both the entry bar and the pivot-low stop are locked. **Negative control A
+carries the weight** — the same confirmed LOWER swing low with the legs' force reversed (A low 94.30/RSI 24.71,
+B low 88.30/RSI 23.46) → no disagreement, no trade; `breakout`/`nbar`/`sweep` cannot tell it from the base
+case. **Not a re-skin of `rsi`, proven on the same bytes:** on those control bars plain `rsi` takes 2 longs and
+`rsidiv` takes 0. Control B (higher low + diverging RSI) and a price-mirror short case complete the set.
+**Machine guard shipped with it:** `?trigger=<class>` on `trd-edge-factory` — the page fetch has no ORDER BY,
+so a newly seeded trigger sat tens of thousands of rows deep and its DEPLOY could only be verified by the CLI
+message, never by output (the D-308 failure mode: an undeployed trigger falls through the `switch` and marks
+every row `thin`, which reads like progress). Absent, behaviour is byte-unchanged. 20/20 grammar + **262/262
+`_shared`** green, both edge fns redeployed. Seeded 2,700 specs × 16 markets = **43,200 rows**, verified by
+SHA-256 (`de72aa4f…948c7659`) computed independently in Postgres and TypeScript over `enumerate()+specKey()`.
+**Deploy verified by OUTPUT:** `?market=LINKUSDT&trigger=rsidiv` → **35 rows `done`, all non-null `n`, avg 104
+trades (37–208), 5 thin, 0 passing the gate.** **Honest status: `rsidiv` has produced nothing — 0 candidates,
+0 stage-2 survivors, 0 forward candidates; 43,160 rows still pending, its hypothesis is UNTESTED.** D-303's
+diagnosis stands: the binding constraint is STOP GEOMETRY, not trigger vocabulary. ↓ prior stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-313: grammar widened to 19 triggers — `squeeze`, the first trigger whose condition is
 a RATIO of two volatility measures; stage-2 record 253 tested / 0 survivors.** Loop healthy and writing: queue
 `max(run_at)` 0.6 min old, `done` advanced 318,939 → 318,967 while this session ran (writes LAND, not merely

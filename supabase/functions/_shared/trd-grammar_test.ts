@@ -444,3 +444,62 @@ Deno.test("squeeze: fires on a RATIO release (BB escaping KC), not on absolute r
     bar(100, 100, 89, 90, 40), bar(90, 92, 88, 89, 41), bar(89, 89, 5, 6, 42)],
     spec, { costRPerSide: 0 }).length, 0);
 });
+
+Deno.test("rsidiv: fires on price/momentum DISAGREEMENT, not on a lower low and not on an RSI level", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "rsidiv" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  const mk = (cs: number[]): Bar[] => cs.map((c, i) => bar(c, c + 0.2, c - 0.2, c, i));
+  // 20 alternating bars around 100. Both gains and losses are non-zero so RSI warms to ~50, and because a
+  // fractal pivot needs a STRICT inequality against both neighbours, equal alternating values can never
+  // produce one — the prelude is guaranteed pivot-free, so nothing can fire inside it.
+  const filler = () => { const a: number[] = []; for (let i = 0; i < 20; i++) a.push(i % 2 === 0 ? 100 : 99.5); return a; };
+
+  // BULLISH DIVERGENCE. Leg A is STEEP (−2/bar × 5) into a trough at close 89.5 / low 89.30; the rally lifts
+  // RSI; leg B is SHALLOW (−1.625/bar × 4) into a LOWER trough at close 89.0 / low 88.80. Measured on these
+  // exact bars: pivot A = low 89.30, RSI 16.77; pivot B = low 88.80, RSI 30.08 — price lower, momentum higher.
+  const base = filler();
+  for (let i = 1; i <= 5; i++) base.push(99.5 - 2 * i);
+  for (let i = 1; i <= 6; i++) base.push(89.5 + i);
+  for (let i = 1; i <= 4; i++) base.push(95.5 - 1.625 * i);
+  for (let i = 1; i <= 6; i++) base.push(89.0 + 1.2 * i);
+  const tr = runComponentTrades(mk(base), spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+  // Pivot B is at index 34, so it is CONFIRMED at bar 36 (k+L) and filled at bar 37's open — the first bar on
+  // which the divergence is knowable, never earlier. Pinning riskFrac pins BOTH: entry = close[37] = 92.6 and
+  // stop = the pivot low 88.80. If the detector ever fired on the pivot bar itself this value would change.
+  assert(Math.abs(tr[0].riskFrac - 3.8 / 92.6) < 1e-9, `entry/stop moved: riskFrac=${tr[0].riskFrac}`);
+
+  // NEGATIVE CONTROL A — the one that carries the weight. The SAME structural feature (a confirmed swing low
+  // that is LOWER than the prior swing low) but with the legs' force reversed: leg A gentle (−1/bar), leg B
+  // steep (−2.5/bar). Measured: pivot A = low 94.30, RSI 24.71; pivot B = low 88.30, RSI 23.46 — price lower
+  // AND momentum lower, so there is no disagreement and no trade. `breakout`/`nbar`/`sweep` read this exactly
+  // as they read the base case; that difference is the entire reason this primitive is new.
+  const ctrlA = filler();
+  for (let i = 1; i <= 5; i++) ctrlA.push(99.5 - i);
+  for (let i = 1; i <= 4; i++) ctrlA.push(94.5 + i);
+  for (let i = 1; i <= 4; i++) ctrlA.push(98.5 - 2.5 * i);
+  for (let i = 1; i <= 6; i++) ctrlA.push(88.5 + 1.2 * i);
+  assertEquals(runComponentTrades(mk(ctrlA), spec, { costRPerSide: 0 }).length, 0);
+  // …and on those IDENTICAL bars the plain `rsi` level-cross trigger takes two longs. Same data, opposite
+  // verdicts: `rsidiv` is not a re-skin of `rsi` (it reads no threshold at all).
+  assertEquals(runComponentTrades(mk(ctrlA), { ...spec, trigger: "rsi" as const }, { costRPerSide: 0 }).length, 2);
+
+  // NEGATIVE CONTROL B — pins the PRICE side. Momentum disagrees the right way (pivot B RSI 32.85 > pivot A
+  // 16.77) but price prints a HIGHER low (90.30 vs 89.30) = ordinary bullish structure, not a divergence.
+  const ctrlB = filler();
+  for (let i = 1; i <= 5; i++) ctrlB.push(99.5 - 2 * i);
+  for (let i = 1; i <= 6; i++) ctrlB.push(89.5 + i);
+  for (let i = 1; i <= 4; i++) ctrlB.push(95.5 - 1.25 * i);
+  for (let i = 1; i <= 6; i++) ctrlB.push(90.5 + 1.2 * i);
+  assertEquals(runComponentTrades(mk(ctrlB), spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — the short branch, tested without hand-building a second fixture. Reflecting every price through
+  // 200 maps lows↔highs and RSI r↔100−r exactly, so the bullish base case becomes a textbook bearish
+  // divergence (higher swing high at 111.20 with RSI 69.92 vs 110.70 at RSI 83.23).
+  const mtr = runComponentTrades(mk(base.map((c) => 200 - c)), spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

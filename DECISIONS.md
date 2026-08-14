@@ -10,6 +10,66 @@
 
 ---
 
+## D-315 — 20th grammar trigger `rsidiv` (RSI divergence) — the first condition that is a DISAGREEMENT BETWEEN TWO SERIES (2026-08-14)
+
+**What.** Added `rsidiv` (ingest id=25, `web:tradersagency`) as the grammar's 20th trigger class. Every one
+of the 19 existing triggers reads either price geometry alone (candles, rolling windows, fractal pivots,
+volatility bands) or an indicator taken ALONE — `rsi` fires on a LEVEL cross (30/70), `supertrend` on a STATE
+flip, `squeeze` on a RATIO of two volatility measures of the same bars. None compares the SHAPE of price
+against the SHAPE of momentum. Bullish divergence = price prints a LOWER swing low while RSI prints a HIGHER
+low at that swing (a new price extreme reached with less force behind it); bearish is the mirror.
+
+**Point-in-time by construction, with no free parameter for entry timing.** A fractal pivot at bar *k* needs
+L=2 bars on either side, so it is not KNOWABLE until bar *k+L*. The trigger may therefore fire on exactly one
+bar — the confirmation bar of the most recent pivot (`k0 = i-L`) — which is the first instant at which the
+divergence exists as information. Nothing repaints, and there is no "wait for a confirmation candle" knob to
+tune. It compares against the NEAREST prior pivot of the same kind only: scanning back for the best-matching
+pivot would be a per-bar optimisation the trial counter cannot see — cherry-picking hidden in the detector.
+RSI period 14, pivot L=2, both fixed for the D-312/D-313 reason (freeing them multiplies the trial count and
+deflates every other candidate's DSR for constants the source states as fixed). Fails closed when RSI is not
+warm or when no prior pivot exists.
+
+**The negative controls carry the weight, and they were MEASURED, not assumed.** The fixtures were built by
+probing the actual RSI and pivot series first, then asserting the measured values:
+- BASE (fires): leg A steep (−2/bar), rally, leg B shallow (−1.625/bar). Pivot A = low 89.30 / RSI 16.77;
+  pivot B = low 88.80 / RSI 30.08 → price lower, momentum higher → 1 long, +1R. `riskFrac` is asserted at
+  exactly 3.8/92.6, which pins BOTH the entry (bar 37's open, i.e. the confirmation bar +1) and the stop (the
+  pivot low 88.80) — if the detector ever fired on the pivot bar itself, that value would change.
+- CONTROL A (must NOT fire) — the one that carries the weight: the SAME structural feature (a confirmed swing
+  low LOWER than the prior one) with the legs' force reversed — leg A gentle (−1/bar), leg B steep (−2.5/bar).
+  Measured: pivot A = low 94.30 / RSI 24.71; pivot B = low 88.30 / RSI 23.46 → price lower AND momentum lower
+  → no disagreement → no trade. `breakout`/`nbar`/`sweep` read this fixture exactly as they read the base
+  case; that difference is the entire reason this primitive is new.
+- **Not a re-skin of `rsi`, proven on the same bytes:** on the CONTROL A bars the plain `rsi` level-cross
+  trigger takes 2 longs and `rsidiv` takes 0. Same data, opposite verdicts. `rsidiv` reads no threshold at all.
+- CONTROL B (must NOT fire): momentum diverges correctly (RSI 32.85 > 16.77) but price prints a HIGHER low
+  (90.30 vs 89.30) = ordinary bullish structure. Pins the price side.
+- MIRROR: reflecting every price through 200 maps lows↔highs and RSI r↔100−r exactly, so the bullish fixture
+  becomes a textbook bearish divergence → 1 short, +1R. The short branch is tested without a hand-built
+  second fixture.
+
+**Machine guard shipped with it (`?trigger=` on `trd-edge-factory`).** The page fetch has no ORDER BY — it
+consumes heap order — so a newly seeded trigger sits tens of thousands of rows deep and could not be reached
+on demand. That meant a new trigger's DEPLOY could only be verified by the CLI's upload message, never by
+output — which is precisely the D-308 failure mode (an undeployed trigger falls through the `switch`, scores
+no trades, and every row is marked `thin`, which reads like progress). `?trigger=<class>` restricts a run to
+one trigger's pending specs; absent, behaviour is byte-unchanged, so the crons are untouched. Every future
+trigger's deploy is now verifiable in one curl.
+
+**Verified.** 20/20 grammar + **262/262 `_shared`** green; `deno check` clean on both edge fns; both
+redeployed. Seeded 2,700 specs × 16 markets = **43,200 rows** at priority 3, verified by SHA-256
+(`de72aa4f…948c7659`) computed independently in Postgres over the distinct seeded `spec_key`s and in
+TypeScript over `enumerate()+specKey()` — identical, so no orphaned rows. **Deploy verified by OUTPUT, not by
+the deploy message:** `?market=LINKUSDT&trigger=rsidiv` → **35 rows `done`, all non-null `n`, avg 104 trades
+(range 37–208), 5 `thin` (n 1–29), 0 passing the factory gate.**
+
+**Honest status: `rsidiv` has produced NOTHING.** 0 candidates, 0 stage-2 survivors, 0 forward candidates;
+43,160 of its rows are still pending. Its hypothesis is UNTESTED. D-303's diagnosis stands — the binding
+constraint is STOP GEOMETRY, not trigger vocabulary — and the stage-2 record is now **538 candidates tested,
+523 stage2-killed, 15 thin, 0 survivors**.
+
+---
+
 ## D-313 — 19th grammar trigger `squeeze` (Bollinger-in-Keltner release) — the first condition that is a RATIO of two volatility measures rather than a level, a shape, or an absolute range
 
 **Date:** 2026-08-14

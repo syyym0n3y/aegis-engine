@@ -177,6 +177,14 @@ Deno.serve(async (req) => {
     // ONE market per run (bars cached → no refetch). Explicit ?market= lets 8 crons run all markets in parallel;
     // otherwise take the first pending market. Each market's specs advance independently.
     const reqMarket = u.searchParams.get("market");
+    // ?trigger=<class> restricts a run to one trigger's pending specs. The page fetch below has no ORDER BY (it
+    // consumes heap order), so a NEWLY SEEDED trigger sits tens of thousands of rows deep and cannot be reached on
+    // demand — which meant a new trigger's DEPLOY could not be verified by OUTPUT, only by the CLI's upload
+    // message. That is exactly the D-308 failure mode (an undeployed trigger falls through the `switch`, scores no
+    // trades, and every row is marked `thin` — which reads like progress). This filter makes the check one curl.
+    // Absent = unchanged behaviour, so the crons are untouched.
+    const reqTrigger = u.searchParams.get("trigger");
+    const trigFilter = reqTrigger && /^[a-z_]+$/.test(reqTrigger) ? `&spec_key=like.${encodeURIComponent(reqTrigger + "|")}*` : "";
     let market: string | null = reqMarket;
     if (!market) {
       const first = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&select=market&order=priority.asc,market.asc&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
@@ -197,7 +205,7 @@ Deno.serve(async (req) => {
     let promoLost = 0, queueLost = 0; const writeErrs: string[] = []; // D-311: track writes that did NOT land
     // page through this market's pending specs; flush each page's status in ONE bulk upsert before the next page
     while (Date.now() - t0 < budgetMs && processed < maxSpecs) {
-      const specs = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&market=eq.${market}&select=spec_key,spec&limit=${page}`, { headers: H }).then((r) => r.json()).catch(() => []);
+      const specs = await fetch(`${SB}/rest/v1/trd_edge_queue?status=eq.pending&market=eq.${market}${trigFilter}&select=spec_key,spec&limit=${page}`, { headers: H }).then((r) => r.json()).catch(() => []);
       if (!Array.isArray(specs) || !specs.length) break;
       const before = processed;
       const updates: Record<string, unknown>[] = [];

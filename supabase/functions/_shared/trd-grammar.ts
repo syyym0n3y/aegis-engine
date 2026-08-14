@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 19·3·3·3·5·4·5 = 51,300. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 20·3·3·3·5·4·5 = 54,000. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -274,6 +274,40 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (b.close > sq.mid[i]) return { side: "long", stop: sq.kcLo[i] };
       if (b.close < sq.mid[i]) return { side: "short", stop: sq.kcUp[i] };
       return null;                                        // close exactly on the basis → no direction (fails closed)
+    }
+    case "rsidiv": { // RSI divergence (ingest id=25, web:tradersagency) — the 20th primitive, and the first whose
+      // condition is a DISAGREEMENT BETWEEN TWO SERIES rather than a property of one. Every existing trigger reads
+      // price geometry (candles, rolling windows, pivots) or an indicator taken ALONE: `rsi` fires on a LEVEL
+      // cross, `supertrend` on a STATE flip, `squeeze` on a RATIO of two volatility measures of the same bars.
+      // None compares the SHAPE of price against the SHAPE of momentum. Bullish divergence = price prints a LOWER
+      // swing low while RSI prints a HIGHER low at that swing — the market reached a new extreme with less force
+      // behind it. Bearish is the exact mirror. It is emphatically NOT a re-skin of `rsi`: RSI can be at any level
+      // here (no 30/70 threshold is read at all), and `rsi` fires on absolute momentum regardless of what price
+      // structure is doing.
+      // Point-in-time by construction, and this is also what fixes the entry timing with NO free parameter: a
+      // fractal pivot at bar k is not KNOWABLE until bar k+L, so the trigger may fire on exactly one bar — the
+      // confirmation bar of the most recent pivot (k0 = i-L), which is the first instant at which the divergence
+      // exists as information. Nothing repaints and there is no "wait for a confirmation candle" knob to tune.
+      // Compared against the NEAREST prior pivot of the same kind ONLY. Scanning back for the best-matching pivot
+      // would be a per-bar optimisation the trial counter cannot see — cherry-picking hidden inside the detector.
+      const L = 2, MAXBACK = 300, RP = 14;
+      const k0 = i - L; if (k0 < L + 1) return null;
+      const pivLo = (k: number) => { for (let j = 1; j <= L; j++) if (!(bars[k].low < bars[k - j].low && bars[k].low < bars[k + j].low)) return false; return true; };
+      const pivHi = (k: number) => { for (let j = 1; j <= L; j++) if (!(bars[k].high > bars[k - j].high && bars[k].high > bars[k + j].high)) return false; return true; };
+      const isLo = pivLo(k0), isHi = pivHi(k0);
+      if (!isLo && !isHi) return null;                      // this bar confirms no pivot → nothing is knowable yet
+      const r0 = triggerSignal_rsi(bars, k0, RP); if (r0 === null) return null; // RSI not warm → fail closed
+      for (let k = k0 - 1; k >= L && k >= k0 - MAXBACK; k--) {
+        if (isLo && pivLo(k)) {
+          const r1 = triggerSignal_rsi(bars, k, RP); if (r1 === null) return null;
+          return bars[k0].low < bars[k].low && r0 > r1 ? { side: "long", stop: bars[k0].low } : null;
+        }
+        if (isHi && pivHi(k)) {
+          const r1 = triggerSignal_rsi(bars, k, RP); if (r1 === null) return null;
+          return bars[k0].high > bars[k].high && r0 < r1 ? { side: "short", stop: bars[k0].high } : null;
+        }
+      }
+      return null;                                          // no prior pivot to diverge FROM → fail closed
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
