@@ -5983,3 +5983,19 @@ too harsh (D-313 proved the deflation ~fair) — it is the honest terminal state
 capacity-bound retail setups do NOT survive honest, cross-market, cost-realistic falsification. The engine is
 working exactly as designed. Cron trd_edge_pool_5m runs it continuously. (Known limit: indicator-heavy specs
 CPU-limit on 16-market pooling in one invocation; their single-market concentration is visible in stage-2 anyway.)
+
+## D-315 — Explored a DIFFERENT signal class (cross-sectional relative-value): cost-bound, not tradeable (2026-08-14)
+
+Price-action grammar is exhausted (D-314: single-market flukes). Built `trd-xsec-crypto`: a genuinely different
+mechanism — each rebalance rank the 16 crypto by trailing-k return, long top-Q / short bottom-Q (momentum) or
+reverse (reversal); the signal is the RELATIONSHIP between instruments, not any chart. Gauntlet: long-short basket
+forward return vs RANDOM-basket control, split-half OOS, turnover cost. 72 configs (dir × k × h × q), 21,985 common bars.
+
+RESULT: 0/72 pass. Best skill t=1.6 (not significant). The GROSS dispersion edge is real but tiny (best config
+rev|k24|h24|q5: +0.04%/rebalance, holds both OOS halves) — crypto shows weak short-term cross-sectional REVERSAL.
+But full-book rotation each rebalance costs ~0.4% (2×20bp), so EVERY config is net-NEGATIVE. Different failure mode
+than price-action: not a fluke — CAPACITY/COST-bound, exactly as D-070 names ("crowded, lagged, or capacity-bound").
+
+Honest read: a second signal class, a second honest rejection — for a new and instructive reason. The next genuinely-
+different class worth testing is FUNDING-RATE CARRY (perp funding = a positioning/sentiment signal, not price; low
+turnover, so cost-tolerant; keyless on Binance fapi). Proposed, not yet built.
