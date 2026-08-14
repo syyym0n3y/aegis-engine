@@ -6188,3 +6188,23 @@ Queue **1,123,200** total: 454,820 done / 503,737 pending / 164,643 thin. Stage-
 / 16 thin at the session-start read). Totals: **574 fac:\* stage-1 candidates, 0 stage-2 survivors, 0
 `trd_forward_candidates`**, `trd_trial_counter` = **690,294**. Ingest backlog **2 → 6** `new`, verified by
 readback. **Nothing has cleared the full gauntlet.**
+
+## D-316 — Funding-rate carry (positioning class): FIRST economically-grounded signal — but alt-specific (2026-08-14)
+
+Built `trd-funding-carry`: fade extreme perp funding (crowded leverage), collect the carry while positioned; a
+POSITIONING signal, not price/relative-value. Pooled across 16 symbols vs random-timing control + OOS. 27 configs.
+Keyless Binance fapi. UNLIKE every prior class, configs PASS the initial gauntlet with COHERENT structure:
+fade|z84(28d)|h9(3d): edge monotonic in threshold — thr2 +0.36%/trade t=2.71, thr1.5 +0.19% t=2.43, thr1 +0.08%
+t=2.58, ALL net of 20bp fee, ALL holding both OOS halves. Monotonicity + OOS consistency = signature of a real signal.
+
+BUT the per-symbol breadth is the honest catch: 10/16 positive, and the split is STRUCTURAL — strong on mid/small
+alts (ETC t=3.72, TRX t=4.19, LTC 2.44, DOT, AVAX) and SIGNIFICANTLY NEGATIVE on the majors (BTC t=−2.27, ETH,
+BNB −2.21, XRP −2.57). Economically coherent: alt funding extremes = retail leverage crowding → reverts (fade wins);
+major funding = institutional trend positioning → fade loses. So the broad pooled edge is a blend, and t=2.71 is
+borderline vs a 27-config Bonferroni (~3.0).
+
+VERDICT: the closest thing to a real edge all session — a genuine carry/positioning risk premium with an economic
+mechanism, OOS-stable, large-n (unlike the price-action flukes). NOT yet validated: it needs (1) a PRE-REGISTERED
+structural alt/major gate (by cap/liquidity, NOT symbol cherry-picking — that split is itself a trial), (2) DSR
+deflated by effective-N, (3) walk-forward, (4) forward paper. This is the first lead worth that full treatment.
+Next: build the pre-registered alt-gated funding-carry test + run it through stage-2-grade validation.
