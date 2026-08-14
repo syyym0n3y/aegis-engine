@@ -740,3 +740,57 @@ Deno.test("doubletop: enters at the NECKLINE between two equal peaks — not at 
   assertEquals(mtr[0].side, "long");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("tweezer: fades a level two ADJACENT bars stopped at — not a one-bar rejection, and not a same-colour pause", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "tweezer" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 NEUTRAL filler bars, all identical and all BULLISH (close 100.1 > open 100). Every adjacent pair is therefore
+  // same-colour, and both branches require opposite colours → the filler is provably signal-free before anything is
+  // built on top of it.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100.1, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+
+  // TWEEZER BOTTOM: bar 12 falls to 96.00 and closes down; bar 13 reaches the SAME price (96.05, |Δ| = 0.05 against a
+  // two-bar span of 3.9 → inside the 10% tolerance) and closes UP. The pair is the low of the stopLookback window, so
+  // the twin low is a swing extreme, not a mid-range coincidence → LONG at the next open, stop at the shared low 96.00.
+  // (Bar 12 itself is silent against the filler: |99.9 − 100.5| = 0.6 > 0.10 × 4.5.)
+  const seq: Bar[] = [...flat,
+    bar(99.8, 99.9, 96.0, 96.2, 12),    // i-1: DOWN bar, low 96.00
+    bar(96.3, 97.5, 96.05, 97.4, 13),   // i:   UP bar stopped at the same low → LONG, stop 96.00
+    bar(97.5, 97.8, 97.3, 97.6, 14),    // fill at open 97.5 → risk 1.5, target 99.0; neither touched here
+    bar(97.6, 99.2, 97.5, 99.1, 15)];   // high 99.2 >= 99.0 → +1R (low 97.5 never revisits the stop)
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // NEGATIVE CONTROL A — isolates the TWICE-STOPPED precondition and pins the difference from the one-bar rejection
+  // `sweep`. Bar 12 wicks to 99.0, clean through the filler's 99.5 low, and closes back inside at 99.8: a textbook
+  // single-bar liquidity grab. No bar shares that low (|99.5 − 99.0| = 0.5 > 0.10 × 1.5), so `tweezer` must be silent
+  // while `sweep` trades the SAME bars — the silence is the second touch, not the absence of a rejection.
+  const oneBar: Bar[] = [...flat,
+    bar(100.0, 100.1, 99.0, 99.8, 12),  // wick below the range, close back inside → a sweep, not a tweezer
+    bar(100, 100.5, 99.5, 100.1, 13), bar(100, 100.5, 99.5, 100.1, 14), bar(100, 100.5, 99.5, 100.1, 15),
+    bar(100.1, 101.2, 100.0, 101.0, 16)];
+  assertEquals(runComponentTrades(oneBar, spec, { costRPerSide: 0 }).length, 0);
+  const asSweep = runComponentTrades(oneBar, { ...spec, trigger: "sweep" as const }, { costRPerSide: 0 });
+  assert(asSweep.length > 0, "control A must contain a real single-bar rejection — otherwise it proves nothing");
+
+  // NEGATIVE CONTROL B — isolates the OPPOSITE-COLOUR requirement. The twin low is kept exactly (96.00 / 96.05) and only
+  // the second bar's colour changes: two consecutive DOWN bars stopping at the same price is a decline pausing on
+  // support, not two sides contesting it. The reversal read requires the level to be taken back, so it must stay silent.
+  const sameColour: Bar[] = [...flat,
+    bar(99.8, 99.9, 96.0, 96.2, 12),
+    bar(97.5, 97.6, 96.05, 96.5, 13),   // same twin low, but DOWN → must NOT fire
+    bar(96.5, 96.8, 96.3, 96.7, 14),    // |96.3 − 96.05| = 0.25 > 0.10 × 1.55 → no fire
+    bar(96.7, 97.0, 96.6, 96.9, 15)];   // same colour as its predecessor → no fire
+  assertEquals(runComponentTrades(sameColour, spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — the tweezer top is the exact reflection: two adjacent bars stopped at the same HIGH, the second closing
+  // down, faded SHORT with the stop at the shared high.
+  const mir = seq.map((b) => ({ ts: b.ts, open: 200 - b.open, high: 200 - b.low, low: 200 - b.high, close: 200 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

@@ -1,6 +1,29 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-320: grammar widened to 25 triggers — `tweezer`, the first condition on the EQUALITY
+OF AN EXTREME between two ADJACENT bars.** Loop healthy and writing: queue `max(run_at)` **0.7 min** old, `done`
+**441,020** of **1,036,800** (was 416,462 last session — writes LAND, not merely "processed:N", which is the
+D-300b/D-302 silent-write class this check exists for). Stage-2 fired once this session: **12 tested, 0
+survivors, 12/12 rows persisted (lost 0)**. Totals: **572 fac:\* stage-1 candidates, 0 stage-2 survivors, 0
+`trd_forward_candidates`**, `trd_trial_counter` = **672,774**.
+
+Shipped `tweezer` (ingest id=14, web:ig): two consecutive bars stopped at the same price (|Δ| <= 10% of the
+two-bar span) at the extreme of the stopLookback window, the second closing OPPOSITE in colour → fade the level,
+stop at the shared extreme. It is not `doubletop` (whose touches are separate swing pivots and which enters at
+the neckline, AWAY from the twin peaks, >=2 bars later), not `pinbar`/`sweep` (single-bar rejections, blind to
+whether anything tested the price before), and not `engulfing`/`harami` (BODY relations that say nothing about
+the extremes). Control A asserts the identical bars trade under `sweep` while `tweezer` is silent, so the silence
+is the second touch and not a missing rejection; control B pins the opposite-colour requirement; mirror covers
+the top. **25/25 grammar tests + `deno check` green**, factory redeployed, **43,200 rows seeded and VERIFIED
+landed** (2,700 spec points × 16 markets, 34,560 with a non-swing stopMode, shapes matching `specKey()` exactly).
+
+**Honest status of the one hit:** a live BTCUSDT run scored 40 of the new specs and promoted ONE stage-1
+candidate — `tweezer|ema20|with|sl3|rr0.5|all|wide100`, skill t=5.09 **in-sample, one market, among ~673k
+lifetime trials**. That is a fac:\* candidate, not an edge: it has not met the stage-2 gauntlet, and D-314
+established that single-market leads of this exact shape evaporate when pooled across independent markets.
+43,160 of 43,200 rows remain pending. Verdict: **UNTESTED**.
+
 **2026-08-14 (Opus 5) — D-319: grammar widened to 24 triggers — `doubletop`, the first trigger that enters at
 a level it did NOT test; and the stage-2 ledger was found RESET, not complete.** Loop healthy and writing:
 queue `max(run_at)` **47 s** old with **5,640 rows written in the trailing 10 min**, `done` 404,007 →

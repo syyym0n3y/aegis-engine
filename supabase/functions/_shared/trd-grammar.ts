@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 24·3·3·3·5·4·5 = 64,800. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 25·3·3·3·5·4·5 = 67,500. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -444,6 +444,46 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
           return { side: "long", stop: trough };
       }
       return null;
+    }
+    case "tweezer": { // Tweezer top/bottom (ingest id=14, web:ig) — the 25th primitive, and the first whose condition is
+      // EQUALITY OF AN EXTREME BETWEEN TWO ADJACENT BARS. The grammar already contains one twice-touched condition and
+      // several single-bar rejection conditions, and it is the gap between them that this occupies:
+      //   · `doubletop` is the other "the level held twice" read, but its two touches are separate swing PIVOTS with a
+      //     trough and several bars between them, and — decisively — it does not trade the level at all: the entry is a
+      //     close through the NECKLINE, below both peaks and AWAY from the twice-touched high. Here the two touches are
+      //     CONSECUTIVE bars with nothing in between, and the entry is at the level itself, on the second touch. The two
+      //     cannot fire on the same bar: `doubletop` needs L=2 bars on each side of each pivot, so its second peak is at
+      //     least two bars old when it signals, while this requires the second touch to BE the signal bar.
+      //   · `pinbar` and `sweep` are the single-bar rejections of a level. Both are satisfied by ONE bar's own geometry
+      //     (a long wick; a wick beyond the range that closes back inside) and are blind to whether anything tested the
+      //     same price before it. Here neither bar need have a wick at all, and neither need violate the range — what is
+      //     required is that the SAME price stopped both of them.
+      //   · `engulfing` and `harami` are the two-bar BODY relations (expansion and contraction of the open–close range);
+      //     they say nothing about where the highs and lows sit. This is the converse: a constraint on the EXTREMES with
+      //     no body-containment requirement in either direction, so a tweezer whose bodies overlap freely is neither.
+      // The read is that a single price rejected two consecutive attempts by OPPOSITE sides — a bull bar reached it and
+      // the next bar, reaching the same price, closed down — so the level is being defended rather than merely paused at.
+      // Direction is the fade (short at a twin high, long at a twin low); the stop is the shared extreme itself, so 1R is
+      // the distance to the level that is being defended and the trade dies the moment it stops being defended.
+      // Two free constants, both held FIXED — as `pinbar`'s 2× wick, `orderblock`'s 1.4× impulse, `harami`'s 2× body and
+      // `doubletop`'s 0.10 tolerance are — so they cannot multiply the trial count and deflate every other candidate's DSR:
+      //   EQ_TOL = 0.10 of the two-bar range, which makes "near-equal" scale-free and needs no absolute price unit;
+      //   and the pair must be the extreme of the stopLookback window, which is the textbook "at a swing extreme"
+      //   qualifier expressed with a window the grammar already varies rather than a new axis.
+      // Point-in-time: reads bars i-1 and i plus the already-computed hi/lo of bars[i-lb..i-1], all closed. Nothing after i.
+      const EQ_TOL = 0.10;
+      const p = bars[i - 1];
+      const span = Math.max(p.high, b.high) - Math.min(p.low, b.low);
+      if (!(span > 0)) return null;                                    // a two-bar flat spot → fails closed
+      const tol = EQ_TOL * span;
+      const topLvl = Math.max(p.high, b.high), botLvl = Math.min(p.low, b.low);
+      // TWEEZER TOP: near-equal highs, at the top of the window, bull bar answered by a bear bar → fade it short.
+      if (Math.abs(b.high - p.high) <= tol && topLvl >= hi && p.close > p.open && b.close < b.open)
+        return { side: "short", stop: topLvl };
+      // TWEEZER BOTTOM: the exact mirror.
+      if (Math.abs(b.low - p.low) <= tol && botLvl <= lo && p.close < p.open && b.close > b.open)
+        return { side: "long", stop: botLvl };
+      return null;                                                     // same colour, unequal extreme, or mid-range
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.

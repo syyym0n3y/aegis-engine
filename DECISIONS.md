@@ -6064,3 +6064,47 @@ than price-action: not a fluke — CAPACITY/COST-bound, exactly as D-070 names (
 Honest read: a second signal class, a second honest rejection — for a new and instructive reason. The next genuinely-
 different class worth testing is FUNDING-RATE CARRY (perp funding = a positioning/sentiment signal, not price; low
 turnover, so cost-tolerant; keyless on Binance fapi). Proposed, not yet built.
+
+## D-320 — 25th grammar trigger `tweezer`: the first condition on the EQUALITY OF AN EXTREME between two ADJACENT bars (2026-08-14)
+
+Added `tweezer` (trd_edge_ingest id=14, web:ig) to `trd-grammar.ts`, taking the grammar to 25 triggers and
+|GRAMMAR| to 67,500. Two consecutive bars stopped at the same price (|Δ| <= 10% of the two-bar span), that price
+being the extreme of the stopLookback window, the second bar closing OPPOSITE in colour to the first → fade the
+level, stop AT the shared extreme so 1R is the distance to the level being defended.
+
+Why it is not already in the grammar — the near neighbours, and how each disagrees:
+- `doubletop` is the other twice-touched condition, but its touches are separate swing PIVOTS with a trough
+  between, and it never trades the level: entry is the close through the NECKLINE, away from the twin peaks. Its
+  L=2 fractal means its second peak is >=2 bars old when it fires; this requires the second touch to BE the
+  signal bar. They cannot fire on the same bar.
+- `pinbar` / `sweep` are the SINGLE-bar rejections — satisfied by one bar's own geometry, blind to whether
+  anything tested the same price before it. Here neither bar need have a wick, nor violate the range; what is
+  required is that the SAME price stopped both.
+- `engulfing` / `harami` are the two-bar BODY relations (expansion / contraction of the open–close range) and say
+  nothing about where the extremes sit. This is the converse: a constraint on the EXTREMES with no body
+  containment in either direction.
+
+Guards (deno test, 25/25 green):
+- Filler is provably signal-free: 12 identical BULLISH bars → every adjacent pair is same-colour, both branches
+  need opposite colours.
+- Control A pins the twice-stopped precondition against the one-bar rejection: bar 12 wicks clean through the
+  range low and closes back inside (a textbook sweep) with no bar sharing that low → `tweezer` silent, and the
+  test ASSERTS the identical bars under `sweep` do trade. The silence is the second touch, not a missing rejection.
+- Control B pins the opposite-colour requirement: identical twin low, second bar DOWN → silent (a decline
+  pausing on support is not two sides contesting it).
+- Mirror: the tweezer top is the exact reflection, short, +1R.
+
+Two free constants held FIXED (EQ_TOL 0.10 of the two-bar span; the pair must be the stopLookback-window extreme)
+rather than exposed as grammar axes — as `pinbar`'s 2x wick, `orderblock`'s 1.4x impulse, `harami`'s 2x body and
+`doubletop`'s 0.10 tolerance are — so they cannot multiply the trial count and deflate every other candidate's DSR.
+
+Shipped: `deno check` + 25/25 tests green, `trd-edge-factory` redeployed, 43,200 rows seeded (2,700 spec points x
+16 markets; 34,560 carry a non-swing stopMode) and VERIFIED landed with the spec_key/spec shapes matching
+`specKey()` exactly. `trd_edge_ingest` id=14 → status='queued'. `trd_lineage.grammar-tweezer` written.
+
+MEASUREMENT, not a claim: a live factory run on BTCUSDT scored 40 of the new specs (6 thin) and promoted ONE
+stage-1 candidate — `tweezer|ema20|with|sl3|rr0.5|all|wide100`, skill t=5.09 in-sample on ONE market among ~673k
+lifetime trials. That is a stage-1 fac:* candidate, NOT an edge: it has not faced the stage-2 gauntlet (DSR
+deflated by the true trial count, K-fold walk-forward, 20bp/side pessimistic cost), and D-314 established that
+single-market leads of exactly this shape evaporate when pooled across independent markets. 43,160 of 43,200 rows
+remain pending. Verdict: UNTESTED. Current totals unchanged: 0 stage-2 survivors, 0 forward candidates.
