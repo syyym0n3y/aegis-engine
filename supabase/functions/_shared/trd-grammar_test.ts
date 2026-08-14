@@ -1,9 +1,10 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { type Bar, enumerate, GRAMMAR, runComponent, runComponentTrades, specKey } from "./trd-grammar.ts";
+const WIDE100_MIN = 100;
 
 Deno.test("enumerate covers the full product space and keys are unique", () => {
   const specs = enumerate();
-  const expected = GRAMMAR.trigger.length * GRAMMAR.emaPeriod.length * GRAMMAR.trendMode.length * GRAMMAR.stopLookback.length * GRAMMAR.rr.length * GRAMMAR.session.length;
+  const expected = GRAMMAR.trigger.length * GRAMMAR.emaPeriod.length * GRAMMAR.trendMode.length * GRAMMAR.stopLookback.length * GRAMMAR.rr.length * GRAMMAR.session.length * GRAMMAR.stopMode.length;
   assertEquals(specs.length, expected);
   assertEquals(new Set(specs.map(specKey)).size, specs.length);
 });
@@ -151,4 +152,92 @@ Deno.test("star: morning star fires only on large-down → small-body → up-clo
     bar(97.6, 98, 97.4, 97.8, 15),
     bar(97.8, 101.5, 97.7, 101.4, 16)];
   assertEquals(runComponentTrades(weak, spec, { costRPerSide: 0 }).length, 0);
+});
+
+// ---- D-305: stop GEOMETRY as a grammar axis -------------------------------------------------------------
+// Deterministic LCG walk → realistic oscillating bars (no Math.random, so the tests are reproducible).
+function walkBars(n: number, seed = 12345): Bar[] {
+  let s = seed; const rnd = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const out: Bar[] = []; let p = 100;
+  for (let i = 0; i < n; i++) {
+    const o = p, c = p * (1 + (rnd() - 0.5) * 0.02);
+    const hi = Math.max(o, c) * (1 + rnd() * 0.006), lo = Math.min(o, c) * (1 - rnd() * 0.006);
+    out.push({ ts: new Date(Date.UTC(2026, 0, 1, 0, i * 15)).toISOString(), open: o, high: hi, low: lo, close: c });
+    p = c;
+  }
+  return out;
+}
+
+Deno.test("specKey + enumerate are backwards-compatible: swing mode keys exactly as before D-305", () => {
+  const legacy = { trigger: "sweep" as const, emaPeriod: 20, trendMode: "with" as const, stopLookback: 5, rr: 1, session: "all" as const };
+  assertEquals(specKey(legacy), "sweep|ema20|with|sl5|rr1|all");
+  assertEquals(specKey({ ...legacy, stopMode: "swing" as const }), specKey(legacy)); // absent === "swing"
+  assertEquals(specKey({ ...legacy, stopMode: "atr12" as const }), "sweep|ema20|with|sl5|rr1|all|atr12");
+  const specs = enumerate();
+  // swing rung is untouched: the full 15·3·3·3·5·4 product, and every one of its keys is a legacy 6-part key.
+  const swing = specs.filter((x) => x.stopMode === "swing");
+  assertEquals(swing.length, 15 * 3 * 3 * 3 * 5 * 4);
+  assert(swing.every((x) => specKey(x).split("|").length === 6), "swing keys must stay 6-part");
+  assertEquals(new Set(specs.map(specKey)).size, specs.length, "all spec keys unique");
+  // every stop mode carries the FULL product (the dedup shortcut was falsified — see the regression guard).
+  for (const m of GRAMMAR.stopMode) assertEquals(specs.filter((x) => x.stopMode === m).length, 15 * 3 * 3 * 3 * 5 * 4, `mode ${m}`);
+});
+
+Deno.test("REGRESSION GUARD: stopLookback is NOT a no-op outside swing mode (the falsified dedup shortcut)", () => {
+  // It is tempting to pin stopLookback for the 12 triggers that don't use it in their SIGNAL, since a non-swing
+  // mode overrides the stop anyway — that would have cut the seed 2.4x. It is WRONG: triggerSignal bails on
+  // `i < max(stopLookback,3)`, suppressing early signals, and one suppressed entry re-phases every later trade
+  // (a new signal is blocked while a trade is open). This test fails if anyone re-introduces the shortcut.
+  const bars = walkBars(600);
+  const diverged: string[] = [];
+  for (const trigger of GRAMMAR.trigger) {
+    const mk = (sl: number) => ({ trigger, emaPeriod: 20, trendMode: "none" as const, stopLookback: sl, rr: 2, session: "all" as const, stopMode: "atr6" as const });
+    const a = runComponentTrades(bars, mk(3), { costRPerSide: 0 });
+    const b = runComponentTrades(bars, mk(10), { costRPerSide: 0 });
+    if (a.length !== b.length || a.some((t, i) => t.entryTs !== b[i]?.entryTs)) diverged.push(trigger);
+  }
+  assert(diverged.length > 0, "expected stopLookback to still matter under atr6 for at least some triggers");
+});
+
+Deno.test("atr stop mode widens riskFrac exactly as specified, and monotonically in the multiple", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  // 12 neutral fillers with a KNOWN true range of 1.0, then an inside-bar break → one long trade.
+  // Every bar's TRUE RANGE is exactly 1.0 → ATR(14) at the signal bar is exactly 1.0, so the expected stops
+  // are known in closed form and the assertions below are not circular.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100, i));
+  const seq: Bar[] = [...flat,
+    bar(100, 100.5, 99.5, 100, 12),    // mother (TR 1)
+    bar(100, 100.5, 99.5, 100, 13),    // inside bar (equal extremes still counts as inside; TR 1)
+    bar(100, 101, 100, 100.8, 14),     // TR 1; close 100.8 > mother high 100.5 → LONG, trigger stop = 99.5
+    bar(100.9, 101, 100.5, 100.7, 15), // fill at open 100.9
+    bar(100.7, 200, 50, 100.8, 16)];   // huge range → stop-first exit in EVERY mode, so each trade closes
+  const mk = (stopMode: "swing" | "atr2" | "atr6" | "atr12") => ({ trigger: "inside" as const, emaPeriod: 2, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const, stopMode });
+  const fr = (m: "swing" | "atr2" | "atr6" | "atr12") => { const t = runComponentTrades(seq, mk(m), { costRPerSide: 0 }); assert(t.length === 1, `${m} should produce exactly 1 trade, got ${t.length}`); return t[0].riskFrac; };
+  const sw = fr("swing"), a2 = fr("atr2"), a6 = fr("atr6"), a12 = fr("atr12");
+  // ATR(14) here is 1.0 (every bar's true range is 1.0), entry 100.9 → atr12 stop = 100.9 − 12 = 88.9, risk 12.
+  assert(Math.abs(a12 - 12 / 100.9) < 1e-9, `atr12 riskFrac ${a12} != ${12 / 100.9}`);
+  assert(Math.abs(a2 - 2 / 100.9) < 1e-9, `atr2 riskFrac ${a2} != ${2 / 100.9}`);
+  assert(sw < a2 && a2 < a6 && a6 < a12, `riskFrac must widen monotonically: ${sw} ${a2} ${a6} ${a12}`);
+  // THE POINT (D-303): a 20bp/side round trip costs (0.40% / riskFrac) in R, so cost falls exactly in
+  // proportion to the widening. (This fixture is synthetic — the claim that TODAY's live stops are fee-lethal
+  // rests on the measured 0.16-0.25% ATR/price on real 15m crypto, not on these bars.)
+  const costR = (f: number) => 0.0040 / f;
+  assert(Math.abs(costR(sw) / costR(a12) - a12 / sw) < 1e-9, "cost must be exactly inversely proportional to riskFrac");
+  assert(costR(a12) < costR(a6) && costR(a6) < costR(a2) && costR(a2) < costR(sw), "widening must monotonically reduce cost in R");
+  assert(costR(a12) < 0.05, `atr12 must be affordable, got ${costR(a12).toFixed(3)}R`);
+});
+
+Deno.test("wide100 needs 100 bars of history and never returns a stop tighter than the trigger's own", () => {
+  const bars = walkBars(400);
+  const mk = (stopMode: "swing" | "wide100") => ({ trigger: "rsi" as const, emaPeriod: 20, trendMode: "none" as const, stopLookback: 5, rr: 2, session: "all" as const, stopMode });
+  const sw = runComponentTrades(bars, mk("swing"), { costRPerSide: 0 });
+  const wd = runComponentTrades(bars, mk("wide100"), { costRPerSide: 0 });
+  assert(sw.length > 0 && wd.length > 0, "expected trades in both modes");
+  // every wide100 trade is at least as wide as the swing trade it corresponds to (same entry timestamp)
+  const swBy = new Map(sw.map((t) => [t.entryTs, t.riskFrac]));
+  let compared = 0;
+  for (const t of wd) { const s = swBy.get(t.entryTs); if (s !== undefined) { assert(t.riskFrac >= s - 1e-12, `wide100 narrower than swing at ${t.entryTs}`); compared++; } }
+  assert(compared > 0, "expected overlapping entries to compare");
+  // signals inside the first 100 bars are DROPPED (history requirement), never silently narrowed
+  assert(wd.every((t) => new Date(t.entryTs).getTime() >= new Date(bars[WIDE100_MIN].ts).getTime()), "wide100 must not fill before 100 bars of history");
 });

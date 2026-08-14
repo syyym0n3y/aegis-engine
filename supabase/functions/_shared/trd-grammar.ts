@@ -26,6 +26,34 @@ export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
 export type VolState = "lo" | "hi";
 
+// STOP GEOMETRY (D-305) — the axis D-303 identified as the binding constraint. Cost in R is
+// (feeBps/1e4)/riskFrac, so how far the stop sits from entry, as a FRACTION OF NOTIONAL, decides whether a
+// setup can pay its fees at all. MEASURED on 1,000 live 15m bars (BTC/ETH/SOL/DOGE): median ATR(14)/price
+// = 0.16–0.25%, and the swing stops the triggers emit sit at 0.25–0.79% of notional. At a 10bp/side fee that
+// is a 0.7R round trip — larger than any measured gross expectancy. These modes widen the stop into the
+// 1–2% band where a 20–40bp round trip costs 0.1–0.3R instead:
+//   swing   = the trigger's OWN stop (today's behaviour; the DEFAULT, so every pre-existing spec is unchanged)
+//   atr2    = 2×ATR(14)   ≈ 0.4% of notional — the CONTROL rung: still too tight, predicted to die like today's
+//   atr6    = 6×ATR(14)   ≈ 1.3% — marginal
+//   atr12   = 12×ATR(14)  ≈ 2.6% — comfortably payable
+//   wide100 = the 100-bar swing extreme ≈ 1.8–2.6% — the same widening via a NON-ATR mechanic, so we can tell
+//             whether what matters is the WIDTH or the volatility-normalisation.
+// The stop is widened AFTER the trigger fires; the trigger's own detection logic is untouched, so a mode
+// change never alters WHICH bars signal — only where the protective stop sits. That keeps the axis clean.
+export type StopMode = "swing" | "atr2" | "atr6" | "atr12" | "wide100";
+/** ATR(14) multiple per mode; null = not an ATR mode. */
+export const STOP_MODE_ATR: Record<StopMode, number | null> = { swing: null, atr2: 2, atr6: 6, atr12: 12, wide100: null };
+const WIDE_LOOKBACK = 100;
+
+// FALSIFIED OPTIMISATION, kept as a warning. It looks like stopLookback should be a no-op outside swing mode
+// for the 12 triggers that don't use it in their SIGNAL (only breakout/sweep/delivery do) — the stop is
+// overridden, so sl3/sl5/sl10 ought to yield identical trades, and pinning it would have cut the seed by 2.4×.
+// It is WRONG: `triggerSignal` bails on `i < max(stopLookback, 3)`, so a larger lookback suppresses signals in
+// the first few bars, and because a new signal is blocked while a trade is open, ONE suppressed early entry
+// re-phases every subsequent trade. A test asserts the divergence so nobody re-introduces the shortcut.
+// Aligning the guard would fix it but would change swing-mode results and invalidate 121k already-scored
+// spec_keys — not worth it. stopLookback is therefore varied in FULL across every stop mode.
+
 export interface ComponentSpec {
   trigger: TriggerClass; // the setup class (ICT-liquidity / imbalance / momentum / trend-continuation)
   emaPeriod: number; // trend-filter EMA length
@@ -33,6 +61,7 @@ export interface ComponentSpec {
   stopLookback: number; // bars used to place the protective stop (swing extreme)
   rr: number; // target = rr × risk
   session: Session; // entry-session filter (UTC buckets)
+  stopMode?: StopMode; // stop GEOMETRY; absent = "swing" = the trigger's own stop (backwards-compatible)
 }
 
 export const GRAMMAR = {
@@ -42,15 +71,22 @@ export const GRAMMAR = {
   stopLookback: [3, 5, 10],
   rr: [0.5, 1, 1.5, 2, 3],
   session: ["all", "asia", "london", "ny"] as Session[],
+  stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| ≈ 4·3·3·3·5·4 = 2160. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 15·3·3·3·5·4·5 = 40,500. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
-  for (const trigger of g.trigger) for (const emaPeriod of g.emaPeriod) for (const trendMode of g.trendMode) for (const stopLookback of g.stopLookback) for (const rr of g.rr) for (const session of g.session) out.push({ trigger, emaPeriod, trendMode, stopLookback, rr, session });
+  const modes = g.stopMode ?? (["swing"] as StopMode[]);
+  for (const trigger of g.trigger) for (const stopMode of modes) for (const emaPeriod of g.emaPeriod) for (const trendMode of g.trendMode) for (const stopLookback of g.stopLookback) for (const rr of g.rr) for (const session of g.session) out.push({ trigger, emaPeriod, trendMode, stopLookback, rr, session, stopMode });
   return out;
 }
-export function specKey(s: ComponentSpec): string { return `${s.trigger}|ema${s.emaPeriod}|${s.trendMode}|sl${s.stopLookback}|rr${s.rr}|${s.session}`; }
+/** Stable identity of a spec. A swing-mode (or stopMode-absent) spec keys EXACTLY as it did before D-305, so
+ * every already-scored spec_key in trd_edge_queue stays valid. */
+export function specKey(s: ComponentSpec): string {
+  const base = `${s.trigger}|ema${s.emaPeriod}|${s.trendMode}|sl${s.stopLookback}|rr${s.rr}|${s.session}`;
+  return !s.stopMode || s.stopMode === "swing" ? base : `${base}|${s.stopMode}`;
+}
 
 function sessionOf(hUtc: number): Session { return hUtc < 7 ? "asia" : hUtc < 13 ? "london" : hUtc < 21 ? "ny" : "asia"; }
 
@@ -254,7 +290,22 @@ export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCf
   const atr = atrSeries(bars, 14); const atrMed = median(atr);
   const out: CTrade[] = [];
   let open: { side: "long" | "short"; entry: number; stop: number; target: number; riskFrac: number; entryTs: string; trend: TrendState; vol: VolState; session: Session } | null = null;
-  let queued: Sig | null = null; // signal fired on prior bar → enter at this bar's open
+  let queued: (Sig & { sigIdx: number }) | null = null; // signal fired on prior bar → enter at this bar's open
+  // Resolve the protective stop for the chosen geometry. Point-in-time: every input is read at the SIGNAL bar
+  // (ATR(14) at sigIdx, or the swing extreme strictly BEFORE sigIdx) and applied to the next bar's fill price.
+  // Returns null when the mode's history requirement isn't met → the signal is dropped, never silently narrowed.
+  const resolveStop = (q: { side: "long" | "short"; stop: number; sigIdx: number }, entry: number): number | null => {
+    const mode = s.stopMode ?? "swing";
+    if (mode === "swing") return q.stop;
+    const dir = q.side === "long" ? 1 : -1;
+    const mult = STOP_MODE_ATR[mode];
+    if (mult !== null) { const a = atr[q.sigIdx]; return a > 0 ? entry - dir * mult * a : null; }
+    // wide100: the extreme of the WIDE_LOOKBACK bars before the signal bar, never tighter than the trigger's own stop.
+    if (q.sigIdx < WIDE_LOOKBACK) return null;
+    let wHi = -Infinity, wLo = Infinity;
+    for (let j = q.sigIdx - WIDE_LOOKBACK; j < q.sigIdx; j++) { if (bars[j].high > wHi) wHi = bars[j].high; if (bars[j].low < wLo) wLo = bars[j].low; }
+    return q.side === "long" ? Math.min(wLo, q.stop) : Math.max(wHi, q.stop);
+  };
   for (let i = 0; i < n; i++) {
     const bar = bars[i];
     if (open) { // resolve open (stop-first, pessimistic)
@@ -264,19 +315,21 @@ export function runComponentTrades(bars: Bar[], s: ComponentSpec, cfg: GrammarCf
       if (exit !== null) { const dir = open.side === "long" ? 1 : -1; const risk = Math.abs(open.entry - open.stop); const grossR = risk > 0 ? (exit - open.entry) * dir / risk : 0; out.push({ r: grossR - 2 * cfg.costRPerSide, riskFrac: open.riskFrac, exitIdx: i, entryTs: open.entryTs, exitTs: bar.ts, side: open.side, trend: open.trend, vol: open.vol, session: open.session }); open = null; }
     }
     if (!open && queued) { // fill queued entry at this bar's open
-      const entry = bar.open, dir = queued.side === "long" ? 1 : -1, risk = Math.abs(entry - queued.stop);
-      if (risk > 0 && ((queued.side === "long" && queued.stop < entry) || (queued.side === "short" && queued.stop > entry))) {
+      const entry = bar.open, dir = queued.side === "long" ? 1 : -1;
+      const stopPx = resolveStop(queued, entry);
+      const risk = stopPx === null ? 0 : Math.abs(entry - stopPx);
+      if (stopPx !== null && risk > 0 && ((queued.side === "long" && stopPx < entry) || (queued.side === "short" && stopPx > entry))) {
         const slope = i > 10 ? (e[i] - e[i - 10]) / (e[i - 10] || 1) : 0;
         const trend: TrendState = slope > 0.001 ? "up" : slope < -0.001 ? "down" : "flat";
         const vol: VolState = atr[i] >= atrMed ? "hi" : "lo";
-        open = { side: queued.side, entry, stop: queued.stop, target: entry + dir * s.rr * risk, riskFrac: entry > 0 ? risk / entry : 0, entryTs: bar.ts, trend, vol, session: sessionOf(new Date(bar.ts).getUTCHours()) };
+        open = { side: queued.side, entry, stop: stopPx, target: entry + dir * s.rr * risk, riskFrac: entry > 0 ? risk / entry : 0, entryTs: bar.ts, trend, vol, session: sessionOf(new Date(bar.ts).getUTCHours()) };
       }
       queued = null;
     }
     if (!open && !queued) { // new signal on this closed bar
       if (s.session !== "all" && sessionOf(new Date(bar.ts).getUTCHours()) !== s.session) continue;
       const sig = triggerSignal(bars, i, s);
-      if (sig && passesTrend(sig.side, bar.close, e[i], s.trendMode)) queued = sig;
+      if (sig && passesTrend(sig.side, bar.close, e[i], s.trendMode)) queued = { ...sig, sigIdx: i };
     }
   }
   return out;

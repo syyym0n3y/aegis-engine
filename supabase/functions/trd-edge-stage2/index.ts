@@ -52,10 +52,13 @@ Deno.serve(async (req) => {
     const batch = Math.min(30, +(u.searchParams.get("batch") || "12"));
     const trialRow = await fetch(`${SB}/rest/v1/trd_trial_counter?id=eq.global&select=total`, { headers: H }).then((r) => r.json()).catch(() => []);
     const nTrials = Math.max(1000, Number((trialRow?.[0] as { total?: number })?.total) || 100000);
-    // best untested candidates first (highest in-sample abs_r), skip any already in stage2_results
-    const done = await fetch(`${SB}/rest/v1/trd_stage2_results?select=edge`, { headers: H }).then((r) => r.json()).catch(() => []);
+    // best untested candidates first (highest in-sample abs_r), skip any already in stage2_results.
+    // ACCOUNTABILITY FIX (D-303b): fetch the WHOLE candidate set (bounded, ~hundreds), not top batch*3 — else once
+    // the top few are tested the filtered todo is always empty and stage-2 silently stalls at the high-abs_r head
+    // while hundreds of lower-ranked candidates never get tested (returns ok:true "all tested" — a false all-clear).
+    const done = await fetch(`${SB}/rest/v1/trd_stage2_results?select=edge&limit=100000`, { headers: H }).then((r) => r.json()).catch(() => []);
     const doneSet = new Set((Array.isArray(done) ? done : []).map((r: { edge: string }) => r.edge));
-    const cands = await fetch(`${SB}/rest/v1/trd_edge_scorecard?edge=like.fac:*&select=edge,abs_r&order=abs_r.desc&limit=${batch * 3}`, { headers: H }).then((r) => r.json()).catch(() => []);
+    const cands = await fetch(`${SB}/rest/v1/trd_edge_scorecard?edge=like.fac:*&select=edge,abs_r&order=abs_r.desc&limit=100000`, { headers: H }).then((r) => r.json()).catch(() => []);
     const todo = (Array.isArray(cands) ? cands : []).filter((c: { edge: string }) => !doneSet.has(c.edge)).slice(0, batch) as { edge: string }[];
     if (!todo.length) return new Response(JSON.stringify({ ok: true, done: "all candidates stage-2 tested", nTrials }), { headers: cors });
 
