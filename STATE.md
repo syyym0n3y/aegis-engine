@@ -1,6 +1,36 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-316: grammar widened to 21 triggers — `stoch`, the first condition that reads a
+bar's POSITION WITHIN ITS RANGE; stage-2 record 566 tested / 0 survivors.** Loop healthy and writing: queue
+`max(run_at)` 46 s old and `done` **374,597 → 375,108 inside one minute** (writes LAND, not merely
+"processed:N"). Queue 864,000 total — 375,108 done / 337,411 pending / 151,481 thin. Stage-2 fired once and is
+**caught up** at a true trial count of **599,820**: cumulative **566 candidates, 566 tested — 508
+stage2-killed, 58 thin, 0 survivors, `trd_forward_candidates` = 0.** Shipped `stoch` (ingest id=24,
+web:tradersagency): every prior trigger reads price geometry, or an indicator that normalises the SIZE of
+moves (`rsi`), their volatility RATIO (`squeeze`), a state flip (`supertrend`) or a two-series disagreement
+(`rsidiv`). None computes where a bar CLOSED inside the last 14 bars' high–low band. %K asks exactly that;
+the trade is the handover to its own 3-bar average (%D) while leaving the 20/80 zone. Canonical 14/3/3 held
+FIXED, as with Supertrend's 10/3 — freeing the periods would multiply the trial count and deflate every other
+candidate's DSR. A flat window leaves %K undefined rather than inventing a 0/0, so it fails closed.
+**Fixtures were MEASURED, then asserted:** base — %K 2.56 under %D 2.99, then the first up close lifts it to
+7.96 over 4.49 → 1 long +1R with `riskFrac` pinned at 2.7/94, locking both the entry bar and the swing stop.
+**The control that carries the weight is byte-identical in its CLOSES:** one bar's LOW deepened to 80. RSI
+reads closes alone, so it is unchanged by construction (0 trades either way) — and `stoch` INVERTS, the same
+closes now sitting near the top of the band (%K 81.68) turning the oversold long into an overbought short
+(−1R, `riskFrac` 4.2/93.5). No trigger reading closes or absolute range can produce that flip. A second
+control inverts the pair the other way (shallow decline over a deep floor: `stoch` 0 / `rsi` 1, against the
+base case's 1 / 0), the 20-bar filler crosses %K over %D in both directions every other bar and still fires
+nothing (the zone gate, not an absence of events), and a price-mirror covers the short branch. 21/21 grammar
++ **263/263 `_shared`** green, `deno check` clean, both edge fns redeployed. Seeded 2,700 specs × 16 markets =
+**43,200 rows**, verified by SHA-256 (`b55e6b84…9301e15c`) computed independently in Postgres and in
+TypeScript over `enumerate()+specKey()`. **Deploy verified by OUTPUT:** `?market=BTCUSDT&trigger=stoch` →
+**37 rows `done`, all non-null `n`, avg 188 trades (36–377), 3 thin, 0 passing the gate.** **Honest status:
+`stoch` has produced nothing — 0 candidates, 0 stage-2 survivors, 0 forward candidates; 43,160 rows still
+pending, its hypothesis is UNTESTED.** D-303's diagnosis stands: the binding constraint is STOP GEOMETRY, not
+trigger vocabulary. ↓ prior stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-314: completion probes on the other 24 crons — `trd_cron_health_v` went from
 verifying 6 of 30 jobs to 30/30 mapped.** pg_cron's `succeeded` only ever meant `net.http_post` enqueued a
 request; 24 jobs read `dispatch-only` and could have 500'd on every run without the monitor noticing. The 24

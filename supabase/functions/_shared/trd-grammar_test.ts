@@ -503,3 +503,60 @@ Deno.test("rsidiv: fires on price/momentum DISAGREEMENT, not on a lower low and 
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("stoch: fires on POSITION-within-range, a quantity `rsi` structurally cannot see", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "stoch" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  const mk = (cs: number[]): Bar[] => cs.map((c, i) => bar(c, c + 0.2, c - 0.2, c, i));
+  // 20 alternating bars around 100. MEASURED: %K alternates 59.26/40.74 and %D 53.09/46.91, so %K crosses %D
+  // in BOTH directions every other bar — the prelude is saturated with crossings and still fires nothing,
+  // because none of them happens in the 20/80 zone. That is the zone gate under test, not an absence of events.
+  const filler = () => { const a: number[] = []; for (let i = 0; i < 20; i++) a.push(i % 2 === 0 ? 100 : 99.5); return a; };
+  assertEquals(runComponentTrades(mk(filler()), spec, { costRPerSide: 0 }).length, 0);
+
+  // BASE LONG. A −1/bar slide drives %K to 2.56 (deeply oversold, below %D 2.99), then the first up close at
+  // index 28 lifts %K to 7.96 above %D 4.49 = the handover. Fill at index 29's open 94.0; the stop is the
+  // 3-bar swing low 91.3, so 1R = 2.7 and the target 96.7 is swept by index 30.
+  const tail = [98.5, 97.5, 96.5, 95.5, 94.5, 93.5, 92.5, 91.5, 93, 94, 98];
+  const base = [...filler(), ...tail];
+  const tr = runComponentTrades(mk(base), spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+  // Pins entry AND stop: if the detector ever fired on a different bar this value moves.
+  assert(Math.abs(tr[0].riskFrac - 2.7 / 94) < 1e-9, `entry/stop moved: riskFrac=${tr[0].riskFrac}`);
+  // …and plain `rsi` takes NOTHING on these exact bars — %K reached its extreme while RSI never crossed 30.
+  assertEquals(runComponentTrades(mk(base), { ...spec, trigger: "rsi" as const }, { costRPerSide: 0 }).length, 0);
+
+  // THE CONTROL THAT CARRIES THE WEIGHT. Byte-identical CLOSES to the base case; the ONLY change is one bar's
+  // LOW, deepened to 80 (a capitulation wick). RSI is a function of closes alone, so it is unchanged BY
+  // CONSTRUCTION — and indeed still takes 0 trades. `stoch` inverts completely: the deep floor puts the same
+  // closes near the TOP of the 14-bar band (%K 81.68 at index 23), so what was an oversold long becomes an
+  // overbought SHORT at index 24 — fill 93.5, stop at the 3-bar swing high 97.7, stopped out for −1R.
+  // No trigger that reads closes, or absolute range, can produce this flip; that is the whole reason the
+  // primitive is new.
+  const wick = mk(base); wick[20] = bar(99.5, 98.7, 80, 98.5, 20);
+  const wtr = runComponentTrades(wick, spec, { costRPerSide: 0 });
+  assertEquals(wtr.length, 1);
+  assertEquals(wtr[0].side, "short");
+  assert(Math.abs(wtr[0].r + 1) < 1e-9, `expected −1R, got ${wtr[0].r}`);
+  assert(Math.abs(wtr[0].riskFrac - 4.2 / 93.5) < 1e-9, `entry/stop moved: riskFrac=${wtr[0].riskFrac}`);
+  assertEquals(runComponentTrades(wick, { ...spec, trigger: "rsi" as const }, { costRPerSide: 0 }).length, 0);
+
+  // SECOND CONTROL — the verdict pair inverted the other way, on a different path: a shallow −0.5/bar decline
+  // sitting above a deep floor. Closes fall far enough for RSI to cross back up through 30 (1 long), while %K
+  // never leaves the 56–72 band, so `stoch` takes nothing. Base case: stoch 1 / rsi 0. Here: stoch 0 / rsi 1.
+  const ctrl: Bar[] = mk(filler());
+  [95, 94.5, 94, 93.5, 93, 92.5, 92, 91.5, 93, 94, 98].forEach((c, j) => {
+    const i = 20 + j; ctrl.push(j === 0 ? bar(99.5, 99.6, 80, c, i) : bar(c, c + 0.2, c - 0.2, c, i));
+  });
+  assertEquals(runComponentTrades(ctrl, spec, { costRPerSide: 0 }).length, 0);
+  assertEquals(runComponentTrades(ctrl, { ...spec, trigger: "rsi" as const }, { costRPerSide: 0 }).length, 1);
+
+  // MIRROR — the short branch. Reflecting every price through 200 maps lows↔highs exactly, so %K ↦ 100−%K and
+  // the oversold cross-up becomes a textbook overbought cross-down.
+  const mtr = runComponentTrades(mk(base.map((c) => 200 - c)), spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

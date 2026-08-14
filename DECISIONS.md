@@ -5800,3 +5800,51 @@ appear", never "did the function finish". `trd-edge-factory` and `trd-edge-stage
 VERIFIED-COMPLETING with the actual response as evidence, and `eng` stays only as a legacy fallback. A
 monitor that cries wolf on a healthy idle component is worse than no monitor — it trains the operator to
 ignore the one alert that matters.
+
+---
+
+## D-316 — 21st grammar trigger `stoch`: the first condition that reads a bar's POSITION WITHIN ITS RANGE
+
+**2026-08-14.** The grammar's 20 triggers cover price geometry (candles, rolling windows, fractal pivots) and
+four distinct indicator families: `rsi` normalises the SIZE of close-to-close moves, `squeeze` the RATIO of two
+volatility measures of the same bars, `supertrend` a trailing STATE, `rsidiv` a DISAGREEMENT between two
+series. **None of them computes where a bar CLOSED inside the recent high–low band.** That is a different
+quantity, not a re-parameterisation: %K is blind to how price arrived and RSI is blind to intrabar position,
+so the two can point in opposite directions on the same bars. `stoch` (ingest id=24, web:tradersagency) adds
+it — the trade is %K handing over to its own 3-bar average (%D) while leaving the 20/80 zone; stop at the
+`stopLookback` swing, exactly as `rsi` does.
+
+**Canonical 14/3/3 with 20/80 zones, held FIXED.** Same reasoning as Supertrend's 10/3 and the squeeze's
+20/2/1.5: the grammar already varies five axes, and freeing the periods would multiply the trial count —
+deflating every other candidate's DSR — for constants the source states as fixed.
+
+**Fails closed by construction.** A flat 14-bar window (highest high === lowest low) leaves raw %K `NaN`
+rather than inventing a 0/0, and that NaN propagates through both moving averages, so a market with no range
+produces no signal instead of a division artefact. Point-in-time: %K at bar *k* reads only the 14 bars ending
+at *k*, %D only the three %K values ending at *k*. Memoised identity-keyed (WeakMap), never by `bars.length`
+— the D-310 cross-market-bleed bug must not come back.
+
+**The control that carries the weight is byte-identical in its closes.** Base fixture: a −1/bar slide drives
+%K to 2.56 under %D 2.99, then the first up close lifts it to 7.96 over 4.49 → one long, +1R, `riskFrac`
+pinned at 2.7/94 so both the entry bar and the swing stop are locked. The control changes **one bar's LOW** to
+80 and nothing else. RSI is a function of closes alone, so it is unchanged *by construction* — and measurably
+still takes 0 trades. `stoch` inverts completely: the same closes now sit near the TOP of the band (%K 81.68),
+turning the oversold long into an overbought SHORT (−1R, `riskFrac` 4.2/93.5). No trigger that reads closes,
+or absolute range, can produce that flip. A second control inverts the verdict pair the other way (a shallow
+decline over a deep floor: `stoch` 0 / `rsi` 1, against the base case's 1 / 0), the 20-bar filler crosses %K
+over %D in **both** directions every other bar and still fires nothing — proving the zone gate rather than an
+absence of events — and a price-mirror fixture covers the short branch.
+
+**Verification.** 21/21 grammar + 263/263 `_shared` green; `deno check` clean; `trd-edge-factory` and
+`trd-edge-stage2` both redeployed (they share the grammar). Seeded 2,700 specs × 16 markets = 43,200 rows,
+SHA-256 `b55e6b84…9301e15c` computed independently in Postgres over the distinct seeded `spec_key`s and in
+TypeScript over `enumerate()+specKey()` — identical, so no orphan row was created. **Deploy verified by
+OUTPUT, not by the CLI message** (`?market=BTCUSDT&trigger=stoch`, the D-315 machine guard): 37 rows `done`,
+all non-null `n`, avg 188 trades (36–377), 3 thin, 0 passing the gate.
+
+**Honest status: `stoch` has produced nothing.** 0 candidates, 0 stage-2 survivors, 0 forward candidates;
+43,160 of its 43,200 rows are still pending. Its hypothesis is UNTESTED, not supported. Session-wide the
+gauntlet record is unchanged: 566 candidates, 566 stage-2 tested, 508 killed, 58 thin, **0 survivors**,
+`trd_forward_candidates` = 0 at a true trial count of 599,820. D-303's diagnosis still stands — the binding
+constraint is STOP GEOMETRY, not trigger vocabulary — and widening the vocabulary is worth doing only because
+each new primitive is cheap and independently falsifiable, not because the last twelve found anything.

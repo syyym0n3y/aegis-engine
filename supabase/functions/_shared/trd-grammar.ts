@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 20·3·3·3·5·4·5 = 54,000. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 21·3·3·3·5·4·5 = 56,700. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -309,6 +309,28 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       }
       return null;                                          // no prior pivot to diverge FROM → fail closed
     }
+    case "stoch": { // Stochastic %K/%D cross out of oversold/overbought (ingest id=24, web:tradersagency) — the 21st
+      // primitive, and the first whose condition is a POSITION-WITHIN-RANGE normalisation: %K asks "where in the
+      // last 14 bars' HIGH–LOW band did this bar close", a quantity no existing trigger computes. The distinction
+      // from `rsi` is not cosmetic and is exactly what the negative controls pin: RSI normalises the SIZE of
+      // close-to-close moves (up magnitude vs down magnitude) and is blind to where the bar sits in its range,
+      // while %K normalises POSITION and is blind to how the price got there. A market that grinds lower in small
+      // steps but keeps closing at the top of a collapsing range is deeply oversold on RSI and near 100 on %K.
+      // The trade is the momentum HANDOVER: %K crossing its own 3-bar average (%D) while still leaving the
+      // oversold zone (long) / overbought zone (short). Stop at the stopLookback swing, as `rsi` does.
+      // Canonical 14/3/3 held FIXED for the same reason as Supertrend's 10/3 and the squeeze's 20/2/1.5 — the
+      // grammar already varies five axes, and freeing the periods would multiply the trial count (deflating every
+      // other candidate's DSR) for constants the source states as fixed.
+      // Point-in-time: %K at bar k reads only the 14 bars ending at k, %D only the 3 %K values ending at k, so
+      // reading either at i uses nothing after i. Memoised identity-keyed (WeakMap), never by bars.length (D-310).
+      const so = stochSeries(bars);
+      if (i < STO_WARM + 1) return null;                    // need K[i-1]/D[i-1] defined as well as K[i]/D[i]
+      const k0 = so.k[i], d0 = so.d[i], k1 = so.k[i - 1], d1 = so.d[i - 1];
+      if (!(Number.isFinite(k0) && Number.isFinite(d0) && Number.isFinite(k1) && Number.isFinite(d1))) return null;
+      if (k1 <= d1 && k0 > d0 && k1 < STO_OS) return { side: "long", stop: lo };   // cross UP, out of oversold
+      if (k1 >= d1 && k0 < d0 && k1 > STO_OB) return { side: "short", stop: hi };  // cross DOWN, out of overbought
+      return null;
+    }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
       const pr = priorSessionRange(bars, i); if (!pr) return null;
@@ -444,6 +466,35 @@ function squeezeSeries(bars: Bar[]): SQSeries {
   _sqCache.set(bars, s); return s;
 }
 
+// Slow-stochastic series (D-316). Canonical 14/3/3 with the 20/80 zones, held FIXED — see the `stoch` case.
+const STO_N = 14, STO_K = 3, STO_D = 3, STO_OS = 20, STO_OB = 80;
+// First index whose %D is a MEASUREMENT rather than a warmup artefact: raw %K needs STO_N bars, the smoothed %K
+// needs STO_K of those, and %D needs STO_D of those.
+const STO_WARM = (STO_N - 1) + (STO_K - 1) + (STO_D - 1); // = 17
+interface STOSeries { k: Float64Array; d: Float64Array }
+let _stoCache = new WeakMap<Bar[], STOSeries>();
+/** Causal slow stochastic. A FLAT window (highest high === lowest low) leaves raw %K undefined rather than
+ * inventing a 0/0 value, and that NaN propagates through both averages, so the trigger fails closed on a
+ * market with no range instead of firing on a division artefact. */
+function stochSeries(bars: Bar[]): STOSeries {
+  const hit = _stoCache.get(bars); if (hit) return hit;
+  const n = bars.length;
+  const raw = new Float64Array(n).fill(NaN), k = new Float64Array(n).fill(NaN), d = new Float64Array(n).fill(NaN);
+  for (let i = STO_N - 1; i < n; i++) {
+    let hh = -Infinity, ll = Infinity;
+    for (let j = i - STO_N + 1; j <= i; j++) { if (bars[j].high > hh) hh = bars[j].high; if (bars[j].low < ll) ll = bars[j].low; }
+    if (hh > ll) raw[i] = 100 * (bars[i].close - ll) / (hh - ll);
+  }
+  const sma = (src: Float64Array, i: number, w: number): number => {
+    let s = 0; for (let j = i - w + 1; j <= i; j++) { if (!Number.isFinite(src[j])) return NaN; s += src[j]; }
+    return s / w;
+  };
+  for (let i = STO_N - 1 + (STO_K - 1); i < n; i++) k[i] = sma(raw, i, STO_K);
+  for (let i = STO_WARM; i < n; i++) d[i] = sma(k, i, STO_D);
+  const s: STOSeries = { k, d };
+  _stoCache.set(bars, s); return s;
+}
+
 // EMA-at-i helper. Identity-keyed for the same reason as the RSI cache above (D-310).
 let _emaCache = new WeakMap<Bar[], Map<number, number[]>>();
 function triggerSignal_ema(bars: Bar[], i: number, period: number): number {
@@ -551,4 +602,4 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
 /** Drops every memoized indicator series. With identity keying (D-310) this is no longer required for
  * CORRECTNESS — it exists so a test can force a cold recompute. Nothing in the live path calls it, and
  * nothing needs to: two different markets are two different array objects. */
-export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); }
+export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); _stoCache = new WeakMap(); }
