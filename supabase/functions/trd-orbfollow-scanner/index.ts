@@ -28,18 +28,23 @@ async function bars5m(sym:string):Promise<Bar[]>{try{
   if(!r.ok)return[];const j=await r.json();const res=j?.chart?.result?.[0];if(!res?.timestamp)return[];
   const q=res.indicators.quote[0],o:Bar[]=[];for(let i=0;i<res.timestamp.length;i++){const h=q.high[i],l=q.low[i],c=q.close[i];if([h,l,c].some((x:number)=>x==null||!Number.isFinite(x)))continue;const e=etOf(res.timestamp[i]);o.push({h,l,c,m:e.m,d:e.d});}
   return o;}catch{return[];}}
+// D-304 completion heartbeat. EVERY non-error exit beats — an early return (kill-switch / disarmed / past-cutoff) is a
+// COMPLETED run, not a silent fail, and trd_cron_health_v only compares dispatch time to last_run. The throw path
+// deliberately does NOT beat, so a real crash still reads SILENT-FAIL-SUSPECT. EOD beats under its own fn key so a
+// flatten tick can never mask a failed 30m scanner dispatch.
+const beat=(outcome:string,fn="trd-orbfollow-scanner")=>fetch(`${SB}/rest/v1/rpc/trd_beat`,{method:"POST",headers:H,body:JSON.stringify({p_fn:fn,p_outcome:outcome})}).then(()=>{}).catch(()=>{});
 async function pool<T,R>(items:T[],n:number,fn:(x:T)=>Promise<R>):Promise<R[]>{const out:R[]=[];let i=0;
   await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{while(i<items.length){const k=i++;out[k]=await fn(items[k]);}}));return out;}
 Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Control-Allow-Origin":"*"};try{
   const ks=await fetch(`${SB}/rest/v1/trd_killswitch?id=eq.default&select=active`,{headers:H}).then(r=>r.json()).catch(()=>[]);
-  if(ks?.[0]?.active)return new Response(JSON.stringify({ok:true,skipped:"kill-switch active"}),{headers:cors});
+  if(ks?.[0]?.active){await beat("skipped: kill-switch active");return new Response(JSON.stringify({ok:true,skipped:"kill-switch active"}),{headers:cors});}
   const dbg=new URL(req.url).searchParams.get("debug")==="1";
   const nowMin=etOf(Math.floor(Date.now()/1000)).m;
   // EOD FLATTEN (safety + backtest fidelity): the edge is INTRADAY — flatten ALL orbfollow positions just before the
   // close so no position is carried naked overnight (day-TIF bracket legs cancel at close). Runs even if DISARMED
   // (positions must never strand); only in the 15:50-16:05 ET window (DST-safe via two cron ticks that no-op else).
   if(new URL(req.url).searchParams.get("eod")==="1"){
-    if(nowMin<950||nowMin>965)return new Response(JSON.stringify({ok:true,eod:true,skip:`not close window (ET ${nowMin})`}),{headers:cors});
+    if(nowMin<950||nowMin>965){await beat(`skipped: not close window (ET ${nowMin})`,"trd-orbfollow-scanner-eod");return new Response(JSON.stringify({ok:true,eod:true,skip:`not close window (ET ${nowMin})`}),{headers:cors});}
     const uni=new Set([...UNIVERSE,"SPY","QQQ","DIA","GLD"]);
     const positions=await fetch(`${PAPER}/v2/positions`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
     const oo=await fetch(`${PAPER}/v2/orders?status=open&limit=500`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
@@ -48,10 +53,11 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
       for(const o of (Array.isArray(oo)?oo:[]) as {id:string,symbol:string}[])if(o.symbol===p.symbol)await fetch(`${PAPER}/v2/orders/${o.id}`,{method:"DELETE",headers:AH}).catch(()=>{});
       const ok=(await fetch(`${PAPER}/v2/positions/${p.symbol}?percentage=100`,{method:"DELETE",headers:AH}).catch(()=>null))?.ok;if(ok)flat.push(p.symbol);}
     await fetch(`${SB}/rest/v1/trd_trades?edge=eq.orbfollow&status=eq.open`,{method:"PATCH",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({status:"closed",exit_at:new Date().toISOString()})}).catch(()=>{});
+    await beat(`eod flatten: ${flat.length} closed`,"trd-orbfollow-scanner-eod");
     return new Response(JSON.stringify({ok:true,eod:true,flattened:flat},null,2),{headers:cors});
   }
   const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);
-  if(!arm?.[0]?.armed&&!dbg)return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});
+  if(!arm?.[0]?.armed&&!dbg){await beat("skipped: NOT ARMED");return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});}
   const acct=await fetch(`${PAPER}/v2/account`,{headers:AH}).then(r=>r.json());const equity=Number(acct.equity)||100000;
   const cfg=await fetch(`${SB}/rest/v1/trd_exec_config?edge=eq.orbfollow&select=size_notional`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   const sizeN=Number(cfg?.[0]?.size_notional)>0?Number(cfg[0].size_notional):RISK_NOTIONAL; // config-driven (D-279); scale = update trd_exec_config
@@ -63,7 +69,7 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const fired=new Set((Array.isArray(firedRows)?firedRows:[]).map((r:{sym:string})=>r.sym));let openCount=fired.size;
   const bars=await pool(UNIVERSE,CONC,bars5m);
   const out:Record<string,unknown>[]=[];let placed=0;
-  if(!dbg&&nowMin>=900)return new Response(JSON.stringify({ok:true,edge:"orbfollow-broad",note:"past 15:00 ET — no NEW entries (positions need room; EOD flatten handles exits)",nowMin}),{headers:cors});
+  if(!dbg&&nowMin>=900){await beat(`skipped: past 15:00 ET (ET ${nowMin}) — no NEW entries`);return new Response(JSON.stringify({ok:true,edge:"orbfollow-broad",note:"past 15:00 ET — no NEW entries (positions need room; EOD flatten handles exits)",nowMin}),{headers:cors});}
   for(let idx=0;idx<UNIVERSE.length;idx++){const sym=UNIVERSE[idx],b=bars[idx];
     if(openCount>=POS_CAP){out.push({sym,skip:"position cap"});continue;}
     if(fired.has(sym)||heldSyms.has(sym)){out.push({sym,skip:"already/held"});continue;}
@@ -88,6 +94,6 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     if(resp.ok){await fetch(`${SB}/rest/v1/trd_trades`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({edge:"orbfollow",sym,side:dir>0?"long":"short",qty,entry_px:+px.toFixed(2),status:"open"})}).catch(()=>{});openCount++;placed++;out.push({sym,dir:dir>0?"long":"short",qty,placed:true});}
     else out.push({sym,placed:false,detail:(await resp.text()).slice(0,120)});
   }
-  await fetch(`${SB}/rest/v1/rpc/trd_beat`,{method:"POST",headers:H,body:JSON.stringify({p_fn:"trd-orbfollow-scanner",p_outcome:`placed ${placed}, open ${openCount}`})}).catch(()=>{}); // D-304 completion heartbeat
+  await beat(`placed ${placed}, open ${openCount}`);
   return new Response(JSON.stringify({ok:true,edge:"orbfollow-broad",universe:UNIVERSE.length,openCount,placed,results:dbg?out.filter(o=>o.dir):out},null,2),{headers:cors});
 }catch(e){return new Response(JSON.stringify({ok:false,err:String(e).slice(0,300)}),{status:500,headers:cors});}});
