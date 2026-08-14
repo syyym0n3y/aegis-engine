@@ -5944,3 +5944,23 @@ gauntlet record is unchanged: 566 candidates, 566 stage-2 tested, 508 killed, 58
 `trd_forward_candidates` = 0 at a true trial count of 599,820. D-303's diagnosis still stands — the binding
 constraint is STOP GEOMETRY, not trigger vocabulary — and widening the vocabulary is worth doing only because
 each new primitive is cheap and independently falsifiable, not because the last twelve found anything.
+
+## D-313 — Effective-N deflation: built, and it confirms the candidates fail on SAMPLE SIZE, not N (2026-08-14)
+
+Hypothesis (D-312 frontier): the wide-stop candidates (supertrend-AVAX, sweep-atr6, ssweep-wide100) that are
+net-profitable at pessimistic cost + high skill-t + walk-forward 4-5/5 might be real edges buried by a DSR
+deflated against the raw 623k trials (which are heavily correlated). Built `trd-effective-n`: samples scored
+specs, runs them on a common tape, and computes Nyholt/Cheverud effective-number-of-tests from the correlation
+matrix (Var(λ)=trace(R²)/M−1, no eigen-decomposition). Stores n_eff to trd_search_stats; stage-2 now deflates by
+n_eff (fallback raw). This CORRECTS a mis-specified N — the DSR>0.95 threshold is untouched (anti-gaming).
+
+RESULT (measured, not assumed): n_eff = 572,538 of 638,640 raw — ratio 0.90, ρ̄ 0.27. The trials are ~90%
+INDEPENDENT when sampled across the grid; the raw count was NOT the over-conservative villain. Re-ran stage-2
+under n_eff: still 0 survivors, best DSR still 0.000 (sweep SOL +0.50R, n=53). The math confirms it: sqrt(2·ln N)
+moves from 4.85→4.70 even at a 10× lower N — the binding constraint is SAMPLE SIZE (n=53-139), not N. A 53-trade
+candidate cannot overcome even a fair multiple-testing penalty.
+
+HONEST CONCLUSION: we do NOT have validated edges hiding behind an over-harsh deflation. The wide-stop candidates
+are genuine LEADS (profitable at cost, high skill, walk-forward-consistent) but UNDER-POWERED — they need forward
+trade ACCUMULATION to earn the sample the gate correctly demands, not a looser gate. Next legitimate step:
+forward-paper the top wide-stop candidates and let n grow, then re-test. The gate held; the engine is honest.

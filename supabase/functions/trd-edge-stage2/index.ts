@@ -107,8 +107,13 @@ SERVE(async (req) => {
   try {
     const u = new URL(req.url);
     const batch = Math.min(30, +(u.searchParams.get("batch") || "12"));
+    // D-313: deflate by the EFFECTIVE independent-trial count (trd_search_stats.n_eff, Nyholt) when available —
+    // the grammar's trials are correlated, so raw N over-penalises. Falls back to the raw counter if unestimated.
+    // This corrects a mis-specified N; it does NOT touch the DSR>0.95 threshold.
+    const effRow = await fetch(`${SB}/rest/v1/trd_search_stats?id=eq.global&select=n_eff`, { headers: H }).then((r) => r.json()).catch(() => []);
     const trialRow = await fetch(`${SB}/rest/v1/trd_trial_counter?id=eq.global&select=total`, { headers: H }).then((r) => r.json()).catch(() => []);
-    const nTrials = Math.max(1000, Number((trialRow?.[0] as { total?: number })?.total) || 100000);
+    const nEff = Number((effRow?.[0] as { n_eff?: number })?.n_eff);
+    const nTrials = Math.max(1000, Number.isFinite(nEff) && nEff > 0 ? nEff : (Number((trialRow?.[0] as { total?: number })?.total) || 100000));
     // best untested candidates first (highest in-sample abs_r), skip any already in stage2_results.
     // ACCOUNTABILITY FIX (D-303b): fetch the WHOLE candidate set (bounded, ~hundreds), not top batch*3 — else once
     // the top few are tested the filtered todo is always empty and stage-2 silently stalls at the high-abs_r head
