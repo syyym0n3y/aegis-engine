@@ -79,3 +79,17 @@ See [`docs/trd/STAGE1.md`](./docs/trd/STAGE1.md) for the full spec + VERIFY per 
   NOTE: won't fire in the current bull regime — that is the POINT; registered_at starts the immutable forward
   clock now so the forward sample is legitimate when the bear regime arrives. Do as its own focused pass (touches the
   evidence ledger — must be right, not crammed).
+
+## EDGE FACTORY — post-D-303 queue (cost model now honest)
+- [x] `riskFrac` on every grammar trade → bps-of-notional fees convert exactly to R.
+- [x] `trd-edge-stage2` second gate (real cost + 6-fold WF + DSR vs true trial count + PBO/CSCV over the
+      selection neighbourhood). 147/147 factory candidates killed; verdicts in `trd_lineage`.
+- [x] Factory gate fixed at the source (gross run + per-trade riskFrac costing on setup, control, OOS, $).
+- [ ] **WIDEN THE STOP GEOMETRY (the direct consequence, highest value).** Every trigger class dies the
+      same way, so the trigger is not the variable — 1R is too small vs notional (median 0.28%). Add wider
+      stops to `GRAMMAR.stopLookback` (e.g. 30/60) and/or an ATR-multiple stop rule, so `riskFrac` reaches
+      ~1-2% where a 10bp fee costs ~0.05R/side. Re-seed the queue for the new points only (specKey must
+      match exactly). This is a real hypothesis, NOT a fix: wider stops may simply lose more per trade.
+- [ ] **HIGHER TIMEFRAME variant** (1h/4h Binance klines) — same grammar, larger `riskFrac` by construction.
+      Needs a timeframe dimension in the queue/cache keys (`trd_bars_cache` is keyed by market only).
+- [ ] Re-check: nothing in the pool needs re-running (under-costing only ever loosened the gate, D-303).

@@ -16,7 +16,11 @@ import { edgeVsRandom } from "../_shared/trd-random-control.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
-const COST_R = 0.05;          // per-side cost in R (grammar nets it in) — pessimistic, gold-calibrated (D-080)
+// D-303: cost is charged in BPS OF NOTIONAL, converted per-trade through the trade's own riskFrac
+// (costR/side = (FEE_BPS/1e4)/riskFrac) — NOT a flat R constant. The old flat 0.05R/side was calibrated on
+// gold; on 15m crypto the median stop is ~0.28% of notional, so a 10bp Binance spot taker fee is really
+// ~0.36R/side — 7× the constant. Every one of the first 147 promoted candidates died on this correction.
+const FEE_BPS = 10;           // Binance spot VIP0 taker, per side; entries are marketable at a bar open
 const RISK_USD = 500;         // $ risked per 1R (0.5% of a $100k book) — same basis as trd_edge_dollar
 const MIN_N = 30;             // fail closed below 30 trades
 // The falsification bar MUST deflate for the search size, or 38,880 trials manufacture ~1,900 false t≥2 edges.
@@ -107,13 +111,16 @@ function randomControl(bars: Bar[], s: ComponentSpec, count: number, seed: numbe
       else { if (b.high >= stop) { r = -1; break; } if (b.low <= target) { r = s.rr; break; } }
     }
     if (r === null) r = dir * (bars[Math.min(n, end) - 1].close - entry) / risk; // mark-to-market at horizon
-    out.push(r - 2 * COST_R);
+    out.push(r - 2 * (FEE_BPS / 1e4) / (risk / entry)); // same bps-of-notional costing as the setup leg
   }
   return out;
 }
 
+/** Real cost in R for one trade: a bps-of-notional fee divided by how big 1R is as a fraction of notional. */
+const netR = (t: CTrade) => t.r - 2 * (FEE_BPS / 1e4) / t.riskFrac;
+
 function toHarness(t: CTrade): HarnessTrade {
-  return { r: t.r, stopFrac: 1, period: t.entryTs.slice(0, 7), regime: { trend: t.trend, vol: t.vol, session: t.session } };
+  return { r: netR(t), stopFrac: 1, period: t.entryTs.slice(0, 7), regime: { trend: t.trend, vol: t.vol, session: t.session } };
 }
 
 Deno.serve(async (req) => {
@@ -151,26 +158,27 @@ Deno.serve(async (req) => {
       const updates: Record<string, unknown>[] = [];
       for (const { spec_key, spec } of specs as { spec_key: string; spec: ComponentSpec }[]) {
         if (Date.now() - t0 >= budgetMs || processed >= maxSpecs) break;
-        const trades = runComponentTrades(bars, spec, { costRPerSide: COST_R });
+        // run GROSS (costRPerSide 0) then re-cost each trade from its own riskFrac (D-303)
+        const trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac > 0);
         // UNIFORM columns across every row — PostgREST merge-duplicates rejects a batch whose rows differ in shape,
         // so thin and scored rows MUST carry the same keys (metrics null-defaulted). `spec` satisfies the INSERT-path
         // NOT NULL; `source` is omitted so provenance (grammar vs ingest:*) is preserved on update.
         const upd: Record<string, unknown> = { spec_key, market, spec, status: "done", n: trades.length, run_at: now,
           vs_random_edge: null, vs_random_t: null, holds_both: null, skill_usd: null, skill_frac: null, passes: false };
         if (trades.length >= MIN_N) {
-          const setupR = trades.map((t) => t.r);
+          const setupR = trades.map(netR);
           const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 131 + trades.length); // matched-count honest control
           const vr = edgeVsRandom(setupR, ctrlR, 2, MIN_N);
           const months = [...new Set(trades.map((t) => t.entryTs.slice(0, 7)))].sort();
           const mid = months[Math.floor(months.length / 2)];
-          const h1 = trades.filter((t) => t.entryTs.slice(0, 7) < mid).map((t) => t.r);
-          const h2 = trades.filter((t) => t.entryTs.slice(0, 7) >= mid).map((t) => t.r);
+          const h1 = trades.filter((t) => t.entryTs.slice(0, 7) < mid).map(netR);
+          const h2 = trades.filter((t) => t.entryTs.slice(0, 7) >= mid).map(netR);
           const c1 = ctrlR.slice(0, h1.length), c2 = ctrlR.slice(h1.length);
           const e1 = h1.length && c1.length ? mean(h1) - mean(c1) : NaN, e2 = h2.length && c2.length ? mean(h2) - mean(c2) : NaN;
           const holdsBoth = h1.length >= 10 && h2.length >= 10 && e1 > 0 && e2 > 0;
           const hs = trades.map(toHarness), hc = ctrlR.map((r) => ({ r, stopFrac: 1 } as HarnessTrade));
           const dv = scoreDollar(spec_key, hs, hc, 0, RISK_USD, convOf);
-          const netAbsR = mean(setupR); // already net of the factory's cost (grammar subtracts 2·COST_R per trade)
+          const netAbsR = mean(setupR); // net of REAL bps-of-notional cost, per-trade via riskFrac (D-303)
           // PROMOTE requires BOTH: skill (beats random, deflated t) AND profitability (net abs R > 0). D-302: skill
           // alone promoted 87% "less-bad-than-random LOSERS" (e.g. fvg rr0.5: t=7.7 but abs_r −0.14). A tradeable
           // edge must make money in absolute terms, not merely lose less than a coin flip.

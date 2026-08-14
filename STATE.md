@@ -1,6 +1,20 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-303: the Edge Factory's COST MODEL was the bug; 147/147 candidates dead.**
+Added `riskFrac` (=|entry−stop|/entry) to the grammar so a fee quoted in bps-of-notional can be converted
+exactly into R. Measured: median stop on 15m crypto = **0.28% of notional**, so Binance's 10bp/side taker
+really costs **0.54R per side** — the factory's flat 0.05R/side understated cost ~7×. Every one of the 147
+promoted candidates flips from +0.138R avg gross to **−0.947R net**; best is −0.359R; **0/147 positive even
+at a 5bp/side** perp/discount fee; 0/147 hold a majority of 6 walk-forward folds. Not one candidate's gross
+expectancy (max +0.271R) reaches its own round-trip cost (min 0.516R). Shipped `trd-edge-stage2` (real cost
++ 6-fold WF + DSR vs the true trial count + PBO/CSCV over the selection neighbourhood) and FIXED the factory
+gate at the source (gross run, per-trade riskFrac costing on setup, random-control, OOS and dollar legs).
+No re-run of the 44.6k scored specs needed: under-costing only ever made the gate more permissive. The
+failure is STOP GEOMETRY, not the trigger — every class dies identically; the next unit is widening the
+grammar to stops/timeframes where 1R is ~1-2% of notional. Queue 47k/121k done, factory healthy. ↓ prior status stands. ↓
+
+## Prior
 **2026-08-08 (Opus 4.8) — DEFINITIVE GLOBAL VERDICT (FX-normalized, D-220).** Expanded intl universe to 693 liquid
 names (18 exchanges) + FX-NORMALIZED the sweep (14 live FX pairs, GBp/ZAc handled → correct USD tiers). rip-short FAILS
 at EVERY international tier (even large flat: -0.010, t=-0.30); D-219's positive was a currency artifact. **DEFINITIVE:

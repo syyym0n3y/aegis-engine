@@ -110,3 +110,19 @@ Deno.test("runComponent produces trades and applies cost", () => {
   const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
   assert(sum(costly) < sum(free), "cost must reduce total R");
 });
+
+Deno.test("riskFrac reports 1R as a fraction of notional (bps→R conversion, D-303)", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "inside" as const, emaPeriod: 2, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // Same construction as the inside-bar test: mother 110/104, inside 109/105, up-break close 111,
+  // fill at the NEXT bar's open (111), stop = mother low 104 → risk 7 on a 111 entry → riskFrac ≈ 0.0631.
+  const asc = (n: number): Bar[] => Array.from({ length: n }, (_, i) => { const p = 90 + i; return bar(p - 0.3, p + 0.5, p - 0.5, p + 0.2, i); });
+  const up: Bar[] = [...asc(10), bar(105, 110, 104, 106, 10), bar(107, 109, 105, 108, 11), bar(108, 112, 107, 111, 12), bar(111, 114, 110, 113, 13), bar(118, 120, 117, 119, 14)];
+  const tr = runComponentTrades(up, spec, { costRPerSide: 0 });
+  assert(tr.length > 0);
+  const t = tr[0];
+  assert(Math.abs(t.riskFrac - 7 / 111) < 1e-9, `riskFrac ${t.riskFrac} != ${7 / 111}`);
+  // the whole point: a 10bp/side fee costs (0.0010/riskFrac) R per side — here ~0.016R, but a stop 10x
+  // tighter would cost ~0.16R/side. The flat cost constant cannot express that.
+  assert((0.0010 / t.riskFrac) > 0, "bps→R conversion must be finite and positive");
+});

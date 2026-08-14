@@ -5173,3 +5173,43 @@ counter-trend, tight stop, WIDE target (the cut-losses/run-winners asymmetry). s
 = net abs_r +0.087 (min +0.047) on 5 markets, t~5.0. Recorded as trd_lineage `sweep-against-rr3` (lead,
 stage2-pending); the fvg mirage was demoted to killed. Far fewer survive the profit bar (5-6 markets vs 16)
 — honest: the profitability requirement is much harder than skill alone, and that is the point.
+
+## D-303 — The cost model was the bug: flat-R costing hid a 7× fee. 147/147 candidates dead (2026-08-14)
+
+The factory charged cost as a FLAT 0.05R per side (a constant calibrated on gold, D-080). A broker does not
+charge in R — it charges **bps of notional**. Converting requires knowing how big 1R is as a fraction of
+notional, which the grammar never recorded. Added `riskFrac = |entry − stop| / entry` to `CTrade` (+ test),
+which makes the conversion exact: `costR/side = (feeBps/1e4) / riskFrac`.
+
+**The measurement (147 factory candidates, 1yr 15m, 16 keyless Binance markets):**
+- median `riskFrac` = **0.0028** — the 3/5/10-bar swing stop on 15m crypto is ~0.28% of notional.
+- Binance spot VIP0 taker = 10bp/side → mean real cost **0.542R per side** (≈1.08R round trip), vs the
+  0.05R/side assumed. The constant understated cost by ~7×; the mean exceeds the median because 1/riskFrac
+  has a fat tail (the tightest stops pay the most R).
+- avg gross +0.138R/trade → avg **net −0.947R** at 10bp. Best candidate: **−0.359R**. At a 5bp/side
+  (BNB-discount / perp-taker) sensitivity leg: **0 of 147 positive**, best −0.100R.
+- 6-fold walk-forward on the real-cost series: **0 of 147** had a majority of positive folds.
+- **147/147 killed.** Not one candidate's gross expectancy (max +0.271R) even reaches its own round-trip
+  cost (min 0.516R). This is not a marginal fail — the geometry is cost-dead by a wide margin.
+
+Built `trd-edge-stage2` (the second gate: real bps-of-notional cost + 6-fold walk-forward + DSR deflated by
+the TRUE trial count + PBO/CSCV over the candidate's own selection neighbourhood; cheap legs batch, deep
+legs run only on cheap-leg survivors, and an unmeasured leg is reported null, never as a pass). Verdicts in
+`trd_edge_scorecard.detail.stage2` + `trd_lineage`.
+
+FIX SHIPPED to the factory: it now runs the grammar GROSS and re-costs every trade from its own `riskFrac`
+at 10bp/side — setup leg, random-control leg, split-half OOS and the dollar harness all use the same model.
+The gate is honest at the source, so the mirage cannot be manufactured again.
+
+NO RE-RUN of the 44.6k already-scored specs is needed, and that is a claim about direction: under-costing
+only makes the `netAbsR>0` gate MORE permissive, so nothing true was rejected on cost — only false positives
+were let through, and every one of those (147) has now been stage-2 killed.
+
+**What this points at (the next unit, not a claim):** the failure is the STOP GEOMETRY, not the trigger.
+Every trigger class dies the same way. A fee is only affordable when 1R is large relative to notional —
+`riskFrac` ~1-2% (wider stops: 30/60-bar swings or ATR multiples) or a higher timeframe (1h/4h) would put
+the real cost back near the 0.05R/side the factory assumed. The grammar currently cannot express either.
+
+Concurrency note: a parallel factory run authored its own `trd-edge-stage2` at the same path; it has since
+adopted this riskFrac cost model (at a 20bp stress fee) and owns `trd_stage2_results` /
+`trd_forward_candidates`. Left in place — the cost model is now consistent across both.
