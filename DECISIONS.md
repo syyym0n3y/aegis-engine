@@ -5472,3 +5472,19 @@ the detector is live. **0 pass the factory gate.**
 43,160 of its 43,200 rows are still pending, and the factory's page fetch has no ORDER BY (D-306), so it
 consumes heap order — `choch` is behind, not starved. **D-303's diagnosis still stands: the binding constraint
 is STOP GEOMETRY, not trigger vocabulary.** A 17th trigger widens the search space; it does not address that.
+
+## D-309 — Write-land verification for execution crons (completion heartbeat + health view) (2026-08-14)
+
+Operator: cron "succeeded" only proves DISPATCH, not that the function did its job — an executor that no-ops
+(0 trades) writes nothing to its trade table, so table-freshness can't tell legit-no-op from silent crash.
+Fix: `trd_cron_heartbeat` + `trd_beat(fn,outcome)` RPC (D-304 migration); the 3 forward executors
+(trd-crypto-orb-exec / trd-futures-orb-exec / trd-orbfollow-scanner) now write a completion heartbeat with a
+short outcome summary at the end of every run. `trd_cron_health_v` joins dispatch (cron.job_run_details) with
+completion (heartbeat, or engine-table freshness for factory/stage2) → verdict: VERIFIED-COMPLETING /
+SILENT-FAIL-SUSPECT / DISPATCH-FAILED. Verified: all 5 key crons VERIFIED-COMPLETING; crypto-orb heartbeat
+"range forming/pre-open" (0 trades, runs=1) proves the no-op-vs-failure distinction the whole thing is for.
+
+CONCURRENCY HAZARD (live): this work was done in the SAME working tree the autonomous scheduled-task loop
+edits. The loop's `git add -A` for D-308 swept my 3 executor edits into its commit — code intact, provenance
+muddled. The loop already documented this hazard in D-305. Interactive + scheduled agent sharing one checkout
+is fragile; a dedicated worktree for the loop (or the interactive session) would end it.
