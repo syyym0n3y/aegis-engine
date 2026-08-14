@@ -1,6 +1,21 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-307: stage-2 had written NOTHING for 5.6h; PostgREST was rejecting every
+mixed-shape batch, silently.** Stage-2's last persisted row was 07:33Z; the 3-minute cron fired **140 times,
+all HTTP 200**, and wrote **zero rows** (~113 wasted invocations reporting `ok:true, tested:12`). Root cause,
+verified by making the write loud: `PGRST102 "All object keys must match"` (HTTP 400) — PostgREST demands an
+identical key set across a bulk INSERT and rejects the batch **atomically**; stage-2 built three row shapes
+(thin-no-`n`, thin-with-`n`, full verdict), so the first batch mixing thin with scored lost all 12 rows, then
+rebuilt and re-failed the identical batch every 3 minutes forever. Fixed with one all-keys-explicit-null row
+template **plus the guard that matters**: `writeRows()` checks `res.ok`, `countPersisted()` reads back what
+landed, and the response reports `computed`/`persisted`/`lost` and returns **HTTP 500** when `lost > 0`.
+Verified independently of the function's own claim: post-fix `computed 12 / persisted 12 / lost 0`, DB
+`trd_stage2_results` **186 → 198** rows, `max(run_at)` 7s old. The outage hid no edge — it was destroying kill
+verdicts. **198/199 candidates now tested: 183 killed, 15 thin, 0 survivors, `trd_forward_candidates` = 0.**
+Queue healthy throughout (316,120 done, `run_at` 47s old). Same swallowed-write pattern remains at 8 sites in
+`trd-edge-factory` — currently writing, so not in outage, but it is the same landmine and is its own unit. ↓
+
 **2026-08-14 (Opus 5) — D-306: grammar widened to 16 triggers (`soldiers`); stage-2 record 139 tested / 0
 survivors.** Loop healthy and writing: queue 62,417 done, max `run_at` 0.78 min old, 4,302 rows in the trailing
 10 min. Stage-2 fired once (12 tested, 0 survivors); cumulative **139 tested, 0 survivors, 0 rows in

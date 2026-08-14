@@ -23,6 +23,44 @@ const HORIZON = 400;
 const mean = (a: number[]) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
 const mulberry = (s: number) => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 
+// D-307 ACCOUNTABILITY: a write that fails must be LOUD. Every write in this pipeline used to be
+// `fetch(...).catch(() => {})` — fetch does NOT throw on 4xx/5xx, so a rejected INSERT was discarded
+// silently while the response still reported `tested: N`. That is how stage-2 ran 113 cron invocations
+// (07:33→13:12, all HTTP 200) writing ZERO rows: a false all-clear, the D-300b/D-303b failure class again.
+// This helper surfaces status + body, and the caller READS BACK what actually landed before claiming it.
+type WriteResult = { table: string; attempted: number; ok: boolean; status: number; err: string | null };
+async function writeRows(table: string, rows: Record<string, unknown>[], onConflict: string): Promise<WriteResult> {
+  if (!rows.length) return { table, attempted: 0, ok: true, status: 200, err: null };
+  try {
+    const r = await fetch(`${SB}/rest/v1/${table}?on_conflict=${onConflict}`, {
+      method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows),
+    });
+    if (r.ok) return { table, attempted: rows.length, ok: true, status: r.status, err: null };
+    return { table, attempted: rows.length, ok: false, status: r.status, err: (await r.text().catch(() => "")).slice(0, 400) };
+  } catch (e) { return { table, attempted: rows.length, ok: false, status: 0, err: String(e).slice(0, 300) }; }
+}
+// read-back: how many of the edges we just claimed to write are ACTUALLY in the table now
+async function countPersisted(table: string, edges: string[]): Promise<number> {
+  if (!edges.length) return 0;
+  const list = edges.map((e) => `"${e.replace(/"/g, '""')}"`).join(",");
+  const r = await fetch(`${SB}/rest/v1/${table}?edge=in.(${encodeURIComponent(list)})&select=edge`, { headers: H })
+    .then((x) => x.json()).catch(() => []);
+  return Array.isArray(r) ? r.length : 0;
+}
+
+// D-307 ROOT CAUSE: PostgREST bulk-insert requires EVERY object in the array to have an identical key set
+// (PGRST102 "All object keys must match") and rejects the WHOLE batch atomically if not. The three row
+// shapes below (no-spec/thin-no-n, thin-with-n, full verdict) differed, so any batch that mixed a thin row
+// with a scored row lost all 12 rows — silently, because the write error was swallowed. Every row is now
+// built from one template with explicit nulls, so the shapes can never drift apart again.
+const STAGE_ROW_TEMPLATE: Record<string, unknown> = {
+  edge: null, spec_key: null, market: null, n: null, net_r_pess: null, skill_t: null,
+  deflated_sharpe: null, gate_passed: null, wf_folds: null, wf_folds_pos: null,
+  verdict: null, killed_by: null, run_at: null,
+};
+const stageRow = (r: Record<string, unknown>): Record<string, unknown> =>
+  ({ ...STAGE_ROW_TEMPLATE, ...r, run_at: r.run_at ?? new Date().toISOString() });
+
 async function getBars(market: string): Promise<Bar[]> {
   const c = await fetch(`${SB}/rest/v1/trd_bars_cache?market=eq.${market}&select=bars`, { headers: H }).then((r) => r.json()).catch(() => []);
   const b = Array.isArray(c) && c.length ? (c[0] as { bars: Bar[] }).bars : [];
@@ -71,10 +109,10 @@ Deno.serve(async (req) => {
       const bars = barsCache.get(market)!;
       const specRow = await fetch(`${SB}/rest/v1/trd_edge_queue?spec_key=eq.${encodeURIComponent(spec_key)}&market=eq.${market}&select=spec&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
       const spec = (Array.isArray(specRow) && specRow.length ? (specRow[0] as { spec: ComponentSpec }).spec : null);
-      if (!spec || bars.length < 500) { stageRows.push({ edge, spec_key, market, verdict: "thin", killed_by: "no spec/bars", run_at: new Date().toISOString() }); continue; }
+      if (!spec || bars.length < 500) { stageRows.push(stageRow({ edge, spec_key, market, verdict: "thin", killed_by: "no spec/bars" })); continue; }
       // run GROSS then re-cost each trade from its own riskFrac at the STRESS fee (D-303, matches factory model)
       const trades = runComponentTrades(bars, spec, { costRPerSide: 0 }).filter((t) => t.riskFrac >= MIN_RISK_FRAC); // D-305 tradeability floor
-      if (trades.length < MIN_N) { stageRows.push({ edge, spec_key, market, n: trades.length, verdict: "thin", killed_by: `<${MIN_N} trades`, run_at: new Date().toISOString() }); continue; }
+      if (trades.length < MIN_N) { stageRows.push(stageRow({ edge, spec_key, market, n: trades.length, verdict: "thin", killed_by: `<${MIN_N} trades` })); continue; }
       const setupR = trades.map(netR), netRpess = mean(setupR);
       const ctrlR = randomControl(bars, spec, trades.length, spec_key.length * 197 + trades.length);
       const hs: HarnessTrade[] = trades.map((t) => ({ r: netR(t), stopFrac: 1, period: t.entryTs.slice(0, 7) }));
@@ -87,17 +125,29 @@ Deno.serve(async (req) => {
       const survive = sc.gatePassed && sc.vsRandomT >= 2 && netRpess > 0 && wfPos >= Math.ceil(WF_FOLDS * 0.6);
       const verdict = survive ? "stage2-survivor" : "stage2-killed";
       const kb = survive ? null : [!sc.gatePassed ? `DSR-gate(${sc.gateFailing.join(",")})` : "", sc.vsRandomT < 2 ? "skill-t<2" : "", netRpess <= 0 ? "unprofitable@pess-cost" : "", wfPos < Math.ceil(WF_FOLDS * 0.6) ? `WF ${wfPos}/${WF_FOLDS}` : ""].filter(Boolean).join("; ");
-      stageRows.push({ edge, spec_key, market, n: trades.length, net_r_pess: +netRpess.toFixed(4), skill_t: +sc.vsRandomT.toFixed(2), deflated_sharpe: sc.deflatedSharpe, gate_passed: sc.gatePassed, wf_folds: WF_FOLDS, wf_folds_pos: wfPos, verdict, killed_by: kb, run_at: new Date().toISOString() });
+      stageRows.push(stageRow({ edge, spec_key, market, n: trades.length, net_r_pess: +netRpess.toFixed(4), skill_t: +sc.vsRandomT.toFixed(2), deflated_sharpe: sc.deflatedSharpe, gate_passed: sc.gatePassed, wf_folds: WF_FOLDS, wf_folds_pos: wfPos, verdict, killed_by: kb }));
       if (survive) {
         fwdRows.push({ edge, spec_key, market, spec, net_r_pess: +netRpess.toFixed(4), deflated_sharpe: sc.deflatedSharpe, wf_folds_pos: wfPos, status: "promoted" });
         linRows.push({ id: `s2:${spec_key}@${market}`, name: `${spec_key}@${market}`, family: "stage2-survivor", hypothesis: `${spec_key} on ${market}`, test_method: "stage-2: DSR deflated by true trial count + K-fold walk-forward + pessimistic cost", key_metric: `DSR ${sc.deflatedSharpe}, WF ${wfPos}/${WF_FOLDS}, net_r@2xcost ${netRpess.toFixed(4)}, skill t=${sc.vsRandomT.toFixed(2)}`, verdict: "survivor", status: "forward-promoted", decision_refs: ["D-303"] });
         results.push({ edge, SURVIVOR: true, dsr: sc.deflatedSharpe, wf: `${wfPos}/${WF_FOLDS}`, net_r_pess: +netRpess.toFixed(4) });
       }
     }
-    if (stageRows.length) await fetch(`${SB}/rest/v1/trd_stage2_results?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(stageRows) }).catch(() => {});
-    if (fwdRows.length) await fetch(`${SB}/rest/v1/trd_forward_candidates?on_conflict=edge`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(fwdRows) }).catch(() => {});
-    if (linRows.length) await fetch(`${SB}/rest/v1/trd_lineage?on_conflict=id`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(linRows) }).catch(() => {});
+    // D-307: writes are checked, then VERIFIED by read-back. `tested` now means "persisted", not "computed".
+    const writes = [
+      await writeRows("trd_stage2_results", stageRows, "edge"),
+      await writeRows("trd_forward_candidates", fwdRows, "edge"),
+      await writeRows("trd_lineage", linRows, "id"),
+    ];
+    const persisted = await countPersisted("trd_stage2_results", stageRows.map((r) => String(r.edge)));
+    const writeErrors = writes.filter((w) => !w.ok);
+    const lost = stageRows.length - persisted;
     const remain = await fetch(`${SB}/rest/v1/trd_edge_scorecard?edge=like.fac:*&select=edge`, { headers: { ...H, Prefer: "count=exact", Range: "0-0" } }).then((r) => r.headers.get("content-range")).catch(() => null);
-    return new Response(JSON.stringify({ ok: true, nTrials, tested: stageRows.length, survivors: results.length, survivorRows: results, candidates_total: remain }, null, 2), { headers: cors });
+    // fail LOUD: a non-200 makes the stall visible to cron/monitor instead of returning a false all-clear
+    const healthy = !writeErrors.length && lost === 0;
+    return new Response(JSON.stringify({
+      ok: healthy, nTrials, computed: stageRows.length, persisted, lost,
+      survivors: results.length, survivorRows: results, candidates_total: remain,
+      writes, writeErrors: writeErrors.length ? writeErrors : undefined,
+    }, null, 2), { status: healthy ? 200 : 500, headers: cors });
   } catch (e) { return new Response(JSON.stringify({ ok: false, err: String(e).slice(0, 300) }), { status: 500, headers: cors }); }
 });

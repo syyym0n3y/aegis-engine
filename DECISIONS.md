@@ -5375,3 +5375,47 @@ merely processed. 160 `fac:*` candidates, unchanged.
 **Honest status:** a 16th trigger is vocabulary, and D-303's diagnosis that the binding constraint is STOP
 GEOMETRY still stands. `soldiers` has produced **nothing** — 0 scored rows, 0 candidates, 0 survivors — and
 will not produce a measurement for ~13-15 hours. Its value is the `nbar` head-to-head, not a new hope.
+
+## D-307 — Stage-2 wrote NOTHING for 5.6h: PostgREST rejected every mixed-shape batch, silently (2026-08-14)
+
+**The measurement first.** Stage-2's last persisted row was `07:33:02Z`. Between `06:15` and `13:12` the cron
+`trd_edge_stage2_3m` fired **140 times, every one HTTP 200**, and `trd_stage2_results` gained **zero rows** —
+~113 wasted invocations returning `{ok: true, tested: 12}` while nothing landed. A false all-clear, and the
+third instance of this exact failure class after D-300b and D-303b.
+
+**Root cause, verified not guessed.** The write was `fetch(...).catch(() => {})`. `fetch` does **not** throw on
+4xx, so the rejection was discarded and `tested: stageRows.length` reported the array length — what was
+*computed*, never what was *persisted*. Making the write loud produced the actual error immediately:
+
+```
+{"code":"PGRST102","message":"All object keys must match"}   HTTP 400
+```
+
+PostgREST requires every object in a bulk INSERT array to carry an **identical key set** and rejects the whole
+batch **atomically**. Stage-2 built three different row shapes: no-spec/thin (no `n`), thin-with-`n`, and the
+full scored verdict (11 keys). Batches of a single shape wrote fine — which is why 186 rows exist and why this
+looked healthy for hours. The first batch that **mixed** a thin row with a scored row lost all 12 rows, and
+because the todo list is "candidates not already in `trd_stage2_results`", the identical mixed batch was
+rebuilt and re-rejected every 3 minutes forever. Self-perpetuating, by construction.
+
+**The fix (two parts — the second is the one that matters).**
+1. *Correctness:* one `STAGE_ROW_TEMPLATE` with all 13 keys explicit-null; every row is built through
+   `stageRow()`. The shapes can no longer drift apart.
+2. *The guard:* `writeRows()` checks `res.ok` and returns status + body; `countPersisted()` **reads back** the
+   edges just written. The response now reports `computed` / `persisted` / `lost` and returns **HTTP 500** when
+   `lost > 0`, so a stalled write is visible to cron and the monitor instead of masquerading as success.
+   `tested` is gone as a field name — it conflated computed with persisted, which is the lie that hid this.
+
+**Verified landing, independently of the function's own report.** Post-fix fire: `computed: 12, persisted: 12,
+lost: 0`, write status 201. DB read-back: `trd_stage2_results` **186 → 198** rows, `max(run_at)` 7 seconds old,
+12 rows in the trailing 10 minutes. The recovered batch was indeed mixed (both `thin` and `stage2-killed`
+verdicts), confirming the diagnosis rather than assuming it.
+
+**Result: still zero survivors.** 198 of 199 candidates now stage-2 tested — **183 killed, 15 thin, 0
+survivors**, `trd_forward_candidates` = **0**. The 5.6h outage hid no edge; it was destroying kill verdicts,
+not promotions. D-070 stands.
+
+**Not fixed here (named, not silently skipped):** the same swallowed-write pattern exists at 8 call sites in
+`trd-edge-factory` (queue, bars cache, scorecard, dollar, lineage) and across other `trd-*` functions. The
+factory is currently writing (verified: queue advancing, `run_at` 47s old), so it is not in outage — but it is
+the same landmine and wants the same `writeRows()` treatment. That is its own unit of work.
