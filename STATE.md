@@ -1,6 +1,37 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-323: grammar widened to 27 triggers — `aroon`, the first condition that reads NO PRICE
+MAGNITUDE AT ALL, only HOW LONG AGO the extremes printed.** Aroon Up/Down over N=14 measure bars-since-the-
+highest-high and bars-since-the-lowest-low; the signal is Up newly crossing above Down with the textbook
+strong-trend qualifier (Up >= 70, Down <= 30) — the high <= 4 bars old while the low is >= 10 bars old. Enter
+WITH the cross at the next open, stop at the stopLookback swing. Every one of the other 26 triggers is a
+price-magnitude condition; none has a term whose units are BARS. `channel`/`breakout` need the close to CLEAR
+the extreme — `aroon` needs no break at all, and conversely goes silent on a real break whenever the low is also
+recent. `nbar`/`soldiers` count CONSECUTIVE closes; bars-since-extreme is indifferent to the path.
+
+**The ordinal control is the point of the class:** the test moves the SAME dip bar one position later — the
+multiset of prices is byte-for-byte identical, every magnitude condition sees the same numbers, only the low's
+AGE changes (10 bars -> 9, Down 28.6 -> 35.7) — and the trigger must go silent. Control B asserts `breakout`
+trades the EXACT bars `aroon` refuses when the low is 1 bar old. **27/27 grammar + 269/269 `_shared` tests +
+`deno check` green**, `trd-edge-factory` and `trd-edge-stage2` both redeployed, **43,200 rows seeded and VERIFIED
+landed** (2,700 spec points x 16 markets; 34,560 non-swing stopMode, 8,640 swing) — verified STRUCTURALLY, not by
+eye: the DB's 2,700 distinct `spec_key`s are byte-identical to `enumerate()+specKey()` run locally (same md5
+`41464a4f...` of the sorted list). Ingest id=27 -> `queued`; `trd_lineage.grammar-aroon` written.
+
+**Honest status:** a live BTCUSDT run scored 60 of the new specs against 35,040 real 15m bars — **60 done, 0
+thin** (124-618 closed trades per spec, so the trigger provably did not fall through the `switch`) — and promoted
+**ZERO** stage-1 candidates. 43,140 of 43,200 rows remain pending. Verdict: **UNTESTED**.
+
+**Loop health, measured:** queue `max(run_at)` **57 s** old; `done` **461,153 -> 465,448** within the session
+(writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this check exists for). Queue
+**1,166,400** total: 465,448 done / 530,117 pending / 170,835 thin. Stage-2 fired once and returned **"all
+candidates stage-2 tested"** — the validator is caught up, not stalled. Totals: **575 fac:\* stage-1 candidates,
+575 stage-2 verdicts (559 killed / 16 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`**,
+`trd_trial_counter` = **706,994**. Nothing has cleared the full gauntlet.
+
+## Prior
+
 **2026-08-14 (Opus 5) — D-322: the ingest backlog was EXHAUSTED (2 `new` rows) — refilled by web research with
 4 primitives, and this unit widened the grammar by ZERO.** The loop's STEP-3 rule fires a research unit instead
 of an implementation unit below 3 queued primitives; it fired. Added `aroon` (bars-SINCE-the-extreme — a
@@ -22,8 +53,6 @@ for). Queue **1,123,200** total: 454,820 done / 503,737 pending / 164,643 thin. 
 computed, 12 persisted, lost 0, 0 survivors**; `trd_stage2_results` 540 → **552** verified by readback (524
 stage2-killed / 16 thin). Totals: **574 fac:\* stage-1 candidates, 0 stage-2 survivors, 0
 `trd_forward_candidates`**, `trd_trial_counter` = **690,294**. Nothing has cleared the full gauntlet.
-
-## Prior
 
 **2026-08-14 (Opus 5) — D-321: grammar widened to 26 triggers — `marubozu`, the first condition on the BODY'S
 SHARE OF ITS OWN BAR'S RANGE.** Loop healthy and writing: queue `max(run_at)` **1 s** old, `done` **446,265 →

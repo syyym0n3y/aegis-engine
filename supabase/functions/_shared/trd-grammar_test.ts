@@ -846,3 +846,53 @@ Deno.test("marubozu: continues a bar whose BODY IS ITS RANGE — not a wick reje
   assertEquals(mtrM[0].side, "short");
   assert(Math.abs(mtrM[0].r - 1) < 1e-9, `expected +1R, got ${mtrM[0].r}`);
 });
+
+Deno.test("aroon: reads HOW LONG AGO the extremes happened — the same prices, reordered, decide the signal", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "aroon" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  const flat = (idx: number) => bar(100, 100.5, 99.5, 100.1, idx);
+  const dip = (idx: number) => bar(100, 100.5, 95, 100, idx);   // identical bar except for a 95 low — the "when" is the variable
+
+  // Bar 0 is a WIDE container (110/90) holding every later bar, so at i=14 the window's high AND low are both bar 0:
+  // Up = Down = 0, i.e. no lead — the state the cross has to come from. It leaves the 15-bar window the moment i=15
+  // is evaluated, which is what lets the cross happen on exactly the bar under test.
+  const build = (dipAt: number): Bar[] => {
+    const bs: Bar[] = [bar(100, 110, 90, 100, 0)];
+    for (let k = 1; k <= 14; k++) bs.push(k === dipAt ? dip(k) : flat(k));
+    bs.push(bar(100.1, 101.2, 100.0, 101.0, 15));   // i=15: NEW window high → Up = 100
+    bs.push(bar(100.5, 100.8, 100.2, 100.6, 16));   // fill at 100.5; stop 99.5 → risk 1.00, target 101.50
+    bs.push(bar(100.6, 101.6, 100.4, 101.5, 17));   // high 101.60 ≥ target (low never revisits the stop) → +1R
+    return bs;
+  };
+
+  // POSITIVE — the low is 10 bars old at i=15 (dip at bar 5 ⇒ Down = 28.6 ≤ 30) while the high is this bar (Up = 100),
+  // and at i=14 Up ≤ Down held, so the cross is genuinely new. Long at the next open, stop at the stopLookback swing.
+  const tr = runComponentTrades(build(5), spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // CONTROL A — THE ORDINAL CONTROL, and the whole point of the class. Move the SAME dip bar one position later: the
+  // multiset of prices is byte-for-byte identical, every magnitude condition in the grammar sees the same numbers, and
+  // only the low's AGE changes (10 bars → 9, so Down = 35.7 > 30). Silence here is the 30 threshold doing real work on
+  // a quantity measured in BARS — nothing about price moved.
+  assertEquals(runComponentTrades(build(6), spec, { costRPerSide: 0 }).length, 0);
+
+  // CONTROL B — separates this from the magnitude triggers. The dip sits at bar 14, so bar 15 still makes the same new
+  // high and still breaks the same recent range — `breakout` trades these EXACT bars, and the test asserts it does —
+  // but the low is 1 bar old (Down = 92.9), so buyers have not been setting the pace and aroon must stay silent.
+  // The trailing bar exists only so the break's wide 95.00 stop can resolve into a CLOSED trade (runComponentTrades
+  // records nothing else); it makes no aroon cross of its own — Up already led on the two bars before it.
+  const recentLow = [...build(14), bar(101.5, 106.2, 101.4, 106.0, 18)];
+  assertEquals(runComponentTrades(recentLow, spec, { costRPerSide: 0 }).length, 0);
+  const asBreakout = runComponentTrades(recentLow, { ...spec, trigger: "breakout" as const }, { costRPerSide: 0 });
+  assert(asBreakout.length > 0, "control B must contain a real range break — otherwise it proves nothing");
+
+  // MIRROR — reflecting every price about 200 swaps the roles of the two extremes exactly, so the bullish cross becomes
+  // the bearish one. This also pins the tie-break: a symmetric rule is the only one that survives reflection.
+  const mir = build(5).map((b) => ({ ts: b.ts, open: 200 - b.open, high: 200 - b.low, low: 200 - b.high, close: 200 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

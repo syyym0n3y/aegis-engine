@@ -6208,3 +6208,61 @@ mechanism, OOS-stable, large-n (unlike the price-action flukes). NOT yet validat
 structural alt/major gate (by cap/liquidity, NOT symbol cherry-picking — that split is itself a trial), (2) DSR
 deflated by effective-N, (3) walk-forward, (4) forward paper. This is the first lead worth that full treatment.
 Next: build the pre-registered alt-gated funding-carry test + run it through stage-2-grade validation.
+
+---
+
+## D-323 — 27th grammar trigger `aroon`: the first condition that reads NO PRICE MAGNITUDE AT ALL, only HOW LONG AGO the extremes printed (2026-08-14)
+
+Added `aroon` (trd_edge_ingest id=27, web:fidelity+litefinance) to `trd-grammar.ts`, taking the grammar to 27
+triggers and |GRAMMAR| to 72,900. Aroon Up = ((N − barsSinceHighestHigh)/N)·100 over N=14, Aroon Down the mirror
+on the lowest low. Signal = Up newly crosses above Down on bar i (it did NOT lead at i−1) with the textbook
+strong-trend qualifier Up >= 70 and Down <= 30 — i.e. the high is <= 4 bars old while the low is >= 10 bars old.
+Enter WITH the cross at the next open; stop at the stopLookback swing (the source's "recent swing low/high", and
+an axis the grammar already varies, so no new stop mechanic is introduced).
+
+**Why this is the widest gap in the grammar so far.** The other 26 triggers are all price-MAGNITUDE conditions —
+a close against a level, a body against a range, one extreme against another. None has a term whose units are
+BARS. This one has nothing else: it is scale-free and level-free by construction. If the 26 magnitude triggers
+are all reading the same crowded information, an ordinal reading of the same bars is the cheapest available
+source of genuinely different information — which is the whole reason it is worth a trial budget.
+
+The near neighbours, and how each disagrees:
+- `channel` / `breakout` need the CLOSE to clear the prior extreme. `aroon` needs no break whatsoever: Up >= 70
+  admits a high up to 4 bars OLD, so the signal bar may close well inside the range. Conversely a bar can break
+  the 20-bar high (firing `channel`) and be silent here whenever the LOW is also recent, because a fresh low
+  keeps Down high. The distinguishing requirement is the one no magnitude trigger can express: the OPPOSITE
+  extreme must be STALE.
+- `nbar` / `soldiers` do count bars, but they count CONSECUTIVE closes — an unbroken run. Bars-since-extreme is
+  indifferent to the path: 4 bars of chop since the high scores identically to 4 bars of hard selling.
+- `supertrend`, `macd`, `stoch`, `rsi` are continuous functions of price levels; none carries a bars unit.
+
+Guards (deno test, 27/27 green; 269/269 across `_shared`):
+- The filler's wide container bar (110/90) puts BOTH extremes on bar 0 at i=14 — Up = Down = 0, the no-lead state
+  the cross must come from — and it leaves the 15-bar window exactly when i=15 is evaluated, so the cross happens
+  on the bar under test and nowhere else.
+- **Control A is the ordinal control, and the point of the class**: the SAME dip bar is moved one position later.
+  The multiset of prices is byte-for-byte identical — every magnitude condition in the grammar sees the same
+  numbers — and only the low's AGE changes (10 bars → 9, Down 28.6 → 35.7). The trigger must go silent. That is
+  the 30 threshold doing real work on a quantity measured in BARS, with nothing about price moved.
+- Control B separates it from the magnitude triggers: with the dip at bar 14 the same new high still breaks the
+  same recent range — the test ASSERTS `breakout` trades those EXACT bars — but the low is 1 bar old (Down =
+  92.9), so `aroon` stays silent.
+- Mirror: reflecting every price about 200 turns the bullish cross into the bearish one, short, +1R. A symmetric
+  tie-break is the only one that survives reflection.
+
+Three free constants held FIXED at their textbook values (N = 14, 70, 30) rather than exposed as grammar axes —
+as `pinbar`'s 2x wick, `orderblock`'s 1.4x impulse and `marubozu`'s 0.90 body-share are — so they cannot
+multiply the trial count and deflate every other candidate's DSR.
+
+Shipped: `deno check` + 27/27 grammar tests + 269/269 `_shared` tests green, `trd-edge-factory` AND
+`trd-edge-stage2` redeployed (both import the grammar), 43,200 rows seeded (2,700 spec points x 16 markets;
+34,560 carry a non-swing stopMode, 8,640 swing). The seed was verified STRUCTURALLY, not by eye: the 2,700
+distinct `spec_key`s in the DB are byte-identical to `enumerate()+specKey()` run locally over the aroon slice —
+same md5 (`41464a4f...`) of the sorted list. `trd_edge_ingest` id=27 → status='queued'. `trd_lineage.grammar-aroon`
+written.
+
+MEASUREMENT, not a claim: a live BTCUSDT run scored 60 of the new specs against 35,040 real 15m bars — **60 done,
+0 thin** (n per spec 124–618 closed trades), which is the D-308 check that the trigger did not fall through the
+`switch` — and promoted **ZERO** stage-1 candidates. 43,140 of 43,200 rows remain pending. Verdict: **UNTESTED**.
+Totals after this unit: 575 fac:* stage-1 candidates, 575 stage-2 verdicts (559 killed / 16 thin), **0 stage-2
+survivors, 0 forward candidates**, `trd_trial_counter` = 706,994.

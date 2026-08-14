@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 26·3·3·3·5·4·5 = 70,200. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 27·3·3·3·5·4·5 = 72,900. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -514,6 +514,50 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (b.close > b.open) return { side: "long", stop: b.low };      // bull marubozu → continue up, stop at its low
       if (b.close < b.open) return { side: "short", stop: b.high };    // bear marubozu → continue down, stop at its high
       return null;                                                     // a doji (body 0) can never clear BODY_FRAC>0 anyway
+    }
+    case "aroon": { // Aroon Up/Down cross (ingest id=27, web:fidelity+litefinance) — the 27th primitive, and the first
+      // whose condition is a PURELY TEMPORAL/ORDINAL quantity: HOW MANY BARS AGO the window's extreme occurred. Every
+      // other trigger in the grammar reads a price MAGNITUDE (a close against a level, a body against a range, one
+      // extreme against another). This one reads no magnitude at all — only the RECENCY of the high versus the low:
+      //   Aroon Up = ((N − barsSinceHighestHigh)/N)·100, Aroon Down the mirror on the lowest low, N = 14.
+      //   · `channel` and `breakout` are the nearest neighbours and are magnitude conditions: they need the CLOSE to
+      //     clear the prior extreme. This needs no break whatsoever — Up ≥ 70 admits a high up to 4 bars OLD, so the
+      //     signal bar may close well inside the range and still fire. Conversely a bar can break the 20-bar high
+      //     (firing `channel`) and be silent here whenever the LOW is also recent, because a fresh low keeps Down high.
+      //     The distinguishing requirement is the one no magnitude trigger can express: the opposite extreme must be
+      //     STALE (Down ≤ 30 ⇒ the low is ≥ 10 bars old).
+      //   · `nbar` and `soldiers` count bars, but they count CONSECUTIVE closes — an unbroken run. Bars-since-extreme
+      //     is indifferent to the path: 4 bars of chop since the high scores identically to 4 bars of hard selling.
+      //   · `supertrend`, `macd`, `stoch`, `rsi` are all continuous functions of price levels; none has a term whose
+      //     units are BARS. That absence is the gap this fills, and it is why the class is worth a trial budget: if
+      //     the grammar's 26 magnitude triggers are all reading the same crowded information, an ordinal reading of
+      //     the same bars is the cheapest available source of genuinely different information.
+      // The read is that when the highest high is recent and the lowest low is old, buyers have been setting the pace
+      // for the whole window — a trend-strength statement, not a level statement — so the entry is WITH the cross
+      // (Up crossing above Down → long). The cross must actually HAPPEN on bar i (it was not true at i−1), so the
+      // trigger fires once per regime change rather than continuously while the condition holds.
+      // Three free constants, all held FIXED at their textbook values — as `pinbar`'s 2× wick, `orderblock`'s 1.4×
+      // impulse and `marubozu`'s 0.90 body-share are — so they cannot multiply the trial count and deflate every
+      // other candidate's DSR: N = 14, and the strong-trend qualifiers 70 / 30.
+      // Stop: the stopLookback swing (the source's "recent swing low/high"), which is also the axis the grammar
+      // already varies — no new stop mechanic is introduced.
+      // Point-in-time: `aroonAt(k)` scans bars[k−14..k] only, and is evaluated at k = i and k = i−1, both closed.
+      // Nothing at or after i+1 is read.
+      const AR_N = 14, AR_HI = 70, AR_LO = 30;
+      if (i < AR_N + 1) return null;                                   // need bar i-1's window too → i ≥ 15
+      const aroonAt = (k: number) => {
+        let hIdx = k - AR_N, lIdx = k - AR_N;
+        // ">=" / "<=" ⇒ the MOST RECENT occurrence wins a tie, which is the standard reading and the one that keeps a
+        // flat market at Up = Down = 100 (no cross, no signal) instead of manufacturing one.
+        for (let j = k - AR_N; j <= k; j++) { if (bars[j].high >= bars[hIdx].high) hIdx = j; if (bars[j].low <= bars[lIdx].low) lIdx = j; }
+        return { up: ((AR_N - (k - hIdx)) / AR_N) * 100, dn: ((AR_N - (k - lIdx)) / AR_N) * 100 };
+      };
+      const cur = aroonAt(i), prv = aroonAt(i - 1);
+      // BULLISH CROSS: Up takes the lead on this bar having not held it on the last, with the strong-trend qualifier.
+      if (cur.up > cur.dn && prv.up <= prv.dn && cur.up >= AR_HI && cur.dn <= AR_LO) return { side: "long", stop: lo };
+      // BEARISH CROSS: the exact mirror.
+      if (cur.dn > cur.up && prv.dn <= prv.up && cur.dn >= AR_HI && cur.up <= AR_LO) return { side: "short", stop: hi };
+      return null;
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
