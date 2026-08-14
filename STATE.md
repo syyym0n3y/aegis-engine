@@ -1,6 +1,29 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-327: the ingest backlog was down to 2 `new` rows — refilled by web research with 4
+primitives, and this unit widened the grammar by ZERO.** The loop's STEP-3 rule fires a research unit instead of an
+implementation unit below 3 queued primitives; it fired (same as D-322). Added `hikkake` (the first condition that is
+another trigger's signal FAILING inside a bounded window — the negation of `inside`'s own break, with a 3-bar deadline),
+`effratio` (Kaufman: net displacement ÷ total path length — the first measure of WASTED MOTION; `psar` is path-dependent
+via a COUNT of new-extreme events, `squeeze` is a ratio of two volatility measures of the same bars), `adx` (Wilder's
++DI/−DI with the extreme-point rule — the only quantity built from the bar-to-bar extension of the two extremes
+SEPARATELY under a winner-take-all exclusion), and `fibpull` (the first condition that is a PROPORTION OF A MEASURED
+LEG, with the free-constant risk recorded in the row itself). All four are OHLC-expressible, so none is skipped for the
+volume/VWAP the `Bar` type lacks. Ingest `new` **2 → 6**, verified by readback.
+
+**Honest status:** these are four rows in a queue. Zero detectors, zero tests, zero seeded specs, zero scored bars, zero
+candidates. The novelty arguments are claims about the DEFINITIONS and are settled only when each is implemented against
+the D-319/D-320 control standard. No `trd_lineage` row — lineage records edge verdicts, and nothing here was tested.
+
+**Loop health, measured:** queue `max(run_at)` **46 s** old, 6,240 rows in the trailing 10 min, `done` 514,125 →
+**514,482** inside the session (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this check
+exists for). Queue **1,296,000** total: 514,482 done / 565,877 pending / 215,998 thin. Stage-2 fired once and returned
+**"all candidates stage-2 tested"** at `nTrials` 572,538 — caught up, not stalled. Totals unchanged by this unit:
+**649 fac:\* candidates, 649 stage-2 verdicts (631 killed / 18 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`**.
+Nothing has cleared the full gauntlet.
+
+## Prior
 **2026-08-14 (Opus 5) — D-326: grammar widened to 30 triggers — `doji`, the first CONDITIONAL trigger: the signal
 bar carries no condition of its own except that it break a level set by a bar that had already given up its
 direction.** A bar whose body is ≤ 0.10 of its own range, printed AT the extreme of the `stopLookback` window, is

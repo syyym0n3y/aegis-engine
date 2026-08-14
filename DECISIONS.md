@@ -6446,3 +6446,45 @@ candidates. 43,160 of 43,200 rows remain pending. Verdict: **UNTESTED**.
 Totals after this unit: 649 fac:* stage-1 candidates, 649 stage-2 verdicts (631 killed / 18 thin), **0 stage-2
 survivors, 0 forward candidates**, queue 1,296,000 total = 512,854 done / 568,317 pending / 214,829 thin (done rose
 500,579 → 512,854 inside the session, so the writes LAND). Nothing has cleared the full gauntlet.
+
+## D-327 — ingest backlog refilled by web research (2 → 6 `new`); the grammar widened by ZERO (2026-08-14)
+
+The loop's STEP-3 rule fires a RESEARCH unit instead of an implementation unit whenever `trd_edge_ingest` holds fewer
+than 3 `status='new'` primitives. It held **2** (`eqhl` id=19, `piercing` id=30), so it fired — same as D-322.
+
+Added four documented setups, all OHLC-expressible (so none is skipped for the volume/VWAP the `Bar` type lacks), each
+row carrying an explicit **NOVELTY CLAIM (untested)** argued against the nearest of the 30 shipped triggers:
+
+- **`hikkake`** (id=31, Chesler 2003 — financestrategists / tradingsetupsreview / earnforex): an inside bar, then a
+  break of its range that FAILS — within 3 bars price closes back beyond the inside bar's opposite extreme and the trade
+  is taken that way. Claim: all 30 shipped triggers condition on a pattern OCCURRING; this conditions on another
+  trigger's signal FAILING inside a bounded window. It is the negation of `inside`'s own break, with a deadline.
+- **`effratio`** (id=32, Kaufman — luxalgo / quantifiedstrategies / trendspider): net displacement over N bars divided
+  by total path length (sum of |Δclose|), crossing up through the documented ~0.3–0.4 persistence threshold. Claim: no
+  shipped trigger measures WASTED MOTION. `psar` is path-dependent via a COUNT of new-extreme events; `squeeze` is a
+  ratio of two VOLATILITY measures of the same bars. Two windows with identical endpoints and identical range score
+  differently here purely on how much they zig-zagged.
+- **`adx`** (id=33, Wilder 1978 — esignal / luxalgo / barchart): +DI/−DI cross with ADX>25, entered on Wilder's
+  extreme-point rule (price must trade beyond the crossover bar's high), which removes the entry-timing free parameter.
+  Claim: the only quantity built from the bar-to-bar extension of the two extremes SEPARATELY under a winner-take-all
+  exclusion — a bar that extends both ways contributes to one side only. `aroon` reads how long ago the extremes
+  printed and no magnitude; `stoch` reads position inside a range; `rsi`/`macd` read closes.
+- **`fibpull`** (id=34, luxalgo / zeiierman / swingfolio): retrace into the 0.618–0.786 band of the last COMPLETED
+  impulse leg between two confirmed fractal pivots, stop beyond the leg's origin. Claim: the first condition that is a
+  PROPORTION OF A MEASURED LEG — `pullback` tags an EMA (scale set by the data, not by the move), `orderblock`/`fvg`
+  reference a fixed prior bar's range, `doubletop`'s 10% is a MATCH tolerance not a depth measurement. Recorded risk in
+  the row itself: the ratio band is a free constant and must be held FIXED like `pinbar`/`harami`/`orderblock`'s, or it
+  multiplies the trial count and deflates every other candidate's DSR.
+
+**Honest status: these are four rows in a queue.** Zero detectors, zero tests, zero seeded specs, zero scored bars,
+zero candidates. Every novelty argument above is a claim about a DEFINITION and is settled only when the primitive is
+implemented against the D-319/D-320 control standard (a control that holds one variable byte-identical and asserts an
+existing trigger DOES fire on the same bars). No `trd_lineage` row — lineage records edge verdicts, and nothing here was
+tested. Write verified by readback: `status='new'` **2 → 6**.
+
+Loop health, measured: queue `max(run_at)` **46 s** old with 6,240 rows in the trailing 10 min; `done`
+**514,125 → 514,482 inside the session** — writes LAND, not merely "processed:N" (the D-300b/D-302 silent-write class
+this check exists for). Queue **1,296,000** total: 514,482 done / 565,877 pending / 215,998 thin. Stage-2 fired once and
+returned `"all candidates stage-2 tested"` at `nTrials` 572,538 — caught up, not stalled. Totals unchanged by this unit:
+**649 fac:\* stage-1 candidates, 649 stage-2 verdicts (631 killed / 18 thin), 0 stage-2 survivors, 0
+`trd_forward_candidates`**. Nothing has cleared the full gauntlet — which is D-070 working, not failure.
