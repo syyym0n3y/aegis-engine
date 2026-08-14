@@ -5576,3 +5576,16 @@ guard view **CLEAN** (0 orphans); 259/259 `_shared` tests green; both edge fns t
 stage-2's full gauntlet (DSR deflated by the true 489,960 trial count, K-fold WF, 20bp/side) will almost
 certainly kill them all, as it has all 200 tested so far (0 survivors). The bug was destroying the ENGINE's
 ability to even test its own candidates, not hiding a profitable strategy.
+
+## D-312 — P&L snapshot fallback (cloud-routine-independent reporting) (2026-08-14)
+
+The cloud "execution driver + P&L" routine shows "No runs yet" — its scheduler isn't firing (a claude.ai
+Routines issue, not fixable from the engine). But EXECUTION is not at risk: pg_cron already fires the executors
+reliably (verified VERIFIED-COMPLETING via D-304 heartbeats), so the routine's premise ("pg_cron unreliable") is
+outdated. Only the P&L REPORT to the operator was lost. Mitigation:
+- `trd-pnl-snapshot` fn + `trd_pnl_snapshot_hourly` cron (35 13-20 UTC weekdays) → durable HOURLY P&L rows into
+  the existing trd_pnl_snapshot table (was only twice-daily via trd_manager_daily). Machine-independent, $0.
+- Local Routine `aegis-pnl-report` (hourly, market hours) reads the snapshot + trd_pnl_daily + trd_cron_health_v
+  and reports equity/P&L + any SILENT-FAIL-SUSPECT cron — the cloud routine's report function on a reliable surface.
+- Snapshot fn is heartbeat-instrumented (D-304) and in trd_cron_health_v. Verified: fires, writes, equity $100,614.
+Honest framing preserved end-to-end: total_pnl includes legacy crypto (NOT edge); ORB edges +0.14R show only at scale.
