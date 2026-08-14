@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -277,6 +277,41 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (i <= ps.warm || ps.flip[i] === 0) return null;    // the seed direction is an assumption — quarantine it
       if (ps.flip[i] === 1) return { side: "long", stop: Math.min(ps.sar[i], b.low) };
       return { side: "short", stop: Math.max(ps.sar[i], b.high) };
+    }
+    case "kumo": { // Ichimoku Kumo breakout (ingest id=28, web:avatrade+oanda) — the 29th primitive, and the first whose
+      // reference level is FORWARD-DISPLACED: the cloud standing at bar i was computed at bar i−26 and projected
+      // ahead. Every other level in the grammar is derived from a window that ENDS at the signal bar or the one
+      // before it — `channel` reads bars i−20…i−1, `breakout` i−lb…i−1, `squeeze`'s bands the last 20, `psar` the
+      // live leg. Here bars i−25…i−1 contribute NOTHING to the level being broken: it is stale by construction, a
+      // barrier the last 25 bars of price action were structurally unable to move. That is the whole point of the
+      // class — a break of a level that recent trading cannot have manufactured, which is a different question from
+      // "did price clear where it has just been" and the one negative control A isolates.
+      // The second structural difference is what is averaged. Every moving average in the grammar averages CLOSES
+      // (`pullback`'s EMA, `macd`'s two EMAs, `squeeze`'s SMA basis, `stoch`'s %D). Tenkan(9), Kijun(26) and Senkou
+      // B(52) are MIDPOINTS OF HIGH–LOW RANGES — (HH+LL)/2 — so they are functions of the two extremes only and are
+      // completely indifferent to where the other bars closed. `channel` is the only other extremes-only construct
+      // and it takes the extreme itself rather than the midpoint of the pair.
+      //   Senkou A = (Tenkan + Kijun)/2, Senkou B = (HH52 + LL52)/2, both displaced +26. Cloud top/bottom = max/min.
+      // The trade is the CROSSING event: a close above the cloud top when the prior close was not above it (mirror
+      // for the short), so it fires once per regime change and not on every bar spent above the cloud. A close
+      // INSIDE the cloud is explicitly not a breakout — that is the "no man's land" the sources describe, and
+      // control B pins it.
+      // Stop at the OPPOSITE edge of the cloud — the canonical Ichimoku invalidation level, and the same mechanic as
+      // `squeeze`'s opposite-Keltner stop: 1R is the cloud's own thickness plus the distance travelled, so the risk
+      // is scaled by the structure rather than by a 3-bar swing (the D-303 riskFrac argument). It cannot land on the
+      // wrong side of entry: a long requires close > top >= bot, so the stop is strictly below the signal close.
+      // 9/26/52/26 are held FIXED at their textbook values — as `supertrend`'s 10/3, `macd`'s 12/26/9 and `aroon`'s
+      // 14/70/30 are — so this class cannot inflate the trial count with parameters the sources state as constants.
+      // Point-in-time: the cloud at index t is written from bar t−26 only, so reading it at i uses data that was
+      // knowable 26 bars ago; nothing at or after i+1 is read. `NaN` inside warm-up fails closed (both comparisons
+      // are false). Memoised identity-keyed (WeakMap), never by bars.length (D-310).
+      const kc = kumoCloud(bars);
+      if (i < KUMO_WARM + 1) return null;                  // need the cloud at i AND at i-1 for the crossing test
+      const top = kc.top[i], bot = kc.bot[i], topPrev = kc.top[i - 1], botPrev = kc.bot[i - 1];
+      const pc = bars[i - 1].close;
+      if (b.close > top && pc <= topPrev) return { side: "long", stop: bot };
+      if (b.close < bot && pc >= botPrev) return { side: "short", stop: top };
+      return null;
     }
     case "squeeze": { // Bollinger-in-Keltner squeeze RELEASE (ingest id=21, web:chartink) — the 19th primitive, and
       // the first whose condition is a RATIO of two volatility measures rather than a level, a shape, or a range.
@@ -738,6 +773,38 @@ function psarSeries(bars: Bar[]): PSSeries {
   _psCache.set(bars, out); return out;
 }
 
+// Ichimoku Kumo (D-325). Canonical 9/26/52 with the standard +26 forward displacement, held FIXED for the same
+// reason as Supertrend's 10/3 and MACD's 12/26/9: the grammar already varies five axes, and freeing the periods
+// would multiply the trial count and deflate every other candidate's DSR for constants the sources state.
+const KU_TENKAN = 9, KU_KIJUN = 26, KU_SENKOU_B = 52, KU_DISP = 26;
+/** First index at which the DISPLACED cloud exists: the earliest bar whose 52-bar window is full is
+ * KU_SENKOU_B-1, and its spans are plotted KU_DISP bars later. Before this the cloud is NaN and every
+ * comparison against it is false, so the trigger fails closed. */
+const KUMO_WARM = KU_SENKOU_B - 1 + KU_DISP;
+interface KumoSeries { top: Float64Array; bot: Float64Array }
+let _kumoCache = new WeakMap<Bar[], KumoSeries>();
+/** The cloud standing at index t is written ONLY from bar t-26, so it is causal with 26 bars to spare — the
+ * forward displacement moves a PAST computation forward, it never reads the future. Identity-keyed (D-310). */
+function kumoCloud(bars: Bar[]): KumoSeries {
+  const hit = _kumoCache.get(bars); if (hit) return hit;
+  const n = bars.length;
+  const top = new Float64Array(n).fill(NaN), bot = new Float64Array(n).fill(NaN);
+  // Midpoint of the high–low range over the `len` bars ending at k — the extremes only, blind to the closes.
+  const mid = (k: number, len: number): number => {
+    let h = -Infinity, l = Infinity;
+    for (let j = k - len + 1; j <= k; j++) { if (bars[j].high > h) h = bars[j].high; if (bars[j].low < l) l = bars[j].low; }
+    return (h + l) / 2;
+  };
+  for (let k = KU_SENKOU_B - 1; k < n; k++) {
+    const t = k + KU_DISP; if (t >= n) break;
+    const spanA = (mid(k, KU_TENKAN) + mid(k, KU_KIJUN)) / 2;
+    const spanB = mid(k, KU_SENKOU_B);
+    top[t] = Math.max(spanA, spanB); bot[t] = Math.min(spanA, spanB);
+  }
+  const out: KumoSeries = { top, bot };
+  _kumoCache.set(bars, out); return out;
+}
+
 // Bollinger-in-Keltner squeeze state (D-313). Canonical TTM-squeeze parameters, held FIXED for the same reason
 // as Supertrend's 10/3: the grammar already varies five axes, and freeing the band parameters would multiply the
 // trial count (deflating every other candidate's DSR) for constants the sources state as fixed.
@@ -924,4 +991,4 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
 /** Drops every memoized indicator series. With identity keying (D-310) this is no longer required for
  * CORRECTNESS — it exists so a test can force a cold recompute. Nothing in the live path calls it, and
  * nothing needs to: two different markets are two different array objects. */
-export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); _stoCache = new WeakMap(); _macdCache = new WeakMap(); }
+export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); _stoCache = new WeakMap(); _macdCache = new WeakMap(); _psCache = new WeakMap(); _kumoCache = new WeakMap(); }

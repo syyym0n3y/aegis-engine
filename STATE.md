@@ -1,6 +1,37 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-325: grammar widened to 29 triggers — `kumo`, the first reference level that is
+FORWARD-DISPLACED rather than a window ending now.** Ichimoku's cloud at bar *i* was computed at bar *i−26* and
+projected ahead, so bars *i−25…i−1* contribute NOTHING to the barrier being broken — every other level in the
+grammar comes from a window ending at the signal bar or the one before it (`channel` i−20…i−1, `breakout`
+i−lb…i−1, `squeeze`'s bands the last 20, `psar` the live leg). Second structural difference: Tenkan(9)/Kijun(26)/
+Senkou B(52) are MIDPOINTS of high–low ranges, while every moving average in the grammar averages CLOSES. The
+trade is the crossing event; the stop is the OPPOSITE cloud edge, so 1R is structure-scaled (D-303).
+
+**The displacement control is the class:** base and control A share a **byte-identical 28-bar tail** (asserted in
+the test) with the signal bar **25 bars inside it** — so `channel`(20), `squeeze`(20), `aroon`(14), `stoch`(14),
+`rsi`(14) and every candle family read the same numbers at the bar under test. Only the block 26+ bars earlier
+moved (104 → 112) and `kumo` goes silent, while the test asserts those identical bars DO trade under `breakout`.
+Control B stops the rally INSIDE the cloud (no man's land ≠ breakout); a mirror covers the short branch.
+**29/29 grammar + 271/271 `_shared` tests + `deno check` green**, `trd-edge-factory` and `trd-edge-stage2` both
+redeployed, **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets; 34,560 non-swing stopMode,
+8,640 swing, 0 non-`kumo` triggers) — verified STRUCTURALLY: the DB's 2,700 distinct `spec_key`s are byte-identical
+to `enumerate()+specKey()` run locally (md5 `660bdb67...`, C collation). Ingest id=28 → `queued`;
+`trd_lineage.grammar-kumo` written. `clearEmaCache()` now also resets `_kumoCache` and `_psCache` (it missed both).
+
+**Honest status:** a live BTCUSDT run via `?trigger=kumo` scored 40 of the new specs against 35,040 real 15m bars
+— **36 done / 4 thin** (n 32–804, avg 279, max |skill t| 7.73, so it provably did not fall through the `switch`)
+— and promoted **ZERO** stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict: **UNTESTED**.
+
+**Loop health, measured:** queue `max(run_at)` **17 s** old; `done` **470,603 → 472,036 inside the session**
+(writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this check exists for). Queue
+**1,252,800** total: 472,036 done / 594,557 pending / 186,207 thin. Stage-2 fired once and returned **"all
+candidates stage-2 tested"** — caught up, not stalled. Pipeline totals: **584 fac:\* candidates, 584 stage-2
+verdicts (567 killed / 17 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`**, trial counter **728,754**.
+Nothing has cleared the full gauntlet.
+
+## Prior
 **2026-08-14 (Opus 5) — D-324: grammar widened to 28 triggers — `psar`, the first condition carrying UNBOUNDED
 PATH-DEPENDENT STATE rather than a window.** Wilder's Parabolic SAR trails at SAR := SAR + AF·(EP − SAR); the
 acceleration factor starts at 0.02 and steps +0.02 (cap 0.20) **every time the leg prints a new extreme**,

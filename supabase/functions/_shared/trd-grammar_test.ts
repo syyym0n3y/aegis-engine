@@ -944,3 +944,56 @@ Deno.test("psar: the SAME 22 bars decide differently depending on a path that en
   assertEquals(mtr[0].side, "long");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("kumo: breaks a level frozen 26 bars ago — the last 25 bars cannot move the barrier they break", () => {
+  const T = (i: number) => new Date(Date.UTC(2026, 0, 1, 0, i * 15)).toISOString();
+  const spec = { trigger: "kumo" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // A flat bar at level p — the cloud is built from HIGH/LOW MIDPOINTS, so a block of these pins the spans exactly.
+  const at = (p: number, i: number): Bar => ({ ts: T(i), open: p, high: p + 0.5, low: p - 0.5, close: p });
+
+  // Bars 0..43 at 100 and 44..69 at `mid` set the cloud that will be standing at the signal bar (i=95, source k=69):
+  //   Tenkan(9) and Kijun(26) at k=69 see only the `mid` block; Senkou B(52) at k=69 spans both blocks.
+  // Bars 70..97 are the TAIL and are byte-identical between the base case and control A.
+  const build = (mid: number, jumpClose: number): Bar[] => {
+    const bs: Bar[] = [];
+    for (let i = 0; i <= 43; i++) bs.push(at(100, i));
+    for (let i = 44; i <= 69; i++) bs.push(at(mid, i));
+    for (let i = 70; i <= 94; i++) bs.push(at(98, i));                                  // parked well under the cloud
+    bs.push({ ts: T(95), open: 98, high: jumpClose + 0.5, low: 97.5, close: jumpClose }); // the bar under test
+    bs.push({ ts: T(96), open: 105, high: 106, low: 104.5, close: 105.5 });              // fill at 105
+    bs.push({ ts: T(97), open: 105.5, high: 108.5, low: 105, close: 108 });              // reaches +1R (target 108)
+    return bs;
+  };
+
+  // POSITIVE — cloud at i=95 is top 104 / bottom 102; the close jumps to 105, and the prior close (98) was not above
+  // the cloud, so this is the crossing bar. Long at the next open (105), stop at the cloud's far edge (102) → risk 3,
+  // target 108, reached by bar 97's high without the low ever revisiting 102.
+  const base = build(104, 105);
+  const tr = runComponentTrades(base, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // CONTROL A — THE DISPLACEMENT CONTROL, and the whole reason this class earns a trial budget. The last 28 bars are
+  // byte-identical (asserted, not asserted-by-comment) and the signal bar sits 25 bars INSIDE that identical tail, so
+  // every windowed trigger in the grammar — `channel`(20), `squeeze`(20), `aroon`(14), `stoch`(14), `rsi`(14), the
+  // candle families — is reading exactly the same numbers at the bar under test. Only the block 26+ bars BEFORE it
+  // moved (104 → 112), lifting the standing cloud above the rally, and kumo must go silent. To prove the silence is
+  // the stale barrier and not an absent move, the same bars are asserted to trade under `breakout`.
+  const ctlA = build(112, 105);
+  assertEquals(JSON.stringify(base.slice(70)), JSON.stringify(ctlA.slice(70)), "the control is only a control if the tails are identical");
+  assertEquals(runComponentTrades(ctlA, spec, { costRPerSide: 0 }).length, 0);
+  assert(runComponentTrades(ctlA, { ...spec, trigger: "breakout" as const }, { costRPerSide: 0 }).length > 0, "control A must contain a real range break — otherwise it proves nothing");
+
+  // CONTROL B — same cloud as the base case, but the rally stops at 103.5: INSIDE the cloud (102 < 103.5 < 104). The
+  // sources' "no man's land" — a big up move that has not cleared the barrier is not a breakout, so it must be silent.
+  assertEquals(runComponentTrades(build(104, 103.5), spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — reflecting every price about 200 swaps the cloud's top and bottom exactly, so the bullish break becomes
+  // the bearish one. A rule that is not symmetric in the two spans cannot survive this.
+  const mir = base.map((b) => ({ ts: b.ts, open: 200 - b.open, high: 200 - b.low, low: 200 - b.high, close: 200 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});
