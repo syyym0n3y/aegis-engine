@@ -6409,3 +6409,40 @@ the scheduler (D-300b rule):
 - trd_funding_exec_8h: FALSE POSITIVE — the funding cron hasn't fired yet (first run 00:05 UTC); the view mislabeled
   a never-dispatched cron (NULL last_dispatch) as silent-fail. Fixed the view: NULL last_dispatch → 'not-yet-dispatched'.
 Health view now clean (0 problem crons). The monitor working exactly as designed — catch silent failures, verify, fix.
+
+## D-326 — 30th grammar trigger: `doji` — the first CONDITIONAL trigger (a level set by a bar that gave up its direction) (2026-08-14)
+
+Widened the setup grammar from 29 to 30 trigger classes with `doji` (ingest id=16, `web:ig`). The class: a bar whose
+body is ≤ 0.10 of its OWN range — indecision — printed AT the extreme of the `stopLookback` window, followed by a bar
+that closes beyond that bar's range. Direction is the BREAK's, not a fade; the stop is the doji's opposite extreme, so
+1R is exactly the width of the indecision (D-303 structure-scaled) and the trade dies when the resolving bar is fully
+retraced. ONE free constant (0.10), held FIXED like `pinbar`'s 2×, `marubozu`'s 0.90 and `tweezer`'s 0.10, so it cannot
+multiply the trial count and deflate every other candidate's DSR; the "at a swing extreme" qualifier reuses the
+`stopLookback` axis the grammar already varies rather than adding a new one.
+
+Why it earns a trial budget — distinctness argued against the nearest neighbours, in code, and two of the claims are
+ASSERTED rather than described: `marubozu` is the exact converse body-share (≥0.90 vs ≤0.10 — mutually exclusive) and
+is a one-bar trigger with no break; `nr7` shares the break MECHANIC but conditions on the prior bar's RANGE-WIDTH
+RANKING, which is logically independent of body-share (a wide-wicked doji can be the WIDEST of 7; a full-bodied bar can
+be the narrowest) and carries no location term; `inside` is range containment; `star` measures a small body against
+ANOTHER BAR'S BODY and confirms on a midpoint close, never a break of the small bar's range; `pinbar` is the one honest
+overlap (it also admits a near-zero body) but requires ONE wick to dominate and FADES that bar — the opposite read.
+
+Tests: positive long +1R; **SHAPE control** — same high/low at the signal-setting bar (level, window extreme and stop
+distance unchanged), only the open/close moved inside it → silent, with `breakout` asserted to trade the byte-identical
+tail so the silence is the shape and not an absent move; **PLACE control** — identical doji, identical break, prior bars
+raised so it is no longer the window extreme → silent; mirror → short. 30/30 grammar + 272/272 `_shared` tests +
+`deno check` green. `trd-edge-factory` and `trd-edge-stage2` both redeployed (both import the grammar). 43,200 rows
+seeded (2,700 spec points × 16 markets; 34,560 non-swing stopMode, 8,640 swing), verified STRUCTURALLY: the DB's 2,700
+distinct `spec_key`s hash md5 `1c62487f29629a1705144a36393aefc1`, byte-identical to `enumerate()+specKey()` locally, and
+0 rows differ in `spec` JSON shape from the `kumo` slice. `trd_edge_ingest` id=16 → `queued`; `trd_lineage.grammar-doji`
+written.
+
+MEASUREMENT, not a claim: a live BTCUSDT run via `?trigger=doji` scored 40 of the new specs against 35,040 real 15m
+bars — **37 done / 3 thin**, n per scored spec 32–244 closed trades, max |skill t| 5.70 — which is the D-308 check that
+the trigger did not fall through the `switch` (a fall-through marks every row thin at n≈0). It promoted **ZERO** stage-1
+candidates. 43,160 of 43,200 rows remain pending. Verdict: **UNTESTED**.
+
+Totals after this unit: 649 fac:* stage-1 candidates, 649 stage-2 verdicts (631 killed / 18 thin), **0 stage-2
+survivors, 0 forward candidates**, queue 1,296,000 total = 512,854 done / 568,317 pending / 214,829 thin (done rose
+500,579 → 512,854 inside the session, so the writes LAND). Nothing has cleared the full gauntlet.

@@ -1,6 +1,44 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-326: grammar widened to 30 triggers — `doji`, the first CONDITIONAL trigger: the signal
+bar carries no condition of its own except that it break a level set by a bar that had already given up its
+direction.** A bar whose body is ≤ 0.10 of its own range, printed AT the extreme of the `stopLookback` window, is
+indecision at the range edge; the next bar closing beyond that bar's range picks the winner. Entry in the BREAK's
+direction, stop at the doji's opposite extreme — 1R is exactly the width of the indecision (D-303 structure-scaled).
+
+**Two controls isolate the two claims, and each holds one variable byte-identical:** the SHAPE control keeps the
+same high and low at the signal-setting bar (so the level broken, the window extreme and the stop distance are
+unchanged) and moves only the open/close inside that range — `doji` goes silent while the test asserts the
+identical tail DOES trade under `breakout`, so the silence is the shape, not an absent move. The PLACE control
+keeps the identical doji and the identical break and only raises the two prior bars, so the doji is no longer the
+window's extreme — silent, isolating the location qualifier. A mirror covers the short branch. The nearest
+neighbours are named in the code and are logically independent, not merely "different": `marubozu` is the exact
+converse body-share (≥0.90 vs ≤0.10, mutually exclusive, and a one-bar trigger with no break), `nr7` is the same
+break MECHANIC but ranks the prior bar's RANGE WIDTH and has no location term at all, `star` measures a small body
+against another BAR'S BODY and never breaks its range, and `pinbar` — the one honest overlap — needs ONE wick to
+dominate and FADES that bar instead.
+
+**30/30 grammar + 272/272 `_shared` tests + `deno check` green**, `trd-edge-factory` and `trd-edge-stage2` both
+redeployed (both import the grammar), **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets;
+34,560 non-swing stopMode, 8,640 swing) — verified STRUCTURALLY, not by eye: the DB's 2,700 distinct `spec_key`s
+are byte-identical to `enumerate()+specKey()` run locally (md5 `1c62487f29629a1705144a36393aefc1`), and every
+`spec` JSON shape matches the `kumo` slice exactly (0 rows differ). Ingest id=16 → `queued`;
+`trd_lineage.grammar-doji` written.
+
+**Honest status:** a live BTCUSDT run via `?trigger=doji` scored 40 of the new specs against 35,040 real 15m bars
+— **37 done / 3 thin** (n 32–244, max |skill t| 5.70, so it provably did not fall through the `switch`, which is
+the D-308 check) — and promoted **ZERO** stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict:
+**UNTESTED**. No edge claimed or found.
+
+**Loop health, measured:** queue `max(run_at)` 38 s old at the start of the run; `done` **500,579 → 512,854 inside
+the session** (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this check exists for).
+Queue **1,296,000** total: 512,854 done / 568,317 pending / 214,829 thin. Stage-2 fired once and returned **"all
+candidates stage-2 tested"** — caught up, not stalled. Pipeline totals: **649 fac:\* candidates, 649 stage-2
+verdicts (631 killed / 18 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`**. Nothing has cleared the full
+gauntlet — which is D-070 working.
+
+## Prior
 **2026-08-14 (Opus 5) — D-325: grammar widened to 29 triggers — `kumo`, the first reference level that is
 FORWARD-DISPLACED rather than a window ending now.** Ichimoku's cloud at bar *i* was computed at bar *i−26* and
 projected ahead, so bars *i−25…i−1* contribute NOTHING to the barrier being broken — every other level in the

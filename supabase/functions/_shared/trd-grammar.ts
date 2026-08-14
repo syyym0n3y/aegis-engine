@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -575,6 +575,47 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (b.close > b.open) return { side: "long", stop: b.low };      // bull marubozu → continue up, stop at its low
       if (b.close < b.open) return { side: "short", stop: b.high };    // bear marubozu → continue down, stop at its high
       return null;                                                     // a doji (body 0) can never clear BODY_FRAC>0 anyway
+    }
+    case "doji": { // Doji-at-extreme break (ingest id=16, web:ig) — the 30th primitive, and the first CONDITIONAL
+      // trigger in the grammar: the signal bar carries NO condition of its own except that it break a level defined
+      // by a bar that had ALREADY given up its direction. Everything it is adjacent to sits somewhere else:
+      //   · `marubozu` is the exact converse of the shape test and is mutually exclusive with it by construction
+      //     (body ≥ 0.90 of range vs body ≤ 0.10). It is also a ONE-bar trigger that fires on the strong bar itself
+      //     with no break requirement; here the shape bar is i-1 and it never signals — only a later break does.
+      //   · `nr7` is the closest MECHANIC (a prior bar's range, broken by this one) but its condition on that bar is
+      //     a RANGE-WIDTH RANKING against 7 neighbours, blind to where the body sits inside it. The two are logically
+      //     independent: a doji with long wicks on both sides can be the WIDEST bar of the last 7 (firing here,
+      //     silent there), and a full-bodied bar can be the narrowest of 7 (firing there, silent here). `nr7` also
+      //     carries no location requirement at all, while this one demands the shape bar BE the window's extreme.
+      //   · `inside` is 2-bar range CONTAINMENT — blind to body and to location alike.
+      //   · `star` also contains a small-body bar, but measures its smallness against ANOTHER BAR'S BODY (< 0.5× the
+      //     impulse's) rather than against its own range, and confirms with a close past that impulse's midpoint —
+      //     never a break of the small bar's own range. A small body inside a huge bar's range fires `star` and is
+      //     silent here whenever its own wicks are short.
+      //   · `pinbar` is the one honest overlap: it too admits a near-zero body. But it requires ONE wick to DOMINATE
+      //     (>2× body and larger than the other side), fires on that bar itself, and FADES it — the opposite read.
+      //     A symmetric doji (equal wicks) can never fire `pinbar`, and where both shapes coexist the two still
+      //     disagree, because this trigger takes whichever side the NEXT bar breaks, which may be the fade's side.
+      // The read is the textbook one: indecision printed AT the edge of the range means neither side could extend
+      // there, so the range's edge is being decided rather than trended through — and the bar that resolves the
+      // indecision by closing beyond the doji's own range picks the winner. Direction is therefore the BREAK's, and
+      // the stop is the doji's opposite extreme: 1R is exactly the width of the indecision, and the trade dies the
+      // moment the bar that was supposed to have resolved it is fully retraced.
+      // ONE free constant, held FIXED — as `pinbar`'s 2× wick, `marubozu`'s 0.90 body-share and `tweezer`'s 0.10
+      // tolerance are — so it cannot multiply the trial count and deflate every other candidate's DSR:
+      //   DOJI_BODY = 0.10 of the bar's own range, scale-free and needing no absolute price unit. The "at a swing
+      //   extreme" qualifier is expressed with the stopLookback window the grammar ALREADY varies, not a new axis.
+      // Point-in-time: reads bar i-1's OHLC, bar i's close, and the hi/lo of bars[i-lb..i-1] — all closed at i.
+      const DOJI_BODY = 0.10;
+      const d = bars[i - 1];
+      const drng = d.high - d.low;
+      if (!(drng > 0)) return null;                                    // a zero-range bar → fails closed
+      if (Math.abs(d.close - d.open) > DOJI_BODY * drng) return null;  // a real body → indecision was not printed
+      // `hi`/`lo` span bars[i-lb..i-1] and therefore INCLUDE the doji, so these tests read "the doji IS the window's
+      // extreme" — the location qualifier — and are exact rather than tolerance-based.
+      if (b.close > d.high && d.high >= hi) return { side: "long", stop: d.low };
+      if (b.close < d.low && d.low <= lo) return { side: "short", stop: d.high };
+      return null;                                                     // unresolved, or resolved away from the edge
     }
     case "aroon": { // Aroon Up/Down cross (ingest id=27, web:fidelity+litefinance) — the 27th primitive, and the first
       // whose condition is a PURELY TEMPORAL/ORDINAL quantity: HOW MANY BARS AGO the window's extreme occurred. Every

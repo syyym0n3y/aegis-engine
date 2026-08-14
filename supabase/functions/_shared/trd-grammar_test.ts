@@ -997,3 +997,57 @@ Deno.test("kumo: breaks a level frozen 26 bars ago — the last 25 bars cannot m
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("doji: the same break trades or not depending only on the SHAPE and PLACE of the bar before it", () => {
+  const T = (i: number) => new Date(Date.UTC(2026, 0, 1, 0, i * 15)).toISOString();
+  const spec = { trigger: "doji" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // NEUTRAL filler: body = 0.8 of a 1.0 range, so it can never be read as indecision and never signals.
+  const fill = (i: number, hiPx = 100.5): Bar => ({ ts: T(i), open: 99.6, high: hiPx, low: 99.5, close: 100.4 });
+  // `shape` is the bar under test at i=20; everything after it is byte-identical across all three series.
+  const build = (shape: Bar, fillerHi = 100.5): Bar[] => [
+    ...Array.from({ length: 18 }, (_, i) => fill(i)),
+    fill(18, fillerHi), fill(19, fillerHi),                              // the two bars the 3-bar window also spans
+    shape,
+    { ts: T(21), open: 101.1, high: 101.6, low: 101.0, close: 101.5 },   // resolves the indecision UP, closing past 101.2
+    { ts: T(22), open: 101.5, high: 101.9, low: 101.4, close: 101.8 },   // fill at 101.5 → risk 0.7, target 102.2
+    { ts: T(23), open: 101.8, high: 102.4, low: 101.7, close: 102.3 },   // target tagged, stop (100.8) never threatened
+    // Two further bars, also full-bodied (never indecision, so they add no signal to any of the three series). They
+    // exist so control A's `breakout` comparison — whose stop is the far side of the whole window and whose target is
+    // therefore much further away — has room to CLOSE; runComponentTrades only reports closed trades.
+    { ts: T(24), open: 102.3, high: 102.9, low: 102.2, close: 102.8 },
+    { ts: T(25), open: 102.8, high: 103.2, low: 102.7, close: 103.1 },
+  ];
+  const DOJI: Bar = { ts: T(20), open: 101.0, high: 101.2, low: 100.8, close: 101.0 };      // body 0 of a 0.4 range
+  const BODY: Bar = { ts: T(20), open: 100.8, high: 101.2, low: 100.8, close: 101.2 };      // SAME extremes, full body
+
+  // POSITIVE — indecision at the window's high, then a close beyond its range: long at the next open, stop at the
+  // doji's low, +1R.
+  const base = build(DOJI);
+  const tr = runComponentTrades(base, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // CONTROL A — THE SHAPE CONTROL. The bar at i=20 keeps the SAME high and low (so the level broken, the window
+  // extreme and the stop distance are all unchanged) and differs ONLY in where its open and close sit inside that
+  // range. Every bar from i=21 on is byte-identical (asserted, not asserted-by-comment), so the break itself is
+  // untouched — and it must go silent. `breakout` is run on the same series to prove the move is real rather than
+  // absent: a control that contains no break would prove nothing.
+  const ctlA = build(BODY);
+  assertEquals(JSON.stringify(base.slice(21)), JSON.stringify(ctlA.slice(21)), "the control is only a control if the tails are identical");
+  assertEquals(runComponentTrades(ctlA, spec, { costRPerSide: 0 }).length, 0);
+  assert(runComponentTrades(ctlA, { ...spec, trigger: "breakout" as const }, { costRPerSide: 0 }).length > 0, "control A must contain a real range break — otherwise it proves nothing");
+
+  // CONTROL B — THE PLACE CONTROL. The identical doji, the identical break, but the two prior bars now reach 101.5,
+  // so the doji is no longer the extreme of the stopLookback window. Indecision in the MIDDLE of a range is not the
+  // pattern the sources describe, and it must be silent.
+  assertEquals(runComponentTrades(build(DOJI, 101.5), spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — reflecting every price about 300 maps the doji's high to its low and the up-break to a down-break, so
+  // the long must become a short of the same size. An asymmetric rule cannot survive this.
+  const mir = base.map((b) => ({ ts: b.ts, open: 300 - b.open, high: 300 - b.low, low: 300 - b.high, close: 300 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});
