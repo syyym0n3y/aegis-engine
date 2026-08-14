@@ -1,6 +1,28 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-312: grammar widened to 18 triggers — `supertrend`, the first VOLATILITY-NORMALISED
+entry condition; stage-2 record 203 tested / 0 survivors.** Loop healthy and writing: queue `max(run_at)` 0.86
+min old, 6,280 rows in the trailing 10 min, `done` 308,754 / pending 300,451 of 734,400 (lower than D-310's
+327,779 because the D-310 58k + D-311 1,005 resets are re-draining, not a stall). D-311's guard
+`trd_factory_promo_integrity_v` reads **CLEAN** (0 orphans). Stage-2 **caught up** — fired once, returned
+`"all candidates stage-2 tested"` at a true trial count of **509,380**; cumulative **203 candidates, 203
+tested — 188 killed, 15 thin, 0 survivors, `trd_forward_candidates` = 0.** Shipped `supertrend`: ATR appeared
+in the grammar only as STOP geometry (D-305) and never as an ENTRY condition — bands at `mid ± 3×ATR(10)`
+ratchet in the trend's favour and the state flips when a close breaches the far band. Chosen over the other 10
+ingest primitives because D-303's binding constraint is stop geometry, and this is the only queued trigger
+whose signal is scaled by current volatility (native ATR-sized stop → a `riskFrac` that might pay its fees).
+Causal by construction (bar *k* reads only *k*, *k−1*); the seeded initial direction is quarantined by a `warm`
+index so the first reported flip always comes from the recursion, not the assumption; identity-keyed WeakMap
+memo (D-310). **Negative control B carries the weight** — the IDENTICAL 10-point drop after an ATR-8 prelude
+must NOT fire, which is exactly what a raw `breakout`/`nbar` cannot distinguish. 18/18 grammar + **260/260
+`_shared`** green, both edge fns redeployed. Seeded 2,700 specs × 16 markets = **43,200 rows**, verified by
+SHA-256 (`4bd69a3d…6bd6c13`) computed independently in Postgres and TypeScript. **Deploy verified by OUTPUT**
+(D-308 lesson): **35 rows `done`, all non-null `n`, avg 161 trades, range 33–303, 0 zero-trade rows.**
+**Honest status: `supertrend` has produced nothing — 0 candidates, 0 stage-2 survivors, 0 forward candidates**;
+43,160 rows still pending, so its hypothesis is UNTESTED. D-303's diagnosis stands. ↓ prior stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-311: factory swallowed-write audit — the scorecard promotion flush had stranded
 1,005 gate-survivors before stage-2 could test them.** Audited all 8 `.catch(() => {})` write sites in
 `trd-edge-factory`. A PostgREST 4xx/5xx does not throw, so the swallow reported false success (the D-307

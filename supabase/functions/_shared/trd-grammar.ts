@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 17·3·3·3·5·4·5 = 45,900. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 18·3·3·3·5·4·5 = 48,600. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -234,6 +234,24 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (structUp && b.close < loP[0]) return { side: "short", stop: hiP[0] };
       return null;
     }
+    case "supertrend": { // Supertrend flip (ingest id=20, web:supertrend) — the 18th primitive, and the first whose
+      // SIGNAL is volatility-normalised. Every other trigger reads raw price geometry (candles, windows, pivots) or
+      // a bounded oscillator; ATR appears in the grammar only as STOP geometry (D-305), never as a condition for
+      // entry. Supertrend is an ATR-band trailing-trend state machine: bands sit ±(ST_MULT × ATR) around the bar
+      // midpoint, ratchet only in the trend's favour, and the state FLIPS when a close breaches the far band. The
+      // trade is the flip itself. Because the breach must clear 3×ATR, the setup fires only on moves that are large
+      // RELATIVE TO CURRENT VOLATILITY — which is precisely the axis D-303 named as binding (a trigger whose stop
+      // is ATR-scaled by construction carries a riskFrac that can pay its fees, unlike a 3-bar swing stop).
+      // Point-in-time: the recursion at bar k reads only bars k and k-1, so the series is causal and reading it at
+      // i uses nothing after i. Memoised identity-keyed (WeakMap) for the D-310 reason — never by bars.length.
+      const st = supertrendSeries(bars);
+      if (i <= st.warm) return null;                       // seed bar + warmup: the initial state is arbitrary
+      const d = st.dir[i], dPrev = st.dir[i - 1];
+      if (d === 0 || dPrev === 0 || d === dPrev) return null;
+      // Stop at the ACTIVE band on the flip bar — the canonical Supertrend trailing stop, on the far side of entry.
+      if (d === 1) return { side: "long", stop: st.lo[i] };
+      return { side: "short", stop: st.up[i] };
+    }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
       const pr = priorSessionRange(bars, i); if (!pr) return null;
@@ -308,6 +326,38 @@ function triggerSignal_rsi(bars: Bar[], i: number, period: number): number | nul
   }
   const v = arr[i]; return Number.isFinite(v) ? v : null;
 }
+// Supertrend state machine (D-312). Fixed canonical parameters — the grammar already varies five other axes, and
+// making the ATR period/multiplier free would multiply the trial count (and deflate every other candidate's DSR)
+// for a parameter the source describes as fixed at 10/3.
+const ST_PERIOD = 10, ST_MULT = 3;
+interface STSeries { dir: Int8Array; up: Float64Array; lo: Float64Array; warm: number }
+let _stCache = new WeakMap<Bar[], STSeries>();
+/** Causal Supertrend: bar k reads only bars k and k-1, so `dir[i]` is knowable at the close of bar i.
+ * `warm` is the last index whose state must be ignored — the direction has to be SEEDED at the first bar with a
+ * valid ATR, and that seed is an assumption, not a measurement. Suppressing ST_PERIOD bars past the seed means the
+ * first reported flip is always produced by the recursion itself, never by the arbitrary initial value. */
+function supertrendSeries(bars: Bar[]): STSeries {
+  const hit = _stCache.get(bars); if (hit) return hit;
+  const n = bars.length, atr = atrSeries(bars, ST_PERIOD);
+  const up = new Float64Array(n), lo = new Float64Array(n), dir = new Int8Array(n);
+  let fu = NaN, fl = NaN, d: 0 | 1 | -1 = 0, warm = n; // warm = n → no valid state at all unless seeded below
+  for (let i = 1; i < n; i++) {
+    const a = atr[i];
+    if (i <= ST_PERIOD || !(a > 0)) continue;             // dir stays 0 = "state undefined" (fails closed)
+    const mid = (bars[i].high + bars[i].low) / 2, pc = bars[i - 1].close;
+    const bu = mid + ST_MULT * a, bl = mid - ST_MULT * a;
+    fu = !Number.isFinite(fu) || bu < fu || pc > fu ? bu : fu; // upper ratchets DOWN while price stays below it
+    fl = !Number.isFinite(fl) || bl > fl || pc < fl ? bl : fl; // lower ratchets UP while price stays above it
+    const c = bars[i].close;
+    if (d === 0) { d = c >= mid ? 1 : -1; warm = i + ST_PERIOD; } // the seed (assumption), then quarantine it
+    else if (d === 1 && c < fl) d = -1;
+    else if (d === -1 && c > fu) d = 1;
+    up[i] = fu; lo[i] = fl; dir[i] = d;
+  }
+  const s: STSeries = { dir, up, lo, warm };
+  _stCache.set(bars, s); return s;
+}
+
 // EMA-at-i helper. Identity-keyed for the same reason as the RSI cache above (D-310).
 let _emaCache = new WeakMap<Bar[], Map<number, number[]>>();
 function triggerSignal_ema(bars: Bar[], i: number, period: number): number {
@@ -415,4 +465,4 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
 /** Drops every memoized indicator series. With identity keying (D-310) this is no longer required for
  * CORRECTNESS — it exists so a test can force a cold recompute. Nothing in the live path calls it, and
  * nothing needs to: two different markets are two different array objects. */
-export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); }
+export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); }

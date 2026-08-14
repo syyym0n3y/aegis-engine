@@ -374,3 +374,34 @@ Deno.test("indicator caches are market-identity-keyed, not length-keyed (no cros
   const first = sig(runComponentTrades(A, s1, { costRPerSide: 0 }));
   assertEquals(sig(runComponentTrades(A, s1, { costRPerSide: 0 })), first, "same market must be stable across repeat runs");
 });
+
+Deno.test("supertrend: flips on a VOLATILITY-NORMALISED breach, not on an absolute move", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "supertrend" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 25 NEUTRAL filler bars of IDENTICAL shape → ATR(10) settles at 1.0, the bands sit at mid±3 = 103/97, and the
+  // close never breaches either, so the state is seeded up at bar 11 and never flips inside the filler.
+  const calm: Bar[] = Array.from({ length: 25 }, (_, i) => bar(100, 100.5, 99.5, 100, i));
+  assertEquals(runComponentTrades(calm, spec, { costRPerSide: 0 }).length, 0);
+
+  // A close at 90 breaches the lower band (97) → state flips UP→DOWN → SHORT, stop at the upper band, entry at
+  // the next bar's open. Exit is booked at the target price itself, so the R is exactly +1 whatever the band value.
+  const drop: Bar[] = [...calm,
+    bar(100, 100.2, 89, 90, 25),   // flip bar: close 90 < lower band 97
+    bar(90, 92, 88, 89, 26),       // fill at open 90 (entry bar cannot also exit)
+    bar(89, 89, 60, 61, 27)];      // low sweeps through the target, high never reaches the stop → +1R
+  const tr = runComponentTrades(drop, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "short");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // NEGATIVE CONTROL A — the move is too SMALL to breach the band. Same calm prelude, close 98 > lower band 97.
+  assertEquals(runComponentTrades([...calm, bar(100, 100.2, 97.5, 98, 25), bar(98, 99, 97, 98, 26), bar(98, 99, 60, 61, 27)], spec, { costRPerSide: 0 }).length, 0);
+
+  // NEGATIVE CONTROL B — the one that proves the signal is NORMALISED and not a fixed threshold: the IDENTICAL
+  // 10-point drop to a close of 90, but after a prelude whose ATR is 8 instead of 1. The lower band now sits at
+  // 76, so the same absolute move is unremarkable relative to volatility → must NOT fire. A raw `breakout`/`nbar`
+  // trigger cannot tell these two cases apart; that difference is the whole reason this primitive is new.
+  const wild: Bar[] = Array.from({ length: 25 }, (_, i) => bar(100, 104, 96, 100, i));
+  assertEquals(runComponentTrades(wild, spec, { costRPerSide: 0 }).length, 0);
+  assertEquals(runComponentTrades([...wild, bar(100, 101, 89, 90, 25), bar(90, 92, 88, 89, 26), bar(89, 89, 60, 61, 27)], spec, { costRPerSide: 0 }).length, 0);
+});

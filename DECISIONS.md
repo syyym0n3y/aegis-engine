@@ -5589,3 +5589,54 @@ outdated. Only the P&L REPORT to the operator was lost. Mitigation:
   and reports equity/P&L + any SILENT-FAIL-SUSPECT cron — the cloud routine's report function on a reliable surface.
 - Snapshot fn is heartbeat-instrumented (D-304) and in trd_cron_health_v. Verified: fires, writes, equity $100,614.
 Honest framing preserved end-to-end: total_pnl includes legacy crypto (NOT edge); ORB edges +0.14R show only at scale.
+
+## D-312 — Grammar widened to 18 triggers: `supertrend`, the first VOLATILITY-NORMALISED entry condition (2026-08-14)
+
+**Loop health first (measured, not assumed).** `trd_edge_queue` `max(run_at)` **0.86 min** old, **6,280 rows
+written in the trailing 10 min**, `done` 308,754 / pending 300,451 of 734,400 (the lower `done` vs D-310's
+327,779 is the D-310 58k + D-311 1,005 deliberate resets re-draining, not a stall). D-311's machine guard
+`trd_factory_promo_integrity_v` reads **CLEAN** (0 orphans, 0 after-fix) — the swallowed-write fix is holding.
+Stage-2 fired once and returned `"all candidates stage-2 tested"` at a true trial count of **509,380**.
+Cumulative: **203 candidates, 203 tested — 188 stage2-killed, 15 thin, 0 survivors,
+`trd_forward_candidates` = 0.** That is D-070 working as designed, not a failure.
+
+**What shipped.** All 17 prior triggers read raw price geometry (candles: `engulfing`/`pinbar`/`star`/
+`soldiers`; windows: `breakout`/`channel`/`delivery`/`nr7`/`inside`; pivots: `choch`; liquidity: `sweep`/
+`ssweep`) or a bounded oscillator (`rsi`). **ATR appeared in the grammar only as STOP geometry (D-305), never
+as a condition for ENTRY.** `supertrend` (ingest id=20) closes that gap: bands at `mid ± 3×ATR(10)` ratchet
+only in the trend's favour, and the state FLIPS when a close breaches the far band; the trade is the flip,
+stopped at the active band.
+
+**Why this trigger rather than the other 10 in the ingest backlog.** D-303's standing diagnosis is that the
+binding constraint is STOP GEOMETRY — `costR = (feeBps/1e4)/riskFrac`, so a 3-bar swing stop at 0.25–0.79% of
+notional cannot pay a 20bp round trip. `supertrend` is the only queued primitive whose *signal* is scaled by
+current volatility, so it fires only on moves that are large relative to ATR and its native stop is ATR-sized
+by construction. The candle-pattern backlog (`harami`/`tweezer`/`marubozu`/`doji`) is dense overlap with
+`engulfing`/`inside`/`pinbar`/`star`, and each would add 43,200 trials that deflate every other candidate's
+DSR for near-zero new information — the D-304 `nr4` / D-308 `bos` rationale.
+
+**Honest by construction.** The band recursion at bar *k* reads only bars *k* and *k−1*, so the series is
+causal and reading it at *i* uses nothing after *i*. The direction must be SEEDED at the first bar with a
+valid ATR, and that seed is an assumption rather than a measurement — so the series carries a `warm` index
+and the detector suppresses `ST_PERIOD` bars past the seed, guaranteeing the first reported flip is produced
+by the recursion and never by the arbitrary initial value. State `0` = undefined = no trade (fails closed).
+Memoised **identity-keyed (WeakMap)**, never by `bars.length` — the D-310 collision must not come back.
+
+**The test's weight is in negative control B.** Control A is the ordinary one (a move too small to breach the
+band → silent). **Control B fires the IDENTICAL 10-point drop to a close of 90 after a prelude whose ATR is 8
+instead of 1** — the band now sits at 76, so the same absolute move is unremarkable relative to volatility and
+must NOT signal. A raw `breakout`/`nbar` trigger cannot tell those two cases apart; that difference *is* the
+new primitive. 18/18 grammar + **260/260 `_shared`** green.
+
+**Seeded and verified.** 2,700 specs × 16 markets = **43,200 rows**, verified by **SHA-256
+`4bd69a3da17a269f25d8b496741edb362dd458e2c95b76d643aae692f6bd6c13`** computed independently in Postgres and in
+TypeScript over `enumerate()`+`specKey()` — so no orphaned rows keyed differently from what the factory reads.
+
+**Deploy verified by OUTPUT, not by the CLI message** (D-308 lesson: an undeployed trigger falls through the
+`switch`, returns `undefined`, and marks every row `thin` — which reads like progress). Measured on live rows
+instead: **35 rows already `done`, all non-null `n`, avg 161 trades, range 33–303, zero zero-trade rows.**
+
+**Honest status: `supertrend` has produced NOTHING — 0 candidates, 0 stage-2 survivors, 0 forward candidates**,
+and 43,160 of its rows are still pending. The hypothesis that a volatility-normalised entry carries a payable
+`riskFrac` is UNTESTED until those drain. D-303's diagnosis stands until the data says otherwise.
+`trd_edge_ingest` now holds 10 `status=new` rows (above the 3-row refill floor), ingest id=20 → `queued`.
