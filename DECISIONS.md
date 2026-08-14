@@ -5964,3 +5964,22 @@ HONEST CONCLUSION: we do NOT have validated edges hiding behind an over-harsh de
 are genuine LEADS (profitable at cost, high skill, walk-forward-consistent) but UNDER-POWERED — they need forward
 trade ACCUMULATION to earn the sample the gate correctly demands, not a looser gate. Next legitimate step:
 forward-paper the top wide-stop candidates and let n grow, then re-test. The gate held; the engine is honest.
+
+## D-314 — Cross-market pooling: the leads are single-market FLUKES. Still zero validated edges (2026-08-14)
+
+Built `trd-edge-pool`: for each profitable-at-cost lead, pool the SAME spec across the 16 INDEPENDENT markets
+(independent evidence, not correlated within-family variants), then apply the full gate + a BREADTH check (edge
+must be net-positive on a majority of markets). This is the honest route to the sample the DSR demands — and the
+decisive falsification. Result on the top leads:
+- sweep|ema20|against|sl3|rr3|asia|atr6: SOL alone +0.50R t=5.48; POOLED (n=565) → skill t=1.24, net −0.014R, positive on 7/15.
+- pinbar|ema50|against|sl5|rr1.5|ny|atr6: LINK alone +0.39R t=7.08; POOLED (n=1975) → net −0.087R, positive on 2/16.
+- supertrend|*|rr3|ny: profitable on AVAX ONLY (0/15 other markets in stage-2) — single-market by inspection.
+Every lead's edge EVAPORATES across independent markets — the single-market t-stats were in-sample luck among
+~623k trials. 0 pool-survivors, 0 forward promotions.
+
+DEFINITIVE ANSWER to "are we on par with our validated edges": we have ZERO edges that survive the full gauntlet
+(skill + profit + walk-forward + DSR-deflated-by-effective-N + cross-market breadth). This is not a gate that's
+too harsh (D-313 proved the deflation ~fair) — it is the honest terminal state D-070 predicted: crowded/lagged/
+capacity-bound retail setups do NOT survive honest, cross-market, cost-realistic falsification. The engine is
+working exactly as designed. Cron trd_edge_pool_5m runs it continuously. (Known limit: indicator-heavy specs
+CPU-limit on 16-market pooling in one invocation; their single-market concentration is visible in stage-2 anyway.)
