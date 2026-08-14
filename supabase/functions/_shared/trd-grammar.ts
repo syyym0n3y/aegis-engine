@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 18·3·3·3·5·4·5 = 48,600. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 19·3·3·3·5·4·5 = 51,300. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -252,6 +252,29 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (d === 1) return { side: "long", stop: st.lo[i] };
       return { side: "short", stop: st.up[i] };
     }
+    case "squeeze": { // Bollinger-in-Keltner squeeze RELEASE (ingest id=21, web:chartink) — the 19th primitive, and
+      // the first whose condition is a RATIO of two volatility measures rather than a level, a shape, or a range.
+      // BB half-width = 2·stdev(close, 20) measures CLOSE-TO-CLOSE dispersion (where price actually settled);
+      // KC half-width = 1.5·ATR(20) measures INTRABAR true range (how far it travelled to get there). "Squeeze on"
+      // = the Bollinger band sits entirely INSIDE the Keltner channel, i.e. closes are agreeing while the bars are
+      // still travelling — the market is churning, not going anywhere. The trade is the RELEASE bar: the first bar
+      // on which the band escapes the channel. Direction from the close vs the 20-bar basis; stop at the OPPOSITE
+      // Keltner band, so 1R is ATR-scaled by construction (the D-303 riskFrac argument that also motivated
+      // `supertrend`).
+      // Why this is not a duplicate of `nr7`/`inside`/`delivery`: all three of those measure ABSOLUTE range
+      // compression over 2–20 bars. This measures a RATIO, so it is blind to scale and can disagree with them in
+      // both directions — a prelude of tiny bars with steadily marching closes is maximally "compressed" to them
+      // and NOT squeezed here (negative control A pins exactly that), while wide-ranging bars that keep closing at
+      // the same price are squeezed here and unremarkable to them.
+      // Point-in-time: the series at bar k reads only the 20 closes/ranges ending at k, so reading it at i uses
+      // nothing after i. Memoised identity-keyed (WeakMap), never by bars.length (D-310).
+      const sq = squeezeSeries(bars);
+      if (i < SQ_WARM + 1) return null;                  // need on[i-1] to be defined too
+      if (!(sq.on[i - 1] === 1 && sq.on[i] === 0)) return null; // the RELEASE bar, not the squeezed state
+      if (b.close > sq.mid[i]) return { side: "long", stop: sq.kcLo[i] };
+      if (b.close < sq.mid[i]) return { side: "short", stop: sq.kcUp[i] };
+      return null;                                        // close exactly on the basis → no direction (fails closed)
+    }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
       const pr = priorSessionRange(bars, i); if (!pr) return null;
@@ -356,6 +379,35 @@ function supertrendSeries(bars: Bar[]): STSeries {
   }
   const s: STSeries = { dir, up, lo, warm };
   _stCache.set(bars, s); return s;
+}
+
+// Bollinger-in-Keltner squeeze state (D-313). Canonical TTM-squeeze parameters, held FIXED for the same reason
+// as Supertrend's 10/3: the grammar already varies five axes, and freeing the band parameters would multiply the
+// trial count (deflating every other candidate's DSR) for constants the sources state as fixed.
+const SQ_PERIOD = 20, SQ_BB_MULT = 2, SQ_KC_MULT = 1.5;
+// First index whose state is a MEASUREMENT rather than a warmup artefact: the close window must be full
+// (SQ_PERIOD bars) AND the Wilder ATR must have run a full period past its simple-average ramp-in.
+const SQ_WARM = 2 * SQ_PERIOD - 1;
+interface SQSeries { on: Int8Array; mid: Float64Array; kcUp: Float64Array; kcLo: Float64Array }
+let _sqCache = new WeakMap<Bar[], SQSeries>();
+/** Causal squeeze state: `on[i]` reads only the 20 closes and true ranges ending at bar i. `on[i] = -1` means
+ * "undefined" (inside warmup) and can never satisfy the release test, so the trigger fails closed. */
+function squeezeSeries(bars: Bar[]): SQSeries {
+  const hit = _sqCache.get(bars); if (hit) return hit;
+  const n = bars.length, atr = atrSeries(bars, SQ_PERIOD);
+  const on = new Int8Array(n).fill(-1), mid = new Float64Array(n), kcUp = new Float64Array(n), kcLo = new Float64Array(n);
+  for (let i = SQ_WARM; i < n; i++) {
+    let sum = 0; for (let k = i - SQ_PERIOD + 1; k <= i; k++) sum += bars[k].close;
+    const m = sum / SQ_PERIOD;
+    let ss = 0; for (let k = i - SQ_PERIOD + 1; k <= i; k++) { const d = bars[k].close - m; ss += d * d; }
+    const sd = Math.sqrt(ss / SQ_PERIOD);                 // population stdev — the canonical Bollinger definition
+    const a = atr[i]; if (!(a > 0)) continue;             // no volatility measure → state stays undefined
+    const bbHalf = SQ_BB_MULT * sd, kcHalf = SQ_KC_MULT * a;
+    mid[i] = m; kcUp[i] = m + kcHalf; kcLo[i] = m - kcHalf;
+    on[i] = bbHalf <= kcHalf ? 1 : 0;                     // BB fully inside KC (bands share the basis `m`)
+  }
+  const s: SQSeries = { on, mid, kcUp, kcLo };
+  _sqCache.set(bars, s); return s;
 }
 
 // EMA-at-i helper. Identity-keyed for the same reason as the RSI cache above (D-310).
@@ -465,4 +517,4 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
 /** Drops every memoized indicator series. With identity keying (D-310) this is no longer required for
  * CORRECTNESS — it exists so a test can force a cold recompute. Nothing in the live path calls it, and
  * nothing needs to: two different markets are two different array objects. */
-export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); }
+export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); }

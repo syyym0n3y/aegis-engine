@@ -405,3 +405,42 @@ Deno.test("supertrend: flips on a VOLATILITY-NORMALISED breach, not on an absolu
   assertEquals(runComponentTrades(wild, spec, { costRPerSide: 0 }).length, 0);
   assertEquals(runComponentTrades([...wild, bar(100, 101, 89, 90, 25), bar(90, 92, 88, 89, 26), bar(89, 89, 60, 61, 27)], spec, { costRPerSide: 0 }).length, 0);
 });
+
+Deno.test("squeeze: fires on a RATIO release (BB escaping KC), not on absolute range compression", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "squeeze" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 40 bars that TRAVEL 8 points each but always CLOSE at 100 → stdev(close)=0 so BB half-width=0, while ATR
+  // settles at 8 so KC half-width=12. BB is inside KC → squeeze ON for every defined bar, and the state is only
+  // defined from index SQ_WARM=39, so the prelude alone can never contain a release.
+  const churn: Bar[] = Array.from({ length: 40 }, (_, i) => bar(100, 104, 96, 100, i));
+  assertEquals(runComponentTrades(churn, spec, { costRPerSide: 0 }).length, 0);
+
+  // RELEASE at index 40: a close of 60 makes stdev 8.718 → BB half 17.44, while ATR only rises to 9.65 → KC half
+  // 14.475. BB now escapes KC → on flips 1→0 → SHORT (close 60 below the 98 basis), stop at the upper Keltner
+  // band 112.475. Fill at the next bar's open (60), so 1R = 52.475 and the target is 7.525.
+  const rel: Bar[] = [...churn,
+    bar(100, 100, 59, 60, 40),   // release bar
+    bar(60, 62, 58, 59, 41),     // fill at open 60 (an entry bar can never also exit)
+    bar(59, 59, 5, 6, 42)];      // low sweeps the target, high never reaches the stop → +1R
+  const tr = runComponentTrades(rel, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "short");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // NEGATIVE CONTROL A — the one that carries the weight. Bars of range 1.0 (eight times TIGHTER in absolute
+  // terms than the churn prelude) but whose closes march +3 per bar: stdev 17.3 → BB half 34.6 vs KC half ~5.25,
+  // so BB is OUTSIDE KC and the market was never squeezed. The IDENTICAL drop must therefore produce no trade.
+  // `nr7`/`inside`/`delivery` read this prelude as maximally compressed; the ratio says the opposite.
+  const march: Bar[] = Array.from({ length: 40 }, (_, i) => { const c = 100 + 3 * i; return bar(c, c + 0.5, c - 0.5, c, i); });
+  const last = 100 + 3 * 39;
+  assertEquals(runComponentTrades([...march,
+    bar(last, last, last - 41, last - 40, 40), bar(last - 40, last - 38, last - 42, last - 41, 41), bar(last - 41, last - 41, 5, 6, 42)],
+    spec, { costRPerSide: 0 }).length, 0);
+
+  // NEGATIVE CONTROL B — squeezed, but the move is too small to RELEASE: a close of 90 gives BB half 4.36, still
+  // inside KC half 12.2, so the state stays ON and no trade is taken. Proves the trigger is the release event,
+  // not merely "a big bar during a squeeze".
+  assertEquals(runComponentTrades([...churn,
+    bar(100, 100, 89, 90, 40), bar(90, 92, 88, 89, 41), bar(89, 89, 5, 6, 42)],
+    spec, { costRPerSide: 0 }).length, 0);
+});

@@ -10,6 +10,64 @@
 
 ---
 
+## D-313 — 19th grammar trigger `squeeze` (Bollinger-in-Keltner release) — the first condition that is a RATIO of two volatility measures rather than a level, a shape, or an absolute range
+
+**Date:** 2026-08-14
+
+**Context:** `trd_edge_ingest` held 10 `status='new'` primitives. D-312 (`supertrend`) had just closed the
+"volatility-normalised ENTRY" gap and explicitly deprioritised the candle-pattern backlog
+(harami/tweezer/marubozu/doji) on the D-304/D-308 grounds that each new trigger costs 43,200 trials of DSR
+deflation and those four add near-zero information. `squeeze` (ingest id=21, web:chartink) was chosen over
+`eqhl`/`doubletop`/`macd`/`stoch`/`rsidiv` because it is the only remaining queued primitive that (a) is
+scale-free — its condition is a ratio, so it cannot be reproduced by any absolute-range trigger already in the
+grammar — and (b) emits an ATR-scaled native stop, which is the D-303 binding constraint (`costR =
+(feeBps/1e4)/riskFrac`; a 3-bar swing stop at 0.25% of notional cannot pay a 10bp/side fee).
+
+**What it measures.** BB half-width = `2 · stdev(close, 20)` — CLOSE-TO-CLOSE dispersion, i.e. where price
+actually settled. KC half-width = `1.5 · ATR(20)` — INTRABAR true range, i.e. how far it travelled to get
+there. "Squeeze on" = the Bollinger band sits entirely inside the Keltner channel: closes are agreeing while
+the bars are still moving — the market is churning, not going anywhere. The trade is the RELEASE bar (the
+first bar the band escapes the channel), direction from close vs the 20-bar basis, stop at the OPPOSITE
+Keltner band. Canonical TTM parameters (20 / 2 / 1.5) are held FIXED for the same reason as Supertrend's
+10/3 — the grammar already varies five axes and freeing band parameters would deflate every other candidate's
+DSR for constants the sources state as fixed.
+
+**Why it is not a duplicate of `nr7` / `inside` / `delivery`.** All three of those measure ABSOLUTE range
+compression over 2–20 bars. This measures a RATIO, so it disagrees with them in BOTH directions: a prelude of
+tiny bars with steadily marching closes is maximally compressed to them and NOT squeezed here; wide-ranging
+bars that keep closing at the same price are squeezed here and unremarkable to them. **Negative control A in
+the test pins exactly that** — bars of range 1.0 (8× tighter in absolute terms than the squeezed prelude) whose
+closes march +3/bar must produce NO trade on the identical drop that fires the squeezed case. Control B pins
+that the trigger is the RELEASE event, not "a big bar during a squeeze": a drop too small to push BB outside
+KC leaves the state ON and takes no trade.
+
+**Honest by construction.** `on[i]` reads only the 20 closes and true ranges ending at bar i, so the series is
+causal and reading it at i uses nothing after i. Inside warmup (`i < 2·20−1`) the state is `-1` = undefined,
+which can never satisfy the release test — it fails closed. The memo is identity-keyed (`WeakMap` on the bars
+array), never `bars.length` (D-310 must not recur); `clearEmaCache()` drops it.
+
+**Verification (evidence, not assertion).**
+- 19/19 `trd-grammar_test.ts` + **261/261 `_shared`** green; `deno check` clean on the grammar and on
+  `trd-edge-factory/index.ts`. `trd-edge-factory` redeployed via the Supabase CLI.
+- Seed generator proved byte-exact BEFORE inserting: regenerated the `supertrend` seed with the identical SQL
+  expression and diffed both directions against the live table — 43,200 = 43,200, `gen_not_live` = 0,
+  `live_not_gen` = 0 (spec_key AND the `spec` jsonb, including the swing-mode `stopMode` omission).
+- Seeded 2,700 specs × 16 markets = **43,200 rows**; `specKey` set SHA-256 = `bfc17a15…bbf9987a` computed
+  independently in Postgres (`sha256` over the sorted distinct keys) and in TypeScript over
+  `enumerate()+specKey()` — identical.
+- **Detector verified by OUTPUT on live keyless Binance 15m bars** (1,000 bars, rr=1, trendMode=none, zero
+  cost): BTCUSDT n=15, ETHUSDT n=14, SOLUSDT n=20, DOGEUSDT n=14 in swing mode; median `riskFrac` 0.50–0.89%
+  of notional, 0.95–1.75% at `atr6`. That is above `MIN_RISK_FRAC` and inside the band where a 20–40bp round
+  trip costs 0.1–0.3R instead of 0.7R. Per-trade expectancy at N=5–20 in-sample with zero cost is NOT a
+  measurement of edge and is deliberately not reported as one (ANALYSIS_CONTRACT Rules 1 and 4).
+
+**Decision:** `squeeze` is added to the grammar and queued. **Status: PENDING / UNTESTED — 0 rows scored, 0
+candidates, 0 stage-2 survivors, 0 forward candidates.** `trd_lineage` row `grammar-squeeze` records the
+hypothesis and this verdict. Loop state at ship time: queue `done` 318,967 / pending 326,771 / thin 131,862 of
+777,600, `max(run_at)` 0.6 min old; stage-2 caught up at trial count 524,700 — **253 candidates tested, 238
+stage2-killed, 15 thin, 0 survivors.** D-070 continues to hold: the expected terminal state is that nothing
+survives the full gauntlet.
+
 ## D-078 — PLATFORM CAPSTONE: the full product is built, tested, and live. Verify/Protect/Allocate + the risk Firewall + adaptive Bot + Paper-Broker bridge. Proven end-to-end: KEEPS accounts alive always; COMPOUNDS only where a real edge exists (the global factor book), never on chart signals.
 
 **Date:** 2026-08-03

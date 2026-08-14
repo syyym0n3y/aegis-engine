@@ -1,6 +1,31 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-313: grammar widened to 19 triggers — `squeeze`, the first trigger whose condition is
+a RATIO of two volatility measures; stage-2 record 253 tested / 0 survivors.** Loop healthy and writing: queue
+`max(run_at)` 0.6 min old, `done` advanced 318,939 → 318,967 while this session ran (writes LAND, not merely
+"processed:N"). Queue 777,600 total — 318,967 done / 326,771 pending / 131,862 thin. Stage-2 fired once and
+returned `"all candidates stage-2 tested"` at a true trial count of **524,700**; cumulative **253 candidates,
+253 tested — 238 stage2-killed, 15 thin, 0 survivors, `trd_forward_candidates` = 0.** Shipped `squeeze`
+(ingest id=21, web:chartink): BB half-width (2·sd of 20 closes = where price SETTLED) vs KC half-width
+(1.5·ATR(20) = how far it TRAVELLED). "Squeeze on" = BB entirely inside KC; the trade is the RELEASE bar, the
+first bar the band escapes the channel. Direction from close vs the 20-bar basis, stop at the OPPOSITE Keltner
+band — ATR-scaled by construction, the same D-303 `riskFrac` argument that motivated `supertrend`. **It is not
+a duplicate of `nr7`/`inside`/`delivery`:** those measure ABSOLUTE range compression, this measures a RATIO, so
+it is blind to scale and disagrees with them in both directions. **Negative control A carries the weight** — a
+prelude of range-1.0 bars (8× tighter in absolute terms than the squeezed prelude) whose closes march +3/bar is
+maximally "compressed" to those three triggers and NOT squeezed here, so the IDENTICAL drop must produce no
+trade. 19/19 grammar + **261/261 `_shared`** green, `trd-edge-factory` redeployed. Seeded 2,700 specs × 16
+markets = **43,200 rows**, verified by SHA-256 (`bfc17a15…bbf9987a`) computed independently in Postgres and
+TypeScript over `enumerate()+specKey()`; the generator was first proved byte-exact by regenerating the
+`supertrend` seed and diffing both directions against the live table (43,200 = 43,200, 0 rows either way).
+**Detector verified by OUTPUT on live Binance 15m bars** (1,000 bars, rr=1, trendMode=none): BTCUSDT n=15,
+ETHUSDT n=14, SOLUSDT n=20, DOGEUSDT n=14 in swing mode; median `riskFrac` 0.50–0.89% of notional (0.95–1.75%
+at atr6) — above `MIN_RISK_FRAC` and inside the band that can pay a 10–20bp round trip. Expectancy at those N
+is not a measurement of edge and is not reported as one. **Honest status: `squeeze` has produced nothing — 0
+scored rows, 0 candidates, 0 stage-2 survivors, 0 forward candidates; its hypothesis is UNTESTED.** ↓ prior stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-312: grammar widened to 18 triggers — `supertrend`, the first VOLATILITY-NORMALISED
 entry condition; stage-2 record 203 tested / 0 survivors.** Loop healthy and writing: queue `max(run_at)` 0.86
 min old, 6,280 rows in the trailing 10 min, `done` 308,754 / pending 300,451 of 734,400 (lower than D-310's
