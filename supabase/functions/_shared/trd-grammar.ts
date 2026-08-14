@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -36,7 +36,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -53,6 +53,18 @@ export function enumerate(g = GRAMMAR): ComponentSpec[] {
 export function specKey(s: ComponentSpec): string { return `${s.trigger}|ema${s.emaPeriod}|${s.trendMode}|sl${s.stopLookback}|rr${s.rr}|${s.session}`; }
 
 function sessionOf(hUtc: number): Session { return hUtc < 7 ? "asia" : hUtc < 13 ? "london" : hUtc < 21 ? "ny" : "asia"; }
+
+// The high/low of the immediately-PRIOR session block before bar i (skip bar i's own session, then aggregate the
+// contiguous run of the previous session). Point-in-time: reads only bars strictly before i. Null if too thin.
+function priorSessionRange(bars: Bar[], i: number): { hi: number; lo: number } | null {
+  const sOf = (k: number) => sessionOf(new Date(bars[k].ts).getUTCHours());
+  const cur = sOf(i); let j = i - 1;
+  while (j >= 0 && sOf(j) === cur) j--;            // skip bar i's own (still-forming) session
+  if (j < 0) return null;
+  const prev = sOf(j); let hi = -Infinity, lo = Infinity, cnt = 0;
+  while (j >= 0 && sOf(j) === prev) { if (bars[j].high > hi) hi = bars[j].high; if (bars[j].low < lo) lo = bars[j].low; cnt++; j--; }
+  return cnt >= 2 ? { hi, lo } : null;
+}
 
 // A trigger inspects data known by the CLOSE of bar i and returns a raw signal or null.
 interface Sig { side: "long" | "short"; stop: number; }
@@ -108,6 +120,13 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (r === null || rPrev === null) return null;
       if (rPrev < 30 && r >= 30) return { side: "long", stop: lo };
       if (rPrev > 70 && r <= 70) return { side: "short", stop: hi };
+      return null;
+    }
+    case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
+      // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.
+      const pr = priorSessionRange(bars, i); if (!pr) return null;
+      if (b.high > pr.hi && b.close < pr.hi) return { side: "short", stop: b.high };
+      if (b.low < pr.lo && b.close > pr.lo) return { side: "long", stop: b.low };
       return null;
     }
     case "nbar": { // N-consecutive-close reversal: 3 down-closes then an up-close = exhaustion reversal LONG (and

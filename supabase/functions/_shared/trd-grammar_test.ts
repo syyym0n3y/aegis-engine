@@ -62,6 +62,25 @@ Deno.test("nbar reversal: fires only after 3 consecutive down-closes then an up-
   assertEquals(tr[0].side, "long");
 });
 
+Deno.test("ssweep: fades a sweep of the PRIOR session's high (Asia high swept in London), resolves short", () => {
+  const b = (hh: number, mm: number, o: number, h: number, l: number, c: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, hh, mm)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "ssweep" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 ASIA bars (04:00–06:45 UTC, all hour<7), session high=105, low=95. First asia bars have no prior session → no trigger.
+  const asia: Bar[] = Array.from({ length: 12 }, (_, i) => {
+    const hh = 4 + Math.floor((i * 15) / 60), mm = (i * 15) % 60;
+    const h = i === 5 ? 105 : 102, l = i === 6 ? 95 : 98;                 // establish the session extremes
+    return b(hh, mm, 100, h, l, 100);
+  });
+  // LONDON: a clean bar (no sweep), then a bar that WICKS above the Asia high (106>105) and CLOSES back inside (103<105)
+  // → short, stop=106. Fill next open (102, risk 4), resolve at the −1R target (98) on the final bar's low (97).
+  const london: Bar[] = [b(7, 0, 103, 104, 102, 103), b(7, 15, 103, 106, 102, 103), b(7, 30, 102, 103, 98, 99), b(7, 45, 99, 100, 97, 98)];
+  const tr = runComponentTrades([...asia, ...london], spec, { costRPerSide: 0 });
+  assert(tr.length > 0, "a sweep of the prior session's high should trade");
+  assertEquals(tr[0].side, "short");
+  // pure-Asia bars alone (no prior session to sweep) must yield ZERO trades
+  assertEquals(runComponentTrades(asia, spec, { costRPerSide: 0 }).length, 0);
+});
+
 Deno.test("runComponent produces trades and applies cost", () => {
   // synthetic trending bars with noise → breakout trigger should fire some trades
   const bars: Bar[] = [];

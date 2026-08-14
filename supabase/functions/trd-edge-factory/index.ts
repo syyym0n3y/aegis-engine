@@ -27,7 +27,8 @@ const DEFLATED_T = 4.4;
 // Deep-history keyless Binance markets. The queue SELF-SEEDS the full grammar (4860 specs) per market on
 // first sight, so coverage widens by editing this list — no external seed job. Universe expansion (more
 // coins) is additive: add symbols here (or a trd_edge_markets table) and the cron fills them in.
-const MARKETS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "LINKUSDT"];
+const MARKETS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "LINKUSDT",
+  "AVAXUSDT", "DOTUSDT", "LTCUSDT", "TRXUSDT", "ATOMUSDT", "ETCUSDT", "XLMUSDT", "BCHUSDT"]; // 16 deep-history keyless
 const mean = (a: number[]) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
 
 // self-seed: for any market with no queue rows yet, enumerate the grammar and insert its trials pending.
