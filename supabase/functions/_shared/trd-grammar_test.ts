@@ -30,6 +30,20 @@ Deno.test("inside-bar break: fires only on a real inside bar + break, in the bre
   assertEquals(none.length, 0, "no inside bar → no inside-break trade");
 });
 
+Deno.test("channel (Donchian): fires only on a break of the prior 20-bar high, resolves long", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "channel" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 22 flat bars in a tight range (h=101,l=99) → NO close ever exceeds the prior-20 channel high (101) → no trigger…
+  const flat: Bar[] = Array.from({ length: 22 }, (_, i) => bar(100, 101, 99, 100, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+  // …then a decisive break above the 20-bar high (close 105 > 101), a fill bar, and a bar that reaches the +1R target.
+  // entry ~ next open 104, stop = 3-bar swing low (~99), risk ~5, target ~109 → reached by the final bar's high 111.
+  const brk: Bar[] = [...flat, bar(102, 105, 101, 105, 22), bar(104, 108, 103, 107, 23), bar(108, 111, 106, 110, 24)];
+  const tr = runComponentTrades(brk, spec, { costRPerSide: 0 });
+  assert(tr.length > 0, "a genuine 20-bar channel break should trade");
+  assertEquals(tr[0].side, "long");
+});
+
 Deno.test("runComponent produces trades and applies cost", () => {
   // synthetic trending bars with noise → breakout trigger should fire some trades
   const bars: Bar[] = [];

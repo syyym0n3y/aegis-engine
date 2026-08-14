@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -36,7 +36,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -108,6 +108,15 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (r === null || rPrev === null) return null;
       if (rPrev < 30 && r >= 30) return { side: "long", stop: lo };
       if (rPrev > 70 && r <= 70) return { side: "short", stop: hi };
+      return null;
+    }
+    case "channel": { // Donchian/Turtle: break of the prior 20-bar high/low channel (a longer, FIXED lookback than
+      // the generic breakout's stopLookback range), stop at the stopLookback swing. The classic trend-capture entry.
+      const CH = 20; if (i < CH) return null;
+      let ch = -Infinity, cl = Infinity;
+      for (let j = i - CH; j < i; j++) { if (bars[j].high > ch) ch = bars[j].high; if (bars[j].low < cl) cl = bars[j].low; }
+      if (b.close > ch) return { side: "long", stop: lo };
+      if (b.close < cl) return { side: "short", stop: hi };
       return null;
     }
     case "inside": { // inside-bar breakout: bar i-1 fully inside the "mother" bar i-2 (a volatility contraction),
