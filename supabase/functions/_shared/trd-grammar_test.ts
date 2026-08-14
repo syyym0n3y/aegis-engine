@@ -633,3 +633,48 @@ Deno.test("macd: fires on the SECOND DERIVATIVE — a decelerating advance, not 
   assertEquals(mtr.map((t) => t.side), ["short", "long"]);
   assert(mtr.every((t) => Math.abs(t.r - 1) < 1e-9), `expected +1R on both, got ${mtr.map((t) => t.r)}`);
 });
+
+Deno.test("harami: fires on BODY contraction against the prior bar — not range containment, not same-colour", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "harami" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 NEUTRAL filler bars, all identical → pbody (0.1) is never >= 2·body (0.2) → no harami can fire.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100.1, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+
+  const seq: Bar[] = [...flat,
+    bar(100, 100.2, 95.8, 96, 12),      // i-1: large DOWN body 4.0 (body 96→100), low 95.8
+    bar(96.5, 97.4, 96.3, 97.0, 13),    // i: small UP body 0.5 INSIDE [96,100] → LONG, stop = min(95.8, 96.3) = 95.8
+    bar(97.2, 97.5, 97.0, 97.3, 14),    // fill at open 97.2 → risk 1.4, target 98.6; neither touched here
+    bar(97.3, 98.8, 97.2, 98.7, 15)];   // high 98.8 >= 98.6 → +1R
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // NEGATIVE control A — pins BODY containment against RANGE containment (the `inside` neighbour). The small bar's
+  // whole HIGH–LOW range (95.4–95.9) sits inside the prior bar's range (95.0–101.0), and it is the right colour
+  // and the right size — but its body (95.5–95.8) is BELOW the prior body (96.0–100.0), so the large bar was
+  // extended, not answered. An inside-bar detector fires here; harami must not.
+  const rangeOnly: Bar[] = [...flat,
+    bar(100, 101, 95, 96, 12),          // large DOWN body 4.0, but a WIDE range 95–101
+    bar(95.5, 95.9, 95.4, 95.8, 13),    // body 0.3 inside the RANGE but not inside the BODY → must NOT fire
+    bar(95.8, 96.0, 95.7, 95.9, 14),    // body [95.8,95.9] escapes prior body top 95.8 → no fire
+    bar(95.9, 96.1, 95.8, 96.0, 15)];   // pbody 0.1 vs body 0.1 → ratio fails → no fire
+  assertEquals(runComponentTrades(rangeOnly, spec, { costRPerSide: 0 }).length, 0);
+
+  // NEGATIVE control B — same contraction, SAME colour: a small down bar inside a large down bar is a trend
+  // pausing, not supply meeting demand at the extreme. Harami is a reversal read and must stay silent.
+  const sameColour: Bar[] = [...flat,
+    bar(100, 100.2, 95.8, 96, 12),
+    bar(97.0, 97.4, 96.4, 96.5, 13),    // small DOWN body inside the prior DOWN body → must NOT fire
+    bar(96.4, 96.6, 96.3, 96.5, 14),    // body bottom 96.4 < prior body bottom 96.5 → not contained → no fire
+    bar(96.5, 97.0, 96.4, 96.9, 15)];   // pbody 0.1 vs body 0.4 → ratio fails → no fire
+  assertEquals(runComponentTrades(sameColour, spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — the bearish harami is the exact reflection (large UP body answered by a small DOWN body inside it).
+  const mir = seq.map((b) => ({ ts: b.ts, open: 200 - b.open, high: 200 - b.low, low: 200 - b.high, close: 200 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

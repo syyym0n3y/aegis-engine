@@ -1,6 +1,35 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-318: grammar widened to 23 triggers — `harami`, the first condition that is
+CONTRACTION OF THE BODY against the prior bar; stage-2 record 566 tested / 0 survivors.** Loop healthy and
+writing: queue `max(run_at)` **24 s** old, `done` **404,007** of **950,400** (391,131 pending / 155,262 thin) —
+writes LAND, not merely "processed:N", which is the D-300b/D-302 silent-write class this check exists for.
+Stage-2 fired once and reported **"all candidates stage-2 tested"** at a true trial count of **631,460**:
+cumulative **566 candidates, 566 tested — 508 stage2-killed, 58 thin, 0 survivors, `trd_forward_candidates` =
+0.** Shipped `harami` (ingest id=13, web:ig): a large directional body immediately answered by a small
+OPPOSITE-colour body CONTAINED WITHIN it — the large bar could not be extended. Both near neighbours were
+already in the grammar and it is the pair of them that makes the case: `engulfing` is the same containment
+relation with the bars SWAPPED (expansion, signal bar is the large one — a bar cannot be both), and `inside`
+contains the HIGH–LOW RANGE, requires a CLOSE BEYOND the mother bar, and is colour-blind. **The controls pin
+those two boundaries and disagree in both directions.** Control A: a bar whose whole range (95.4–95.9) sits
+inside the prior range (95.0–101.0), right colour and right size, but whose BODY (95.5–95.8) is BELOW the prior
+body (96.0–100.0) — an inside-bar detector fires, harami does not. Control B: a small DOWN body inside a large
+DOWN body, a trend pausing rather than a reversal — silent. The converse is why containment is on the body: a
+bar whose body is inside the prior body while its wicks spill outside the prior range is a harami and NOT an
+inside bar. The one free constant (prior body ≥ 2× current) is held FIXED as `pinbar`'s and `orderblock`'s
+ratios are, so it cannot multiply the trial count; the NEUTRAL filler (identical bars, body 0.1) fails it, so
+the fixture is provably signal-free before the pattern. 23/23 grammar tests green, `deno check` clean, both
+edge fns redeployed. Seeded 2,700 specs × 16 markets = **43,200 rows** (2,700 distinct keys; the swing-mode
+`spec` jsonb and `spec_key` shapes verified byte-identical to the shipped `macd` rows with only the trigger
+swapped). **Deploy verified by OUTPUT, not by "deployed successfully":** `?market=BTCUSDT&trigger=harami` over
+35,040 real 15m bars → **57 rows `done`, all non-null `n`, avg 502 trades (32–2,077), 3 thin, 0 passing the
+gate.** **Honest status: `harami` has produced nothing — 0 candidates, 0 stage-2 survivors, 0 forward
+candidates; 43,140 rows still pending, its hypothesis is UNTESTED.** D-303's diagnosis stands: the binding
+constraint is STOP GEOMETRY, not trigger vocabulary. ↓ prior stands. ↓
+
+## Prior
+
 **2026-08-14 (Opus 5) — D-317: grammar widened to 22 triggers — `macd`, the first condition that is a
 SECOND-ORDER quantity; stage-2 record 566 tested / 0 survivors.** Loop healthy and writing: queue
 `max(run_at)` **49 s** old with **6,000 rows written in the trailing 10 min**, and `done` 392,724 → **397,703**
@@ -38,8 +67,6 @@ pinning the row shape as well as the key. **Deploy verified by OUTPUT:** `?marke
 gate.** **Honest status: `macd` has produced nothing — 0 candidates, 0 stage-2 survivors, 0 forward
 candidates; 43,160 rows still pending, its hypothesis is UNTESTED.** D-303's diagnosis stands: the binding
 constraint is STOP GEOMETRY, not trigger vocabulary. ↓ prior stands. ↓
-
-## Prior
 
 **2026-08-14 (Opus 5) — D-316: grammar widened to 21 triggers — `stoch`, the first condition that reads a
 bar's POSITION WITHIN ITS RANGE; stage-2 record 566 tested / 0 survivors.** Loop healthy and writing: queue

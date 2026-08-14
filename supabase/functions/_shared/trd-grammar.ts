@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -356,6 +356,35 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (m1 <= s1 && m0 > s0) return { side: "long", stop: lo };   // spread turns UP through its own average
       if (m1 >= s1 && m0 < s0) return { side: "short", stop: hi };  // spread turns DOWN through its own average
       return null;
+    }
+    case "harami": { // Harami (ingest id=13, web:ig) — the 23rd primitive, and the first whose condition is
+      // CONTRACTION OF THE BODY AGAINST THE PRIOR BAR. The grammar already contains both of its near neighbours,
+      // and it is the pair of them that shows this is a genuinely different bar:
+      //   · `engulfing` is the SAME containment relation with the two bars SWAPPED — there the CURRENT body
+      //     swallows the prior one (expansion, and the signal bar is the large one). Here the PRIOR body swallows
+      //     the current one (contraction, and the signal bar is the small one). A bar cannot be both.
+      //   · `inside` contains the HIGH–LOW RANGE and then requires a CLOSE BEYOND the mother bar — it fires on the
+      //     expansion break, one or more bars later, and is blind to candle colour. Harami contains only the
+      //     OPEN–CLOSE BODY and fires on the contraction bar itself. The two disagree in both directions: a bar
+      //     whose body sits inside the prior body while its wicks spill outside the prior range is a harami and
+      //     NOT an inside bar, and a same-colour inside bar (a pause in a trend) is an inside bar and NOT a harami.
+      // The read is that a large directional bar was immediately answered by a small OPPOSITE-colour bar that
+      // could not extend it — supply/demand met at the extreme rather than the trend simply resting. Direction is
+      // the reversal (against the prior bar's colour); stop at the far side of the two-bar pattern, which is the
+      // prior bar's own extreme, so 1R scales with the size of the bar being faded.
+      // The one free constant is the "small relative to large" ratio, held FIXED at 2× — the same choice made for
+      // `pinbar`'s wick and `orderblock`'s impulse — rather than exposed as a grammar axis, so it cannot multiply
+      // the trial count and deflate every other candidate's DSR.
+      // Point-in-time: reads bars i-1 and i only, both closed. No series, no cache, nothing after i.
+      const p = bars[i - 1];
+      const body = Math.abs(b.close - b.open), pbody = Math.abs(p.close - p.open);
+      if (!(pbody > 0 && pbody >= 2 * body)) return null;         // the prior bar must dominate this one
+      const pTop = Math.max(p.open, p.close), pBot = Math.min(p.open, p.close);
+      const inside = Math.max(b.open, b.close) <= pTop && Math.min(b.open, b.close) >= pBot;
+      if (!inside) return null;                                   // BODY containment, not range containment
+      if (p.close < p.open && b.close > b.open) return { side: "long", stop: Math.min(p.low, b.low) };
+      if (p.close > p.open && b.close < b.open) return { side: "short", stop: Math.max(p.high, b.high) };
+      return null;                                                // same colour, or a flat body → fails closed
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting
       // there) then closes back inside → fade the sweep. The Asia-range-swept-in-London / London-swept-in-NY pattern.

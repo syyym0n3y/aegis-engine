@@ -5803,6 +5803,40 @@ ignore the one alert that matters.
 
 ---
 
+## D-318 — 23rd grammar trigger `harami`: the first condition that is CONTRACTION OF THE BODY
+
+**2026-08-14.** `harami` (ingest id=13, web:ig) — a large directional body immediately answered by a small
+OPPOSITE-colour body **contained within it**. The read is that the large bar could not be extended: supply met
+demand at the extreme rather than the trend simply resting. Direction is the reversal (against the prior bar's
+colour); stop at the far side of the two-bar pattern, which is the prior bar's own extreme, so 1R scales with
+the size of the bar being faded. Point-in-time by construction — it reads bars *i−1* and *i* only, both closed,
+no series and no cache.
+
+**Both of its near neighbours are already in the grammar, and it is the PAIR of them that shows this is a
+different bar.** `engulfing` is the SAME containment relation with the two bars SWAPPED: there the CURRENT body
+swallows the prior one (expansion; the signal bar is the large one). Here the PRIOR body swallows the current
+one (contraction; the signal bar is the small one). A bar cannot be both. `inside` contains the HIGH–LOW RANGE
+and then requires a CLOSE BEYOND the mother bar — it fires on the expansion break, one or more bars later, and
+is blind to candle colour.
+
+**The two negative controls pin exactly those two boundaries, and they disagree with harami in both
+directions.** Control A is a bar whose whole HIGH–LOW range (95.4–95.9) sits inside the prior bar's range
+(95.0–101.0), of the right colour and the right size — but whose BODY (95.5–95.8) is BELOW the prior body
+(96.0–100.0). An inside-bar detector fires there; harami must not, and does not. Control B is a small DOWN body
+inside a large DOWN body — a trend pausing, which is an inside bar and not a reversal. The converse also holds
+and is why the containment is on the body: a bar whose body sits inside the prior body while its wicks spill
+outside the prior range is a harami and is NOT an inside bar.
+
+**One free constant, held FIXED at 2×** (prior body ≥ 2 × current body) — the same choice made for `pinbar`'s
+wick ratio and `orderblock`'s impulse ratio — rather than exposed as a grammar axis, so it cannot multiply the
+trial count and deflate every other candidate's DSR. The NEUTRAL filler used by every grammar test (identical
+bars, body 0.1) fails that ratio, so the fixture is provably signal-free before the pattern. A mirror through
+200 covers the bearish branch.
+
+**Honest status: `harami` has produced nothing.** 43,140 of 43,200 rows still pending; 0 candidates, 0 stage-2
+survivors, 0 forward candidates. Its hypothesis is UNTESTED, not supported. D-303's diagnosis still stands —
+the binding constraint is STOP GEOMETRY, not trigger vocabulary.
+
 ## D-317 — 22nd grammar trigger `macd`: the first condition that is a SECOND-ORDER quantity
 
 **2026-08-14.** Every one of the 21 existing triggers reads a FIRST-ORDER property of the series: price
