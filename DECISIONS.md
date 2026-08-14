@@ -5318,3 +5318,14 @@ A grammar that CAN express a payable setup is a precondition for finding one, no
 candidates' DSR. That reason is weak — deflation grows with sqrt(2·ln N), so 121k → 510k trials raises the
 required z by ~6%. The sound reason was the one I listed first: `nr4` is a strictly weaker `nr7` and adds no
 information. The verdict stands; the stated reasoning was overweighted.
+
+**Concurrency note (D-305).** A second Claude instance (the 25-min cron loop) was running in this same working
+tree and committed with `git add -A`, sweeping this session's in-progress `stopMode` grammar work into ITS
+commit `b6c7035`, whose message describes only a stage-2 fetch fix. The resulting TREE is correct and complete
+(`git status` clean, 256 tests green, `deno check` clean, both fns deployed from it), but the history is
+misattributed across `b6c7035` + `7edb701`. History left intact rather than rewriting a pushed branch. That
+session's own finding is real and worth keeping: stage-2 fetched only `batch*3` candidates ordered by abs_r, so
+once the head was tested the filtered todo was always empty and it returned `ok:true` — a FALSE all-clear while
+hundreds of lower-ranked candidates were never tested. Now bounded at 100k and confirmed reaching the tail:
+stage-2 is at **91 tested / 91 killed / 0 survivors** against 160 candidates (was silently stuck at ~37).
+Hazard recorded: concurrent agents sharing one working tree must not `git add -A`.
