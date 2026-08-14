@@ -126,3 +126,29 @@ Deno.test("riskFrac reports 1R as a fraction of notional (bps→R conversion, D-
   // tighter would cost ~0.16R/side. The flat cost constant cannot express that.
   assert((0.0010 / t.riskFrac) > 0, "bps→R conversion must be finite and positive");
 });
+
+Deno.test("star: morning star fires only on large-down → small-body → up-close-above-midpoint, resolves long", () => {
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const spec = { trigger: "star" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // 12 NEUTRAL filler bars, all with the SAME small body → body(i-1) is never < 0.5·body(i-2) → no star can fire.
+  const flat: Bar[] = Array.from({ length: 12 }, (_, i) => bar(100, 100.5, 99.5, 100.1, i));
+  assertEquals(runComponentTrades(flat, spec, { costRPerSide: 0 }).length, 0);
+  const seq: Bar[] = [...flat,
+    bar(100, 100.2, 96, 96.5, 12),      // i-2: large DOWN body 3.5 → midpoint 98.25
+    bar(96.4, 96.9, 95.9, 96.5, 13),    // i-1: the STAR, body 0.1 < 0.5·3.5
+    bar(96.6, 99, 96.5, 98.5, 14),      // i: UP close 98.5 > midpoint 98.25 → LONG, stop = 95.9
+    bar(98.6, 99, 98.4, 98.8, 15),      // fill at open 98.6 → risk 2.7, target 101.3
+    bar(98.8, 101.5, 98.7, 101.4, 16)]; // high 101.5 >= target → +1R
+  const tr = runComponentTrades(seq, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+  // NEGATIVE control: same 3-candle geometry but the confirming close stops SHORT of the midpoint → no reversal.
+  const weak: Bar[] = [...flat,
+    bar(100, 100.2, 96, 96.5, 12),
+    bar(96.4, 96.9, 95.9, 96.5, 13),
+    bar(96.6, 98, 96.5, 97.5, 14),      // close 97.5 < midpoint 98.25 → must NOT fire
+    bar(97.6, 98, 97.4, 97.8, 15),
+    bar(97.8, 101.5, 97.7, 101.4, 16)];
+  assertEquals(runComponentTrades(weak, spec, { costRPerSide: 0 }).length, 0);
+});

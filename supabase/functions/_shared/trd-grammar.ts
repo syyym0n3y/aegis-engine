@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -36,7 +36,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -131,6 +131,20 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (!isNR7) return null;
       if (b.close > nb.high) return { side: "long", stop: nb.low };
       if (b.close < nb.low) return { side: "short", stop: nb.high };
+      return null;
+    }
+    case "star": { // morning/evening star — the canonical 3-candle reversal (ingest id=11, web:strike.money).
+      // Morning star (LONG): bar i-2 is a large DOWN body, bar i-1 is a SMALL body (indecision — the "star"),
+      // bar i is an UP candle that closes back above the MIDPOINT of bar i-2's body (the reversal is confirmed
+      // by the close, not by a wick). Evening star is the exact mirror. Point-in-time: only closed bars ≤ i.
+      // Stop at the far extreme of the 3-candle formation. Degenerate (zero-body i-2) can never fire because
+      // body1 >= 0 is never < 0.5*0.
+      const b2 = bars[i - 2], b1 = bars[i - 1];
+      const body2 = Math.abs(b2.close - b2.open), body1 = Math.abs(b1.close - b1.open);
+      if (!(body1 < 0.5 * body2)) return null;            // the middle bar must be small vs the impulse
+      const mid2 = (b2.open + b2.close) / 2;
+      if (b2.close < b2.open && b.close > b.open && b.close > mid2) return { side: "long", stop: Math.min(b2.low, b1.low, b.low) };
+      if (b2.close > b2.open && b.close < b.open && b.close < mid2) return { side: "short", stop: Math.max(b2.high, b1.high, b.high) };
       return null;
     }
     case "ssweep": { // session-range sweep: price wicks BEYOND the prior session's high/low (running the stops resting

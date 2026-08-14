@@ -5227,3 +5227,31 @@ Cost model correction (autonomous loop, folded in): cost is now bps-of-notional 
 so a 10bp fee is really 0.4-4R/side — the flat constant understated it up to 7×. This killed all 147 optimistic-
 cost candidates. First stage-2 run: 12/12 killed, net_r_pess −1.6..−4.2R (micro-stop sweeps are pure fee-bleed —
 they beat random but fees several× exceed the range). 0 survivors = the gauntlet working (D-070), not a failure.
+
+## D-304 — Grammar widened to 15 triggers: `star` (morning/evening star); nr4/vwap_reclaim closed out (2026-08-14)
+
+**Unit shipped.** Added `star` to `_shared/trd-grammar.ts` — the canonical 3-candle reversal (ingest id=11,
+web:strike.money): bar i-2 a large body, bar i-1 a SMALL body (<0.5× the impulse body — the "star"), bar i
+closing back through the MIDPOINT of bar i-2's body in the opposite direction. Confirmation is by CLOSE, never
+by a wick; the detector reads only closed bars ≤ i; stop at the far extreme of the 3-bar formation. Test asserts
+both the positive case (+1R resolve, correct side) and a NEGATIVE control (identical geometry, confirming close
+stopping short of the midpoint → must not fire). 10/10 grammar tests green, `deno check` clean. Both
+`trd-edge-factory` and `trd-edge-stage2` redeployed (they import the shared grammar). Seeded 540 specs × 16
+markets = 8,640 queue rows, spec_key verified byte-identical to `specKey()` output from the code.
+
+**Live verification (not a claim):** 333 star rows already `done` with real `run_at`, all with a non-null n
+(avg 664 trades, max 1,589) — the primitive fires at a healthy rate. 0/333 pass the factory gate so far.
+
+**Two ingest rows closed out, with reasons:**
+- id=5 `vwap_reclaim` → `skipped-novolume`. The `Bar` type carries OHLC + ts only; VWAP is not expressible
+  without volume. Not a judgment on the setup — it is structurally untestable in this grammar.
+- id=10 `nr4` → `skipped-dup`. NR4 is a strictly weaker threshold of the `nr7` primitive already in the
+  grammar. Adding it would cost 8,640 more queue rows of near-zero novelty AND inflate `trd_trial_counter`,
+  which deflates the DSR of every OTHER candidate. Redundant breadth makes the gauntlet harder to clear
+  without adding information. Reversible in one UPDATE if the operator disagrees.
+
+**Honest framing:** widening the grammar is coverage, not evidence. Nothing here is an edge. The stage-2 record
+stands at 36 tested / 0 survivors / 0 rows in `trd_forward_candidates`; every kill so far is
+`unprofitable@pess-cost` with WF 0-1 of 5 folds. The D-303 diagnosis is unchanged and unrefuted — the binding
+constraint is STOP GEOMETRY (1R too small vs notional to pay the fee), not the trigger vocabulary. Adding a 15th
+trigger does not address it; the stop/timeframe axis still does.

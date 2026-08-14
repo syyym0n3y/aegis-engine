@@ -1,6 +1,19 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-304: grammar widened to 15 triggers (`star`); stage-2 record 36 tested / 0 survivors.**
+Full-gauntlet loop healthy and writing: queue 53.7k/121k done, 6,400 rows written in a 10-min window, max
+`run_at` 0.1 min old. Stage-2 fired once (11 tested, 0 survivors); cumulative 36 tested, **0 survivors, 0 rows
+in `trd_forward_candidates`** — every kill is `unprofitable@pess-cost` with walk-forward 0-1 of 5 folds and
+net_r_pess −0.02 … −4.19R. Shipped `star` (morning/evening star, 3-candle reversal, close-confirmed above the
+impulse body midpoint, point-in-time, +negative-control test; 10/10 green, both edge fns redeployed) and seeded
+540 specs × 16 markets = 8,640 rows; **verified live** — 333 already `done`, all with non-null n (avg 664
+trades), 0 passing the factory gate. Closed out `vwap_reclaim` (no volume in `Bar` — structurally untestable)
+and `nr4` (strictly weaker duplicate of `nr7`; would inflate the trial counter and deflate every other
+candidate's DSR for no information). **The D-303 diagnosis stands: the binding constraint is STOP GEOMETRY, not
+trigger vocabulary — a 15th trigger does not address it.** ↓ prior status stands. ↓
+
+## Prior
 **2026-08-14 (Opus 5) — D-303: the Edge Factory's COST MODEL was the bug; 147/147 candidates dead.**
 Added `riskFrac` (=|entry−stop|/entry) to the grammar so a fee quoted in bps-of-notional can be converted
 exactly into R. Measured: median stop on 15m crypto = **0.28% of notional**, so Binance's 10bp/side taker
