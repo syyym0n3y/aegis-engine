@@ -170,7 +170,11 @@ Deno.serve(async (req) => {
           const holdsBoth = h1.length >= 10 && h2.length >= 10 && e1 > 0 && e2 > 0;
           const hs = trades.map(toHarness), hc = ctrlR.map((r) => ({ r, stopFrac: 1 } as HarnessTrade));
           const dv = scoreDollar(spec_key, hs, hc, 0, RISK_USD, convOf);
-          const promote = vr.tStat >= DEFLATED_T && holdsBoth; // deflated for the 38,880-trial search
+          const netAbsR = mean(setupR); // already net of the factory's cost (grammar subtracts 2·COST_R per trade)
+          // PROMOTE requires BOTH: skill (beats random, deflated t) AND profitability (net abs R > 0). D-302: skill
+          // alone promoted 87% "less-bad-than-random LOSERS" (e.g. fvg rr0.5: t=7.7 but abs_r −0.14). A tradeable
+          // edge must make money in absolute terms, not merely lose less than a coin flip.
+          const promote = vr.tStat >= DEFLATED_T && holdsBoth && netAbsR > 0;
           Object.assign(upd, { vs_random_edge: +vr.edge.toFixed(4), vs_random_t: +vr.tStat.toFixed(2), holds_both: holdsBoth, skill_usd: dv.skillUsd, skill_frac: dv.n ? +(dv.skillUsd / (dv.flatUsd || 1)).toFixed(3) : null, passes: promote });
           if (promote) {
             const eid = `fac:${spec_key}@${market}`;

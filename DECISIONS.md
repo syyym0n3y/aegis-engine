@@ -5154,3 +5154,22 @@ optimistic — re-test pessimistic); then forward. Base rate says most leads die
 Also fixed a silent write bug: the factory's trd_lineage inserts used non-existent columns (`test`,
 `decision_trail`) so every lineage write failed silently (same class as D-300b). Corrected to
 `test_method`/`decision_refs`/`name`/`family`; redeployed.
+
+## D-302 — Gate gap: skill ≠ profit. 87% of candidates were less-bad-than-random LOSERS (2026-08-14)
+
+Stage-2 cost check on the top "lead" (fvg|rr0.5|sl3) exposed a fundamental gate gap: it clears t=6.5–10.5
+vs random on all 16 markets, but its ABSOLUTE net return is NEGATIVE on all 16 (−0.11..−0.17R/trade). It
+"beats random" only because random entry loses even more — a losing strategy that loses less than a coin
+flip. Measured across the whole pool: **87.2% (991/1,137) were this mirage** — positive skill, negative abs_r.
+The rr0.5 geometry (tiny 0.5R target, tight sl3) has negative expectancy; fvg timing beats random but can't
+overcome it.
+
+FIX: promotion now requires BOTH positive skill (deflated t≥4.4 + holds-both) AND positive net abs_r > 0.
+A tradeable edge must make money in absolute terms, not merely beat a coin flip. Purged the 991 mirages
+from the candidate pool (146 real candidates remain). Redeployed the factory gate.
+
+The REAL leads have the OPPOSITE geometry: `sweep|…|against|sl3-5|rr2-3|all` — liquidity-sweep faded
+counter-trend, tight stop, WIDE target (the cut-losses/run-winners asymmetry). sweep|ema20|against|sl5|rr3|all
+= net abs_r +0.087 (min +0.047) on 5 markets, t~5.0. Recorded as trd_lineage `sweep-against-rr3` (lead,
+stage2-pending); the fvg mirage was demoted to killed. Far fewer survive the profit bar (5-6 markets vs 16)
+— honest: the profitability requirement is much harder than skill alone, and that is the point.
