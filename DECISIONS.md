@@ -6155,3 +6155,36 @@ MEASUREMENT, not a claim: a live factory run on BTCUSDT scored 40 of the new spe
 vs-random t = 4.68, and promoted ZERO stage-1 candidates. 43,160 of 43,200 rows remain pending. Verdict:
 UNTESTED. Current totals unchanged: 574 fac:* stage-1 candidates, 456 stage-2 verdicts (440 killed / 16 thin),
 0 stage-2 survivors, 0 forward candidates.
+
+---
+
+## D-322 — Ingest backlog refilled by web research: 4 new candidate primitives, none of them a price-magnitude condition (2026-08-14)
+
+**Context.** The loop's STEP-3 rule fires a research unit instead of an implementation unit when
+`trd_edge_ingest` holds fewer than 3 `status='new'` rows. Measured at session start: **2** (`doji` id=16,
+`eqhl` id=19). That is the backlog-exhaustion condition, so this session's unit is refilling it — not a 27th
+trigger.
+
+**What was added** (ids 27-30, all `status='new'`, all OHLC-expressible so none is skipped for the missing
+volume/VWAP the `Bar` type lacks):
+
+| id | primitive | why it is not one of the 26 already shipped | source |
+|----|-----------|--------------------------------------------|--------|
+| 27 | `aroon` | Reads **bars since the window's extreme** — a temporal/ordinal quantity. `breakout`/`channel` ask whether price exceeded the extreme; `nr7`/`squeeze` measure range size; none reads **how long ago** the extreme printed. | Fidelity, LiteFinance |
+| 28 | `kumo` | The only reference level that is a **forward-displaced projection** (today's cloud was computed 26 bars ago), and the only average built from **range midpoints** rather than closes (every EMA in the grammar averages closes). | AvaTrade, OANDA |
+| 29 | `psar` | The trigger level is **path-dependent on the age of the move** (AF 0.02 → 0.20, reset on each flip). `supertrend` is ATR-scaled but its band does not tighten with trend duration. | QuantifiedStrategies, CMC |
+| 30 | `piercing` | The only condition defined by a **partial-penetration band** of the prior body (close past the 50% mark but short of the prior open). The sources name the boundary explicitly: past the prior open it *is* `engulfing`. Nearest to an existing trigger of the four. | QuantStrategy (Nison), XS |
+
+**Honest framing.** This unit added **zero** grammar coverage, zero specs, zero candidates. Four leads were
+written to a queue; not one has a detector, a test, a seed, or a single scored bar. The novelty arguments above
+are **claims about the definitions**, to be settled by the controls when each is implemented — the D-319/D-320
+standard (a control that removes only the new condition and asserts the identical bars still trade under a
+neighbouring trigger). No `trd_lineage` row: lineage records edge verdicts, and nothing here was tested.
+
+**Live state, measured this session.** Queue `max(run_at)` **37 s** old, 6,000 rows in the trailing 10 min,
+`done` 453,754 → **454,820** (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class).
+Queue **1,123,200** total: 454,820 done / 503,737 pending / 164,643 thin. Stage-2 fired once: **12 computed,
+12 persisted, 0 lost, 0 survivors**; `trd_stage2_results` 540 → **552** verified by readback (524 stage2-killed
+/ 16 thin at the session-start read). Totals: **574 fac:\* stage-1 candidates, 0 stage-2 survivors, 0
+`trd_forward_candidates`**, `trd_trial_counter` = **690,294**. Ingest backlog **2 → 6** `new`, verified by
+readback. **Nothing has cleared the full gauntlet.**

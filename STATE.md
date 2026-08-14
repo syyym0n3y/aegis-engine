@@ -1,6 +1,30 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-14 (Opus 5) — D-322: the ingest backlog was EXHAUSTED (2 `new` rows) — refilled by web research with
+4 primitives, and this unit widened the grammar by ZERO.** The loop's STEP-3 rule fires a research unit instead
+of an implementation unit below 3 queued primitives; it fired. Added `aroon` (bars-SINCE-the-extreme — a
+temporal quantity, where `breakout`/`channel` ask only whether price exceeded it), `kumo` (the only
+FORWARD-DISPLACED reference level, and the only average of range midpoints rather than closes), `psar` (the only
+level that is PATH-DEPENDENT ON THE AGE of the move — `supertrend` is ATR-scaled but does not tighten with
+duration), and `piercing` (the only PARTIAL-PENETRATION band of the prior body — past the prior open it is
+`engulfing`, which the sources state explicitly). All four are OHLC-expressible, so none is skipped for the
+volume/VWAP the `Bar` type lacks. Ingest `new` **2 → 6**, verified by readback.
+
+**Honest status:** these are four rows in a queue. Zero detectors, zero tests, zero seeded specs, zero scored
+bars, zero candidates. The novelty arguments are claims about the DEFINITIONS and are settled only when each is
+implemented against the D-319/D-320 control standard. No `trd_lineage` row — lineage records edge verdicts, and
+nothing here was tested.
+
+**Loop health, measured:** queue `max(run_at)` **37 s** old, 6,000 rows in the trailing 10 min, `done` 453,754
+→ **454,820** (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this check exists
+for). Queue **1,123,200** total: 454,820 done / 503,737 pending / 164,643 thin. Stage-2 fired once: **12
+computed, 12 persisted, lost 0, 0 survivors**; `trd_stage2_results` 540 → **552** verified by readback (524
+stage2-killed / 16 thin). Totals: **574 fac:\* stage-1 candidates, 0 stage-2 survivors, 0
+`trd_forward_candidates`**, `trd_trial_counter` = **690,294**. Nothing has cleared the full gauntlet.
+
+## Prior
+
 **2026-08-14 (Opus 5) — D-321: grammar widened to 26 triggers — `marubozu`, the first condition on the BODY'S
 SHARE OF ITS OWN BAR'S RANGE.** Loop healthy and writing: queue `max(run_at)` **1 s** old, `done` **446,265 →
 453,754** within the session (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this
