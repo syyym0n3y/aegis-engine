@@ -6285,3 +6285,15 @@ status=forward-paper-watch: forward paper (touches $0) is the true OOS test and 
 live data. HONEST caveats: (1) the gate is data-informed → confirmatory, forward is the only clean OOS; (2) DSR-framing
 unresolved. This is the first lead genuinely worth forward paper — a positioning/carry risk premium with an economic
 mechanism, alt-specific, skill+breadth+walk-forward-clean, large-n. Next: build the forward-paper executor for it.
+
+## D-318 — Forward-paper executor for alt-gated funding carry: LIVE (paper) (2026-08-14)
+
+Built `trd-funding-exec` — the forward-paper test of the D-317 lead. Internal PERP paper broker (perps can't be
+papered on Alpaca): real keyless Binance mark prices + REAL funding rates. Each 8h: for each non-major alt (the
+D-317 gate), manage open positions (close after 3-day hold, realising price move + funding collected − fee), then
+if flat, fade an extreme 28-day funding z-score (|z|≥1.5). Guards: killswitch + arm + one-position-per-symbol +
+heartbeat (D-304). Config-tunable (trd_exec_config edge=funding-carry: size_notional, z_thr). NOT real money.
+Cron trd_funding_exec_8h (every 8h at :05 UTC), in trd_cron_health_v. Seeded 3 positions live (BCH/ETC/SOL long,
+funding currently extreme-negative = crowded shorts → fade long). This starts accumulating the LIVE out-of-sample
+evidence that resolves D-317's two open questions (data-informed gate + DSR-per-trade-framing) — the only honest
+way to promote a confirmatory lead. Real money stays gated behind the ladder; this is paper only.
