@@ -1051,3 +1051,76 @@ Deno.test("doji: the same break trades or not depending only on the SHAPE and PL
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("hikkake: the reversal trades only when the inside-bar break FAILS, and only inside the 3-bar deadline", () => {
+  const T = (i: number) => new Date(Date.UTC(2026, 0, 1, 0, i * 15)).toISOString();
+  const spec = { trigger: "hikkake" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // NEUTRAL filler: every filler bar is byte-identical apart from its timestamp, so `high[a] < high[a-1]` is never
+  // true and no filler can ever be read as an inside bar. The filler region is therefore structurally silent.
+  const FILL = { open: 99.5, high: 101.0, low: 99.0, close: 100.5 };
+  // A = the inside bar (100.5 < 101.0 and 99.5 > 99.0). BREAK takes out A's LOW and closes down — this is exactly the
+  // bar `inside` would sell. WAIT bars keep the setup armed without falsifying it (they never close above A's high and,
+  // sharing BREAK's extremes, never form a new inside bar). CONFIRM closes ABOVE A's high: the short broke.
+  const A     = { open: 100.0, high: 100.5, low: 99.5,  close: 100.2 };
+  const BREAK = { open: 100.2, high: 100.3, low: 99.2,  close: 99.4  };
+  const WAIT  = { open: 99.4,  high: 100.3, low: 99.2,  close: 99.4  };
+  const CONF  = { open: 99.5,  high: 100.8, low: 99.45, close: 100.7 };
+  // Tail highs are strictly increasing, so no tail bar can be an inside bar and the tail adds no second signal.
+  const TAIL = [
+    { open: 100.7, high: 101.2, low: 100.6, close: 101.1 }, // entry fills at 100.7 → risk 1.5 against the 99.2 stop
+    { open: 101.1, high: 102.3, low: 101.0, close: 102.2 }, // 102.2 target tagged; the stop was never threatened
+    { open: 102.2, high: 102.9, low: 102.0, close: 102.8 },
+    { open: 102.8, high: 103.5, low: 102.6, close: 103.4 },
+    { open: 103.4, high: 104.1, low: 103.2, close: 104.0 },
+    { open: 104.0, high: 104.7, low: 103.8, close: 104.6 },
+    { open: 104.6, high: 105.3, low: 104.4, close: 105.2 },
+    { open: 105.2, high: 105.9, low: 105.0, close: 105.8 },
+    { open: 105.8, high: 106.5, low: 105.6, close: 106.4 },
+  ];
+  const build = (pad: number, shape = A): Bar[] => {
+    const arr: Bar[] = []; let t = 0;
+    const push = (b: Omit<Bar, "ts">) => arr.push({ ...b, ts: T(t++) });
+    for (let k = 0; k < 18; k++) push(FILL);
+    push(shape); push(BREAK);
+    for (let k = 0; k < pad; k++) push(WAIT);
+    push(CONF);
+    for (const b of TAIL) push(b);
+    return arr;
+  };
+
+  // POSITIVE — the break is falsified on the very next bar: long at the next open, stop at the low of the failed
+  // excursion (99.2), +1R.
+  const base = build(0);
+  const tr = runComponentTrades(base, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // DEADLINE, LAST ALLOWED BAR — two waiting bars in between puts the confirmation at d = 3. Still inside Chesler's
+  // window, so the identical trade must appear (the stop is unchanged: the waiting bars share BREAK's low).
+  const late = runComponentTrades(build(2), spec, { costRPerSide: 0 });
+  assertEquals(late.length, 1);
+  assertEquals(late[0].side, "long");
+  assert(Math.abs(late[0].r - 1) < 1e-9, `expected +1R, got ${late[0].r}`);
+
+  // DEADLINE, ONE BAR LATE — three waiting bars puts the SAME confirmation at d = 4. Nothing else about the series
+  // changed, and it must be silent. This is the property no other trigger in the grammar has: a setup that expires.
+  assertEquals(runComponentTrades(build(3), spec, { costRPerSide: 0 }).length, 0);
+
+  // NEGATIVE CONTROL — THE INSIDE-BAR CONTROL. Bar 18 keeps its low (so BREAK still takes out the same price) and
+  // differs only in its HIGH, which now exceeds the filler's — so it is no longer an inside bar and there was never a
+  // break to falsify. Every bar from index 19 on is byte-identical (asserted, not asserted-by-comment). `breakout` is
+  // run on the same series to prove the move is real rather than absent: a control with no move would prove nothing.
+  const ctl = build(0, { open: 100.0, high: 101.2, low: 99.5, close: 100.2 });
+  assertEquals(JSON.stringify(base.slice(19)), JSON.stringify(ctl.slice(19)), "the control is only a control if the tails are identical");
+  assertEquals(runComponentTrades(ctl, spec, { costRPerSide: 0 }).length, 0);
+  assert(runComponentTrades(ctl, { ...spec, trigger: "breakout" as const }, { costRPerSide: 0 }).length > 0, "the control must contain a real move — otherwise it proves nothing");
+
+  // MIRROR — reflecting every price about 300 turns the failed DOWN-break into a failed UP-break, so the long must
+  // become a short of the same size. An asymmetric rule cannot survive this.
+  const mir = base.map((b) => ({ ts: b.ts, open: 300 - b.open, high: 300 - b.low, low: 300 - b.high, close: 300 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

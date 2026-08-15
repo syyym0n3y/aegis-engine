@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji" | "hikkake";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji", "hikkake"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 28·3·3·3·5·4·5 = 75,600. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 31·3·3·3·5·4·5 = 83,700. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -616,6 +616,58 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (b.close > d.high && d.high >= hi) return { side: "long", stop: d.low };
       if (b.close < d.low && d.low <= lo) return { side: "short", stop: d.high };
       return null;                                                     // unresolved, or resolved away from the edge
+    }
+    case "hikkake": { // Hikkake (ingest id=31, Chesler 2003; web:financestrategists+tradingsetupsreview+earnforex) — the
+      // 31st primitive, and the first whose condition is ANOTHER PATTERN'S SIGNAL FAILING INSIDE A DEADLINE. Every one
+      // of the 30 triggers already in the grammar conditions on something OCCURRING: a shape printing, a level being
+      // cleared, a ratio crossing, an extreme being recent, a state flipping. This one conditions on the `inside`
+      // trigger's own break being WRONG, and it must be proven wrong within a bounded number of bars or the setup is
+      // discarded. Two things about that are new here:
+      //   · It is a NEGATION. The signal requires that a specific, fully-formed entry signal of another class did not
+      //     work — the trade is taken against the direction `inside` would have taken. `inside` and this trigger can
+      //     never agree on a bar, and on the same series they take opposite sides of the same range.
+      //   · It carries a DEADLINE. Every other trigger is a predicate evaluated on bar i alone (over whatever window it
+      //     reads); if the condition is not met, nothing is pending. Here a break arms a setup that stays live for at
+      //     most HIK_WIN bars and then EXPIRES unfilled. A confirmation that arrives one bar late produces no trade at
+      //     all — the deadline is the whole idea, and the test pins the d=3 fires / d=4 silent boundary exactly.
+      // Why it is not the nearest neighbours:
+      //   · `inside` is the direct converse and is mutually exclusive by construction (it trades the break; this trades
+      //     the break that dies).
+      //   · `sweep`/`ssweep` are the other "the move failed" reads, but their failure is INTRA-BAR — one candle wicks
+      //     past a level and closes back inside, so the rejection is contained in a single bar's geometry. Here the
+      //     failed move is a CLOSED bar's break that then needs a later bar to close beyond the range's OTHER side; a
+      //     sweep bar cannot express "and then, two bars later, the opposite extreme gave way".
+      //   · `choch` also reverses a structure, but its precondition is a sequence of swing pivots, not a specific
+      //     entry signal firing and failing, and it has no expiry.
+      // ONE free constant, held FIXED — as `pinbar`'s 2× wick and `doji`'s 0.10 body share are — so this class cannot
+      // multiply the trial count and deflate every other candidate's DSR: HIK_WIN = 3, Chesler's own stated deadline.
+      // Choice-free by construction: `d` is scanned from the MOST RECENT break bar outward and the first match wins, so
+      // there is no per-bar search for the best-fitting pattern. The `already` guard requires bar i to be the FIRST bar
+      // to close beyond the opposite extreme, so one armed setup emits at most one signal rather than one per bar it
+      // stays beyond. An outside break bar (one that took out BOTH sides of A) is ambiguous about which side failed and
+      // is rejected — fails closed.
+      // Stop at the extreme of the failed excursion (the lowest low of the whole break-and-reversal for a long) — the
+      // canonical hikkake stop, and the level whose violation says the "failure" was itself the failure. It is strictly
+      // beyond A's broken side and therefore on the correct side of a close that is past A's opposite extreme.
+      // Point-in-time: reads bars[i-4 … i] only, all closed at i; nothing at or after i+1 is read.
+      const HIK_WIN = 3;
+      for (let d = 1; d <= HIK_WIN; d++) {
+        const bk = i - d, a = bk - 1;
+        if (a < 1) break;                                              // no bar before A → the inside test is undefined
+        if (!(bars[a].high < bars[a - 1].high && bars[a].low > bars[a - 1].low)) continue;  // A is not an inside bar
+        const aHi = bars[a].high, aLo = bars[a].low;
+        const dn = bars[bk].low < aLo, up = bars[bk].high > aHi;
+        if (dn === up) continue;                                       // no break at all, or BOTH sides → ambiguous
+        const beyond = (k: number) => (dn ? bars[k].close > aHi : bars[k].close < aLo);
+        if (!beyond(i)) continue;                                      // the break has not (yet) been falsified
+        let already = false;
+        for (let k = bk + 1; k < i; k++) if (beyond(k)) { already = true; break; }
+        if (already) continue;                                         // an earlier bar owned this reversal, not i
+        let ext = dn ? bars[bk].low : bars[bk].high;
+        for (let k = bk + 1; k <= i; k++) ext = dn ? Math.min(ext, bars[k].low) : Math.max(ext, bars[k].high);
+        return { side: dn ? "long" : "short", stop: ext };
+      }
+      return null;
     }
     case "aroon": { // Aroon Up/Down cross (ingest id=27, web:fidelity+litefinance) — the 27th primitive, and the first
       // whose condition is a PURELY TEMPORAL/ORDINAL quantity: HOW MANY BARS AGO the window's extreme occurred. Every

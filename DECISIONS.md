@@ -10,6 +10,59 @@
 
 ---
 
+## D-328 — 31st grammar trigger `hikkake` — the first condition that is another trigger's signal FAILING, inside a deadline (2026-08-15)
+
+**What.** Added `hikkake` (ingest id=31, Chesler 2003; `web:financestrategists+tradingsetupsreview+earnforex`)
+as the grammar's 31st trigger class. Bar A is an inside bar (lower high AND higher low than its predecessor).
+The next bar breaks one side of A's range — the bar the `inside` trigger would trade. If, within the next 3
+bars, a bar CLOSES beyond A's OPPOSITE extreme, the break is falsified and the trade is taken the other way,
+with the stop at the extreme of the failed excursion.
+
+**Why it is not a re-skin of anything already in the grammar.** Every one of the 30 shipped triggers conditions
+on something OCCURRING: a shape printing, a level being cleared, a ratio crossing, an extreme being recent, a
+state flipping. Two properties here are new to the grammar:
+- **It is a NEGATION.** The precondition is that a specific, fully-formed entry signal of another class did not
+  work. `inside` and `hikkake` are mutually exclusive by construction and take opposite sides of the same range.
+- **It carries a DEADLINE.** Every other trigger is a predicate on bar `i` alone; if unmet, nothing is pending.
+  Here a break ARMS a setup that stays live for at most `HIK_WIN` bars and then EXPIRES unfilled. A confirmation
+  one bar late produces no trade at all.
+
+The other "the move failed" reads are elsewhere: `sweep`/`ssweep` are INTRA-BAR rejections (one candle wicks
+past a level and closes back inside — the whole failure is in one bar's geometry, and a sweep bar cannot express
+"and then, two bars later, the opposite extreme gave way"); `choch` reverses a structure but its precondition is
+a sequence of swing pivots, not a signal firing and failing, and it has no expiry.
+
+**Controls, each holding one variable byte-identical.** The DEADLINE is pinned on both sides: the same
+confirmation at `d=3` trades (+1R) and at `d=4` is silent, with nothing else in the series changed — the
+property no other trigger has. The INSIDE-BAR control keeps bar 18's LOW (so the break takes out the identical
+price) and raises only its HIGH so it is no longer an inside bar; every bar from index 19 on is asserted
+byte-identical, and `breakout` is asserted to trade that same tail, so the silence is the missing precondition
+and not an absent move. A mirror about 300 turns the failed down-break into a failed up-break and covers the
+short branch. **One free constant, held FIXED** — `HIK_WIN = 3`, Chesler's own stated deadline — as `pinbar`'s
+2× wick and `doji`'s 0.10 body share are, so the class cannot multiply the trial count and deflate every other
+candidate's DSR. Choice-free by construction: `d` is scanned from the most recent break bar outward and the
+first match wins (no per-bar search for the best-fitting pattern); an `already` guard makes bar `i` the FIRST
+bar to close beyond the opposite extreme, so one armed setup emits at most one signal; an outside break bar
+(both sides taken) is ambiguous about which side failed and is rejected — fails closed.
+
+**Verified, not asserted.** `31/31` grammar + **`273/273` `_shared`** tests + `deno check` green;
+`trd-edge-factory` redeployed. **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets;
+`pending` 43,200) — verified STRUCTURALLY: the DB's 2,700 distinct `spec_key`s are byte-identical to
+`enumerate()+specKey()` run locally (md5 `af2a7de6f312129161bf08ac195d4943`), and every `spec` JSON shape
+matches the `doji` slice exactly (0 rows differ, including the swing-mode rows that OMIT `stopMode`).
+Deploy verified by OUTPUT, not by the upload message (the D-315 `?trigger=` guard): a live
+`?market=BTCUSDT&trigger=hikkake` run scored **40 specs on 35,040 real 15m bars** — had the trigger not
+deployed it would have fallen through the `switch` and marked all 40 `thin`.
+
+**Honest status: UNTESTED, and zero candidates.** Across the 80 BTCUSDT rows now scored (75 done / 5 thin,
+n 30–754), several clear the deflated skill bar with `holds_both=true` — the largest is
+`hikkake|ema30|with|sl5|rr0.5` at n=754, skill edge +0.75R, t=9.43 — and **not one promoted**. They are the
+D-302 class: skilled relative to a matched random entry but with net `abs_r ≤ 0` once the real 10bp/side
+bps-of-notional cost is charged through each trade's own `riskFrac` (D-303). Less-bad-than-random is not an
+edge. Ingest id=31 → `queued`; `trd_lineage.grammar-hikkake` written (verdict UNTESTED, status queued).
+
+---
+
 ## D-315 — 20th grammar trigger `rsidiv` (RSI divergence) — the first condition that is a DISAGREEMENT BETWEEN TWO SERIES (2026-08-14)
 
 **What.** Added `rsidiv` (ingest id=25, `web:tradersagency`) as the grammar's 20th trigger class. Every one

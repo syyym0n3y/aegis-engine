@@ -1,6 +1,47 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-15 (Opus 5) — D-328: grammar widened to 31 triggers — `hikkake`, the first condition that is another
+trigger's signal FAILING inside a deadline.** Bar A is an inside bar; the next bar breaks one side of it (the bar
+`inside` would trade); if a bar CLOSES beyond A's opposite extreme within 3 bars, the break is falsified and the trade
+is taken the other way, stop at the extreme of the failed excursion. Two properties are new to the grammar. It is a
+**NEGATION** — the precondition is that a fully-formed signal of another class did not work, so `inside` and `hikkake`
+are mutually exclusive by construction and take opposite sides of the same range. And it carries a **DEADLINE** —
+every other trigger is a predicate on bar `i` alone, while here a break ARMS a setup that expires unfilled after
+`HIK_WIN` bars. The other "the move failed" reads sit elsewhere: `sweep`/`ssweep` are INTRA-BAR rejections contained
+in one candle's geometry and cannot express "two bars later, the opposite extreme gave way"; `choch` reverses a swing
+structure, not a signal, and has no expiry.
+
+**The controls pin both claims.** The deadline is pinned on BOTH sides: the same confirmation at `d=3` trades (+1R)
+and at `d=4` is silent with nothing else in the series changed. The INSIDE-BAR control keeps bar 18's LOW (so the
+break takes out the identical price) and raises only its HIGH — bars 19+ asserted byte-identical, and `breakout`
+asserted to trade that same tail, so the silence is the missing precondition and not an absent move. Mirror covers
+the short branch. ONE free constant, `HIK_WIN = 3` (Chesler's own deadline), held FIXED so it cannot inflate the
+trial count. Choice-free: `d` scanned outward from the most recent break bar, first match wins; an `already` guard
+makes bar `i` the FIRST bar beyond the opposite extreme; an outside break bar is ambiguous and rejected (fails closed).
+
+**31/31 grammar + 273/273 `_shared` tests + `deno check` green**, `trd-edge-factory` redeployed, **43,200 rows
+seeded and VERIFIED landed** (2,700 spec points × 16 markets) — verified STRUCTURALLY: the DB's 2,700 distinct
+`spec_key`s are byte-identical to `enumerate()+specKey()` locally (md5 `af2a7de6f312129161bf08ac195d4943`) and every
+`spec` JSON matches the `doji` slice exactly (0 shape diffs, swing rows correctly OMIT `stopMode`). Deploy verified by
+OUTPUT via the D-315 `?trigger=` guard: a live `?market=BTCUSDT&trigger=hikkake` run scored **40 specs on 35,040 real
+15m bars** (an undeployed trigger would have marked all 40 `thin`). Ingest id=31 → `queued`;
+`trd_lineage.grammar-hikkake` written (verdict UNTESTED).
+
+**Honest status: UNTESTED, ZERO candidates.** 2,130 `hikkake` specs have now scored across the 16 markets — max
+|skill t| **10.74**, several with `holds_both=true` (largest: `hikkake|ema30|with|sl5|rr0.5` @BTCUSDT, n=754, skill
+edge +0.75R, t=9.43) — and **not one promoted**. They are the D-302 class: skilled against a matched random entry
+but net `abs_r ≤ 0` once the real 10bp/side bps-of-notional cost is charged through each trade's own `riskFrac`
+(D-303). Less-bad-than-random is not an edge.
+
+**Loop health, measured:** queue `max(run_at)` **10 s** old, 5,600 rows in the trailing 10 min, `done`
+530,699 → **850,878** across the session's span (writes LAND, not merely "processed:N" — the D-300b/D-302
+silent-write class this check exists for). Queue **1,339,200** total (1,296,000 + this unit's 43,200): 850,878 done /
+198,397 pending / 289,925 thin. Stage-2 fired once and returned **"all candidates stage-2 tested"** at `nTrials`
+572,538 — caught up, not stalled. **911 fac:\* candidates, 911 stage-2 verdicts (876 killed / 35 thin), 0 stage-2
+survivors, 0 `trd_forward_candidates`.** Nothing has cleared the full gauntlet. Ingest backlog `new` 6 → **5**.
+
+## Prior
 **2026-08-14 (Opus 5) — D-327: the ingest backlog was down to 2 `new` rows — refilled by web research with 4
 primitives, and this unit widened the grammar by ZERO.** The loop's STEP-3 rule fires a research unit instead of an
 implementation unit below 3 queued primitives; it fired (same as D-322). Added `hikkake` (the first condition that is
