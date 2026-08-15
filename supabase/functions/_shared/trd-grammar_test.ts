@@ -1124,3 +1124,74 @@ Deno.test("hikkake: the reversal trades only when the inside-bar break FAILS, an
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+Deno.test("piercing: the SAME two bars trade, or become an engulfing, or go silent — decided only by where the close lands", () => {
+  const T = (i: number) => new Date(Date.UTC(2026, 0, 1, 0, i * 15)).toISOString();
+  const spec = { trigger: "piercing" as const, emaPeriod: 5, trendMode: "none" as const, stopLookback: 3, rr: 1, session: "all" as const };
+  // NEUTRAL filler: 18 byte-identical UP bars. A piercing line needs the PRIOR bar to be DOWN and a dark cloud
+  // needs the CURRENT bar to be DOWN, so an unbroken run of identical up bars can satisfy neither. The filler
+  // region is structurally silent, not merely quiet.
+  const FILL = { open: 109.5, high: 111.0, low: 109.0, close: 110.5 };
+  // PRIOR — a large DOWN bar: body 110.0 → 100.0, so the penetration band is the open interval (105.0, 110.0).
+  // It cannot itself be a dark cloud over the filler: its open (110.0) does not exceed the filler high (111.0).
+  const PRIOR = { open: 110.0, high: 110.5, low: 99.5, close: 100.0 };
+  // SIGNAL — opens at 99.0, BELOW the prior low (99.5), and closes at 106.0: past the 105.0 midpoint, short of the
+  // 110.0 prior open. Stop is the two-bar extreme, 98.5, so 1R spans the whole failed excursion.
+  const SIG = { open: 99.0, high: 111.0, low: 98.5, close: 106.0 };
+  // Tail: entry fills at 106.0 → risk 7.5 against the 98.5 stop → the 113.5 target is tagged on the third bar,
+  // and the stop is never threatened. Every tail bar is an up bar following an up bar, so none is a second signal.
+  const TAIL = [
+    { open: 106.0, high: 108.0, low: 105.8, close: 107.8 },
+    { open: 107.8, high: 110.0, low: 107.6, close: 109.8 },
+    { open: 109.8, high: 114.0, low: 109.6, close: 113.8 },
+    { open: 113.8, high: 114.5, low: 113.6, close: 114.4 },
+  ];
+  const build = (sig = SIG): Bar[] => {
+    const arr: Bar[] = []; let t = 0;
+    const push = (b: Omit<Bar, "ts">) => arr.push({ ...b, ts: T(t++) });
+    for (let k = 0; k < 18; k++) push(FILL);
+    push(PRIOR); push(sig);
+    for (const b of TAIL) push(b);
+    return arr;
+  };
+
+  // POSITIVE — one long, +1R.
+  const base = build();
+  const tr = runComponentTrades(base, spec, { costRPerSide: 0 });
+  assertEquals(tr.length, 1);
+  assertEquals(tr[0].side, "long");
+  assert(Math.abs(tr[0].r - 1) < 1e-9, `expected +1R, got ${tr[0].r}`);
+
+  // CONTROL A — the 50% FLOOR. Only the signal bar's CLOSE moves, 106.0 → 104.0: still a strong up bar closing far
+  // above its own open and far above the prior close, but now short of the prior body's midpoint. The sources call
+  // that a thrusting line and deny it is a reversal; the trigger must agree. Everything else is byte-identical.
+  const shallow = build({ ...SIG, close: 104.0 });
+  assertEquals(JSON.stringify(base.slice(20)), JSON.stringify(shallow.slice(20)), "the control is only a control if the tails are identical");
+  assertEquals(runComponentTrades(shallow, spec, { costRPerSide: 0 }).length, 0);
+
+  // CONTROL B — the 100% CEILING, and the engulfing boundary. Again only the close moves, 106.0 → 110.5, which is
+  // at/past the prior OPEN. `piercing` must go silent, and the IDENTICAL bars must trade under `engulfing` — that is
+  // what makes this a partition rather than a gap in coverage, and it proves the silence is the band and not an
+  // absent move. The converse also holds: `engulfing` is silent on the base fixture.
+  const deep = build({ ...SIG, close: 110.5 });
+  assertEquals(runComponentTrades(deep, spec, { costRPerSide: 0 }).length, 0);
+  assert(runComponentTrades(deep, { ...spec, trigger: "engulfing" as const }, { costRPerSide: 0 }).length > 0, "past the prior open the same bars must be an engulfing — otherwise the boundary claim is empty");
+  assertEquals(runComponentTrades(base, { ...spec, trigger: "engulfing" as const }, { costRPerSide: 0 }).length, 0);
+
+  // CONTROL C — the GAP requirement, isolated to a single field. Only the signal bar's OPEN moves, 99.0 → 99.8, so
+  // it no longer opens beyond the prior low. The close, high and low are unchanged — the bar still trades down to
+  // 98.5 intrabar and still closes at 106.0 inside the band — so the move the base fixture resolves is provably
+  // still present; the ONLY thing removed is that the bar OPENED by extending the prior decline.
+  const noGap = build({ ...SIG, open: 99.8 });
+  assertEquals(JSON.stringify({ ...base[19], open: 99.8 }), JSON.stringify(noGap[19]), "control C must differ from the base in the signal bar's open and nothing else");
+  assertEquals(JSON.stringify(base.slice(20)), JSON.stringify(noGap.slice(20)), "the control is only a control if the tails are identical");
+  assertEquals(runComponentTrades(noGap, spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — reflecting every price about 300 turns the piercing line into a dark cloud cover, so the long must
+  // become a short of the same size. An asymmetric rule cannot survive this.
+  const mir = base.map((b) => ({ ts: b.ts, open: 300 - b.open, high: 300 - b.low, low: 300 - b.high, close: 300 - b.close }));
+  const mtr = runComponentTrades(mir, spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
+});

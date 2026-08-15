@@ -10,6 +10,63 @@
 
 ---
 
+## D-329 — 32nd grammar trigger `piercing` — the first PARTIAL-PENETRATION BAND; and it is MEASURED near-inapplicable to 24/7 crypto (2026-08-15)
+
+**What.** Added `piercing` (ingest id=30, Nison; `web:quantstrategy+nison`) as the grammar's 32nd trigger
+class. Piercing line (LONG): the prior bar is a large DOWN bar; the signal bar OPENS BELOW the prior bar's LOW
+— it began by extending the decline — and then CLOSES strictly inside the open interval **(midpoint of the
+prior body, prior open)**. Dark cloud cover is the exact mirror. Stop at the two-bar extreme, which after the
+gap is the signal bar's own low, so 1R spans the whole failed excursion (D-303 structure-scaled).
+
+**Why it is not a re-skin.** Every other two-bar BODY relation in the grammar is a binary containment test with
+no interior: `engulfing` needs the current body to swallow the prior one WHOLE (penetration ≥ 100%), `harami`
+needs it to sit INSIDE (≤ 0% beyond the prior close), `orderblock` is `engulfing` plus an impulse ratio, and
+`marubozu` reads a bar against ITS OWN range. None can express "far enough in to matter, but not all the way
+through". This class is defined by exactly that interior, and its two endpoints ARE the two neighbouring
+classes — below the midpoint the sources name the bar a thrusting/on-neck line and deny it is a reversal; at or
+past the prior open it IS an engulfing, which the sources state explicitly. So `piercing` and `engulfing` are
+mutually exclusive by arithmetic and partition the penetration axis at the prior open. The gap requirement also
+forces the signal bar's body to exceed half the prior body, so a real piercing bar can never also be a harami.
+
+**No free constant is introduced.** Both band endpoints (the prior body's midpoint, the prior open) are read
+off the data, so this class cannot multiply the trial count or deflate any other candidate's DSR.
+
+**Three controls, each moving ONE field.** (a) The 50% FLOOR: only the signal close moves 106.0 → 104.0 — still
+a strong up bar closing far above the prior close, now short of the midpoint — silent, tail asserted
+byte-identical. (b) The 100% CEILING: only the close moves 106.0 → 110.5, at/past the prior open — `piercing`
+silent and the **identical bars are asserted to trade under `engulfing`**, which makes it a partition rather
+than a coverage gap and proves the silence is the band and not an absent move; the converse is also asserted
+(`engulfing` is silent on the base fixture). (c) The GAP: only the signal OPEN moves 99.0 → 99.8, so it no
+longer opens beyond the prior low while its close, high and low are unchanged — the move is provably still
+present and only the extension-at-the-open is removed; asserted to differ from the base in that one field and
+nothing else. A mirror about 300 turns the piercing line into a dark cloud cover.
+
+**Verification.** 32/32 grammar + **274/274 `_shared`** tests + `deno check` green on the grammar and on both
+edge functions; `trd-edge-factory` and `trd-edge-stage2` both redeployed (both import the grammar). Seeded
+2,700 spec points × 16 markets = **43,200 rows**, verified STRUCTURALLY rather than by eye: the DB's 2,700
+distinct `spec_key`s hash to md5 `59aabfedb349b8e0dccb1bc53043f166` under C collation, byte-identical to the
+md5 of `enumerate()+specKey()` run locally over the TS grammar; 0 rows carry a non-`piercing` trigger and 8,640
+swing rows correctly omit `stopMode` (the rows were cloned from the `hikkake` slice with the trigger
+substituted, so the shape match is structural).
+
+**The measurement, and it is the headline — negative.** Deploy verified by OUTPUT via the D-315 `?trigger=`
+guard: `?market=BTCUSDT&trigger=piercing` over 35,040 real 15m bars scored 40 specs, and every scored row
+carries a **non-null `n`**, so the class provably did not fall through the `switch` (the D-308 failure mode).
+But across **1,240 rows scored so far the average is 6.6 closed trades per spec** (81 rows with n=0, max 50);
+**1,238 thin / 2 done**, max |skill t| 3.05, **ZERO promoted**. Compare `harami`'s avg 502 or `psar`'s 34–1,103.
+The cause is structural, not a bug: the canonical definition requires the bar to OPEN beyond the prior bar's
+extreme, and on a continuously-traded 24/7 crypto series a 15m bar opens at the prior close, so the gap
+essentially never occurs. **The definition was NOT relaxed to manufacture sample size** — widening the open
+test to "below the prior close" would be a different pattern and would destroy the harami exclusivity argument;
+inflating N by loosening a definition is precisely the ANALYSIS_CONTRACT F1/F2 failure. The honest conclusion
+is that gap-dependent candle classes are near-inapplicable to this universe, and the 43,200 seeded rows will
+resolve overwhelmingly `thin`. That is a real result about the ASSET CLASS, recorded rather than hidden.
+
+**Honest status: UNTESTED, ZERO candidates, 0 stage-2 survivors, 0 forward candidates.** Ingest id=30 →
+`queued`; `trd_lineage.grammar-piercing` written (verdict UNTESTED).
+
+---
+
 ## D-328 — 31st grammar trigger `hikkake` — the first condition that is another trigger's signal FAILING, inside a deadline (2026-08-15)
 
 **What.** Added `hikkake` (ingest id=31, Chesler 2003; `web:financestrategists+tradingsetupsreview+earnforex`)

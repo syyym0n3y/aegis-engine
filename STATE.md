@@ -1,6 +1,48 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-15 (Opus 5) — D-329: grammar widened to 32 triggers — `piercing`, the first PARTIAL-PENETRATION BAND;
+and the measurement says it is near-inapplicable to 24/7 crypto.** A bar that OPENS BEYOND the prior bar's
+extreme (extending the prior move) and then CLOSES strictly inside the open interval **(midpoint of the prior
+body, prior open)**. Every other two-bar body relation in the grammar is a binary containment test with no
+interior — `engulfing` is the ≥100% endpoint, `harami` the ≤0% one — and the two endpoints of this band ARE
+those two classes: below the midpoint the sources call it a thrusting line and deny it is a reversal; at or past
+the prior open it IS an engulfing. `piercing` and `engulfing` are therefore mutually exclusive by arithmetic and
+partition the penetration axis at the prior open. NO free constant is introduced (both endpoints are read off
+the data). Stop at the two-bar extreme, so 1R spans the whole failed excursion (D-303).
+
+**Three controls, each moving ONE field.** The 50% FLOOR: only the close moves 106.0 → 104.0 → silent, tail
+asserted byte-identical. The 100% CEILING: only the close moves 106.0 → 110.5 → silent, and the IDENTICAL bars
+are asserted to trade under `engulfing` (with the converse asserted too — `engulfing` is silent on the base), so
+it is a partition rather than a coverage gap. The GAP: only the signal bar's OPEN moves 99.0 → 99.8 while close,
+high and low are unchanged, asserted to differ in that one field and nothing else. Mirror covers the short side.
+
+**32/32 grammar + 274/274 `_shared` tests + `deno check` green**, `trd-edge-factory` and `trd-edge-stage2` both
+redeployed, **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets) — verified STRUCTURALLY:
+the DB's 2,700 distinct `spec_key`s hash to md5 `59aabfedb349b8e0dccb1bc53043f166` (C collation), byte-identical
+to `enumerate()+specKey()` locally; 0 non-`piercing` triggers, 8,640 swing rows correctly omitting `stopMode`.
+Ingest id=30 → `queued`; `trd_lineage.grammar-piercing` written (verdict UNTESTED).
+
+**Honest status: UNTESTED, ZERO candidates — and the sparsity is the headline, not a footnote.** Deploy verified
+by OUTPUT via the D-315 `?trigger=` guard: a live `?market=BTCUSDT&trigger=piercing` run scored 40 specs on
+35,040 real 15m bars and every scored row carries a **non-null `n`**, so it provably did not fall through the
+`switch` (D-308). But across **1,240 rows scored the average is 6.6 closed trades per spec** (81 with n=0, max
+50) — **1,238 thin / 2 done, max |skill t| 3.05, 0 promoted** — against `harami`'s avg 502. The cause is
+structural: the canonical definition needs the bar to OPEN beyond the prior extreme, and a 15m bar on a
+continuously-traded crypto series opens at the prior close. **The definition was NOT relaxed to manufacture N**
+(that would be a different pattern and would destroy the harami-exclusivity argument, and inflating N by
+loosening a definition is the exact ANALYSIS_CONTRACT F1/F2 failure). Gap-dependent candle classes are
+near-inapplicable to this universe; the 43,200 rows will resolve overwhelmingly `thin`. Recorded, not hidden.
+
+**Loop health, measured:** queue `max(run_at)` **5 s** old, 4,960 rows in the trailing 10 min, `done` 852,424 →
+**885,592** across the session (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this
+check exists for). Queue **1,382,400** total (1,339,200 + this unit's 43,200): 885,592 done / 199,717 pending /
+297,091 thin. Stage-2 fired once and returned **"all candidates stage-2 tested"** at `nTrials` 572,538 — caught
+up, not stalled. **914 fac:\* candidates** (911 → 914; the 1m cron promoted 3 from other triggers unattended,
+none from `piercing`), **911 stage-2 verdicts (876 killed / 35 thin), 0 stage-2 survivors, 0
+`trd_forward_candidates`.** Nothing has cleared the full gauntlet. Ingest backlog `new` 5 → **4**.
+
+## Prior
 **2026-08-15 (Opus 5) — D-328: grammar widened to 31 triggers — `hikkake`, the first condition that is another
 trigger's signal FAILING inside a deadline.** Bar A is an inside bar; the next bar breaks one side of it (the bar
 `inside` would trade); if a bar CLOSES beyond A's opposite extreme within 3 bars, the break is falsified and the trade

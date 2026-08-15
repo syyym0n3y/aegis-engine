@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji" | "hikkake";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji" | "hikkake" | "piercing";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji", "hikkake"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji", "hikkake", "piercing"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 31·3·3·3·5·4·5 = 83,700. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 32·3·3·3·5·4·5 = 86,400. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -666,6 +666,42 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
         let ext = dn ? bars[bk].low : bars[bk].high;
         for (let k = bk + 1; k <= i; k++) ext = dn ? Math.min(ext, bars[k].low) : Math.max(ext, bars[k].high);
         return { side: dn ? "long" : "short", stop: ext };
+      }
+      return null;
+    }
+    case "piercing": { // Piercing line / dark cloud cover (ingest id=30, Nison; web:quantstrategy+nison) — the 32nd
+      // primitive, and the first whose condition is a PARTIAL PENETRATION BAND of the prior bar's body. Every other
+      // two-bar body relation in the grammar is a BINARY containment test with no interior:
+      //   · `engulfing` needs the current body to swallow the prior one WHOLE — penetration ≥ 100%.
+      //   · `harami` needs the current body to sit INSIDE the prior one — penetration ≤ 0% beyond the prior close.
+      //   · `orderblock` is `engulfing` plus an impulse-size ratio; `marubozu` reads a bar against ITS OWN range.
+      // None of them can express "far enough in to matter, but not all the way through". This one is defined by
+      // exactly that interior: the close must land STRICTLY BETWEEN the midpoint of the prior body and the prior
+      // OPEN — an open interval, (50%, 100%), whose two endpoints are the two neighbouring classes. Below the
+      // midpoint the sources name the bar an on-neck / in-neck / thrusting line and state it is NOT a reversal;
+      // at or past the prior open it IS an engulfing, which the sources also state explicitly. So `piercing` and
+      // `engulfing` are mutually exclusive by arithmetic and partition the penetration axis at the prior open.
+      // The second requirement is the gap: the bar must OPEN BEYOND the prior bar's extreme (below the prior low
+      // for a piercing line), i.e. the session began by extending the prior move and then reversed most of it
+      // intrabar. That is what distinguishes it from an ordinary strong up bar, and it also forces the bar's own
+      // body to be more than half the prior body — which is why a real piercing bar can NEVER also be a harami.
+      // Direction is the reversal (against the prior bar's colour). Stop at the far extreme of the two-bar
+      // pattern, which after the gap is the signal bar's own low, so 1R spans the whole failed excursion and is
+      // structure-scaled (the D-303 riskFrac argument).
+      // NO free constant is introduced: the band's endpoints are the prior body's own midpoint and its own open,
+      // both read off the data, so this class cannot multiply the trial count or deflate any other candidate's DSR.
+      // Point-in-time: reads bars i-1 and i only, both closed. No series, no cache, nothing at or after i+1.
+      const p = bars[i - 1];
+      const pbody = Math.abs(p.close - p.open);
+      if (!(pbody > 0)) return null;                                   // a flat prior body has no midpoint → fails closed
+      const mid = (p.open + p.close) / 2;
+      // PIERCING LINE (long): prior bar DOWN, this bar UP, opening below the prior LOW and closing inside (mid, open).
+      if (p.close < p.open && b.close > b.open && b.open < p.low && b.close > mid && b.close < p.open) {
+        return { side: "long", stop: Math.min(b.low, p.low) };
+      }
+      // DARK CLOUD COVER (short): the exact mirror.
+      if (p.close > p.open && b.close < b.open && b.open > p.high && b.close < mid && b.close > p.open) {
+        return { side: "short", stop: Math.max(b.high, p.high) };
       }
       return null;
     }
