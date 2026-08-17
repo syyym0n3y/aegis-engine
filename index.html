@@ -153,6 +153,12 @@ QQQ long 12000</textarea>
   <div id="c_out">loading…</div>
 </section>
 
+<section class="view" data-view="causal">
+  <h1>Causal engine</h1>
+  <p class="sub">Every instrument's move decomposed into the <b>causal forces</b> that drive it — with an honestly-measured <b>residual</b> (what we can't explain). The buy/sell gate opens ONLY when a force explains the move with a sign that holds across market cycles. Single-operator, not advice. <span id="cz_upd" class="muted"></span></p>
+  <div id="cz_out">loading…</div>
+</section>
+
 <section class="view" data-view="edges">
   <h1>Edges now</h1>
   <p class="sub">Live state of all seven verified edges — is each actionable right now, and its current reading. The broad risk premia (vol, pairs, term-structure, momentum) plus the narrow technical patterns. Updates on load.</p>
@@ -180,13 +186,37 @@ QQQ long 12000</textarea>
 
 <script>
 const API = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1";
-const VIEWS = [["home","Home"],["edges","Edges now"],["copilot","Co-pilot"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
+const VIEWS = [["home","Home"],["causal","Causal engine"],["edges","Edges now"],["copilot","Co-pilot"],["portfolio","Portfolio risk"],["prop","Prop challenge"],["protect","Risk X-ray"],["verify","Authenticity"],["allocate","Allocator"],["cockpit","Live cockpit"],["doctrine","Findings"]];
 const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const nav=document.getElementById("nav");
 VIEWS.forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.k=k;b.onclick=()=>go(k);nav.appendChild(b)});
 function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.dataset.view===k));
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
-  if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();doScorecard();renderCtl();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); location.hash=k; window.scrollTo(0,0);}
+  if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();doScorecard();renderCtl();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); if(k==="causal")doCausal(); location.hash=k; window.scrollTo(0,0);}
+async function doCausal(){
+  const o=document.getElementById("cz_out");
+  try{const d=await(await fetch(API+"/aegis-signals",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
+    const s=d.summary||{}; document.getElementById("cz_upd").textContent="live · "+new Date(d.generated_at).toISOString().replace("T"," ").slice(0,16)+" UTC";
+    const engc=s.engaged>0?"var(--accent)":"var(--mut)";
+    const grid=(d.era_grid||[]).map(g=>{const ok=g.ic>0,col=Math.abs(g.t)<2?"var(--mut)":ok?"var(--accent)":"var(--red)";return `<tr><td class="mono">${esc(g.era)}</td><td class="mono num" style="color:${col}">${g.ic>=0?"+":""}${(+g.ic).toFixed(4)}</td><td class="mono num" style="color:var(--mut)">${(+g.t).toFixed(1)}</td><td class="mono num" style="color:var(--mut)">${g.n}</td></tr>`}).join("")||`<tr><td colspan=4 class=muted>—</td></tr>`;
+    const sig=(d.signals||[]).slice(0,30).map(x=>{const buy=x.lean>0,lc=x.engage?(buy?"var(--accent)":"var(--red)"):"var(--mut)";return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:${lc}">${x.lean>=0?"+":""}${(+x.lean).toFixed(2)}</td><td class="mono num">${(+x.confidence).toFixed(3)}</td><td class="mono num" style="color:var(--mut)">${Math.round((+x.residual)*100)}%</td><td class="mono" style="color:${x.engage?"var(--accent)":"var(--mut)"}">${x.engage?"ENGAGE":"stand down"}</td></tr>`}).join("")||`<tr><td colspan=5 class=muted>no signals computed yet</td></tr>`;
+    o.innerHTML=`
+    <div class="grid">
+      <div class="card"><div class="lbl">Instruments</div><div class="v">${s.n??0}</div><div class="s">scored on causal forces</div></div>
+      <div class="card"><div class="lbl">Engaged</div><div class="v" style="color:${engc}">${s.engaged??0}</div><div class="s">gate open only if explained + cycle-stable</div></div>
+      <div class="card"><div class="lbl">Avg confidence</div><div class="v">${(+(s.avg_confidence??0)).toFixed(3)}</div><div class="s">calibrated causal confidence</div></div>
+      <div class="card"><div class="lbl">Avg residual</div><div class="v" style="color:var(--amber)">${Math.round((s.avg_residual??0)*100)}%</div><div class="s">UNEXPLAINED — the anti-guru number</div></div>
+    </div>
+    <div class="two" style="margin-top:16px">
+      <div class="panel"><div class="lbl" style="margin-bottom:10px">Why the gate is ${s.engaged>0?"open":"shut"} — ${esc(d.factor||"factor")} IC by era (33-yr, deflated)</div>
+        <table><thead><tr><th>market era</th><th class="num">IC</th><th class="num">t</th><th class="num">n</th></tr></thead><tbody>${grid}</tbody></table>
+        <p class="muted" style="margin-top:10px;font-size:12px">A force is trusted only if its sign HOLDS across cycles. Sign-flips (e.g. momentum inverting in the dot-com bust) → confidence≈0 → stand down. The engine refuses to trade what it cannot explain — the opposite of a guru.</p></div>
+      <div class="panel"><div class="lbl" style="margin-bottom:10px">Per-instrument — lean · confidence · residual</div>
+        <table><thead><tr><th>sym</th><th class="num">lean</th><th class="num">conf</th><th class="num">resid</th><th>gate</th></tr></thead><tbody>${sig}</tbody></table></div>
+    </div>
+    <p class="muted" style="margin-top:14px">Single-operator research tool. Not investment advice. Buy/sell leans are for the operator only and are not published or sold.</p>`;
+  }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)} — the causal endpoint may be waking; retry in a moment.</span>`}
+}
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
 
 async function doProp(){
