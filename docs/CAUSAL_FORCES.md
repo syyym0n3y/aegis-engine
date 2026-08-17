@@ -34,6 +34,18 @@ payoff of modularity is threefold:
    where the 60-instrument-day leverage lives: each instrument trades only its factors, only in the regimes
    where that factor's conditional IC is positive.
 
+### Law of multi-timeframe — timeframe is a dimension of every factor, never a fixed lens (D-333)
+A factor measured through ONE timeframe can read null in aggregate while carrying a real signal, because
+opposite-signed regimes on a HIGHER timeframe cancel. A single 8h/4h lens structurally cannot see this. So every
+factor is tested across a timeframe grid AND conditioned on higher-timeframe context (the HTF trend/vol regime
+that gates the lower-TF signal). MTF is mandatory, not optional enrichment — the aggregate is a projection that
+hides structure the higher timeframe reveals. **Proven live:** funding-fade IC was ~null through the 8h lens
+(t=−1.54), but conditioned on a WEEKLY-downtrend context it is significant and sign-correct at every horizon
+(8h t=−2.02, 24h t=−2.34, 72h t=−2.72, strengthening with horizon) — and flips/vanishes in weekly-uptrends, so
+the two regimes cancelled in the pooled view. The 8h lens said "nothing"; the weekly context said "a real fade
+signal, but only when longs are already underwater." Discipline: every HTF regime×horizon cell is a trial and is
+deflated (a wide MTF grid multiplies comparisons — MTF adds information AND multiple-testing risk simultaneously).
+
 ### The leverage math, stated honestly (the path to 10×)
 **Fundamental Law of Active Management: IR = IC × √Breadth.** Breadth (many instruments × many factors × many
 days, each an independent bet) is the multiplier. But it multiplies IC — √breadth on IC=0 is still 0. And 60

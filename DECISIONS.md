@@ -6827,3 +6827,19 @@ dormant causal assets (Databento auction-imbalance/OFI, AlphaVantage PEAD/GEX, F
 enrichment. Full-chain infra map written: `docs/INFRA_CHAIN.md` — own the truth layer (~90%, already ahead), BUILD
 the scale layer (own compute worker, kills the 2s edge-fn bound) + exploitation layer (equity ingestors + combiner
 + direct crypto execution), REFUSE the HFT-latency layer (structurally unwinnable, gated out of live forever).
+
+---
+
+## D-333 — MTF recovers what the single lens hid: funding-fade is real conditioned on a weekly downtrend
+Operator correction: single-timeframe analysis neglects what higher timeframes reveal. Built `trd-factor-funding-mtf`
+— conditions the 8h funding-z signal on point-in-time HIGHER-timeframe trailing trend (72h "3-day" + 168h "weekly"),
+measures rank-IC within each HTF regime × forward horizon. Result (6,090 obs, 15 alts): the pooled/8h IC was null
+(t=−1.54) BECAUSE weekly-up and weekly-down regimes carry OPPOSITE signs and cancel. Split by weekly context:
+**wk_down IC is negative + significant + SIGN-CORRECT (hypo −1) and STRENGTHENS with horizon: 8h t=−2.02, 24h t=−2.34,
+72h t=−2.72**; wk_up flips positive/insignificant. Combined 3d_down|wk_down at 72h: IC −0.053, t=−2.59. Mechanism is
+coherent: fading crowded (high-funding) longs works specifically when the market is ALREADY in a weekly downtrend =
+when those longs are underwater and vulnerable to unwinding. HONEST STATUS: a strong LEAD, not validated — 24 cells
+scanned, so strict Bonferroni wants ~t≥3.0; the −2.72 is compelling + coherent (same sign, monotone in horizon,
+economically sensible) but needs walk-forward + OOS before promotion. Codified MTF as a standing engine law
+(`docs/CAUSAL_FORCES.md`): timeframe is a dimension of every factor; HTF-conditioning is mandatory + deflated. This
+also revises D-332 — funding is not IC-null, it is IC-null UNCONDITIONED; it lives in the weekly-downtrend regime.
