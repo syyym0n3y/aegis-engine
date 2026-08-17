@@ -6693,3 +6693,24 @@ AGENTIC TEAM now complete (5 roles, all independent of the chat, coordinating vi
 4. Health Monitor = trd_cron_health_v + heartbeats. 5. Reporter = aegis-pnl-report + aegis-funding-check.
 Shared truth: trd_edge_forward_v (forward scorecard) + trd_forward_validation (verdicts) + trd_lineage (status)
 + trd_exec_config (sizing). Honest anchor everywhere: size follows PROVEN forward skill; nothing validated yet.
+
+---
+
+## D-321 — the 56-position account jam was CAPACITY, not losses; investigated then reset ($0 P&L cost)
+The Alpaca paper account had accreted to **56 positions / $0 buying power** while the DB tracked only 2. Operator
+directed "investigate first, then reset-and-cap." Built `trd-positions-dump` (reads the broker directly; the P&L
+feed only returns totals): the full book was **+$471 unrealized** (24 losers −$831 / 32 winners +$1,302) — a
+market-neutral ETF cross-section from `orbfollow` (D-287, unvalidated) whose EOD-flatten had broken, plus a few
+momentum stocks + 2 crypto legs. No winner was a real edge, so a clean reset was correct. `trd-account-reset`
+(guarded `?confirm=RESET`) fired one broker `DELETE /v2/positions` → **56 closed, buying power $0 → $237k+**, DB
+reconciled (all open `trd_trades` → closed). Realized ≈ +$471. Broker + DB both verified flat (0/0).
+
+## D-322 — the enforced exposure cap: `trd-risk-officer` (no edge can ever re-jam the account)
+Root cause named honestly: **~15 execution crons** (orbfollow, crypto-orb, xsec-mom, pairs, vrp, ripshort,
+meanrev, macro-pump, tbr, squeeze, stablecoin…) all enter the SAME Alpaca account with NO shared ceiling — that is
+why it filled to $0 buying power, not one bad edge. `trd-risk-officer` (cron `*/10`) is the durable backstop:
+autonomously (risk-REDUCING only, per the hybrid mandate — it never opens, only trims) enforces **PER_EDGE_MAX=6 ·
+GLOBAL_MAX=24 positions · GROSS_NOTIONAL_CAP=$80k**. Attribution: broker sym → edge via open `trd_trades`; trims
+orphans (untracked accretion) first, then oldest per-edge overflow, then largest-notional until under caps. Logs
+`trd_risk_actions` (append-only) + heartbeat; `?dry=1` previews. Respects the kill-switch. Verified: dry + live on
+the clean account = 0 trims, heartbeat written. The account can no longer silently consume its own buying power.
