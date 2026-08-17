@@ -6843,3 +6843,13 @@ scanned, so strict Bonferroni wants ~t≥3.0; the −2.72 is compelling + cohere
 economically sensible) but needs walk-forward + OOS before promotion. Codified MTF as a standing engine law
 (`docs/CAUSAL_FORCES.md`): timeframe is a dimension of every factor; HTF-conditioning is mandatory + deflated. This
 also revises D-332 — funding is not IC-null, it is IC-null UNCONDITIONED; it lives in the weekly-downtrend regime.
+
+---
+
+## D-334 — operating doctrine: never conclude from an aggregate (ANALYSIS_CONTRACT Rule 8)
+Operator-locked. An average is a projection that can hide the opposite of what it shows — D-332's pooled "IC-null"
+(t=−1.54) was direction-WRONG; disaggregating (D-333) found t=−2.72 sign-correct. Rule 8: no verdict from a pooled
+statistic; judge the disaggregated grid (per-symbol · per-regime · per-timeframe · per-epoch), pool is a footnote.
+Disaggregate exhaustively (the machine's advantage over a human eyeballing an average). Mandatory partner: every cut
+bumps trial count + carries N + deflated significance + OOS confirmation, else it is data-mining. Coherence across
+cells (same sign across a regime family, monotone in horizon) outranks one isolated low p. Memory + contract updated.

@@ -57,3 +57,31 @@ shown to be **regime drift, not setups**: none beat a random entry in the same r
 worse than random), and the headline stress-short was positive in **0 of 50** instruments. In calm VIX a
 *random* long earns +0.15–0.25R. Any "setup" measured without this control is measuring the market's drift
 and calling it skill. This gate is machine-enforced and unit-tested; it must never be bypassed.
+
+## Rule 8 — NEVER conclude from an aggregate; disaggregate to see, deflate to believe (added 2026-08-17, D-334)
+
+**An aggregate is a projection that can hide the opposite of what it shows.** D-332 called funding-carry
+"IC-null" from a POOLED number (t=−1.54); D-333 disaggregated by higher-timeframe regime and found a
+significant, sign-correct, horizon-strengthening signal (72h t=−2.72) that the pool had cancelled to zero.
+The pooled conclusion was not just weak — it was **wrong in direction**. A single averaged number is the
+laziest possible read and is forbidden as a verdict.
+
+**The doctrine (operator-locked, binds every analysis):**
+1. **No verdict from a pooled/averaged statistic — ever.** A factor, edge, or strategy is judged on its
+   DISAGGREGATED grid, not one number. Minimum cuts before any verdict: **per-symbol/instrument · per-regime ·
+   per-timeframe (MTF, D-333) · per-epoch (walk-forward era)**. The pool is reported ONLY as a footnote to the
+   grid, never as the headline. If the only evidence offered is an aggregate, the analysis is incomplete —
+   go back and cut it.
+2. **Disaggregate exhaustively — this is the machine's advantage over a human.** A person eyeballs the average
+   and stops; the engine can slice every conditioning dimension and must. "Looks null on average" is never a
+   stopping point — it is the signal to cut deeper, because opposite-signed sub-populations cancel.
+3. **The mandatory partner: deflate + OOS, or it is data-mining.** Exhaustive disaggregation WILL surface
+   structure in pure noise. So every cut multiplies the trial count (`trd_trial_counter`), every disaggregated
+   cell carries its N and deflated significance, and a cell is believed ONLY after out-of-sample / walk-forward
+   confirmation. Disaggregate to DISCOVER; deflate + OOS to BELIEVE. A significant slice without its deflation
+   and OOS is NOISE, labeled as such (this is Rule 4 applied to slices).
+4. **Coherence across cells outranks a single low p-value.** A lead is trusted when disaggregated cells agree
+   in a mechanistically-sensible way (same sign across a regime family, monotone in horizon) — that pattern is
+   far stronger evidence than one isolated t past the bar, and far harder for noise to fake.
+
+The one line: **the average is where signal goes to hide — cut it apart, then make every piece earn belief.**
