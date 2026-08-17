@@ -6812,3 +6812,18 @@ t=4.53) lives in the TAIL (extreme z>1.5, held ~72h), not in the linear response
 now MEASURES that conditionality systematically instead of asserting it. Next: extreme-conditional + multi-horizon +
 regime-conditioned IC (all one-liners in the same harness), then light up the dormant Databento (auction-imbalance,
 OFI) + AlphaVantage (PEAD, GEX) factors. Trial counter → 1,475,112.
+
+---
+
+## D-332 — the engine deflated our own best lead: funding carry is IC-null (honest)
+Conditional/multi-horizon rank-IC harness (`trd-factor-funding-cond`) tested funding z84 vs forward return across
+horizons {8h,24h,72h} × regimes {all, extreme |z|≥1.5, alt-only [majors excluded, D-317's own condition],
+alt-extreme}. **Every cell |t|<2** — no significant edge anywhere. The 72h alt-extreme cut where D-317 claimed the
+edge: IC −0.0147, t −0.31. The 8h extreme even flips to the WRONG sign (+0.0414). Conclusion: the D-317 "strong
+lead" (tuned rule, t=4.53, already failed DSR) has **no robust monotonic signal underneath** — the untuned IC
+confirms it. This is the validation layer (our moat) working as designed: it caught what a threshold-tuned backtest
+hid. Evidence persisted (12 `trd_factor_ic` rows). Reframes the mission: with funding IC-null, lighting up the
+dormant causal assets (Databento auction-imbalance/OFI, AlphaVantage PEAD/GEX, Form-4) is the ONLY path, not
+enrichment. Full-chain infra map written: `docs/INFRA_CHAIN.md` — own the truth layer (~90%, already ahead), BUILD
+the scale layer (own compute worker, kills the 2s edge-fn bound) + exploitation layer (equity ingestors + combiner
++ direct crypto execution), REFUSE the HFT-latency layer (structurally unwinnable, gated out of live forever).
