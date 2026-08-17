@@ -6936,3 +6936,17 @@ names are ingested. NOTE: IC t-stats inflated by overlapping windows + cross-cor
    a queue-filler cron (operator provisions the box; I can't create paid cloud infra).
 8. **Data fragility** — single-sourced on keyless Yahoo (Stooq now PoW-walled); needs fallback sources.
 9. **Regime classifier as first-class input** — systematize "when to engage" (vol/trend/liquidity/credit state).
+
+---
+
+## D-340 — signals stay LIVE independent of operator/worker + engaged signals gated operator-only
+(a) Operator gate: `aegis-signals?op=<token>` — ENGAGED (actionable) signals are redacted on the public page (lean→null,
+"operator-only"); valid OPERATOR_TOKEN (function secret) reveals full detail. Non-engaged ("stand down") stay public
+(explicitly not-actionable). Verified: valid key→mode operator, wrong/none→public. Dashboard (origin/main) got an
+operator-key input (localStorage) + redaction rendering + lock/unlock; pushed to Vercel (aegis-engine-psi.vercel.app).
+Keeps the public anti-guru engine (era grid + residual) visible while actionable buy/sell stays single-operator —
+resolves the publish-vs-adviser line without hiding the honesty.
+(b) Cloud refresh: `trd-signal-refresh` (light edge fn, cron `20 */6 * * *`) recomputes each instrument's CURRENT 12-1
+momentum from fresh keyless Yahoo bars, re-derives lean/confidence/engage/residual using the cached deep era-grid, upserts
+trd_signal. Verified: 25 refreshed. Signals now stay live with NO local worker (the heavy 33-yr grid, which barely
+changes, is refreshed by the worker only occasionally). Everything on the dashboard is live independent of operator or me.
