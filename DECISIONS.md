@@ -10,6 +10,65 @@
 
 ---
 
+## D-330 — 33rd grammar trigger `effratio` — the first measure of WASTED MOTION; and the stage-1 queue drained to ZERO pending for the first time (2026-08-17)
+
+**The headline is the queue, not the trigger.** `trd_edge_queue` reached **0 pending** — 1,382,400 rows,
+1,015,168 `done` / 367,232 `thin`, with the last write 30 h before this session. That is NOT a stall: the
+factory cron is alive and completing (`trd_cron_health_v` = VERIFIED-COMPLETING, dispatch age 0.2 min) and its
+last run returned `processed: 0` because there was nothing left to claim. The discovery engine has consumed its
+entire backlog. From here the loop's STEP-3 widening is the *only* source of new stage-1 work, and a run that
+ships no primitive leaves the factory idle — a change in what "loop health" means that the health check must
+now read as `pending = 0` rather than as a stale `run_at`.
+
+**What.** Added `effratio` (ingest id=32, Kaufman 1995; `web:luxalgo+quantifiedstrategies+trendspider`) as the
+33rd trigger class. ER = |close_i − close_{i−10}| / Σ|close_k − close_{k−1}| over the same 10 increments —
+NET DISPLACEMENT over TOTAL PATH LENGTH, bounded in [0,1] by the triangle inequality. The trade is the bar on
+which ER crosses UP through 0.5, taken in the direction of the displacement; stop at the `stopLookback` swing.
+
+**Why it is not a re-skin.** Nothing in the grammar computes a path length at all. `squeeze` is the nearest
+neighbour and the only other RATIO trigger, but both of its terms are DISPERSION magnitudes of the same bars
+(2·stdev of closes vs 1.5·ATR of true ranges) — neither is a displacement between two endpoints, and stdev is
+invariant to the ORDER of the closes, so `squeeze` cannot tell a straight advance from a zigzag through the same
+prices. `breakout`/`channel`/`kumo`/`doubletop` are LOCATION conditions and read no path; `aroon` is the other
+magnitude-blind trigger but reads only WHEN the extremes printed (units of bars) where ER reads only HOW FAR;
+`nbar`/`soldiers` count consecutive closes, which is neither necessary nor sufficient for efficiency. A stated
+structural property, not hidden: over a fixed window ER is invariant to PERMUTING the increments — both terms
+are functions of the multiset of close-to-close changes — which is precisely where `aroon` changes its mind.
+
+**The control is the class.** Base and control share the same 23-bar chop prelude, the same +4 net displacement
+per bar, the same length, and — asserted in the test — an IDENTICAL CLOSE AT EVERY EVEN STEP of the advance.
+Only the ground covered between those checkpoints differs: 18 per 2 bars instead of 8. `effratio` is silent
+across the whole control series (measured ER never exceeds 0.444) while `breakout` takes **3 trades on the
+identical bars**, so the silence is the wasted motion and not an absent move. The threshold is pinned on its own
+boundary: the bar before the signal sits at ER = **0.500 exactly** and is silent (the comparison is strict `>`),
+the signal bar at 0.579 fires. The cross semantics are pinned too — bars 26–36 of the base are *more* efficient
+still (ER up to 1.000) with the trade already closed, and a STATE test rather than a CROSS test would take a
+second entry there; exactly one trade is asserted. Chop-only → 0; a perfectly flat series leaves the ratio 0/0
+and fails closed → 0; mirror → 1 short.
+
+**TWO free constants, both held FIXED** — as `supertrend`'s 10/3, `macd`'s 12/26/9 and `aroon`'s 14/70/30 are —
+so this class cannot inflate the trial count and deflate every other candidate's DSR: ER_N = 10, Kaufman's own
+period inside KAMA; and ER_HI = 0.5, which is not a fitted level but the MIDPOINT OF THE RATIO'S OWN BOUNDED
+RANGE (price covered exactly half of what it travelled).
+
+**Verified, not asserted.** 33/33 grammar + **275/275 `_shared`** tests + `deno check` green; `trd-edge-factory`
+and `trd-edge-stage2` both redeployed. **43,200 rows seeded and verified landed** (2,700 spec points × 16
+markets; 34,560 non-swing `stopMode`, 8,640 swing rows correctly omitting it, 0 non-`effratio` triggers) —
+verified STRUCTURALLY: the DB's 2,700 distinct `spec_key`s hash to md5 `5c68f59dd04d5172cfdd6ae60b6e4db6` (C
+collation), byte-identical to `enumerate()+specKey()` computed locally. Deploy verified by OUTPUT via the D-315
+`?trigger=` guard: a live `?market=BTCUSDT&trigger=effratio` run scored 40 specs on 35,040 real 15m bars with
+**0 thin**, so it provably did not fall through the `switch` (D-308). Ingest id=32 → `queued`;
+`trd_lineage.grammar-effratio` written (verdict UNTESTED).
+
+**Honest status: UNTESTED, ZERO candidates.** 588 `effratio` specs have scored so far (the 1m cron picked up the
+new pending rows unattended) — all with non-null `n`, avg **281** closed trades (30–1,867), max |skill t|
+**19.37** — and **not one promoted**. Skilled against a matched random entry is not an edge: the gate also
+requires net `abs_r > 0` after the real 10bp/side bps-of-notional cost charged through each trade's own
+`riskFrac` (D-303). 42,612 of 43,200 rows remain pending. Nothing has cleared the full gauntlet: **953 fac:\*
+candidates, 953 stage-2 verdicts (911 killed / 42 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`.**
+
+---
+
 ## D-329 — 32nd grammar trigger `piercing` — the first PARTIAL-PENETRATION BAND; and it is MEASURED near-inapplicable to 24/7 crypto (2026-08-15)
 
 **What.** Added `piercing` (ingest id=30, Nison; `web:quantstrategy+nison`) as the grammar's 32nd trigger

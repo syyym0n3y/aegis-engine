@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji" | "hikkake" | "piercing";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji" | "hikkake" | "piercing" | "effratio";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji", "hikkake", "piercing"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji", "hikkake", "piercing", "effratio"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 32·3·3·3·5·4·5 = 86,400. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 33·3·3·3·5·4·5 = 89,100. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -704,6 +704,62 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
         return { side: "short", stop: Math.max(b.high, p.high) };
       }
       return null;
+    }
+    case "effratio": { // Kaufman Efficiency Ratio regime cross (ingest id=32, Kaufman 1995; web:luxalgo+
+      // quantifiedstrategies+trendspider) — the 33rd primitive, and the first that measures WASTED MOTION: how much
+      // of the distance price TRAVELLED was actually converted into distance price COVERED.
+      //   ER = |close_i − close_{i−N}| / Σ|close_k − close_{k−1}|  over the same N increments.
+      // The numerator is a property of the two ENDPOINTS alone; the denominator is a property of the PATH between
+      // them. Their ratio is bounded in [0,1] by the triangle inequality — 1 = a straight line, 0 = a round trip
+      // that ended where it began. Nothing in the grammar computes a path length at all, and that is the gap:
+      //   · `squeeze` is the other RATIO trigger and is the nearest neighbour, but both of its terms are
+      //     DISPERSION magnitudes of the same bars (2·stdev of closes vs 1.5·ATR of true ranges) and it asks
+      //     whether the closes agree while the bars travel. Neither term is a displacement between two endpoints,
+      //     and stdev is invariant to the ORDER of the closes it sees, so `squeeze` cannot tell a straight advance
+      //     from a zigzag that visits the same prices. This trigger is exactly that distinction and nothing else.
+      //   · `breakout`/`channel`/`kumo`/`doubletop` are LOCATION conditions — did the close clear a level. ER reads
+      //     no level whatsoever: a market can break its 20-bar high on a bar that ends a wandering, inefficient
+      //     10 bars (fires there, silent here — negative control A pins exactly that), and a straight-line advance
+      //     can become efficient on a bar that closes below the prior bar's high (silent there, fires here).
+      //   · `aroon` is the other trigger that is blind to price magnitude, but it reads only WHEN the extremes
+      //     printed (an ordinal quantity, units of bars). ER reads only HOW FAR, and is completely indifferent to
+      //     when: it is scale-free in price (doubling every move leaves ER unchanged) and, over a fixed window,
+      //     it is invariant to PERMUTING the increments — both of its terms are functions of the multiset of
+      //     close-to-close changes. `aroon` changes its mind under exactly that permutation and ER does not.
+      //   · `nbar`/`soldiers` count consecutive same-direction closes, which is a crude proxy for efficiency, but
+      //     an unbroken run is neither necessary (3 up bars and 1 small down bar can be highly efficient) nor
+      //     sufficient (3 tiny up closes inside a wide two-way range are not).
+      // The read is Kaufman's own: an efficient market is trending and a wasteful one is churning, so the trade is
+      // the moment the market STOPS wasting its motion — the bar on which ER crosses UP through the threshold —
+      // taken in the direction of the net displacement that made it efficient. It is a CROSSING event, so it fires
+      // once per regime change and not on every bar the market spends trending (the test pins this by continuing
+      // the efficient advance after the trade resolves and asserting no second entry).
+      // TWO constants, both held FIXED — as `supertrend`'s 10/3, `macd`'s 12/26/9 and `aroon`'s 14/70/30 are — so
+      // this class cannot inflate the trial count and deflate every other candidate's DSR:
+      //   ER_N = 10, Kaufman's own period for the efficiency ratio inside KAMA; and ER_HI = 0.5, which is not a
+      //   fitted level but the MIDPOINT OF THE RATIO'S OWN BOUNDED RANGE — the point at which price covered exactly
+      //   half of what it travelled, i.e. half the motion was wasted. The test pins it on the exact boundary: the
+      //   bar before the signal sits at ER = 0.500 and is silent, and > is strict.
+      // A perfectly flat window has zero path and leaves the ratio 0/0 — it returns NaN rather than inventing a
+      // value, and both the cross test and the finiteness guard then fail closed.
+      // Stop: the stopLookback swing, as `rsi`/`stoch`/`macd`/`aroon` use — no new stop mechanic is introduced.
+      // Point-in-time: `erAt(k)` reads closes bars[k−10 … k] only, evaluated at k = i and k = i−1, both closed.
+      // Nothing at or after i+1 is read. O(N) per bar, so no memoised series is needed.
+      const ER_N = 10, ER_HI = 0.5;
+      if (i < ER_N + 1) return null;                                   // need the ratio at i-1 as well as at i
+      const erAt = (k: number): number => {
+        let path = 0;
+        for (let j = k - ER_N + 1; j <= k; j++) path += Math.abs(bars[j].close - bars[j - 1].close);
+        if (!(path > 0)) return NaN;                                   // no motion at all → no ratio (fails closed)
+        return Math.abs(bars[k].close - bars[k - ER_N].close) / path;
+      };
+      const erCur = erAt(i), erPrev = erAt(i - 1);
+      if (!(Number.isFinite(erCur) && Number.isFinite(erPrev))) return null;
+      if (!(erPrev <= ER_HI && erCur > ER_HI)) return null;            // the CROSS, not the efficient state
+      const disp = b.close - bars[i - ER_N].close;
+      if (disp > 0) return { side: "long", stop: lo };
+      if (disp < 0) return { side: "short", stop: hi };
+      return null;                                                     // zero displacement cannot exceed ER_HI > 0
     }
     case "aroon": { // Aroon Up/Down cross (ingest id=27, web:fidelity+litefinance) — the 27th primitive, and the first
       // whose condition is a PURELY TEMPORAL/ORDINAL quantity: HOW MANY BARS AGO the window's extreme occurred. Every

@@ -1,6 +1,54 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-17 (Opus 5) — D-330: the stage-1 queue DRAINED to zero pending for the first time; grammar widened to
+33 triggers — `effratio`, the first measure of WASTED MOTION.** The headline is the queue. `trd_edge_queue` was
+found at **0 pending** — 1,382,400 rows, 1,015,168 `done` / 367,232 `thin`, last write **30 h** old. That is not
+a stall: `trd_cron_health_v` reads **VERIFIED-COMPLETING** (dispatch age 0.2 min) and the factory's last run
+returned `processed: 0` because there was nothing left to claim. The discovery engine has consumed its entire
+backlog, so the loop's STEP-3 widening is now the ONLY source of stage-1 work, and a stale `run_at` is no longer
+evidence of a fault — `pending = 0` is what the health check has to read.
+
+**`effratio`** (ingest id=32, Kaufman 1995): ER = |close_i − close_{i−10}| / Σ|close_k − close_{k−1}| over the
+same 10 increments — NET DISPLACEMENT over TOTAL PATH LENGTH, bounded in [0,1]. The trade is the CROSS up
+through 0.5, in the direction of the displacement. Nothing in the grammar computed a path length at all:
+`squeeze` is the only other RATIO trigger but both its terms are DISPERSION magnitudes of the same bars, and
+stdev is order-invariant, so it cannot tell a straight advance from a zigzag through the same prices;
+`breakout`/`channel`/`kumo` are LOCATION conditions; `aroon` is magnitude-blind but reads only WHEN the extremes
+printed. Stated rather than hidden: over a fixed window ER is invariant to PERMUTING the increments.
+
+**The control is the class.** Base and control share the same chop prelude, the same +4 net displacement per
+bar, the same length, and — asserted — an IDENTICAL CLOSE AT EVERY EVEN STEP; only the ground covered between
+those checkpoints differs (path 18 per 2 bars vs 8). `effratio` is silent across the whole control (measured ER
+never exceeds 0.444) while `breakout` takes **3 trades on the identical bars**. The threshold is pinned on its
+own boundary — the bar before the signal sits at ER = **0.500 exactly** and is silent (strict `>`), the signal
+bar at 0.579 fires — and the CROSS semantics are pinned by continuing the advance to ER = 1.000 after the trade
+closes and asserting no second entry. Chop-only → 0; a flat series (0/0) fails closed → 0; mirror → 1 short.
+TWO constants held FIXED: ER_N = 10 (Kaufman's own) and ER_HI = 0.5, the MIDPOINT of the ratio's bounded range,
+not a fitted level.
+
+**33/33 grammar + 275/275 `_shared` tests + `deno check` green**, `trd-edge-factory` and `trd-edge-stage2` both
+redeployed, **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets) — verified
+STRUCTURALLY: the DB's 2,700 distinct `spec_key`s hash to md5 `5c68f59dd04d5172cfdd6ae60b6e4db6` (C collation),
+byte-identical to `enumerate()+specKey()` locally; 0 non-`effratio` triggers, 8,640 swing rows correctly
+omitting `stopMode`. Ingest id=32 → `queued`; `trd_lineage.grammar-effratio` written (verdict UNTESTED).
+
+**Honest status: UNTESTED, ZERO candidates.** Deploy verified by OUTPUT via the D-315 `?trigger=` guard: a live
+`?market=BTCUSDT&trigger=effratio` run scored 40 specs on 35,040 real 15m bars with **0 thin**, so it provably
+did not fall through the `switch` (D-308). 588 `effratio` specs have scored so far (the 1m cron picked up the
+new rows unattended) — all non-null `n`, avg **281** closed trades (30–1,867), max |skill t| **19.37** — and
+**not one promoted**. Skilled against a matched random entry is not an edge; the gate also requires net
+`abs_r > 0` after the real 10bp/side cost charged through each trade's own `riskFrac` (D-303).
+
+**Loop health, measured:** queue **1,425,600** total after the seed — 1,016,237 done / 41,920 pending / 367,443
+thin, with **1,280 rows in the trailing 10 min** and `done` 1,015,168 → **1,016,237** inside the session (writes
+LAND, not merely "processed:N" — the D-300b/D-302 silent-write class this check exists for). Stage-2 fired once
+and returned **"all candidates stage-2 tested"** at `nTrials` 572,538 — caught up, not stalled. **953 fac:\*
+candidates (914 → 953 unattended since D-329), 953 stage-2 verdicts (911 killed / 42 thin), 0 stage-2 survivors,
+0 `trd_forward_candidates`.** Nothing has cleared the full gauntlet. Ingest backlog `new` 4 → **3**; the next
+run trips the <3 rule and fires a research unit instead of an implementation unit.
+
+## Prior
 **2026-08-15 (Opus 5) — D-329: grammar widened to 32 triggers — `piercing`, the first PARTIAL-PENETRATION BAND;
 and the measurement says it is near-inapplicable to 24/7 crypto.** A bar that OPENS BEYOND the prior bar's
 extreme (extending the prior move) and then CLOSES strictly inside the open interval **(midpoint of the prior

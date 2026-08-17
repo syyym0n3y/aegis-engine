@@ -1195,3 +1195,65 @@ Deno.test("piercing: the SAME two bars trade, or become an engulfing, or go sile
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 1) < 1e-9, `expected +1R, got ${mtr[0].r}`);
 });
+
+// D-330 — `effratio` (Kaufman Efficiency Ratio): the first WASTED-MOTION measure in the grammar. ER =
+// |net displacement| / |total path| over the same 10 close-to-close increments, bounded in [0,1]. The trade is
+// the CROSS up through 0.5 — the midpoint of the ratio's own range, i.e. the bar on which price starts covering
+// more ground than it wastes — taken in the direction of the displacement.
+// The whole class rests on one distinction: TWO SERIES THAT ARRIVE AT THE SAME PLACE VIA DIFFERENT AMOUNTS OF
+// TRAVEL. The control below is built to be exactly that and nothing else — same 23-bar chop prelude, same +4
+// net displacement per bar, same length, and (asserted) an IDENTICAL CLOSE AT EVERY EVEN STEP of the advance —
+// while the path between those checkpoints is 18 per 2 bars instead of 8. `effratio` is silent on the whole
+// control series and `breakout` takes 3 trades on the identical bars, so the silence is the wasted motion and
+// not an absent move.
+Deno.test("effratio: fires on the efficiency CROSS, is silent when the same ground is covered wastefully", () => {
+  clearEmaCache();
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  // Bars are built from a CLOSE series alone (open = prior close, wicks pad the span by 0.5) so that the only
+  // thing any fixture below varies is the quantity this trigger reads.
+  const fromCloses = (cs: number[]): Bar[] => cs.map((c, i) => { const o = i === 0 ? c : cs[i - 1]; return bar(o, Math.max(o, c) + 0.5, Math.min(o, c) - 0.5, c, i); });
+  const spec = { trigger: "effratio" as const, emaPeriod: 20, trendMode: "none" as const, stopLookback: 3, rr: 0.5, session: "all" as const };
+  const bspec = { ...spec, trigger: "breakout" as const };
+
+  // 23 bars of two-tick chop (100/101/100/…). Every 10-bar window has net displacement 0 over a path of 10, so
+  // ER = 0.000 throughout — a provably signal-free prelude, and one that is DEFINED (a flat prelude would leave
+  // the ratio 0/0 and could never produce a cross at all; the FLAT case below pins that separately).
+  const CHOP = Array.from({ length: 23 }, (_, i) => (i % 2 === 0 ? 100 : 101)); // c[22] = 100
+  // BASE: a straight +4/bar advance. MEASURED ER, bar by bar: 23→0.231, 24→0.500, 25→0.579, then 0.727, 0.760,
+  // 0.857, 0.871, 0.941, 0.946, and 1.000 from bar 32 on (the window is pure advance).
+  const baseCloses = [...CHOP, ...Array.from({ length: 14 }, (_, t) => 100 + 4 * (t + 1))];
+  // CONTROL: the same +4/bar NET displacement delivered as −5 then +13, so every even step lands on the base's
+  // exact close while the path is 18 per 2 bars instead of 8. MEASURED ER never exceeds 0.444.
+  const ctrlCloses = [...CHOP, ...Array.from({ length: 14 }, (_, t) => 100 + 4 * (t + 1) + ((t + 1) % 2 === 1 ? -9 : 0))];
+  // The displacement checkpoints are IDENTICAL — this is what makes the control a control rather than a different
+  // fixture. Only the ground covered between them differs.
+  for (let i = 24; i < baseCloses.length; i += 2) assertEquals(ctrlCloses[i], baseCloses[i], `even-step close ${i} must match the base`);
+
+  const base = fromCloses(baseCloses);
+  const tr = runComponentTrades(base, spec, { costRPerSide: 0 });
+  // EXACTLY ONE trade. Bar 24 sits at ER = 0.500 EXACTLY and is silent (the comparison is strict `>`), so this
+  // pins the threshold on its own boundary; bar 25 at 0.579 fires LONG. And bars 26–36 are all MORE efficient
+  // still (up to ER = 1.000) with the trade closed at bar 27 — a trigger written as a STATE test rather than a
+  // CROSS test would take a second entry there. It does not.
+  assertEquals(tr.length, 1, "one regime cross ⇒ one entry, however long the efficient advance runs");
+  assertEquals(tr[0].side, "long");
+  assertEquals(tr[0].exitIdx, 27);
+  assert(Math.abs(tr[0].r - 0.5) < 1e-9, `expected +0.5R, got ${tr[0].r}`);
+
+  // CONTROL A — the class. Same endpoints at every even step, longer path ⇒ silent…
+  const ctrl = fromCloses(ctrlCloses);
+  assertEquals(runComponentTrades(ctrl, spec, { costRPerSide: 0 }).length, 0, "wasteful travel to the same place is not efficiency");
+  // …and the identical bars DO trade under a location trigger, so the silence is the wastage, not a missing move.
+  assertEquals(runComponentTrades(ctrl, bspec, { costRPerSide: 0 }).length, 3, "breakout trades the bars effratio refuses");
+
+  // CONTROL B — chop that never becomes efficient (ER = 0.000 throughout) ⇒ no cross, no trade.
+  assertEquals(runComponentTrades(fromCloses([...CHOP, ...CHOP]), spec, { costRPerSide: 0 }).length, 0);
+  // CONTROL C — a perfectly flat series leaves the ratio 0/0. It must fail CLOSED, not invent a value.
+  assertEquals(runComponentTrades(fromCloses(Array(40).fill(100)), spec, { costRPerSide: 0 }).length, 0);
+
+  // MIRROR — the short branch, price reflected through 200.
+  const mtr = runComponentTrades(fromCloses(baseCloses.map((c) => 200 - c)), spec, { costRPerSide: 0 });
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assert(Math.abs(mtr[0].r - 0.5) < 1e-9, `expected +0.5R, got ${mtr[0].r}`);
+});
