@@ -6916,3 +6916,23 @@ what it can't explain across eras — the north-star (measured ignorance) workin
 served by `aegis-signals` and rendered as a new panel on `web/aegis-cockpit.html` (live-verified in-browser). CAVEAT (see
 D-339 gaps): the deep equity universe is SURVIVORS only — momentum results carry a survivorship caveat until delisted
 names are ingested. NOTE: IC t-stats inflated by overlapping windows + cross-correlation (trust IC sign/magnitude, not t).
+
+---
+
+## D-339 — honest gap analysis: what's still missing on the path to success (prioritized)
+1. **SURVIVORSHIP BIAS (critical honesty gap).** trd_bars_deep is hand-picked SURVIVORS (AAPL/MSFT that reached 2026);
+   the names that went to zero (Lehman/Enron/WorldCom/Wachovia) are absent, and Yahoo cannot serve delisted tickers. Every
+   deep-equity result (incl. D-338 momentum) is survivorship-inflated until point-in-time constituents + delisting returns
+   are ingested (paid: CRSP / Sharadar / Databento). Biggest single threat to "honest." Carry the caveat until fixed.
+2. **Point-in-time FUNDAMENTALS absent.** We have PIT prices, not PIT earnings/book/quality history → value/quality/PEAD
+   force-classes can't be built deeply. Needs AlphaVantage/Databento ingestion + an accumulation cursor.
+3. **The real multi-factor ATTRIBUTION engine (layer 1) not yet built.** D-338 shipped the seed (single-factor era IC +
+   signal). The actual "why" = regress each instrument's returns on ALL forces simultaneously → explained R² + residual per
+   instrument per period. Now BUILDABLE (compute node removed the 2s cap) — the recommended next worker job.
+4. **Cross-sectional construction** — used single-name momentum, not canonical decile UMD (cheap fix once universe broad).
+5. **Causal identification** — IC is association; claiming causation needs event-studies / natural experiments.
+6. **Transaction-cost + execution realism** — pessimistic bps not calibrated to real per-instrument spreads/impact/fills.
+7. **Compute node 24/7 hosting** — worker runs on the operator's Mac on demand; continuous ops needs an always-on box +
+   a queue-filler cron (operator provisions the box; I can't create paid cloud infra).
+8. **Data fragility** — single-sourced on keyless Yahoo (Stooq now PoW-walled); needs fallback sources.
+9. **Regime classifier as first-class input** — systematize "when to engage" (vol/trend/liquidity/credit state).
