@@ -6853,3 +6853,16 @@ statistic; judge the disaggregated grid (per-symbol · per-regime · per-timefra
 Disaggregate exhaustively (the machine's advantage over a human eyeballing an average). Mandatory partner: every cut
 bumps trial count + carries N + deflated significance + OOS confirmation, else it is data-mining. Coherence across
 cells (same sign across a regime family, monotone in horizon) outranks one isolated low p. Memory + contract updated.
+
+---
+
+## D-335 — weekly-down funding lead: walk-forward + breadth (disaggregated per D-334) — real but unstable, NOT validated
+`trd-factor-funding-wf` tested the D-333 signal (8h funding z84 | weekly-downtrend, 72h) by TEMPORAL walk-forward
+(4 sequential epochs) + CROSS-SECTIONAL breadth (per-symbol), never a pooled verdict. Result: pooled footnote
+IC=−0.048 t=−2.73 (n=3240) MASKS an epoch-3 SIGN INVERSION — epochs 1/2/4 hold negative+significant (t=−2.18/−3.42/
+−3.36) but epoch 3 (2026-06-07..07-11) flips POSITIVE (t=+1.93). Breadth 10/15 alts sign-correct, concentrated in
+BTC(t=−3.46)/ETH(−3.90)/AVAX(−3.67)/DOGE(−2.01) — MAJORS strongest, which CONTRADICTS D-317's "majors-excluded"
+claim (the earlier tuned-rule finding was likely mis-attributed). Verdict: a real conditional signal but regime-
+UNSTABLE (one-month inversion) with moderate breadth → NOT validated; the epoch-3 inversion must be explained (what
+sub-regime breaks it) before any sizing. Exemplifies D-334: the pool looked tradeable, the disaggregation showed a
+month-long reversal a single number would have hidden.
