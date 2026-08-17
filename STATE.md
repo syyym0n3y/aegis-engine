@@ -1,6 +1,63 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-17 21:40Z (Opus 5, edge-factory loop run) — the loop's own STEP-3 mandate is SUPERSEDED by the D-331
+pivot; the grammar-widening unit was reversed rather than shipped. Stage-1 queue is DRAINED to zero pending
+again. Two defects recorded in the new factor engine, one of them mine.**
+
+**The conflict, surfaced not silently resolved (ANALYSIS_CONTRACT rule 5).** The scheduled loop's STEP 3 says
+"widen the grammar with the next primitive from `trd_edge_ingest`". The backlog held 2 `new` rows (<3), so the
+rule fired a RESEARCH unit and I added 4 web-sourced primitives — `cci` (Lambert 1980: the only quantity
+normalised by an L1 mean-absolute-deviation), `tdsetup` (DeMark: the first comparison against a FIXED LAG i−4
+rather than the adjacent bar, counting to an EXHAUSTION), `hns` (the first ORDINAL RANKING of three pivots, and
+the first SLOPING reference level), `vcp` (Minervini: the first MONOTONE TREND in volatility across successive
+swings). All four are OHLC-expressible. **Then the live repo contradicted the task file**: commits `619ffe9`
+(D-331 THE PIVOT) and `caa6f18` (D-332), both newer than the loop's instructions, retire candle-grammar mining
+— "for every candidate signal, name the force that would make it work. No named force → it is a shadow → it
+does not enter the queue" (`docs/CAUSAL_FORCES.md`). All four additions are pure candle/indicator geometry, i.e.
+shadows by that directive. **I reversed my own write**: ingest ids 35–38 plus the two pre-existing `new` rows
+(19 `eqhl`, 34 `fibpull`) set to `status='superseded-D331'` — rows and research text preserved, verified by
+readback (`new` 6 → **0**, `superseded-D331` = **6**). No 35th trigger was built. The queue can no longer hand
+a future loop run a shadow to implement.
+
+**Stage-1 queue: ZERO pending, for the second time (the D-330 condition).** 1,468,800 rows — **1,072,247 done /
+396,553 thin / 0 pending**. `done` advanced **1,038,535 → 1,072,247** inside this run, so writes LAND. The
+`trd_edge_factory_par_1m` cron reports `succeeded (16 rows)` every minute while `max(run_at)` sits ~50 min old:
+that is EXHAUSTION, not the D-300b/D-302 silent-write class — with `pending = 0` there is nothing to claim.
+Stage-2 fired once: **2 computed, 2 persisted, 0 lost, 0 survivors**. Totals now **1,023 fac:\* candidates,
+1,019 stage-2 verdicts (973 killed / 46 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`**. Nothing has
+cleared the full gauntlet — D-070 working.
+
+**A CONCURRENT SESSION owns the factor-engine work; I did not commit its files.** The tree was clean at my start;
+mid-run `supabase/functions/trd-factor-form4-ic/index.ts` was rewritten (mtime 21:36:28Z) and `ANALYSIS_CONTRACT.md`
+became modified — another session is editing this same working tree live. **Disclosure: I deployed its
+then-current uncommitted file** (`supabase functions deploy trd-factor-form4-ic`, which also uploaded
+`_shared/trd-edgar.ts`) before I knew that, and ran it twice; the deployed build is the 21:33Z version and is
+almost certainly now BEHIND that session's latest edit — it must redeploy. I committed none of its files.
+
+**Defect found in `trd-factor-form4-ic`, measured: a LIVE run wrote ZERO factor values and still returned
+`ok:true`.** `?nt=30&nf=18` over 30 tickers returned `events: 12, values_written: 0`, and
+`trd_factor_value where factor_id='form4_opportunistic'` = **0 rows** — while both `trd_factor_ic` rows DID
+persist. So IC evidence can be written with no underlying point-in-time values behind it. Two parts:
+(a) CERTAIN, from the source: the upsert result is swallowed — `if (res.ok) written += ...` with no error
+captured and no non-OK path, which is why a total write failure reported success;
+(b) MECHANISM CONFIRMED, application to this batch INFERRED not observed: `trd_factor_value`'s PK is
+`(factor_id, symbol, ts)` with `ts` = the earliest transaction date of each filing, and a single PostgREST
+`on_conflict` batch containing two rows with equal keys is rejected WHOLESALE — probed directly on this database:
+`sqlstate=21000, "ON CONFLICT DO UPDATE command cannot affect row a second time"`. 11 of the 12 events came from
+BAC alone, and separate insiders' Form-4s routinely share a transaction date, so duplicate keys within the one
+batch are the probable cause — not verified by observing the batch itself. The economically correct fix is also
+the statistical one: aggregate to one row per (symbol, transaction-date) with `effective_date` = the MAX filing
+date of the buys aggregated (never the min — the day's total is not knowable until the last filing lands), which
+removes the duplicate keys AND the pseudo-replication of pooling 11 overlapping BAC filings as independent
+observations. Left for the session that owns the file.
+
+**The form4 IC itself is UNDERPOWERED — not evidence either way.** Pooled rank-IC 5d = **−0.6606, t = −2.49,
+n = 10**; 21d = 0.0, n = 6. The pre-registered `hypothesized_sign` is **+1**, so the point estimate is the WRONG
+sign, at n=10 — below the function's own stated n≈25 underpowered floor, and the 21d window is mostly unavailable
+because the filings are recent. Reported next to its N, as required; it supports no conclusion about the factor.
+
+## Prior
 **2026-08-17 (Opus 5) — D-331: grammar widened to 34 triggers — `adx`, the first quantity built from the TWO
 EXTREMES MEASURED SEPARATELY, under a winner-take-all exclusion.** Wilder's DMI: `upMove = high − prevHigh`,
 `downMove = prevLow − low`, and **only the larger counts** — the loser is forced to zero, not netted. Every other
