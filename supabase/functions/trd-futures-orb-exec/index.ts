@@ -16,8 +16,12 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
   const dbg=new URL(req.url).searchParams.get("debug")==="1";
   const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);
   if(!arm?.[0]?.armed&&!dbg)return new Response(JSON.stringify({ok:true,skipped:"NOT ARMED"}),{headers:cors});
-  const cfg=await fetch(`${SB}/rest/v1/trd_exec_config?edge=eq.futures-orb815&select=size_notional`,{headers:H}).then(r=>r.json()).catch(()=>[]);
-  const LOTS=Math.max(1,Math.round(Number(cfg?.[0]?.size_notional)||1)); // config-driven lot size (D-294); scale = update trd_exec_config
+  const cfg=await fetch(`${SB}/rest/v1/trd_exec_config?edge=eq.futures-orb815&select=size_notional,risk_usd`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+  // D-319: RISK-NORMALIZED sizing. The old fixed-lots×conviction (D-294/295) risked $250–$16,110 on identical 1:1
+  // trades because stop width × $/pt varies 64× across ES/NQ/GC — a couple of huge GOLD trades (one −$16k) drowned a
+  // real but TINY (+0.086R) edge that can only express over MANY trades at CONSISTENT risk. Now: risk a FIXED $ per
+  // trade → lots = risk_$ / (stopPts × $per_pt). No single instrument can dominate; the edge compounds on volume.
+  const RISK_USD=Math.max(50,Number(cfg?.[0]?.risk_usd)||500); // $ risked per trade (0.5% of a $100k book); tune via trd_exec_config.risk_usd
   const out:Record<string,unknown>[]=[];
   for(const [sym,mult] of INSTR){const b=await y5m(sym);if(b.length<5){out.push({sym,skip:"no bars"});continue;}
     const px=b[b.length-1].c,today=b[b.length-1].d;
@@ -39,23 +43,16 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     let dir=0;for(const x of post){if(x.h>rH){dir=1;break;}if(x.l<rL){dir=-1;break;}}
     if(dir===0){out.push({sym,skip:"no break yet"});continue;}
     const entry=dir>0?rH:rL,stop=dir>0?rL:rH,tgt=dir>0?entry+w:entry-w;
-    // CONVICTION SIZING (D-295): flex lots by MEASURED setup quality (D-271 OOS-validated: tight range +0.126R most
-    // stable, up-break +0.148R holds; wide/down weaker). tight+up → up to 1.8x base; wide+down → ~0.5x.
-    const dHi=new Map<string,number>(),dLo=new Map<string,number>();
-    for(const x of b){if(x.d!==today&&x.m>=WS&&x.m<WE){dHi.set(x.d,Math.max(dHi.get(x.d)??-1e18,x.h));dLo.set(x.d,Math.min(dLo.get(x.d)??1e18,x.l));}}
-    const priorW=[...dHi.keys()].map(d=>dHi.get(d)!-dLo.get(d)!).filter(v=>v>0).sort((a,b)=>a-b);
-    const medW=priorW.length?priorW[Math.floor(priorW.length/2)]:w;
-    // D-298: conviction backtest on ES cash_open showed the DIRECTION axis is validated (up-breaks
-    // +0.048R > down +0.039R → up×1.2/down×0.85 = +5.4% P&L) but the RANGE-tightness multiplier (tuned
-    // on crypto D-271) is NOT validated on futures — tight-range ES buckets are noisy/negative. So range
-    // stays NEUTRAL (1.0) here until per-instrument-validated; only the validated direction axis sizes.
-    const tightMult=1.0;
+    // RISK-NORMALIZED lots (D-319): lots so the $ risk (stop width w × $per_pt mult) ≈ RISK_USD, with only the
+    // VALIDATED direction tilt (D-298: up×1.2/down×0.85) applied to the risk budget. Every trade risks ~the same;
+    // gold no longer dominates. Clamp [1,50]. The unvalidated range/conviction lot-scaling (D-294/295) is removed.
+    const riskPerLot=w*mult;                       // $ risked per contract = stop distance × $/pt
     const dirMult=dir>0?1.2:0.85;
-    const conv=tightMult*dirMult;const lots=Math.max(1,Math.min(LOTS*2,Math.round(LOTS*conv)));
-    const rangeQ=w<0.8*medW?"tight":w>1.3*medW?"wide":"normal";
-    if(dbg){out.push({sym,would:"ENTER",dir:dir>0?"long":"short",lots,base:LOTS,conviction:+conv.toFixed(2),range:rangeQ,entry:+entry.toFixed(2),stop:+stop.toFixed(2),tgt:+tgt.toFixed(2),w:+w.toFixed(2)});continue;}
+    const lots=Math.max(1,Math.min(50,Math.round((RISK_USD*dirMult)/Math.max(1e-9,riskPerLot))));
+    const dollarRisk=+(lots*riskPerLot).toFixed(0);
+    if(dbg){out.push({sym,would:"ENTER",dir:dir>0?"long":"short",lots,riskUsd:RISK_USD,dollarRisk,dirMult,entry:+entry.toFixed(2),stop:+stop.toFixed(2),tgt:+tgt.toFixed(2),w:+w.toFixed(2)});continue;}
     await fetch(`${SB}/rest/v1/trd_futures_paper`,{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({edge:"futures-orb815",sym,side:dir>0?"long":"short",qty:lots,entry_px:+entry.toFixed(2),stop:+stop.toFixed(2),target:+tgt.toFixed(2),status:"open"})}).catch(()=>{});
-    out.push({sym,action:"ENTER",dir:dir>0?"long":"short",lots,conviction:+conv.toFixed(2),range:rangeQ});
+    out.push({sym,action:"ENTER",dir:dir>0?"long":"short",lots,dollarRisk});
   }
   await fetch(`${SB}/rest/v1/rpc/trd_beat`,{method:"POST",headers:H,body:JSON.stringify({p_fn:"trd-futures-orb-exec",p_outcome:out.map(o=>o.action||o.skip||"?").join(",").slice(0,180)||"ran"})}).catch(()=>{}); // D-304 completion heartbeat
   return new Response(JSON.stringify({ok:true,edge:"futures-orb815",broker:"internal keyless paper (Yahoo fills)",results:out},null,2),{headers:cors});

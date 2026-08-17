@@ -6598,3 +6598,22 @@ this check exists for). Queue **1,296,000** total: 514,482 done / 565,877 pendin
 returned `"all candidates stage-2 tested"` at `nTrials` 572,538 — caught up, not stalled. Totals unchanged by this unit:
 **649 fac:\* stage-1 candidates, 649 stage-2 verdicts (631 killed / 18 thin), 0 stage-2 survivors, 0
 `trd_forward_candidates`**. Nothing has cleared the full gauntlet — which is D-070 working, not failure.
+
+## D-319 — Futures-8:15 diagnosis: not a broken edge, a broken SIZE. Risk-normalized. + agentic-team foundation (2026-08-17)
+
+Operator asked to understand the −$6,882 futures-8:15 paper loss and exploit the edge better. Trade-by-trade
+(8 closed): win rate is 4W/4L at 1:1 — exactly the coin-flip expected of a +0.086R edge over a tiny sample. The
+edge did NOT break. The flaw was SIZING: fixed lots×conviction (D-294/295) risked $250–$16,110 on IDENTICAL 1:1
+trades, because stop-width × $/pt varies 64× across ES($50)/NQ($20)/GC($100). Gold dominated: the Mon GC short
+risked $16,110 on one trade and stopped out (−$16k), swamping +$4.9k of good trades — THAT is the −$6,882.
+FIX (D-319): risk-normalized sizing — lots = risk_$ / (stopPts × $per_pt), only the VALIDATED direction tilt
+(D-298 up×1.2/down×0.85) applied. risk_usd=$500 (trd_exec_config, tunable). Under this the Mon GC short is 1 lot
+(−$1,790 not −$16,110) and the series is ~breakeven. A tiny edge can only express over MANY trades at CONSISTENT
+risk — the opposite of conviction-scaled big lots. This is the Allocator role's first autonomous risk-reducing action.
+
+AGENTIC TEAM (operator request): Hybrid mandate chosen — agents AUTONOMOUSLY do risk-reducing actions (size down
+bleeders, flatten demoted edges, trip kill-switch) but only RECOMMEND scale-ups/new risk. Foundation built:
+`trd_edge_forward_v` — the shared-truth per-edge FORWARD scorecard (n_closed, realized P&L, win%, forward days,
+allocator_verdict EARNED-scale-up / BLEEDING-size-down / TESTING-hold-size) that every role reads. Team roles to
+stand up as independent Routines: Risk Officer, Forward Validator, Allocator/Sizer, Health Monitor (built), Reporter.
+Honest anchor: size follows PROVEN forward skill; no validated edge exists yet (funding-carry first close tonight).
