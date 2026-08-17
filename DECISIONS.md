@@ -10,6 +10,80 @@
 
 ---
 
+## D-331 — 34th grammar trigger `adx` — the first quantity built from the TWO EXTREMES MEASURED SEPARATELY, under a winner-take-all exclusion (2026-08-17)
+
+**What.** Added `adx` (ingest id=33, Wilder 1978; `web:esignal+luxalgo+barchart`) as the 34th trigger class.
+Per bar: `upMove = high − prevHigh`, `downMove = prevLow − low`; **only the larger counts, and only when
+positive** — the loser is forced to zero. Those become ±DM, Wilder-smoothed over 14 and divided by smoothed
+true range to give ±DI; `DX = 100·|+DI − −DI|/(+DI + −DI)`; `ADX = Wilder14(DX)`. The signal is +DI crossing
+above −DI with ADX > 25, and the entry is **Wilder's own extreme-point rule**: the crossover only ARMS the
+trade, and price must then clear the crossover bar's own high (long) before entry. Stop at the `stopLookback`
+swing — no new stop mechanic.
+
+**Why it is not a re-skin — two separable claims.**
+1. **Separate, sided extension.** Every other trigger that reads both extremes reads them JOINTLY, as two ends
+   of one object: `channel`/`breakout` compare a close to a window extreme, `stoch` places the close INSIDE the
+   span between them, `squeeze` reads their dispersion, `nr7`/`inside` compare whole ranges, `tweezer` tests one
+   extreme for EQUALITY with its neighbour, `aroon` reads only WHEN they printed and no magnitude at all, and
+   `effratio`/`rsi`/`macd` read closes only. None asks how far the high pushed past the PRIOR high while
+   separately asking how far the low pushed below the PRIOR low.
+2. **A non-additive exclusion.** The two sides do not net. A bar extending its high by 3 and its low by 4
+   contributes 4 to −DM and **zero** to +DM — the bullish extension is DELETED, not subtracted. No other term
+   anywhere in the grammar discards a measured quantity conditional on a comparison with a second one, and it is
+   what forces an OUTSIDE bar (a real event extending both sides) to resolve to a single direction.
+
+**The controls, each moving one thing.**
+- **A — the class.** Deepen ONLY the LOWS of the advance; every open, high and close is asserted byte-identical
+  field by field. The advance now extends its low 6/bar against a high extending 4/bar, so the winner-take-all
+  rule zeroes +DM on every one of those bars and the crossover never happens → `adx` silent, while `breakout`
+  (closes against prior highs) takes **16 trades on each series**, the first 11 at the identical bars. The
+  silence is the sided extension, not an absent move.
+- **B — the ADX gate.** The 112-bar prelude is not signal-free by absence of events: it contains **31 measured
+  DI crossovers in both directions** and is silent purely because ADX sits at ≈5.5. (Recorded because the first
+  fixture attempt got this wrong: a two-tick prelude leaves both DMs at zero, one seed bar then pins DX and ADX
+  at 100 forever, and the filler stops being neutral. Measured, not assumed.)
+- **C — the extreme-point boundary, isolated to ONE FIELD.** The comparison is strict `>`: a bar closing at
+  EXACTLY the crossover bar's high (251.5) does not clear it and the entry slips to the next bar; one tick more
+  (251.6) and that bar owns it. Both series take exactly one long, so the boundary decides WHICH BAR — sharper
+  than fires/silent, and unsatisfiable by an off-by-one detector.
+- **STALL — what separates it from `hikkake`,** the grammar's only other ARMED setup. Hikkake's arming expires
+  on a fixed 3-bar DEADLINE; here it expires only when the NEXT DI crossover supersedes it, a boundary set by
+  the data rather than by a constant. Five bars creep beneath the extreme point and the setup is still live on
+  the sixth. Plus a price mirror for the short branch.
+
+**Constants.** TWO, both textbook and held FIXED as `supertrend`'s 10/3 and `aroon`'s 14/70/30 are: `ADX_N = 14`
+and `ADX_MIN = 25`. The extreme-point rule is what removes the entry-timing free parameter that would otherwise
+be needed. `ADX_WARM = 7·14 = 98` is derived, not chosen: the ADX's simple-mean seed decays as (1−1/14)^m, so by
+98 bars it retains ≈0.55% — the same discipline as `MACD_WARM`. Note what the ADX gate implies about which bars
+can EVER fire: a bullish cross with ADX already >25 requires the PRECEDING move to have lifted it, so the class
+is a reversal out of an established trend, never the birth of one. The test fixture is shaped that way because
+the rule forces it.
+
+**One implementation defect found and fixed while building.** The first version seeded the ADX at a fixed index
+and `break`-ed the recursion on the first non-finite DX — meaning a single degenerate stretch would have killed
+the ADX for **every later bar of that market**, silently and permanently. That is the D-300b/D-302 silent-death
+class. It now resets and re-seeds after a gap, and the gap itself stays NaN so the trigger fails closed there.
+
+**Verification.** 34/34 grammar + **276/276 `_shared`** tests + repo-wide `deno check` green;
+`trd-edge-factory` and `trd-edge-stage2` both redeployed. **43,200 rows seeded and VERIFIED landed** (2,700 spec
+points × 16 markets) — verified STRUCTURALLY, not by eye: the DB's 2,700 distinct `spec_key`s hash to md5
+**`6321bd123fa58711d5cbe13ac9406981`** (C collation), byte-identical to `enumerate()+specKey()` computed
+locally; 0 non-`adx` triggers, 34,560 stopMode rows / 8,640 swing rows correctly omitting `stopMode`. Ingest
+id=33 → `queued`; `trd_lineage.grammar-adx` written (verdict UNTESTED).
+
+**Honest status: UNTESTED. One stage-1 candidate, which is not an edge.** Deploy verified by OUTPUT via the
+D-315 `?trigger=` guard: a live `?market=BTCUSDT&trigger=adx` run scored 40 specs on 35,040 real 15m bars, so it
+provably did not fall through the `switch` (D-308). 680 `adx` specs have scored so far (the 1m cron picked up the
+new rows unattended) — all non-null `n`, avg **82** closed trades (0–356), 553 done / 127 thin, max |skill t|
+**13.59**. The average N is low relative to `harami`'s 502: the ADX>25 gate plus the extreme-point confirmation
+is a two-stage filter, so sparsity is expected and a share of the 43,200 rows will resolve `thin`.
+**One row promoted:** `adx|ema50|with|sl3|rr1.5|ny` @SOLUSDT, n=90, skill edge +1.62R vs a matched random entry,
+t=8.13, `holds_both=true`. That is a `fac:*` stage-1 candidate — in-sample, ONE market, one session bucket, n=90,
+among **1,443,591 lifetime trials** — and D-314 established that single-market leads of exactly this shape
+evaporate when pooled across independent markets. It has not met the stage-2 gauntlet. No edge is claimed.
+
+---
+
 ## D-330 — 33rd grammar trigger `effratio` — the first measure of WASTED MOTION; and the stage-1 queue drained to ZERO pending for the first time (2026-08-17)
 
 **The headline is the queue, not the trigger.** `trd_edge_queue` reached **0 pending** — 1,382,400 rows,

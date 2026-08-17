@@ -1,6 +1,59 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-17 (Opus 5) — D-331: grammar widened to 34 triggers — `adx`, the first quantity built from the TWO
+EXTREMES MEASURED SEPARATELY, under a winner-take-all exclusion.** Wilder's DMI: `upMove = high − prevHigh`,
+`downMove = prevLow − low`, and **only the larger counts** — the loser is forced to zero, not netted. Every other
+trigger that reads both extremes reads them JOINTLY (`channel`/`breakout` compare a close to a window extreme,
+`stoch` places the close inside the span, `squeeze` reads dispersion, `nr7`/`inside` compare whole ranges,
+`tweezer` tests one for EQUALITY, `aroon` reads only WHEN they printed, `effratio`/`rsi`/`macd` read closes).
+Nothing else in the grammar DELETES a measured quantity conditional on a comparison with a second one — which is
+what forces an outside bar to resolve to one direction. Entry is Wilder's **extreme-point rule**: the +DI/−DI
+crossover (with ADX > 25) only ARMS the trade; price must then clear the crossover bar's own high. That is what
+removes the entry-timing free parameter.
+
+**Four controls, each moving one thing.** (A) THE CLASS: deepen ONLY the LOWS of the advance — every open, high
+and close asserted byte-identical field by field — so the low extends 6/bar against a high extending 4/bar, the
+winner-take-all rule zeroes +DM, and the crossover never happens; `adx` silent while `breakout` takes **16 trades
+on each series**, first 11 at identical bars. (B) THE GATE: the 112-bar prelude contains **31 measured DI
+crossovers in both directions** and is silent purely because ADX sits at ≈5.5 — silence by the gate, not by
+absence of events. (C) THE BOUNDARY, one field: a close at EXACTLY the crossover bar's high (251.5) does not
+clear it and the entry slips one bar; 251.6 owns it — both take exactly one long, so the boundary decides WHICH
+BAR. (STALL) the property separating it from `hikkake`, the only other ARMED setup: hikkake expires on a fixed
+3-bar DEADLINE, this expires only when the NEXT crossover supersedes it — 5 bars creep under the extreme point
+and the setup is still live. Plus a mirror. TWO constants held FIXED (ADX_N = 14, ADX_MIN = 25); `ADX_WARM = 7·14`
+is derived from the seed's (13/14)^m decay, not chosen.
+
+**A silent-death defect was found and fixed in the build.** The first version `break`-ed the ADX recursion on the
+first non-finite DX, which would have killed the ADX for **every later bar of that market**, permanently and
+without a symptom — the D-300b/D-302 class. It now resets and re-seeds after a gap, and the gap stays NaN so the
+trigger fails closed there.
+
+**34/34 grammar + 276/276 `_shared` tests + repo-wide `deno check` green**, `trd-edge-factory` and
+`trd-edge-stage2` both redeployed, **43,200 rows seeded and VERIFIED landed** (2,700 spec points × 16 markets) —
+verified STRUCTURALLY: the DB's 2,700 distinct `spec_key`s hash to md5 **`6321bd123fa58711d5cbe13ac9406981`**
+(C collation), byte-identical to `enumerate()+specKey()` locally; 0 non-`adx` triggers, 8,640 swing rows correctly
+omitting `stopMode`. Ingest id=33 → `queued`; `trd_lineage.grammar-adx` written (verdict UNTESTED).
+
+**Honest status: UNTESTED. One stage-1 candidate, which is NOT an edge.** Deploy verified by OUTPUT via the D-315
+`?trigger=` guard: a live `?market=BTCUSDT&trigger=adx` run scored 40 specs on 35,040 real 15m bars, so it
+provably did not fall through the `switch` (D-308). 680 `adx` specs scored so far (the 1m cron picked up the new
+rows unattended) — all non-null `n`, avg **82** closed trades (0–356), 553 done / 127 thin, max |skill t|
+**13.59**. Average N is low against `harami`'s 502 because the ADX>25 gate plus the extreme-point confirmation is
+a two-stage filter; a share of the 43,200 rows will resolve `thin`. **One row promoted:**
+`adx|ema50|with|sl3|rr1.5|ny` @SOLUSDT, n=90, skill edge +1.62R vs matched random, t=8.13, `holds_both=true` —
+in-sample, ONE market, one session bucket, among **1,468,751 lifetime trials**, and D-314 established that
+single-market leads of exactly this shape evaporate when pooled. It has not met the stage-2 gauntlet.
+
+**Loop health, measured:** queue `max(run_at)` **54 s** old with **6,400 rows in the trailing 10 min**; `done`
+1,015,168 → **1,036,561** across the session (writes LAND, not merely "processed:N" — the D-300b/D-302 silent-write
+class this check exists for). Queue **1,468,800** total (1,425,600 + this unit's 43,200): 1,036,561 done / 58,640
+pending / 373,599 thin — the D-330 zero-pending drain is refilled. Stage-2 fired once: **1 computed, 1 persisted,
+0 lost, 0 survivors**, and is caught up. **985 fac:\* candidates (953 → 985), 983 stage-2 verdicts (913 killed /
+42 thin at session start), 0 stage-2 survivors, 0 `trd_forward_candidates`.** Nothing has cleared the full
+gauntlet. Ingest backlog `new` 3 → **2**; the next run trips the <3 rule and fires a research unit.
+
+## Prior
 **2026-08-17 (Opus 5) — D-330: the stage-1 queue DRAINED to zero pending for the first time; grammar widened to
 33 triggers — `effratio`, the first measure of WASTED MOTION.** The headline is the queue. `trd_edge_queue` was
 found at **0 pending** — 1,382,400 rows, 1,015,168 `done` / 367,232 `thin`, last write **30 h** old. That is not

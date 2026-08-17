@@ -1257,3 +1257,107 @@ Deno.test("effratio: fires on the efficiency CROSS, is silent when the same grou
   assertEquals(mtr[0].side, "short");
   assert(Math.abs(mtr[0].r - 0.5) < 1e-9, `expected +0.5R, got ${mtr[0].r}`);
 });
+
+// D-331 — `adx` (Wilder DMI/ADX + the extreme-point rule): the first quantity in the grammar built from the
+// bar-to-bar EXTENSION OF THE TWO EXTREMES MEASURED SEPARATELY, under a winner-take-all exclusion. +DM reads
+// (high − prevHigh), −DM reads (prevLow − low), and only the LARGER counts — the loser is forced to zero rather
+// than netted. CONTROL A is that exclusion and nothing else: it deepens ONLY the lows of the advance, holding
+// every open, high and close byte-identical (asserted field by field), which annihilates +DM and makes the
+// bullish crossover disappear — while `breakout`, which reads closes against prior highs, trades the identical
+// bars. CONTROL B pins the ADX>25 gate: the 112-bar prelude is not signal-free by absence of events, it contains
+// 31 MEASURED DI crossovers in BOTH directions and stays silent purely because ADX sits at ≈5.5. CONTROL C pins
+// the extreme-point rule on its exact boundary, and the STALL case pins the property that separates this from
+// `hikkake`, the grammar's only other armed setup: there is no deadline.
+Deno.test("adx: DI cross + ADX gate + extreme-point entry; silent when the low-side extension annihilates +DM", () => {
+  clearEmaCache();
+  const bar = (o: number, h: number, l: number, c: number, idx: number): Bar => ({ ts: new Date(Date.UTC(2026, 0, 1, 0, idx * 15)).toISOString(), open: o, high: h, low: l, close: c });
+  const fromCloses = (cs: number[]): Bar[] => cs.map((c, i) => { const o = i === 0 ? c : cs[i - 1]; return bar(o, Math.max(o, c) + 0.5, Math.min(o, c) - 0.5, c, i); });
+  const spec = { trigger: "adx" as const, emaPeriod: 20, trendMode: "none" as const, stopLookback: 3, rr: 0.5, session: "all" as const };
+  const bspec = { ...spec, trigger: "breakout" as const };
+  const run = (b: Bar[], s: typeof spec | typeof bspec) => { clearEmaCache(); return runComponentTrades(b, s, { costRPerSide: 0 }); };
+
+  // The ADX>25 gate dictates the SHAPE of any fixture that can ever fire: a bullish DI cross with ADX already
+  // above 25 requires the preceding move to have lifted it, so the setup is a reversal OUT OF an established
+  // trend. Hence: neutral prelude → sustained decline (lifts ADX, −DI on top) → reversal (the bullish cross).
+  // PRELUDE — a 4-phase cycle, chosen because it extends BOTH extremes in both directions, so +DM and −DM both
+  // accumulate and DX stays small. MEASURED: 31 DI crossovers between bars 50 and 110, ADX ≈ 5.4–5.7 throughout.
+  // (A two-tick prelude is NOT usable here: identical bars leave both DMs at zero, one seed bar then pins DX at
+  // 100 and ADX at 100 forever, and the filler stops being neutral. That was measured, not assumed.)
+  const CYC = [300, 304, 299, 303];
+  const CHOP = Array.from({ length: 112 }, (_, i) => CYC[i % 4]);                 // c[111] = 303
+  const DOWN = Array.from({ length: 22 }, (_, t) => 303 - 4 * (t + 1));           // 299 → 215, ends at index 133
+  const UP = Array.from({ length: 14 }, (_, t) => 215 + 4 * (t + 1));             // 219 → 271, indices 134…147
+  const baseCloses = [...CHOP, ...DOWN, ...UP];
+  const base = fromCloses(baseCloses);
+
+  // BASE. MEASURED: +DI takes the lead on bar 142 with ADX = 54.35; that bar's HIGH (251.5) is the extreme point.
+  // Bar 143 closes 255 > 251.5, so bar 143 is the signal and the fill is bar 144's open — i.e. the extreme-point
+  // rule costs one bar versus entering on the crossover itself, which is the whole reason it needs no
+  // entry-timing parameter. Exactly ONE trade: bars 144–147 keep advancing to 271 with no new crossover, and the
+  // `already` guard stops the same armed setup emitting again.
+  const tr = run(base, spec);
+  assertEquals(tr.length, 1, "one crossover ⇒ one entry, however far the advance runs afterwards");
+  assertEquals(tr[0].side, "long");
+  assertEquals(tr[0].entryTs, new Date(Date.UTC(2026, 0, 1, 0, 144 * 15)).toISOString(), "fill is the bar AFTER the extreme point is cleared, not the crossover bar");
+  assertEquals(tr[0].exitIdx, 145);
+  assert(Math.abs(tr[0].r - 0.5) < 1e-9, `expected +0.5R, got ${tr[0].r}`);
+  assert(Math.abs(tr[0].riskFrac - 16.5 / 255) < 1e-12, `stop is the 3-bar swing low 238.5 under a 255 entry, got riskFrac ${tr[0].riskFrac}`);
+
+  // CONTROL A — THE CLASS. Deepen ONLY the LOWS from the reversal onward. Every open, high and close is held
+  // byte-identical, so every trigger reading closes (`rsi`/`macd`/`effratio`/`nbar`) or closes-against-highs
+  // (`breakout`/`channel`) sees the same numbers. The advance now extends its low by 6/bar against a high
+  // extending 4/bar, so the winner-take-all rule forces +DM to ZERO on every one of those bars — the bullish
+  // extension is deleted rather than netted — and the crossover never happens.
+  const ctrlA = base.map((b, i) => (i >= 134 ? { ...b, low: 214.5 - 6 * (i - 134) } : b));
+  for (let i = 0; i < base.length; i++) {
+    assertEquals(ctrlA[i].open, base[i].open, `control A must move ONLY the low (open differs at ${i})`);
+    assertEquals(ctrlA[i].high, base[i].high, `control A must move ONLY the low (high differs at ${i})`);
+    assertEquals(ctrlA[i].close, base[i].close, `control A must move ONLY the low (close differs at ${i})`);
+  }
+  assertEquals(run(ctrlA, spec).length, 0, "a high that extends less than the low cannot produce a +DM at all");
+  // …and the identical bars DO trade under a close-versus-level trigger, so the silence is the sided extension
+  // and not an absent move. MEASURED: 16 breakout trades on each series, and because the down-leg is untouched
+  // the first 11 entries are the same bars in both.
+  const bBase = run(base, bspec), bCtrl = run(ctrlA, bspec);
+  assertEquals(bBase.length, 16);
+  assertEquals(bCtrl.length, 16, "breakout trades the bars adx refuses");
+  assertEquals(bCtrl.slice(0, 11).map((t) => t.entryTs), bBase.slice(0, 11).map((t) => t.entryTs));
+
+  // CONTROL B — the ADX>25 gate. The prelude alone contains 31 measured DI crossovers in both directions; every
+  // one is refused because the market never trends. Silence here is the gate, not an absence of events.
+  assertEquals(run(fromCloses([...CHOP, ...CHOP]), spec).length, 0, "DI crossovers in a rangebound market are not signals");
+
+  // CONTROL C — the extreme-point boundary, isolated to ONE FIELD. The comparison is strict `>`, so a bar that
+  // closes at EXACTLY the crossover bar's high (251.5) does not clear it and the entry passes to the next bar;
+  // one tick more (251.6) and that bar owns it. Both series take exactly one long — the boundary decides WHICH
+  // BAR, which is a sharper statement than fires/silent and cannot be satisfied by an off-by-one detector.
+  const X = [...baseCloses]; X[143] = 251.5;
+  const Y = [...baseCloses]; Y[143] = 251.6;
+  assert(X.every((v, i) => i === 143 || v === Y[i]), "X and Y must differ in exactly one close");
+  const tX = run(fromCloses(X), spec), tY = run(fromCloses(Y), spec);
+  assertEquals(tX.length, 1);
+  assertEquals(tY.length, 1);
+  assertEquals(tX[0].entryTs, new Date(Date.UTC(2026, 0, 1, 0, 145 * 15)).toISOString(), "close == extreme point ⇒ not cleared ⇒ entry slips a bar");
+  assertEquals(tY[0].entryTs, new Date(Date.UTC(2026, 0, 1, 0, 144 * 15)).toISOString(), "one tick beyond the extreme point ⇒ this bar owns the entry");
+
+  // STALL — the property that separates this from `hikkake`, the grammar's only other ARMED setup. Hikkake's
+  // arming expires on a fixed 3-bar deadline; here it expires only when the NEXT DI crossover supersedes it, a
+  // boundary set by the data rather than by a constant. Five bars creep up beneath the extreme point (251.0 →
+  // 251.4, never clearing 251.5) and the setup is still live on the sixth, which breaks out and fills at 149.
+  const S = [...baseCloses];
+  [251.0, 251.1, 251.2, 251.3, 251.4].forEach((v, k) => { S[143 + k] = v; });
+  S[148] = 262; S[149] = 266; S[150] = 270;
+  const tS = run(fromCloses(S), spec);
+  assertEquals(tS.length, 1, "the armed setup survives 5 bars — well past hikkake's 3-bar deadline");
+  assertEquals(tS[0].side, "long");
+  assertEquals(tS[0].entryTs, new Date(Date.UTC(2026, 0, 1, 0, 149 * 15)).toISOString());
+
+  // MIRROR — reflecting every price about 600 turns the bullish cross into a bearish one; an asymmetric rule
+  // (for instance one that read the extreme point off the wrong side of the crossover bar) cannot survive it.
+  const mir = base.map((b) => ({ ts: b.ts, open: 600 - b.open, high: 600 - b.low, low: 600 - b.high, close: 600 - b.close }));
+  const mtr = run(mir, spec);
+  assertEquals(mtr.length, 1);
+  assertEquals(mtr[0].side, "short");
+  assertEquals(mtr[0].exitIdx, 145);
+  assert(Math.abs(mtr[0].r - 0.5) < 1e-9, `expected +0.5R, got ${mtr[0].r}`);
+});

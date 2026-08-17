@@ -20,7 +20,7 @@ export type { Bar };
 // picked a side) followed by a DISPLACEMENT candle that breaks the range = a Change In State of
 // Delivery (CISD). Enter in the break direction, stop at the far side of the consolidation. It is
 // the volatility-clustering idea (range contraction → expansion) as a mechanical setup.
-export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji" | "hikkake" | "piercing" | "effratio";
+export type TriggerClass = "sweep" | "fvg" | "orderblock" | "breakout" | "pullback" | "engulfing" | "pinbar" | "rsi" | "delivery" | "inside" | "channel" | "nbar" | "ssweep" | "nr7" | "star" | "soldiers" | "choch" | "supertrend" | "squeeze" | "rsidiv" | "stoch" | "macd" | "harami" | "doubletop" | "tweezer" | "marubozu" | "aroon" | "psar" | "kumo" | "doji" | "hikkake" | "piercing" | "effratio" | "adx";
 export type TrendMode = "with" | "against" | "none";
 export type Session = "all" | "asia" | "london" | "ny";
 export type TrendState = "up" | "down" | "flat";
@@ -65,7 +65,7 @@ export interface ComponentSpec {
 }
 
 export const GRAMMAR = {
-  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji", "hikkake", "piercing", "effratio"] as TriggerClass[],
+  trigger: ["sweep", "fvg", "orderblock", "breakout", "pullback", "engulfing", "pinbar", "rsi", "delivery", "inside", "channel", "nbar", "ssweep", "nr7", "star", "soldiers", "choch", "supertrend", "squeeze", "rsidiv", "stoch", "macd", "harami", "doubletop", "tweezer", "marubozu", "aroon", "psar", "kumo", "doji", "hikkake", "piercing", "effratio", "adx"] as TriggerClass[],
   emaPeriod: [20, 30, 50],
   trendMode: ["with", "against", "none"] as TrendMode[],
   stopLookback: [3, 5, 10],
@@ -74,7 +74,7 @@ export const GRAMMAR = {
   stopMode: ["swing", "atr2", "atr6", "atr12", "wide100"] as StopMode[],
 };
 
-/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 33·3·3·3·5·4·5 = 89,100. */
+/** Cartesian product of the grammar → every distinct strategy. |GRAMMAR| = 34·3·3·3·5·4·5 = 91,800. */
 export function enumerate(g = GRAMMAR): ComponentSpec[] {
   const out: ComponentSpec[] = [];
   const modes = g.stopMode ?? (["swing"] as StopMode[]);
@@ -761,6 +761,55 @@ function triggerSignal(bars: Bar[], i: number, s: ComponentSpec): Sig | null {
       if (disp < 0) return { side: "short", stop: hi };
       return null;                                                     // zero displacement cannot exceed ER_HI > 0
     }
+    case "adx": { // Wilder DMI/ADX crossover with the extreme-point rule (ingest id=33, Wilder 1978;
+      // web:esignal+luxalgo+barchart) — the 34th primitive, and the first quantity in the grammar built from the
+      // BAR-TO-BAR EXTENSION OF THE TWO EXTREMES MEASURED SEPARATELY, under a winner-take-all exclusion:
+      //   upMove = high_k − high_{k−1},  downMove = low_{k−1} − low_k,
+      //   +DM = upMove if (upMove > downMove and upMove > 0) else 0;  −DM the mirror,
+      //   ±DI = 100 · Wilder14(±DM) / Wilder14(TR),  DX = 100·|+DI − −DI|/(+DI + −DI),  ADX = Wilder14(DX).
+      // Two properties of that construction are new here, and they are separable claims:
+      //   · SEPARATE, SIDED EXTENSION. Every other trigger that reads both extremes reads them JOINTLY, as the two
+      //     ends of one object: `channel`/`breakout` compare a close to a window extreme, `stoch` places the close
+      //     INSIDE the span between them, `squeeze` reads their dispersion, `nr7`/`inside` compare whole ranges,
+      //     `tweezer` tests one extreme for EQUALITY with its neighbour, `aroon` reads only WHEN they printed and no
+      //     magnitude at all, and `effratio`/`rsi`/`macd` read closes only. None asks how far the high pushed past
+      //     the PRIOR high while separately asking how far the low pushed below the PRIOR low.
+      //   · A NON-ADDITIVE EXCLUSION. The two sides do not net: a bar that extends its high by 3 and its low by 4
+      //     contributes 4 to −DM and ZERO to +DM — the bullish extension is DELETED, not subtracted. No other term
+      //     anywhere in the grammar discards a measured quantity conditional on a comparison with a second one, and
+      //     it is what makes an OUTSIDE bar (a real event that extends both sides) resolve to a single direction.
+      //     Negative control A is built on exactly this: deepening only the LOWS of an advance, with every HIGH and
+      //     every CLOSE held byte-identical, annihilates +DM and the crossover disappears.
+      // ENTRY — Wilder's own extreme-point rule, which is why this class carries NO entry-timing free parameter:
+      // the crossover only ARMS the trade; the entry requires price to take out the crossover bar's own extreme
+      // (its high for a long). Read on CLOSES, as `hikkake`'s confirmation is, which is the pessimistic reading
+      // given that fills happen at the NEXT bar's open. `hikkake` is the only other armed-setup trigger and the
+      // difference is the expiry: its window is a fixed 3-bar DEADLINE, whereas here the setup stays armed until
+      // the NEXT DI crossover supersedes it — a boundary set by the data, so no deadline constant is introduced.
+      // The `already` scan makes bar i the FIRST bar to clear the extreme point, so one crossover emits at most one
+      // signal rather than one per bar it stays beyond.
+      // TWO free constants, both textbook and held FIXED — as `supertrend`'s 10/3, `macd`'s 12/26/9 and `aroon`'s
+      // 14/70/30 are — so this class cannot inflate the trial count and deflate every other candidate's DSR:
+      // ADX_N = 14 (Wilder's own) and ADX_MIN = 25 (the standard trend-strength floor). Note what the ADX gate
+      // implies about WHICH bars can ever fire: a bullish DI cross with ADX already above 25 requires the ADX to
+      // have been lifted by the PRECEDING move, i.e. the setup is a reversal out of an established trend, not the
+      // birth of one — the test fixture is built that way because the rule forces it.
+      // Stop: the stopLookback swing, as `rsi`/`stoch`/`macd`/`aroon`/`effratio` use — no new stop mechanic.
+      // Point-in-time: every term at bar k reads bars k and k−1 only and all three smoothers are backward
+      // recursions; nothing at or after i+1 is read. Memoised identity-keyed (WeakMap), never by bars.length (D-310).
+      const ax = adxSeries(bars);
+      if (i < ADX_WARM + 1) return null;
+      const x = ax.lastCross[i];
+      if (x < ADX_WARM || x >= i) return null;      // no crossover past the quarantine, or it IS this bar (the
+                                                    // extreme point it sets must be exceeded by a LATER bar)
+      if (!(ax.adx[x] > ADX_MIN)) return null;      // NaN fails closed
+      const long = ax.pdi[x] > ax.mdi[x];
+      const ep = long ? bars[x].high : bars[x].low; // Wilder's extreme point = the crossover bar's own extreme
+      const beyond = (k: number) => (long ? bars[k].close > ep : bars[k].close < ep);
+      if (!beyond(i)) return null;                  // the extreme point has not been taken out yet
+      for (let k = x + 1; k < i; k++) if (beyond(k)) return null;  // an earlier bar owned this entry, not i
+      return long ? { side: "long", stop: lo } : { side: "short", stop: hi };
+    }
     case "aroon": { // Aroon Up/Down cross (ingest id=27, web:fidelity+litefinance) — the 27th primitive, and the first
       // whose condition is a PURELY TEMPORAL/ORDINAL quantity: HOW MANY BARS AGO the window's extreme occurred. Every
       // other trigger in the grammar reads a price MAGNITUDE (a close against a level, a body against a range, one
@@ -956,6 +1005,71 @@ function psarSeries(bars: Bar[]): PSSeries {
   }
   const out: PSSeries = { flip, sar, warm };
   _psCache.set(bars, out); return out;
+}
+
+// Wilder's Directional Movement / ADX (D-331). Canonical N=14 with the textbook ADX>25 trend-strength gate, both
+// held FIXED for the same reason as Supertrend's 10/3, MACD's 12/26/9 and Aroon's 14/70/30 — see the `adx` case.
+const ADX_N = 14, ADX_MIN = 25;
+// Wilder smooths +DM/-DM/TR from a SUM seed (measured data, no arbitrary starting value), but the ADX itself is
+// seeded with the simple MEAN of the first N DX values, and that seed's weight decays only as (1-1/N)^m. The
+// first ADX prints at 2N-1 = 27; by 7N = 98 the seed retains (13/14)^71 ≈ 0.55% of the value, below any price
+// resolution we measure. Quarantining 7N bars means the first reported crossover is produced by the data and
+// never by the seed — the same discipline as MACD_WARM (D-317) and Supertrend's `warm` (D-312).
+const ADX_WARM = 7 * ADX_N; // = 98
+interface ADXSeries { pdi: Float64Array; mdi: Float64Array; adx: Float64Array; lastCross: Int32Array }
+let _adxCache = new WeakMap<Bar[], ADXSeries>();
+/** Causal DMI/ADX. Every per-bar term at index k reads bars k and k-1 only, and all three smoothers are strictly
+ * backward recursions, so reading the series at i uses nothing at or after i+1.
+ * `lastCross[k]` is the index of the most recent bar (≤ k) on which +DI took the lead from -DI or vice versa,
+ * or -1 if none — it is what lets the extreme-point rule stay armed until the NEXT crossover supersedes it,
+ * with no deadline constant. A window with no true range at all leaves the DIs NaN rather than inventing a 0/0,
+ * and every comparison against NaN is false, so the trigger fails closed. */
+function adxSeries(bars: Bar[]): ADXSeries {
+  const hit = _adxCache.get(bars); if (hit) return hit;
+  const n = bars.length;
+  const pdi = new Float64Array(n).fill(NaN), mdi = new Float64Array(n).fill(NaN), adx = new Float64Array(n).fill(NaN);
+  const lastCross = new Int32Array(n).fill(-1);
+  if (n > ADX_N) {
+    const pdm = new Float64Array(n), mdm = new Float64Array(n), tr = new Float64Array(n);
+    for (let k = 1; k < n; k++) {
+      // The two extremes are measured SEPARATELY against their own counterpart on the prior bar…
+      const up = bars[k].high - bars[k - 1].high, dn = bars[k - 1].low - bars[k].low;
+      // …and then the WINNER-TAKE-ALL exclusion: only the larger extension counts, and only when positive. A bar
+      // that extends BOTH sides (an outside bar) contributes to ONE side only; the loser is annihilated, not netted.
+      pdm[k] = (up > dn && up > 0) ? up : 0;
+      mdm[k] = (dn > up && dn > 0) ? dn : 0;
+      const pc = bars[k - 1].close;
+      tr[k] = Math.max(bars[k].high - bars[k].low, Math.abs(bars[k].high - pc), Math.abs(pc - bars[k].low));
+    }
+    let sp = 0, sm = 0, st = 0;                                  // Wilder seed = the sum over indices 1..N
+    for (let k = 1; k <= ADX_N; k++) { sp += pdm[k]; sm += mdm[k]; st += tr[k]; }
+    const dx = new Float64Array(n).fill(NaN);
+    for (let k = ADX_N; k < n; k++) {
+      if (k > ADX_N) { sp = sp - sp / ADX_N + pdm[k]; sm = sm - sm / ADX_N + mdm[k]; st = st - st / ADX_N + tr[k]; }
+      if (!(st > 0)) continue;                                   // no true range → DI undefined (fails closed as NaN)
+      pdi[k] = 100 * sp / st; mdi[k] = 100 * sm / st;
+      const sum = pdi[k] + mdi[k];
+      if (sum > 0) dx[k] = 100 * Math.abs(pdi[k] - mdi[k]) / sum;
+    }
+    // ADX = Wilder-smoothed DX, seeded with the simple mean of the first N CONSECUTIVE finite DX values. An
+    // undefined DX (a stretch with no directional movement at all) RESETS the average and re-seeds after it,
+    // rather than killing the series for every later bar — a permanent silent death on one degenerate bar is
+    // exactly the D-300b/D-302 failure class. The gap itself stays NaN, so the trigger fails closed there.
+    let have = 0, seed = 0, cur = NaN;
+    for (let k = ADX_N; k < n; k++) {
+      if (!Number.isFinite(dx[k])) { have = 0; seed = 0; cur = NaN; continue; }
+      if (!Number.isFinite(cur)) { seed += dx[k]; if (++have === ADX_N) { cur = seed / ADX_N; adx[k] = cur; } }
+      else { cur = (cur * (ADX_N - 1) + dx[k]) / ADX_N; adx[k] = cur; }
+    }
+    let last = -1;
+    for (let k = ADX_N + 1; k < n; k++) {
+      const a = pdi[k] - mdi[k], p = pdi[k - 1] - mdi[k - 1];
+      if (Number.isFinite(a) && Number.isFinite(p) && ((a > 0 && p <= 0) || (a < 0 && p >= 0))) last = k;
+      lastCross[k] = last;
+    }
+  }
+  const out: ADXSeries = { pdi, mdi, adx, lastCross };
+  _adxCache.set(bars, out); return out;
 }
 
 // Ichimoku Kumo (D-325). Canonical 9/26/52 with the standard +26 forward displacement, held FIXED for the same
@@ -1176,4 +1290,4 @@ export function runComponent(bars: Bar[], s: ComponentSpec, cfg: GrammarCfg): nu
 /** Drops every memoized indicator series. With identity keying (D-310) this is no longer required for
  * CORRECTNESS — it exists so a test can force a cold recompute. Nothing in the live path calls it, and
  * nothing needs to: two different markets are two different array objects. */
-export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); _stoCache = new WeakMap(); _macdCache = new WeakMap(); _psCache = new WeakMap(); _kumoCache = new WeakMap(); }
+export function clearEmaCache() { _emaCache = new WeakMap(); _rsiCache = new WeakMap(); _stCache = new WeakMap(); _sqCache = new WeakMap(); _stoCache = new WeakMap(); _macdCache = new WeakMap(); _psCache = new WeakMap(); _kumoCache = new WeakMap(); _adxCache = new WeakMap(); }
