@@ -6881,3 +6881,22 @@ financials/energy. Opportunistic-vs-routine (Cohen-Malloy) classifier DEFERRED (
 calendar). KEY BOTTLENECK reconfirmed: keyless SEC throttles, one invocation tops ~25-30 events → structurally
 underpowered until breadth widened via a PERSISTENT INGEST CURSOR (accumulate events over time) or paid PIT feed.
 This is the "data breadth, not effort" wall — the case for the ingestion + compute-node builds in INFRA_CHAIN.md.
+
+---
+
+## D-337 — VIX-TS factor null + the DEEP-HISTORY foundation (honest 33-yr testing begins)
+(a) `trd-factor-vixts-mtf` (VIX term-structure / VRP, keyless Yahoo ^VIX9D/^VIX3M): pre-registered +1 sign REJECTED —
+IC coherently NEGATIVE across pool, MTF regimes, epochs, and 9/13 ETFs (21d flips in epoch 3). Will NOT relabel −1 as
+a win (hindsight fitting, banned). Also flagged: our IC t-stats are OVERSTATED — overlapping forward windows +
+cross-correlated ETF panel inflate effective-N; trust sign coherence, not magnitudes (apply to ALL IC henceforth). But
+the deeper problem: only ~2y history (Yahoo VIX9D/3M depth) = single bull regime = NOT HONEST. Third consecutive
+short-history null (Form-4 breadth-blocked, funding 166d unstable, VIX-TS 2y).
+
+(b) THE FIX — deep-history foundation. Verified keyless depth: Yahoo `period1=0` daily goes back ^GSPC 1970 (56y,
+14,277 bars), ^IXIC 1971, AAPL 1980, ^VIX 1990, GC/CL 2000, FX 2003 — spans 1987/dot-com/GFC/COVID/2022. Stooq is now
+PoW-walled (dead keyless). Crypto physically can't do 33y (BTC 2010, alts 2017+) — labeled regime-limited, not faked.
+Built `trd_bars_deep` (migration 0045; one compact JSONB row/symbol) + `trd-bars-deep-ingest` (keyless Yahoo, idempotent/
+resumable, 6/batch under the 2s cap) + cron `trd-bars-deep-drain` (*/2, drains 59-symbol multi-asset universe + weekly
+refresh). First batch verified: S&P 1970→2026 (56y) landed. NEXT: era-disaggregated + deflated re-run of factors AND
+the 1.4M grammar across this deep data (per-era cells: pre-2000/dot-com/GFC/2010s/COVID/2022) — the full 1.4M sweep
+needs the own-compute-node (INFRA_CHAIN.md) since the 2s edge cap can't hold it.
