@@ -33,7 +33,7 @@ button{font-family:var(--mono);font-size:12px;background:var(--sf);color:var(--t
 <body>
 <header><div class="wrap bar"><div class="brand"><span class="dot"></span> AEGIS · COMMAND COCKPIT</div>
 <div><span id="upd" class="mono" style="font-size:12px;color:var(--mut)">loading…</span> <button onclick="load()">↻ refresh</button></div></div></header>
-<main class="wrap"><div id="err"></div><div id="app"></div></main>
+<main class="wrap"><div id="err"></div><div id="app"></div><div id="signals"></div></main>
 <script>
 const ENDPOINT = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1/aegis-cockpit?format=json";
 const esc = s => String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
@@ -82,11 +82,34 @@ function render(d){
   <li>The one mechanism-backed cycle lead (BTC halving) is pre-registered forward, not backfit.</li>
   </ul></div>`;
 }
+const SIG_ENDPOINT = "https://glzzoomuhnugsiichnub.supabase.co/functions/v1/aegis-signals";
+function renderSignals(d){
+  const s=d.summary||{}; const engc = s.engaged>0?"var(--accent)":"var(--faint)";
+  const grid=(d.era_grid||[]).map(g=>{const ok=g.ic>0,col=Math.abs(g.t)<2?"var(--faint)":ok?"var(--accent)":"var(--red)";return `<tr><td class=mono>${esc(g.era)}</td><td class="mono num" style="color:${col}">${g.ic>=0?"+":""}${(+g.ic).toFixed(4)}</td><td class="mono num" style="color:var(--faint)">${(+g.t).toFixed(1)}</td><td class="mono num" style="color:var(--faint)">${g.n}</td></tr>`}).join("");
+  const sig=(d.signals||[]).slice(0,25).map(x=>{const buy=x.lean>0,lc=x.engage?(buy?"var(--accent)":"var(--red)"):"var(--faint)";return `<tr><td class=mono>${esc(x.symbol)}</td><td class="mono num" style="color:${lc}">${x.lean>=0?"+":""}${(+x.lean).toFixed(2)}</td><td class="mono num">${(+x.confidence).toFixed(3)}</td><td class="mono num" style="color:var(--faint)">${(+x.residual).toFixed(2)}</td><td class=mono style="color:${x.engage?"var(--accent)":"var(--faint)"}">${x.engage?"ENGAGE":"stand down"}</td></tr>`}).join("")||`<tr><td colspan=5 style="color:var(--faint)">no signals computed yet</td></tr>`;
+  document.getElementById("signals").innerHTML = `
+  <h2>Causal buy/sell signals — single-operator, honest</h2>
+  <div class=grid>
+  ${card("Instruments",s.n??0,"scored on causal forces")}
+  ${card("Engaged",s.engaged??0,"gate open only if explained+stable",engc)}
+  ${card("Avg confidence",(s.avg_confidence??0).toFixed(3),"calibrated causal confidence")}
+  ${card("Avg residual",Math.round((s.avg_residual??0)*100)+"%","UNEXPLAINED — the anti-guru number","var(--amber)")}
+  </div>
+  <div class=two style="margin-top:14px">
+  <div class=panel><div class=lbl>Why the gate is ${s.engaged>0?"open":"shut"} — ${esc(d.factor||"factor")} IC by era (33-yr, deflated)</div>
+    <table style="margin-top:8px"><thead><tr><th>era</th><th class=num>IC</th><th class=num>t</th><th class=num>n</th></tr></thead><tbody>${grid||`<tr><td colspan=4 style="color:var(--faint)">—</td></tr>`}</tbody></table>
+    <div style="font-size:12px;color:var(--faint);margin-top:8px">A force is trusted only if its sign HOLDS across eras. Sign-flips across cycles → confidence≈0 → stand down. The system refuses to trade what it can't explain.</div></div>
+  <div class=panel><div class=lbl>Per-instrument lean · confidence · residual</div>
+    <table style="margin-top:8px"><thead><tr><th>sym</th><th class=num>lean</th><th class=num>conf</th><th class=num>resid</th><th>gate</th></tr></thead><tbody>${sig}</tbody></table></div>
+  </div>`;
+}
+async function loadSignals(){ try{ const r=await fetch(SIG_ENDPOINT,{cache:"no-store"}); if(r.ok) renderSignals(await r.json()); }catch(e){} }
 async function load(){
   try{ document.getElementById("err").textContent="";
     const r=await fetch(ENDPOINT,{cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status);
     render(await r.json());
   }catch(e){ document.getElementById("err").textContent="fetch failed: "+e.message+" (endpoint may be waking; retrying in 60s)"; }
+  loadSignals();
 }
 load(); setInterval(load, 60000);
 </script>

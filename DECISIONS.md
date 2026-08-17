@@ -6900,3 +6900,19 @@ resumable, 6/batch under the 2s cap) + cron `trd-bars-deep-drain` (*/2, drains 5
 refresh). First batch verified: S&P 1970→2026 (56y) landed. NEXT: era-disaggregated + deflated re-run of factors AND
 the 1.4M grammar across this deep data (per-era cells: pre-2000/dot-com/GFC/2010s/COVID/2022) — the full 1.4M sweep
 needs the own-compute-node (INFRA_CHAIN.md) since the 2s edge cap can't hold it.
+
+---
+
+## D-338 — the OWN COMPUTE NODE + causal buy/sell SIGNAL layer + dashboard (all live)
+Built the uncapped compute substrate that removes the 2s edge-fn bottleneck. `trd-compute` (broker, no-verify-jwt: claim
+job / serve deep bars / submit result+signals) + `scripts/aegis-worker.ts` (standalone Deno worker, CREDENTIAL-FREE —
+talks only to the broker, runs anywhere, uncapped) + `trd_compute_jobs` queue (skip-locked `trd_claim_job`) + `trd_signal`
+store (migration 0046). VERIFIED end-to-end: worker drained a `deep_factor_ic` job — 25 mega-caps × ~40yr, 12-1 momentum,
+**9.3s runtime (4.6× the 2s edge cap)** — and emitted 25 signals. Era grid is honestly damning for single-name momentum:
+IC +0.073 pre-2000 then INVERTS negative 2000-2021 (dotcom −0.063, GFC −0.041, COVID −0.064), +0.026 in 2022+ → sign
+unstable across cycles → confidence 0 → **0/25 engaged, 99% residual**. The engagement gate correctly REFUSES to trade
+what it can't explain across eras — the north-star (measured ignorance) working live. Buy/sell SIGNAL layer
+(single-operator, unpublished): per-instrument lean + calibrated causal confidence + WHY decomposition + honest residual,
+served by `aegis-signals` and rendered as a new panel on `web/aegis-cockpit.html` (live-verified in-browser). CAVEAT (see
+D-339 gaps): the deep equity universe is SURVIVORS only — momentum results carry a survivorship caveat until delisted
+names are ingested. NOTE: IC t-stats inflated by overlapping windows + cross-correlation (trust IC sign/magnitude, not t).
