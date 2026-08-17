@@ -6866,3 +6866,18 @@ claim (the earlier tuned-rule finding was likely mis-attributed). Verdict: a rea
 UNSTABLE (one-month inversion) with moderate breadth → NOT validated; the epoch-3 inversion must be explained (what
 sub-regime breaks it) before any sizing. Exemplifies D-334: the pool looked tradeable, the disaggregation showed a
 month-long reversal a single number would have hidden.
+
+---
+
+## D-336 — first equity factor (Form-4 insider buys): built end-to-end, underpowered null (breadth-blocked)
+`trd-factor-form4-ic` — opportunistic-insider-buy factor via keyless SEC EDGAR (reused `_shared/trd-edgar.ts`
+parseForm4/isOpenMarketBuy) + Yahoo forward returns, filing-date effective_date. Wired end-to-end: 23 trd_factor_value
+rows, 8 symbols, **0 leakage** (PIT CHECK held), 2 trd_factor_ic rows, trials bumped, status→measuring. Measured
+(pooled, hypo sign +1): 5d IC −0.010 t=−0.04 N=22; 21d IC −0.515 t=−2.40 N=18. Verdict: **underpowered null, NOT an
+edge** — N tiny, single un-deflated run, pool dominated by ONE issuer (BAC 15/24 events) so the negative 21d is one
+name's buy-timing artifact, not cross-sectional evidence (D-334: never conclude from an aggregate dominated by one
+member). Mega-caps (AAPL/MSFT/…) produce ~zero code-P open-market buys (insiders get grants + sell) → signal lives in
+financials/energy. Opportunistic-vs-routine (Cohen-Malloy) classifier DEFERRED (needs each insider's multi-year
+calendar). KEY BOTTLENECK reconfirmed: keyless SEC throttles, one invocation tops ~25-30 events → structurally
+underpowered until breadth widened via a PERSISTENT INGEST CURSOR (accumulate events over time) or paid PIT feed.
+This is the "data breadth, not effort" wall — the case for the ingestion + compute-node builds in INFRA_CHAIN.md.
