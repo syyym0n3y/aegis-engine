@@ -195,11 +195,14 @@ function go(k){document.querySelectorAll(".view").forEach(v=>v.classList.toggle(
   if(k==="allocate")doAllocate(); if(k==="cockpit"){doExec();doScorecard();renderCtl();doScan();doCockpit();} if(k==="copilot")doCopilot(); if(k==="edges")doEdges(); if(k==="causal")doCausal(); location.hash=k; window.scrollTo(0,0);}
 async function doCausal(){
   const o=document.getElementById("cz_out");
-  try{const d=await(await fetch(API+"/aegis-signals",{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
-    const s=d.summary||{}; document.getElementById("cz_upd").textContent="live · "+new Date(d.generated_at).toISOString().replace("T"," ").slice(0,16)+" UTC";
+  try{const opk=localStorage.getItem("aegis_op")||"";
+    const d=await(await fetch(API+"/aegis-signals"+(opk?("?op="+encodeURIComponent(opk)):""),{cache:"no-store"})).json();if(!d.ok)throw new Error(d.err||"error");
+    const s=d.summary||{}; const isOp=d.mode==="operator"; document.getElementById("cz_upd").textContent="live · "+new Date(d.generated_at).toISOString().replace("T"," ").slice(0,16)+" UTC · "+(isOp?"operator":"public");
     const engc=s.engaged>0?"var(--accent)":"var(--mut)";
     const grid=(d.era_grid||[]).map(g=>{const ok=g.ic>0,col=Math.abs(g.t)<2?"var(--mut)":ok?"var(--accent)":"var(--red)";return `<tr><td class="mono">${esc(g.era)}</td><td class="mono num" style="color:${col}">${g.ic>=0?"+":""}${(+g.ic).toFixed(4)}</td><td class="mono num" style="color:var(--mut)">${(+g.t).toFixed(1)}</td><td class="mono num" style="color:var(--mut)">${g.n}</td></tr>`}).join("")||`<tr><td colspan=4 class=muted>—</td></tr>`;
-    const sig=(d.signals||[]).slice(0,30).map(x=>{const buy=x.lean>0,lc=x.engage?(buy?"var(--accent)":"var(--red)"):"var(--mut)";return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:${lc}">${x.lean>=0?"+":""}${(+x.lean).toFixed(2)}</td><td class="mono num">${(+x.confidence).toFixed(3)}</td><td class="mono num" style="color:var(--mut)">${Math.round((+x.residual)*100)}%</td><td class="mono" style="color:${x.engage?"var(--accent)":"var(--mut)"}">${x.engage?"ENGAGE":"stand down"}</td></tr>`}).join("")||`<tr><td colspan=5 class=muted>no signals computed yet</td></tr>`;
+    const sig=(d.signals||[]).slice(0,30).map(x=>{
+      if(x.redacted)return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:var(--amber)">🔒</td><td class="mono num">${(+x.confidence).toFixed(3)}</td><td class="mono num" style="color:var(--mut)">${Math.round((+x.residual)*100)}%</td><td class="mono" style="color:var(--amber)">operator-only</td></tr>`;
+      const buy=x.lean>0,lc=x.engage?(buy?"var(--accent)":"var(--red)"):"var(--mut)";return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:${lc}">${x.lean>=0?"+":""}${(+x.lean).toFixed(2)}</td><td class="mono num">${(+x.confidence).toFixed(3)}</td><td class="mono num" style="color:var(--mut)">${Math.round((+x.residual)*100)}%</td><td class="mono" style="color:${x.engage?"var(--accent)":"var(--mut)"}">${x.engage?"ENGAGE":"stand down"}</td></tr>`}).join("")||`<tr><td colspan=5 class=muted>no signals computed yet</td></tr>`;
     o.innerHTML=`
     <div class="grid">
       <div class="card"><div class="lbl">Instruments</div><div class="v">${s.n??0}</div><div class="s">scored on causal forces</div></div>
@@ -214,7 +217,13 @@ async function doCausal(){
       <div class="panel"><div class="lbl" style="margin-bottom:10px">Per-instrument — lean · confidence · residual</div>
         <table><thead><tr><th>sym</th><th class="num">lean</th><th class="num">conf</th><th class="num">resid</th><th>gate</th></tr></thead><tbody>${sig}</tbody></table></div>
     </div>
-    <p class="muted" style="margin-top:14px">Single-operator research tool. Not investment advice. Buy/sell leans are for the operator only and are not published or sold.</p>`;
+    <div class="panel" style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="lbl">Operator key</span>
+      <input id="cz_key" type="password" placeholder="${isOp?"unlocked — engaged signals visible":"enter key to reveal engaged signals"}" style="flex:1;min-width:200px;font-family:var(--mono);font-size:12px;background:transparent;color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:6px 10px">
+      <button onclick="(function(){var v=document.getElementById('cz_key').value.trim();if(v)localStorage.setItem('aegis_op',v);else localStorage.removeItem('aegis_op');doCausal();})()">${isOp?"re-check":"unlock"}</button>
+      ${isOp?`<button onclick="localStorage.removeItem('aegis_op');doCausal()">lock</button>`:""}
+    </div>
+    <p class="muted" style="margin-top:14px">Single-operator research tool. Not investment advice. Engaged (actionable) buy/sell leans are operator-only — redacted on the public page and never published or sold. The engine, its residual, and 'stand down' readings are public.</p>`;
   }catch(e){o.innerHTML=`<span style="color:var(--red)">${esc(e.message)} — the causal endpoint may be waking; retry in a moment.</span>`}
 }
 const vcol=v=>/SURVIV|LIKELY REAL|ALIVE/i.test(v)?"var(--accent)":/FRAGILE|CAUTION/i.test(v)?"var(--amber)":"var(--red)";
