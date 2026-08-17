@@ -6788,3 +6788,27 @@ GLOBAL_MAX=24 positions · GROSS_NOTIONAL_CAP=$80k**. Attribution: broker sym �
 orphans (untracked accretion) first, then oldest per-edge overflow, then largest-notional until under caps. Logs
 `trd_risk_actions` (append-only) + heartbeat; `?dry=1` previews. Respects the kill-switch. Verified: dry + live on
 the clean account = 0 trims, heartbeat written. The account can no longer silently consume its own buying power.
+
+---
+
+## D-331 — THE PIVOT: modular causal-factor engine replaces candle-grammar mining
+The grammar mined candle GEOMETRY (effects): 1.47M specs, 988 in-sample survivors, **1** forward-clean — the engine
+was correctly rejecting because it was looking at the wrong object (shadows of order flow, not forces). Pivoted to a
+modular CAUSAL-FACTOR engine grounded in `docs/CAUSAL_FORCES.md` (7 force-classes, IR=IC×√Breadth, causality+modularity
+made operational). Three parallel research passes (microstructure/dealer, positioning/event/carry, infra audit) built
+the whole-field map + confirmed **Databento is dormant** (ohlcv-1m on 2 futures = ~1% of the key; MBO/trades/options/
+auction-imbalance unused) and **AlphaVantage unused** — our biggest under-exploited assets.
+
+**Built (migration `0044_trd_factor_engine.sql`):** `trd_factor` (pre-registered registry — mechanism + hypothesized
+sign declared BEFORE testing, the one element that makes it causal not fishing), `trd_factor_value` (materialized
+point-in-time store; `pit_no_leak` CHECK `effective_date >= ts` makes look-ahead structurally impossible), `trd_factor_ic`
+(append-only IC evidence, trial-deflated). 12 factors pre-registered across all 7 classes. Factors promote into the
+SAME gate (trd_edge_scorecard/trd_lineage) as grammar edges — one ledger.
+
+**First factor proven end-to-end (`trd-factor-funding-ic`):** funding crowding-fade, 6,225 PIT values across 15 keyless
+Binance perps, **pooled rank-IC = −0.0201, t = −1.59, n = 6225** (0 leakage rows). Honest read: **sign is exactly the
+pre-registered −1, but the LINEAR pooled IC at 8h is weak/insignificant** — because the proven funding edge (D-316/317,
+t=4.53) lives in the TAIL (extreme z>1.5, held ~72h), not in the linear response across all funding levels. The engine
+now MEASURES that conditionality systematically instead of asserting it. Next: extreme-conditional + multi-horizon +
+regime-conditioned IC (all one-liners in the same harness), then light up the dormant Databento (auction-imbalance,
+OFI) + AlphaVantage (PEAD, GEX) factors. Trial counter → 1,475,112.
