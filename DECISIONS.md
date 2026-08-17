@@ -6617,3 +6617,20 @@ bleeders, flatten demoted edges, trip kill-switch) but only RECOMMEND scale-ups/
 allocator_verdict EARNED-scale-up / BLEEDING-size-down / TESTING-hold-size) that every role reads. Team roles to
 stand up as independent Routines: Risk Officer, Forward Validator, Allocator/Sizer, Health Monitor (built), Reporter.
 Honest anchor: size follows PROVEN forward skill; no validated edge exists yet (funding-carry first close tonight).
+
+## D-320 — Forward Validator: the 5th team role, completing the agentic team (2026-08-17)
+
+Built `trd-forward-validate` — the Forward Validator. Runs a DETERMINISTIC gauntlet on each edge's LIVE forward
+(paper) trades: n>=30 AND positive mean P&L AND forward skill t>=2 AND not driven by 1 trade (top_trade_frac<0.5)
+AND tolerable drawdown → 'forward-validated' (the ONLY gate to a scale-up recommendation). Else forward-failing
+(negative w/ sample → demote), forward-inconclusive, or forward-testing (too few). Writes trd_forward_validation +
+updates trd_lineage. Stats are math, not LLM judgment. Cron trd_forward_validate_6h. First run: futures-orb815
+n=9 t=0.15 → forward-testing (insufficient); funding-carry 0 closed. NOTHING validated — the honest state; edges
+need weeks of live trades.
+
+AGENTIC TEAM now complete (5 roles, all independent of the chat, coordinating via DB shared-truth tables):
+1. Risk Officer + 2. Allocator = aegis-portfolio-manager routine (hourly): sizes to earned skill, autonomous
+   risk-reduction, recommends scale-ups. 3. Forward Validator = trd-forward-validate (6h): the validation gate.
+4. Health Monitor = trd_cron_health_v + heartbeats. 5. Reporter = aegis-pnl-report + aegis-funding-check.
+Shared truth: trd_edge_forward_v (forward scorecard) + trd_forward_validation (verdicts) + trd_lineage (status)
++ trd_exec_config (sizing). Honest anchor everywhere: size follows PROVEN forward skill; nothing validated yet.
