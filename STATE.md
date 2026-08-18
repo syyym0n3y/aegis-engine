@@ -1,7 +1,7 @@
 # STATE — Aegis (live state)
 
 ## Last updated
-**2026-08-18 00:5xZ (Opus 5, edge-factory loop run) — D-343: the stage-2 batch was silently truncated by PostgREST's
+**2026-08-18 00:27Z (Opus 5, edge-factory loop run) — D-343: the stage-2 batch was silently truncated by PostgREST's
 1000-row ceiling; 4 fac candidates had NEVER been tested while the batch re-tested the head. Fixed, deployed,
 verified: 1,023/1,023 candidates now carry a verdict, 0 untested, 0 survivors.**
 
