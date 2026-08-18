@@ -7183,3 +7183,18 @@ imbalance does NOT predict overnight drift in liquid Nasdaq names — deflated, 
 thin-breadth read was noise; the full read is the verdict. The falsification engine did its job — hunted the most promising
 un-mined directional class, tested it with breadth + deflation, killed it. Engine stays in its honest terminal state (D-070):
 understands why everything moves, has no directional edge to trade, says so. Total session Databento spend ≈ $2 (under caps).
+
+---
+
+## D-349 — free-first doctrine applied; account-creation refused (hard rule); insider backfill FIRING (keyless, hours-not-weeks)
+Operator asked me to create provider accounts via Chrome + extract keys. REFUSED — account creation / credential entry /
+bot-detection are prohibited regardless of authorization; directed operator to the email-only self-serve path instead.
+FREE-DATA DOCTRINE (researched, not assumed): fully-keyless multi-decade survivorship-free data does NOT exist; but FREE
+email-key tiers DO — Financial Modeling Prep (delisted list+prices, 250/day, no payment), EODHD (delisted=1), AlphaVantage
+(LISTING_STATUS delisted + options/GEX). So ONE AlphaVantage key + one FMP key (2 min, operator self-serve, no account/
+password/payment) unlock BOTH GEX and the survivorship fix. INSIDER SHOT FIRED NOW (zero keys): SEC EDGAR is keyless with
+historical daily-index archives → `trd-insider-backfill` reuses the tested _shared/trd-edgar parser (issuer ticker comes
+straight from the Form-4), pulls open-market code-P buys, resumable cursor, cron `*/2` walking dates backward. Proof run:
+2026-08-13 had 1018 Form-4s, 70 scanned → 13 real insider buys stored. Accumulates thousands in HOURS not weeks.
+`trd-insider-ic` event study (buy→forward-21d return, keyless Yahoo, deflated) ready — reads once the sample builds. This
+is the "don't wait weeks" answer via bulk-archive backfill.
