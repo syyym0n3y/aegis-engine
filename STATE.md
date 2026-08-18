@@ -1,63 +1,52 @@
 # STATE — Aegis (live state)
 
 ## Last updated
-**2026-08-17 21:40Z (Opus 5, edge-factory loop run) — the loop's own STEP-3 mandate is SUPERSEDED by the D-331
-pivot; the grammar-widening unit was reversed rather than shipped. Stage-1 queue is DRAINED to zero pending
-again. Two defects recorded in the new factor engine, one of them mine.**
+**2026-08-18 00:20Z (Opus 5, edge-factory loop run) — D-341: the "our t-stats are overstated" caveat, carried in prose
+by D-336/D-337/D-338 and enforced nowhere, is now a machine gate. The first thing it did was WITHDRAW one of our own
+published readings.**
 
-**The conflict, surfaced not silently resolved (ANALYSIS_CONTRACT rule 5).** The scheduled loop's STEP 3 says
-"widen the grammar with the next primitive from `trd_edge_ingest`". The backlog held 2 `new` rows (<3), so the
-rule fired a RESEARCH unit and I added 4 web-sourced primitives — `cci` (Lambert 1980: the only quantity
-normalised by an L1 mean-absolute-deviation), `tdsetup` (DeMark: the first comparison against a FIXED LAG i−4
-rather than the adjacent bar, counting to an EXHAUSTION), `hns` (the first ORDINAL RANKING of three pivots, and
-the first SLOPING reference level), `vcp` (Minervini: the first MONOTONE TREND in volatility across successive
-swings). All four are OHLC-expressible. **Then the live repo contradicted the task file**: commits `619ffe9`
-(D-331 THE PIVOT) and `caa6f18` (D-332), both newer than the loop's instructions, retire candle-grammar mining
-— "for every candidate signal, name the force that would make it work. No named force → it is a shadow → it
-does not enter the queue" (`docs/CAUSAL_FORCES.md`). All four additions are pure candle/indicator geometry, i.e.
-shadows by that directive. **I reversed my own write**: ingest ids 35–38 plus the two pre-existing `new` rows
-(19 `eqhl`, 34 `fibpull`) set to `status='superseded-D331'` — rows and research text preserved, verified by
-readback (`new` 6 → **0**, `superseded-D331` = **6**). No 35th trigger was built. The queue can no longer hand
-a future loop run a shadow to implement.
+**The unit.** Shipped `_shared/trd-effective-n.ts` + 12 tests (**288/288 `_shared` green, `deno check` clean**).
+`effectiveRankIC()` computes the rank-IC and `effN` — distinct (member, horizon-block) clusters, block width = the
+forward horizon — so overlapping forward windows and same-symbol repetition both collapse to one independent unit.
+`ic_t` is computed on `effN` and **fails closed to 0** below 10 clusters; `vif = n/effN` and `maxMemberShare` are
+returned so single-issuer domination is a number in the row rather than something a reader must notice. Controls each
+move ONE thing: same 24 pairs re-tagged to one member/one block → effN 1, tEff 0 while tNaive > 3 (the D-336 shape,
+refused); same observations with only the horizon changing 1d → 21d → effN and |tEff| fall, never rise; distinct members
+on non-overlapping days → effN = n, vif = 1, **tEff == tNaive (the gate is a no-op on an independent pool)**. Stated,
+not hidden: this is not HAC and does not model cross-symbol correlation, so effN is an UPPER bound on independence.
 
-**Stage-1 queue: ZERO pending, for the second time (the D-330 condition).** 1,468,800 rows — **1,072,247 done /
-396,553 thin / 0 pending**. `done` advanced **1,038,535 → 1,072,247** inside this run, so writes LAND. The
-`trd_edge_factory_par_1m` cron reports `succeeded (16 rows)` every minute while `max(run_at)` sits ~50 min old:
-that is EXHAUSTION, not the D-300b/D-302 silent-write class — with `pending = 0` there is nothing to claim.
-Stage-2 fired once: **2 computed, 2 persisted, 0 lost, 0 survivors**. Totals now **1,023 fac:\* candidates,
-1,019 stage-2 verdicts (973 killed / 46 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`**. Nothing has
-cleared the full gauntlet — D-070 working.
+**Live-verified on `trd-factor-form4-ic` by readback, not by `ok:true`.** Run `?nt=30&nf=18`: 11 events, 10 values
+written, **4 `trd_factor_ic` rows written and confirmed present in the table**; PIT holds (`effective_date >= ts` true
+across all 23 stored values, 8 symbols, 2024-02→2026-08). Measured, next to its N: **5d IC −0.6748, raw n=10 → effN 7,
+naive t −2.59, honest t 0 (UNDERPOWERED); 21d IC +0.6667, raw n=6 → effN 2, naive t 1.79, honest t 0.** The pool was
+**100% one issuer (BAC), maxMemberShare = 1.00** — worse than D-336's 15/24. **Verdict: NO CLAIM either direction, and
+D-336's negative 21d reading is WITHDRAWN as a naive-N artifact** — the sign even flipped positive on this pull, which
+is what a number with no independent observations behind it does. `trd_lineage.factor-form4-effn` = blocked.
+Two further fixes in the same function: the per-symbol grid is now WRITTEN beside the pool (Rule 8 — the cut is the
+evidence, the pool the footnote) with `n_trials` = the whole grid; and the IC writes' `.catch(() => {})` (the
+D-300b/D-302 silent-failure class) is replaced by captured `ic_rows_written` / `ic_write_err`. **Concurrency note:**
+this file was UNTRACKED at my session start (deployed, in no commit); a concurrent session committed it as `effa928`
+mid-run and also took the number D-340, so this unit is **D-341** — my edits sit on top of their commit, none of their
+work was reverted.
 
-**A CONCURRENT SESSION owns the factor-engine work; I did not commit its files.** The tree was clean at my start;
-mid-run `supabase/functions/trd-factor-form4-ic/index.ts` was rewritten (mtime 21:36:28Z) and `ANALYSIS_CONTRACT.md`
-became modified — another session is editing this same working tree live. **Disclosure: I deployed its
-then-current uncommitted file** (`supabase functions deploy trd-factor-form4-ic`, which also uploaded
-`_shared/trd-edgar.ts`) before I knew that, and ran it twice; the deployed build is the 21:33Z version and is
-almost certainly now BEHIND that session's latest edit — it must redeploy. I committed none of its files.
+**Owed work, named not skipped:** the gate should be applied retroactively to the D-337 VIX-TS and D-338 momentum ICs,
+whose t-stats were computed on raw panel counts. Not done in this unit.
 
-**Defect found in `trd-factor-form4-ic`, measured: a LIVE run wrote ZERO factor values and still returned
-`ok:true`.** `?nt=30&nf=18` over 30 tickers returned `events: 12, values_written: 0`, and
-`trd_factor_value where factor_id='form4_opportunistic'` = **0 rows** — while both `trd_factor_ic` rows DID
-persist. So IC evidence can be written with no underlying point-in-time values behind it. Two parts:
-(a) CERTAIN, from the source: the upsert result is swallowed — `if (res.ok) written += ...` with no error
-captured and no non-OK path, which is why a total write failure reported success;
-(b) MECHANISM CONFIRMED, application to this batch INFERRED not observed: `trd_factor_value`'s PK is
-`(factor_id, symbol, ts)` with `ts` = the earliest transaction date of each filing, and a single PostgREST
-`on_conflict` batch containing two rows with equal keys is rejected WHOLESALE — probed directly on this database:
-`sqlstate=21000, "ON CONFLICT DO UPDATE command cannot affect row a second time"`. 11 of the 12 events came from
-BAC alone, and separate insiders' Form-4s routinely share a transaction date, so duplicate keys within the one
-batch are the probable cause — not verified by observing the batch itself. The economically correct fix is also
-the statistical one: aggregate to one row per (symbol, transaction-date) with `effective_date` = the MAX filing
-date of the buys aggregated (never the min — the day's total is not knowable until the last filing lands), which
-removes the duplicate keys AND the pseudo-replication of pooling 11 overlapping BAC filings as independent
-observations. Left for the session that owns the file.
-
-**The form4 IC itself is UNDERPOWERED — not evidence either way.** Pooled rank-IC 5d = **−0.6606, t = −2.49,
-n = 10**; 21d = 0.0, n = 6. The pre-registered `hypothesized_sign` is **+1**, so the point estimate is the WRONG
-sign, at n=10 — below the function's own stated n≈25 underpowered floor, and the 21d window is mostly unavailable
-because the filings are recent. Reported next to its N, as required; it supports no conclusion about the factor.
+**Loop health, measured.** Stage-1 queue **1,468,800 total — 1,072,247 done / 0 pending / 396,553 thin**, `max(run_at)`
+55 min old with 0 rows in the trailing 10 min. That is the D-330 EXHAUSTION condition, not the silent-write class: with
+`pending = 0` the 1m cron has nothing to claim. **STEP-3 of the loop task (widen the candle grammar) remains DEAD under
+the D-331 pivot** — `trd_edge_ingest` holds **0 `new` rows** (6 marked `superseded-D331` by the prior run), and refilling
+it with candle geometry would re-add shadows the pivot retired, so this run did factor-engine work instead. Stage-2 fired
+once: **12 computed, 12 persisted, 0 lost, 0 survivors** — and the writes were verified as writes, not as an `ok:true`:
+`trd_stage2_results` total stayed **1,019** because the PK is `(edge)` and these were RE-TESTS, but exactly **12 rows
+carry a `run_at` inside the run window**, so the upserts landed. Totals: **1,023 fac:\* candidates, 1,019 stage-2
+verdicts (973 killed / 46 thin), 0 stage-2 survivors, 0 `trd_forward_candidates`.** Nothing has cleared the full
+gauntlet — D-070 working. **Noted, not resolved:** 1,023 candidates against 1,019 verdicts means 4 are still untested,
+yet this batch re-tested 12 already-verdicted rows — the stage-2 batch cursor appears to wrap rather than prefer the
+untested tail. Worth a look next run; not touched here.
 
 ## Prior
+
 **2026-08-17 (Opus 5) — D-331: grammar widened to 34 triggers — `adx`, the first quantity built from the TWO
 EXTREMES MEASURED SEPARATELY, under a winner-take-all exclusion.** Wilder's DMI: `upMove = high − prevHigh`,
 `downMove = prevLow − low`, and **only the larger counts** — the loser is forced to zero, not netted. Every other

@@ -10,7 +10,14 @@
 // NOTE on the opportunistic-vs-routine classifier: DEFERRED to a follow-up (recorded in detail). Classifying a buy as
 // opportunistic per Cohen-Malloy requires each insider's multi-year trade calendar (irregular timing) — too heavy for a
 // single edge-function invocation. This first cut measures ALL open-market buys; the classifier is the next iteration.
+//
+// D-341 — the IC is now reported through the EFFECTIVE-N gate (`_shared/trd-effective-n.ts`). D-336 concluded from a
+// pooled 21d IC of −0.515 at "N=18" whose pool was dominated by ONE issuer (BAC 15/24 events) with heavily overlapping
+// 21-day forward windows: that naive t=−2.40 was one name's buy-timing counted many times. `ic_t` written here is
+// computed on the number of INDEPENDENT (symbol, horizon-block) clusters, and the per-symbol grid is written alongside
+// the pool because ANALYSIS_CONTRACT Rule 8 forbids a verdict from an aggregate.
 import { parseForm4, isOpenMarketBuy } from "../_shared/trd-edgar.ts";
+import { dayIndex, effectiveRankIC, type ICObs } from "../_shared/trd-effective-n.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
@@ -28,18 +35,14 @@ const UNIVERSE = [
   "EQT","F","PFE","GM","T","VZ","GE","BA","INTC","CMCSA",                   // higher-insider-turnover large caps
 ];
 
-function rankIC(xs: number[], ys: number[]) {
-  // Floor at 10 (not 30): open-market insider BUYS are genuinely sparse events — one keyless SEC invocation pools ~25-30.
-  // The honest-stats discipline is "report the IC next to its N": a small N speaks through a small t-stat, which is more
-  // truthful than flooring the sign to zero. Anything below ~n=25 here is UNDERPOWERED and must be read as such.
-  const n = xs.length; if (n < 10) return { ic: 0, t: 0, n };
-  const rank = (a: number[]) => { const idx = a.map((v, i) => [v, i] as [number, number]).sort((p, q) => p[0] - q[0]); const r = new Array(n); for (let k = 0; k < n; k++) r[idx[k][1]] = k; return r; };
-  const rx = rank(xs), ry = rank(ys); const mx = (n - 1) / 2;
-  let sxy = 0, sxx = 0, syy = 0; for (let i = 0; i < n; i++) { const dx = rx[i] - mx, dy = ry[i] - mx; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
-  const ic = sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : 0;
-  const t = Math.abs(ic) < 1 ? ic * Math.sqrt((n - 2) / (1 - ic * ic)) : 0;
-  return { ic: +ic.toFixed(4), t: +t.toFixed(2), n };
-}
+const HORIZONS: [string, number][] = [["5d", 5], ["21d", 21]];
+// Independence floor for a WRITTEN significance claim. Kept at 10 for the same reason the old local rankIC used 10 —
+// open-market insider buys are genuinely sparse — but it now counts INDEPENDENT CLUSTERS, not raw filings, so it is a
+// far harder floor to clear than the number it replaces. Below it, effectiveRankIC returns tEff = 0 (fails closed).
+const MIN_EFF_N = 10;
+// A per-symbol cut needs at least this many observations before a row is written, so the disaggregated grid Rule 8
+// requires does not fill trd_factor_ic with one-observation cells.
+const MIN_MEMBER_OBS = 5;
 async function jget(u: string, headers: Record<string, string>) { try { const r = await fetch(u, { headers }); return r.ok ? await r.json() : null; } catch { return null; } }
 async function tget(u: string, headers: Record<string, string>) { try { const r = await fetch(u, { headers }); return r.ok ? await r.text() : null; } catch { return null; } }
 const beat = (o: string) => fetch(`${SB}/rest/v1/rpc/trd_beat`, { method: "POST", headers: H, body: JSON.stringify({ p_fn: "trd-factor-form4-ic", p_outcome: o.slice(0, 180) }) }).catch(() => {});
@@ -73,8 +76,9 @@ Deno.serve(async (req) => {
     const cik = new Map<string, string>();
     for (const v of Object.values(map)) if (syms.includes(v.ticker)) cik.set(v.ticker, String(v.cik_str).padStart(10, "0"));
 
-    // pooled (value, fwd) pairs per horizon + PIT value rows
-    const pool: Record<string, { x: number[]; y: number[] }> = { "5d": { x: [], y: [] }, "21d": { x: [], y: [] } };
+    // pooled observations per horizon (each tagged with its symbol + the day its forward window starts, so the
+    // effective-N gate can count independent clusters) + PIT value rows
+    const pool: Record<string, ICObs[]> = { "5d": [], "21d": [] };
     const valRows: Record<string, unknown>[] = []; const per: Record<string, unknown>[] = [];
     let leak = 0, events = 0;
     // Hard wall-clock budget: the edge runtime kills the request at 150s. Stop fetching new filings at 120s and compute
@@ -110,16 +114,27 @@ Deno.serve(async (req) => {
         events++; symEvents++;
         valRows.push({ factor_id: FACTOR, symbol: sym, ts: `${txnDate}T00:00:00Z`, effective_date: `${filingDate}T00:00:00Z`, value: +value.toFixed(4), raw: { notional: +notional.toFixed(2), shares, n_buys: buys.length, accession: acc, filing_date: filingDate, txn_date: txnDate, opportunistic_classified: false } });
         // pool value vs forward return measured FROM the disclosure date (what a strategy could actually trade)
-        for (const [hk, hd] of [["5d", 5], ["21d", 21]] as [string, number][]) {
+        for (const [hk, hd] of HORIZONS) {
           const fr = fwdRet(bars, filingDate, hd); if (fr === null) continue;
-          pool[hk].x.push(value); pool[hk].y.push(fr);
+          pool[hk].push({ member: sym, day: dayIndex(filingDate), x: value, y: fr });
         }
       }
       per.push({ sym, cik: c, events: symEvents });
     }
 
-    const ics: Record<string, { ic: number; t: number; n: number }> = {};
-    for (const hk of ["5d", "21d"]) ics[hk] = rankIC(pool[hk].x, pool[hk].y);
+    // Rule 8 (D-334): the DISAGGREGATED grid is the evidence; the pool is a footnote to it. Every cell is a trial.
+    const ics: Record<string, ReturnType<typeof effectiveRankIC>> = {};
+    const grid: Record<string, unknown>[] = [];   // one row per (horizon × symbol) cut, for trd_factor_ic + the response
+    for (const [hk, hd] of HORIZONS) {
+      ics[hk] = effectiveRankIC(pool[hk], hd, MIN_EFF_N);
+      const byMember = new Map<string, ICObs[]>();
+      for (const o of pool[hk]) { const a = byMember.get(o.member) ?? []; a.push(o); byMember.set(o.member, a); }
+      for (const [sym, obs] of byMember) {
+        if (obs.length < MIN_MEMBER_OBS) continue;
+        const r = effectiveRankIC(obs, hd, MIN_EFF_N);
+        grid.push({ symbol_set: `sym:${sym}`, horizon: hk, ...r });
+      }
+    }
 
     // Dedupe by PK (factor_id,symbol,ts): two distinct Form-4 filings can share the same earliest transaction date, which
     // would make ON CONFLICT try to update the same target row twice in one batch (pg 21000). Keep the max-conviction ($) row.
@@ -127,16 +142,26 @@ Deno.serve(async (req) => {
     for (const r of valRows) { const k = `${r.symbol}|${r.ts}`; const prev = dedup.get(k); if (!prev || (r.value as number) > (prev.value as number)) dedup.set(k, r); }
     const uniqRows = [...dedup.values()];
     let written = 0; let writeErr: string | null = null;
+    let icWritten = 0; let icErr: string | null = null;
     if (!dry) {
       for (let i = 0; i < uniqRows.length; i += 1000) { const res = await fetch(`${SB}/rest/v1/trd_factor_value?on_conflict=factor_id,symbol,ts`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(uniqRows.slice(i, i + 1000)) }); if (res.ok) written += uniqRows.slice(i, i + 1000).length; else if (!writeErr) writeErr = `${res.status}:${(await res.text()).slice(0, 200)}`; }
-      for (const hk of ["5d", "21d"]) {
-        const ic = ics[hk];
-        await fetch(`${SB}/rest/v1/trd_factor_ic`, { method: "POST", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ factor_id: FACTOR, symbol_set: `${SYMSET}${syms.length}`, horizon: hk, ic: ic.ic, ic_t: ic.t, n: ic.n, regime: null, n_trials: 1, detail: `pooled rank-IC of log10($ open-market insider buys) vs fwd ret from FILING DATE; hypo sign +1; ${events} events / ${syms.length} tickers; opportunistic-vs-routine classifier DEFERRED (measures all code-P buys)` }) }).catch(() => {});
-        await fetch(`${SB}/rest/v1/rpc/trd_bump_trials`, { method: "POST", headers: H, body: JSON.stringify({ n: 1 }) }).catch(() => {});
+      // `n` written is the EFFECTIVE cluster count, not the raw filing count, so the (ic, ic_t, n) triple in the row is
+      // internally consistent — a reader can recompute ic_t from ic and n. The raw count and the inflation factor live
+      // in `detail`, which is where D-336's "N=18" belonged. The write outcome is CAPTURED, not swallowed: a
+      // `.catch(() => {})` on an evidence write is the D-300b/D-302 silent-failure class that already cost this repo
+      // an "ok:true" run that wrote nothing.
+      const cells = [...HORIZONS.map(([hk]) => ({ symbol_set: `${SYMSET}${syms.length}`, horizon: hk, ...ics[hk] })), ...grid] as Record<string, number | string | boolean>[];
+      for (const r of cells) {
+        try {
+          const res = await fetch(`${SB}/rest/v1/trd_factor_ic`, { method: "POST", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ factor_id: FACTOR, symbol_set: r.symbol_set, horizon: r.horizon, ic: r.ic, ic_t: r.tEff, n: r.effN, regime: null, n_trials: cells.length, detail: `rank-IC of log10($ open-market insider buys) vs fwd ret from FILING DATE; hypo sign +1. n = effN (independent symbol × horizon-block clusters) of raw ${r.n} obs, VIF ${r.vif}x, top member ${r.maxMemberShare} of n; naive t would be ${r.tNaive} (D-341 effective-N gate). ${events} events / ${syms.length} tickers; opportunistic-vs-routine classifier DEFERRED (measures all code-P buys)` }) });
+          if (res.ok) icWritten++; else if (!icErr) icErr = `${res.status}:${(await res.text()).slice(0, 200)}`;
+        } catch (e) { if (!icErr) icErr = String(e).slice(0, 200); }
       }
+      // Every cut is a comparison (Rule 8.3) — the trial counter takes the WHOLE grid, not one bump per horizon.
+      await fetch(`${SB}/rest/v1/rpc/trd_bump_trials`, { method: "POST", headers: H, body: JSON.stringify({ n: cells.length }) }).catch(() => {});
       await fetch(`${SB}/rest/v1/trd_factor?id=eq.${FACTOR}`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: "measuring" }) }).catch(() => {});
     }
-    await beat(`ic5d=${ics["5d"].ic}(n${ics["5d"].n}) ic21d=${ics["21d"].ic}(n${ics["21d"].n}) events=${events} leak=${leak} dry=${dry}`);
-    return new Response(JSON.stringify({ ok: true, factor: FACTOR, hypothesized_sign: 1, symbol_set: `${SYMSET}${syms.length}`, caps: { tickers: NT, filings_per_ticker: NF }, budget_capped: capped, elapsed_s: +((Date.now() - t0) / 1000).toFixed(1), ic: ics, events, values_written: written, write_err: writeErr, leakage_skipped: leak, opportunistic_classifier: "deferred", per_symbol: per }, null, 2), { headers: cors });
+    await beat(`ic5d=${ics["5d"].ic}(effN${ics["5d"].effN}/n${ics["5d"].n} t${ics["5d"].tEff}) ic21d=${ics["21d"].ic}(effN${ics["21d"].effN}/n${ics["21d"].n} t${ics["21d"].tEff}) events=${events} leak=${leak} vals=${written} ics=${icWritten} dry=${dry}`);
+    return new Response(JSON.stringify({ ok: true, factor: FACTOR, hypothesized_sign: 1, symbol_set: `${SYMSET}${syms.length}`, caps: { tickers: NT, filings_per_ticker: NF }, budget_capped: capped, elapsed_s: +((Date.now() - t0) / 1000).toFixed(1), ic_pooled: ics, ic_grid: grid, events, values_written: written, write_err: writeErr, ic_rows_written: icWritten, ic_write_err: icErr, leakage_skipped: leak, opportunistic_classifier: "deferred", per_symbol: per }, null, 2), { headers: cors });
   } catch (e) { await beat(`err ${String(e).slice(0, 120)}`); return new Response(JSON.stringify({ ok: false, err: String(e).slice(0, 300) }), { status: 500, headers: cors }); }
 });

@@ -6950,3 +6950,54 @@ resolves the publish-vs-adviser line without hiding the honesty.
 momentum from fresh keyless Yahoo bars, re-derives lean/confidence/engage/residual using the cached deep era-grid, upserts
 trd_signal. Verified: 25 refreshed. Signals now stay live with NO local worker (the heavy 33-yr grid, which barely
 changes, is refreshed by the worker only occasionally). Everything on the dashboard is live independent of operator or me.
+
+---
+
+## D-341 — the effective-N gate: three decisions carried "our t-stats are overstated" in prose; it is now machine-enforced (2026-08-18)
+**The defect, quoted from our own ledger.** D-337: "our IC t-stats are OVERSTATED — overlapping forward windows +
+cross-correlated ETF panel inflate effective-N; trust sign coherence, not magnitudes (**apply to ALL IC henceforth**)".
+D-338 repeats it as a NOTE. D-336 states it concretely — the Form-4 pool's 21d IC of −0.515 "N=18" came from a pool where
+ONE issuer (BAC) supplied 15 of 24 events with heavily overlapping 21-day windows, so t=−2.40 was one name's buy-timing
+counted many times. **Carried three times, enforced zero times.** A caveat a human must remember is not a gate
+(global doctrine: every fix ships a machine guard that goes red on regression).
+
+**Shipped: `_shared/trd-effective-n.ts` (+ 12 tests, 288/288 `_shared` green, `deno check` clean).** `effectiveRankIC()`
+returns the rank-IC alongside `effN` — the count of DISTINCT (member, horizon-block) clusters, where the block width is
+the forward horizon. Two observations count as two independent units only if they are on different symbols OR are
+separated by at least one full horizon; inside a cluster everything collapses to one. That single device covers BOTH
+named inflation sources (overlapping windows; same-member repetition). `ic_t` is computed on `effN`, and **fails closed
+to 0** below 10 clusters. Also returned: `vif = n/effN` and `maxMemberShare` — the one-issuer concentration that made
+D-336 an artifact is now a NUMBER IN THE ROW, not something the reader has to notice.
+
+**Stated rather than hidden:** this is not a Newey–West/HAC estimator and it does not model correlation BETWEEN different
+symbols (two banks in the same week still count as two clusters). So `effN` is an UPPER bound on independence and `tEff`
+remains an upper bound on significance — conservative in the right direction, but not a full fix.
+
+**The controls pin the claim, each moving ONE thing.** Same 24 (x,y) pairs, re-tagged only: one member in one block →
+`effN` 1, `tEff` 0 while `tNaive` > 3 (the D-336 shape, refused). Same daily observations, only the horizon changes
+1d → 21d → `effN` falls and |tEff| falls, never rises. Distinct members on non-overlapping days → `effN` = n, `vif` = 1,
+`tEff` == `tNaive`, i.e. **the gate is a no-op on a genuinely independent pool** — it deflates inflation, it does not
+tax everything. Plus: order-invariance, ties averaged (not resolved by fetch order), a perfect fit returning a large
+FINITE t rather than 0 (understating is the wrong failure direction), and NaN-day rows given their own block instead of
+silently bucketing into day 0.
+
+**Wired into `trd-factor-form4-ic` and LIVE-VERIFIED (rows read back, not merely "ok:true").** Live run
+`?nt=30&nf=18`: 11 events, 10 values written, **4 `trd_factor_ic` rows written and confirmed present by readback**,
+PIT check holds (`effective_date >= ts` true on all 23 stored values, 8 symbols, 2024-02→2026-08). Measured, reported
+next to its N: **5d IC −0.6748, raw n=10 → effN 7, naive t −2.59, honest t 0 (UNDERPOWERED); 21d IC +0.6667, raw n=6 →
+effN 2, naive t 1.79, honest t 0.** This run's pool was **100% ONE issuer (BAC), `maxMemberShare` = 1.00** — worse
+concentration than D-336's 15/24. **Verdict: NO CLAIM in either direction, and D-336's negative 21d reading is WITHDRAWN
+as a naive-N artifact** (note the sign even flipped positive on this pull — exactly what a number with no independent
+observations behind it does). `trd_lineage.factor-form4-effn` = blocked.
+
+**Two further fixes in the same function.** (a) Rule 8 (D-334) compliance: the per-symbol grid is now WRITTEN to
+`trd_factor_ic` (`symbol_set='sym:BAC'`) beside the pool, so the disaggregated cut is the evidence and the pool is the
+footnote; `n_trials` takes the whole grid, since every cut is a comparison. (b) The IC writes were `.catch(() => {})` —
+the same silent-failure class (D-300b/D-302) that already produced an `ok:true` run writing zero values. Outcomes are
+now captured and surfaced as `ic_rows_written` / `ic_write_err`.
+
+**What this does NOT fix.** The breadth wall of D-336/D-339 is untouched and is now measured rather than argued: keyless
+SEC yields one dominant issuer per invocation, so the honest cluster count is ~2–7 where ≥10 is needed. The factor stays
+`blocked` until a persistent ingest cursor accumulates events across many issuers over time. The gate should be applied
+retroactively to the D-337 VIX-TS and D-338 momentum ICs, whose t-stats were computed on raw panel counts — NOT done in
+this unit, and named as owed work rather than quietly skipped.
