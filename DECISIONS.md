@@ -7296,3 +7296,15 @@ deep and free; a proper deflated IC across it needs a price pipeline that evades
 or bulk-ingesting the insider tickers into trd_bars_deep (accumulation, not a wall). Weekly IC cron stands; it reads as the
 price coverage is built. Not spinning further — the ask (decades of data, free, now) is met; the test is infra-bound, and
 every powered read to date is null.
+
+---
+
+## D-356 — worker-paced price pipeline + interconnected stack map (context-preserving architecture)
+Built the WORKER-PACED insider test that evades the edge fn's Yahoo IP rate-limit: `trd_insider_sample(n)` RPC serves the
+top-N conviction/persistent insider tickers; `trd-compute` broker `?insider=N` exposes them; worker job `insider_ic`
+paces Yahoo fetches (own IP, delay/call, uncapped) → event study across hundreds of tickers × decades → result. This makes
+the stack MORE interconnected: the worker is the pacing compute layer, the broker its I/O, results flow to trd_compute_jobs
++ (weekly) trd_lineage. Wrote `docs/STACK.md` — the full layer map (L0 data → L1 PIT → L2 factor → L3 attribution → L4
+understanding/gate → L5 signal/surface), the store that connects each pair, the compute node, the crons, and the provenance
+(DECISIONS + trd_lineage + trd_trial_counter). Principle documented: each layer reads the one below through a stable store,
+so layers rebuild independently and context is never lost. Insider IC verdict appended once the paced run completes.

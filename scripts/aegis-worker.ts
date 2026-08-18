@@ -38,6 +38,33 @@ async function getIntraday(sym: string): Promise<number[][] | null> {
 function iret(bars: number[][]): Map<number, number> {
   const m = new Map<number, number>(); for (let i = 1; i < bars.length; i++) { const p0 = bars[i - 1][4], p1 = bars[i][4]; if (p0 > 0 && Number.isFinite(p1)) m.set(bars[i][0], p1 / p0 - 1); } return m;
 }
+// JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
+// a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
+// after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
+async function runInsiderIC(params: { limit?: number; horizon?: number; pace_ms?: number }) {
+  const HZ = params.horizon ?? 21, PACE = params.pace_ms ?? 400;
+  const sr = await fetch(`${BROKER}?insider=${params.limit ?? 300}`).then((r) => r.json()).catch(() => null);
+  const sample = (sr?.sample ?? []) as { ticker: string; dates: string[] }[];
+  const fwd: number[] = []; let nT = 0, posT = 0, covered = 0;
+  const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
+  for (const { ticker, dates } of sample) {
+    await new Promise((r) => setTimeout(r, PACE)); // pace to respect Yahoo (uncapped worker can afford it)
+    const p2 = Math.floor(Date.now() / 1000);
+    const j = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&period1=0&period2=${p2}`, { headers: { "User-Agent": "Mozilla/5.0" } }).then((r) => r.json()).catch(() => null);
+    const res = j?.chart?.result?.[0]; if (!res?.timestamp) continue; covered++;
+    const c = res.indicators.quote[0].close as number[]; const ds: string[] = res.timestamp.map((t: number) => new Date(t * 1000).toISOString().slice(0, 10));
+    const idx = new Map<string, number>(); ds.forEach((d, i) => idx.set(d, i));
+    const tf: number[] = [];
+    for (const d of dates) { let i = idx.get(d); if (i == null) { const k = ds.findIndex((x) => x >= d); if (k < 0) continue; i = k; } if (i + HZ >= c.length || c[i] == null || c[i + HZ] == null) continue; tf.push(c[i + HZ] / c[i] - 1); }
+    if (tf.length) { nT++; if (mean(tf) > 0) posT++; fwd.push(...tf); }
+  }
+  const n = fwd.length, m = n ? mean(fwd) : 0;
+  const sd = n > 1 ? Math.sqrt(fwd.reduce((s, x) => s + (x - m) ** 2, 0) / (n - 1)) : 0;
+  const t = n > 1 && sd > 0 ? m / (sd / Math.sqrt(n)) : 0;
+  const win = n ? 100 * fwd.filter((x) => x > 0).length / n : 0;
+  return { result: { factor: "insider_buys", n_events: n, n_tickers: nT, sample_size: sample.length, coverage: covered, mean_fwd_ret_pct: +(100 * m).toFixed(3), t_stat: +t.toFixed(2), win_pct: +win.toFixed(0), breadth: `${posT}/${nT}`, horizon_days: HZ } };
+}
+
 // JOB: intraday_attribution — take attribution BELOW daily. Regress a stock's MINUTE returns onto market (SPY) + its own
 // sector at 1-min/5-min/60-min (non-overlapping) → the R2 ladder from the minute up. Needs Databento intraday (trd_bars_intraday).
 async function runIntradayAttribution(params: { targets: string[] }) {
@@ -227,6 +254,7 @@ async function runOne(): Promise<boolean> {
     if (job.job_type === "deep_factor_ic") out = await runDeepFactorIC(job.params);
     else if (job.job_type === "attribution") out = await runAttribution(job.params);
     else if (job.job_type === "intraday_attribution") out = await runIntradayAttribution(job.params);
+    else if (job.job_type === "insider_ic") out = await runInsiderIC(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));

@@ -21,6 +21,11 @@ Deno.serve(async (req) => {
       const b = await fetch(`${SB}/rest/v1/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=symbol,asset_class,bars`, { headers: H }).then((r) => r.json()).catch(() => []);
       return new Response(JSON.stringify({ ok: true, row: Array.isArray(b) && b.length ? b[0] : null }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("insider")) {
+      const n = Number(url.searchParams.get("insider")) || 300;
+      const s = await fetch(`${SB}/rest/v1/rpc/trd_insider_sample`, { method: "POST", headers: H, body: JSON.stringify({ p_limit: n }) }).then((r) => r.json()).catch(() => []);
+      return new Response(JSON.stringify({ ok: true, sample: Array.isArray(s) ? s : [] }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("intraday")) {
       const sym = url.searchParams.get("intraday")!, tf = url.searchParams.get("tf") || "1m";
       const b = await fetch(`${SB}/rest/v1/trd_bars_intraday?symbol=eq.${encodeURIComponent(sym)}&tf=eq.${tf}&select=symbol,bars`, { headers: H }).then((r) => r.json()).catch(() => []);
