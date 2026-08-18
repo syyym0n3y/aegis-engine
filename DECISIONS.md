@@ -7001,3 +7001,17 @@ SEC yields one dominant issuer per invocation, so the honest cluster count is ~2
 `blocked` until a persistent ingest cursor accumulates events across many issuers over time. The gate should be applied
 retroactively to the D-337 VIX-TS and D-338 momentum ICs, whose t-stats were computed on raw panel counts — NOT done in
 this unit, and named as owed work rather than quietly skipped.
+
+---
+
+## D-341 — multi-factor ATTRIBUTION engine (layer 1) built as a worker job — the "why" per instrument
+The causal-attribution engine (north-star layer 1): each instrument's daily return decomposed via multi-factor OLS onto
+5 keyless deep-history forces — MKT (^GSPC), RATES (Δ^TNX), VOL (^VIX), OIL (CL=F), GOLD (GC=F) — over ~40yr + per-era,
+yielding explained R², honest residual (1−R²), and the per-force loadings (the "why"). Built as worker job type
+`attribution` (`scripts/aegis-worker.ts`: OLS via normal-equations + matrix inverse, per-era refit); broker upserts
+`trd_attribution` (migration 0047); `aegis-signals` joins it (per-signal r2 + residual + top drivers + mean_r2); live on
+the cockpit Causal-engine view (R² + top driver columns). VERIFIED: 34 instruments, 13.2s uncapped, **mean R² 0.447
+(range 0.256–0.810)**, and the loadings are economically CORRECT not fitted — XLF/JPM load +RATES −GOLD (banks),
+XLE/XOM/CVX load +OIL (energy), XLK pure MKT β1.18 (tech), AAPL/AMGN low-R² idiosyncratic. Writer separation:
+attribution owns residual/R²/betas, momentum owns lean/confidence/engage — neither clobbers the other. This is the
+engine that KNOWS why each instrument moves, with its ignorance (the residual) measured not hidden.

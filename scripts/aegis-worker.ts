@@ -67,15 +67,68 @@ async function runDeepFactorIC(params: { symbols: string[]; lookback?: number; s
   return { result: { factor: "mom_12_1", era_grid: grid, mean_ic: +meanIC.toFixed(4), era_consistency: eraConsistency, n_symbols: Object.keys(latest).length }, signals };
 }
 
+// ---- multi-factor ATTRIBUTION (layer 1): decompose each instrument's return onto all causal forces via OLS ----
+const FACTORS: [string, string, "ret" | "diff"][] = [
+  ["MKT", "^GSPC", "ret"], ["RATES", "^TNX", "diff"], ["VOL", "^VIX", "ret"], ["OIL", "CL=F", "ret"], ["GOLD", "GC=F", "ret"],
+];
+const dayKey = (ts: number) => Math.floor(ts / 86400);
+function retMap(bars: number[][], mode: "ret" | "diff"): Map<number, number> {
+  const m = new Map<number, number>(); for (let i = 1; i < bars.length; i++) { const p0 = bars[i - 1][4], p1 = bars[i][4]; if (!(p0 > 0) || !Number.isFinite(p1)) continue; m.set(dayKey(bars[i][0]), mode === "ret" ? p1 / p0 - 1 : p1 - p0); } return m;
+}
+function matInv(A: number[][]): number[][] | null {
+  const n = A.length, M = A.map((r, i) => [...r, ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))]);
+  for (let c = 0; c < n; c++) {
+    let piv = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+    if (Math.abs(M[piv][c]) < 1e-12) return null; [M[c], M[piv]] = [M[piv], M[c]];
+    const d = M[c][c]; for (let j = 0; j < 2 * n; j++) M[c][j] /= d;
+    for (let r = 0; r < n; r++) if (r !== c) { const f = M[r][c]; for (let j = 0; j < 2 * n; j++) M[r][j] -= f * M[c][j]; }
+  }
+  return M.map((r) => r.slice(n));
+}
+function ols(Y: number[], X: number[][]) { // X rows already include leading 1 (intercept)
+  const n = Y.length, p = X[0].length; if (n < p + 10) return null;
+  const XtX = Array.from({ length: p }, () => new Array(p).fill(0)), Xty = new Array(p).fill(0);
+  for (let i = 0; i < n; i++) { for (let a = 0; a < p; a++) { Xty[a] += X[i][a] * Y[i]; for (let b = 0; b < p; b++) XtX[a][b] += X[i][a] * X[i][b]; } }
+  const inv = matInv(XtX); if (!inv) return null;
+  const beta = inv.map((row) => row.reduce((s, v, j) => s + v * Xty[j], 0));
+  const ybar = Y.reduce((s, v) => s + v, 0) / n; let ssres = 0, sstot = 0;
+  for (let i = 0; i < n; i++) { const yh = X[i].reduce((s, v, j) => s + v * beta[j], 0); ssres += (Y[i] - yh) ** 2; sstot += (Y[i] - ybar) ** 2; }
+  const r2 = sstot > 0 ? 1 - ssres / sstot : 0, sigma2 = ssres / (n - p);
+  const t = beta.map((b, j) => { const v = sigma2 * inv[j][j]; return v > 0 ? +(b / Math.sqrt(v)).toFixed(2) : 0; });
+  return { beta, t, r2: +r2.toFixed(4), n };
+}
+async function runAttribution(params: { targets: string[] }) {
+  const fret = new Map<string, Map<number, number>>();
+  for (const [key, sym, mode] of FACTORS) { const b = await getBars(sym); if (b) fret.set(key, retMap(b, mode)); }
+  const attribution: Record<string, unknown>[] = [], signals: Record<string, unknown>[] = [];
+  const asof = new Date().toISOString().slice(0, 10);
+  for (const sym of params.targets) {
+    const b = await getBars(sym); if (!b || b.length < 300) continue; const tr = retMap(b, "ret");
+    const days: number[] = [], Y: number[] = [], X: number[][] = [], yrs: number[] = [];
+    for (const [d, r] of tr) { const row = [1]; let ok = true; for (const [key] of FACTORS) { const fv = fret.get(key)?.get(d); if (fv == null) { ok = false; break; } row.push(fv); } if (ok) { days.push(d); Y.push(r); X.push(row); yrs.push(new Date(d * 86400 * 1000).getUTCFullYear()); } }
+    const fit = ols(Y, X); if (!fit) continue;
+    const betas: Record<string, unknown> = {}; FACTORS.forEach(([key], i) => betas[key] = { beta: +fit.beta[i + 1].toFixed(3), t: fit.t[i + 1] });
+    const perEra: Record<string, unknown> = {};
+    for (const [e, a, bb] of ERAS) { const idx = yrs.map((y, i) => (y >= a && y < bb ? i : -1)).filter((i) => i >= 0); if (idx.length < 80) continue; const ef = ols(idx.map((i) => Y[i]), idx.map((i) => X[i])); if (ef) perEra[e] = { r2: ef.r2, n: ef.n }; }
+    // attribution OWNS residual (1-R2) + the driver map; the momentum layer owns lean/confidence/engage. aegis-signals
+    // joins the two — clean writer separation so neither clobbers the other.
+    attribution.push({ symbol: sym, asof, r2: fit.r2, residual: +(1 - fit.r2).toFixed(4), n: fit.n, betas, per_era: perEra });
+  }
+  void signals;
+  const meanR2 = attribution.length ? +(attribution.reduce((s, a) => s + (a.r2 as number), 0) / attribution.length).toFixed(4) : 0;
+  return { result: { factor: "multi_factor_attribution", factors: FACTORS.map((f) => f[0]), n_instruments: attribution.length, mean_r2: meanR2 }, attribution };
+}
+
 async function runOne(): Promise<boolean> {
   const cl = await fetch(`${BROKER}?claim=1&worker=${encodeURIComponent(WORKER)}`).then((r) => r.json()).catch(() => null);
   const job = cl?.job; if (!job) return false;
   console.log(`[${WORKER}] claimed job ${job.id} (${job.job_type})`);
   try {
-    let out: { result: unknown; signals?: Record<string, unknown>[] };
+    let out: { result: unknown; signals?: Record<string, unknown>[]; attribution?: Record<string, unknown>[] };
     if (job.job_type === "deep_factor_ic") out = await runDeepFactorIC(job.params);
+    else if (job.job_type === "attribution") out = await runAttribution(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
-    await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals }) });
+    await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
   } catch (e) {
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "error", error: String(e).slice(0, 300) }) });

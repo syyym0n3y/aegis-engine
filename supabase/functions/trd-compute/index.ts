@@ -23,11 +23,15 @@ Deno.serve(async (req) => {
     }
     if (req.method === "POST") {
       const body = await req.json().catch(() => ({}));
-      const { job_id, status, result, error, signals } = body as { job_id: number; status?: string; result?: unknown; error?: string; signals?: Record<string, unknown>[] };
+      const { job_id, status, result, error, signals, attribution } = body as { job_id: number; status?: string; result?: unknown; error?: string; signals?: Record<string, unknown>[]; attribution?: Record<string, unknown>[] };
       if (job_id) await fetch(`${SB}/rest/v1/trd_compute_jobs?id=eq.${job_id}`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: status || "done", result: result ?? null, error: error ?? null, done_at: new Date().toISOString() }) }).catch(() => {});
       if (Array.isArray(signals) && signals.length) {
         const rows = signals.map((s) => ({ ...s, updated_at: new Date().toISOString() }));
         await fetch(`${SB}/rest/v1/trd_signal?on_conflict=symbol`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) }).catch(() => {});
+      }
+      if (Array.isArray(attribution) && attribution.length) {
+        const rows = attribution.map((a) => ({ ...a, updated_at: new Date().toISOString() }));
+        await fetch(`${SB}/rest/v1/trd_attribution?on_conflict=symbol`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) }).catch(() => {});
       }
       await fetch(`${SB}/rest/v1/rpc/trd_beat`, { method: "POST", headers: H, body: JSON.stringify({ p_fn: "trd-compute", p_outcome: `job ${job_id} ${status || "done"}; ${signals?.length || 0} signals` }) }).catch(() => {});
       return new Response(JSON.stringify({ ok: true }), { headers: cors });

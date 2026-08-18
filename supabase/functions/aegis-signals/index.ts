@@ -13,16 +13,24 @@ Deno.serve(async (req) => {
     const opTok = new URL(req.url).searchParams.get("op");
     const isOperator = !!opTok && opTok === Deno.env.get("OPERATOR_TOKEN");
     const sig = await fetch(`${SB}/rest/v1/trd_signal?select=symbol,asof,lean,confidence,engage,residual,why,note&order=confidence.desc,lean.desc`, { headers: H }).then((r) => r.json()).catch(() => []);
-    const raw = Array.isArray(sig) ? sig : [];
-    const rows = isOperator ? raw : raw.map((s: Record<string, unknown>) =>
-      s.engage ? { symbol: s.symbol, asof: s.asof, confidence: s.confidence, residual: s.residual, engage: true, redacted: true, lean: null, why: null, note: "operator-only" } : s);
+    // attribution (layer 1): R2 + honest residual + per-force driver map, joined per instrument
+    const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,residual,betas`, { headers: H }).then((r) => r.json()).catch(() => []);
+    const aMap = new Map<string, { r2: number; residual: number; betas: Record<string, { beta: number; t: number }> }>();
+    for (const a of (Array.isArray(attr) ? attr : []) as { symbol: string; r2: number; residual: number; betas: Record<string, { beta: number; t: number }> }[]) aMap.set(a.symbol, a);
+    const raw: Record<string, unknown>[] = (Array.isArray(sig) ? sig : []).map((s: Record<string, unknown>) => {
+      const a = aMap.get(s.symbol as string); if (!a) return s;
+      const drivers = Object.entries(a.betas || {}).map(([f, v]) => ({ f, beta: v.beta, t: v.t })).sort((p, q) => Math.abs(q.t) - Math.abs(p.t)).slice(0, 3);
+      return { ...s, residual: a.residual, r2: a.r2, drivers };
+    });
+    const rows: Record<string, unknown>[] = isOperator ? raw : raw.map((s) =>
+      s.engage ? { symbol: s.symbol, asof: s.asof, confidence: s.confidence, residual: s.residual, r2: s.r2, drivers: s.drivers, engage: true, redacted: true, lean: null, why: null, note: "operator-only" } : s);
     const job = await fetch(`${SB}/rest/v1/trd_compute_jobs?job_type=eq.deep_factor_ic&status=eq.done&select=result,done_at&order=done_at.desc&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
     const grid = Array.isArray(job) && job.length ? job[0].result : null;
-    const engaged = rows.filter((r: { engage: boolean }) => r.engage).length;
-    const avg = (k: string) => rows.length ? +(rows.reduce((s: number, r: Record<string, number>) => s + (r[k] || 0), 0) / rows.length).toFixed(3) : 0;
+    const engaged = rows.filter((r) => r.engage).length;
+    const avg = (k: string) => rows.length ? +(rows.reduce((s: number, r) => s + (Number(r[k]) || 0), 0) / rows.length).toFixed(3) : 0;
     return new Response(JSON.stringify({
       ok: true, generated_at: new Date().toISOString(), mode: isOperator ? "operator" : "public",
-      summary: { n: rows.length, engaged, avg_confidence: avg("confidence"), avg_residual: avg("residual") },
+      summary: { n: rows.length, engaged, avg_confidence: avg("confidence"), avg_residual: avg("residual"), mean_r2: aMap.size ? +([...aMap.values()].reduce((s, a) => s + a.r2, 0) / aMap.size).toFixed(3) : null },
       era_grid: grid?.era_grid ?? null, factor: grid?.factor ?? null, mean_ic: grid?.mean_ic ?? null,
       signals: rows,
     }), { headers: cors });
