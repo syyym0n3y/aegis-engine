@@ -7283,3 +7283,16 @@ SEC DERA dates are "DD-MON-YYYY" — my slice(0,10) mangled them to garbage year
 Backfilling 2010→2026 (68 quarters, ~17yr, ~150k+ buys). IC bounded to persistent Yahoo-covered names across the decades
 (micro-caps where insider buys cluster aren't Yahoo-covered — the price-coverage limit, honest). Lesson: bulk historical
 sources beat forward-accumulation — the decades were one zip-per-quarter away.
+
+---
+
+## D-355b — decades of insider DATA delivered free; the IC TEST is price-infrastructure-bound (honest)
+Bulk backfill complete: **240,825 insider open-market buys, 11,010 std tickers, 7,122 persistent multi-year, 2010→2026**
+— free/keyless via SEC bulk, exactly the "decades to test against" asked for. DELIVERED. But testing it hits a real
+free-data wall on the PRICE side, not the data side: insider buys cluster in small-caps/delisted; Yahoo IP-rate-limits the
+edge fn to ~5 tickers/run (unpowered t=0.44 read), FMP free tier gates historical prices, EODHD/AV are day-throttled. The
+signal on every POWERED read (the 119-event recent sample, D-353) was NULL. Honest terminal: the insider DATA is decades-
+deep and free; a proper deflated IC across it needs a price pipeline that evades Yahoo's IP limit — worker-paced fetching
+or bulk-ingesting the insider tickers into trd_bars_deep (accumulation, not a wall). Weekly IC cron stands; it reads as the
+price coverage is built. Not spinning further — the ask (decades of data, free, now) is met; the test is infra-bound, and
+every powered read to date is null.
