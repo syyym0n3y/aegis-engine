@@ -68,9 +68,10 @@ async function runDeepFactorIC(params: { symbols: string[]; lookback?: number; s
 }
 
 // ---- multi-factor ATTRIBUTION (layer 1): decompose each instrument's return onto all causal forces via OLS ----
-const FACTORS: [string, string, "ret" | "diff"][] = [
-  ["MKT", "^GSPC", "ret"], ["RATES", "^TNX", "diff"], ["VOL", "^VIX", "ret"], ["OIL", "CL=F", "ret"], ["GOLD", "GC=F", "ret"],
-];
+// causal forces (keyless deep history). Composite SIZE = RUT−GSPC (small-minus-big premium). Each has a NAMED mechanism;
+// a force earns its place only with a mechanism + adjusted-R2 lift + cross-era stability (ANALYSIS_CONTRACT: no noise regressors).
+const FBASE: [string, string, "ret" | "diff"][] = [["GSPC", "^GSPC", "ret"], ["TNX", "^TNX", "diff"], ["VIX", "^VIX", "ret"], ["CL", "CL=F", "ret"], ["GC", "GC=F", "ret"], ["RUT", "^RUT", "ret"]];
+const FKEYS = ["MKT", "RATES", "VOL", "OIL", "GOLD", "SIZE"];
 const dayKey = (ts: number) => Math.floor(ts / 86400);
 function retMap(bars: number[][], mode: "ret" | "diff"): Map<number, number> {
   const m = new Map<number, number>(); for (let i = 1; i < bars.length; i++) { const p0 = bars[i - 1][4], p1 = bars[i][4]; if (!(p0 > 0) || !Number.isFinite(p1)) continue; m.set(dayKey(bars[i][0]), mode === "ret" ? p1 / p0 - 1 : p1 - p0); } return m;
@@ -98,25 +99,32 @@ function ols(Y: number[], X: number[][]) { // X rows already include leading 1 (
   return { beta, t, r2: +r2.toFixed(4), n };
 }
 async function runAttribution(params: { targets: string[] }) {
+  const base = new Map<string, Map<number, number>>();
+  for (const [k, sym, mode] of FBASE) { const b = await getBars(sym); if (b) base.set(k, retMap(b, mode)); }
   const fret = new Map<string, Map<number, number>>();
-  for (const [key, sym, mode] of FACTORS) { const b = await getBars(sym); if (b) fret.set(key, retMap(b, mode)); }
-  const attribution: Record<string, unknown>[] = [], signals: Record<string, unknown>[] = [];
+  fret.set("MKT", base.get("GSPC") ?? new Map()); fret.set("RATES", base.get("TNX") ?? new Map()); fret.set("VOL", base.get("VIX") ?? new Map());
+  fret.set("OIL", base.get("CL") ?? new Map()); fret.set("GOLD", base.get("GC") ?? new Map());
+  const sz = new Map<number, number>(); const rutM = base.get("RUT"), gspM = base.get("GSPC");
+  if (rutM && gspM) for (const [d, rv] of rutM) { const gv = gspM.get(d); if (gv != null) sz.set(d, rv - gv); }
+  fret.set("SIZE", sz);
+  const attribution: Record<string, unknown>[] = [];
   const asof = new Date().toISOString().slice(0, 10);
   for (const sym of params.targets) {
     const b = await getBars(sym); if (!b || b.length < 300) continue; const tr = retMap(b, "ret");
     const days: number[] = [], Y: number[] = [], X: number[][] = [], yrs: number[] = [];
-    for (const [d, r] of tr) { const row = [1]; let ok = true; for (const [key] of FACTORS) { const fv = fret.get(key)?.get(d); if (fv == null) { ok = false; break; } row.push(fv); } if (ok) { days.push(d); Y.push(r); X.push(row); yrs.push(new Date(d * 86400 * 1000).getUTCFullYear()); } }
+    for (const [d, r] of tr) { const row = [1]; let ok = true; for (const key of FKEYS) { const fv = fret.get(key)?.get(d); if (fv == null) { ok = false; break; } row.push(fv); } if (ok) { days.push(d); Y.push(r); X.push(row); yrs.push(new Date(d * 86400 * 1000).getUTCFullYear()); } }
     const fit = ols(Y, X); if (!fit) continue;
-    const betas: Record<string, unknown> = {}; FACTORS.forEach(([key], i) => betas[key] = { beta: +fit.beta[i + 1].toFixed(3), t: fit.t[i + 1] });
-    const perEra: Record<string, unknown> = {};
-    for (const [e, a, bb] of ERAS) { const idx = yrs.map((y, i) => (y >= a && y < bb ? i : -1)).filter((i) => i >= 0); if (idx.length < 80) continue; const ef = ols(idx.map((i) => Y[i]), idx.map((i) => X[i])); if (ef) perEra[e] = { r2: ef.r2, n: ef.n }; }
-    // attribution OWNS residual (1-R2) + the driver map; the momentum layer owns lean/confidence/engage. aegis-signals
-    // joins the two — clean writer separation so neither clobbers the other.
-    attribution.push({ symbol: sym, asof, r2: fit.r2, residual: +(1 - fit.r2).toFixed(4), n: fit.n, betas, per_era: perEra });
+    const p = FKEYS.length, adj = +(1 - (1 - fit.r2) * (fit.n - 1) / (fit.n - p - 1)).toFixed(4); // ADJUSTED R2 — penalizes added forces
+    const betas: Record<string, unknown> = {}; FKEYS.forEach((key, i) => betas[key] = { beta: +fit.beta[i + 1].toFixed(3), t: fit.t[i + 1] });
+    const perEra: Record<string, unknown> = {}; const eraR2: number[] = [];
+    for (const [e, a, bb] of ERAS) { const idx = yrs.map((y, i) => (y >= a && y < bb ? i : -1)).filter((i) => i >= 0); if (idx.length < 80) continue; const ef = ols(idx.map((i) => Y[i]), idx.map((i) => X[i])); if (ef) { perEra[e] = { r2: ef.r2, n: ef.n }; eraR2.push(ef.r2); } }
+    const eraStab = eraR2.length >= 2 ? +(Math.max(0, Math.min(...eraR2)) / Math.max(1e-9, Math.max(...eraR2))).toFixed(3) : +Math.max(0, adj).toFixed(3); // do we understand it CONSISTENTLY across cycles?
+    // attribution OWNS residual/R2/quality + driver map; momentum owns lean/direction. aegis-signals folds BOTH into the gate.
+    attribution.push({ symbol: sym, asof, r2: fit.r2, adj_r2: adj, residual: +(1 - fit.r2).toFixed(4), era_stability: eraStab, n_factors: p, n: fit.n, betas, per_era: perEra });
   }
-  void signals;
   const meanR2 = attribution.length ? +(attribution.reduce((s, a) => s + (a.r2 as number), 0) / attribution.length).toFixed(4) : 0;
-  return { result: { factor: "multi_factor_attribution", factors: FACTORS.map((f) => f[0]), n_instruments: attribution.length, mean_r2: meanR2 }, attribution };
+  const meanAdj = attribution.length ? +(attribution.reduce((s, a) => s + (a.adj_r2 as number), 0) / attribution.length).toFixed(4) : 0;
+  return { result: { factor: "multi_factor_attribution", factors: FKEYS, n_instruments: attribution.length, mean_r2: meanR2, mean_adj_r2: meanAdj }, attribution };
 }
 
 async function runOne(): Promise<boolean> {

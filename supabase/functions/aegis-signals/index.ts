@@ -13,14 +13,24 @@ Deno.serve(async (req) => {
     const opTok = new URL(req.url).searchParams.get("op");
     const isOperator = !!opTok && opTok === Deno.env.get("OPERATOR_TOKEN");
     const sig = await fetch(`${SB}/rest/v1/trd_signal?select=symbol,asof,lean,confidence,engage,residual,why,note&order=confidence.desc,lean.desc`, { headers: H }).then((r) => r.json()).catch(() => []);
-    // attribution (layer 1): R2 + honest residual + per-force driver map, joined per instrument
-    const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,residual,betas`, { headers: H }).then((r) => r.json()).catch(() => []);
-    const aMap = new Map<string, { r2: number; residual: number; betas: Record<string, { beta: number; t: number }> }>();
-    for (const a of (Array.isArray(attr) ? attr : []) as { symbol: string; r2: number; residual: number; betas: Record<string, { beta: number; t: number }> }[]) aMap.set(a.symbol, a);
+    // attribution (layer 1): R2 + adj-R2 + era-stability + driver map. THE FOLDED GATE: engage requires BOTH a directional
+    // edge (momentum, cycle-stable) AND genuine understanding = adjusted-R2 × era-stability >= threshold. We never trade an
+    // instrument we don't understand, and never trade understanding alone without a directional edge.
+    const U_THRESH = 0.30;
+    type A = { symbol: string; r2: number; adj_r2: number; residual: number; era_stability: number; betas: Record<string, { beta: number; t: number }> };
+    const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,adj_r2,residual,era_stability,betas`, { headers: H }).then((r) => r.json()).catch(() => []);
+    const aMap = new Map<string, A>();
+    for (const a of (Array.isArray(attr) ? attr : []) as A[]) aMap.set(a.symbol, a);
     const raw: Record<string, unknown>[] = (Array.isArray(sig) ? sig : []).map((s: Record<string, unknown>) => {
-      const a = aMap.get(s.symbol as string); if (!a) return s;
+      const a = aMap.get(s.symbol as string);
+      if (!a) return { ...s, understanding: 0, engage: false, gate_reason: "not yet attributed" };
       const drivers = Object.entries(a.betas || {}).map(([f, v]) => ({ f, beta: v.beta, t: v.t })).sort((p, q) => Math.abs(q.t) - Math.abs(p.t)).slice(0, 3);
-      return { ...s, residual: a.residual, r2: a.r2, drivers };
+      const understanding = +Math.max(0, (a.adj_r2 || 0) * (a.era_stability || 0)).toFixed(3);
+      const directional = !!s.engage;                                   // momentum gate (cycle-stable directional edge)
+      const understood = understanding >= U_THRESH;
+      const engage = directional && understood;                          // FOLDED GATE — both required
+      const gate_reason = engage ? "predict + understand" : !directional ? "no directional edge" : "not understood well enough";
+      return { ...s, residual: a.residual, r2: a.r2, adj_r2: a.adj_r2, era_stability: a.era_stability, understanding, drivers, directional, engage, gate_reason };
     });
     const rows: Record<string, unknown>[] = isOperator ? raw : raw.map((s) =>
       s.engage ? { symbol: s.symbol, asof: s.asof, confidence: s.confidence, residual: s.residual, r2: s.r2, drivers: s.drivers, engage: true, redacted: true, lean: null, why: null, note: "operator-only" } : s);

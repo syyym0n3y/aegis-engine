@@ -7015,3 +7015,33 @@ the cockpit Causal-engine view (R² + top driver columns). VERIFIED: 34 instrume
 XLE/XOM/CVX load +OIL (energy), XLK pure MKT β1.18 (tech), AAPL/AMGN low-R² idiosyncratic. Writer separation:
 attribution owns residual/R²/betas, momentum owns lean/confidence/engage — neither clobbers the other. This is the
 engine that KNOWS why each instrument moves, with its ignorance (the residual) measured not hidden.
+
+---
+
+## D-342 — the grammar lane is DRAINED and its measured yield is 0/1023; backlog refilled with 4 primitives, one of which is deliberately not a candle shape (2026-08-18)
+**Health, measured (not "processed:N"):** `trd_edge_queue` = 1,468,800 specs, **1,072,247 done + 396,553 thin, 0 pending** —
+the lane is not stalled, it is FINISHED (max(run_at) 2026-08-17 20:47Z is 3h stale because there is nothing left to claim).
+`trd_edge_scorecard` holds **1,023 `fac:*` candidates, of which gate_passed = 0**. `trd_stage2_results`: **973 stage2-killed,
+46 thin, 0 survivors**; `trd_forward_candidates` = **0**. This run fired `trd-edge-stage2?batch=12`: 12 computed, 12 persisted,
+0 lost, **0 survivors**, nTrials 572,538. Cumulative honest read of the grammar lane: **1.47M specs → 1,023 in-sample
+candidates → 0 through the full gauntlet.** That is D-070 working, and it is the same verdict D-331 reached when it pivoted
+to causal factors: candle geometry is an effect, not a force.
+
+**Unit shipped:** `trd_edge_ingest` had **0 rows at status='new'** (25 queued / 3 mapped / rest skipped-or-superseded), so
+per the standing mine-the-internet mandate the backlog was refilled with 4 documented setups verified absent from the
+34-trigger grammar (`trd-grammar.ts`), each with its source and an explicit statement of what existing trigger it is NOT:
+- **`ibs`** — Internal Bar Strength (close−low)/(high−low), decile extremes mean-revert (NAAIM/Pagonidis). Keys on CLOSE
+  LOCATION in the range; `pinbar`/`doji`/`marubozu` key on body-vs-wick proportion. Distinct.
+- **`outside`** — outside bar (high>prior high AND low<prior low), direction from close-in-range-thirds. Distinct from
+  `engulfing`, which is BODY containment and ignores wicks.
+- **`wrb`** — wide-range bar, range > 2× mean of prior 20 ranges, trade the close direction. The INVERSE of `nr7`/`squeeze`;
+  the compression triggers can never fire on it.
+- **`csrev`** — cross-sectional prior-day reversal across the crypto universe (arXiv 1903.06033). **Logged with an explicit
+  triage note that it is NOT expressible in the current grammar** (`runComponentTrades` sees one symbol at a time) and
+  belongs to the D-331 factor lane, not the shape lane. It is the only one of the four that is a force rather than a shape.
+
+**Reconciliation (ANALYSIS_CONTRACT Rule 5), stated rather than buried:** refilling a lane whose measured yield is 0/1023
+is low-prior work. It is done because it is $0, keeps the idle discovery cron fed, and costs nothing but compute — NOT
+because there is evidence the 35th shape will do what the first 34 did not. The prioritized path remains D-331/D-339:
+survivorship-free data, PIT fundamentals, and the multi-factor causal engine. `csrev` is the deliberate hedge in that
+direction. No trades, no capital, no arming: `trd_forward_candidates` remains 0.
