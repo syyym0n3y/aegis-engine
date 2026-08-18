@@ -202,7 +202,8 @@ async function doCausal(){
     const grid=(d.era_grid||[]).map(g=>{const ok=g.ic>0,col=Math.abs(g.t)<2?"var(--mut)":ok?"var(--accent)":"var(--red)";return `<tr><td class="mono">${esc(g.era)}</td><td class="mono num" style="color:${col}">${g.ic>=0?"+":""}${(+g.ic).toFixed(4)}</td><td class="mono num" style="color:var(--mut)">${(+g.t).toFixed(1)}</td><td class="mono num" style="color:var(--mut)">${g.n}</td></tr>`}).join("")||`<tr><td colspan=4 class=muted>—</td></tr>`;
     const uT=s.u_threshold||0.3;
     const drv=x=>(x.drivers&&x.drivers[0])?esc(x.drivers[0].f)+" β"+(+x.drivers[0].beta).toFixed(2):"—";
-    const r2c=x=>x.r2!=null?Math.round((+x.r2)*100)+"%":"—";
+    const tfab={daily:"d",weekly:"w",monthly:"m"};
+    const r2c=x=>{const r=(x.best_r2!=null)?x.best_r2:x.r2;if(r==null)return "—";const tf=x.best_tf&&x.best_tf!=="daily"?" "+(tfab[x.best_tf]||x.best_tf):"";return Math.round((+r)*100)+"%"+tf;};
     const uc=x=>x.understanding!=null?Math.round((+x.understanding)*100)+"%":"—";
     const uco=x=>(+x.understanding>=uT)?"var(--accent)":"var(--amber)";
     const leanc=x=>x.lean==null?"—":(x.lean>=0?"+":"")+(+x.lean).toFixed(2);
@@ -221,8 +222,8 @@ async function doCausal(){
         <table><thead><tr><th>market era</th><th class="num">IC</th><th class="num">t</th><th class="num">n</th></tr></thead><tbody>${grid}</tbody></table>
         <p class="muted" style="margin-top:10px;font-size:12px">A force is trusted only if its sign HOLDS across cycles. Sign-flips (e.g. momentum inverting in the dot-com bust) → confidence≈0 → stand down. The engine refuses to trade what it cannot explain — the opposite of a guru.</p></div>
       <div class="panel"><div class="lbl" style="margin-bottom:10px">Every instrument — lean · explained (R²) · understanding · driver · gate</div>
-        <table><thead><tr><th>sym</th><th class="num">lean</th><th class="num">R²</th><th class="num">underst.</th><th>top driver</th><th>gate</th></tr></thead><tbody>${sig}</tbody></table>
-        <p class="muted" style="margin-top:10px;font-size:12px">Understanding = adjusted-R² × cross-era stability (survives the added-force penalty AND holds across cycles). The gate opens ONLY with a directional edge AND understanding — SPY is fully understood yet stands down (no edge). Low-understanding names (nat-gas, foreign indices, FX) are the research mission: each needs its own forces (weather/storage, local rates, carry). We shy away from none.</p></div>
+        <table><thead><tr><th>sym</th><th class="num">lean</th><th class="num">R²·tf</th><th class="num">underst.</th><th>top driver</th><th>gate</th></tr></thead><tbody>${sig}</tbody></table>
+        <p class="muted" style="margin-top:10px;font-size:12px">R² is shown at the timeframe that explains most (d/w/m) — MULTI-TIMEFRAME, because the daily lens hides structure (gold: daily 7% → weekly 26%). Understanding = best-timeframe adjusted-R² × cross-era stability. The gate opens ONLY with a directional edge AND understanding — SPY is fully understood yet stands down (no edge). Low-understanding names (nat-gas, foreign indices) are the research mission; each cluster gets its own forces. Finer than daily (to the minute) over history needs the Databento feed — keyless data stops at daily.</p></div>
     </div>
     <div class="panel" style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span class="lbl">Operator key</span>
