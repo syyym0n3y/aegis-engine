@@ -7174,3 +7174,12 @@ deflated. INTERIM (AAPL+MSFT, n=350): pooled IC +0.058 t=1.09, breadth 2/2 sign-
 MSFT t=1.25 — sign-coherent but INSIGNIFICANT; full 8-symbol breadth read pending. Session Databento spend ≈ $2 (under
 $20 cap; each pull <$5, cost-checked). GEX (needs AlphaVantage key, not stored) + insider-cluster (free EDGAR, needs
 accumulation) remain un-mined.
+
+## D-348b — auction-imbalance FALSIFIED (full breadth): no directional edge
+Full 6-symbol breadth read (n=1000): pooled IC −0.013 t=−0.41, breadth 3/6 sign-correct (COIN FLIP). MSFT/AMD/AAPL
+positive, MU/NVDA/AMZN negative; the only |t|≥2 cell (AMZN −2.35) is WRONG-sign noise. The interim 2-symbol positive
+(t=1.09) was small-sample luck — AAPL+MSFT were the two positive names; 4 more reverted it to null. Verdict: closing-auction
+imbalance does NOT predict overnight drift in liquid Nasdaq names — deflated, breadth-checked NULL. Exemplifies D-334: the
+thin-breadth read was noise; the full read is the verdict. The falsification engine did its job — hunted the most promising
+un-mined directional class, tested it with breadth + deflation, killed it. Engine stays in its honest terminal state (D-070):
+understands why everything moves, has no directional edge to trade, says so. Total session Databento spend ≈ $2 (under caps).
