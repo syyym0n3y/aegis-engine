@@ -27,9 +27,22 @@ function rankIC(xs: number[], ys: number[]) {
 const yearOf = (ts: number) => new Date(ts * 1000).getUTCFullYear();
 const eraOf = (ts: number) => { const y = yearOf(ts); return ERAS.find(([, a, b]) => y >= a && y < b)?.[0] || "?"; };
 
+const barsCache = new Map<string, number[][] | null>();
 async function getBars(sym: string): Promise<number[][] | null> {
+  if (barsCache.has(sym)) return barsCache.get(sym)!;            // cache-first (filled by preloadBars for sweeps)
   const r = await fetch(`${BROKER}?bars=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
-  return r?.row?.bars ?? null; // [[ts,o,h,l,c,v],...]
+  const bars = r?.row?.bars ?? null; barsCache.set(sym, bars); return bars; // [[ts,o,h,l,c,v],...]
+}
+// D-362b speedup: pull ALL sweep symbols' bars in chunks (one broker call per chunk) instead of 4,400 single round-trips.
+async function preloadBars(symbols: string[], chunk = 25) {
+  for (let i = 0; i < symbols.length; i += chunk) {
+    const part = symbols.slice(i, i + chunk).filter((s) => !barsCache.has(s));
+    if (!part.length) continue;
+    const r = await fetch(`${BROKER}?barsbatch=${encodeURIComponent(part.join(","))}`).then((x) => x.json()).catch(() => null);
+    const rows = (r?.rows ?? []) as { symbol: string; bars: number[][] }[];
+    const got = new Set<string>(); for (const row of rows) { barsCache.set(row.symbol, row.bars ?? null); got.add(row.symbol); }
+    for (const s of part) if (!got.has(s)) barsCache.set(s, null);  // mark missing so getBars won't re-fetch
+  }
 }
 async function getIntraday(sym: string): Promise<number[][] | null> {
   const r = await fetch(`${BROKER}?intraday=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
@@ -44,6 +57,7 @@ function iret(bars: number[][]): Map<number, number> {
 async function runStrategySweep(params: { symbols?: string[]; horizon?: number }) {
   const HZ = params.horizon ?? 21;
   const symbols = params.symbols?.length ? params.symbols : await getUniverse();
+  await preloadBars(symbols);
   const SIGS = ["mom_12_1", "trend_200", "high_52w", "max_lottery", "rev_5d", "lowvol_60", "overnight"] as const;
   const acc: Record<string, Record<string, { x: number[]; y: number[] }>> = {}; // sig → era → {x,y}
   for (const s of SIGS) acc[s] = {};
@@ -83,6 +97,7 @@ async function getUniverse(): Promise<string[]> {
 async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
   const HZ = params.horizon ?? 21;
   const symbols = params.symbols?.length ? params.symbols : await getUniverse(); // self-pull the full accumulated universe
+  await preloadBars(symbols);
   const SIGS = ["mom_12_1", "rev_5d", "max_lottery", "lowvol_60", "trend_200", "high_52w"] as const;
   // per signal: date → {x: signal vals, y: fwd returns} across symbols (the cross-section that date)
   const byDate: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const s of SIGS) byDate[s] = new Map();
@@ -133,6 +148,7 @@ async function runFundamentalsIC(params: { horizon?: number }) {
   const FACS = ["value_bm", "earnings_yield", "quality_roe", "investment", "leverage"] as const;
   const byMonth: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const f of FACS) byMonth[f] = new Map();
   const symbols = await getUniverse();
+  await preloadBars(symbols);
   for (const sym of symbols) {
     const fm = fund.get(sym); if (!fm) continue;
     const b = await getBars(sym); if (!b || b.length < HZ + 30) continue;

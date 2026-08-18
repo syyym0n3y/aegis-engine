@@ -37,6 +37,13 @@ Deno.serve(async (req) => {
       }
       return new Response(JSON.stringify({ ok: true, symbols: rows }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("barsbatch")) {
+      // many symbols' bars in ONE call — collapses a sweep's ~4,400 round-trips into ~200 (D-362b speedup)
+      const syms = url.searchParams.get("barsbatch")!.split(",").filter(Boolean);
+      const inList = syms.map((s) => `"${s}"`).join(",");
+      const b = await fetch(`${SB}/rest/v1/trd_bars_deep?symbol=in.(${encodeURIComponent(inList)})&select=symbol,bars`, { headers: H }).then((r) => r.json()).catch(() => []);
+      return new Response(JSON.stringify({ ok: true, rows: Array.isArray(b) ? b : [] }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("fundamentals")) {
       // serve point-in-time fundamentals to the worker for the cross-sectional value/quality/investment test (D-362)
       const rows: { t: string; c: string; e: string; p: string; v: number }[] = [];
