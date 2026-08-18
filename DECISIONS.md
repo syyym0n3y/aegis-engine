@@ -7157,3 +7157,20 @@ monthly). The understanding/attribution stack is COMPLETE. The one unbuilt layer
 stand-down), and manufacturing one with no edge to combine is the exact dishonesty the engine exists to prevent (D-070:
 "nothing cleared the gates" is the designed SUCCESS state). The engine knows WHY everything moves; it honestly has no
 edge to TRADE — and says so.
+
+---
+
+## D-348 — survivorship BLOCKED (data availability); auction-imbalance edge hunt (interim: sign-coherent, insignificant)
+PART 1 — SURVIVORSHIP FIX: investigated, and it is BLOCKED by data availability, not cost. Databento's deepest equity
+history is XNAS.ITCH from 2018-05 (Nasdaq-only); DBEQ.BASIC 2023, XNAS.BASIC/EQUS.SUMMARY 2024. The classic delistings
+(Enron 2001, Lehman 2008, WorldCom 2002) predate ALL Databento equity coverage by a decade+. A true multi-decade
+survivorship-free universe needs a CRSP-class source (CRSP/Sharadar/Norgate) we do NOT have. **The equity survivorship
+caveat therefore STANDS, honestly flagged — faking it on 2018+ Nasdaq-only data would be the dishonesty the engine prevents.**
+
+PART 2 — DIRECTIONAL EDGE HUNT (auction-imbalance): wired Databento XNAS.ITCH `imbalance` (closing-auction/MOC). Cost-gated
+loader `trd-databento-imbalance` (?inspect + ?cap; auction_type='C' closing only; side B=+/A=−) → trd_imbalance (0053).
+Test `trd-imbalance-ic`: signed closing imbalance (z per symbol) vs OVERNIGHT close→next-open return, keyless-Yahoo forward,
+deflated. INTERIM (AAPL+MSFT, n=350): pooled IC +0.058 t=1.09, breadth 2/2 sign-correct (+1 = buy→gap-up continuation),
+MSFT t=1.25 — sign-coherent but INSIGNIFICANT; full 8-symbol breadth read pending. Session Databento spend ≈ $2 (under
+$20 cap; each pull <$5, cost-checked). GEX (needs AlphaVantage key, not stored) + insider-cluster (free EDGAR, needs
+accumulation) remain un-mined.
