@@ -20,6 +20,8 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, cik_map_rows: n }), { headers: cors });
     }
     const concept = u.searchParams.get("concept"), period = u.searchParams.get("period"); // e.g. Assets, CY2023Q1I
+    const ns = u.searchParams.get("ns") || "us-gaap";   // namespace: us-gaap (default) | dei (shares outstanding)
+    const unit = u.searchParams.get("unit") || "USD";   // USD (default) | shares (for dei:EntityCommonStockSharesOutstanding)
     if (!concept || !period) return new Response(JSON.stringify({ ok: false, err: "need ?concept & ?period" }), { status: 400, headers: cors });
     // CIK→ticker map — PAGINATE (PostgREST caps at 1000/req; the map has ~10k rows, so a single fetch silently truncates)
     const c2t = new Map<string, string>();
@@ -29,8 +31,8 @@ Deno.serve(async (req) => {
       for (const r of page as { cik: string; ticker: string }[]) if (r.ticker) c2t.set(r.cik, r.ticker);
       if (page.length < 1000) break;
     }
-    const fr = await fetch(`https://data.sec.gov/api/xbrl/frames/us-gaap/${concept}/USD/${period}.json`, { headers: UA });
-    if (!fr.ok) return new Response(JSON.stringify({ ok: false, err: `frames ${fr.status}`, concept, period }), { headers: cors });
+    const fr = await fetch(`https://data.sec.gov/api/xbrl/frames/${ns}/${concept}/${unit}/${period}.json`, { headers: UA });
+    if (!fr.ok) return new Response(JSON.stringify({ ok: false, err: `frames ${fr.status}`, ns, concept, unit, period }), { headers: cors });
     const data = (await fr.json())?.data as { cik: number; end: string; val: number }[] | undefined;
     if (!Array.isArray(data)) return new Response(JSON.stringify({ ok: false, err: "no data" }), { headers: cors });
     const rows = data.filter((d) => Number.isFinite(d.val) && d.end).map((d) => ({ cik: String(d.cik), ticker: c2t.get(String(d.cik)) ?? null, concept, fy: +period.slice(2, 6), fp: period.slice(6), period_end: d.end, effective_date: addDays(d.end, 75), value: d.val, updated_at: new Date().toISOString() }));

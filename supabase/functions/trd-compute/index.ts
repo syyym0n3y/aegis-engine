@@ -37,6 +37,17 @@ Deno.serve(async (req) => {
       }
       return new Response(JSON.stringify({ ok: true, symbols: rows }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("fundamentals")) {
+      // serve point-in-time fundamentals to the worker for the cross-sectional value/quality/investment test (D-362)
+      const rows: { t: string; c: string; e: string; p: string; v: number }[] = [];
+      for (let off = 0; ; off += 1000) {
+        const p = await fetch(`${SB}/rest/v1/trd_fundamentals?ticker=not.is.null&select=ticker,concept,effective_date,period_end,value&order=ticker&offset=${off}&limit=1000`, { headers: H }).then((r) => r.json()).catch(() => []);
+        if (!Array.isArray(p) || !p.length) break;
+        for (const r of p as { ticker: string; concept: string; effective_date: string; period_end: string; value: number }[]) rows.push({ t: r.ticker, c: r.concept, e: r.effective_date, p: r.period_end, v: r.value });
+        if (p.length < 1000) break;
+      }
+      return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("worklist")) {
       // hand the worker the next batch of fundamentals tickers still lacking deep daily bars (D-360b price accumulation)
       const n = Number(url.searchParams.get("worklist")) || 200;

@@ -114,6 +114,56 @@ async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
   return { result: { factor: "xsec_sweep_famamacbeth", n_symbols: symbols.length, battery: out, overnight_premium: { overnight: tt(ovM), intraday: tt(intrM) } } };
 }
 
+// JOB: fundamentals_ic — CROSS-SECTIONAL value/quality/investment/leverage (D-362). Rank names WITHIN each month by each
+// fundamental factor (point-in-time via effective_date, the 75d filing lag baked in), per-month rank-IC vs the forward
+// quarterly return, Fama-MacBeth average per era. Factors: value (book/mktcap), earnings-yield (NI/mktcap), quality (ROE),
+// investment (−asset-growth), leverage (liab/assets). Market cap = shares×price. Honest window: fundamentals are recent
+// (2023–2025 frames), so eras skew to the tightening regime — reported next to N, deflated, default REJECT (D-070).
+async function runFundamentalsIC(params: { horizon?: number }) {
+  const HZ = params.horizon ?? 63; // ~1 quarter forward
+  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const rows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
+  // ticker → concept → sorted [{eff(ms), val}]
+  const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
+  for (const r of rows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
+  for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, atMs: number): number | null => {
+    const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= atMs) v = x.v; else break; } return v;
+  };
+  const FACS = ["value_bm", "earnings_yield", "quality_roe", "investment", "leverage"] as const;
+  const byMonth: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const f of FACS) byMonth[f] = new Map();
+  const symbols = await getUniverse();
+  for (const sym of symbols) {
+    const fm = fund.get(sym); if (!fm) continue;
+    const b = await getBars(sym); if (!b || b.length < HZ + 30) continue;
+    const c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
+    let lastMonth = "";
+    for (let i = 0; i < b.length - HZ; i++) {
+      const dt = new Date(ts[i] * 1000); const mo = dt.toISOString().slice(0, 7); if (mo === lastMonth) continue; lastMonth = mo; // one obs/month/name
+      const atMs = ts[i] * 1000, px = c[i]; const fwd = c[i + HZ] / c[i] - 1; if (!Number.isFinite(fwd) || !(px > 0)) continue;
+      const be = pit(fm, "StockholdersEquity", atMs), ni = pit(fm, "NetIncomeLoss", atMs), assets = pit(fm, "Assets", atMs), liab = pit(fm, "Liabilities", atMs), sh = pit(fm, "EntityCommonStockSharesOutstanding", atMs);
+      const assetsPrev = pit(fm, "Assets", atMs - 365 * 864e5);
+      const mcap = sh && sh > 0 ? sh * px : null;
+      const fac: Record<string, number | null> = {
+        value_bm: mcap && be != null ? be / mcap : null,
+        earnings_yield: mcap && ni != null ? ni / mcap : null,
+        quality_roe: be && be > 0 && ni != null ? ni / be : null,
+        investment: assets && assetsPrev && assetsPrev > 0 ? -(assets / assetsPrev - 1) : null,
+        leverage: assets && assets > 0 && liab != null ? -(liab / assets) : null, // sign −: high leverage hypothesized distress
+      };
+      for (const f of FACS) { const v = fac[f]; if (v == null || !Number.isFinite(v)) continue; const m = byMonth[f].get(mo) ?? byMonth[f].set(mo, { x: [], y: [] }).get(mo)!; m.x.push(v); m.y.push(fwd); }
+    }
+  }
+  const out: Record<string, unknown>[] = [];
+  for (const f of FACS) {
+    const byEra: Record<string, number[]> = {};
+    for (const [mo, m] of byMonth[f]) { if (m.x.length < 10) continue; const ic = rankIC(m.x, m.y).ic; if (!Number.isFinite(ic)) continue; const era = eraOf(Math.floor(new Date(mo + "-01").getTime() / 1000)); (byEra[era] ||= []).push(ic); (byEra.ALL ||= []).push(ic); }
+    const cells = Object.entries(byEra).filter(([, a]) => a.length >= 6).map(([era, a]) => { const mn = a.reduce((x, y) => x + y, 0) / a.length; const sd = a.length > 1 ? Math.sqrt(a.reduce((x, y) => x + (y - mn) ** 2, 0) / (a.length - 1)) : 0; return { era, ic: +mn.toFixed(4), t: sd > 0 ? +(mn / (sd / Math.sqrt(a.length))).toFixed(2) : 0, n_months: a.length }; });
+    out.push({ factor: f, cells });
+  }
+  return { result: { factor: "fundamentals_ic_famamacbeth", horizon_days: HZ, n_symbols_with_fund: [...fund.keys()].length, battery: out } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -358,6 +408,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "strategy_sweep") out = await runStrategySweep(job.params);
     else if (job.job_type === "xsec_sweep") out = await runXsecSweep(job.params);
     else if (job.job_type === "price_accumulate") out = await runPriceAccumulate(job.params);
+    else if (job.job_type === "fundamentals_ic") out = await runFundamentalsIC(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
