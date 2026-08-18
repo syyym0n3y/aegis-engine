@@ -7198,3 +7198,16 @@ straight from the Form-4), pulls open-market code-P buys, resumable cursor, cron
 2026-08-13 had 1018 Form-4s, 70 scanned → 13 real insider buys stored. Accumulates thousands in HOURS not weeks.
 `trd-insider-ic` event study (buy→forward-21d return, keyless Yahoo, deflated) ready — reads once the sample builds. This
 is the "don't wait weeks" answer via bulk-archive backfill.
+
+---
+
+## D-350 — provider keys vaulted; SURVIVORSHIP FIXED (membership); GEX blocked on free-tier options
+Operator self-served 3 email-only keys (FMP/EODHD/AlphaVantage), pasted them; vaulted in trd_secrets (RLS-denied, NOT in
+git). Connectivity verified (`trd-provider-check`): AV LISTING_STATUS ✓ (9432 delisted w/ dates), EODHD delisted ✓ (59,184),
+FMP delisted ✗ (premium-gated on free tier — no matter). SURVIVORSHIP FIX (the last honesty caveat): `trd-universe-load`
+pulled AV LISTING_STATUS delisted → **trd_universe: 9,431 delisted securities (7,455 stocks), delisting dates 1997→2026**
+(covers dot-com/GFC/COVID/2022). The dead names are now first-class — survivor-only bias is addressable: any equity
+universe can be checked against the delisted membership. (Full price-LEVEL correction needs delisted prices — throttled
+AV 25/day; a bounded follow-on.) GEX: HONESTLY BLOCKED on the free AV tier — HISTORICAL_OPTIONS is premium/heavily-throttled
+(25 req/day can't power options chains, which need dozens of calls/symbol/day). GEX needs AV premium (~$50/mo) or Databento
+OPRA (paid, per-use). Reported, not faked. Insider backfill cron still accumulating in parallel (D-349).
