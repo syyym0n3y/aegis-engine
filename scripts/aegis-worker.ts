@@ -71,6 +71,43 @@ async function runStrategySweep(params: { symbols: string[]; horizon?: number })
   return { result: { factor: "strategy_sweep", n_symbols: params.symbols.length, battery: out } };
 }
 
+// JOB: xsec_sweep — CORRECTED cross-sectional test (audit D-359 fix). Momentum/reversal/lottery/vol are CROSS-SECTIONAL
+// factors: rank symbols WITHIN each date, per-date rank-IC, then Fama-MacBeth average (the pooled panel-IC in strategy_sweep
+// diluted real cross-sectional edges toward zero — violated our own no-pooling law). Also: overnight tested as its OWN
+// return (close→open), not 21d. Universe MUST be homogeneous (equities). t = mean(dailyIC)/(sd/sqrt(#days)) — honest N.
+async function runXsecSweep(params: { symbols: string[]; horizon?: number }) {
+  const HZ = params.horizon ?? 21;
+  const SIGS = ["mom_12_1", "rev_5d", "max_lottery", "lowvol_60", "trend_200", "high_52w"] as const;
+  // per signal: date → {x: signal vals, y: fwd returns} across symbols (the cross-section that date)
+  const byDate: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const s of SIGS) byDate[s] = new Map();
+  const onDate = new Map<string, { ov: number[]; intr: number[] }>(); // overnight premium (own return)
+  for (const sym of params.symbols) {
+    const b = await getBars(sym); if (!b || b.length < 300) continue;
+    const o = b.map((r) => r[1]), c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
+    for (let i = 260; i < b.length - HZ; i++) {
+      const fwd = c[i + HZ] / c[i] - 1; if (!Number.isFinite(fwd)) continue; const d = new Date(ts[i] * 1000).toISOString().slice(0, 10);
+      const win = c.slice(i - 21, i); const rets: number[] = []; for (let k = 1; k < win.length; k++) rets.push(win[k] / win[k - 1] - 1);
+      const v60 = c.slice(i - 60, i); const r60: number[] = []; for (let k = 1; k < v60.length; k++) r60.push(v60[k] / v60[k - 1] - 1);
+      const sd = r60.length ? Math.sqrt(r60.reduce((a, x) => a + x * x, 0) / r60.length) : 0;
+      const sig: Record<string, number> = { mom_12_1: c[i - 21] / c[i - 252] - 1, rev_5d: -(c[i] / c[i - 5] - 1), max_lottery: -Math.max(...rets), lowvol_60: -sd, trend_200: c[i] / (c.slice(i - 200, i).reduce((a, x) => a + x, 0) / 200) - 1, high_52w: c[i] / Math.max(...c.slice(i - 252, i + 1)) };
+      for (const s of SIGS) { const v = sig[s]; if (!Number.isFinite(v)) continue; const m = byDate[s].get(d) ?? byDate[s].set(d, { x: [], y: [] }).get(d)!; m.x.push(v); m.y.push(fwd); }
+      // overnight premium: the overnight gap return vs the intraday return (own, not cross-sectional)
+      const ov = (o[i] - c[i - 1]) / c[i - 1], intr = (c[i] - o[i]) / o[i]; if (Number.isFinite(ov) && Number.isFinite(intr)) { const e = onDate.get(d) ?? onDate.set(d, { ov: [], intr: [] }).get(d)!; e.ov.push(ov); e.intr.push(intr); }
+    }
+  }
+  const out: Record<string, unknown>[] = [];
+  for (const s of SIGS) {
+    const byEra: Record<string, number[]> = {};
+    for (const [d, m] of byDate[s]) { if (m.x.length < 8) continue; const ic = rankIC(m.x, m.y).ic; if (!Number.isFinite(ic)) continue; const era = eraOf(Math.floor(new Date(d).getTime() / 1000)); (byEra[era] ||= []).push(ic); (byEra.ALL ||= []).push(ic); }
+    const cells = Object.entries(byEra).filter(([, a]) => a.length >= 30).map(([era, a]) => { const mn = a.reduce((x, y) => x + y, 0) / a.length; const sd = Math.sqrt(a.reduce((x, y) => x + (y - mn) ** 2, 0) / (a.length - 1)); return { era, ic: +mn.toFixed(4), t: +(mn / (sd / Math.sqrt(a.length))).toFixed(2), n_days: a.length }; });
+    out.push({ signal: s, cells });
+  }
+  // overnight premium: mean daily overnight vs intraday return, Fama-MacBeth
+  const ovM: number[] = [], intrM: number[] = []; for (const [, e] of onDate) { if (e.ov.length < 3) continue; ovM.push(e.ov.reduce((a, b) => a + b, 0) / e.ov.length); intrM.push(e.intr.reduce((a, b) => a + b, 0) / e.intr.length); }
+  const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length; const tt = (a: number[]) => { const m = mean(a); const sd = Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)); return { mean_bp: +(1e4 * m).toFixed(2), t: +(m / (sd / Math.sqrt(a.length))).toFixed(2), n: a.length }; };
+  return { result: { factor: "xsec_sweep_famamacbeth", n_symbols: params.symbols.length, battery: out, overnight_premium: { overnight: tt(ovM), intraday: tt(intrM) } } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -289,6 +326,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "intraday_attribution") out = await runIntradayAttribution(job.params);
     else if (job.job_type === "insider_ic") out = await runInsiderIC(job.params);
     else if (job.job_type === "strategy_sweep") out = await runStrategySweep(job.params);
+    else if (job.job_type === "xsec_sweep") out = await runXsecSweep(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));

@@ -7346,3 +7346,26 @@ tradeable edge, classified or not. Systematic free-anomaly sweep (D-357): all sm
 the #1 next free build (EDGAR XBRL frames API verified keyless — 6,184 companies/quarter; unlocks quality/value/investment,
 the most durable factors) — a real point-in-time pipeline, teed up in docs/GAPS.md, not test-tonight. Everything freely
 testable with CURRENT data is now exhausted and null/small — D-070 terminal state, comprehensively earned.
+
+---
+
+## D-359 — ADVERSARIAL AUDIT of my own tests (operator-mandated honesty check) — found + fixed real false-nulls
+Ran an Opus adversarial auditor against the test code to falsify the "no edge" conclusion (a wrong null STOPS the work — the
+worst error). Findings, all acted on:
+1. **VINDICATED as honest:** GEX→vol −0.49 is a REAL forward finding NOT look-ahead (predictor uses data ≤t, target is
+   t+1..t+5, zero overlap — verified); all signals point-in-time no leak; sign errors absent (and can't cause a false null);
+   insider/funding nulls run CONSERVATIVE (survivorship + overlapping-obs inflation make results look BETTER than truth, so
+   those nulls are safe); conclusions keyed on IC magnitude not the inflated t-stats — correct.
+2. **BUG — pooled panel-IC (aegis-worker strategy_sweep/deep_factor_ic):** cross-sectional factors tested as a POOLED panel
+   (all symbols×dates one array) — dilutes cross-sectional edges toward zero, violated our own no-pooling law. FIXED: new
+   `xsec_sweep` job does per-date cross-sectional rank-IC + Fama-MacBeth (honest t). Result on our 40 equity-like names:
+   momentum +0.008 (t4.44), reversal +0.005, lowvol/lottery small — STILL small, but honestly UNDER-POWERED (canonical
+   cross-sectional momentum needs hundreds of individual stocks = the broad-price-coverage gap, not 40 mixed instruments).
+3. **BUG — overnight anomaly FALSE-NULLED (wrong horizon):** original tested the overnight gap vs 21d fwd. FIXED (own
+   close→open return): **overnight +3.02 bp/day t=6.56 > intraday +2.77 bp t=3.58** — the documented overnight premium is
+   REAL and significant; I was wrong to null it. Marginal after 2-trades/day costs, but a genuine structural effect.
+4. Minor: funding entry lagged 8h (conservative attenuation, low-prob false null) — noted.
+HONEST OUTCOME: the audit the operator demanded found a real mistake (overnight) + a methodology bug (pooling) + a real data
+bug earlier this turn (fundamentals CIK 1000-row truncation, 668→4060). My nulls are now audited: the survivors are
+GEX→vol (sizing) + the overnight premium (real, marginal-after-cost); the momentum family is honestly under-powered pending
+broad equity price coverage; everything else is trustworthy null. Self-certification is not enough — the external check paid off.
