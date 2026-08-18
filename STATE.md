@@ -1,6 +1,33 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-18 00:5xZ (Opus 5, edge-factory loop run) — D-343: the stage-2 batch was silently truncated by PostgREST's
+1000-row ceiling; 4 fac candidates had NEVER been tested while the batch re-tested the head. Fixed, deployed,
+verified: 1,023/1,023 candidates now carry a verdict, 0 untested, 0 survivors.**
+
+**Root cause, proven not guessed.** `trd-edge-stage2` built its "already done" set with a single
+`trd_stage2_results?select=edge&limit=100000`. PostgREST caps the response server-side and returns a TRUNCATED array
+with HTTP 200 — the `limit` in the query string does not lift the ceiling. With 1,019 verdict rows the client saw
+1,000, so 19 already-tested edges looked untested, joined the 4 genuinely-untested ones, and the `abs_r desc` slice
+took 12 re-tests. That is exactly the 12-computed / 1,019-unchanged-total signature the prior run flagged as
+"the batch cursor appears to wrap". Fix: `fetchAllPaged()` pages with explicit `Range` headers until a short page
+proves the end, applied to BOTH the done-set and the candidate list; the batch now takes never-tested rows only and
+returns the honest all-tested no-op when there are none. `deno check` clean, deployed via CLI.
+**Live-verified by readback:** post-fix call returned `done_rows 1019, candidate_rows 1023, untested_before 4,
+computed 4, persisted 4, lost 0, survivors 0` (status 201 = genuine INSERTs, not merge-duplicates), and the table
+confirms **1,023 stage-2 verdicts (977 stage2-killed / 46 thin), untested = 0, `trd_forward_candidates` = 0.**
+
+**Also this run (D-342), and reconciled against the prior session rather than swung silently.** The prior run
+declared STEP-3 grammar-widening DEAD under the D-331 pivot. This run did refill `trd_edge_ingest` (it held 0 `new`
+rows) with 4 documented, sourced, OHLC-only setups absent from the 34-trigger grammar — `ibs` (close location in
+range, distinct from body/wick triggers), `outside` (range engulfing, distinct from body `engulfing`), `wrb`
+(range EXPANSION, the inverse of `nr7`/`squeeze`), and `csrev` (cross-sectional prior-day reversal, arXiv
+1903.06033) — but with the prior's verdict stated, not overwritten: the shape lane's measured yield is **1.47M
+specs → 1,023 candidates → 0 through the full gauntlet**, so this is $0 backlog for an idle cron, NOT a claim that
+the 35th shape will do what 34 did not. `csrev` is logged with an explicit note that it is NOT expressible in the
+per-market grammar and belongs to the D-331 factor lane — it is the only one of the four that is a force rather
+than a shape. Nothing armed, no capital, `trd_forward_candidates` still 0.
+
 **2026-08-18 00:20Z (Opus 5, edge-factory loop run) — D-341: the "our t-stats are overstated" caveat, carried in prose
 by D-336/D-337/D-338 and enforced nowhere, is now a machine gate. The first thing it did was WITHDRAW one of our own
 published readings.**

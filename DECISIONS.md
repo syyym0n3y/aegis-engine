@@ -7045,3 +7045,28 @@ is low-prior work. It is done because it is $0, keeps the idle discovery cron fe
 because there is evidence the 35th shape will do what the first 34 did not. The prioritized path remains D-331/D-339:
 survivorship-free data, PIT fundamentals, and the multi-factor causal engine. `csrev` is the deliberate hedge in that
 direction. No trades, no capital, no arming: `trd_forward_candidates` remains 0.
+
+---
+
+## D-343 — stage-2 was starving 4 candidates forever: PostgREST's row ceiling silently truncated the "already tested" set (2026-08-18)
+**The prior run named the symptom and did not have the cause:** "1,023 candidates against 1,019 verdicts means 4 are
+still untested, yet this batch re-tested 12 already-verdicted rows — the stage-2 batch cursor appears to wrap." It does
+not wrap. `trd-edge-stage2` fetched the done-set as a single `trd_stage2_results?select=edge&limit=100000`. **PostgREST
+applies its own server-side row ceiling and returns a truncated array with HTTP 200** — a query-string `limit` above the
+ceiling buys nothing. At 1,019 verdict rows the client received 1,000; the 19 it could not see were classified as
+untested, were ranked above the 4 real ones by `abs_r desc`, and filled the batch. Same failure class as D-300b/D-303b:
+a 200 that did not do the work. The candidate fetch carried the identical bug and was capping the searchable universe at
+1,000 of 1,023.
+
+**Fix (`fetchAllPaged`)**: page with explicit `Range`/`Range-Unit: items` headers until a short page proves the end,
+used for BOTH the done-set and the candidate list; select **never-tested candidates only** so the high-`abs_r` head can
+never starve the tail; return the honest "all candidates stage-2 tested" no-op when the untested set is empty instead of
+re-testing the head and reporting it as fresh work. Response now carries `done_rows` / `candidate_rows` /
+`untested_before`, so truncation is a number in every reply rather than something a reader must infer. `deno check`
+clean; deployed via CLI.
+
+**Verified live by readback, not by `ok:true`.** Post-fix invocation: `done_rows 1019, candidate_rows 1023,
+untested_before 4, computed 4, persisted 4, lost 0, survivors 0`, write status **201** (genuine INSERTs, not
+merge-duplicate no-ops). DB confirms: **1,023 fac candidates, 1,023 stage-2 verdicts (977 stage2-killed / 46 thin),
+untested = 0, `trd_forward_candidates` = 0.** The grammar lane is now fully adjudicated end-to-end: **1,468,800 specs →
+1,023 in-sample candidates → 0 through the full gauntlet.** D-070 working. Nothing armed; no capital touched.

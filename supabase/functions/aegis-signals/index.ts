@@ -21,8 +21,13 @@ Deno.serve(async (req) => {
     const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,adj_r2,residual,era_stability,betas`, { headers: H }).then((r) => r.json()).catch(() => []);
     const aMap = new Map<string, A>();
     for (const a of (Array.isArray(attr) ? attr : []) as A[]) aMap.set(a.symbol, a);
-    const raw: Record<string, unknown>[] = (Array.isArray(sig) ? sig : []).map((s: Record<string, unknown>) => {
-      const a = aMap.get(s.symbol as string);
+    const sMap = new Map<string, Record<string, unknown>>();
+    for (const s of (Array.isArray(sig) ? sig : []) as Record<string, unknown>[]) sMap.set(s.symbol as string, s);
+    // build from the UNION of every attributed instrument AND every signalled one — no instrument is shied away from
+    const allSyms = new Set<string>([...aMap.keys(), ...sMap.keys()]);
+    const raw: Record<string, unknown>[] = [...allSyms].map((sym) => {
+      const s = sMap.get(sym) ?? { symbol: sym, lean: null };
+      const a = aMap.get(sym);
       if (!a) return { ...s, understanding: 0, engage: false, gate_reason: "not yet attributed" };
       const drivers = Object.entries(a.betas || {}).map(([f, v]) => ({ f, beta: v.beta, t: v.t })).sort((p, q) => Math.abs(q.t) - Math.abs(p.t)).slice(0, 3);
       const understanding = +Math.max(0, (a.adj_r2 || 0) * (a.era_stability || 0)).toFixed(3);
@@ -31,16 +36,19 @@ Deno.serve(async (req) => {
       const engage = directional && understood;                          // FOLDED GATE — both required
       const gate_reason = engage ? "predict + understand" : !directional ? "no directional edge" : "not understood well enough";
       return { ...s, residual: a.residual, r2: a.r2, adj_r2: a.adj_r2, era_stability: a.era_stability, understanding, drivers, directional, engage, gate_reason };
-    });
+    }).sort((p, q) => Number(q.understanding) - Number(p.understanding));
     const rows: Record<string, unknown>[] = isOperator ? raw : raw.map((s) =>
-      s.engage ? { symbol: s.symbol, asof: s.asof, confidence: s.confidence, residual: s.residual, r2: s.r2, drivers: s.drivers, engage: true, redacted: true, lean: null, why: null, note: "operator-only" } : s);
+      s.engage ? { symbol: s.symbol, asof: s.asof, residual: s.residual, r2: s.r2, adj_r2: s.adj_r2, understanding: s.understanding, drivers: s.drivers, engage: true, redacted: true, lean: null, why: null, gate_reason: s.gate_reason, note: "operator-only" } : s);
     const job = await fetch(`${SB}/rest/v1/trd_compute_jobs?job_type=eq.deep_factor_ic&status=eq.done&select=result,done_at&order=done_at.desc&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
     const grid = Array.isArray(job) && job.length ? job[0].result : null;
     const engaged = rows.filter((r) => r.engage).length;
     const avg = (k: string) => rows.length ? +(rows.reduce((s: number, r) => s + (Number(r[k]) || 0), 0) / rows.length).toFixed(3) : 0;
     return new Response(JSON.stringify({
       ok: true, generated_at: new Date().toISOString(), mode: isOperator ? "operator" : "public",
-      summary: { n: rows.length, engaged, avg_confidence: avg("confidence"), avg_residual: avg("residual"), mean_r2: aMap.size ? +([...aMap.values()].reduce((s, a) => s + a.r2, 0) / aMap.size).toFixed(3) : null },
+      summary: { n: rows.length, engaged, u_threshold: U_THRESH, avg_residual: avg("residual"), avg_understanding: avg("understanding"),
+        mean_r2: aMap.size ? +([...aMap.values()].reduce((s, a) => s + a.r2, 0) / aMap.size).toFixed(3) : null,
+        mean_adj_r2: aMap.size ? +([...aMap.values()].reduce((s, a) => s + (a.adj_r2 || 0), 0) / aMap.size).toFixed(3) : null,
+        understood: rows.filter((r) => Number(r.understanding) >= U_THRESH).length },
       era_grid: grid?.era_grid ?? null, factor: grid?.factor ?? null, mean_ic: grid?.mean_ic ?? null,
       signals: rows,
     }), { headers: cors });

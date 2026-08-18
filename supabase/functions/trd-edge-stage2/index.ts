@@ -39,6 +39,26 @@ async function writeRows(table: string, rows: Record<string, unknown>[], onConfl
     return { table, attempted: rows.length, ok: false, status: r.status, err: (await r.text().catch(() => "")).slice(0, 400) };
   } catch (e) { return { table, attempted: rows.length, ok: false, status: 0, err: String(e).slice(0, 300) }; }
 }
+// D-342 ACCOUNTABILITY: a single `select=...&limit=100000` is NOT a guarantee that you got every row —
+// PostgREST applies its own db-max-rows ceiling server-side and returns a TRUNCATED array with HTTP 200.
+// That is how stage-2 kept re-testing the same head while 4 fac:* candidates sat NEVER tested: the `done`
+// list came back short, so already-verdicted edges looked untested and crowded the batch. Same D-300b class
+// (a 200 that did not do the work). This pages explicitly with Range until a short page proves the end,
+// and the caller REPORTS the counts so truncation can never hide again.
+const PAGE = 1000;
+async function fetchAllPaged<T>(pathAndQuery: string, cap = 200_000): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; from < cap; from += PAGE) {
+    const r = await fetch(`${SB}/rest/v1/${pathAndQuery}`, {
+      headers: { ...H, Range: `${from}-${from + PAGE - 1}`, "Range-Unit": "items" },
+    }).then((x) => x.json()).catch(() => []);
+    const page = Array.isArray(r) ? (r as T[]) : [];
+    out.push(...page);
+    if (page.length < PAGE) break;
+  }
+  return out;
+}
+
 // read-back: how many of the edges we just claimed to write are ACTUALLY in the table now
 async function countPersisted(table: string, edges: string[]): Promise<number> {
   if (!edges.length) return 0;
@@ -118,10 +138,14 @@ SERVE(async (req) => {
     // ACCOUNTABILITY FIX (D-303b): fetch the WHOLE candidate set (bounded, ~hundreds), not top batch*3 — else once
     // the top few are tested the filtered todo is always empty and stage-2 silently stalls at the high-abs_r head
     // while hundreds of lower-ranked candidates never get tested (returns ok:true "all tested" — a false all-clear).
-    const done = await fetch(`${SB}/rest/v1/trd_stage2_results?select=edge&limit=100000`, { headers: H }).then((r) => r.json()).catch(() => []);
-    const doneSet = new Set((Array.isArray(done) ? done : []).map((r: { edge: string }) => r.edge));
-    const cands = await fetch(`${SB}/rest/v1/trd_edge_scorecard?edge=like.fac:*&select=edge,abs_r&order=abs_r.desc&limit=100000`, { headers: H }).then((r) => r.json()).catch(() => []);
-    const todo = (Array.isArray(cands) ? cands : []).filter((c: { edge: string }) => !doneSet.has(c.edge)).slice(0, batch) as { edge: string }[];
+    const done = await fetchAllPaged<{ edge: string }>("trd_stage2_results?select=edge&order=edge.asc");
+    const doneSet = new Set(done.map((r) => r.edge));
+    const cands = await fetchAllPaged<{ edge: string; abs_r: number }>("trd_edge_scorecard?edge=like.fac:*&select=edge,abs_r&order=abs_r.desc");
+    const untested = cands.filter((c) => !doneSet.has(c.edge));
+    // NEVER-TESTED candidates only — a batch that wraps to the high-abs_r head starves the tail forever.
+    // When the untested set is empty the call returns the honest "all candidates stage-2 tested" no-op below;
+    // it does NOT silently re-test the head and report those as fresh work (which is what it was doing).
+    const todo = untested.slice(0, batch) as { edge: string }[];
     if (!todo.length) return new Response(JSON.stringify({ ok: true, done: "all candidates stage-2 tested", nTrials }), { headers: cors });
 
     // group by market → fetch bars once; also fetch each spec from the queue
@@ -171,6 +195,7 @@ SERVE(async (req) => {
     return new Response(JSON.stringify({
       ok: healthy, nTrials, computed: stageRows.length, persisted, lost,
       survivors: results.length, survivorRows: results, candidates_total: remain,
+      done_rows: done.length, candidate_rows: cands.length, untested_before: untested.length,
       writes, writeErrors: writeErrors.length ? writeErrors : undefined,
     }, null, 2), { status: healthy ? 200 : 500, headers: cors });
   } catch (e) { return new Response(JSON.stringify({ ok: false, err: String(e).slice(0, 300) }), { status: 500, headers: cors }); }
