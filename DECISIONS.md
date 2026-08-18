@@ -7211,3 +7211,20 @@ universe can be checked against the delisted membership. (Full price-LEVEL corre
 AV 25/day; a bounded follow-on.) GEX: HONESTLY BLOCKED on the free AV tier — HISTORICAL_OPTIONS is premium/heavily-throttled
 (25 req/day can't power options chains, which need dozens of calls/symbol/day). GEX needs AV premium (~$50/mo) or Databento
 OPRA (paid, per-use). Reported, not faked. Insider backfill cron still accumulating in parallel (D-349).
+
+---
+
+## D-351 — GEX completed FREE (no OPRA spend); the engine's STRONGEST, most stable signal — as a VOL REGIME, not a trade
+Operator: build GEX on Databento OPRA OR find free. FREE-FIRST WON: SqueezeMetrics DIX.csv carries GEX + DIX daily (2011→,
+keyless — already wired in trd-gex). Zero OPRA spend. `trd-gex-ic` tested GEX/DIX vs SPY, deflated + per-era (n=3588,
+2012-2026):
+1. **GEX_z → forward 5d realized vol (REGIME): IC −0.49, t=−34, STABLE EVERY ERA** (2011-15 t−16, 2016-19 t−21, COVID t−9,
+   2022-26 t−24). High dealer gamma suppresses vol — the strongest, most robust relationship the engine has ever measured.
+   It is a REGIME signal (predicts vol), not a directional trade — but it's exactly the engagement-gate conditioning input
+   (high-gamma → low vol → mean-reversion works; short-gamma → high vol → trend). The north-star "know WHEN to engage".
+2. **GEX_z → next-day return (DIRECTIONAL): IC −0.058 t=−3.49 pooled but DECAYING** — high gamma → mild fade/mean-reversion,
+   significant 2011-19 (t−2.9/−2.4) but arbitraged to t=−0.64 in 2022-26. A real, small, decayed anomaly. Honest: not a
+   standalone tradeable edge today, but a genuine conditioning tilt.
+3. **DIX_z → return: NULL** (t=1.36).
+VERDICT: GEX is the first signal to clear every bar decisively — as a vol-regime GATE. It doesn't light the directional
+trade layer by itself, but it's the conditioning variable that makes the engagement gate real. Free, keyless, 14yr, every era.
