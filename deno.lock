@@ -1,5 +1,13 @@
 {
   "version": "5",
+  "specifiers": {
+    "jsr:@zip-js/zip-js@2.7.52": "2.7.52"
+  },
+  "jsr": {
+    "@zip-js/zip-js@2.7.52": {
+      "integrity": "c8d9fd23b1965fdf58071e886b3b8dbd32a68f780ccb60cb256cfc41b4423e32"
+    }
+  },
   "remote": {
     "https://deno.land/std@0.132.0/_deno_unstable.ts": "23a1a36928f1b6d3b0170aaa67de09af12aa998525f608ff7331b9fb364cbde6",
     "https://deno.land/std@0.132.0/_util/assert.ts": "e94f2eb37cebd7f199952e242c77654e43333c1ac4c5c700e929ea3aa5489f74",

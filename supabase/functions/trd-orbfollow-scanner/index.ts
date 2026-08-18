@@ -49,11 +49,29 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     const positions=await fetch(`${PAPER}/v2/positions`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
     const oo=await fetch(`${PAPER}/v2/orders?status=open&limit=500`,{headers:AH}).then(r=>r.json()).catch(()=>[]);
     const flat:string[]=[];
+    // exit price per symbol from the live position (current_price) BEFORE we flatten it — used to write realized_pnl
+    const pxBySym=new Map<string,number>();
+    for(const p of (Array.isArray(positions)?positions:[]) as {symbol:string,current_price?:string}[])if(p.current_price!=null)pxBySym.set(p.symbol,+p.current_price);
     for(const p of (Array.isArray(positions)?positions:[]) as {symbol:string}[]){if(!uni.has(p.symbol))continue;
       for(const o of (Array.isArray(oo)?oo:[]) as {id:string,symbol:string}[])if(o.symbol===p.symbol)await fetch(`${PAPER}/v2/orders/${o.id}`,{method:"DELETE",headers:AH}).catch(()=>{});
       const ok=(await fetch(`${PAPER}/v2/positions/${p.symbol}?percentage=100`,{method:"DELETE",headers:AH}).catch(()=>null))?.ok;if(ok)flat.push(p.symbol);}
-    await fetch(`${SB}/rest/v1/trd_trades?edge=eq.orbfollow&status=eq.open`,{method:"PATCH",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({status:"closed",exit_at:new Date().toISOString()})}).catch(()=>{});
-    await beat(`eod flatten: ${flat.length} closed`,"trd-orbfollow-scanner-eod");
+    // PER-TRADE close with exit_px + realized_pnl (was a blind bulk PATCH with no P&L → allocator-blind, D-300b silent-write class).
+    // Fetch each open orbfollow row; exit at its position's current_price (bracket already gone → fall back to a fresh 5m close).
+    const flatSet=new Set(flat), livePos=new Set(pxBySym.keys());
+    const openTr=await fetch(`${SB}/rest/v1/trd_trades?edge=eq.orbfollow&status=eq.open&select=id,sym,side,entry_px,qty`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+    let pnlWritten=0,leftOpen=0;
+    for(const t of (Array.isArray(openTr)?openTr:[]) as {id:number,sym:string,side:string,entry_px:number,qty:number}[]){
+      // FAIL-CLOSED (D-360): only mark the DB row closed if the broker position is actually gone. A live position we did
+      // NOT successfully flatten (in pxBySym but not in flatSet) stays status='open' so it's tracked + retried — marking it
+      // closed is exactly what created 47 orphans. No live position → already flat → close it (exit via a fresh 5m bar).
+      if(livePos.has(t.sym)&&!flatSet.has(t.sym)){leftOpen++;continue;}
+      let xpx=pxBySym.get(t.sym); // captured pre-flatten for the ones we just closed
+      if(xpx==null){const b=await bars5m(t.sym);xpx=b.length?b[b.length-1].c:undefined;}
+      const patch:Record<string,unknown>={status:"closed",exit_at:new Date().toISOString()};
+      if(xpx!=null){patch.exit_px=xpx;patch.realized_pnl=+((t.side==="long"?xpx-(+t.entry_px):(+t.entry_px)-xpx)*(+t.qty||0)).toFixed(2);pnlWritten++;}
+      await fetch(`${SB}/rest/v1/trd_trades?id=eq.${t.id}`,{method:"PATCH",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify(patch)}).catch(()=>{});
+    }
+    await beat(`eod flatten: ${flat.length} broker-closed, ${pnlWritten} pnl-written, ${leftOpen} left-open(flatten-failed)`,"trd-orbfollow-scanner-eod");
     return new Response(JSON.stringify({ok:true,eod:true,flattened:flat},null,2),{headers:cors});
   }
   const arm=await fetch(`${SB}/rest/v1/trd_exec_arm?id=eq.paper&select=armed`,{headers:H}).then(r=>r.json()).catch(()=>[]);

@@ -30,11 +30,14 @@ Deno.serve(async(req)=>{const cors={"Content-Type":"application/json","Access-Co
     const b=await bnb(bsym);if(b.length<10){out.push({sym:psym,skip:"no bars"});continue;}
     const px=b[b.length-1].c;
     // MANAGE open position (poll-bracket): stop / target / 48h
-    const openRows=await fetch(`${SB}/rest/v1/trd_trades?edge=eq.crypto-orb&sym=eq.${psym}&status=eq.open&select=id,side,entry_px,stop,target,entry_at&order=entry_at.desc&limit=1`,{headers:H}).then(r=>r.json()).catch(()=>[]);
+    const openRows=await fetch(`${SB}/rest/v1/trd_trades?edge=eq.crypto-orb&sym=eq.${psym}&status=eq.open&select=id,side,entry_px,qty,stop,target,entry_at&order=entry_at.desc&limit=1`,{headers:H}).then(r=>r.json()).catch(()=>[]);
     const held=Array.isArray(openRows)&&openRows.length?openRows[0]:null;
     if(held){const age=(Date.now()-new Date(held.entry_at).getTime())/36e5;
       const hitStop=held.side==="long"?px<=held.stop:px>=held.stop, hitTgt=held.side==="long"?px>=held.target:px<=held.target;
-      if(hitStop||hitTgt||age>=48){if(!dbg){await closePos(psym);await fetch(`${SB}/rest/v1/trd_trades?id=eq.${held.id}`,{method:"PATCH",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({status:"closed",exit_px:px,exit_at:new Date().toISOString()})}).catch(()=>{});}
+      if(hitStop||hitTgt||age>=48){
+        // realized P&L on exit — MUST write it (the allocator reads realized_pnl; a null read as "no edge measured", D-300b silent-write class)
+        const pnl=(held.side==="long"?px-(+held.entry_px):(+held.entry_px)-px)*(+held.qty||0);
+        if(!dbg){await closePos(psym);await fetch(`${SB}/rest/v1/trd_trades?id=eq.${held.id}`,{method:"PATCH",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify({status:"closed",exit_px:px,exit_at:new Date().toISOString(),realized_pnl:+pnl.toFixed(2)})}).catch(()=>{});}
         out.push({sym:psym,action:"EXIT",reason:hitStop?"stop":hitTgt?"target":"48h",px});continue;}
       out.push({sym:psym,action:"hold",px,age:+age.toFixed(1)});continue;}
     // ENTRY: after the window, on the first break, once/day

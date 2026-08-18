@@ -7369,3 +7369,31 @@ HONEST OUTCOME: the audit the operator demanded found a real mistake (overnight)
 bug earlier this turn (fundamentals CIK 1000-row truncation, 668→4060). My nulls are now audited: the survivors are
 GEX→vol (sizing) + the overnight premium (real, marginal-after-cost); the momentum family is honestly under-powered pending
 broad equity price coverage; everything else is trustworthy null. Self-certification is not enough — the external check paid off.
+
+---
+
+## D-360 — P&L silent-write bug (operator-flagged) → uncovered a 47-position DB/broker divergence; all root-caused + fixed
+Operator's Portfolio Manager report flagged: orbfollow closes recorded no `realized_pnl` (157 closed / 2 with P&L), so the
+allocator was BLIND on the highest-volume edge. Investigation found a **cascade of the same silent-write class across THREE
+closers**, plus a live-account divergence hiding behind it:
+
+1. **Three closers wrote no P&L on exit** — `trd-crypto-orb-exec` (exit_px but no realized_pnl), `trd-orbfollow-scanner`
+   EOD (blind bulk PATCH: status+exit_at only), `trd-risk-officer` trim (status+exit_at only). FIXED: each now computes
+   `realized_pnl = (long? exit-entry : entry-exit)·qty` on close (risk-officer uses the position's own `unrealized_pl`,
+   exact at flat). A machine guard (`trd-pnl-reconcile` default mode + daily cron `trd_pnl_guard_daily`) goes red if any
+   freshly-closed row lacks realized_pnl.
+2. **Backfill:** `trd-pnl-reconcile` reconstructs historical exits from Alpaca's real fill log (account/activities/FILL),
+   qty-weighting the closing fills. 142/160 recovered; 32 more resolved as never-filled→$0 (orders logged but rejected
+   post-accept = no position = measured $0, not a guess); the rest were still-open (see #3). Fail-closed: no exit found →
+   left null, never guessed.
+3. **ROOT CAUSE — 47 orphan positions / $124k gross (> $80k cap), DB said "closed":** the closers marked DB rows closed
+   EVEN WHEN the broker DELETE failed (403). The 403 was because `closeSym` deleted the position without first canceling
+   the resting bracket/stop orders → Alpaca holds the shares (qty_available=0) → forbids the close. FIXED: (a) cancel open
+   orders before the position DELETE (matching the EOD closer); (b) mark DB closed ONLY on a 2xx broker close — a failed
+   close leaves status='open' so it's tracked + retried, never hidden. Reopened the 18 mislabeled-closed rows to their true
+   'open' state. Fired the fixed risk-officer: 47→17 positions, $124k→$39k gross (under cap), all closes writing real P&L.
+
+HONEST VERDICT now visible to the allocator (was null): **orbfollow −$219.94 over 152 closes (avg −$1.45/trade) — the
+broadly-deployed "validated" ORB edge is NET-NEGATIVE in live paper.** crypto-orb +$43.63/9. This is precisely the truth the
+silent-write bug was hiding: the executor instrumentation, not a backtest, is what caught a losing live edge. Guard now
+green (0 missing P&L). Files: trd-crypto-orb-exec, trd-orbfollow-scanner, trd-risk-officer, trd-pnl-reconcile (new).

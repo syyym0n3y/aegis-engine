@@ -20,6 +20,10 @@ const GLOBAL_MAX = 24;           // whole-account position ceiling
 const GROSS_NOTIONAL_CAP = 80000; // whole-account gross $ exposure ceiling (equity ~$102k)
 
 async function closeSym(sym: string) {
+  // Cancel any resting bracket/stop orders FIRST — Alpaca holds the shares for open orders (qty_available=0), so a
+  // DELETE-position with orders live returns 403 (this is exactly why 47 positions stranded, D-360). Cancel, then flat.
+  const oo = await fetch(`${PAPER}/v2/orders?status=open&symbols=${encodeURIComponent(sym)}&limit=100`, { headers: AH }).then((r) => r.json()).catch(() => []);
+  for (const o of (Array.isArray(oo) ? oo : []) as { id: string }[]) await fetch(`${PAPER}/v2/orders/${o.id}`, { method: "DELETE", headers: AH }).catch(() => {});
   const r = await fetch(`${PAPER}/v2/positions/${encodeURIComponent(sym)}?percentage=100`, { method: "DELETE", headers: AH });
   return r.status;
 }
@@ -39,6 +43,9 @@ Deno.serve(async (req) => {
 
     const grossNotional = pos.reduce((s: number, p: Record<string, string>) => s + Math.abs(+p.market_value), 0);
     const nPos = pos.length;
+    // broker sym → full position (carries current_price + unrealized_pl → authoritative P&L at trim time, D-360)
+    const posBySym = new Map<string, Record<string, string>>();
+    for (const p of pos as Record<string, string>[]) posBySym.set(p.symbol, p);
     // group broker positions by attributed edge (or __orphan__)
     const byEdge = new Map<string, { sym: string; mv: number; entry_at: string }[]>();
     for (const p of pos as Record<string, string>[]) {
@@ -74,7 +81,17 @@ Deno.serve(async (req) => {
       if (!dry) {
         status = await closeSym(t.sym);
         const row = symToRow.get(t.sym);
-        if (row) await fetch(`${SB}/rest/v1/trd_trades?id=eq.${row.id}`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: "closed", exit_at: new Date().toISOString() }) }).catch(() => {});
+        // ONLY mark the DB row closed if the BROKER close actually succeeded (2xx). Marking closed on a failed DELETE is
+        // exactly what created 47 orphan positions (D-360): the DB said "closed" while the live position kept running,
+        // hidden from every risk check. A failed close leaves status='open' so the next tick retries — fail-closed.
+        if (row && status >= 200 && status < 300) {
+          // a trim is a close → MUST write exit_px + realized_pnl (null P&L = the D-300b silent-write bug that blinded the
+          // allocator). Use the position's own current_price + unrealized_pl — exact at the moment of the market flat.
+          const pp = posBySym.get(t.sym);
+          const patch: Record<string, unknown> = { status: "closed", exit_at: new Date().toISOString() };
+          if (pp) { patch.exit_px = +(+pp.current_price).toFixed(4); patch.realized_pnl = +(+pp.unrealized_pl).toFixed(2); }
+          await fetch(`${SB}/rest/v1/trd_trades?id=eq.${row.id}`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify(patch) }).catch(() => {});
+        }
         await fetch(`${SB}/rest/v1/trd_risk_actions`, { method: "POST", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ sym: t.sym, edge: t.edge, reason: t.reason, broker_status: status, acted_at: new Date().toISOString() }) }).catch(() => {});
       }
       actions.push({ sym: t.sym, edge: t.edge, reason: t.reason, broker_status: status });
