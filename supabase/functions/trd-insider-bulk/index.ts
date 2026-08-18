@@ -36,9 +36,12 @@ Deno.serve(async (req) => {
     const buf = new Uint8Array(await r.arrayBuffer());
     const zr = new ZipReader(new Uint8ArrayReader(buf));
     const entries = await zr.getEntries();
-    const subTxt = await readEntry(entries, "SUBMISSION.TSV"), ndTxt = await readEntry(entries, "NONDERIV_TRANS.TSV");
+    const subTxt = await readEntry(entries, "SUBMISSION.TSV"), ndTxt = await readEntry(entries, "NONDERIV_TRANS.TSV"), ownTxt = await readEntry(entries, "REPORTINGOWNER.TSV");
     await zr.close();
     if (!subTxt || !ndTxt) return new Response(JSON.stringify({ ok: false, err: "missing tsv", files: entries.map((e) => e.filename) }), { headers: cors });
+    // accession → reporting owner CIK (for the opportunistic-vs-routine classifier)
+    const own2 = new Map<string, string>();
+    if (ownTxt) { const ow = tsv(ownTxt); const oa = ow.hdr.indexOf("ACCESSION_NUMBER"), ock = ow.hdr.indexOf("RPTOWNERCIK"); for (const row of ow.rows) { const acc = row[oa]; const cik = (row[ock] || "").trim(); if (acc && cik && !own2.has(acc)) own2.set(acc, cik); } }
     // accession → {ticker, filing_date}
     const sub = tsv(subTxt); const ci = (h: string) => sub.hdr.indexOf(h);
     const acc2 = new Map<string, { tk: string; fd: string }>();
@@ -54,7 +57,7 @@ Deno.serve(async (req) => {
       const key = meta.tk + "|" + acc; const cur = byKey.get(key);
       if (cur) { cur.shares += sh; } else byKey.set(key, { ticker: meta.tk, accession: acc, disclosed_date: meta.fd || "", trade_date: row[iDt] || "", shares: sh, price: px });
     }
-    const rows = [...byKey.values()].map((b) => ({ ticker: b.ticker, accession: b.accession, disclosed_date: pdate(b.disclosed_date), trade_date: pdate(b.trade_date), value_usd: +(b.shares * b.price).toFixed(0), shares: b.shares, price: b.price, owner: null, is_officer: null, updated_at: new Date().toISOString() }));
+    const rows = [...byKey.values()].map((b) => ({ ticker: b.ticker, accession: b.accession, disclosed_date: pdate(b.disclosed_date), trade_date: pdate(b.trade_date), value_usd: +(b.shares * b.price).toFixed(0), shares: b.shares, price: b.price, owner_cik: own2.get(b.accession) ?? null, updated_at: new Date().toISOString() }));
     let stored = 0;
     for (let i = 0; i < rows.length; i += 1000) { await fetch(`${SB}/rest/v1/trd_insider?on_conflict=ticker,accession`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows.slice(i, i + 1000)) }).catch(() => {}); stored += Math.min(1000, rows.length - i); }
     await fetch(`${SB}/rest/v1/rpc/trd_beat`, { method: "POST", headers: H, body: JSON.stringify({ p_fn: "trd-insider-bulk", p_outcome: `${year}q${q}: ${stored} buys from ${nd.rows.length} txns` }) }).catch(() => {});

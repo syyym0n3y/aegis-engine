@@ -38,12 +38,45 @@ async function getIntraday(sym: string): Promise<number[][] | null> {
 function iret(bars: number[][]): Map<number, number> {
   const m = new Map<number, number>(); for (let i = 1; i < bars.length; i++) { const p0 = bars[i - 1][4], p1 = bars[i][4]; if (p0 > 0 && Number.isFinite(p1)) m.set(bars[i][0], p1 / p0 - 1); } return m;
 }
+// JOB: strategy_sweep — test the FREE documented anomaly battery through the era-disaggregated engine at once. Per
+// instrument×date computes each signal (from daily OHLC) + forward 21d return; pools per era; rank-IC + deflation. One pass
+// tests trend, momentum variants, 52wk-high, MAX/lottery, short-reversal, low-vol, overnight — honest, most will be null.
+async function runStrategySweep(params: { symbols: string[]; horizon?: number }) {
+  const HZ = params.horizon ?? 21;
+  const SIGS = ["mom_12_1", "trend_200", "high_52w", "max_lottery", "rev_5d", "lowvol_60", "overnight"] as const;
+  const acc: Record<string, Record<string, { x: number[]; y: number[] }>> = {}; // sig → era → {x,y}
+  for (const s of SIGS) acc[s] = {};
+  for (const sym of params.symbols) {
+    const b = await getBars(sym); if (!b || b.length < 300) continue;
+    const o = b.map((r) => r[1]), c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
+    for (let i = 260; i < b.length - HZ; i++) {
+      const fwd = c[i + HZ] / c[i] - 1; if (!Number.isFinite(fwd)) continue; const era = eraOf(ts[i]);
+      const win = c.slice(i - 21, i); const rets = []; for (let k = 1; k < win.length; k++) rets.push(win[k] / win[k - 1] - 1);
+      const v60 = c.slice(i - 60, i); const r60: number[] = []; for (let k = 1; k < v60.length; k++) r60.push(v60[k] / v60[k - 1] - 1);
+      const sd = r60.length ? Math.sqrt(r60.reduce((a, x) => a + x * x, 0) / r60.length) : 0;
+      const sig: Record<string, number> = {
+        mom_12_1: c[i - 21] / c[i - 252] - 1,
+        trend_200: c[i] / (c.slice(i - 200, i).reduce((a, x) => a + x, 0) / 200) - 1,
+        high_52w: c[i] / Math.max(...c.slice(i - 252, i + 1)),
+        max_lottery: -Math.max(...rets),            // lottery: high max → lower fwd (sign −)
+        rev_5d: -(c[i] / c[i - 5] - 1),              // short-term reversal (sign −)
+        lowvol_60: -sd,                              // low-vol: high vol → lower fwd (sign −)
+        overnight: (o[i] - c[i - 1]) / c[i - 1],     // overnight gap
+      };
+      for (const s of SIGS) { const val = sig[s]; if (!Number.isFinite(val)) continue; (acc[s][era] ||= { x: [], y: [] }); acc[s][era].x.push(val); acc[s][era].y.push(fwd); (acc[s].ALL ||= { x: [], y: [] }); acc[s].ALL.x.push(val); acc[s].ALL.y.push(fwd); } // deno-lint-ignore
+    }
+  }
+  const out: Record<string, unknown>[] = [];
+  for (const s of SIGS) { const eras = Object.entries(acc[s]).map(([era, d]) => ({ era, ...rankIC(d.x, d.y) })).filter((e) => e.n > 50); out.push({ signal: s, cells: eras }); }
+  return { result: { factor: "strategy_sweep", n_symbols: params.symbols.length, battery: out } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
-async function runInsiderIC(params: { limit?: number; horizon?: number; pace_ms?: number }) {
+async function runInsiderIC(params: { limit?: number; horizon?: number; pace_ms?: number; opportunistic?: boolean }) {
   const HZ = params.horizon ?? 21, PACE = params.pace_ms ?? 400;
-  const sr = await fetch(`${BROKER}?insider=${params.limit ?? 300}`).then((r) => r.json()).catch(() => null);
+  const sr = await fetch(`${BROKER}?insider=${params.limit ?? 300}${params.opportunistic ? "&opp=1" : ""}`).then((r) => r.json()).catch(() => null);
   const sample = (sr?.sample ?? []) as { ticker: string; dates: string[] }[];
   const fwd: number[] = []; let nT = 0, posT = 0, covered = 0;
   const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
@@ -62,7 +95,7 @@ async function runInsiderIC(params: { limit?: number; horizon?: number; pace_ms?
   const sd = n > 1 ? Math.sqrt(fwd.reduce((s, x) => s + (x - m) ** 2, 0) / (n - 1)) : 0;
   const t = n > 1 && sd > 0 ? m / (sd / Math.sqrt(n)) : 0;
   const win = n ? 100 * fwd.filter((x) => x > 0).length / n : 0;
-  return { result: { factor: "insider_buys", n_events: n, n_tickers: nT, sample_size: sample.length, coverage: covered, mean_fwd_ret_pct: +(100 * m).toFixed(3), t_stat: +t.toFixed(2), win_pct: +win.toFixed(0), breadth: `${posT}/${nT}`, horizon_days: HZ } };
+  return { result: { factor: params.opportunistic ? "insider_buys_opportunistic" : "insider_buys", n_events: n, n_tickers: nT, sample_size: sample.length, coverage: covered, mean_fwd_ret_pct: +(100 * m).toFixed(3), t_stat: +t.toFixed(2), win_pct: +win.toFixed(0), breadth: `${posT}/${nT}`, horizon_days: HZ } };
 }
 
 // JOB: intraday_attribution — take attribution BELOW daily. Regress a stock's MINUTE returns onto market (SPY) + its own
@@ -255,6 +288,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "attribution") out = await runAttribution(job.params);
     else if (job.job_type === "intraday_attribution") out = await runIntradayAttribution(job.params);
     else if (job.job_type === "insider_ic") out = await runInsiderIC(job.params);
+    else if (job.job_type === "strategy_sweep") out = await runStrategySweep(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));

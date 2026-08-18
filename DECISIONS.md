@@ -7319,3 +7319,19 @@ REPORTINGOWNER table + per-owner history — a classifier, free, in the same pip
 decisively null. DIRECTIONAL HUNT COMPLETE: every candidate falsified/null; GEX→vol (sizing) the sole survivor. Engine at
 its designed terminal state (D-070), now with the insider candidate exhaustively tested, not deferred. Stack fully mapped
 (docs/STACK.md) + provenance complete (trd_lineage 1300 rows).
+
+---
+
+## D-357 — opportunistic-insider classifier + systematic free-anomaly SWEEP (contextual engine); all small/null
+Operator: build the opportunistic classifier + test everything testable through the contextual engine + account for unknowns.
+UNKNOWNS accounted (honest ceiling): markets are efficient (why everything's null); the real levers are DATA-completeness
+(survivorship-free PRICES, deep intraday, alt-data — we lack), FEATURES (new forces), METHODOLOGY (cross-sectional/combining)
+— no single lever is 10^6x. "Test everything" scoped to the DOCUMENTED anomaly universe (research agent enumerated it).
+(1) OPPORTUNISTIC CLASSIFIER: captured REPORTINGOWNER owner_cik in the bulk ingest (re-ingested all quarters);
+`trd_classify_opportunistic()` tags routine (same-month-≥3yr) vs opportunistic → 147,655 opportunistic / 129,165 routine.
+Opportunistic-only insider IC running (worker-paced). (2) STRATEGY SWEEP (`strategy_sweep` worker job, 49 instruments,
+512k obs, per-era + deflated): momentum +0.027, reversal +0.030, MAX-lottery −0.037, 52wk-high −0.033, vol −0.046, trend
+−0.017, OVERNIGHT +0.0005 (null). ALL small ICs; t-stats INFLATED by overlapping-window+cross-sectional correlation (trust
+magnitude not t). No large tradeable directional edge — the documented anomalies show up faintly, consistent with D-070.
+The contextual engine now tests any signal battery era-disaggregated in one pass; the honest verdict remains: understanding
+complete, no directional edge, GEX-vol sizing the sole survivor.
