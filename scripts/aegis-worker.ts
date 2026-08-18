@@ -81,17 +81,34 @@ async function buildForces(cluster: string): Promise<{ fret: Map<string, Map<num
     fret.set("GOLD", await rm("GC=F", "ret")); fret.set("OIL", await rm("CL=F", "ret"));
     return { fret, keys: ["SHORT", "LONG", "RISK", "GOLD", "OIL"] };
   }
-  if (cluster === "commodity") {
-    // commodities priced in USD → the broad DOLLAR is the dominant external force; plus real-rate demand, risk, growth.
-    // DOLLAR = leave-out USD-strength basket (external to any single commodity). Term-structure/roll is a return component,
-    // not an external force (needs the futures curve → Databento); we attribute the tradeable external drivers here.
+  // broad USD-strength basket (external dollar factor) — shared by commodity + foreign-index clusters.
+  const buildDollar = async () => {
     const pairs: [string, number][] = [["EURUSD=X", -1], ["GBPUSD=X", -1], ["AUDUSD=X", -1], ["NZDUSD=X", -1], ["JPY=X", 1], ["CAD=X", 1], ["CHF=X", 1], ["MXN=X", 1]];
     const legs: Map<number, number>[] = [];
     for (const [sym, sgn] of pairs) { const m = await rm(sym, "ret"); const s = new Map<number, number>(); for (const [d, v] of m) s.set(d, sgn * v); legs.push(s); }
     const dollar = new Map<number, number>(); const allDays = new Set<number>(); for (const l of legs) for (const d of l.keys()) allDays.add(d);
     for (const d of allDays) { let sum = 0, c = 0; for (const l of legs) { const v = l.get(d); if (v != null) { sum += v; c++; } } if (c >= 4) dollar.set(d, sum / c); }
-    fret.set("DOLLAR", dollar); fret.set("RATES", await rm("^TNX", "diff")); fret.set("RISK", await rm("^VIX", "ret")); fret.set("MKT", await rm("^GSPC", "ret"));
+    return dollar;
+  };
+  if (cluster === "commodity") {
+    // commodities priced in USD → broad DOLLAR dominates; plus real-rate demand, risk, growth. Term-structure/roll is a
+    // return component (needs the futures curve → Databento), not an external force.
+    fret.set("DOLLAR", await buildDollar()); fret.set("RATES", await rm("^TNX", "diff")); fret.set("RISK", await rm("^VIX", "ret")); fret.set("MKT", await rm("^GSPC", "ret"));
     return { fret, keys: ["DOLLAR", "RATES", "RISK", "MKT"] };
+  }
+  if (cluster === "foreign_index") {
+    // foreign indices FOLLOW Wall Street (US lead) + global risk + the USD channel + the global rate anchor. NOTE: true
+    // LOCAL-rate forces (JGB/Bund/Gilt) are NOT keyless — that's a Databento/paid gap; US ^TNX is the global rate proxy here.
+    fret.set("US_MKT", await rm("^GSPC", "ret")); fret.set("RISK", await rm("^VIX", "ret")); fret.set("DOLLAR", await buildDollar()); fret.set("RATES", await rm("^TNX", "diff"));
+    return { fret, keys: ["US_MKT", "RISK", "DOLLAR", "RATES"] };
+  }
+  if (cluster === "equity_sector") {
+    // single stocks decompose into MARKET + own-SECTOR + idiosyncratic. Global forces here; the per-target own-sector force
+    // is added in the attribution loop (SECTOR_MAP). Raises R2 and splits the "why" into market vs sector vs stock-specific.
+    fret.set("MKT", await rm("^GSPC", "ret")); fret.set("RATES", await rm("^TNX", "diff")); fret.set("VOL", await rm("^VIX", "ret"));
+    const rut = await rm("^RUT", "ret"), g = fret.get("MKT")!; const sz = new Map<number, number>();
+    for (const [d, rv] of rut) { const gv = g.get(d); if (gv != null) sz.set(d, rv - gv); } fret.set("SIZE", sz);
+    return { fret, keys: ["MKT", "RATES", "VOL", "SIZE"] };
   }
   fret.set("MKT", await rm("^GSPC", "ret")); fret.set("RATES", await rm("^TNX", "diff")); fret.set("VOL", await rm("^VIX", "ret"));
   fret.set("OIL", await rm("CL=F", "ret")); fret.set("GOLD", await rm("GC=F", "ret"));
@@ -115,6 +132,7 @@ function matInv(A: number[][]): number[][] | null {
   return M.map((r) => r.slice(n));
 }
 function ols(Y: number[], X: number[][]) { // X rows already include leading 1 (intercept)
+  if (!Y.length || !X.length || !X[0]) return null;
   const n = Y.length, p = X[0].length; if (n < p + 10) return null;
   const XtX = Array.from({ length: p }, () => new Array(p).fill(0)), Xty = new Array(p).fill(0);
   for (let i = 0; i < n; i++) { for (let a = 0; a < p; a++) { Xty[a] += X[i][a] * Y[i]; for (let b = 0; b < p; b++) XtX[a][b] += X[i][a] * X[i][b]; } }
@@ -129,15 +147,21 @@ function ols(Y: number[], X: number[][]) { // X rows already include leading 1 (
 async function runAttribution(params: { targets: string[]; cluster?: string }) {
   const cluster = params.cluster || "equity";
   const { fret, keys: FK } = await buildForces(cluster);
+  const SECTOR_MAP: Record<string, string> = { AAPL: "XLK", MSFT: "XLK", INTC: "XLK", CSCO: "XLK", ORCL: "XLK", IBM: "XLK", JPM: "XLF", AXP: "XLF", XOM: "XLE", CVX: "XLE", JNJ: "XLV", AMGN: "XLV", PG: "XLP", KO: "XLP", WMT: "XLP", MCD: "XLY", DIS: "XLY", HD: "XLY", NKE: "XLY", CAT: "XLI", BA: "XLI", MMM: "XLI", GE: "XLI", T: "XLC", VZ: "XLC" };
+  const secCache = new Map<string, Map<number, number>>();
+  const getSec = async (etf: string) => { if (!secCache.has(etf)) { const b = await getBars(etf); secCache.set(etf, b ? retMap(b, "ret") : new Map()); } return secCache.get(etf)!; };
   const attribution: Record<string, unknown>[] = [];
   const asof = new Date().toISOString().slice(0, 10);
   for (const sym of params.targets) {
     const b = await getBars(sym); if (!b || b.length < 300) continue; const tr = retMap(b, "ret");
+    const secEtf = cluster === "equity_sector" ? SECTOR_MAP[sym] : undefined;   // own-sector force, per target
+    const secRet = secEtf ? await getSec(secEtf) : undefined;
+    const FKL = secRet ? [...FK, "SECTOR"] : FK;
     const days: number[] = [], Y: number[] = [], X: number[][] = [], yrs: number[] = [];
-    for (const [d, r] of tr) { const row = [1]; let ok = true; for (const key of FK) { const fv = fret.get(key)?.get(d); if (fv == null) { ok = false; break; } row.push(fv); } if (ok) { days.push(d); Y.push(r); X.push(row); yrs.push(new Date(d * 86400 * 1000).getUTCFullYear()); } }
+    for (const [d, r] of tr) { const row = [1]; let ok = true; for (const key of FK) { const fv = fret.get(key)?.get(d); if (fv == null) { ok = false; break; } row.push(fv); } if (ok && secRet) { const sv = secRet.get(d); if (sv == null) ok = false; else row.push(sv); } if (ok) { days.push(d); Y.push(r); X.push(row); yrs.push(new Date(d * 86400 * 1000).getUTCFullYear()); } }
     const fit = ols(Y, X); if (!fit) continue;
-    const p = FK.length, adj = +(1 - (1 - fit.r2) * (fit.n - 1) / (fit.n - p - 1)).toFixed(4); // ADJUSTED R2 — penalizes added forces
-    const betas: Record<string, unknown> = {}; FK.forEach((key, i) => betas[key] = { beta: +fit.beta[i + 1].toFixed(3), t: fit.t[i + 1] });
+    const p = FKL.length, adj = +(1 - (1 - fit.r2) * (fit.n - 1) / (fit.n - p - 1)).toFixed(4); // ADJUSTED R2 — penalizes added forces
+    const betas: Record<string, unknown> = {}; FKL.forEach((key, i) => betas[key] = { beta: +fit.beta[i + 1].toFixed(3), t: fit.t[i + 1] });
     // MULTI-TIMEFRAME: the same force model at daily/weekly/monthly (NON-overlapping blocks → honest N). Reveals whether a
     // force explains MORE once daily noise averages out — a single timeframe hides that (D-333 MTF law). Finer than daily
     // (hourly→minute) needs intraday depth → the dormant Databento key; keyless data stops at daily over history.

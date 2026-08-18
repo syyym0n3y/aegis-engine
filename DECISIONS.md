@@ -7114,3 +7114,17 @@ DOLLAR dominates all metals (gold t=−15.7, silver −13.6, copper −12 — pr
 (t=8.8, "Dr. Copper") + oil (t=4.8), nat-gas stays ~0 (weather/storage, correctly). Re-ran equity (47) + FX (8) through
 MTF too — all clusters now carry per_tf. HONEST BOUND on "to the very minute": keyless data stops at DAILY over history;
 finer-than-daily (hourly→minute) requires the dormant Databento key — flagged, not faked. 60 instruments, 21 understood.
+
+---
+
+## D-345 — foreign-index + equities-by-sector clusters (coarse-and-wide, keyless)
+(a) FOREIGN INDICES (^N225/^FTSE/^GDAXI): forces US_MKT (Wall-St lead) + RISK + DOLLAR + RATES. Local-rate forces
+(JGB/Bund/Gilt) are NOT keyless (Databento/paid gap) — US ^TNX is the global anchor; noted, not faked. MTF decisive again:
+DAX daily 0.35→WEEKLY 0.62, FTSE 0.32→0.53, **Nikkei 0.025 daily→0.258 weekly** — the daily read is timezone-MASKED
+(Tokyo closes before NY opens, so same-day corr is spurious-low); weekly reveals the real 26% US linkage. US_MKT dominant
+(DAX t=30).
+(b) EQUITIES-BY-SECTOR: per-target own-sector force (SECTOR_MAP → sector ETF) added to MKT/RATES/VOL/SIZE. Single stocks
+are DOMINATED by their sector: CVX R² 0.787 (SECTOR=XLE β0.84 t=117, MKT only 0.10), XOM 0.771 (XLE t=114), JPM 0.766
+(XLF β1.16 t=82, MKT ~0). AXP loads on BOTH (XLF t=45 + MKT t=16 consumer-credit). Correct structure: stock = sector +
+idiosyncratic; the decomposition quantifies how much of each name is sector vs stock-specific. Fixed an ols crash (empty
+design matrix guard) that had errored job 9. Dashboard auto-reflects via aegis-signals.
