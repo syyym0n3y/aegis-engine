@@ -7128,3 +7128,17 @@ are DOMINATED by their sector: CVX R² 0.787 (SECTOR=XLE β0.84 t=117, MKT only 
 (XLF β1.16 t=82, MKT ~0). AXP loads on BOTH (XLF t=45 + MKT t=16 consumer-credit). Correct structure: stock = sector +
 idiosyncratic; the decomposition quantifies how much of each name is sector vs stock-specific. Fixed an ols crash (empty
 design matrix guard) that had errored job 9. Dashboard auto-reflects via aegis-signals.
+
+---
+
+## D-346 — DATABENTO intraday wired: attribution goes BELOW daily; the Epps effect, measured
+Wired the dormant Databento key to take the engine below daily. `trd_bars_intraday` (migration 0051) + `trd-databento-intraday`
+loader — ALWAYS cost-checks (metadata.get_cost, FREE) and REFUSES to pull over ?cap (default $2): a hard spend gate. Proof
+pull: 8 symbols (SPY+sectors+4 target stocks), July 2026 minute bars, **actual cost $0.24** (est $0.238, under cap, no
+confirm needed) — 19,199 SPY bars @ $744, sane prices. Broker serves intraday (?intraday=); worker `intraday_attribution`
+job regresses a stock's MINUTE returns on market(SPY)+own-sector at 1m/5m/60m (non-overlapping) → per_tf_intraday (migration
+0052). FINDING — the EPPS EFFECT, live: market+sector explain ~0 at the minute (AAPL 0.0%, JPM 0.7%) and R² climbs to daily
+(AAPL 40%, CVX 79%). **Below daily a stock is almost pure idiosyncratic microstructure noise; the causal forces only
+assemble at daily+ horizons.** Honest answer to "to the very minute": we CAN now, and what's there is noise, not causal
+structure — intraday is a microstructure game, not an attribution one. Fixed a broker bug (partial intraday rows need PATCH,
+not upsert — NOT-NULL cols block the insert-half). Session Databento spend: **$0.24** (well under caps).

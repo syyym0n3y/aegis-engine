@@ -21,6 +21,11 @@ Deno.serve(async (req) => {
       const b = await fetch(`${SB}/rest/v1/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=symbol,asset_class,bars`, { headers: H }).then((r) => r.json()).catch(() => []);
       return new Response(JSON.stringify({ ok: true, row: Array.isArray(b) && b.length ? b[0] : null }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("intraday")) {
+      const sym = url.searchParams.get("intraday")!, tf = url.searchParams.get("tf") || "1m";
+      const b = await fetch(`${SB}/rest/v1/trd_bars_intraday?symbol=eq.${encodeURIComponent(sym)}&tf=eq.${tf}&select=symbol,bars`, { headers: H }).then((r) => r.json()).catch(() => []);
+      return new Response(JSON.stringify({ ok: true, row: Array.isArray(b) && b.length ? b[0] : null }), { headers: cors });
+    }
     if (req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       const { job_id, status, result, error, signals, attribution } = body as { job_id: number; status?: string; result?: unknown; error?: string; signals?: Record<string, unknown>[]; attribution?: Record<string, unknown>[] };
@@ -30,8 +35,11 @@ Deno.serve(async (req) => {
         await fetch(`${SB}/rest/v1/trd_signal?on_conflict=symbol`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) }).catch(() => {});
       }
       if (Array.isArray(attribution) && attribution.length) {
-        const rows = attribution.map((a) => ({ ...a, updated_at: new Date().toISOString() }));
-        await fetch(`${SB}/rest/v1/trd_attribution?on_conflict=symbol`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) }).catch(() => {});
+        // full rows (have r2) → upsert; partial rows (e.g. intraday-only {symbol, per_tf_intraday}) → PATCH existing row
+        const full = attribution.filter((a) => a.r2 != null).map((a) => ({ ...a, updated_at: new Date().toISOString() }));
+        const partial = attribution.filter((a) => a.r2 == null);
+        if (full.length) await fetch(`${SB}/rest/v1/trd_attribution?on_conflict=symbol`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(full) }).catch(() => {});
+        for (const a of partial) { const { symbol, ...rest } = a as Record<string, unknown>; await fetch(`${SB}/rest/v1/trd_attribution?symbol=eq.${encodeURIComponent(String(symbol))}`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ ...rest, updated_at: new Date().toISOString() }) }).catch(() => {}); }
       }
       await fetch(`${SB}/rest/v1/rpc/trd_beat`, { method: "POST", headers: H, body: JSON.stringify({ p_fn: "trd-compute", p_outcome: `job ${job_id} ${status || "done"}; ${signals?.length || 0} signals` }) }).catch(() => {});
       return new Response(JSON.stringify({ ok: true }), { headers: cors });

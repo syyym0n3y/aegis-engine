@@ -31,6 +31,35 @@ async function getBars(sym: string): Promise<number[][] | null> {
   const r = await fetch(`${BROKER}?bars=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
   return r?.row?.bars ?? null; // [[ts,o,h,l,c,v],...]
 }
+async function getIntraday(sym: string): Promise<number[][] | null> {
+  const r = await fetch(`${BROKER}?intraday=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
+  return r?.row?.bars ?? null; // minute [[ts_sec,o,h,l,c,v],...]
+}
+function iret(bars: number[][]): Map<number, number> {
+  const m = new Map<number, number>(); for (let i = 1; i < bars.length; i++) { const p0 = bars[i - 1][4], p1 = bars[i][4]; if (p0 > 0 && Number.isFinite(p1)) m.set(bars[i][0], p1 / p0 - 1); } return m;
+}
+// JOB: intraday_attribution — take attribution BELOW daily. Regress a stock's MINUTE returns onto market (SPY) + its own
+// sector at 1-min/5-min/60-min (non-overlapping) → the R2 ladder from the minute up. Needs Databento intraday (trd_bars_intraday).
+async function runIntradayAttribution(params: { targets: string[] }) {
+  const SEC: Record<string, string> = { AAPL: "XLK", MSFT: "XLK", INTC: "XLK", CSCO: "XLK", JPM: "XLF", AXP: "XLF", XOM: "XLE", CVX: "XLE", JNJ: "XLV" };
+  const spy = iret(await getIntraday("SPY") ?? []); const secCache = new Map<string, Map<number, number>>();
+  const attribution: Record<string, unknown>[] = [], ladderOut: Record<string, unknown>[] = [];
+  for (const sym of params.targets) {
+    const tb = await getIntraday(sym); const secEtf = SEC[sym]; if (!tb || !secEtf) continue;
+    if (!secCache.has(secEtf)) secCache.set(secEtf, iret(await getIntraday(secEtf) ?? []));
+    const sec = secCache.get(secEtf)!, tr = iret(tb);
+    const Y: number[] = [], Xs: number[] = [], Xc: number[] = [];
+    for (const [t, r] of tr) { const sv = spy.get(t), cv = sec.get(t); if (sv != null && cv != null) { Y.push(r); Xs.push(sv); Xc.push(cv); } }
+    const ladder: Record<string, unknown> = {};
+    for (const [name, k] of [["min1", 1], ["min5", 5], ["min60", 60]] as [string, number][]) {
+      const nb = Math.floor(Y.length / k); if (nb < 30) continue; const Yb: number[] = [], Xb: number[][] = [];
+      for (let bi = 0; bi < nb; bi++) { let y = 0, xs = 0, xc = 0; for (let j = 0; j < k; j++) { const i = bi * k + j; y += Y[i]; xs += Xs[i]; xc += Xc[i]; } Yb.push(y); Xb.push([1, xs, xc]); }
+      const fit = ols(Yb, Xb); if (fit) ladder[name] = { r2: fit.r2, mkt_t: fit.t[1], sector_t: fit.t[2], n: fit.n };
+    }
+    attribution.push({ symbol: sym, per_tf_intraday: ladder }); ladderOut.push({ sym, sector: secEtf, ...ladder });
+  }
+  return { result: { factor: "intraday_attribution", n: ladderOut.length, ladder: ladderOut }, attribution };
+}
 
 // JOB: deep_factor_ic — 12-1 momentum, era-disaggregated + deflated IC across 33yr history; emits per-symbol signals.
 async function runDeepFactorIC(params: { symbols: string[]; lookback?: number; skip?: number; horizon?: number }) {
@@ -191,6 +220,7 @@ async function runOne(): Promise<boolean> {
     let out: { result: unknown; signals?: Record<string, unknown>[]; attribution?: Record<string, unknown>[] };
     if (job.job_type === "deep_factor_ic") out = await runDeepFactorIC(job.params);
     else if (job.job_type === "attribution") out = await runAttribution(job.params);
+    else if (job.job_type === "intraday_attribution") out = await runIntradayAttribution(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
