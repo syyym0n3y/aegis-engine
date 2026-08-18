@@ -7335,3 +7335,14 @@ Opportunistic-only insider IC running (worker-paced). (2) STRATEGY SWEEP (`strat
 magnitude not t). No large tradeable directional edge — the documented anomalies show up faintly, consistent with D-070.
 The contextual engine now tests any signal battery era-disaggregated in one pass; the honest verdict remains: understanding
 complete, no directional edge, GEX-vol sizing the sole survivor.
+
+## D-357b — opportunistic-insider subset does NOT replicate Cohen-Malloy; insider thread definitively closed
+Worker-paced opportunistic-only insider IC (161 tickers, 3,988 events, decades): mean fwd-21d −1.458%, t=−3.95, win 49%,
+breadth 95/161. The supposed alpha-carrying subset is NOT positive — negatively significant on the pooled mean (tail-
+dominated: 59% of tickers positive by breadth, but a few cratered small-caps drag the mean). Cohen-Malloy's ~10%/yr does
+NOT replicate on our free Yahoo-covered sample — decayed (research agent flagged insider as weak/decayed) + small-cap
+tail-risk. Both all-buys (t=−1.41 null) and opportunistic (t=−3.95 negative) are non-edges. INSIDER THREAD CLOSED: no
+tradeable edge, classified or not. Systematic free-anomaly sweep (D-357): all small/null. FUNDAMENTALS FAMILY de-risked as
+the #1 next free build (EDGAR XBRL frames API verified keyless — 6,184 companies/quarter; unlocks quality/value/investment,
+the most durable factors) — a real point-in-time pipeline, teed up in docs/GAPS.md, not test-tonight. Everything freely
+testable with CURRENT data is now exhausted and null/small — D-070 terminal state, comprehensively earned.
