@@ -27,21 +27,20 @@ function rankIC(xs: number[], ys: number[]) {
 const yearOf = (ts: number) => new Date(ts * 1000).getUTCFullYear();
 const eraOf = (ts: number) => { const y = yearOf(ts); return ERAS.find(([, a, b]) => y >= a && y < b)?.[0] || "?"; };
 
-const barsCache = new Map<string, number[][] | null>();
 async function getBars(sym: string): Promise<number[][] | null> {
-  if (barsCache.has(sym)) return barsCache.get(sym)!;            // cache-first (filled by preloadBars for sweeps)
   const r = await fetch(`${BROKER}?bars=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
-  const bars = r?.row?.bars ?? null; barsCache.set(sym, bars); return bars; // [[ts,o,h,l,c,v],...]
+  return r?.row?.bars ?? null; // [[ts,o,h,l,c,v],...]
 }
-// D-362b speedup: pull ALL sweep symbols' bars in chunks (one broker call per chunk) instead of 4,400 single round-trips.
-async function preloadBars(symbols: string[], chunk = 25) {
+// D-362b speedup: batch-fetch bars in chunks and process each symbol IMMEDIATELY, discarding the chunk before the next —
+// bounded memory (~chunk symbols resident, not all 4,400 → the earlier preload-all OOM'd) while collapsing ~4,400 single
+// round-trips into ~150 batched calls. fn is sync compute (accumulates into small cross-sectional maps, not raw bars).
+async function forEachBars(symbols: string[], fn: (sym: string, bars: number[][]) => void, chunk = 30) {
   for (let i = 0; i < symbols.length; i += chunk) {
-    const part = symbols.slice(i, i + chunk).filter((s) => !barsCache.has(s));
-    if (!part.length) continue;
+    const part = symbols.slice(i, i + chunk);
     const r = await fetch(`${BROKER}?barsbatch=${encodeURIComponent(part.join(","))}`).then((x) => x.json()).catch(() => null);
     const rows = (r?.rows ?? []) as { symbol: string; bars: number[][] }[];
-    const got = new Set<string>(); for (const row of rows) { barsCache.set(row.symbol, row.bars ?? null); got.add(row.symbol); }
-    for (const s of part) if (!got.has(s)) barsCache.set(s, null);  // mark missing so getBars won't re-fetch
+    const m = new Map<string, number[][]>(); for (const row of rows) if (row.bars) m.set(row.symbol, row.bars);
+    for (const s of part) { const b = m.get(s); if (b) fn(s, b); }
   }
 }
 async function getIntraday(sym: string): Promise<number[][] | null> {
@@ -57,12 +56,11 @@ function iret(bars: number[][]): Map<number, number> {
 async function runStrategySweep(params: { symbols?: string[]; horizon?: number }) {
   const HZ = params.horizon ?? 21;
   const symbols = params.symbols?.length ? params.symbols : await getUniverse();
-  await preloadBars(symbols);
   const SIGS = ["mom_12_1", "trend_200", "high_52w", "max_lottery", "rev_5d", "lowvol_60", "overnight"] as const;
   const acc: Record<string, Record<string, { x: number[]; y: number[] }>> = {}; // sig → era → {x,y}
   for (const s of SIGS) acc[s] = {};
-  for (const sym of symbols) {
-    const b = await getBars(sym); if (!b || b.length < 300) continue;
+  await forEachBars(symbols, (_sym, b) => {
+    if (b.length < 300) return;
     const o = b.map((r) => r[1]), c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
     for (let i = 260; i < b.length - HZ; i++) {
       const fwd = c[i + HZ] / c[i] - 1; if (!Number.isFinite(fwd)) continue; const era = eraOf(ts[i]);
@@ -80,7 +78,7 @@ async function runStrategySweep(params: { symbols?: string[]; horizon?: number }
       };
       for (const s of SIGS) { const val = sig[s]; if (!Number.isFinite(val)) continue; (acc[s][era] ||= { x: [], y: [] }); acc[s][era].x.push(val); acc[s][era].y.push(fwd); (acc[s].ALL ||= { x: [], y: [] }); acc[s].ALL.x.push(val); acc[s].ALL.y.push(fwd); } // deno-lint-ignore
     }
-  }
+  });
   const out: Record<string, unknown>[] = [];
   for (const s of SIGS) { const eras = Object.entries(acc[s]).map(([era, d]) => ({ era, ...rankIC(d.x, d.y) })).filter((e) => e.n > 50); out.push({ signal: s, cells: eras }); }
   return { result: { factor: "strategy_sweep", n_symbols: symbols.length, battery: out } };
@@ -97,13 +95,12 @@ async function getUniverse(): Promise<string[]> {
 async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
   const HZ = params.horizon ?? 21;
   const symbols = params.symbols?.length ? params.symbols : await getUniverse(); // self-pull the full accumulated universe
-  await preloadBars(symbols);
   const SIGS = ["mom_12_1", "rev_5d", "max_lottery", "lowvol_60", "trend_200", "high_52w"] as const;
   // per signal: date → {x: signal vals, y: fwd returns} across symbols (the cross-section that date)
   const byDate: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const s of SIGS) byDate[s] = new Map();
   const onDate = new Map<string, { ov: number[]; intr: number[] }>(); // overnight premium (own return)
-  for (const sym of symbols) {
-    const b = await getBars(sym); if (!b || b.length < 300) continue;
+  await forEachBars(symbols, (_sym, b) => {
+    if (b.length < 300) return;
     const o = b.map((r) => r[1]), c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
     for (let i = 260; i < b.length - HZ; i++) {
       const fwd = c[i + HZ] / c[i] - 1; if (!Number.isFinite(fwd)) continue; const d = new Date(ts[i] * 1000).toISOString().slice(0, 10);
@@ -115,7 +112,7 @@ async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
       // overnight premium: the overnight gap return vs the intraday return (own, not cross-sectional)
       const ov = (o[i] - c[i - 1]) / c[i - 1], intr = (c[i] - o[i]) / o[i]; if (Number.isFinite(ov) && Number.isFinite(intr)) { const e = onDate.get(d) ?? onDate.set(d, { ov: [], intr: [] }).get(d)!; e.ov.push(ov); e.intr.push(intr); }
     }
-  }
+  });
   const out: Record<string, unknown>[] = [];
   for (const s of SIGS) {
     const byEra: Record<string, number[]> = {};
@@ -148,10 +145,9 @@ async function runFundamentalsIC(params: { horizon?: number }) {
   const FACS = ["value_bm", "earnings_yield", "quality_roe", "investment", "leverage"] as const;
   const byMonth: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const f of FACS) byMonth[f] = new Map();
   const symbols = await getUniverse();
-  await preloadBars(symbols);
-  for (const sym of symbols) {
-    const fm = fund.get(sym); if (!fm) continue;
-    const b = await getBars(sym); if (!b || b.length < HZ + 30) continue;
+  await forEachBars(symbols, (sym, b) => {
+    const fm = fund.get(sym); if (!fm) return;
+    if (b.length < HZ + 30) return;
     const c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
     let lastMonth = "";
     for (let i = 0; i < b.length - HZ; i++) {
@@ -169,7 +165,7 @@ async function runFundamentalsIC(params: { horizon?: number }) {
       };
       for (const f of FACS) { const v = fac[f]; if (v == null || !Number.isFinite(v)) continue; const m = byMonth[f].get(mo) ?? byMonth[f].set(mo, { x: [], y: [] }).get(mo)!; m.x.push(v); m.y.push(fwd); }
     }
-  }
+  });
   const out: Record<string, unknown>[] = [];
   for (const f of FACS) {
     const byEra: Record<string, number[]> = {};
