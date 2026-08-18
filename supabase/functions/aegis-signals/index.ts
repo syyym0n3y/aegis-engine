@@ -18,8 +18,8 @@ Deno.serve(async (req) => {
     // instrument we don't understand, and never trade understanding alone without a directional edge.
     const U_THRESH = 0.30;
     type TF = Record<string, { r2: number; adj_r2: number; n: number }>;
-    type A = { symbol: string; r2: number; adj_r2: number; residual: number; era_stability: number; betas: Record<string, { beta: number; t: number }>; per_tf?: TF };
-    const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,adj_r2,residual,era_stability,betas,per_tf`, { headers: H }).then((r) => r.json()).catch(() => []);
+    type A = { symbol: string; r2: number; adj_r2: number; residual: number; era_stability: number; betas: Record<string, { beta: number; t: number }>; per_tf?: TF; per_tf_intraday?: Record<string, { r2: number; n: number }> };
+    const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,adj_r2,residual,era_stability,betas,per_tf,per_tf_intraday`, { headers: H }).then((r) => r.json()).catch(() => []);
     const aMap = new Map<string, A>();
     for (const a of (Array.isArray(attr) ? attr : []) as A[]) aMap.set(a.symbol, a);
     // MTF: the timeframe where the force model explains MOST (daily noise can hide a strong relationship — D-333).
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       const understood = understanding >= U_THRESH;
       const engage = directional && understood;                          // FOLDED GATE — both required
       const gate_reason = engage ? "predict + understand" : !directional ? "no directional edge" : "not understood well enough";
-      return { ...s, residual: a.residual, r2: a.r2, adj_r2: a.adj_r2, best_tf: bt.tf, best_r2: +bt.adj.toFixed(3), per_tf: a.per_tf ?? null, era_stability: a.era_stability, understanding, drivers, directional, engage, gate_reason };
+      return { ...s, residual: a.residual, r2: a.r2, adj_r2: a.adj_r2, best_tf: bt.tf, best_r2: +bt.adj.toFixed(3), per_tf: a.per_tf ?? null, per_tf_intraday: a.per_tf_intraday ?? null, era_stability: a.era_stability, understanding, drivers, directional, engage, gate_reason };
     }).sort((p, q) => Number(q.understanding) - Number(p.understanding));
     const rows: Record<string, unknown>[] = isOperator ? raw : raw.map((s) =>
       s.engage ? { symbol: s.symbol, asof: s.asof, residual: s.residual, r2: s.r2, adj_r2: s.adj_r2, understanding: s.understanding, drivers: s.drivers, engage: true, redacted: true, lean: null, why: null, gate_reason: s.gate_reason, note: "operator-only" } : s);
@@ -58,6 +58,11 @@ Deno.serve(async (req) => {
         mean_adj_r2: aMap.size ? +([...aMap.values()].reduce((s, a) => s + (a.adj_r2 || 0), 0) / aMap.size).toFixed(3) : null,
         understood: rows.filter((r) => Number(r.understanding) >= U_THRESH).length },
       era_grid: grid?.era_grid ?? null, factor: grid?.factor ?? null, mean_ic: grid?.mean_ic ?? null,
+      // intraday R2 ladder (below daily → the Epps effect: causal forces dissolve into microstructure noise at the minute)
+      intraday: [...aMap.values()].filter((a) => a.per_tf_intraday).map((a) => ({
+        symbol: a.symbol, daily_r2: a.r2,
+        min1: (a.per_tf_intraday!.min1?.r2) ?? null, min5: (a.per_tf_intraday!.min5?.r2) ?? null, min60: (a.per_tf_intraday!.min60?.r2) ?? null,
+      })),
       signals: rows,
     }), { headers: cors });
   } catch (e) { return new Response(JSON.stringify({ ok: false, err: String(e).slice(0, 300) }), { status: 500, headers: cors }); }

@@ -131,6 +131,12 @@ async function buildForces(cluster: string): Promise<{ fret: Map<string, Map<num
     fret.set("US_MKT", await rm("^GSPC", "ret")); fret.set("RISK", await rm("^VIX", "ret")); fret.set("DOLLAR", await buildDollar()); fret.set("RATES", await rm("^TNX", "diff"));
     return { fret, keys: ["US_MKT", "RISK", "DOLLAR", "RATES"] };
   }
+  if (cluster === "crypto") {
+    // alts are dominated by BTC (crypto-market beta) + ETH; plus the macro channel (USD, traditional risk). BTC/ETH are
+    // the forces, so they're excluded from the targets (would be definitional).
+    fret.set("BTC", await rm("BTC-USD", "ret")); fret.set("ETH", await rm("ETH-USD", "ret")); fret.set("DOLLAR", await buildDollar()); fret.set("RISK", await rm("^VIX", "ret"));
+    return { fret, keys: ["BTC", "ETH", "DOLLAR", "RISK"] };
+  }
   if (cluster === "equity_sector") {
     // single stocks decompose into MARKET + own-SECTOR + idiosyncratic. Global forces here; the per-target own-sector force
     // is added in the attribution loop (SECTOR_MAP). Raises R2 and splits the "why" into market vs sector vs stock-specific.

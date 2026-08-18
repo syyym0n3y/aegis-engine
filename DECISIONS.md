@@ -7142,3 +7142,18 @@ job regresses a stock's MINUTE returns on market(SPY)+own-sector at 1m/5m/60m (n
 assemble at daily+ horizons.** Honest answer to "to the very minute": we CAN now, and what's there is noise, not causal
 structure — intraday is a microstructure game, not an attribution one. Fixed a broker bug (partial intraday rows need PATCH,
 not upsert — NOT-NULL cols block the insert-half). Session Databento spend: **$0.24** (well under caps).
+
+---
+
+## D-347 — crypto cluster: asset-class coverage complete
+Ingested crypto daily (keyless Yahoo, BTC 2014 / ETH+majors 2017 / SOL 2020) + crypto cluster forces BTC (crypto-market
+beta) + ETH + DOLLAR + RISK (BTC/ETH excluded from targets — definitional). 10 alts, mean R² 0.435. Economically correct:
+most alts are ETH-BETA (smart-contract ecosystem — LINK eth-t19/btc-t5, SOL/MATIC/AVAX/DOT/ADA all ETH-dominant), while
+DOGE is BTC-beta (0.71 t7.8 > ETH — meme/store-of-value not ETH-ecosystem) and BNB leans BTC (own L1). R² 0.18 (DOGE,
+idiosyncratic meme) → 0.66 (LTC/DOT). The attribution engine now covers EVERY major asset class — equity, sector, FX,
+commodity, foreign-index, crypto — across EVERY timeframe minute→monthly (Databento intraday + keyless daily/weekly/
+monthly). The understanding/attribution stack is COMPLETE. The one unbuilt layer — a tradeable DIRECTIONAL signal
+(combiner) — is honestly BLOCKED, not missing: no directional edge has survived (momentum IC-null, all instruments
+stand-down), and manufacturing one with no edge to combine is the exact dishonesty the engine exists to prevent (D-070:
+"nothing cleared the gates" is the designed SUCCESS state). The engine knows WHY everything moves; it honestly has no
+edge to TRADE — and says so.

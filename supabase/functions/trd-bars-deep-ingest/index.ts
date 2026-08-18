@@ -21,6 +21,7 @@ const UNIVERSE: [string, string, string][] = [
   ["AUDUSD=X","AUDUSD=X","fx"],["CAD=X","CAD=X","fx"],["CHF=X","CHF=X","fx"],["NZDUSD=X","NZDUSD=X","fx"],["MXN=X","MXN=X","fx"],
   ["^TNX","^TNX","rate"],["^TYX","^TYX","rate"],["^IRX","^IRX","rate"],
   ["SPY","SPY","etf"],["QQQ","QQQ","etf"],["IWM","IWM","etf"],["DIA","DIA","etf"],["GLD","GLD","etf"],["TLT","TLT","etf"],
+  ["BTC-USD","BTC-USD","crypto"],["ETH-USD","ETH-USD","crypto"],["SOL-USD","SOL-USD","crypto"],["BNB-USD","BNB-USD","crypto"],["XRP-USD","XRP-USD","crypto"],["ADA-USD","ADA-USD","crypto"],["DOGE-USD","DOGE-USD","crypto"],["AVAX-USD","AVAX-USD","crypto"],["LINK-USD","LINK-USD","crypto"],["DOT-USD","DOT-USD","crypto"],["LTC-USD","LTC-USD","crypto"],["MATIC-USD","MATIC-USD","crypto"],
 ];
 
 Deno.serve(async (req) => {
