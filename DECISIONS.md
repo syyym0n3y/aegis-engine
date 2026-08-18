@@ -7397,3 +7397,26 @@ HONEST VERDICT now visible to the allocator (was null): **orbfollow −$219.94 o
 broadly-deployed "validated" ORB edge is NET-NEGATIVE in live paper.** crypto-orb +$43.63/9. This is precisely the truth the
 silent-write bug was hiding: the executor instrumentation, not a backtest, is what caught a losing live edge. Guard now
 green (0 missing P&L). Files: trd-crypto-orb-exec, trd-orbfollow-scanner, trd-risk-officer, trd-pnl-reconcile (new).
+
+---
+
+## D-360b — price accumulation pipeline (unblocks cross-sectional momentum/value)
+The binding constraint on every cross-sectional test was broad price coverage: trd_bars_deep held ~77 names vs 4,300+ in
+trd_fundamentals. Built a compute-node job that drains the gap: `trd_price_worklist(n)` RPC hands out fundamentals tickers
+lacking deep bars (funded names first, D-361); broker gained `?worklist` + POST `bars_upsert`; worker job `price_accumulate`
+fetches Yahoo daily period1=0 (own IP, paced 200ms) and flushes [[ts,o,h,l,c,v]] batches to trd_bars_deep. Enqueued 18 jobs
+(~4,280 tickers); worker running. Live progress this session: 77 -> 505+ names and climbing. Once drained, momentum
+(xsec_sweep, D-359) and the fundamentals value/quality factors finally run on hundreds of names instead of ~40.
+
+## D-361 — FUNDING-FLOW tracker: emerging leverage before it is priced (operator directive)
+Operator: "track which stocks are receiving large sums of funding which shows signs of emerging leverage way before it
+becomes a large sum of the market cap." Built the free/keyless SEC Form D ingester (`trd-fundflow-load`): parses the EDGAR
+daily index for Form D / D-A, maps CIK->ticker, pulls the STRUCTURED dollar amount from each primary_doc.xml
+(totalOfferingAmount / totalAmountSold / is-debt), stores trd_fundflow point-in-time (effective_date = filed_date). Backfilled
+30 days (50 public-ticker raises, ~2-3/day) + daily cron `trd_fundflow_daily` for autonomous forward capture. Signal view
+`trd_fundflow_signal` sizes each raise against POINT-IN-TIME book equity (raise/equity; no look-ahead) — market-cap upgrade
+pending a shares-outstanding load. First results are exactly on-thesis: **ENTX $275M raised vs $10M book equity = 27x**
+(Aug 12), UROY 6.2x, ZSTK 1.7x — large capital hitting small names, caught within days of first sale. NOT yet validated as a
+return predictor (needs the funded names' forward prices, which the D-360b accumulation is now filling); the harness to test
+it honestly is built. Caveat noted: pooled-investment-fund Form Ds inflate raw offering size — filter by industry before the
+IC test. Files: trd-fundflow-load (new), migrations 0059/0060/0061, trd-compute, aegis-worker.

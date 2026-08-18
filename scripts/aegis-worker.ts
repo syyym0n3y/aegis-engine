@@ -135,6 +135,30 @@ async function runInsiderIC(params: { limit?: number; horizon?: number; pace_ms?
   return { result: { factor: params.opportunistic ? "insider_buys_opportunistic" : "insider_buys", n_events: n, n_tickers: nT, sample_size: sample.length, coverage: covered, mean_fwd_ret_pct: +(100 * m).toFixed(3), t_stat: +t.toFixed(2), win_pct: +win.toFixed(0), breadth: `${posT}/${nT}`, horizon_days: HZ } };
 }
 
+// JOB: price_accumulate — drain the broad-price-coverage gap (D-360b). Pull a worklist of fundamentals tickers lacking
+// deep bars, fetch Yahoo daily period1=0 (own IP, paced), flush [[ts,o,h,l,c,v]] batches to the broker → trd_bars_deep.
+// This is the substrate that finally lets cross-sectional momentum/value run on hundreds of names instead of ~40.
+async function runPriceAccumulate(params: { batch?: number; pace_ms?: number }) {
+  const BATCH = params.batch ?? 250, PACE = params.pace_ms ?? 250;
+  const wl = await fetch(`${BROKER}?worklist=${BATCH}`).then((r) => r.json()).catch(() => null);
+  const tickers = (wl?.tickers ?? []) as string[];
+  const p2 = Math.floor(Date.now() / 1000);
+  let stored = 0, empty = 0; const pending: { symbol: string; asset_class: string; bars: number[][] }[] = [];
+  const flush = async () => { if (pending.length) { await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bars_upsert: pending.splice(0) }) }).catch(() => {}); } };
+  for (const sym of tickers) {
+    await new Promise((r) => setTimeout(r, PACE));
+    const j = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&period1=0&period2=${p2}`, { headers: { "User-Agent": "Mozilla/5.0" } }).then((r) => r.json()).catch(() => null);
+    const res = j?.chart?.result?.[0]; if (!res?.timestamp) { empty++; continue; }
+    const q = res.indicators.quote[0], ts = res.timestamp as number[]; const bars: number[][] = [];
+    for (let i = 0; i < ts.length; i++) { const o = q.open[i], h = q.high[i], l = q.low[i], c = q.close[i], v = q.volume[i]; if ([o, h, l, c].some((x: number) => x == null || !Number.isFinite(x))) continue; bars.push([ts[i], o, h, l, c, v ?? 0]); }
+    if (bars.length < 250) { empty++; continue; } // need ~1yr+ of history to be useful for momentum/value
+    pending.push({ symbol: sym, asset_class: "equity", bars }); stored++;
+    if (pending.length >= 20) await flush();
+  }
+  await flush();
+  return { result: { factor: "price_accumulate", requested: tickers.length, stored, empty } };
+}
+
 // JOB: intraday_attribution — take attribution BELOW daily. Regress a stock's MINUTE returns onto market (SPY) + its own
 // sector at 1-min/5-min/60-min (non-overlapping) → the R2 ladder from the minute up. Needs Databento intraday (trd_bars_intraday).
 async function runIntradayAttribution(params: { targets: string[] }) {
@@ -327,6 +351,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "insider_ic") out = await runInsiderIC(job.params);
     else if (job.job_type === "strategy_sweep") out = await runStrategySweep(job.params);
     else if (job.job_type === "xsec_sweep") out = await runXsecSweep(job.params);
+    else if (job.job_type === "price_accumulate") out = await runPriceAccumulate(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));

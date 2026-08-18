@@ -27,6 +27,12 @@ Deno.serve(async (req) => {
       const s = await fetch(`${SB}/rest/v1/rpc/${rpc}`, { method: "POST", headers: H, body: JSON.stringify({ p_limit: n }) }).then((r) => r.json()).catch(() => []);
       return new Response(JSON.stringify({ ok: true, sample: Array.isArray(s) ? s : [] }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("worklist")) {
+      // hand the worker the next batch of fundamentals tickers still lacking deep daily bars (D-360b price accumulation)
+      const n = Number(url.searchParams.get("worklist")) || 200;
+      const w = await fetch(`${SB}/rest/v1/rpc/trd_price_worklist`, { method: "POST", headers: H, body: JSON.stringify({ p_n: n }) }).then((r) => r.json()).catch(() => []);
+      return new Response(JSON.stringify({ ok: true, tickers: (Array.isArray(w) ? w : []).map((r: { ticker: string }) => r.ticker) }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("intraday")) {
       const sym = url.searchParams.get("intraday")!, tf = url.searchParams.get("tf") || "1m";
       const b = await fetch(`${SB}/rest/v1/trd_bars_intraday?symbol=eq.${encodeURIComponent(sym)}&tf=eq.${tf}&select=symbol,bars`, { headers: H }).then((r) => r.json()).catch(() => []);
@@ -34,7 +40,13 @@ Deno.serve(async (req) => {
     }
     if (req.method === "POST") {
       const body = await req.json().catch(() => ({}));
-      const { job_id, status, result, error, signals, attribution } = body as { job_id: number; status?: string; result?: unknown; error?: string; signals?: Record<string, unknown>[]; attribution?: Record<string, unknown>[] };
+      const { job_id, status, result, error, signals, attribution, bars_upsert } = body as { job_id: number; status?: string; result?: unknown; error?: string; signals?: Record<string, unknown>[]; attribution?: Record<string, unknown>[]; bars_upsert?: { symbol: string; asset_class: string; bars: number[][] }[] };
+      // mid-job data flush from the price-accumulation worker → upsert deep daily bars (D-360b). Works with/without job_id.
+      if (Array.isArray(bars_upsert) && bars_upsert.length) {
+        const rows = bars_upsert.map((b) => ({ symbol: b.symbol, asset_class: b.asset_class || "equity", bars: b.bars, updated_at: new Date().toISOString() }));
+        await fetch(`${SB}/rest/v1/trd_bars_deep?on_conflict=symbol`, { method: "POST", headers: { ...H, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) }).catch(() => {});
+        if (!job_id) return new Response(JSON.stringify({ ok: true, upserted: rows.length }), { headers: cors });
+      }
       if (job_id) await fetch(`${SB}/rest/v1/trd_compute_jobs?id=eq.${job_id}`, { method: "PATCH", headers: { ...H, Prefer: "return=minimal" }, body: JSON.stringify({ status: status || "done", result: result ?? null, error: error ?? null, done_at: new Date().toISOString() }) }).catch(() => {});
       if (Array.isArray(signals) && signals.length) {
         const rows = signals.map((s) => ({ ...s, updated_at: new Date().toISOString() }));
