@@ -7241,3 +7241,20 @@ cron 21:30 wkdays via `trd-gex-state-refresh`) stores regime + expected vol + si
 `gex` overlay; the engage decision stays edge×understanding (GEX conditions SIZE, not selection). Live on the cockpit as a
 market-regime banner. The north-star "favourable conditions → sizing" is now real, proven, free — and honestly scoped to
 what the data supports, not what the mechanism-story wanted.
+
+---
+
+## D-353 — insider IC null (recent/unclassified); MISSION at its designed terminal state
+Insider event study (790 buys/354 tickers backfilled, 119 with 21d forward elapsed): mean fwd-21d −0.55%, t=−0.41, win
+35%, breadth 28/57 = coin flip. NULL. Caveats honest: only ~6 weeks history (backfill walking back) + ALL open-market buys
+(the Cohen-Malloy alpha is the OPPORTUNISTIC/irregular subset, which needs multi-year per-insider history to classify —
+not yet accumulated). Initial read: no edge, consistent with every other directional candidate.
+
+TERMINAL STATE (D-070 fulfilled): every free/keyless directional candidate has now been tested and FALSIFIED or found
+null — price-grammar (0/1.4M), funding, cross-sectional, momentum (all eras), auction-imbalance (Databento, falsified),
+GEX-directional (decayed), DIX (null), VIX-TS (null), insider (null). The ONLY signal that decisively cleared is GEX→vol
+(IC −0.49, regime/SIZING not direction). The engine is COMPLETE: causal attribution across every asset class × every
+timeframe (minute→monthly), survivorship-free universe (9,431 delisted), proven vol-regime sizing (GEX), honest residual
+everywhere. It understands why every instrument moves and has NO directional edge to trade — the designed success, not a
+failure. Further directional hunting needs: more insider history + the opportunistic classifier (accumulating, weeks), or
+PAID directional data (options-flow/OPRA — a spend decision). Nothing free remains un-fired.
