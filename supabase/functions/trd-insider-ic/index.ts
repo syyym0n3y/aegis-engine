@@ -9,13 +9,18 @@ const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 Deno.serve(async () => {
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
   try {
-    const rows = await fetch(`${SB}/rest/v1/trd_insider?select=ticker,disclosed_date&order=ticker`, { headers: H }).then((r) => r.json()).catch(() => []);
-    const byT = new Map<string, string[]>();
-    for (const r of (Array.isArray(rows) ? rows : []) as { ticker: string; disclosed_date: string }[]) (byT.get(r.ticker) ?? byT.set(r.ticker, []).get(r.ticker)!).push(r.disclosed_date);
+    const rows = await fetch(`${SB}/rest/v1/trd_insider?select=ticker,disclosed_date&disclosed_date=gte.2005-01-01&limit=200000`, { headers: H }).then((r) => r.json()).catch(() => []);
+    const byTall = new Map<string, string[]>();
+    for (const r of (Array.isArray(rows) ? rows : []) as { ticker: string; disclosed_date: string }[]) { if (!r.disclosed_date || r.disclosed_date < "2005-01-01" || r.disclosed_date > "2027-01-01") continue; (byTall.get(r.ticker) ?? byTall.set(r.ticker, []).get(r.ticker)!).push(r.disclosed_date); }
+    // Yahoo per ticker is the bottleneck + micro-caps aren't covered → sample PERSISTENT names (standard ticker, buys spanning
+    // multiple years = Yahoo-tradeable + tests across the decades, not recent micro-cap noise). Rank by date-span.
+    const span = (ds: string[]) => (Math.max(...ds.map((x) => +new Date(x))) - Math.min(...ds.map((x) => +new Date(x)))) / 864e5;
+    const cand = [...byTall.entries()].filter(([t, ds]) => /^[A-Z]{1,5}$/.test(t) && t !== "NONE" && ds.length >= 2 && span(ds) > 400);
+    const byT = new Map(cand.sort((a, b) => span(b[1]) - span(a[1])).slice(0, 130));
     const fwd: number[] = []; let nT = 0, posT = 0;
     for (const [tkr, dates] of byT) {
       const p2 = Math.floor(Date.now() / 1000);
-      const j = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(tkr)}?interval=1d&period1=${p2 - 800 * 86400}&period2=${p2}`, { headers: { "User-Agent": "Mozilla/5.0" } }).then((r) => r.json()).catch(() => null);
+      const j = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(tkr)}?interval=1d&period1=0&period2=${p2}`, { headers: { "User-Agent": "Mozilla/5.0" } }).then((r) => r.json()).catch(() => null);
       const res = j?.chart?.result?.[0]; if (!res?.timestamp) continue;
       const c = res.indicators.quote[0].close as number[]; const ds = res.timestamp.map((t: number) => new Date(t * 1000).toISOString().slice(0, 10));
       const idxOf = new Map<string, number>(); ds.forEach((d: string, i: number) => idxOf.set(d, i));

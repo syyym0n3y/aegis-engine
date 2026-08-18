@@ -7271,3 +7271,15 @@ JPM +$93M — real per-name dealer positioning, $0. Daily cron snapshots 15 name
 needed to backtest per-name GEX→forward return/vol (the chain is live-only; we build the history free over time). Also
 adjusted insider crons: backfill */5 (sustainable, keeps running), IC re-test WEEKLY. DOCTRINE reinforced: research free
 before ever citing spend — the free path existed the whole time.
+
+---
+
+## D-355 — insider from SEC BULK Form-345 datasets: DECADES now, not weeks (free/keyless)
+Operator: don't wait weeks, we have decades to test against. Right — replaced the slow EDGAR day-crawl with SEC's bulk
+Form-345 quarterly datasets (`.../insider-transactions-data-sets/{year}q{q}_form345.zip`, keyless). `trd-insider-bulk`
+downloads a quarter, unzips (zip-js) SUBMISSION.tsv + NONDERIV_TRANS.tsv, filters code-P open-market buys, joins issuer
+ticker, stores → trd_insider. One quarter = ~2,900-7,100 buys in ONE call (vs 790 from days of crawling). Bug found+fixed:
+SEC DERA dates are "DD-MON-YYYY" — my slice(0,10) mangled them to garbage years (0201); added a proper date parser.
+Backfilling 2010→2026 (68 quarters, ~17yr, ~150k+ buys). IC bounded to persistent Yahoo-covered names across the decades
+(micro-caps where insider buys cluster aren't Yahoo-covered — the price-coverage limit, honest). Lesson: bulk historical
+sources beat forward-accumulation — the decades were one zip-per-quarter away.
