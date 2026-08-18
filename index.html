@@ -200,25 +200,29 @@ async function doCausal(){
     const s=d.summary||{}; const isOp=d.mode==="operator"; document.getElementById("cz_upd").textContent="live · "+new Date(d.generated_at).toISOString().replace("T"," ").slice(0,16)+" UTC · "+(isOp?"operator":"public");
     const engc=s.engaged>0?"var(--accent)":"var(--mut)";
     const grid=(d.era_grid||[]).map(g=>{const ok=g.ic>0,col=Math.abs(g.t)<2?"var(--mut)":ok?"var(--accent)":"var(--red)";return `<tr><td class="mono">${esc(g.era)}</td><td class="mono num" style="color:${col}">${g.ic>=0?"+":""}${(+g.ic).toFixed(4)}</td><td class="mono num" style="color:var(--mut)">${(+g.t).toFixed(1)}</td><td class="mono num" style="color:var(--mut)">${g.n}</td></tr>`}).join("")||`<tr><td colspan=4 class=muted>—</td></tr>`;
+    const uT=s.u_threshold||0.3;
     const drv=x=>(x.drivers&&x.drivers[0])?esc(x.drivers[0].f)+" β"+(+x.drivers[0].beta).toFixed(2):"—";
     const r2c=x=>x.r2!=null?Math.round((+x.r2)*100)+"%":"—";
-    const sig=(d.signals||[]).slice(0,34).map(x=>{
-      if(x.redacted)return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:var(--amber)">🔒</td><td class="mono num">${r2c(x)}</td><td class="mono num" style="color:var(--mut)">${Math.round((+x.residual)*100)}%</td><td class="mono" style="color:var(--mut)">${drv(x)}</td><td class="mono" style="color:var(--amber)">operator-only</td></tr>`;
-      const buy=x.lean>0,lc=x.engage?(buy?"var(--accent)":"var(--red)"):"var(--mut)";return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:${lc}">${x.lean>=0?"+":""}${(+x.lean).toFixed(2)}</td><td class="mono num">${r2c(x)}</td><td class="mono num" style="color:var(--mut)">${Math.round((+x.residual)*100)}%</td><td class="mono" style="color:var(--mut)">${drv(x)}</td><td class="mono" style="color:${x.engage?"var(--accent)":"var(--mut)"}">${x.engage?"ENGAGE":"stand down"}</td></tr>`}).join("")||`<tr><td colspan=6 class=muted>no signals computed yet</td></tr>`;
+    const uc=x=>x.understanding!=null?Math.round((+x.understanding)*100)+"%":"—";
+    const uco=x=>(+x.understanding>=uT)?"var(--accent)":"var(--amber)";
+    const leanc=x=>x.lean==null?"—":(x.lean>=0?"+":"")+(+x.lean).toFixed(2);
+    const sig=(d.signals||[]).slice(0,60).map(x=>{
+      if(x.redacted)return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:var(--amber)">🔒</td><td class="mono num">${r2c(x)}</td><td class="mono num" style="color:${uco(x)}">${uc(x)}</td><td class="mono" style="color:var(--mut)">${drv(x)}</td><td class="mono" style="color:var(--amber)">operator-only</td></tr>`;
+      const buy=x.lean>0,lc=x.engage?(buy?"var(--accent)":"var(--red)"):"var(--mut)";return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:${lc}">${leanc(x)}</td><td class="mono num">${r2c(x)}</td><td class="mono num" style="color:${uco(x)}">${uc(x)}</td><td class="mono" style="color:var(--mut)">${drv(x)}</td><td class="mono" style="color:${x.engage?"var(--accent)":"var(--mut)"};font-size:11px">${esc(x.gate_reason||(x.engage?"ENGAGE":"stand down"))}</td></tr>`}).join("")||`<tr><td colspan=6 class=muted>no signals computed yet</td></tr>`;
     o.innerHTML=`
     <div class="grid">
-      <div class="card"><div class="lbl">Instruments</div><div class="v">${s.n??0}</div><div class="s">scored on causal forces</div></div>
-      <div class="card"><div class="lbl">Engaged</div><div class="v" style="color:${engc}">${s.engaged??0}</div><div class="s">gate open only if explained + cycle-stable</div></div>
-      <div class="card"><div class="lbl">Avg explained (R²)</div><div class="v" style="color:var(--accent)">${s.mean_r2!=null?Math.round(s.mean_r2*100)+"%":"—"}</div><div class="s">variance explained by 5 forces (MKT·rates·vol·oil·gold)</div></div>
-      <div class="card"><div class="lbl">Avg residual</div><div class="v" style="color:var(--amber)">${Math.round((s.avg_residual??0)*100)}%</div><div class="s">UNEXPLAINED — the anti-guru number</div></div>
+      <div class="card"><div class="lbl">Instruments</div><div class="v">${s.n??0}</div><div class="s">every one attributed — none shied from</div></div>
+      <div class="card"><div class="lbl">Understood</div><div class="v" style="color:var(--accent)">${s.understood??0}/${s.n??0}</div><div class="s">adj-R²×era-stability ≥ ${Math.round(uT*100)}%</div></div>
+      <div class="card"><div class="lbl">Avg explained (R²)</div><div class="v">${s.mean_r2!=null?Math.round(s.mean_r2*100)+"%":"—"}</div><div class="s">6 forces · residual ${Math.round((s.avg_residual??0)*100)}% unexplained</div></div>
+      <div class="card"><div class="lbl">Engaged</div><div class="v" style="color:${engc}">${s.engaged??0}</div><div class="s">needs BOTH a directional edge + understanding</div></div>
     </div>
     <div class="two" style="margin-top:16px">
       <div class="panel"><div class="lbl" style="margin-bottom:10px">Why the gate is ${s.engaged>0?"open":"shut"} — ${esc(d.factor||"factor")} IC by era (33-yr, deflated)</div>
         <table><thead><tr><th>market era</th><th class="num">IC</th><th class="num">t</th><th class="num">n</th></tr></thead><tbody>${grid}</tbody></table>
         <p class="muted" style="margin-top:10px;font-size:12px">A force is trusted only if its sign HOLDS across cycles. Sign-flips (e.g. momentum inverting in the dot-com bust) → confidence≈0 → stand down. The engine refuses to trade what it cannot explain — the opposite of a guru.</p></div>
-      <div class="panel"><div class="lbl" style="margin-bottom:10px">Per-instrument — lean · explained (R²) · residual · top causal driver</div>
-        <table><thead><tr><th>sym</th><th class="num">lean</th><th class="num">R²</th><th class="num">resid</th><th>top driver</th><th>gate</th></tr></thead><tbody>${sig}</tbody></table>
-        <p class="muted" style="margin-top:10px;font-size:12px">R² = fraction of the instrument's move explained by the 5 forces (multi-factor OLS over 33yr). The top driver is its dominant force — banks load on rates, energy on oil, tech on market. Residual = what no force explains.</p></div>
+      <div class="panel"><div class="lbl" style="margin-bottom:10px">Every instrument — lean · explained (R²) · understanding · driver · gate</div>
+        <table><thead><tr><th>sym</th><th class="num">lean</th><th class="num">R²</th><th class="num">underst.</th><th>top driver</th><th>gate</th></tr></thead><tbody>${sig}</tbody></table>
+        <p class="muted" style="margin-top:10px;font-size:12px">Understanding = adjusted-R² × cross-era stability (survives the added-force penalty AND holds across cycles). The gate opens ONLY with a directional edge AND understanding — SPY is fully understood yet stands down (no edge). Low-understanding names (nat-gas, foreign indices, FX) are the research mission: each needs its own forces (weather/storage, local rates, carry). We shy away from none.</p></div>
     </div>
     <div class="panel" style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span class="lbl">Operator key</span>
