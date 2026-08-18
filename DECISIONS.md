@@ -7086,3 +7086,17 @@ equity forces — CORRECTLY, they need their own forces (weather/storage, local 
 aegis-signals builds from the UNION of attributed+signalled instruments (none omitted); live on the cockpit with an
 understanding column + gate reasons; the least-understood list IS the research backlog. Next: add per-cluster forces to
 raise understanding on the un-understood (deflated, mechanism-required).
+
+---
+
+## D-343 — FX cluster: per-cluster force sets; FX is a RISK-SENTIMENT play (honest 5× lift, still below the bar)
+Started the "understand the un-understood" mission with FX (was U~0.01 under equity forces). Made attribution CLUSTER-AWARE
+(`buildForces(cluster)` in the worker; `cluster` col migration 0049): FX gets mechanism-backed drivers — SHORT (Δ^IRX US
+3M policy/carry), LONG (Δ^TNX), RISK (^VIX safe-haven), GOLD, OIL (commodity currencies) — deliberately NOT a DXY proxy
+(regressing a USD pair on the dollar index is definitional, not understanding). Ingested ^IRX (1970) + 5 FX majors
+(AUDUSD/CAD/CHF/NZD/MXN, 2003-06) keyless. Ran 8 pairs: mean R² 0.052 (adj 0.051) — ~5× the equity-forces ~0.01, and the
+loadings are ECONOMICALLY CORRECT: RISK dominates (AUD/NZD −RISK t≈−12 risk-on; CAD/MXN +RISK & CAD −OIL t=−5.5 oil
+economy; JPY +SHORT t2.6 carry & −RISK t−2.9 haven — the yen duality). HONEST BOUND: no FX pair clears the 0.30
+understanding bar (best AUD ~0.05); FX remains ~95% unexplained (the disconnect puzzle is real). Real mechanism-correct
+progress, NOT a forced R². Knowledge gained: FX is primarily risk-sentiment, not rates, at daily frequency. Next clusters:
+commodities (term-structure/storage), then foreign indices (local rates). Dashboard auto-reflects via aegis-signals join.

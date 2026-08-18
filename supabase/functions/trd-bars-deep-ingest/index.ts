@@ -18,7 +18,8 @@ const UNIVERSE: [string, string, string][] = [
   ["BA","BA","equity"],["HD","HD","equity"],["AMGN","AMGN","equity"],["NKE","NKE","equity"],["AXP","AXP","equity"],
   ["GC=F","GC=F","commodity"],["CL=F","CL=F","commodity"],["SI=F","SI=F","commodity"],["HG=F","HG=F","commodity"],["NG=F","NG=F","commodity"],
   ["EURUSD=X","EURUSD=X","fx"],["JPY=X","JPY=X","fx"],["GBPUSD=X","GBPUSD=X","fx"],
-  ["^TNX","^TNX","rate"],["^TYX","^TYX","rate"],
+  ["AUDUSD=X","AUDUSD=X","fx"],["CAD=X","CAD=X","fx"],["CHF=X","CHF=X","fx"],["NZDUSD=X","NZDUSD=X","fx"],["MXN=X","MXN=X","fx"],
+  ["^TNX","^TNX","rate"],["^TYX","^TYX","rate"],["^IRX","^IRX","rate"],
   ["SPY","SPY","etf"],["QQQ","QQQ","etf"],["IWM","IWM","etf"],["DIA","DIA","etf"],["GLD","GLD","etf"],["TLT","TLT","etf"],
 ];
 
