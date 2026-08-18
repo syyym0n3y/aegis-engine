@@ -41,12 +41,13 @@ function iret(bars: number[][]): Map<number, number> {
 // JOB: strategy_sweep — test the FREE documented anomaly battery through the era-disaggregated engine at once. Per
 // instrument×date computes each signal (from daily OHLC) + forward 21d return; pools per era; rank-IC + deflation. One pass
 // tests trend, momentum variants, 52wk-high, MAX/lottery, short-reversal, low-vol, overnight — honest, most will be null.
-async function runStrategySweep(params: { symbols: string[]; horizon?: number }) {
+async function runStrategySweep(params: { symbols?: string[]; horizon?: number }) {
   const HZ = params.horizon ?? 21;
+  const symbols = params.symbols?.length ? params.symbols : await getUniverse();
   const SIGS = ["mom_12_1", "trend_200", "high_52w", "max_lottery", "rev_5d", "lowvol_60", "overnight"] as const;
   const acc: Record<string, Record<string, { x: number[]; y: number[] }>> = {}; // sig → era → {x,y}
   for (const s of SIGS) acc[s] = {};
-  for (const sym of params.symbols) {
+  for (const sym of symbols) {
     const b = await getBars(sym); if (!b || b.length < 300) continue;
     const o = b.map((r) => r[1]), c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
     for (let i = 260; i < b.length - HZ; i++) {
@@ -68,20 +69,25 @@ async function runStrategySweep(params: { symbols: string[]; horizon?: number })
   }
   const out: Record<string, unknown>[] = [];
   for (const s of SIGS) { const eras = Object.entries(acc[s]).map(([era, d]) => ({ era, ...rankIC(d.x, d.y) })).filter((e) => e.n > 50); out.push({ signal: s, cells: eras }); }
-  return { result: { factor: "strategy_sweep", n_symbols: params.symbols.length, battery: out } };
+  return { result: { factor: "strategy_sweep", n_symbols: symbols.length, battery: out } };
 }
 
 // JOB: xsec_sweep — CORRECTED cross-sectional test (audit D-359 fix). Momentum/reversal/lottery/vol are CROSS-SECTIONAL
 // factors: rank symbols WITHIN each date, per-date rank-IC, then Fama-MacBeth average (the pooled panel-IC in strategy_sweep
 // diluted real cross-sectional edges toward zero — violated our own no-pooling law). Also: overnight tested as its OWN
 // return (close→open), not 21d. Universe MUST be homogeneous (equities). t = mean(dailyIC)/(sd/sqrt(#days)) — honest N.
-async function runXsecSweep(params: { symbols: string[]; horizon?: number }) {
+async function getUniverse(): Promise<string[]> {
+  const r = await fetch(`${BROKER}?universe=1`).then((x) => x.json()).catch(() => null);
+  return (r?.symbols ?? []) as string[];
+}
+async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
   const HZ = params.horizon ?? 21;
+  const symbols = params.symbols?.length ? params.symbols : await getUniverse(); // self-pull the full accumulated universe
   const SIGS = ["mom_12_1", "rev_5d", "max_lottery", "lowvol_60", "trend_200", "high_52w"] as const;
   // per signal: date → {x: signal vals, y: fwd returns} across symbols (the cross-section that date)
   const byDate: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const s of SIGS) byDate[s] = new Map();
   const onDate = new Map<string, { ov: number[]; intr: number[] }>(); // overnight premium (own return)
-  for (const sym of params.symbols) {
+  for (const sym of symbols) {
     const b = await getBars(sym); if (!b || b.length < 300) continue;
     const o = b.map((r) => r[1]), c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
     for (let i = 260; i < b.length - HZ; i++) {
@@ -105,7 +111,7 @@ async function runXsecSweep(params: { symbols: string[]; horizon?: number }) {
   // overnight premium: mean daily overnight vs intraday return, Fama-MacBeth
   const ovM: number[] = [], intrM: number[] = []; for (const [, e] of onDate) { if (e.ov.length < 3) continue; ovM.push(e.ov.reduce((a, b) => a + b, 0) / e.ov.length); intrM.push(e.intr.reduce((a, b) => a + b, 0) / e.intr.length); }
   const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length; const tt = (a: number[]) => { const m = mean(a); const sd = Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)); return { mean_bp: +(1e4 * m).toFixed(2), t: +(m / (sd / Math.sqrt(a.length))).toFixed(2), n: a.length }; };
-  return { result: { factor: "xsec_sweep_famamacbeth", n_symbols: params.symbols.length, battery: out, overnight_premium: { overnight: tt(ovM), intraday: tt(intrM) } } };
+  return { result: { factor: "xsec_sweep_famamacbeth", n_symbols: symbols.length, battery: out, overnight_premium: { overnight: tt(ovM), intraday: tt(intrM) } } };
 }
 
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on

@@ -27,6 +27,16 @@ Deno.serve(async (req) => {
       const s = await fetch(`${SB}/rest/v1/rpc/${rpc}`, { method: "POST", headers: H, body: JSON.stringify({ p_limit: n }) }).then((r) => r.json()).catch(() => []);
       return new Response(JSON.stringify({ ok: true, sample: Array.isArray(s) ? s : [] }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("universe")) {
+      // all accumulated equity symbols — lets a sweep self-pull the full universe instead of a hardcoded list (D-360b)
+      const cls = url.searchParams.get("class") || "equity";
+      const rows: string[] = [];
+      for (let off = 0; ; off += 1000) {
+        const p = await fetch(`${SB}/rest/v1/trd_bars_deep?select=symbol&asset_class=eq.${cls}&order=symbol&offset=${off}&limit=1000`, { headers: H }).then((r) => r.json()).catch(() => []);
+        if (!Array.isArray(p) || !p.length) break; for (const r of p as { symbol: string }[]) rows.push(r.symbol); if (p.length < 1000) break;
+      }
+      return new Response(JSON.stringify({ ok: true, symbols: rows }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("worklist")) {
       // hand the worker the next batch of fundamentals tickers still lacking deep daily bars (D-360b price accumulation)
       const n = Number(url.searchParams.get("worklist")) || 200;
