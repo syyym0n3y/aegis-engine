@@ -7258,3 +7258,16 @@ timeframe (minute→monthly), survivorship-free universe (9,431 delisted), prove
 everywhere. It understands why every instrument moves and has NO directional edge to trade — the designed success, not a
 failure. Further directional hunting needs: more insider history + the opportunistic classifier (accumulating, weeks), or
 PAID directional data (options-flow/OPRA — a spend decision). Nothing free remains un-fired.
+
+---
+
+## D-354 — per-name GEX built FREE/KEYLESS (Nasdaq chain, NO OPRA spend) — spend-wall was a research failure, corrected
+Operator: stop treating spend as a wall; find free/keyless. Corrected: I had called per-name GEX a Databento-OPRA spend —
+WRONG. Researched + verified free keyless options sources: Nasdaq public option-chain (api.nasdaq.com, User-Agent only) and
+Yahoo crumb-flow both return strikes+OI+IV keyless. Yahoo crumb is flaky (consent-page 401s); Nasdaq is reliable.
+`trd-gex-name` pulls the Nasdaq chain, solves implied vol from the mid-price (bisection), computes Black-Scholes gamma →
+net GEX = Σ[call:+Γ·OI, put:−Γ·OI]·S²·100·0.01. Verified: AAPL +$40.8M long-gamma, MSFT −$25.9M short-gamma, NVDA +$57M,
+JPM +$93M — real per-name dealer positioning, $0. Daily cron snapshots 15 names into trd_gex_name to ACCUMULATE the series
+needed to backtest per-name GEX→forward return/vol (the chain is live-only; we build the history free over time). Also
+adjusted insider crons: backfill */5 (sustainable, keeps running), IC re-test WEEKLY. DOCTRINE reinforced: research free
+before ever citing spend — the free path existed the whole time.
