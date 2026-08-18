@@ -7100,3 +7100,17 @@ economy; JPY +SHORT t2.6 carry & −RISK t−2.9 haven — the yen duality). HON
 understanding bar (best AUD ~0.05); FX remains ~95% unexplained (the disconnect puzzle is real). Real mechanism-correct
 progress, NOT a forced R². Knowledge gained: FX is primarily risk-sentiment, not rates, at daily frequency. Next clusters:
 commodities (term-structure/storage), then foreign indices (local rates). Dashboard auto-reflects via aegis-signals join.
+
+---
+
+## D-344 — commodity cluster + MULTI-TIMEFRAME attribution (daily/weekly/monthly); MTF vindicated
+Commodity cluster: forces = DOLLAR (leave-out USD-strength basket from 8 FX pairs), RATES (Δ^TNX), RISK (^VIX), MKT
+(^GSPC growth demand) — term-structure/roll is a return component (futures curve → Databento), not an external force.
+MTF: the worker now runs the SAME force model at daily/weekly/monthly (NON-overlapping blocks → honest N), stored in
+`per_tf`; aegis-signals measures understanding at the BEST timeframe (× era-stability). MTF is DECISIVE for commodities —
+the daily lens massively understates: **gold daily R² 0.074 → WEEKLY 0.261 (3.5×)**, copper 0.107→0.244 (monthly), silver
+0.062→0.205. A daily-only read would have wrongly concluded we barely understand gold. Mechanisms economically correct:
+DOLLAR dominates all metals (gold t=−15.7, silver −13.6, copper −12 — priced in USD), MKT drives growth-sensitive copper
+(t=8.8, "Dr. Copper") + oil (t=4.8), nat-gas stays ~0 (weather/storage, correctly). Re-ran equity (47) + FX (8) through
+MTF too — all clusters now carry per_tf. HONEST BOUND on "to the very minute": keyless data stops at DAILY over history;
+finer-than-daily (hourly→minute) requires the dormant Databento key — flagged, not faked. 60 instruments, 21 understood.

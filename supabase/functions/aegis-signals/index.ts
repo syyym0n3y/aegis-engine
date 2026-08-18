@@ -17,10 +17,17 @@ Deno.serve(async (req) => {
     // edge (momentum, cycle-stable) AND genuine understanding = adjusted-R2 × era-stability >= threshold. We never trade an
     // instrument we don't understand, and never trade understanding alone without a directional edge.
     const U_THRESH = 0.30;
-    type A = { symbol: string; r2: number; adj_r2: number; residual: number; era_stability: number; betas: Record<string, { beta: number; t: number }> };
-    const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,adj_r2,residual,era_stability,betas`, { headers: H }).then((r) => r.json()).catch(() => []);
+    type TF = Record<string, { r2: number; adj_r2: number; n: number }>;
+    type A = { symbol: string; r2: number; adj_r2: number; residual: number; era_stability: number; betas: Record<string, { beta: number; t: number }>; per_tf?: TF };
+    const attr = await fetch(`${SB}/rest/v1/trd_attribution?select=symbol,r2,adj_r2,residual,era_stability,betas,per_tf`, { headers: H }).then((r) => r.json()).catch(() => []);
     const aMap = new Map<string, A>();
     for (const a of (Array.isArray(attr) ? attr : []) as A[]) aMap.set(a.symbol, a);
+    // MTF: the timeframe where the force model explains MOST (daily noise can hide a strong relationship — D-333).
+    const bestTf = (a: A): { tf: string; adj: number } => {
+      let best = { tf: "daily", adj: a.adj_r2 || 0 };
+      for (const [tf, v] of Object.entries(a.per_tf || {})) if ((v.adj_r2 || 0) > best.adj) best = { tf, adj: v.adj_r2 };
+      return best;
+    };
     const sMap = new Map<string, Record<string, unknown>>();
     for (const s of (Array.isArray(sig) ? sig : []) as Record<string, unknown>[]) sMap.set(s.symbol as string, s);
     // build from the UNION of every attributed instrument AND every signalled one — no instrument is shied away from
@@ -30,12 +37,13 @@ Deno.serve(async (req) => {
       const a = aMap.get(sym);
       if (!a) return { ...s, understanding: 0, engage: false, gate_reason: "not yet attributed" };
       const drivers = Object.entries(a.betas || {}).map(([f, v]) => ({ f, beta: v.beta, t: v.t })).sort((p, q) => Math.abs(q.t) - Math.abs(p.t)).slice(0, 3);
-      const understanding = +Math.max(0, (a.adj_r2 || 0) * (a.era_stability || 0)).toFixed(3);
+      const bt = bestTf(a);                                              // best-timeframe adjusted-R2 (MTF)
+      const understanding = +Math.max(0, bt.adj * (a.era_stability || 0)).toFixed(3);
       const directional = !!s.engage;                                   // momentum gate (cycle-stable directional edge)
       const understood = understanding >= U_THRESH;
       const engage = directional && understood;                          // FOLDED GATE — both required
       const gate_reason = engage ? "predict + understand" : !directional ? "no directional edge" : "not understood well enough";
-      return { ...s, residual: a.residual, r2: a.r2, adj_r2: a.adj_r2, era_stability: a.era_stability, understanding, drivers, directional, engage, gate_reason };
+      return { ...s, residual: a.residual, r2: a.r2, adj_r2: a.adj_r2, best_tf: bt.tf, best_r2: +bt.adj.toFixed(3), per_tf: a.per_tf ?? null, era_stability: a.era_stability, understanding, drivers, directional, engage, gate_reason };
     }).sort((p, q) => Number(q.understanding) - Number(p.understanding));
     const rows: Record<string, unknown>[] = isOperator ? raw : raw.map((s) =>
       s.engage ? { symbol: s.symbol, asof: s.asof, residual: s.residual, r2: s.r2, adj_r2: s.adj_r2, understanding: s.understanding, drivers: s.drivers, engage: true, redacted: true, lean: null, why: null, gate_reason: s.gate_reason, note: "operator-only" } : s);

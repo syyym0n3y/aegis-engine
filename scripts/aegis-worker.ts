@@ -81,6 +81,18 @@ async function buildForces(cluster: string): Promise<{ fret: Map<string, Map<num
     fret.set("GOLD", await rm("GC=F", "ret")); fret.set("OIL", await rm("CL=F", "ret"));
     return { fret, keys: ["SHORT", "LONG", "RISK", "GOLD", "OIL"] };
   }
+  if (cluster === "commodity") {
+    // commodities priced in USD → the broad DOLLAR is the dominant external force; plus real-rate demand, risk, growth.
+    // DOLLAR = leave-out USD-strength basket (external to any single commodity). Term-structure/roll is a return component,
+    // not an external force (needs the futures curve → Databento); we attribute the tradeable external drivers here.
+    const pairs: [string, number][] = [["EURUSD=X", -1], ["GBPUSD=X", -1], ["AUDUSD=X", -1], ["NZDUSD=X", -1], ["JPY=X", 1], ["CAD=X", 1], ["CHF=X", 1], ["MXN=X", 1]];
+    const legs: Map<number, number>[] = [];
+    for (const [sym, sgn] of pairs) { const m = await rm(sym, "ret"); const s = new Map<number, number>(); for (const [d, v] of m) s.set(d, sgn * v); legs.push(s); }
+    const dollar = new Map<number, number>(); const allDays = new Set<number>(); for (const l of legs) for (const d of l.keys()) allDays.add(d);
+    for (const d of allDays) { let sum = 0, c = 0; for (const l of legs) { const v = l.get(d); if (v != null) { sum += v; c++; } } if (c >= 4) dollar.set(d, sum / c); }
+    fret.set("DOLLAR", dollar); fret.set("RATES", await rm("^TNX", "diff")); fret.set("RISK", await rm("^VIX", "ret")); fret.set("MKT", await rm("^GSPC", "ret"));
+    return { fret, keys: ["DOLLAR", "RATES", "RISK", "MKT"] };
+  }
   fret.set("MKT", await rm("^GSPC", "ret")); fret.set("RATES", await rm("^TNX", "diff")); fret.set("VOL", await rm("^VIX", "ret"));
   fret.set("OIL", await rm("CL=F", "ret")); fret.set("GOLD", await rm("GC=F", "ret"));
   const rut = await rm("^RUT", "ret"), gsp = fret.get("MKT")!; const sz = new Map<number, number>();
@@ -126,11 +138,21 @@ async function runAttribution(params: { targets: string[]; cluster?: string }) {
     const fit = ols(Y, X); if (!fit) continue;
     const p = FK.length, adj = +(1 - (1 - fit.r2) * (fit.n - 1) / (fit.n - p - 1)).toFixed(4); // ADJUSTED R2 — penalizes added forces
     const betas: Record<string, unknown> = {}; FK.forEach((key, i) => betas[key] = { beta: +fit.beta[i + 1].toFixed(3), t: fit.t[i + 1] });
+    // MULTI-TIMEFRAME: the same force model at daily/weekly/monthly (NON-overlapping blocks → honest N). Reveals whether a
+    // force explains MORE once daily noise averages out — a single timeframe hides that (D-333 MTF law). Finer than daily
+    // (hourly→minute) needs intraday depth → the dormant Databento key; keyless data stops at daily over history.
+    const perTf: Record<string, unknown> = { daily: { r2: fit.r2, adj_r2: adj, n: fit.n } };
+    for (const [tfName, k] of [["weekly", 5], ["monthly", 21]] as [string, number][]) {
+      const nb = Math.floor(Y.length / k); if (nb < p + 20) continue;
+      const Yb: number[] = [], Xb: number[][] = [];
+      for (let bi = 0; bi < nb; bi++) { let ys = 0; const xr = new Array(p + 1).fill(0); xr[0] = 1; for (let j = 0; j < k; j++) { const idx = bi * k + j; ys += Y[idx]; for (let c = 1; c <= p; c++) xr[c] += X[idx][c]; } Yb.push(ys); Xb.push(xr); }
+      const bf = ols(Yb, Xb); if (bf) perTf[tfName] = { r2: bf.r2, adj_r2: +(1 - (1 - bf.r2) * (bf.n - 1) / (bf.n - p - 1)).toFixed(4), n: bf.n };
+    }
     const perEra: Record<string, unknown> = {}; const eraR2: number[] = [];
     for (const [e, a, bb] of ERAS) { const idx = yrs.map((y, i) => (y >= a && y < bb ? i : -1)).filter((i) => i >= 0); if (idx.length < 80) continue; const ef = ols(idx.map((i) => Y[i]), idx.map((i) => X[i])); if (ef) { perEra[e] = { r2: ef.r2, n: ef.n }; eraR2.push(ef.r2); } }
     const eraStab = eraR2.length >= 2 ? +(Math.max(0, Math.min(...eraR2)) / Math.max(1e-9, Math.max(...eraR2))).toFixed(3) : +Math.max(0, adj).toFixed(3); // do we understand it CONSISTENTLY across cycles?
     // attribution OWNS residual/R2/quality + driver map; momentum owns lean/direction. aegis-signals folds BOTH into the gate.
-    attribution.push({ symbol: sym, asof, cluster, r2: fit.r2, adj_r2: adj, residual: +(1 - fit.r2).toFixed(4), era_stability: eraStab, n_factors: p, n: fit.n, betas, per_era: perEra });
+    attribution.push({ symbol: sym, asof, cluster, r2: fit.r2, adj_r2: adj, residual: +(1 - fit.r2).toFixed(4), era_stability: eraStab, n_factors: p, n: fit.n, betas, per_era: perEra, per_tf: perTf });
   }
   const meanR2 = attribution.length ? +(attribution.reduce((s, a) => s + (a.r2 as number), 0) / attribution.length).toFixed(4) : 0;
   const meanAdj = attribution.length ? +(attribution.reduce((s, a) => s + (a.adj_r2 as number), 0) / attribution.length).toFixed(4) : 0;
