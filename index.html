@@ -210,7 +210,14 @@ async function doCausal(){
     const sig=(d.signals||[]).slice(0,60).map(x=>{
       if(x.redacted)return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:var(--amber)">🔒</td><td class="mono num">${r2c(x)}</td><td class="mono num" style="color:${uco(x)}">${uc(x)}</td><td class="mono" style="color:var(--mut)">${drv(x)}</td><td class="mono" style="color:var(--amber)">operator-only</td></tr>`;
       const buy=x.lean>0,lc=x.engage?(buy?"var(--accent)":"var(--red)"):"var(--mut)";return `<tr><td class="mono">${esc(x.symbol)}</td><td class="mono num" style="color:${lc}">${leanc(x)}</td><td class="mono num">${r2c(x)}</td><td class="mono num" style="color:${uco(x)}">${uc(x)}</td><td class="mono" style="color:var(--mut)">${drv(x)}</td><td class="mono" style="color:${x.engage?"var(--accent)":"var(--mut)"};font-size:11px">${esc(x.gate_reason||(x.engage?"ENGAGE":"stand down"))}</td></tr>`}).join("")||`<tr><td colspan=6 class=muted>no signals computed yet</td></tr>`;
+    const gx=d.gex;
     o.innerHTML=`
+    ${gx?`<div class="panel" style="margin-bottom:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+      <span class="lbl">Market regime (GEX)</span>
+      <span class="mono" style="color:${gx.regime&&gx.regime.includes('high')?'var(--accent)':'var(--amber)'}">${esc(gx.regime||'—')}</span>
+      <span class="mono" style="color:var(--mut);font-size:12px">gamma pct ${Math.round((gx.percentile||0)*100)} · exp vol ${gx.expected_vol_pct}% · <b style="color:var(--tx)">size ×${gx.size_mult}</b></span>
+      <span class="muted" style="font-size:11px;flex:1;min-width:200px">Proven vol-regime (GEX→vol IC −0.49, every era) → drives SIZING, not signal selection: calm high-gamma sizes up, short-gamma vol-expansion sizes down. Measured NOT to gate momentum (D-352) — honest.</span>
+    </div>`:""}
     <div class="grid">
       <div class="card"><div class="lbl">Instruments</div><div class="v">${s.n??0}</div><div class="s">every one attributed — none shied from</div></div>
       <div class="card"><div class="lbl">Understood</div><div class="v" style="color:var(--accent)">${s.understood??0}/${s.n??0}</div><div class="s">adj-R²×era-stability ≥ ${Math.round(uT*100)}%</div></div>
