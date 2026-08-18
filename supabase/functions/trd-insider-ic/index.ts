@@ -21,8 +21,9 @@ Deno.serve(async () => {
       const idxOf = new Map<string, number>(); ds.forEach((d: string, i: number) => idxOf.set(d, i));
       const tf: number[] = [];
       for (const d of dates) {
-        let i = idxOf.get(d); if (i == null) { const k = ds.findIndex((x: string) => x >= d); if (k < 0) continue; i = k; }
-        if (i + HORIZON >= c.length || c[i] == null || c[i + HORIZON] == null) continue;
+        const gi = idxOf.get(d);
+        const i = gi != null ? gi : ds.findIndex((x: string) => x >= d);
+        if (i < 0 || i + HORIZON >= c.length || c[i] == null || c[i + HORIZON] == null) continue;
         tf.push(c[i + HORIZON] / c[i] - 1);
       }
       if (tf.length) { nT++; if (mean(tf) > 0) posT++; fwd.push(...tf); }
