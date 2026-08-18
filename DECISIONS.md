@@ -7070,3 +7070,19 @@ untested_before 4, computed 4, persisted 4, lost 0, survivors 0`, write status *
 merge-duplicate no-ops). DB confirms: **1,023 fac candidates, 1,023 stage-2 verdicts (977 stage2-killed / 46 thin),
 untested = 0, `trd_forward_candidates` = 0.** The grammar lane is now fully adjudicated end-to-end: **1,468,800 specs →
 1,023 in-sample candidates → 0 through the full gauntlet.** D-070 working. Nothing armed; no capital touched.
+
+---
+
+## D-342 — folded engagement gate (edge + understanding) + SIZE force + attribute EVERY instrument
+Per operator: fold attribution QUALITY into the gate + make it our mission to understand every instrument (shy from none).
+(a) GATE FOLDED: engage now requires BOTH (i) a directional edge (momentum, cycle-stable) AND (ii) genuine understanding
+= adjusted-R² × cross-era-stability ≥ 0.30. Neither alone trades — SPY is fully understood (U=0.92) yet stands down (no
+edge); a directional signal on an un-understood instrument is also refused. Doctrine-honest: uses ADJUSTED R² (penalizes
+added forces — no faking understanding by piling on regressors) and per-era stability (understood CONSISTENTLY, not in one
+regime). (b) Added SIZE force (RUT−GSPC small-minus-big); mean adj-R² 0.485 ≈ R² (with thousands of days, 6 forces don't
+overfit). (c) Attributed the FULL deep universe — 53 instruments, 17.6s uncapped. Honest map of understanding: US index
+ETFs near-fully understood (SPY R²0.98/U0.92), while nat-gas (U0.001), Nikkei (0.008), FX (~0.01) are barely explained by
+equity forces — CORRECTLY, they need their own forces (weather/storage, local rates, carry). 19/53 understood, 0 engaged.
+aegis-signals builds from the UNION of attributed+signalled instruments (none omitted); live on the cockpit with an
+understanding column + gate reasons; the least-understood list IS the research backlog. Next: add per-cluster forces to
+raise understanding on the un-understood (deflated, mechanism-required).
