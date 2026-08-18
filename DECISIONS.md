@@ -7308,3 +7308,14 @@ the stack MORE interconnected: the worker is the pacing compute layer, the broke
 understanding/gate → L5 signal/surface), the store that connects each pair, the compute node, the crons, and the provenance
 (DECISIONS + trd_lineage + trd_trial_counter). Principle documented: each layer reads the one below through a stable store,
 so layers rebuild independently and context is never lost. Insider IC verdict appended once the paced run completes.
+
+## D-356b — worker-paced insider test FINISHED: null on 8,168 events across decades
+The worker-paced pipeline evaded the Yahoo IP-limit as designed: 163/300 tickers covered (vs 5 on the edge fn), **8,168
+insider-buy events across 2010-2026**. Verdict: mean fwd-21d −0.294%, t=−1.41, win 52%, breadth 98/163 — NULL (faint
+positive breadth, but pooled return negative + insignificant). The last free directional candidate, tested properly and
+powered, is null — consistent with every other. One honest refinement remains (not a wall): my test used ALL open-market
+buys; the Cohen-Malloy alpha is the OPPORTUNISTIC subset (irregular timing per insider), buildable from the bulk
+REPORTINGOWNER table + per-owner history — a classifier, free, in the same pipeline. But the all-buys powered read is
+decisively null. DIRECTIONAL HUNT COMPLETE: every candidate falsified/null; GEX→vol (sizing) the sole survivor. Engine at
+its designed terminal state (D-070), now with the insider candidate exhaustively tested, not deferred. Stack fully mapped
+(docs/STACK.md) + provenance complete (trd_lineage 1300 rows).
