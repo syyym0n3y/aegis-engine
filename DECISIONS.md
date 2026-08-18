@@ -7228,3 +7228,16 @@ keyless — already wired in trd-gex). Zero OPRA spend. `trd-gex-ic` tested GEX/
 3. **DIX_z → return: NULL** (t=1.36).
 VERDICT: GEX is the first signal to clear every bar decisively — as a vol-regime GATE. It doesn't light the directional
 trade layer by itself, but it's the conditioning variable that makes the engagement gate real. Free, keyless, 14yr, every era.
+
+---
+
+## D-352 — GEX vol-regime WIRED into the engagement gate (as sizing, measured — not a false selection gate)
+Operator: wire GEX into the gate. Did it HONESTLY — measured the claim first (`trd-gex-gate-test`): does momentum work
+better in short-gamma? NO — high-gamma momentum IC +0.002 (t=0.34), short-gamma −0.012 (t=−1.84, if anything negative).
+So GEX is NOT a valid strategy-SELECTION gate for momentum (would have been a false wire had I assumed the mechanism).
+What IS proven: GEX→vol (IC −0.49, every era). So GEX wired as the SIZING/RISK overlay: `trd_gex_state` (migration 0056,
+cron 21:30 wkdays via `trd-gex-state-refresh`) stores regime + expected vol + size_mult = clamp(12%/expected_vol, 0.4, 1.4)
+— calm high-gamma sizes UP (×1.19 now), short-gamma vol-expansion sizes DOWN. `aegis-signals` reads it and exposes the
+`gex` overlay; the engage decision stays edge×understanding (GEX conditions SIZE, not selection). Live on the cockpit as a
+market-regime banner. The north-star "favourable conditions → sizing" is now real, proven, free — and honestly scoped to
+what the data supports, not what the mechanism-story wanted.

@@ -49,6 +49,11 @@ Deno.serve(async (req) => {
       s.engage ? { symbol: s.symbol, asof: s.asof, residual: s.residual, r2: s.r2, adj_r2: s.adj_r2, understanding: s.understanding, drivers: s.drivers, engage: true, redacted: true, lean: null, why: null, gate_reason: s.gate_reason, note: "operator-only" } : s);
     const job = await fetch(`${SB}/rest/v1/trd_compute_jobs?job_type=eq.deep_factor_ic&status=eq.done&select=result,done_at&order=done_at.desc&limit=1`, { headers: H }).then((r) => r.json()).catch(() => []);
     const grid = Array.isArray(job) && job.length ? job[0].result : null;
+    // GEX vol-regime — the conditioning overlay. PROVEN as SIZING (GEX→vol IC −0.49, every era); NOT a strategy-selection
+    // gate (momentum isn't regime-dependent, D-352). size_mult = vol-target/expected-vol → size up in calm high-gamma, down
+    // in short-gamma vol-expansion. Applied market-wide to any engaged size; the engage decision itself stays edge×understanding.
+    const gx = await fetch(`${SB}/rest/v1/trd_gex_state?id=eq.current&select=regime,gex_percentile,expected_vol_pct,size_mult,asof`, { headers: H }).then((r) => r.json()).catch(() => []);
+    const gex = Array.isArray(gx) && gx.length ? gx[0] : null;
     const engaged = rows.filter((r) => r.engage).length;
     const avg = (k: string) => rows.length ? +(rows.reduce((s: number, r) => s + (Number(r[k]) || 0), 0) / rows.length).toFixed(3) : 0;
     return new Response(JSON.stringify({
@@ -57,6 +62,7 @@ Deno.serve(async (req) => {
         mean_r2: aMap.size ? +([...aMap.values()].reduce((s, a) => s + a.r2, 0) / aMap.size).toFixed(3) : null,
         mean_adj_r2: aMap.size ? +([...aMap.values()].reduce((s, a) => s + (a.adj_r2 || 0), 0) / aMap.size).toFixed(3) : null,
         understood: rows.filter((r) => Number(r.understanding) >= U_THRESH).length },
+      gex: gex ? { regime: gex.regime, percentile: gex.gex_percentile, expected_vol_pct: gex.expected_vol_pct, size_mult: gex.size_mult, role: "vol-regime sizing overlay (proven IC −0.49); NOT a selection gate (D-352)" } : null,
       era_grid: grid?.era_grid ?? null, factor: grid?.factor ?? null, mean_ic: grid?.mean_ic ?? null,
       // intraday R2 ladder (below daily → the Epps effect: causal forces dissolve into microstructure noise at the minute)
       intraday: [...aMap.values()].filter((a) => a.per_tf_intraday).map((a) => ({
