@@ -7437,3 +7437,35 @@ Harvey-Liu t>3 bar, on a LIQUID universe ($vol≥$1M/day, 20bp) — the ALL/micr
 HONEST OUTCOME: the gate did its job — it killed the plausible-but-untradable. Gross IC ≠ edge. Value is the single factor
 that clears deflation+cost on a liquid universe; the walk-forward (Move 3, D-363b) tests whether it holds OOS. Default REJECT
 still governs everything until the OOS split confirms. Files: aegis-worker runFactorBacktest; job 70.
+
+---
+
+## D-364 — THE CENTURY-SCALE VERDICT: over 63–99 years, deflated, almost nothing survives
+Operator demanded a bigger sample + proper deflation. Loaded the full Fama-French canon (Ken French, free/keyless): HML/SMB/
+RMW/CMA/Mkt 1963–2026 (756 mo), Momentum 1927–2026 (1,194 mo) — 4–7× our 15-yr fundamentals. Ran the proper Deflated Sharpe
+(skew/kurtosis-adjusted PSR vs the noise ceiling √(2·ln N), N=1000 = the literature's distinct-factor count). Result, full-sample:
+- **Momentum**: Sharpe 0.46, psr_z 3.73 vs ceiling 3.72 → clears by a hair (DSR 0.50 = coin-flip), with CATASTROPHIC crash risk
+  (skew −3.0, kurtosis 31).
+- Market (equity premium) 3.55, Investment 3.29, Profitability 2.81, **Value (HML) 2.76**, Size 1.71 → ALL fail the N=1000 bar.
+HONEST CONCLUSION: even a century of the most-studied factors in finance, deflated against how many factors the literature
+has tried, yields NO clean survivor — momentum is a coin-flip with a fat crash tail; value/quality/size do not clear. There is
+NO high-Sharpe holy grail in the factor zoo; the real premia are ~0.35–0.46 Sharpe GROSS, before cost. The defensible edge is
+not one factor but MANY small decorrelated premia harvested at scale, vol-targeted + ¼-Kelly-sized (D-365). Default REJECT
+holds — now earned at 63–99 yr with proper deflation, not 15 yr with a naive t. The stock-level fundamentals re-run + blend
+were deprioritised (they re-wedge the shared DB and the FF canon already answers value/quality/momentum definitively).
+
+## D-365 — execution-intelligence sizing layer (how to actually deploy a proven edge)
+_shared/sizing.ts (deterministic, no LLM in the order path, 9 tests green): appliedLeverage=min(¼-Kelly, vol-target);
+positionSize risks exactly equity·ρ at the stop → whole shares; breadthForIR=(IR/IC)²; positionsForTargetVol from name-vol +
+correlation; signalHalfLife=ln0.5/lnφ for hold period; deploymentPlan() ties it into one plan. Answers the operator's "how
+many lots / equity at risk / how many positions / how long to hold" — valid ONLY for an edge that cleared the gate.
+
+## D-366 — SECURITY: closed the anon-read hole on all Aegis tables; root cause = shared prod DB
+Advisor: 108 findings. Material one: 39 Aegis trd_* tables had RLS DISABLED in public → the public anon key could read all
+trading data (positions, signals, P&L, strategies). Fixed (migration 0064, reproducible): enabled RLS on all 39 (service-role
+bypasses, zero system impact; zero YGS/CC tables were exposed), pinned search_path on all trd_* + flagged CC functions, revoked
+anon/authenticated execute on 8 CC trigger functions, set security_invoker on trd_* views. HELD for operator (needs CC design
+knowledge, could break webhooks/auth): 10 RPC-callable SECURITY DEFINER CC functions anon can execute (verify_cc_callback_token,
+kb_*, etc.). LOW: Alpaca PAPER key-ID hardcoded as fallback (secret is env-only). ROOT CAUSE surfaced repeatedly this session:
+Aegis's multi-GB research load shares the command-centre production DB and wedges it under heavy jobs — Aegis needs its OWN
+Supabase project (as its CLAUDE.md always intended). That isolation is the #1 next build.
