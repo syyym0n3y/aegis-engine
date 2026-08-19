@@ -241,6 +241,65 @@ async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?:
   return { result: { factor: "factor_backtest_deflated", cost_bps_all: COST_ALL * 1e4, cost_bps_liq: COST_LIQ * 1e4, liq_min_dvol: LIQ, n_trials: ALLF.length * 2, harvey_liu_bar: 3.0, battery: out } };
 }
 
+// JOB: factor_blend — Move 3 (D-363b). Combine the decorrelated survivors into one composite and WALK IT FORWARD. Each
+// month, cross-sectionally z-score each factor, average into a composite (equal-weight = parameter-free, so the whole
+// series is genuinely OOS), decile long-short net of cost on the LIQUID universe. Reports IS vs OOS (time-split) net Sharpe
+// + the composite's monthly-return correlation to each leg, so we see whether the blend actually diversifies. Default legs
+// are the low-turnover survivors; pass params.factors to match whatever cleared the D-363 gate.
+async function runFactorBlend(params: { factors?: string[]; oos_frac?: number; cost_bps?: number; liq_min_dvol?: number }) {
+  const FACS = params.factors ?? ["mom_12_1", "lowvol_60", "value_bm", "quality_roe"];
+  const OOS = params.oos_frac ?? 0.5, COST = params.cost_bps ?? 0.0020, LIQ = params.liq_min_dvol ?? 1e6, HZ = 21;
+  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
+  const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
+  for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
+  for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  // per month: array of { s, dv, fwd, vals:Record<factor,number> }
+  const byMonth = new Map<string, { s: string; dv: number; fwd: number; vals: Record<string, number> }[]>();
+  const symbols = await getUniverse();
+  await forEachBars(symbols, (sym, b) => {
+    if (b.length < 300) return;
+    const c = b.map((r) => r[4]), v = b.map((r) => r[5]), ts = b.map((r) => r[0]);
+    const fm = fund.get(sym); let lastMonth = "";
+    for (let i = 260; i < b.length - HZ; i++) {
+      const mo = new Date(ts[i] * 1000).toISOString().slice(0, 7); if (mo === lastMonth) continue; lastMonth = mo;
+      const px = c[i]; const fwd = c[i + HZ] / c[i] - 1; if (!(px > 0) || !Number.isFinite(fwd)) continue;
+      let dv = 0, cnt = 0; for (let k = i - 21; k < i; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cnt++; } } dv = cnt ? dv / cnt : 0;
+      const rets: number[] = []; for (let k = i - 20; k <= i; k++) rets.push(c[k] / c[k - 1] - 1);
+      const r60: number[] = []; for (let k = i - 59; k <= i; k++) r60.push(c[k] / c[k - 1] - 1);
+      const sd = Math.sqrt(r60.reduce((a, x) => a + x * x, 0) / r60.length);
+      const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at); const mcap = sh && sh > 0 ? sh * px : null;
+      const all: Record<string, number | null> = { mom_12_1: c[i - 21] / c[i - 252] - 1, lowvol_60: -sd, high_52w: c[i] / Math.max(...c.slice(i - 252, i + 1)), max_lottery: -Math.max(...rets), rev_5d: -(c[i] / c[i - 5] - 1), value_bm: mcap && be != null ? be / mcap : null, quality_roe: be && be > 0 && ni != null ? ni / be : null, earnings_yield: mcap && ni != null ? ni / mcap : null };
+      const vals: Record<string, number> = {}; for (const f of FACS) { const x = all[f]; if (x != null && Number.isFinite(x)) vals[f] = x; }
+      if (!Object.keys(vals).length) continue;
+      (byMonth.get(mo) ?? byMonth.set(mo, []).get(mo)!).push({ s: sym, dv, fwd, vals });
+    }
+  });
+  const months = [...byMonth.keys()].sort();
+  const legReturns: Record<string, number[]> = {}; for (const f of FACS) legReturns[f] = [];
+  const comboRet: number[] = []; let prevL = new Set<string>(), prevS = new Set<string>();
+  const decileLS = (arr: { s: string; f: number; key: number }[]) => { arr.sort((a, b) => a.key - b.key); const d = Math.max(1, Math.floor(arr.length / 10)); const short = arr.slice(0, d), long = arr.slice(arr.length - d); return { g: long.reduce((a, x) => a + x.f, 0) / long.length - short.reduce((a, x) => a + x.f, 0) / short.length, L: new Set(long.map((x) => x.s)), S: new Set(short.map((x) => x.s)) }; };
+  for (const mo of months) {
+    const liq = byMonth.get(mo)!.filter((x) => x.dv >= LIQ); if (liq.length < 30) { comboRet.push(NaN); continue; }
+    // z-score each factor across the month's liquid names
+    const z: Record<string, { m: number; sd: number }> = {};
+    for (const f of FACS) { const xs = liq.filter((r) => r.vals[f] != null).map((r) => r.vals[f]); if (xs.length < 20) continue; const m = xs.reduce((a, b) => a + b, 0) / xs.length; const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length) || 1; z[f] = { m, sd }; }
+    // per-leg return (for correlation) + composite score
+    for (const f of FACS) { if (!z[f]) continue; const arr = liq.filter((r) => r.vals[f] != null).map((r) => ({ s: r.s, f: r.fwd, key: (r.vals[f] - z[f].m) / z[f].sd })); if (arr.length >= 20) legReturns[f].push(decileLS(arr).g); }
+    const comp = liq.map((r) => { let s = 0, n = 0; for (const f of FACS) if (z[f] && r.vals[f] != null) { s += (r.vals[f] - z[f].m) / z[f].sd; n++; } return { s: r.s, f: r.fwd, key: n ? s / n : NaN, n }; }).filter((r) => r.n >= Math.ceil(FACS.length / 2) && Number.isFinite(r.key));
+    if (comp.length < 30) { comboRet.push(NaN); continue; }
+    const { g, L, S } = decileLS(comp);
+    let chg = 0; for (const s of L) if (!prevL.has(s)) chg++; for (const s of S) if (!prevS.has(s)) chg++; const turn = (L.size + S.size) ? chg / (L.size + S.size) : 0;
+    comboRet.push(g - turn * COST); prevL = L; prevS = S;
+  }
+  const ann = (a: number[]) => { const x = a.filter(Number.isFinite); if (x.length < 12) return null; const m = x.reduce((p, q) => p + q, 0) / x.length; const sd = Math.sqrt(x.reduce((p, q) => p + (q - m) ** 2, 0) / (x.length - 1)); const msr = sd > 0 ? m / sd : 0; return { ann_ret_pct: +(m * 12 * 100).toFixed(2), sharpe: +(msr * Math.sqrt(12)).toFixed(2), t: +(msr * Math.sqrt(x.length)).toFixed(2), n: x.length }; };
+  const split = Math.floor(comboRet.length * (1 - OOS));
+  const corr = (a: number[], b: number[]) => { const n = Math.min(a.length, b.length); const xa = a.slice(-n), xb = b.slice(-n); const fa = xa.map((_, i) => [xa[i], xb[i]]).filter(([p, q]) => Number.isFinite(p) && Number.isFinite(q)); if (fa.length < 12) return null; const ma = fa.reduce((s, [p]) => s + p, 0) / fa.length, mb = fa.reduce((s, [, q]) => s + q, 0) / fa.length; let sxy = 0, sxx = 0, syy = 0; for (const [p, q] of fa) { sxy += (p - ma) * (q - mb); sxx += (p - ma) ** 2; syy += (q - mb) ** 2; } return sxx > 0 && syy > 0 ? +(sxy / Math.sqrt(sxx * syy)).toFixed(2) : null; };
+  const legCorr: Record<string, number | null> = {}; for (const f of FACS) legCorr[f] = corr(comboRet, legReturns[f]);
+  return { result: { factor: "factor_blend_walkforward", legs: FACS, cost_bps: COST * 1e4, composite: { full: ann(comboRet), in_sample: ann(comboRet.slice(0, split)), out_of_sample: ann(comboRet.slice(split)) }, leg_sharpes: Object.fromEntries(FACS.map((f) => [f, ann(legReturns[f])])), composite_vs_leg_corr: legCorr } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -487,6 +546,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "price_accumulate") out = await runPriceAccumulate(job.params);
     else if (job.job_type === "fundamentals_ic") out = await runFundamentalsIC(job.params);
     else if (job.job_type === "factor_backtest") out = await runFactorBacktest(job.params);
+    else if (job.job_type === "factor_blend") out = await runFactorBlend(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
