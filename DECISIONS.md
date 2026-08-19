@@ -7493,3 +7493,21 @@ Pilot torn down clean (data volume persists); nothing armed.
 verdict is IDENTICAL to the rented-Supabase run: Mom psr_z 3.73 / DSR 0.504 CLEARS (barely); Mkt-RF 3.55, CMA 3.29, RMW 2.81,
 HML 2.76, SMB 1.71 all FAIL the N=1000 deflation ceiling (3.72). Ownership is proven complete — not just the data layer but the
 full ingest→analysis→verdict loop, rent-free, same answer. The engine is portable to any Postgres you own.
+
+---
+
+## D-372 — DISAGGREGATED attribution across the board: the market is understood at the macro layer, idiosyncratic at the name
+Ran the causal-attribution engine on all 4,379 un-attributed equities (25→3,813 decomposed) onto MKT/SIZE/OIL/GOLD/VOL/RATES ×
+daily/weekly/monthly. The no-aggregation finding — the exact thing a pooled number hides:
+- **Individual stocks are mostly IDIOSYNCRATIC to macro forces.** Median R² 0.11; 81% of names below R² 0.3; only 26 above 0.6
+  (the ETFs/indices that ARE the forces). The forces explain INDEXES (SPY 0.98) and LIQUID large-caps (JPM/XOM ~0.77, MSFT
+  0.59) well, but the broad single-name universe is ~85% stock-specific variance the macro forces cannot see.
+- **Force landscape:** MKT + SIZE are the near-universal systematic exposures (significant |t|>3 in ~68% of names). RATES 20%,
+  GOLD 16%, VOL 15%, OIL 10% — most stocks are NOT rate/commodity/vol driven. (Avg |beta| is inflated by the micro-cap tail's
+  noisy OLS — liquidity-filter before trusting name-level loadings; R² is scale-free and unaffected.)
+- **MTF lift (Epps signature):** understanding RISES with horizon — daily R² 0.16 → weekly 0.17 → monthly 0.24 — as
+  idiosyncratic daily noise averages out and systematic exposure surfaces. Timeframes genuinely tell different stories.
+CONVERGES with D-364: the macro/systematic layer is efficient AND understood (no free edge, high R² on aggregates), and the
+remaining structure is idiosyncratic — to understand/predict a SINGLE NAME needs stock-specific forces (fundamentals surprises,
+earnings, news, flow), not macro. The honest ceiling of macro attribution on single names is ~15-25% R². That is the measured
+ignorance, and it points the next hunt: per-name idiosyncratic forces, not more macro.
