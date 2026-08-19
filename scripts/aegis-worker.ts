@@ -176,6 +176,71 @@ async function runFundamentalsIC(params: { horizon?: number }) {
   return { result: { factor: "fundamentals_ic_famamacbeth", horizon_days: HZ, n_symbols_with_fund: [...fund.keys()].length, battery: out } };
 }
 
+// JOB: factor_backtest — THE GATE (D-363). Turns gross IC into a net-of-cost, multiple-testing-deflated verdict. Monthly
+// decile long-short (equal-weight, 21d hold) per factor, on TWO universes: ALL (micro-cap heavy, 100bp round-trip) and
+// LIQUID (trailing $vol ≥ $1M/day, 20bp). Net return = gross − turnover×cost. A factor SURVIVES only if its NET Sharpe
+// t-stat clears the Harvey-Liu multiple-testing bar (t>3.0), not the naive 1.96. This is what separates real signal from a
+// tradable edge — most gross ICs die here on turnover (reversal/lottery) or capacity (micro-cap-only).
+async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?: number; liq_min_dvol?: number }) {
+  const COST_ALL = params.cost_bps_all ?? 0.010, COST_LIQ = params.cost_bps_liq ?? 0.0020, LIQ = params.liq_min_dvol ?? 1e6, HZ = 21;
+  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
+  const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
+  for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
+  for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  const PFAC = ["mom_12_1", "lowvol_60", "high_52w", "max_lottery", "rev_5d"] as const;
+  const FFAC = ["value_bm", "quality_roe", "earnings_yield"] as const;
+  const ALLF = [...PFAC, ...FFAC];
+  const data: Record<string, Map<string, { v: number; f: number; dv: number; s: string }[]>> = {};
+  for (const f of ALLF) data[f] = new Map();
+  const symbols = await getUniverse();
+  await forEachBars(symbols, (sym, b) => {
+    if (b.length < 300) return;
+    const c = b.map((r) => r[4]), v = b.map((r) => r[5]), ts = b.map((r) => r[0]);
+    const fm = fund.get(sym); let lastMonth = "";
+    for (let i = 260; i < b.length - HZ; i++) {
+      const mo = new Date(ts[i] * 1000).toISOString().slice(0, 7); if (mo === lastMonth) continue; lastMonth = mo;
+      const px = c[i]; const fwd = c[i + HZ] / c[i] - 1; if (!(px > 0) || !Number.isFinite(fwd)) continue;
+      let dv = 0, cnt = 0; for (let k = i - 21; k < i; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cnt++; } } dv = cnt ? dv / cnt : 0;
+      const rets: number[] = []; for (let k = i - 20; k <= i; k++) rets.push(c[k] / c[k - 1] - 1);
+      const r60: number[] = []; for (let k = i - 59; k <= i; k++) r60.push(c[k] / c[k - 1] - 1);
+      const sd = Math.sqrt(r60.reduce((a, x) => a + x * x, 0) / r60.length);
+      const pf: Record<string, number> = { mom_12_1: c[i - 21] / c[i - 252] - 1, lowvol_60: -sd, high_52w: c[i] / Math.max(...c.slice(i - 252, i + 1)), max_lottery: -Math.max(...rets), rev_5d: -(c[i] / c[i - 5] - 1) };
+      for (const f of PFAC) { const val = pf[f]; if (!Number.isFinite(val)) continue; (data[f].get(mo) ?? data[f].set(mo, []).get(mo)!).push({ v: val, f: fwd, dv, s: sym }); }
+      if (fm) { const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at); const mcap = sh && sh > 0 ? sh * px : null;
+        const ff: Record<string, number | null> = { value_bm: mcap && be != null ? be / mcap : null, quality_roe: be && be > 0 && ni != null ? ni / be : null, earnings_yield: mcap && ni != null ? ni / mcap : null };
+        for (const f of FFAC) { const val = ff[f]; if (val == null || !Number.isFinite(val)) continue; (data[f].get(mo) ?? data[f].set(mo, []).get(mo)!).push({ v: val, f: fwd, dv, s: sym }); }
+      }
+    }
+  });
+  const ann = (monthly: number[]) => { const n = monthly.length; if (n < 12) return null; const m = monthly.reduce((a, x) => a + x, 0) / n; const sd = Math.sqrt(monthly.reduce((a, x) => a + (x - m) ** 2, 0) / (n - 1)); const msr = sd > 0 ? m / sd : 0; return { ann_ret_pct: +(m * 12 * 100).toFixed(2), sharpe: +(msr * Math.sqrt(12)).toFixed(2), t: +(msr * Math.sqrt(n)).toFixed(2), n }; };
+  const runUniv = (f: string, liqOnly: boolean, cost: number) => {
+    const months = [...data[f].keys()].sort(); let prevL = new Set<string>(), prevS = new Set<string>();
+    const gross: number[] = [], net: number[] = [], turns: number[] = [];
+    for (const mo of months) {
+      let arr = data[f].get(mo)!; if (liqOnly) arr = arr.filter((x) => x.dv >= LIQ);
+      if (arr.length < 20) continue;
+      arr = arr.slice().sort((a, b) => a.v - b.v);
+      const d = Math.max(1, Math.floor(arr.length / 10));
+      const short = arr.slice(0, d), long = arr.slice(arr.length - d); // low factor→short, high→long (signs set so high=good)
+      const g = long.reduce((a, x) => a + x.f, 0) / long.length - short.reduce((a, x) => a + x.f, 0) / short.length;
+      const Ls = new Set(long.map((x) => x.s)), Ss = new Set(short.map((x) => x.s));
+      let chg = 0; for (const s of Ls) if (!prevL.has(s)) chg++; for (const s of Ss) if (!prevS.has(s)) chg++;
+      const turnover = (Ls.size + Ss.size) ? chg / (Ls.size + Ss.size) : 0;
+      gross.push(g); net.push(g - turnover * cost); turns.push(turnover); prevL = Ls; prevS = Ss;
+    }
+    return { n_months: gross.length, avg_turnover: +(turns.reduce((a, x) => a + x, 0) / (turns.length || 1)).toFixed(2), gross: ann(gross), net: ann(net) };
+  };
+  const out: Record<string, unknown>[] = [];
+  for (const f of ALLF) {
+    const all = runUniv(f, false, COST_ALL), liq = runUniv(f, true, COST_LIQ);
+    const surv = (u: { net: { t: number; sharpe: number } | null }) => !!(u.net && u.net.t > 3.0 && u.net.sharpe > 0);
+    out.push({ factor: f, all, liq, survives_liq_net: surv(liq), survives_all_net: surv(all) });
+  }
+  return { result: { factor: "factor_backtest_deflated", cost_bps_all: COST_ALL * 1e4, cost_bps_liq: COST_LIQ * 1e4, liq_min_dvol: LIQ, n_trials: ALLF.length * 2, harvey_liu_bar: 3.0, battery: out } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -421,6 +486,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "xsec_sweep") out = await runXsecSweep(job.params);
     else if (job.job_type === "price_accumulate") out = await runPriceAccumulate(job.params);
     else if (job.job_type === "fundamentals_ic") out = await runFundamentalsIC(job.params);
+    else if (job.job_type === "factor_backtest") out = await runFactorBacktest(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
