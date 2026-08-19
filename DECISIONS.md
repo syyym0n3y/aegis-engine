@@ -7420,3 +7420,20 @@ pending a shares-outstanding load. First results are exactly on-thesis: **ENTX $
 return predictor (needs the funded names' forward prices, which the D-360b accumulation is now filling); the harness to test
 it honestly is built. Caveat noted: pooled-investment-fund Form Ds inflate raw offering size — filter by industry before the
 IC test. Files: trd-fundflow-load (new), migrations 0059/0060/0061, trd-compute, aegis-worker.
+
+---
+
+## D-363 — THE GATE: deflation + cost kills the mirages; only VALUE survives clean
+Applied the net-of-cost, multiple-testing gate (Move 1) to all 8 factors: monthly decile long-short, turnover×spread cost,
+Harvey-Liu t>3 bar, on a LIQUID universe ($vol≥$1M/day, 20bp) — the ALL/micro-cap universe is uninterpretable garbage
+(±1000%/yr from penny-stock gaps; only LIQUID is real). Result — every gross-IC "winner" DIES net of cost on tradable names:
+- **value_bm: net Sharpe 1.41, t=5.51, turnover 0.14/mo — SURVIVES clean** (the classic value premium; low-turnover so cost
+  doesn't eat it). The one robust tradable survivor.
+- rev_5d: net Sharpe 0.61, t=4.40 — clears the stat bar but turnover 0.88/mo AND rebalanced monthly (its true 5-day freq =
+  ~4× the cost) → cost-suspect, NOT trusted.
+- quality_roe (t=0.54), mom_12_1 (t=0.35), high_52w (−1.6), max_lottery (−1.9), lowvol_60 (−2.3, NEGATIVE), earnings_yield
+  (−1.3): ALL DEAD net-of-cost. The strong GROSS ICs (mom/lowvol/lottery/quality, IC 0.04–0.13) do not translate to a
+  tradable long-short return once cost + liquidity are honest.
+HONEST OUTCOME: the gate did its job — it killed the plausible-but-untradable. Gross IC ≠ edge. Value is the single factor
+that clears deflation+cost on a liquid universe; the walk-forward (Move 3, D-363b) tests whether it holds OOS. Default REJECT
+still governs everything until the OOS split confirms. Files: aegis-worker runFactorBacktest; job 70.
