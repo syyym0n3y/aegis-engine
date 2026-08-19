@@ -7486,3 +7486,10 @@ The portability discipline enforced all session (schema in migrations, data re-d
 scripts) was always the on-ramp to this. Model recommendation for the continuation: **Opus (4.8/5) + fast mode**, subagents
 (Sonnet) for mechanical bulk only — this is HARD/CRITICAL (production migration, irreversible data-location decisions).
 Pilot torn down clean (data volume persists); nothing armed.
+
+## D-368b — owned loop COMPLETE: full value loop on owned infra reproduces the rented verdict byte-for-byte
+`infra/scripts/owned-loop-proof.ts` ran the ENTIRE Aegis value loop on owned hardware: mint service JWT → fetch Fama-French
+(free) → write 5,730 rows into the OWNED Postgres via the OWNED PostgREST API → read back → compute the Deflated Sharpe. The
+verdict is IDENTICAL to the rented-Supabase run: Mom psr_z 3.73 / DSR 0.504 CLEARS (barely); Mkt-RF 3.55, CMA 3.29, RMW 2.81,
+HML 2.76, SMB 1.71 all FAIL the N=1000 deflation ceiling (3.72). Ownership is proven complete — not just the data layer but the
+full ingest→analysis→verdict loop, rent-free, same answer. The engine is portable to any Postgres you own.
