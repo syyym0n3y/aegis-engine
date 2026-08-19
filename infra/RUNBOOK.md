@@ -61,3 +61,16 @@ clears — but **never arms, trades, or spends** (arming is your act alone). "Au
 - **Persistent (dedicated linux box — the reliable home)**: install `infra/launchd/aegis-autopilot.service` under systemd; `systemctl enable --now aegis-autopilot`.
 - **Watch it**: `select * from trd_autopilot_log order by cycle_at desc;` — the engine grading its own position over time.
 - **Arming stays manual**: when a surfaced factor is genuinely worth capital, YOU flip the arm (trd_exec_arm) after the staged gates — the autopilot will never do it.
+
+## Move to a dedicated box + migrate a domain (D-370)
+One command each, the moment you have a box + SSH:
+- **Provision the box** (fresh Ubuntu/Debian, root/sudo): `infra/scripts/deploy-to-box.sh user@host` — installs docker+deno,
+  syncs the repo, brings up the owned node with the **supabase/postgres image** (all 56 migrations + pg_cron/vault), installs
+  the autopilot under systemd (24/7), wires nightly backups, migrates the Mac's data. The box becomes the owned node.
+- **Migrate a rented DB onto the box** (Aegis's project or YGS): `infra/scripts/migrate-db.sh "<source-conn-with-pw>" user@box <dbname>`
+  — pg_dump (source read-only) → restore on the box → verify table parity → prints the cutover checklist (crons, functions,
+  secrets, frontend, rollback). YGS is 592 tables / ~1.25 GB / 74 crons → stage it: dump+restore+verify, then a scheduled
+  cutover window with rollback, because it is revenue.
+- **Prerequisites only you can provide**: (1) a box + SSH (buy metal for true ownership, or a rented bare-metal interim);
+  (2) each source project's DB connection string WITH password (Supabase dashboard); (3) for YGS, that project's edge-function
+  repo (command-centre) + a cutover window. Claude never holds the passwords.
