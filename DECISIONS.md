@@ -7511,3 +7511,23 @@ CONVERGES with D-364: the macro/systematic layer is efficient AND understood (no
 remaining structure is idiosyncratic — to understand/predict a SINGLE NAME needs stock-specific forces (fundamentals surprises,
 earnings, news, flow), not macro. The honest ceiling of macro attribution on single names is ~15-25% R². That is the measured
 ignorance, and it points the next hunt: per-name idiosyncratic forces, not more macro.
+
+---
+
+## D-373 — PER-NAME residual attribution: real structure, no tradable deflated edge (the hunt's honest terminus)
+Attributed the idiosyncratic residual (D-372's ~85%) onto every per-name force we have — value, earnings-yield, quality(ROE),
+investment(−Δassets), NET-ISSUANCE(−Δshares, never tested before), insider-buy intensity (278k Form-4 events, PIT). Cross-
+sectional rank-IC (auto-market-neutral) per era + deflated long-short Sharpe. Funding(49)/GEX(30) excluded as too sparse.
+Result — the whole hunt converges here:
+- **Real, regime-robust structure exists.** value_bm IC +0.11 (positive ALL 3 eras, t 3-14); quality_roe +0.096; earnings_
+  yield +0.087; net_issuance +0.040 (all eras). These per-name forces DO explain part of the idiosyncratic residual — the
+  rank-ordering genuinely works.
+- **But NONE is a tradable deflated edge.** Every force FAILS the N=1000 deflation ceiling, and every decile long-short has a
+  NEGATIVE Sharpe despite positive IC. That divergence is the diagnostic: the capturable signal lives in the toxic tails
+  (cheapest-decile = distressed micro-cap value-traps that keep falling; the smooth middle carries the IC), and the value
+  drawdown + costs destroy the long-short. investment + insider_buy are IC-null on the residual.
+TERMINAL, EARNED honestly across the full hunt: macro forces explain indexes not names (D-372); the century factor canon fails
+deflation (D-364); the per-name residual forces have real IC but no deflation-surviving long-short (D-373). The market is now
+understood + measured end to end — macro, century, and per-name — with NO free tradable edge. That is D-070's predicted
+terminus, reached by accounting for everything, not by giving up. The honest value is the understanding + the risk/sizing
+layer; there is no guru's edge because the evidence says there isn't one.
