@@ -1,0 +1,50 @@
+# infra/docker-compose.yml (D-368) — Aegis on OWNED hardware. Self-hosted Supabase-compatible core: the SAME Postgres image
+# Supabase runs (all extensions: pg_cron, pgsodium/vault, pg_net, pgjwt) + PostgREST for the identical REST API our edge
+# functions call. Data lives on ./data/db — a disk YOU own, an asset on the balance sheet, not a tenant row in a vendor's DB.
+# No 2s function cap, no connection ceiling, no vendor rate limit. Bring up: infra/scripts/up.sh. Reproducible from this file.
+name: aegis-owned
+
+services:
+  db:
+    image: supabase/postgres:15.8.1.060           # bundles pg_cron, pgsodium, pg_net, pgjwt, vault, the anon/service roles
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in infra/.env}
+      POSTGRES_DB: postgres
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - ./data/db:/var/lib/postgresql/data        # OWNED data — this directory is the asset; back it up (scripts/backup.sh)
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  rest:
+    image: postgrest/postgrest:v12.2.3            # identical REST surface to Supabase's — our code is unchanged
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:?set in infra/.env}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    ports:
+      - "${REST_PORT:-3000}:3000"
+
+  # Owned reverse proxy / TLS (replaces Vercel/edge). Serves the REST API + static frontends from OUR box.
+  proxy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on: [rest]
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy:/data
+    profiles: ["full"]                            # pilot skips it; `--profile full` for the production node

@@ -1,0 +1,10 @@
+# Owned edge. In production, replace :80 with your domain for automatic Let's Encrypt TLS.
+:80 {
+	handle_path /rest/* {
+		reverse_proxy rest:3000
+	}
+	handle {
+		root * /srv
+		file_server
+	}
+}
