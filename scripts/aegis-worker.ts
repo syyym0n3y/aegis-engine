@@ -181,7 +181,7 @@ async function runFundamentalsIC(params: { horizon?: number }) {
 // LIQUID (trailing $vol ≥ $1M/day, 20bp). Net return = gross − turnover×cost. A factor SURVIVES only if its NET Sharpe
 // t-stat clears the Harvey-Liu multiple-testing bar (t>3.0), not the naive 1.96. This is what separates real signal from a
 // tradable edge — most gross ICs die here on turnover (reversal/lottery) or capacity (micro-cap-only).
-async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?: number; liq_min_dvol?: number }) {
+async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?: number; liq_min_dvol?: number; n_trials?: number }) {
   const COST_ALL = params.cost_bps_all ?? 0.010, COST_LIQ = params.cost_bps_liq ?? 0.0020, LIQ = params.liq_min_dvol ?? 1e6, HZ = 21;
   const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
@@ -214,7 +214,24 @@ async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?:
       }
     }
   });
-  const ann = (monthly: number[]) => { const n = monthly.length; if (n < 12) return null; const m = monthly.reduce((a, x) => a + x, 0) / n; const sd = Math.sqrt(monthly.reduce((a, x) => a + (x - m) ** 2, 0) / (n - 1)); const msr = sd > 0 ? m / sd : 0; return { ann_ret_pct: +(m * 12 * 100).toFixed(2), sharpe: +(msr * Math.sqrt(12)).toFixed(2), t: +(msr * Math.sqrt(n)).toFixed(2), n }; };
+  // normal-CDF (Abramowitz-Stegun) for PSR/DSR probabilities
+  const ncdf = (z: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3989423 * Math.exp(-z * z / 2); let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); if (z > 0) p = 1 - p; return +p.toFixed(4); };
+  const N_TRIALS = params.n_trials ?? 1; // real cumulative trial count fed in → deflation benchmark
+  const ann = (monthly: number[]) => {
+    const n = monthly.length; if (n < 12) return null;
+    const m = monthly.reduce((a, x) => a + x, 0) / n; const sd = Math.sqrt(monthly.reduce((a, x) => a + (x - m) ** 2, 0) / (n - 1)); const msr = sd > 0 ? m / sd : 0;
+    // higher moments of the return series (Bailey-LdP non-normality correction)
+    const sk = sd > 0 ? monthly.reduce((a, x) => a + ((x - m) / sd) ** 3, 0) / n : 0;
+    const ku = sd > 0 ? monthly.reduce((a, x) => a + ((x - m) / sd) ** 4, 0) / n : 3; // raw kurtosis (normal=3)
+    const t = msr * Math.sqrt(n);
+    // PSR z-stat vs SR*=0, non-normality + sample-length adjusted: z = SR·√(n-1) / √(1 − skew·SR + (kurt−1)/4·SR²)
+    const denom = Math.sqrt(Math.max(1e-9, 1 - sk * msr + ((ku - 1) / 4) * msr * msr));
+    const psrZ = denom > 0 ? (msr * Math.sqrt(n - 1)) / denom : 0;
+    // deflation: noise ceiling = expected max |t| under N independent trials ≈ √(2·ln N). DSR = Φ(psrZ − ceiling).
+    const ceil = N_TRIALS > 1 ? Math.sqrt(2 * Math.log(N_TRIALS)) : 0;
+    const dsr = ncdf(psrZ - ceil); // prob the Sharpe beats the best-of-N noise result
+    return { ann_ret_pct: +(m * 12 * 100).toFixed(2), sharpe: +(msr * Math.sqrt(12)).toFixed(2), t: +t.toFixed(2), n, skew: +sk.toFixed(2), kurt: +ku.toFixed(2), psr_z: +psrZ.toFixed(2), noise_ceiling_t: +ceil.toFixed(2), dsr, passes_deflation: psrZ > ceil };
+  };
   const runUniv = (f: string, liqOnly: boolean, cost: number) => {
     const months = [...data[f].keys()].sort(); let prevL = new Set<string>(), prevS = new Set<string>();
     const gross: number[] = [], net: number[] = [], turns: number[] = [];
@@ -235,10 +252,11 @@ async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?:
   const out: Record<string, unknown>[] = [];
   for (const f of ALLF) {
     const all = runUniv(f, false, COST_ALL), liq = runUniv(f, true, COST_LIQ);
-    const surv = (u: { net: { t: number; sharpe: number } | null }) => !!(u.net && u.net.t > 3.0 && u.net.sharpe > 0);
-    out.push({ factor: f, all, liq, survives_liq_net: surv(liq), survives_all_net: surv(all) });
+    // SURVIVES only if the LIQUID net Sharpe clears the DEFLATION ceiling (beats best-of-N-trials noise) — not a fixed t-bar
+    const surv = (u: { net: { passes_deflation?: boolean; sharpe: number } | null }) => !!(u.net && u.net.passes_deflation && u.net.sharpe > 0);
+    out.push({ factor: f, all, liq, survives_liq_deflated: surv(liq) });
   }
-  return { result: { factor: "factor_backtest_deflated", cost_bps_all: COST_ALL * 1e4, cost_bps_liq: COST_LIQ * 1e4, liq_min_dvol: LIQ, n_trials: ALLF.length * 2, harvey_liu_bar: 3.0, battery: out } };
+  return { result: { factor: "factor_backtest_deflated", cost_bps_all: COST_ALL * 1e4, cost_bps_liq: COST_LIQ * 1e4, liq_min_dvol: LIQ, n_trials_deflation: N_TRIALS, noise_ceiling_t: +Math.sqrt(2 * Math.log(Math.max(2, N_TRIALS))).toFixed(2), battery: out } };
 }
 
 // JOB: factor_blend — Move 3 (D-363b). Combine the decorrelated survivors into one composite and WALK IT FORWARD. Each
