@@ -44,6 +44,15 @@ Deno.serve(async (req) => {
       const b = await fetch(`${SB}/rest/v1/trd_bars_deep?symbol=in.(${encodeURIComponent(inList)})&select=symbol,bars`, { headers: H }).then((r) => r.json()).catch(() => []);
       return new Response(JSON.stringify({ ok: true, rows: Array.isArray(b) ? b : [] }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("ff")) {
+      // Fama-French factor returns (D-364) — the 99-year canon for the century-scale deflated gate
+      const rows: { month: string; factor: string; ret: number }[] = [];
+      for (let off = 0; ; off += 1000) {
+        const p = await fetch(`${SB}/rest/v1/trd_ff_factors?select=month,factor,ret&order=month&offset=${off}&limit=1000`, { headers: H }).then((r) => r.json()).catch(() => []);
+        if (!Array.isArray(p) || !p.length) break; rows.push(...p as typeof rows); if (p.length < 1000) break;
+      }
+      return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("fundamentals")) {
       // serve point-in-time fundamentals to the worker for the cross-sectional value/quality/investment test (D-362)
       const rows: { t: string; c: string; e: string; p: string; v: number }[] = [];

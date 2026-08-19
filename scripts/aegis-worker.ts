@@ -27,6 +27,40 @@ function rankIC(xs: number[], ys: number[]) {
 const yearOf = (ts: number) => new Date(ts * 1000).getUTCFullYear();
 const eraOf = (ts: number) => { const y = yearOf(ts); return ERAS.find(([, a, b]) => y >= a && y < b)?.[0] || "?"; };
 
+// Deflated-Sharpe statistics on a monthly return series (Bailey-LdP): non-normality-adjusted PSR z, deflated against the
+// noise ceiling √(2·ln N) for N trials. passes_deflation = the adjusted Sharpe beats the best-of-N-trials noise result.
+const _ncdf = (z: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3989423 * Math.exp(-z * z / 2); let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); if (z > 0) p = 1 - p; return +p.toFixed(4); };
+function dsrStats(monthly: number[], nTrials: number) {
+  const n = monthly.length; if (n < 24) return null;
+  const m = monthly.reduce((a, x) => a + x, 0) / n; const sd = Math.sqrt(monthly.reduce((a, x) => a + (x - m) ** 2, 0) / (n - 1)); const msr = sd > 0 ? m / sd : 0;
+  const sk = sd > 0 ? monthly.reduce((a, x) => a + ((x - m) / sd) ** 3, 0) / n : 0;
+  const ku = sd > 0 ? monthly.reduce((a, x) => a + ((x - m) / sd) ** 4, 0) / n : 3;
+  const denom = Math.sqrt(Math.max(1e-9, 1 - sk * msr + ((ku - 1) / 4) * msr * msr));
+  const psrZ = denom > 0 ? (msr * Math.sqrt(n - 1)) / denom : 0;
+  const ceil = nTrials > 1 ? Math.sqrt(2 * Math.log(nTrials)) : 0;
+  return { n, ann_ret_pct: +(m * 12 * 100).toFixed(2), sharpe: +(msr * Math.sqrt(12)).toFixed(2), t: +(msr * Math.sqrt(n)).toFixed(2), skew: +sk.toFixed(2), kurt: +ku.toFixed(2), psr_z: +psrZ.toFixed(2), noise_ceiling_t: +ceil.toFixed(2), dsr: _ncdf(psrZ - ceil), passes_deflation: psrZ > ceil };
+}
+// JOB: ff_deflated — the 99-YEAR deflated gate (D-364). The Fama-French factor RETURNS are the canon of what drives stock
+// returns, monthly since 1926. Each series IS its long-short portfolio return, so we deflate it directly. N defaults to
+// 1000 (≈ the count of DISTINCT published factors per Harvey-Liu — the honest multiple-testing bar for the LITERATURE, not
+// our 1.5M grid of self-run trials). This is the sample where value/profitability/momentum either clear deflation or don't.
+async function runFFDeflated(params: { n_trials?: number }) {
+  const N = params.n_trials ?? 1000;
+  const r = await fetch(`${BROKER}?ff=1`).then((x) => x.json()).catch(() => null);
+  const rows = (r?.rows ?? []) as { month: string; factor: string; ret: number }[];
+  const byF = new Map<string, { month: string; ret: number }[]>();
+  for (const x of rows) (byF.get(x.factor) ?? byF.set(x.factor, []).get(x.factor)!).push({ month: x.month, ret: x.ret });
+  const out: Record<string, unknown>[] = [];
+  for (const [f, arr] of byF) {
+    arr.sort((a, b) => a.month < b.month ? -1 : 1);
+    const eras: Record<string, number[]> = {};
+    for (const x of arr) { const e = eraOf(Math.floor(new Date(x.month).getTime() / 1000)); (eras[e] ||= []).push(x.ret); }
+    const eraStats = Object.entries(eras).map(([e, a]) => ({ era: e, ...(dsrStats(a, N) || {}) })).filter((x) => x.n);
+    out.push({ factor: f, full: dsrStats(arr.map((x) => x.ret), N), eras: eraStats, span: [arr[0]?.month, arr[arr.length - 1]?.month], n_months: arr.length });
+  }
+  return { result: { factor: "ff_deflated", n_trials: N, noise_ceiling_t: +Math.sqrt(2 * Math.log(Math.max(2, N))).toFixed(2), battery: out } };
+}
+
 async function getBars(sym: string): Promise<number[][] | null> {
   const r = await fetch(`${BROKER}?bars=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
   return r?.row?.bars ?? null; // [[ts,o,h,l,c,v],...]
@@ -565,6 +599,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "fundamentals_ic") out = await runFundamentalsIC(job.params);
     else if (job.job_type === "factor_backtest") out = await runFactorBacktest(job.params);
     else if (job.job_type === "factor_blend") out = await runFactorBlend(job.params);
+    else if (job.job_type === "ff_deflated") out = await runFFDeflated(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
