@@ -352,6 +352,65 @@ async function runFactorBlend(params: { factors?: string[]; oos_frac?: number; c
   return { result: { factor: "factor_blend_walkforward", legs: FACS, cost_bps: COST * 1e4, composite: { full: ann(comboRet), in_sample: ann(comboRet.slice(0, split)), out_of_sample: ann(comboRet.slice(split)) }, leg_sharpes: Object.fromEntries(FACS.map((f) => [f, ann(legReturns[f])])), composite_vs_leg_corr: legCorr } };
 }
 
+// JOB: residual_attribution — attribute the IDIOSYNCRATIC residual (the ~85% macro forces can't explain, D-372) onto the
+// PER-NAME forces (D-373). Cross-sectional ranking auto-neutralises the common market move, so per-date rank-IC IS residual
+// attribution. Accounts for everything testable: value, earnings-yield, quality(ROE), investment(−Δassets), net-issuance
+// (−Δshares — a documented strong factor we hadn't tested), insider-buy intensity (trailing-90d Form-4 $ / mktcap, PIT).
+// Reports per-force Fama-MacBeth IC per era AND the deflated long-short Sharpe (tradability). Funding(49 names)/GEX(30) too
+// sparse for cross-section — honestly excluded, not faked.
+async function runResidualAttribution(params: { horizon?: number }) {
+  const HZ = params.horizon ?? 63;
+  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
+  const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
+  for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
+  for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
+  const ir = await fetch(`${BROKER}?insider_all=1`).then((r) => r.json()).catch(() => null);
+  const insider = new Map<string, { e: number; v: number }[]>();
+  for (const r of (ir?.rows ?? []) as { t: string; d: string; v: number }[]) (insider.get(r.t) ?? insider.set(r.t, []).get(r.t)!).push({ e: new Date(r.d).getTime(), v: r.v });
+  for (const a of insider.values()) a.sort((x, y) => x.e - y.e);
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  const FACS = ["value_bm", "earnings_yield", "quality_roe", "investment", "net_issuance", "insider_buy"] as const;
+  const byMonth: Record<string, Map<string, { s: string; v: number; f: number }[]>> = {}; for (const f of FACS) byMonth[f] = new Map();
+  const symbols = await getUniverse();
+  await forEachBars(symbols, (sym, b) => {
+    if (b.length < HZ + 30) return;
+    const c = b.map((r) => r[4]), ts = b.map((r) => r[0]);
+    const fm = fund.get(sym), im = insider.get(sym); let lastMonth = "";
+    for (let i = 0; i < b.length - HZ; i++) {
+      const mo = new Date(ts[i] * 1000).toISOString().slice(0, 7); if (mo === lastMonth) continue; lastMonth = mo;
+      const at = ts[i] * 1000, px = c[i]; const fwd = c[i + HZ] / c[i] - 1; if (!(px > 0) || !Number.isFinite(fwd)) continue;
+      const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), assets = pit(fm, "Assets", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at);
+      const assetsPrev = pit(fm, "Assets", at - 365 * 864e5), shPrev = pit(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5);
+      const mcap = sh && sh > 0 ? sh * px : null;
+      let insBuy = 0; if (im && mcap) { for (const e of im) { if (e.e > at) break; if (e.e > at - 90 * 864e5) insBuy += e.v; } insBuy = insBuy / mcap; }
+      const sig: Record<string, number | null> = {
+        value_bm: mcap && be != null ? be / mcap : null,
+        earnings_yield: mcap && ni != null ? ni / mcap : null,
+        quality_roe: be && be > 0 && ni != null ? ni / be : null,
+        investment: assets && assetsPrev && assetsPrev > 0 ? -(assets / assetsPrev - 1) : null,
+        net_issuance: sh && shPrev && shPrev > 0 ? -(sh / shPrev - 1) : null,
+        insider_buy: im ? insBuy : null,
+      };
+      for (const f of FACS) { const v = sig[f]; if (v == null || !Number.isFinite(v)) continue; (byMonth[f].get(mo) ?? byMonth[f].set(mo, []).get(mo)!).push({ s: sym, v, f: fwd }); }
+    }
+  });
+  const out: Record<string, unknown>[] = [];
+  for (const f of FACS) {
+    const byEra: Record<string, number[]> = {}; const lsMonthly: number[] = [];
+    for (const [mo, arr] of [...byMonth[f]].sort()) {
+      if (arr.length < 20) continue;
+      const ic = rankIC(arr.map((x) => x.v), arr.map((x) => x.f)).ic;
+      if (Number.isFinite(ic)) { const era = eraOf(Math.floor(new Date(mo + "-01").getTime() / 1000)); (byEra[era] ||= []).push(ic); (byEra.ALL ||= []).push(ic); }
+      const s = arr.slice().sort((a, b) => a.v - b.v); const d = Math.max(1, Math.floor(s.length / 10));
+      lsMonthly.push(s.slice(s.length - d).reduce((a, x) => a + x.f, 0) / d - s.slice(0, d).reduce((a, x) => a + x.f, 0) / d);
+    }
+    const cells = Object.entries(byEra).filter(([, a]) => a.length >= 6).map(([era, a]) => { const mn = a.reduce((x, y) => x + y, 0) / a.length; const sd = a.length > 1 ? Math.sqrt(a.reduce((x, y) => x + (y - mn) ** 2, 0) / (a.length - 1)) : 0; return { era, ic: +mn.toFixed(4), t: sd > 0 ? +(mn / (sd / Math.sqrt(a.length))).toFixed(2) : 0, n: a.length }; });
+    out.push({ force: f, cells, deflated_ls: dsrStats(lsMonthly, 1000), n_months: lsMonthly.length });
+  }
+  return { result: { factor: "residual_attribution", horizon_days: HZ, forces_tested: FACS, excluded_too_sparse: ["funding_formD(49)", "gex(30)"], battery: out } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -600,6 +659,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "factor_backtest") out = await runFactorBacktest(job.params);
     else if (job.job_type === "factor_blend") out = await runFactorBlend(job.params);
     else if (job.job_type === "ff_deflated") out = await runFFDeflated(job.params);
+    else if (job.job_type === "residual_attribution") out = await runResidualAttribution(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));

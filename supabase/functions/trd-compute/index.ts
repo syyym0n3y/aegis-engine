@@ -53,6 +53,17 @@ Deno.serve(async (req) => {
       }
       return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("insider_all")) {
+      // per-name Form-4 open-market buys (D-373 residual attribution): ticker, disclosed_date, value_usd — point-in-time
+      const rows: { t: string; d: string; v: number }[] = [];
+      for (let off = 0; ; off += 1000) {
+        const p = await fetch(`${SB}/rest/v1/trd_insider?disclosed_date=not.is.null&select=ticker,disclosed_date,value_usd&order=ticker&offset=${off}&limit=1000`, { headers: H }).then((r) => r.json()).catch(() => []);
+        if (!Array.isArray(p) || !p.length) break;
+        for (const r of p as { ticker: string; disclosed_date: string; value_usd: number }[]) rows.push({ t: r.ticker, d: r.disclosed_date, v: +r.value_usd });
+        if (p.length < 1000) break;
+      }
+      return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("fundamentals")) {
       // serve point-in-time fundamentals to the worker for the cross-sectional value/quality/investment test (D-362)
       const rows: { t: string; c: string; e: string; p: string; v: number }[] = [];
