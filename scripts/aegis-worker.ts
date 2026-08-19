@@ -496,18 +496,29 @@ async function runProbabilityLadder(params: { horizon?: number; min_dvol?: numbe
     }
   });
   const months = [...byMonth.keys()].sort(); const latest = months[months.length - 1];
-  // composite score per name-month (cross-sectional z), and the calibration sample from PAST months (score bucket → fwd returns)
+  // composite score per name-month (cross-sectional z), calibration sample from PAST, + the per-month ranked (score,fwd) for the breadth backtest
   const calib = new Map<number, number[]>(); const current: { sym: string; score: number; px: number }[] = [];
+  const BREADTHS = [5, 10, 20, 50, 100, 200, 500]; const lsRet: Record<number, number[]> = {}; const loRet: Record<number, number[]> = {}; for (const n of BREADTHS) { lsRet[n] = []; loRet[n] = []; }
   for (const mo of months) {
     const arr = byMonth.get(mo)!; const zst: Record<string, { m: number; sd: number }> = {};
     for (const fac of FAC) { const xs = arr.map((r) => r.f[fac]).filter((x) => x != null && Number.isFinite(x)); if (xs.length < 20) continue; const m = xs.reduce((a, x) => a + x, 0) / xs.length; const sd = Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / xs.length) || 1; zst[fac] = { m, sd }; }
+    const scored: { score: number; fwd: number | null }[] = [];
     for (const r of arr) {
       let s = 0, w = 0; for (const fac of FAC) { if (!zst[fac] || r.f[fac] == null || !Number.isFinite(r.f[fac])) continue; s += W[fac] * Math.max(-4, Math.min(4, (r.f[fac] - zst[fac].m) / zst[fac].sd)); w += W[fac]; }
-      if (w === 0) continue; const score = s / w; const bucket = Math.round(score * 4) / 4; // 0.25-wide score buckets
-      if (mo !== latest && r.fwd != null && Number.isFinite(r.fwd)) (calib.get(bucket) ?? calib.set(bucket, []).get(bucket)!).push(r.fwd);
+      if (w === 0) continue; const score = s / w; const bucket = Math.round(score * 4) / 4;
+      if (mo !== latest && r.fwd != null && Number.isFinite(r.fwd)) { (calib.get(bucket) ?? calib.set(bucket, []).get(bucket)!).push(r.fwd); scored.push({ score, fwd: r.fwd }); }
       if (mo === latest) current.push({ sym: r.sym, score: +score.toFixed(3), px: r.px });
     }
+    // BREADTH backtest for this month: long top-N, short bottom-N (LS) and long top-N vs universe mean (LO)
+    if (scored.length >= 20) {
+      scored.sort((a, b) => b.score - a.score); const mkt = scored.reduce((s, x) => s + x.fwd!, 0) / scored.length;
+      for (const n of BREADTHS) { if (scored.length < 2 * n) continue; const top = scored.slice(0, n), bot = scored.slice(scored.length - n); const tR = top.reduce((s, x) => s + x.fwd!, 0) / n, bR = bot.reduce((s, x) => s + x.fwd!, 0) / n; lsRet[n].push(tR - bR); loRet[n].push(tR - mkt); }
+    }
   }
+  // breadth curve: for each N, net (20bp round-trip×assumed 0.7 turnover) annualised Sharpe / return / monthly win-rate
+  const per = 12 / (HZ / 21); const cost = 0.002 * 0.7;
+  const stat = (a: number[]) => { const x = a.filter(Number.isFinite).map((r) => r - cost); if (x.length < 12) return null; const m = x.reduce((p, q) => p + q, 0) / x.length; const sd = Math.sqrt(x.reduce((p, q) => p + (q - m) ** 2, 0) / (x.length - 1)); const sr = sd > 0 ? (m / sd) * Math.sqrt(per) : 0; return { ann_ret_pct: +(m * per * 100).toFixed(1), sharpe: +sr.toFixed(2), monthly_win_pct: +(100 * x.filter((r) => r > 0).length / x.length).toFixed(0), n_months: x.length }; };
+  const breadth_curve = BREADTHS.map((n) => ({ positions_each_side: n, long_short: stat(lsRet[n]), long_only_vs_mkt: stat(loRet[n]) })).filter((r) => r.long_short || r.long_only_vs_mkt);
   // calibration curve: bucket → P_up / E_win / E_loss / EV / n  (the empirical, honest map)
   const curve = [...calib.entries()].filter(([, a]) => a.length >= 30).map(([bucket, a]) => { const up = a.filter((x) => x > 0), dn = a.filter((x) => x <= 0); return { bucket, n: a.length, p_up: +(up.length / a.length).toFixed(3), e_win: +(100 * (up.reduce((s, x) => s + x, 0) / (up.length || 1))).toFixed(2), e_loss: +(100 * (dn.reduce((s, x) => s + x, 0) / (dn.length || 1))).toFixed(2), ev: +(100 * a.reduce((s, x) => s + x, 0) / a.length).toFixed(2) }; }).sort((a, b) => a.bucket - b.bucket);
   const nearest = (score: number) => { let best = curve[0], bd = Infinity; for (const c of curve) { const d = Math.abs(c.bucket - score); if (d < bd) { bd = d; best = c; } } return best; };
@@ -515,7 +526,8 @@ async function runProbabilityLadder(params: { horizon?: number; min_dvol?: numbe
   const ladder = current.map((r) => { const c = nearest(r.score); if (!c) return null; const dir = c.p_up > 0.5 + GATE ? "LONG" : c.p_up < 0.5 - GATE ? "SHORT" : "NO-TRADE"; const edge = dir === "LONG" ? c.ev : dir === "SHORT" ? -c.ev : 0; return { sym: r.sym, px: r.px, score: r.score, p_up: c.p_up, e_win_pct: c.e_win, e_loss_pct: c.e_loss, ev_pct: c.ev, direction: dir, edge_pct: +edge.toFixed(2), calib_n: c.n }; }).filter(Boolean).sort((a, b) => (b!.edge_pct) - (a!.edge_pct));
   const tradeable = ladder.filter((r) => r!.direction !== "NO-TRADE");
   return { result: { factor: "probability_ladder", horizon_days: HZ, as_of: latest, liquid_universe: current.length, calibration_curve: curve,
-    honest_note: "P_up is empirically calibrated on out-of-current history. Edge per name is small (IC~0.1); rank by edge_pct, hold the top LONGs + bottom SHORTs across breadth, size by edge×confidence, ABSTAIN on NO-TRADE. Bull or bear, the tradeable set has both sides. Gross of cost, single-operator, never auto-armed.",
+    breadth_curve, // THE breadth test: how portfolio Sharpe/return/win-rate scale with the number of positions held (net ~20bp)
+    honest_note: "P_up is empirically calibrated on out-of-current history. Edge per name is small (IC~0.1); the breadth_curve shows the AGGREGATE — rank by edge_pct, hold the top LONGs + bottom SHORTs across breadth, size by edge×confidence, ABSTAIN on NO-TRADE. Bull or bear, the tradeable set has both sides. NET of ~20bp cost, single-operator, never auto-armed.",
     n_tradeable: tradeable.length, ladder_top: ladder.slice(0, TOP) } };
 }
 
