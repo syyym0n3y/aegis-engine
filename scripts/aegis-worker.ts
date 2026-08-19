@@ -462,6 +462,63 @@ async function runOpportunityScan(params: { top?: number; min_dvol?: number }) {
     top_positions: scored.slice(0, TOP), bottom_avoid: scored.slice(-10) } };
 }
 
+// JOB: probability_ladder — the CALIBRATED EV engine (D-375). Per instrument, right now: P(up), expected win, expected loss,
+// expected value — EMPIRICALLY CALIBRATED on history (when it says 55%, 55% actually happened), so it is a probability system,
+// not a guru. Composite of the real regime-robust factors → cross-sectional score → the historical forward-return distribution
+// CONDITIONAL on that score bucket gives {P_up, E_win, E_loss, EV}. Ranks the liquid universe by EV, gates OUT names where
+// P≈0.5 (not advisable to trade), tags LONG/SHORT (bull or bear, both extract). The per-name edge is small; the ladder × sizing
+// × breadth is the wealth. Honest bound: IC~0.1 → P_up lands ~0.47-0.58, never 0.9.
+async function runProbabilityLadder(params: { horizon?: number; min_dvol?: number; top?: number }) {
+  const HZ = params.horizon ?? 21, LIQ = params.min_dvol ?? 5e6, TOP = params.top ?? 50;
+  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
+  for (const r of (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[]) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
+  for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  const W: Record<string, number> = { value_bm: 0.108, quality_roe: 0.096, earnings_yield: 0.087, mom_12_1: 0.038, net_issuance: 0.040 };
+  const FAC = Object.keys(W);
+  // per month: liquid names with their raw factor values + forward return (null for the latest, tradeable month)
+  const byMonth = new Map<string, { sym: string; f: Record<string, number>; fwd: number | null; px: number }[]>();
+  const symbols = await getUniverse();
+  await forEachBars(symbols, (sym, b) => {
+    if (b.length < 300) return;
+    const c = b.map((r) => r[4]), v = b.map((r) => r[5]), ts = b.map((r) => r[0]);
+    const fm = fund.get(sym); let last = "";
+    for (let i = 260; i < b.length; i++) {
+      const mo = new Date(ts[i] * 1000).toISOString().slice(0, 7); if (mo === last) continue; last = mo;
+      const px = c[i]; if (!(px > 0)) continue;
+      let dv = 0, cnt = 0; for (let k = i - 21; k < i; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cnt++; } } dv = cnt ? dv / cnt : 0; if (dv < LIQ) continue;
+      const fwd = i + HZ < b.length ? c[i + HZ] / c[i] - 1 : null;
+      const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at), shp = pit(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5); const mc = sh && sh > 0 ? sh * px : null;
+      const f: Record<string, number> = { mom_12_1: c[i - 21] / c[i - 252] - 1 };
+      if (mc && be != null) f.value_bm = be / mc; if (be && be > 0 && ni != null) f.quality_roe = ni / be; if (mc && ni != null) f.earnings_yield = ni / mc; if (sh && shp && shp > 0) f.net_issuance = -(sh / shp - 1);
+      (byMonth.get(mo) ?? byMonth.set(mo, []).get(mo)!).push({ sym, f, fwd, px });
+    }
+  });
+  const months = [...byMonth.keys()].sort(); const latest = months[months.length - 1];
+  // composite score per name-month (cross-sectional z), and the calibration sample from PAST months (score bucket → fwd returns)
+  const calib = new Map<number, number[]>(); const current: { sym: string; score: number; px: number }[] = [];
+  for (const mo of months) {
+    const arr = byMonth.get(mo)!; const zst: Record<string, { m: number; sd: number }> = {};
+    for (const fac of FAC) { const xs = arr.map((r) => r.f[fac]).filter((x) => x != null && Number.isFinite(x)); if (xs.length < 20) continue; const m = xs.reduce((a, x) => a + x, 0) / xs.length; const sd = Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / xs.length) || 1; zst[fac] = { m, sd }; }
+    for (const r of arr) {
+      let s = 0, w = 0; for (const fac of FAC) { if (!zst[fac] || r.f[fac] == null || !Number.isFinite(r.f[fac])) continue; s += W[fac] * Math.max(-4, Math.min(4, (r.f[fac] - zst[fac].m) / zst[fac].sd)); w += W[fac]; }
+      if (w === 0) continue; const score = s / w; const bucket = Math.round(score * 4) / 4; // 0.25-wide score buckets
+      if (mo !== latest && r.fwd != null && Number.isFinite(r.fwd)) (calib.get(bucket) ?? calib.set(bucket, []).get(bucket)!).push(r.fwd);
+      if (mo === latest) current.push({ sym: r.sym, score: +score.toFixed(3), px: r.px });
+    }
+  }
+  // calibration curve: bucket → P_up / E_win / E_loss / EV / n  (the empirical, honest map)
+  const curve = [...calib.entries()].filter(([, a]) => a.length >= 30).map(([bucket, a]) => { const up = a.filter((x) => x > 0), dn = a.filter((x) => x <= 0); return { bucket, n: a.length, p_up: +(up.length / a.length).toFixed(3), e_win: +(100 * (up.reduce((s, x) => s + x, 0) / (up.length || 1))).toFixed(2), e_loss: +(100 * (dn.reduce((s, x) => s + x, 0) / (dn.length || 1))).toFixed(2), ev: +(100 * a.reduce((s, x) => s + x, 0) / a.length).toFixed(2) }; }).sort((a, b) => a.bucket - b.bucket);
+  const nearest = (score: number) => { let best = curve[0], bd = Infinity; for (const c of curve) { const d = Math.abs(c.bucket - score); if (d < bd) { bd = d; best = c; } } return best; };
+  const GATE = 0.03; // require P_up to deviate ≥3pts from 0.5 to trade — else NOT advisable
+  const ladder = current.map((r) => { const c = nearest(r.score); if (!c) return null; const dir = c.p_up > 0.5 + GATE ? "LONG" : c.p_up < 0.5 - GATE ? "SHORT" : "NO-TRADE"; const edge = dir === "LONG" ? c.ev : dir === "SHORT" ? -c.ev : 0; return { sym: r.sym, px: r.px, score: r.score, p_up: c.p_up, e_win_pct: c.e_win, e_loss_pct: c.e_loss, ev_pct: c.ev, direction: dir, edge_pct: +edge.toFixed(2), calib_n: c.n }; }).filter(Boolean).sort((a, b) => (b!.edge_pct) - (a!.edge_pct));
+  const tradeable = ladder.filter((r) => r!.direction !== "NO-TRADE");
+  return { result: { factor: "probability_ladder", horizon_days: HZ, as_of: latest, liquid_universe: current.length, calibration_curve: curve,
+    honest_note: "P_up is empirically calibrated on out-of-current history. Edge per name is small (IC~0.1); rank by edge_pct, hold the top LONGs + bottom SHORTs across breadth, size by edge×confidence, ABSTAIN on NO-TRADE. Bull or bear, the tradeable set has both sides. Gross of cost, single-operator, never auto-armed.",
+    n_tradeable: tradeable.length, ladder_top: ladder.slice(0, TOP) } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -712,6 +769,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "ff_deflated") out = await runFFDeflated(job.params);
     else if (job.job_type === "residual_attribution") out = await runResidualAttribution(job.params);
     else if (job.job_type === "opportunity_scan") out = await runOpportunityScan(job.params);
+    else if (job.job_type === "probability_ladder") out = await runProbabilityLadder(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
