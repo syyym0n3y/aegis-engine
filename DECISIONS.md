@@ -7546,3 +7546,25 @@ current best positions to hold, with the honest breadth-scaled IR estimate. Not 
 multi-factor tilt with a real, modest, aggregate edge — the sum/multiplication done honestly. Single-operator, never published,
 never auto-armed. This is what Aegis is FOR: understand the market deeply (D-372/373/364) THEN position where the measured
 structure is favourable.
+
+---
+
+## D-375/376 — the POSITIONING map across the whole data stack: calibrated, breadth-tested, multi-class × multi-timeframe
+The probability + breadth + multiclass engines ran on the full stack. Honest, actionable findings:
+- **The equity composite IS calibrated** (integrity proven): P(up) rises monotonically with the composite score from 0.413 (worst
+  names) to ~0.556 (score≈1) — real directional information, honest magnitude (never >0.56, as IC~0.1 demands). The EXTREME top
+  (score 3-4) REVERSES to P_up~0.47 (crowding/value-trap) → don't chase the extreme, trade the calibrated sweet-spot (score
+  ~0.5-2, P_up 0.54-0.56).
+- **Breadth test (equity long-short, net ~20bp):** monthly WIN RATE is 56-59% across N=5..500 — the win% the operator wants IS
+  there — but the Sharpe is best at N=5 (0.13) and goes slightly NEGATIVE for N≥20: the book has frequent small wins + rare
+  large losses (negative skew from value crashes). So the naive top-vs-bottom long-short does NOT monetize it; the edge is
+  captured by LONGING the calibrated sweet-spot + managing the skew (sizing/stops), not by the extreme-decile spread.
+- **Multi-class × timeframe (universal time-series momentum):** the edge is CONCENTRATED, not universal. CRYPTO trends
+  (daily Sharpe 0.57 / ann 53%, strong at every timeframe — the standout); ETF & SECTOR monthly momentum have high hit-rate
+  (P_up|uptrend 0.61 / 0.58); EQUITY daily/weekly momentum FAILS (P_up 0.436 daily = short-term reversal); FX / rates /
+  commodity are null on price momentum (they need carry/term-structure). 
+THE HONEST POSITIONING VERDICT: wealth is extractable in SPECIFIC favourable cells — crypto momentum, ETF/sector monthly
+momentum, and the equity cross-sectional composite's calibrated sweet-spot — with a real 54-59% edge, kept up by breadth +
+abstention, monetised by longing the calibrated middle-high and managing negative skew. Not 100 equal ways; ~a handful of real
+ones, mapped honestly. This is the system doing its job: not "nothing works" and not "everything works" — precisely WHERE,
+WHEN, and HOW MUCH, calibrated.
