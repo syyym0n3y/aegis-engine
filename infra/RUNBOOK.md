@@ -51,3 +51,13 @@ docker rm -f aegis-rest aegis-db      # stop containers (data volume 'aegis-db-d
 docker volume rm aegis-db-data        # ONLY to wipe the owned data
 colima stop                           # stop the daemon (mac)
 ```
+
+## Autonomous operation (autopilot — D-369)
+The engine runs itself, dormant on capital: each cycle it self-heals, refreshes free evidence, re-computes the DEFLATED
+verdict, scores the statistical position + delta vs last cycle, records to `trd_autopilot_log`, and SURFACES anything that
+clears — but **never arms, trades, or spends** (arming is your act alone). "Autonomously succeeding" within the safety law.
+- **Run it**: `infra/scripts/autopilot-up.sh` (ensures the owned node + runs the daemon; `CYCLE_SEC` sets cadence, default 6h).
+- **Persistent (mac)**: `cp infra/launchd/io.aegis.autopilot.plist ~/Library/LaunchAgents/ && launchctl load ~/Library/LaunchAgents/io.aegis.autopilot.plist` — runs at login, keep-alive, logs to `infra/data/autopilot.log`.
+- **Persistent (dedicated linux box — the reliable home)**: install `infra/launchd/aegis-autopilot.service` under systemd; `systemctl enable --now aegis-autopilot`.
+- **Watch it**: `select * from trd_autopilot_log order by cycle_at desc;` — the engine grading its own position over time.
+- **Arming stays manual**: when a surfaced factor is genuinely worth capital, YOU flip the arm (trd_exec_arm) after the staged gates — the autopilot will never do it.

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>io.aegis.autopilot</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string><string>/Users/ona/Projects/aegis/infra/scripts/autopilot-up.sh</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/ona/Projects/aegis/infra/data/autopilot.log</string>
+  <key>StandardErrorPath</key><string>/Users/ona/Projects/aegis/infra/data/autopilot.err</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/Users/ona/.deno/bin</string></dict>
+</dict></plist>

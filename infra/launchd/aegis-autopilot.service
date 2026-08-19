@@ -1,0 +1,11 @@
+[Unit]
+Description=Aegis Autopilot (autonomous, dormant research loop)
+After=docker.service network-online.target
+[Service]
+Type=simple
+WorkingDirectory=/opt/aegis
+ExecStart=/opt/aegis/infra/scripts/autopilot-up.sh
+Restart=always
+RestartSec=30
+[Install]
+WantedBy=multi-user.target
