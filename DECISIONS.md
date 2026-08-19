@@ -7469,3 +7469,20 @@ knowledge, could break webhooks/auth): 10 RPC-callable SECURITY DEFINER CC funct
 kb_*, etc.). LOW: Alpaca PAPER key-ID hardcoded as fallback (secret is env-only). ROOT CAUSE surfaced repeatedly this session:
 Aegis's multi-GB research load shares the command-centre production DB and wedges it under heavy jobs — Aegis needs its OWN
 Supabase project (as its CLAUDE.md always intended). That isolation is the #1 next build.
+
+---
+
+## D-368 — OWNED-INFRASTRUCTURE pilot: PROVEN, not theorised (own the stack, kill the rent)
+Operator corrected the doctrine (D-367 was still the tenant's cost-framing): the goal is TOTAL ownership because owned data +
+owned infra = enterprise value (a fully-rented company owns no evaluable asset in diligence/acquisition), sovereignty, and
+removal of the landlord's bottlenecks (this session: shared-DB wedge, 2s edge cap, connection limits). Built + VERIFIED on
+owned hardware (this Mac, colima/docker), not on paper:
+- `infra/`: docker-compose (supabase/postgres or stock) + PostgREST + Caddy; portable auth roles; up/backup/restore/healthcheck
+  scripts; `provision-owned.sh` (one-command owned node); RUNBOOK with the de-risked per-domain migration path.
+- **Proof:** 54/56 Aegis migrations applied on STOCK postgres:16 (schema portable to ANY Postgres, not vendor-locked; the 2
+  skips need pg_cron/vault → the supabase/postgres image), 59 tables ALL RLS-enforced, owned PostgREST returned HTTP 200, anon
+  HTTP read → **401 permission denied** (the D-366 security travels with the schema), owned `pg_dump` backup to owned disk.
+The portability discipline enforced all session (schema in migrations, data re-derivable from free loaders, provisioning
+scripts) was always the on-ramp to this. Model recommendation for the continuation: **Opus (4.8/5) + fast mode**, subagents
+(Sonnet) for mechanical bulk only — this is HARD/CRITICAL (production migration, irreversible data-location decisions).
+Pilot torn down clean (data volume persists); nothing armed.

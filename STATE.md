@@ -1,6 +1,30 @@
 # STATE — Aegis (live state)
 
 ## Last updated
+**2026-08-19 (Opus 4.8, long session) — D-360→D-368: from a silent-write bug to owned infrastructure. The arc:**
+- **D-360 P&L silent-write** (3 closers wrote no realized_pnl) fixed + root-caused a 47-position DB/broker divergence
+  (closeSym deleted positions without canceling bracket orders → 403 → DB marked "closed" while live). Fixed fail-closed;
+  guard cron; measured verdict: **orbfollow −$219.94/152 in live paper** (a losing "validated" edge, previously invisible).
+- **D-360b/361/362** built the substrate: price accumulation (77→4,456 names), the funding-flow tracker (Form D raise/mktcap,
+  emerging leverage), fundamentals pipeline + shares → market cap, and the cross-sectional momentum/value/fundamentals gates.
+- **D-363/364 THE VERDICT (properly deflated, big sample):** gate + Deflated Sharpe (skew/kurt-adjusted vs the real
+  1.53M-trial noise ceiling t≈5.34) + the Fama-French **63–99yr** canon. Result: **nothing clears clean deflation** —
+  momentum a coin-flip (DSR 0.50, skew −3/kurt 31); value/quality/size/equity-premium all fail. No holy grail; the honest edge
+  is many small decorrelated premia **sized** (D-365 execution layer: ¼-Kelly/vol-target/breadth/hold, 9 tests green).
+- **D-366 SECURITY:** RLS enabled on all 39 exposed Aegis tables (were anon-readable), function/view hardening (migration 0064).
+  Held for operator: 10 CC RPC-callable SECURITY DEFINER functions (webhook/auth-plausible).
+- **D-367/368 OWNERSHIP:** doctrine corrected to build toward TOTAL ownership (owned data = enterprise value). Owned-infra
+  pilot **PROVEN** on this Mac: 54/56 migrations on stock postgres:16, 59 tables RLS-enforced, owned PostgREST HTTP 200, anon
+  HTTP → 401, owned backup. `infra/` is the reproducible on-ramp off rented Supabase. Aegis's own rented project (D-367) is
+  blocked only on settling overdue Supabase invoices.
+
+**NEXT (fresh Opus session):** (1) own one box + pilot Aegis on it → migrate off rented; (2) promote command-centre to the pure
+control-plane brain; (3) operator: settle Supabase invoices + decide the 10 CC RPC revokes; (4) if pursuing edges, harvest the
+small deflated-marginal premia as a sized, decorrelated blend — never a single-factor bet. Default REJECT holds, now earned at
+century scale. Nothing armed, $0 at risk.
+
+---
+
 **2026-08-18 00:27Z (Opus 5, edge-factory loop run) — D-343: the stage-2 batch was silently truncated by PostgREST's
 1000-row ceiling; 4 fac candidates had NEVER been tested while the batch re-tested the head. Fixed, deployed,
 verified: 1,023/1,023 candidates now carry a verdict, 0 untested, 0 survivors.**
