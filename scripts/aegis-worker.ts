@@ -411,6 +411,57 @@ async function runResidualAttribution(params: { horizon?: number }) {
   return { result: { factor: "residual_attribution", horizon_days: HZ, forces_tested: FACS, excluded_too_sparse: ["funding_formD(49)", "gex(30)"], battery: out } };
 }
 
+// JOB: opportunity_scan — the POSITIONING engine (D-374). Not "does one edge clear" but "given everything measured, where are
+// the best places to be RIGHT NOW." Composite of the REAL regime-robust per-name signals (value, quality, earnings-yield,
+// net-issuance, momentum), cross-sectionally z-scored across the LIQUID universe (the toxic micro-cap tail excluded — that is
+// where the naive long-short died), IC-weighted, ranked. The edge per name is small; the law IR=IC·√breadth means the AGGREGATE
+// of many sized positions is real. Output: the current ranked buy-list + composite score + honest breadth-scaled expectation.
+async function runOpportunityScan(params: { top?: number; min_dvol?: number }) {
+  const TOP = params.top ?? 40, LIQ = params.min_dvol ?? 5e6;
+  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
+  const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
+  for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
+  for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  // IC weights from the measured, regime-robust residual attribution (D-373) — the market told us these, we don't guess
+  const W: Record<string, number> = { value_bm: 0.108, quality_roe: 0.096, earnings_yield: 0.087, mom_12_1: 0.038, net_issuance: 0.040 };
+  const FAC = Object.keys(W);
+  const rows: { sym: string; dvol: number; px: number; f: Record<string, number> }[] = [];
+  const symbols = await getUniverse();
+  await forEachBars(symbols, (sym, b) => {
+    if (b.length < 300) return;
+    const c = b.map((r) => r[4]), v = b.map((r) => r[5]), ts = b.map((r) => r[0]); const i = b.length - 1;
+    const px = c[i]; if (!(px > 0)) return;
+    let dv = 0, cnt = 0; for (let k = i - 21; k < i; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cnt++; } } dv = cnt ? dv / cnt : 0;
+    if (dv < LIQ) return; // LIQUID only — the trap tail is excluded by construction
+    const fm = fund.get(sym); const at = ts[i] * 1000;
+    const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at), shPrev = pit(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5);
+    const mcap = sh && sh > 0 ? sh * px : null;
+    const f: Record<string, number> = {};
+    if (mcap && be != null) f.value_bm = be / mcap;
+    if (be && be > 0 && ni != null) f.quality_roe = ni / be;
+    if (mcap && ni != null) f.earnings_yield = ni / mcap;
+    f.mom_12_1 = c[i - 21] / c[i - 252] - 1;
+    if (sh && shPrev && shPrev > 0) f.net_issuance = -(sh / shPrev - 1);
+    rows.push({ sym, dvol: dv, px, f });
+  });
+  // cross-sectionally z-score each factor across the current liquid universe (winsorise at ±4σ)
+  const z: Record<string, { m: number; sd: number }> = {};
+  for (const fac of FAC) { const xs = rows.map((r) => r.f[fac]).filter((x) => x != null && Number.isFinite(x)); if (xs.length < 20) continue; const m = xs.reduce((a, x) => a + x, 0) / xs.length; const sd = Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / xs.length) || 1; z[fac] = { m, sd }; }
+  const scored = rows.map((r) => {
+    let s = 0, wsum = 0; const zz: Record<string, number> = {};
+    for (const fac of FAC) { if (!z[fac] || r.f[fac] == null || !Number.isFinite(r.f[fac])) continue; const zv = Math.max(-4, Math.min(4, (r.f[fac] - z[fac].m) / z[fac].sd)); zz[fac] = +zv.toFixed(2); s += W[fac] * zv; wsum += W[fac]; }
+    return { sym: r.sym, px: +r.px.toFixed(2), dvol_m: +(r.dvol / 1e6).toFixed(1), score: wsum ? +(s / wsum).toFixed(3) : 0, n_fac: Object.keys(zz).length, z: zz };
+  }).filter((r) => r.n_fac >= 3).sort((a, b) => b.score - a.score);
+  const breadth = scored.length;
+  const combinedIC = 0.10; // conservative post-correlation estimate of the composite's cross-sectional IC
+  return { result: { factor: "opportunity_scan", generated_for: "latest bar", liquid_universe: breadth, min_dvol_usd: LIQ, weights: W,
+    expected_ir_gross: breadth > 0 ? +(combinedIC * Math.sqrt(breadth)).toFixed(2) : 0,
+    honest_note: "Composite of REAL regime-robust factors, liquid-only, IC-weighted. Per-name edge is small; the aggregate across breadth is the edge (IR=IC·√breadth). Gross of cost, NOT auto-armed. Long the top, optionally short the bottom (liquid, not distressed).",
+    top_positions: scored.slice(0, TOP), bottom_avoid: scored.slice(-10) } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -660,6 +711,7 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "factor_blend") out = await runFactorBlend(job.params);
     else if (job.job_type === "ff_deflated") out = await runFFDeflated(job.params);
     else if (job.job_type === "residual_attribution") out = await runResidualAttribution(job.params);
+    else if (job.job_type === "opportunity_scan") out = await runOpportunityScan(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));

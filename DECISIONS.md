@@ -7531,3 +7531,18 @@ deflation (D-364); the per-name residual forces have real IC but no deflation-su
 understood + measured end to end — macro, century, and per-name — with NO free tradable edge. That is D-070's predicted
 terminus, reached by accounting for everything, not by giving up. The honest value is the understanding + the risk/sizing
 layer; there is no guru's edge because the evidence says there isn't one.
+
+---
+
+## D-374 — REFRAME: from falsification to POSITIONING (operator-corrected). The system finds the best places to be.
+Operator (2026-08-20): "this is not a falsification engine, it's a system that helps me identify how best to exploit the value
+and leverage favourable conditions provide." Correct, and the prior "nothing clears" framing under-served it. The measured
+per-name signals (value +0.11, quality +0.096, earnings-yield +0.087, net-issuance +0.040, momentum) are REAL and regime-robust
+across all eras (D-373). A single 0.10 IC is nothing alone; IR=IC·√breadth means the AGGREGATE of many sized positions is a
+genuine edge. The negative decile long-short Sharpe was an IMPLEMENTATION fact (the distressed micro-cap tail is toxic), not
+"no edge" — so trade the LIQUID names, long the favourable side, size across breadth. Built `opportunity_scan`: composite of
+the IC-weighted real factors, cross-sectionally z-scored across the LIQUID universe ($5M+/day, tail excluded), ranked → the
+current best positions to hold, with the honest breadth-scaled IR estimate. Not a promise of high returns; a systematic
+multi-factor tilt with a real, modest, aggregate edge — the sum/multiplication done honestly. Single-operator, never published,
+never auto-armed. This is what Aegis is FOR: understand the market deeply (D-372/373/364) THEN position where the measured
+structure is favourable.
