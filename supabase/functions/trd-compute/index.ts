@@ -53,6 +53,15 @@ Deno.serve(async (req) => {
       }
       return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
     }
+    if (req.method === "GET" && url.searchParams.get("allclasses")) {
+      // every symbol + its asset_class — for the multi-class × multi-timeframe ladder (D-376)
+      const rows: { symbol: string; asset_class: string }[] = [];
+      for (let off = 0; ; off += 1000) {
+        const p = await fetch(`${SB}/rest/v1/trd_bars_deep?select=symbol,asset_class&order=symbol&offset=${off}&limit=1000`, { headers: H }).then((r) => r.json()).catch(() => []);
+        if (!Array.isArray(p) || !p.length) break; rows.push(...p as typeof rows); if (p.length < 1000) break;
+      }
+      return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
+    }
     if (req.method === "GET" && url.searchParams.get("insider_all")) {
       // per-name Form-4 open-market buys (D-373 residual attribution): ticker, disclosed_date, value_usd — point-in-time
       const rows: { t: string; d: string; v: number }[] = [];

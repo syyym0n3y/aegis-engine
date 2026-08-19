@@ -531,6 +531,40 @@ async function runProbabilityLadder(params: { horizon?: number; min_dvol?: numbe
     n_tradeable: tradeable.length, ladder_top: ladder.slice(0, TOP) } };
 }
 
+// JOB: multiclass_ladder — extend the ladder across ALL asset classes × ALL timeframes (D-376). The universal price signals
+// work on any series, so this spans equity/etf/crypto/fx/commodity/index/sector/rate at daily/weekly/monthly. Uses TIME-SERIES
+// MOMENTUM (Moskowitz et al — the one signal documented to pay across every asset class): does a 12-period trend predict the
+// next period? Per (class × timeframe): pooled rank-IC, the tsmom strategy Sharpe (long-uptrend/short-downtrend), and the
+// calibrated P(up | uptrend). The matrix shows WHERE across the whole data stack a signal has real directional edge — the
+// "extract wealth in a hundred ways, bull or bear" map. Honest: small classes (few instruments) flagged low-power.
+async function runMultiClassLadder(params: { lookback?: number }) {
+  const LB = params.lookback ?? 12, HZ = 1;
+  const cr = await fetch(`${BROKER}?allclasses=1`).then((r) => r.json()).catch(() => null);
+  const byCls = new Map<string, string[]>();
+  for (const r of (cr?.rows ?? []) as { symbol: string; asset_class: string }[]) (byCls.get(r.asset_class) ?? byCls.set(r.asset_class, []).get(r.asset_class)!).push(r.symbol);
+  const TFS: [string, number][] = [["daily", 1], ["weekly", 5], ["monthly", 21]];
+  const out: Record<string, unknown>[] = [];
+  for (const [cls, syms] of byCls) {
+    for (const [tfName, step] of TFS) {
+      const S: number[] = [], F: number[] = [];
+      await forEachBars(syms, (_sym, b) => {
+        const cl: number[] = []; for (let i = 0; i < b.length; i += step) cl.push(b[i][4]);
+        for (let i = LB; i < cl.length - HZ; i++) { const sig = cl[i] / cl[i - LB] - 1, fwd = cl[i + HZ] / cl[i] - 1; if (Number.isFinite(sig) && Number.isFinite(fwd) && cl[i - LB] > 0 && cl[i] > 0) { S.push(sig); F.push(fwd); } }
+      });
+      if (S.length < 100) { out.push({ asset_class: cls, timeframe: tfName, n_obs: S.length, n_instruments: syms.length, note: "insufficient data — low power" }); continue; }
+      const ic = rankIC(S, F).ic;
+      const strat = F.map((f, i) => f * Math.sign(S[i])); const m = strat.reduce((a, x) => a + x, 0) / strat.length; const sd = Math.sqrt(strat.reduce((a, x) => a + (x - m) ** 2, 0) / (strat.length - 1)); const ppy = 252 / step; const sharpe = sd > 0 ? (m / sd) * Math.sqrt(ppy) : 0;
+      const posIdx = S.map((s, i) => [s, i] as [number, number]).filter(([s]) => s > 0).map(([, i]) => i);
+      const pUpTrend = posIdx.length ? posIdx.filter((i) => F[i] > 0).length / posIdx.length : 0;
+      const negIdx = S.map((s, i) => [s, i] as [number, number]).filter(([s]) => s < 0).map(([, i]) => i);
+      const pDnTrend = negIdx.length ? negIdx.filter((i) => F[i] < 0).length / negIdx.length : 0;
+      out.push({ asset_class: cls, timeframe: tfName, n_instruments: syms.length, n_obs: S.length, momentum_ic: +ic.toFixed(4), tsmom_sharpe: +sharpe.toFixed(2), p_up_given_uptrend: +pUpTrend.toFixed(3), p_dn_given_downtrend: +pDnTrend.toFixed(3), ann_ret_pct: +(m * ppy * 100).toFixed(1) });
+    }
+  }
+  out.sort((a, b) => ((b.tsmom_sharpe as number) || -9) - ((a.tsmom_sharpe as number) || -9));
+  return { result: { factor: "multiclass_ladder", lookback: LB, note: "time-series momentum (universal signal) per asset_class × timeframe; tsmom_sharpe = long-uptrend/short-downtrend, gross; small classes low-power", matrix: out } };
+}
+
 // JOB: insider_ic — the WORKER-PACED insider test. The edge fn hits Yahoo's IP rate-limit (~5 tickers); the worker runs on
 // a different IP and PACES itself (delay/call), so it tests HUNDREDS of insider tickers across the decades. Event study:
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
@@ -782,8 +816,12 @@ async function runOne(): Promise<boolean> {
     else if (job.job_type === "residual_attribution") out = await runResidualAttribution(job.params);
     else if (job.job_type === "opportunity_scan") out = await runOpportunityScan(job.params);
     else if (job.job_type === "probability_ladder") out = await runProbabilityLadder(job.params);
+    else if (job.job_type === "multiclass_ladder") out = await runMultiClassLadder(job.params);
     else throw new Error(`unknown job_type ${job.job_type}`);
-    await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution }) });
+    // durable result write — the shared DB blips under load; retry so a computed result is never lost (D-375)
+    { const body = JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution });
+      let wrote = false; for (let att = 0; att < 5 && !wrote; att++) { try { const r = await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body }); if (r.ok) wrote = true; } catch { /* retry */ } if (!wrote) await new Promise((r) => setTimeout(r, 3000 * (att + 1))); }
+      if (!wrote) console.log(`[${WORKER}] WARN: result write for job ${job.id} failed after retries`); }
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
   } catch (e) {
     await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "error", error: String(e).slice(0, 300) }) });
