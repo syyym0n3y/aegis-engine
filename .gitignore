@@ -24,3 +24,6 @@ data/binance/
 data/finra/
 data/literature/PredictorPortsFull.bin
 data/edgar/
+data/
+scratchpad/
+*.bin
