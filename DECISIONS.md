@@ -7761,3 +7761,22 @@ time-clustered beta trap; D-389/390 short-sale volume null at monthly AND daily 
 **NO VALIDATED TRADABLE EDGE EXISTS IN AEGIS.** Nothing armed, $0 at risk. Five would-be discoveries were killed by controls in
 this session (trend accounting artifact, daily edge-score OOS-negative, equity tilt tail-lottery, insider-cluster beta trap,
 short-volume look-ahead) — four of which looked strong enough to publish. That is the engine working exactly as designed (D-070).
+
+## D-392 — THE DROPPED LEAD PAID: long-only crypto trend beats buy-and-hold OUT-OF-SAMPLE on drawdown (and Sharpe)
+Operator's criticism was correct: D-376 flagged crypto daily tsmom at Sharpe 0.57 — the strongest cell in the whole matrix —
+and I never followed up. That was incuriosity, not rigor. Pursued properly: 12 crypto instruments, 4,102 daily portfolio
+observations, vol-scaled risk parity, turnover-aware costs, and THE decisive control (does it beat simply HOLDING crypto?).
+FULL SAMPLE looked strong (LS SR 1.16 @20bp, psr_z 3.98) but the controls tell the real story:
+- **Severe decay:** long-short TRAIN SR 1.67 -> TEST 0.11 (20d), 1.28 -> 0.18 (50d), 0.94 -> 0.28 (100d). The crypto trend
+  edge WAS strong and has been largely arbitraged away (textbook McLean-Pontiff post-publication decay).
+- **The long-short does NOT beat buy-and-hold full-sample** (1.16 vs 1.32) — shorting crypto is a losing leg.
+- **BUT out-of-sample, LONG-ONLY trend beats buy-and-hold on BOTH axes, and the drawdown gap is large:**
+  100d lookback TEST: **SR 0.32 vs 0.14, max drawdown -42.4% vs -73.2%**. Holds at 50d (0.20 vs 0.14, -46% vs -73%).
+  Monotone in lookback (longer = better OOS = less overfit), which is the signature of a real effect rather than a fit.
+HONEST CALIBRATION (the discipline that killed five prior claims applies here too): OOS SR 0.32 over ~4.5 years is t~0.7 —
+the SHARPE difference alone is NOT statistically significant. The ROBUST finding is the **drawdown halving (-42% vs -73%)**,
+which is a large structural difference and is exactly the risk-management value D-070 identifies as the one component with
+near-certain positive EV. This is NOT "we found alpha"; it IS "trend-following as crash protection on a volatile asset works
+out-of-sample, and materially." That is a legitimate PAPER-FORWARD candidate — the first that survived its own controls.
+Caveats: Yahoo daily crypto (not exchange tick), no funding/borrow modelled for the long-only leg (it holds spot, so minimal),
+12 instruments is thin breadth, and crypto's OOS window contains one major cycle.
