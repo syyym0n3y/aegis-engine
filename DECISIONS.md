@@ -7936,3 +7936,22 @@ harvestable as a TILT on a position already held (shade exposure up at the turn,
 strategy. Same for September/seasonal: real, tiny, and only useful as a weighting adjustment.
 This is the FIRST family where effects survive OOS in sign and magnitude rather than flipping — a genuine, if small, result.
 It fits the program-wide pattern (D-402): real effects exist, and they are smaller than the cost of accessing them directly.
+
+## D-404 — VOLATILITY RISK PREMIUM: the most statistically robust finding in the program, and NOT a free lunch.
+Tested the one documented premium never examined here. 8,444 overlapping days, 1993-2026.
+**1. THE PREMIUM IS REAL AND OVERWHELMING.** Mean VIX 19.5 vs mean subsequent 21d realised vol 15.8. **VRP = 3.67 vol points,
+t = 48.8, positive on 84% of days (n=8,423)**, TRAIN 3.81 -> TEST 3.46 (persists). It rises MONOTONICALLY with fear:
+VIX<15 -> 2.52pts, 15-20 -> 3.70, 20-30 -> 4.28, VIX>30 -> **5.95** (all t>11). Nothing else tested in this program comes
+close to a t of 48.8 with an 84% hit rate over 33 years and a coherent mechanism.
+**2. HARVESTING IT IS BRUTAL — and the tail IS the finding.** SVXY (short-vol ETF), 3,741 bars: ann 31.4%, Sharpe 0.57, vol
+55%, **maxDD -95.2%, WORST SINGLE DAY -83.0% on 2018-02-06, skew -4.77**. Split at the blowup:
+  PRE 2018-02-05: ann 67%, SR 1.08, maxDD -68%   |   POST: ann **5%**, SR 0.10, maxDD **-94%** — and that is with SVXY's
+  leverage CUT from -1x to -0.5x. Half the leverage, a worse drawdown, and 5%/yr.
+**THE CORRECT INTERPRETATION, which the whole program has been building toward:** the VRP is NOT an anomaly or an
+inefficiency — it is **compensation for bearing crash risk**, and the crash is real, measured, and arrives in a single day.
+The premium is genuine (t=48.8); the free lunch is not. Sizing it with the D-365 layer at anything near full Kelly would have
+been ruinous on 2018-02-06 regardless of 25 years of prior evidence.
+This closes the documented-premium space: value/quality/momentum (D-364, fail deflation), trend (D-384 artifact; D-400/401
+risk-overlay only), PEAD (D-393 null), short interest (D-389/390/391 null/underpowered), non-price (D-387/388 null),
+seasonality (D-403 real but sub-cost), VRP (real, but paid for in tail risk). **Every documented premium is now measured, and
+the pattern is uniform: what is large is compensation for real risk; what is free is too small to access.**
