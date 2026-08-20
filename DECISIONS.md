@@ -7780,3 +7780,21 @@ near-certain positive EV. This is NOT "we found alpha"; it IS "trend-following a
 out-of-sample, and materially." That is a legitimate PAPER-FORWARD candidate — the first that survived its own controls.
 Caveats: Yahoo daily crypto (not exchange tick), no funding/borrow modelled for the long-only leg (it holds spot, so minimal),
 12 instruments is thin breadth, and crypto's OOS window contains one major cycle.
+
+## D-393/394 — PEAD tested (null, and the sign FLIPS train->test); crypto survivor pushed to live FORWARD-TEST
+**D-393 PEAD** — the most robust documented anomaly, finally tested (operator was right that skipping it was a gap). Real
+earnings dates from EDGAR 10-Q/10-K filings (28 quarterly indexes, 5,063 tickers with events, 3,125 joined to prices), both
+classic forms, market-adjusted drift over 42 trading days, entry 2 days AFTER the filing (no look-ahead), liquid-only:
+- **CAR (3-day announcement reaction):** FULL IC 0.0060 (t 0.51); TRAIN -0.0017 -> TEST +0.0172. Quintile-LS net -2.7%/yr full.
+- **SUE (seasonal-random-walk earnings surprise):** FULL IC 0.0263 (t 1.85) — the strongest full-sample IC of any equity
+  signal tested — but **TRAIN IC +0.0574 (t 2.91) -> TEST -0.0194 (t -1.11): the sign FLIPS.** Net LS -2.1%/yr.
+VERDICT: NULL in our sample. Honest caveats: our SUE uses NetIncomeLoss (not EPS) from RESTATED EDGAR frames (D-386 look-ahead
+that would FLATTER it, and it still fails), the 10-Q filing date is a proxy for the announcement date (often a few days late,
+which eats the front of the drift where PEAD is strongest), and 2019-2026 is a period where PEAD is documented to have decayed.
+So: this is evidence PEAD is not capturable with THIS data/proxy — not a refutation of the literature.
+**D-394 crypto FORWARD-TEST live.** The one candidate that survived its controls (D-392) is now accruing a real forward record
+on the owned node: `trd_crypto_forward` + a 5th launchd agent, scoring each prior snapshot's paper return and emitting today's
+positions. DORMANT — recorded, never armed. First run is itself informative: **0/12 crypto in a 100d uptrend today, so the
+strategy is FLAT** — the drawdown protection behaving exactly as designed rather than holding through a downtrend.
+The bar it must clear before capital: a meaningful forward window with the drawdown advantage intact (the in-sample SR edge
+alone was t~0.7, not significant).
