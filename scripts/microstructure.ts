@@ -19,7 +19,11 @@ let okS=0;
 for(const s of SYMS){
   await new Promise(r=>setTimeout(r,250));
   try{
-    const j=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${s}?interval=5m&range=60d`,{headers:UA}).then(r=>r.json());
+    // WINDOW EXTENSION (D-398): 5m bars cap at 60 days — far too few sessions to conclude anything (the D-396 caveat). Yahoo
+    // serves 1h bars for 730 days, giving ~500 sessions instead of 58. Coarser granularity, ~9x the statistical power; the
+    // three effects tested (gap, first-bar reversal, last-hour momentum) are all expressible at hourly resolution.
+    const IV=Deno.env.get("IV")||"1h", RG=Deno.env.get("RG")||"730d";
+    const j=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${s}?interval=${IV}&range=${RG}`,{headers:UA}).then(r=>r.json());
     const res=j?.chart?.result?.[0]; if(!res?.timestamp) continue;
     const q=res.indicators.quote[0], ts=res.timestamp as number[];
     const days=new Map<string,Day>();
@@ -29,7 +33,8 @@ for(const s of SYMS){
       const d=new Date(ts[i]*1000).toISOString().slice(0,10);
       (days.get(d)??days.set(d,{date:d,bars:[]}).get(d)!).bars.push({t:ts[i],o,h,l,c,v:v??0});
     }
-    const arr=[...days.values()].filter(d=>d.bars.length>=70).sort((a,b)=>a.date<b.date?-1:1);
+    const MINBARS=Number(Deno.env.get("MINBARS")||6);
+    const arr=[...days.values()].filter(d=>d.bars.length>=MINBARS).sort((a,b)=>a.date<b.date?-1:1);
     if(arr.length>=20){bySym.set(s,arr); okS++;}
   }catch{/*skip*/}
 }
@@ -39,20 +44,21 @@ const tstat=(a:number[])=>{const m=mean(a);const sd=Math.sqrt(a.reduce((s,x)=>s+
 const rankIC=(xs:number[],ys:number[])=>{const n=xs.length;if(n<20)return 0;const rk=(a:number[])=>{const ix=a.map((v,i)=>[v,i] as [number,number]).sort((p,q)=>p[0]-q[0]);const r=new Array(n);for(let k=0;k<n;k++)r[ix[k][1]]=k;return r;};const rx=rk(xs),ry=rk(ys),mx=(n-1)/2;let sxy=0,sx=0,sy=0;for(let i=0;i<n;i++){const dx=rx[i]-mx,dy=ry[i]-mx;sxy+=dx*dy;sx+=dx*dx;sy+=dy*dy;}return sx>0&&sy>0?sxy/Math.sqrt(sx*sy):0;};
 // build per (symbol,day) observations
 type Obs={sym:string;date:string;gap:number;first30:number;restOfDay:number;afterFirst30:number;lastHourSig:number;closeMove:number};
+const MINB=Number(Deno.env.get("MINBARS")||6);
 const obs:Obs[]=[];
 for(const [sym,days] of bySym){
   for(let i=1;i<days.length;i++){
     const d=days[i], p=days[i-1]; const b=d.bars;
-    if(b.length<70||p.bars.length<70) continue;
+    if(b.length<MINB||p.bars.length<MINB) continue;
     const prevClose=p.bars[p.bars.length-1].c, open=b[0].o, close=b[b.length-1].c;
     if(!(prevClose>0)||!(open>0)||!(close>0)) continue;
     const gap=open/prevClose-1;                                  // overnight gap (known at the open)
-    const i30=Math.min(5,b.length-1);                            // first 30 min = 6 five-minute bars
+    const i30=Math.min(Number(Deno.env.get("FIRSTN")||1),b.length-1);   // first bar(s): 6x5m = 30min, or 1x1h = first hour
     const first30=b[i30].c/open-1;                               // known at 10:00
     const restOfDay=close/b[i30].c-1;                            // 10:00 -> close  (strictly after the signal)
     const afterFirst30=close/open-1;                             // full session (for the gap test, signal known at open)
-    const iL=Math.max(0,b.length-13);                            // ~last hour start
-    const lastHourSig=b[iL].c/b[Math.max(0,iL-12)].c-1;          // the hour BEFORE the last hour (known at 14:00)
+    const iL=Math.max(0,b.length-Number(Deno.env.get("LASTN")||1));      // last bar(s) = the closing hour
+    const lastHourSig=b[iL].c/b[Math.max(0,iL-Number(Deno.env.get("LASTN")||1))].c-1;  // the hour BEFORE (strictly prior)
     const closeMove=close/b[iL].c-1;                             // last hour -> close (strictly after)
     if(![gap,first30,restOfDay,afterFirst30,lastHourSig,closeMove].every(Number.isFinite)) continue;
     obs.push({sym,date:d.date,gap,first30,restOfDay,afterFirst30,lastHourSig,closeMove});

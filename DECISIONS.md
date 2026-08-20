@@ -7825,3 +7825,27 @@ the return window):
 All three: gross effects ~zero, signs unstable, and even a 5bp/leg spread makes every one negative. CAVEAT: 58 sessions is
 UNDERPOWERED — this is evidence these three simple patterns are not capturable with retail-grade data and costs, NOT evidence
 that microstructure is dead (real intraday edges live in order-flow/queue position at latencies we cannot reach).
+
+## D-397/398 — EXCHANGE-QUALITY crypto confirms the split verdict; microstructure re-tested at 12x power, still NULL.
+**D-397 Alpaca exchange-quality crypto (already allowlisted, no key).** Yahoo's aggregated crypto cost us a false positive and
+a partial retraction, so the surviving finding was re-tested on real exchange data (trade counts + VWAP), 23 series, 2021-2026.
+DATA QUALITY IS VISIBLY BETTER: worst single-day moves BTC 20% / ETH 28% / LTC 37% / BCH 58% — plausible — versus Yahoo's
+ARB 297,915%, OP 200,020%, AAVE 10,189%. **No impossible values in the exchange feed.**
+THE DECISIVE RE-TEST (20 clean instruments):
+- **SHARPE: pure noise, confirming the D-395 retraction.** TEST SR -0.05 (20d) / +0.25 (50d) / -0.16 (100d) — sign flips with
+  lookback. There is NO return advantage. That claim stays dead.
+- **DRAWDOWN: confirmed a THIRD time, on independent data.** Trend -41% to -48% vs buy-and-hold -77%, consistent across every
+  lookback AND in both train and test. Three independent cuts now agree: Yahoo-12 (-42 vs -73), Yahoo-37-clean (-53 vs -77),
+  Alpaca-exchange-20 (-41/-48 vs -77). **A ~30 percentage-point drawdown reduction, replicated across sources and universes.**
+This is now the single most-replicated finding in Aegis. It is NOT alpha (no return edge) — it is RISK MANAGEMENT, exactly the
+component D-070 names as having near-certain positive EV. The forward-test (D-394) tracks it on that basis.
+**D-398 microstructure at 12x the power — still NULL.** D-396's honest caveat was 58 sessions. Extended to hourly bars over
+730 days = **722 sessions** across the same liquid universe:
+- GAP FADE: IC 0.0119 (t 0.98), gross +0.027%/day, TRAIN +0.069% -> TEST -0.037% (sign flip).
+- FIRST-BAR REVERSAL: IC -0.0054 (t -0.47), gross -0.081%/day (wrong sign vs the hypothesis).
+- LAST-HOUR MOMENTUM: IC -0.0179 (t -2.60 — significant but NEGATIVE, i.e. the afternoon move REVERSES), gross exactly 0.000%.
+With 722 sessions the verdict is no longer underpowered: **all three gross effects are ~zero, and every one is negative at even
+5bp/leg.** Note the one statistically significant result (last-hour IC t=-2.60) is significant in the OPPOSITE direction to the
+hypothesis and still produces zero gross return — a textbook example of statistical significance without economic significance.
+HONEST RESIDUAL CAVEAT: hourly bars cannot see order-flow, queue position or sub-second dynamics — the layer where real
+market-making profit lives, and which is structurally unreachable without colocation (D-070 explicitly refuses that tier).

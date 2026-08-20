@@ -11,8 +11,9 @@ const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"ct",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const H=async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};};
 const hdr=await H();
-const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.crypto&select=symbol,bars`,{headers:hdr}).then(r=>r.json()) as {symbol:string;bars:number[][]}[];
-console.log(`==> CRYPTO TREND (the dropped lead): ${rows.length} instruments`);
+const CLS=Deno.env.get("CLS")||"crypto";   // "crypto"=Yahoo aggregated, "crypto_ex"=Alpaca EXCHANGE-quality (D-397)
+const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${CLS}&select=symbol,bars`,{headers:hdr}).then(r=>r.json()) as {symbol:string;bars:number[][]}[];
+console.log(`==> CRYPTO TREND [${CLS}]: ${rows.length} instruments`);
 // DATA-QUALITY FILTER (D-395b): extending to 50 instruments exposed corrupted Yahoo series — ARB-USD showed a 297,915%
 // single-day move, OP-USD 200,020% (ticker reuse / pre-launch garbage). 16/50 had >100% daily moves and 12 had sub-penny
 // prices. Those produce nonsense (ann 700%, "maxDD -1790%"). Exclude: any series with a >60% single-day move (real crypto
