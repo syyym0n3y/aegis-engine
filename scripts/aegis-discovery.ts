@@ -57,30 +57,35 @@ async function cycle() {
   if (!syms.length) { console.log("  no bars on owned yet (sync in progress?) — skip"); return; }
   const byMonth = await buildMonths(fund, syms, hdr);
   const months = [...byMonth.keys()].sort(); if (months.length < 40) { console.log(`  only ${months.length} months — skip`); return; }
-  const split = Math.floor(months.length * 0.6); const N_TRIALS = 1000, ceil = Math.sqrt(2 * Math.log(N_TRIALS));
+  // THOROUGH: parameter-free candidates → full-sample decile-LS series + per-era + NET-of-cost + skew + drawdown + deflation.
+  const ERAS: [string, number, number][] = [["qe_10_19", 2010, 2020], ["covid_20_21", 2020, 2022], ["tightening_22_26", 2022, 2100]];
+  const N_TRIALS = Number(Deno.env.get("N_TRIALS") || 1000), ceil = Math.sqrt(2 * Math.log(N_TRIALS)); const COST = 0.002 * 0.7; // ~20bp × turnover
   const results: Record<string, unknown>[] = [];
   for (const cand of CANDIDATES) {
-    const testLS: number[] = []; const testICs: number[] = []; // OOS only (test window)
-    for (let mi = split; mi < months.length; mi++) {
-      const arr = byMonth.get(months[mi])!.filter((r) => r.fwd != null); if (arr.length < 30) continue;
+    const ls: { mo: string; ret: number; longSet: Set<number>; shortSet: Set<number> }[] = [];
+    for (const mo of months) {
+      const arr = byMonth.get(mo)!.filter((r) => r.fwd != null); if (arr.length < 30) continue;
       const zf: Record<string, (x: number) => number> = {}; for (const k of ["value", "quality", "eyield", "mom", "issuance"]) { const f = zc(arr, k); if (f) zf[k] = f; }
-      const scored = arr.map((r) => { const z: Z = {}; for (const k in zf) if (r.f[k] != null) z[k] = zf[k](r.f[k]); const s = cand.f(z); return s == null || !Number.isFinite(s) ? null : { s, fwd: r.fwd! }; }).filter(Boolean) as { s: number; fwd: number }[];
-      if (scored.length < 30) continue;
-      testICs.push(rankIC(scored.map((x) => x.s), scored.map((x) => x.fwd)));
-      scored.sort((a, b) => a.s - b.s); const d = Math.max(1, Math.floor(scored.length / 10));
-      testLS.push(scored.slice(scored.length - d).reduce((s, x) => s + x.fwd, 0) / d - scored.slice(0, d).reduce((s, x) => s + x.fwd, 0) / d);
+      const scored = arr.map((r, i) => { const z: Z = {}; for (const k in zf) if (r.f[k] != null) z[k] = zf[k](r.f[k]); const s = cand.f(z); return s == null || !Number.isFinite(s) ? null : { s, fwd: r.fwd!, i }; }).filter(Boolean) as { s: number; fwd: number; i: number }[];
+      if (scored.length < 30) continue; scored.sort((a, b) => a.s - b.s); const d = Math.max(1, Math.floor(scored.length / 10));
+      const long = scored.slice(scored.length - d), short = scored.slice(0, d);
+      ls.push({ mo, ret: long.reduce((s, x) => s + x.fwd, 0) / d - short.reduce((s, x) => s + x.fwd, 0) / d, longSet: new Set(long.map((x) => x.i)), shortSet: new Set(short.map((x) => x.i)) });
     }
-    const nm = testLS.length; if (nm < 12) continue;
-    const m = testLS.reduce((a, b) => a + b, 0) / nm; const sd = Math.sqrt(testLS.reduce((a, b) => a + (b - m) ** 2, 0) / (nm - 1)); const sr = sd > 0 ? (m / sd) * Math.sqrt(12) : 0;
-    const sk = sd > 0 ? testLS.reduce((a, x) => a + ((x - m) / sd) ** 3, 0) / nm : 0, ku = sd > 0 ? testLS.reduce((a, x) => a + ((x - m) / sd) ** 4, 0) / nm : 3;
-    const msr = sd > 0 ? m / sd : 0; const dn = Math.sqrt(Math.max(1e-9, 1 - sk * msr + ((ku - 1) / 4) * msr * msr)); const psrZ = (msr * Math.sqrt(nm - 1)) / dn;
-    const oosIC = testICs.reduce((a, b) => a + b, 0) / testICs.length;
-    results.push({ candidate: cand.name, family: cand.family, oos_ic: +oosIC.toFixed(4), oos_sharpe: +sr.toFixed(2), psr_z: +psrZ.toFixed(2), passes_deflation: psrZ > ceil, n_test_months: nm });
+    if (ls.length < 24) continue;
+    // turnover (name overlap month-to-month) → net returns
+    let prevL = new Set<number>(), prevS = new Set<number>(); const net: number[] = []; const gross: number[] = [];
+    for (const x of ls) { let chg = 0; for (const s of x.longSet) if (!prevL.has(s)) chg++; for (const s of x.shortSet) if (!prevS.has(s)) chg++; const turn = (x.longSet.size + x.shortSet.size) ? chg / (x.longSet.size + x.shortSet.size) : 0; gross.push(x.ret); net.push(x.ret - turn * COST); prevL = x.longSet; prevS = x.shortSet; }
+    const ann = (a: number[]) => { const n = a.length; const m = a.reduce((s, x) => s + x, 0) / n; const sd = Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (n - 1)); const msr = sd > 0 ? m / sd : 0; const sk = sd > 0 ? a.reduce((s, x) => s + ((x - m) / sd) ** 3, 0) / n : 0, ku = sd > 0 ? a.reduce((s, x) => s + ((x - m) / sd) ** 4, 0) / n : 3; const dn = Math.sqrt(Math.max(1e-9, 1 - sk * msr + ((ku - 1) / 4) * msr * msr)); let cum = 1, peak = 1, dd = 0; for (const r of a) { cum *= 1 + r; peak = Math.max(peak, cum); dd = Math.min(dd, cum / peak - 1); } return { sharpe: +(msr * Math.sqrt(12)).toFixed(2), ann_pct: +(m * 1200).toFixed(1), win_pct: +(100 * a.filter((x) => x > 0).length / n).toFixed(0), skew: +sk.toFixed(2), maxdd_pct: +(dd * 100).toFixed(1), psr_z: +((msr * Math.sqrt(n - 1)) / dn).toFixed(2), n }; };
+    const gS = ann(gross), nS = ann(net);
+    // per-era net sharpe
+    const eraSharpe: Record<string, number> = {}; for (const [en, a, b] of ERAS) { const sub = net.filter((_, i) => { const y = +ls[i].mo.slice(0, 4); return y >= a && y < b; }); if (sub.length >= 8) { const m = sub.reduce((s, x) => s + x, 0) / sub.length; const sd = Math.sqrt(sub.reduce((s, x) => s + (x - m) ** 2, 0) / sub.length); eraSharpe[en] = +(sd > 0 ? m / sd * Math.sqrt(12) : 0).toFixed(2); } }
+    results.push({ candidate: cand.name, family: cand.family, gross_sharpe: gS.sharpe, net_sharpe: nS.sharpe, net_ann_pct: nS.ann_pct, win_pct: nS.win_pct, skew: nS.skew, maxdd_pct: nS.maxdd_pct, psr_z: nS.psr_z, noise_ceiling: +ceil.toFixed(2), passes_deflation: nS.psr_z > ceil, per_era_net_sharpe: eraSharpe, n_months: nS.n });
   }
-  const base = results.find((r) => r.candidate === "base_composite"); const baseSr = base ? (base.oos_sharpe as number) : 0;
-  for (const r of results) { r.beats_base = (r.oos_sharpe as number) > baseSr && r.candidate !== "base_composite"; r.note = `OOS test ${r.n_test_months}mo; base OOS Sharpe ${baseSr}`; }
-  results.sort((a, b) => (b.oos_sharpe as number) - (a.oos_sharpe as number));
-  console.log("  candidates (OOS):"); for (const r of results) console.log(`   ${String(r.candidate).padEnd(20)} OOS-Sharpe ${String(r.oos_sharpe).padStart(6)} IC ${String(r.oos_ic).padStart(7)} psr_z ${r.psr_z} ${r.passes_deflation ? "CLEARS" : ""} ${r.beats_base ? "BEATS-BASE" : ""}`);
+  const base = results.find((r) => r.candidate === "base_composite"); const baseSr = base ? (base.net_sharpe as number) : 0;
+  for (const r of results) { r.beats_base = (r.net_sharpe as number) > baseSr && r.candidate !== "base_composite"; }
+  results.sort((a, b) => (b.net_sharpe as number) - (a.net_sharpe as number));
+  console.log(`  candidates (NET of ~20bp, full history, deflation N=${N_TRIALS} ceil=${ceil.toFixed(2)}):`);
+  for (const r of results) console.log(`   ${String(r.candidate).padEnd(20)} netSharpe ${String(r.net_sharpe).padStart(6)} (gross ${r.gross_sharpe}) win ${r.win_pct}% skew ${r.skew} maxDD ${r.maxdd_pct}% psr_z ${r.psr_z} ${r.passes_deflation ? "CLEARS" : "fails"} ${r.beats_base ? "BEATS-BASE" : ""} eras:${JSON.stringify(r.per_era_net_sharpe)}`);
   // log to the owned discovery ledger
   await fetch(`${OWNED}/trd_discovery_log`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify(results.map((r) => ({ ...r, tested_at: new Date().toISOString() }))) }).catch(() => {});
 }

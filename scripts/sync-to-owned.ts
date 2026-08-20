@@ -23,23 +23,26 @@ console.log(`==> SYNC rented → owned (${OWNED})`);
 // 1. symbols + classes
 const cls = new Map<string, string>();
 for (const r of ((await rget("allclasses=1"))?.rows ?? []) as { symbol: string; asset_class: string }[]) cls.set(r.symbol, r.asset_class);
-const syms = [...cls.keys()]; console.log(`1/4 bars: ${syms.length} symbols`);
-let done = 0;
-for (let i = 0; i < syms.length; i += 20) {
-  const chunk = syms.slice(i, i + 20);
-  const rows = ((await rget(`barsbatch=${encodeURIComponent(chunk.join(","))}`))?.rows ?? []) as { symbol: string; bars: number[][] }[];
-  await owrite("trd_bars_deep", rows.filter((r) => r.bars?.length).map((r) => ({ symbol: r.symbol, asset_class: cls.get(r.symbol) || "equity", bars: r.bars, updated_at: new Date().toISOString() })), "symbol");
-  done += rows.length; if (i % 200 === 0) console.log(`    ${done}/${syms.length}`);
-}
-console.log(`    bars done: ${done}`);
-// 2. fundamentals
+const syms = [...cls.keys()]; const SKIP_BARS = Deno.args.includes("--skip-bars");
+if (!SKIP_BARS) {
+  console.log(`1/4 bars: ${syms.length} symbols`); let done = 0;
+  for (let i = 0; i < syms.length; i += 20) {
+    const chunk = syms.slice(i, i + 20);
+    const rows = ((await rget(`barsbatch=${encodeURIComponent(chunk.join(","))}`))?.rows ?? []) as { symbol: string; bars: number[][] }[];
+    await owrite("trd_bars_deep", rows.filter((r) => r.bars?.length).map((r) => ({ symbol: r.symbol, asset_class: cls.get(r.symbol) || "equity", bars: r.bars, updated_at: new Date().toISOString() })), "symbol");
+    done += rows.length; if (i % 200 === 0) console.log(`    ${done}/${syms.length}`);
+  }
+  console.log(`    bars done: ${done}`);
+} else console.log("1/4 bars: skipped (already synced)");
+// 2. fundamentals — cik=ticker so the conflict key (ticker,concept,period_end) is unique per name; DEDUPE within batch
 const f = ((await rget("fundamentals=1"))?.rows ?? []) as { t: string; c: string; e: string; p?: string; v: number }[];
-console.log(`2/4 fundamentals: ${f.length} rows`);
-await owrite("trd_fundamentals", f.map((r) => ({ ticker: r.t, concept: r.c, effective_date: r.e, period_end: r.p ?? r.e, value: r.v, cik: "0", updated_at: new Date().toISOString() })), "cik,concept,period_end");
-// 3. insider
+const fseen = new Set<string>(); const fdedup = f.filter((r) => { const k = `${r.t}|${r.c}|${r.p ?? r.e}`; if (fseen.has(k)) return false; fseen.add(k); return true; });
+console.log(`2/4 fundamentals: ${f.length} rows (${fdedup.length} after dedupe)`);
+await owrite("trd_fundamentals", fdedup.map((r) => ({ ticker: r.t, concept: r.c, effective_date: r.e, period_end: r.p ?? r.e, value: r.v, cik: r.t, updated_at: new Date().toISOString() })), "cik,concept,period_end");
+// 3. insider — unique accession per (ticker,date,idx); dedupe
 const ins = ((await rget("insider_all=1"))?.rows ?? []) as { t: string; d: string; v: number }[];
 console.log(`3/4 insider: ${ins.length} events`);
-await owrite("trd_insider", ins.map((r, i) => ({ ticker: r.t, accession: `sync-${i}`, disclosed_date: r.d, value_usd: r.v, updated_at: new Date().toISOString() })), "ticker,accession");
+await owrite("trd_insider", ins.map((r, i) => ({ ticker: r.t, accession: `sync-${r.t}-${i}`, disclosed_date: r.d, value_usd: r.v, updated_at: new Date().toISOString() })), "ticker,accession");
 // 4. FF factors
 const ff = ((await rget("ff=1"))?.rows ?? []) as { month: string; factor: string; ret: number }[];
 console.log(`4/4 ff_factors: ${ff.length} rows`);
