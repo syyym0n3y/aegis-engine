@@ -26,7 +26,8 @@ const hdr = await H();
 // anyone can earn (and near the ZLB ^IRX produced explosive fake "returns"); ^VIX has no instrument that delivers its return.
 // Under risk parity these 4 carried ~7.7% of book risk on fictional P&L. Rate exposure belongs via TLT/IEF/SHY total returns.
 const NON_INVESTABLE = new Set(["^TNX", "^TYX", "^IRX", "^VIX"]);
-const metaAll = await fetch(`${OWNED}/trd_bars_deep?asset_class=neq.equity&select=symbol,asset_class`, { headers: hdr }).then((r) => r.json()).catch(() => []) as { symbol: string; asset_class: string }[];
+const metaAll: { symbol: string; asset_class: string }[] = []; // F19: paginate (unpaged silently caps at 1000 rows)
+for (let off = 0; ; off += 1000) { const p = await fetch(`${OWNED}/trd_bars_deep?asset_class=neq.equity&select=symbol,asset_class&order=symbol&offset=${off}&limit=1000`, { headers: hdr }).then((r) => r.json()).catch(() => []); if (!Array.isArray(p) || !p.length) break; metaAll.push(...p); if (p.length < 1000) break; }
 const meta = metaAll.filter((m) => !NON_INVESTABLE.has(m.symbol));
 console.log(`excluded non-investable: ${metaAll.length - meta.length} (${[...NON_INVESTABLE].join(",")})`);
 console.log(`instruments: ${meta.length} (${[...new Set(meta.map((m) => m.asset_class))].join(",")})`);
@@ -82,4 +83,6 @@ for (let i = 6; i < rpBook.length; i++) {
 }
 const meanL = levs.reduce((s, x) => s + x, 0) / levs.length;
 console.log(`  + vol-REGIME overlay, HONEST NET (levered cost + ${(RF_M * 12 * 100).toFixed(0)}% financing, mean leverage ${meanL.toFixed(2)}x):`, JSON.stringify(stat(regime, 12, 0)));
-console.log("\n(honest: this is the century-documented trend edge measured on OUR stack — believe the NET Sharpe + per-era, not the gross)");
+// F18: cost sensitivity — 15bp is optimistic for spot FX/crypto/small ETFs, and Yahoo continuous futures are not roll-adjusted.
+for (const bp of [15, 30, 50]) { const c = bp / 1e4; const r: number[] = []; for (let i = 6; i < rpBook.length; i++) { const w = rpBook.slice(i - 6, i); const v = Math.sqrt(w.reduce((s, x) => s + x * x, 0) / 6) || 0.05; const L = Math.min(2, 0.04 / v); r.push(L * (rpBook[i] - c) - Math.max(0, L - 1) * RF_M); } const st = stat(r, 12, 0); console.log(`  cost sensitivity @${bp}bp: Sharpe ${st?.sharpe} ann ${st?.ann_pct}%`); }
+console.log("\n(honest: NET Sharpe + per-era are the numbers; gross is not investable. Known un-fixed biases: dividends excluded (price-return only), Yahoo continuous futures not roll-adjusted, no crypto funding/borrow.)");

@@ -1,10 +1,10 @@
 #!/usr/bin/env -S deno run --allow-net --allow-env
-// aegis-positioning.ts (D-380) — THE CULMINATION. Combines the two validated edges into one sized, capital-safe book and
-// emits the current best positions: (1) the diversified vol-scaled, regime-conditioned TREND book across non-equity
-// instruments (D-379, net Sharpe 0.57, deflation-cleared — the core), (2) the equity QUALITY-VALUE tilt (D-378, cheap AND
-// profitable — the satellite). They are near-decorrelated, so the combined portfolio Sharpe ≈ √(Sᵀ²+Sᵉ²) — the "sum" that
-// beats either alone. Risk-budgeted to a target vol, written to trd_positions, DORMANT (surfaced, never auto-armed). This is
-// the owned, autonomous system telling you where to be — honestly, sized, capital-safe.
+// aegis-positioning.ts (D-380, CORRECTED D-386) — the combined WATCHLIST. It emits (1) a diversified vol-scaled trend book
+// across non-equity instruments and (2) an equity quality-value tilt, sized and dollar-neutral, to trd_positions, DORMANT.
+// !! NEITHER LEG IS A VALIDATED EDGE. The trend "0.57 deflation-cleared" of D-379 was an ACCOUNTING ARTIFACT (levered returns
+// but unlevered costs, free financing on cash instruments, 4 non-investable legs, and an equity-index-only pre-1993 window):
+// honest net Sharpe is 0.22, psr_z 1.26, FAILS (D-384). The equity tilt is tail-driven: 0.30 ex-top-3-months and its psr_z is
+// REFUSED (skew 8.5 is outside PSR validity) (D-386). This file therefore produces a research WATCHLIST, not a trade list.
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
 const TARGET_VOL = Number(Deno.env.get("TARGET_VOL") || 0.12); // 12% annualised portfolio target
@@ -26,9 +26,13 @@ async function scorePrior() {
   for (const p of b.satellite_equity_quality_value?.longs ?? []) priced.push({ sym: p.sym, w: 1, px0: p.px });
   for (const p of b.satellite_equity_quality_value?.shorts ?? []) priced.push({ sym: p.sym, w: -1, px0: p.px });
   if (!priced.length) return;
-  let pnl = 0, n = 0;
-  for (const p of priced) { const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(p.sym)}&select=bars`, { headers: hdr }).then((x) => x.json()).catch(() => []); const bars = Array.isArray(r) && r.length ? r[0].bars : null; if (!bars?.length) continue; const pxNow = bars[bars.length - 1][4]; if (!(pxNow > 0) || !(p.px0 > 0)) continue; pnl += p.w * (pxNow / p.px0 - 1); n++; }
-  if (n) { const ret = pnl / n; await fetch(`${OWNED}/trd_positions?id=eq.${prior[0].id}`, { method: "PATCH", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({ forward_return: +ret.toFixed(4), forward_scored_at: new Date().toISOString() }) }).catch(() => {}); console.log(`   earning-meter: prior equity book paper return ${(ret * 100).toFixed(2)}% over ${n} names (no capital)`); }
+  // F13 FIX: the old meter weighted 12 longs at +1 and 6 shorts at -1 then divided by 18 — a +33% net-long book whose paper
+  // return is dominated by market BETA (guaranteed to look good in an up market with zero edge). Make the spread dollar-neutral
+  // and report the long side separately so beta is never mistaken for alpha.
+  const nL = priced.filter((p) => p.w > 0).length || 1, nSh = priced.filter((p) => p.w < 0).length || 1;
+  let pnl = 0, n = 0, longAvg = 0, shortAvg = 0;
+  for (const p of priced) { const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(p.sym)}&select=bars`, { headers: hdr }).then((x) => x.json()).catch(() => []); const bars = Array.isArray(r) && r.length ? r[0].bars : null; if (!bars?.length) continue; const pxNow = bars[bars.length - 1][4]; if (!(pxNow > 0) || !(p.px0 > 0)) continue; const rr = pxNow / p.px0 - 1; if (p.w > 0) { pnl += 0.5 * rr / nL; longAvg += rr / nL; } else { pnl -= 0.5 * rr / nSh; shortAvg += rr / nSh; } n++; }
+  if (n) { const ret = pnl; await fetch(`${OWNED}/trd_positions?id=eq.${prior[0].id}`, { method: "PATCH", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({ forward_return: +ret.toFixed(4), forward_scored_at: new Date().toISOString() }) }).catch(() => {}); console.log(`   earning-meter (dollar-neutral SPREAD = alpha proxy): ${(ret * 100).toFixed(2)}% | long-side ${(longAvg * 100).toFixed(2)}% (mostly beta) short-side ${(shortAvg * 100).toFixed(2)}% over ${n} names, no capital`); }
 }
 await scorePrior();
 
@@ -39,7 +43,9 @@ for (let i = 0; i < meta.length; i += 15) {
   const rows = await fetch(`${OWNED}/trd_bars_deep?symbol=in.(${meta.slice(i, i + 15).map((m) => `"${m.symbol}"`).join(",")})&select=symbol,bars`, { headers: hdr }).then((r) => r.json()) as { symbol: string; bars: number[][] }[];
   for (const row of rows) { const b = row.bars; if (!b || b.length < 300) continue; const mc: number[] = []; let last = ""; for (const bar of b) { const mo = new Date(bar[0] * 1000).toISOString().slice(0, 7); if (mo !== last) { mc.push(bar[4]); last = mo; } else mc[mc.length - 1] = bar[4]; } if (mc.length < 13) continue; const k = mc.length - 1; const t12 = mc[k] / mc[k - 12] - 1; const rets: number[] = []; for (let j = Math.max(1, k - 12); j <= k; j++) rets.push(mc[j] / mc[j - 1] - 1); const vol = Math.sqrt(rets.reduce((s, x) => s + x * x, 0) / rets.length) || 0.05; const scale = Math.min(3, (TARGET_VOL / Math.sqrt(12)) / vol); if (Number.isFinite(t12) && Math.abs(t12) > 0.001) trend.push({ sym: row.symbol, cls: meta.find((m) => m.symbol === row.symbol)!.asset_class, dir: t12 > 0 ? "LONG" : "SHORT", weight: +(Math.sign(t12) * scale).toFixed(3), trend12: +(t12 * 100).toFixed(1) }); }
 }
-trend.sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight));
+// F11 FIX: |weight| is proportional to 1/vol, so sorting on it emitted the LOWEST-VOL instruments (rates/FX), not the highest
+// conviction — the identical edge/size conflation fixed in aegis-daily. Rank by trend conviction; keep weight as SIZE only.
+trend.sort((a, b) => Math.abs(b.trend12) - Math.abs(a.trend12));
 
 // ---- SATELLITE: equity quality-value tilt (current top/bottom) ----
 const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
@@ -58,13 +64,24 @@ const zv = zc("value"), zq = zc("quality");
 const eqScored = eq.map((r) => { const v = zv(r.value), q = zq(r.quality); return { sym: r.sym, px: r.px, score: +(0.6 * v + 0.4 * q + 0.4 * Math.min(v, q)).toFixed(3) }; }).sort((a, b) => b.score - a.score);
 
 // ---- combine + report ----
-const St = 0.57, Se = 0.52, rho = 0.1; // trend & equity edge Sharpes; near-decorrelated
-const combined = +Math.sqrt((St * St + Se * Se + 2 * rho * St * Se)).toFixed(2);
-const book = { generated_at: new Date().toISOString(), target_vol: TARGET_VOL, dormant: true,
+// F10 FIX + D-384/386 RETRACTION. Old formula sqrt(S1^2+S2^2+2*rho*S1*S2) is a vector norm, not a Sharpe combination: it
+// INCREASES with correlation (at rho=1 it returned 1.09 for two identical strategies). Correct equal-risk combination is
+// (S1+S2)/sqrt(2+2*rho). Inputs also corrected: trend 0.57 was an accounting artifact (honest 0.22); equity 0.52 is tail-driven
+// (0.30 ex-top-3-months, psr_z INVALID at skew 8.5). rho is set conservatively until MEASURED from the two live return series.
+const St = Number(Deno.env.get("ST_HONEST") || 0.22);
+const Se = Number(Deno.env.get("SE_HONEST") || 0.30);
+const rho = Number(Deno.env.get("RHO_MEASURED") || 0.30);
+const combined = +((St + Se) / Math.sqrt(2 + 2 * rho)).toFixed(2);
+// F12 FIX: every leg was independently scaled to TARGET_VOL, so with ~52 legs and ~5-7 effective independent bets the true
+// portfolio vol was ~29%, not the 12% the book advertised. Report gross notional and the effective-bet estimate explicitly.
+const grossNotional = trend.reduce((s, t) => s + Math.abs(t.weight), 0);
+const effBets = 6;
+const est_portfolio_vol = +(TARGET_VOL * Math.sqrt(effBets)).toFixed(3);
+const book = { generated_at: new Date().toISOString(), per_leg_target_vol: TARGET_VOL, est_portfolio_vol_UNSCALED: est_portfolio_vol, gross_notional_x: +grossNotional.toFixed(1), effective_bets: effBets, dormant: true,
   core_trend: { n: trend.length, expected_sharpe: St, top_positions: trend.slice(0, 15) },
   satellite_equity_quality_value: { n: eqScored.length, expected_sharpe: Se, longs: eqScored.slice(0, 12).map((r) => ({ ...r, dir: "LONG" })), shorts: eqScored.slice(-6).map((r) => ({ ...r, dir: "SHORT" })) },
   combined_expected_sharpe: combined,
-  honest_note: `Two validated, near-decorrelated edges combined → portfolio Sharpe ≈ ${combined} (√(0.57²+0.52²+2·0.1·..)). GROSS of the residual costs beyond what each backtest netted; trend has multi-year droughts. DORMANT — surfaced for review, NEVER auto-armed; arming is the operator's act after the staged gates.` };
+  honest_note: `UNVALIDATED / RETRACTED (D-384, D-386). NEITHER leg is a validated edge: the trend 0.57 was an accounting artifact (honest 0.22 after levered costs + financing + dropping non-investable legs) and the equity tilt is tail-driven (0.30 ex-top-3-months; psr_z REFUSED at skew 8.5). F14: this 12-long/6-short book is NOT the ~150-name decile that was measured, so realised Sharpe will be materially lower (idiosyncratic vol scales as 1/sqrt(n)), and the engine's own calibration found the EXTREME deciles REVERSE. Combined estimate ${combined} uses the corrected formula on honest inputs at rho=${rho}. WATCHLIST ONLY - DORMANT, never auto-armed.` };
 await fetch(`${OWNED}/trd_positions`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify([{ book, generated_at: book.generated_at }]) }).catch(() => {});
 console.log(JSON.stringify({ core_trend_n: trend.length, top_trend: trend.slice(0, 8).map((t) => `${t.sym}:${t.dir}`), equity_longs: eqScored.slice(0, 8).map((r) => r.sym), combined_expected_sharpe: combined }, null, 2));
 console.log(`\n==> BOOK written to trd_positions (DORMANT). Combined expected Sharpe ≈ ${combined} — the sum of two decorrelated edges.`);

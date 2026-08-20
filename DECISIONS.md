@@ -7650,3 +7650,40 @@ net long), and the 12/6-name book is not the 150-name decile that measured 0.52;
 validated against forward returns and its constants were tuned by looking at output; F20 prices are dividend-UNADJUSTED.
 STANDING VERDICT RESTORED: there is NO validated tradable edge in Aegis. Nothing armed, $0 at risk. The engine caught its own
 false positive — which is the engine working — but only because an adversarial check was run. Self-certification failed again.
+
+---
+
+## D-386 — ALL 16 AUDIT FINDINGS (F5-F20) FIXED AND RE-RUN. Every number moved DOWN. No validated edge exists.
+Fixed and re-ran everything. What each fix did to the numbers:
+- **F20 RESOLVED NOT-A-BUG (checked first, was potentially CRITICAL):** stored bars ARE split-adjusted — AAPL ratio 1.034 across
+  its 4:1, NVDA 1.007 across its 10:1. Dividends remain excluded (price-return only); direction known, stated, not fixed.
+- **F15 (the big one) — the daily `edge` score is NOT PREDICTIVE.** Built validate-daily-edge.ts: rebuilt the score
+  point-in-time over 362,572 historical setups. IC(edge->fwd) in-sample +0.0101, **OUT-OF-SAMPLE -0.0065 (NEGATIVE)**. Within
+  the qualifying set the IC is ~0.000. The long-setup return (0.78%/21d ~ 7%/yr) is **market BETA at SR~0.14 — worse than
+  owning an index** (the no-filter baseline returns 0.77%, i.e. the regime filter adds nothing once shorts are gone). The
+  engine is now labelled a FILTERED WATCHLIST, not an alpha ranking.
+- **The SHORT side is measurably HARMFUL and has been REMOVED:** across 147,055 historical short setups the directional return
+  averaged **-1.21%/21d** (downtrends bounce at this horizon, before borrow). Daily now surfaces LONG only (967 today, from
+  2,756 before the liquidity floor + short removal).
+- **F17 RESOLVED IN FAVOUR of the existing design** (the audit's hypothesis was wrong here): measured calm +0.20% / normal
+  +0.10% / **turbulent -0.57% (IC -0.035)** — standing aside in turbulence is correct, not lost convexity.
+- **F5 look-ahead FIXED** (market cap now uses a LAGGED price; the same close was in both the signal denominator and the
+  forward return) -> base_composite **0.15 -> 0.07**, halved. The "value premium" was substantially mechanical reversal.
+- **F7 skew guard:** psr_z is now REFUSED when |skew|>2 (PSR is a near-normal expansion) and hard-fails instead of the silent
+  Math.max(1e-9) clamp that could have printed psr_z ~65,000. quality_tilt_value's psr_z is now correctly **INVALID (skew 8.5)**,
+  and ex-top-1/ex-top-3 Sharpes (0.40/0.30 vs 0.43) confirm it was a **tail lottery**.
+- **F9 real OOS split + trial counter:** discovery had a header claiming an OOS split with none in the code. Now train60/test40,
+  ranked on TEST, and every cycle increments trd_trial_counter. quality_tilt_value: **train -0.27 vs test +0.82** — violently
+  unstable, not an edge. F6 turnover is now symbol-keyed (was array-index = fabricated cost); F18 charges borrow on shorts.
+- **F18 cost sensitivity kills the trend book:** @15bp Sharpe 0.22, **@30bp 0.00, @50bp -0.28**. Entirely cost-fragile.
+- **F10-F14 positioning:** wrong combined-Sharpe formula replaced ((S1+S2)/sqrt(2+2rho); the old one INCREASED with correlation
+  and returned 1.09 for two identical strategies) on honest inputs -> **0.81 -> 0.32**. Ranking now by conviction not inverse-vol
+  (it had been emitting the lowest-vol legs); portfolio vol/gross notional reported honestly (per-leg 12% != portfolio 12%);
+  earning-meter made DOLLAR-NEUTRAL and reports long-side beta separately (it had been a +33% net-long beta meter).
+- **F8 CANNOT be fixed with free data, so it is STATED:** the universe is currently-listed-only (both the ticker map and Yahoo),
+  so survivorship is structural (~1.5-3%/yr overstatement on a value decile), and EDGAR frames returns RESTATED fundamentals
+  (a genuine look-ahead in quality/eyield). Every equity number above is therefore an UPPER bound.
+STANDING VERDICT: **no validated tradable edge exists in Aegis.** Trend is real but small and cost-fragile; the equity tilt is
+a tail lottery with an unstable train/test split; the daily edge score does not predict. Nothing armed, $0 at risk. What IS
+validated and kept: the turbulent-regime filter, the short-side exclusion, the liquidity floor, and the measurement machinery
+itself — which is now honest enough to have killed three of my own claims in one session.
