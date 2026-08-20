@@ -7874,3 +7874,23 @@ out-of-sample. The exception is INDEX (trend is 19pp WORSE), which makes sense: 
 exiting on a 100d downtrend sells the dip and misses the recovery.
 **SIGN ERROR CAUGHT PRE-REPORT:** the first version computed `B.dd - L.dd` on NEGATIVE drawdowns, inverting every verdict —
 it would have reported the exact opposite conclusion for all 7 classes. Fixed and re-run before anything was claimed.
+
+## D-401 — the overlay at PORTFOLIO level: it is EXPENSIVE INSURANCE. Diversification is the cheaper risk management.
+D-400 showed trend cuts drawdown in 6 of 7 classes individually (crypto +24pp, commodity +34pp). The practical question is
+portfolio-level. Diversified multi-asset book (190 instruments across 7 classes, equal risk per class) vs the same book with a
+100d long-only trend overlay, 4,450 days:
+| | Sharpe | ann | vol | maxDD |
+|---|---|---|---|---|
+| diversified PASSIVE | **0.70** | 9.1% | 13.1% | -33.2% |
+| diversified + TREND overlay | 0.26 | 1.8% | 7.1% | **-22.2%** |
+OOS: passive SR 0.57 / dd -25.1% vs overlay SR **-0.04** / dd -12.1%.
+**CRISIS BEHAVIOUR — the overlay cushioned 4 of 4:** GFC passive -14.5% vs overlay -8.1% (+6.4pp); COVID -7.5% vs -5.5%
+(+2.0pp); 2022 bear -18.3% vs -6.9% (**+11.4pp**); 2018 Q4 -6.9% vs -2.3% (+4.6pp). The protection is real and it shows up
+in every actual crisis, not just in a summary statistic.
+**BUT THE HONEST VERDICT IS LESS FLATTERING THAN D-400.** The overlay costs **7.3pp/yr of return** to buy 11-13pp of drawdown
+reduction, and Sharpe collapses (0.70 -> 0.26 full, 0.57 -> -0.04 OOS). It is EXPENSIVE INSURANCE, not free protection.
+THE KEY INSIGHT this test produced: the 24-34pp advantages in D-400 looked enormous because INDIVIDUAL assets have terrible
+drawdowns (-56% to -81%). Once you simply DIVERSIFY, the passive portfolio's drawdown is already only -33% — **diversification
+does most of the risk management at ZERO return cost**, and the trend overlay then adds a further 11pp for a steep 7.3pp/yr
+premium. Correct ordering for a risk-managed book: diversify FIRST (free), and add a trend overlay only if drawdown beyond
+that is genuinely intolerable and the return give-up is acceptable. This refines — and partially deflates — D-400.
