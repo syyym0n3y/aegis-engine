@@ -7955,3 +7955,26 @@ This closes the documented-premium space: value/quality/momentum (D-364, fail de
 risk-overlay only), PEAD (D-393 null), short interest (D-389/390/391 null/underpowered), non-price (D-387/388 null),
 seasonality (D-403 real but sub-cost), VRP (real, but paid for in tail risk). **Every documented premium is now measured, and
 the pattern is uniform: what is large is compensation for real risk; what is free is too small to access.**
+
+## D-405 — THE COMBINED BOOK: selective overlay beats blanket (OOS SR 0.00 -> 0.37), but PASSIVE DIVERSIFICATION still wins on Sharpe
+Built only from what survived, layered in the order the evidence dictates (cheap risk management first). 190 instruments,
+7 classes, 4,450 days, train/test split.
+| book | FULL SR/ann/maxDD | OOS SR/ann/maxDD |
+|---|---|---|
+| 1. diversified PASSIVE | 0.70 / 9.1% / -33.2% | **0.57 / 7.3% / -25.1%** |
+| 2. + seasonal tilt | 0.70 / 9.3% / -31.5% | 0.56 / 7.3% / -25.5% |
+| 3. + BLANKET trend (D-401) | 0.29 / 2.1% / -21.7% | **0.00** / 0.0% / -11.9% |
+| 4. + SELECTIVE trend | 0.49 / 3.4% / -26.0% | **0.37** / 2.4% / -12.3% |
+| 5. COMBINED (season+selective) | 0.49 / 3.4% / -25.4% | 0.37 / 2.4% / **-12.4%** |
+**THE SELECTIVE HYPOTHESIS WAS RIGHT AND IT MATTERS.** D-400 measured the overlay as HARMFUL on index (-19pp) and helpful
+elsewhere; D-401 applied it blanket and destroyed the book (OOS SR 0.00). Applying it ONLY where it measured positive
+(commodity/crypto/sector/equity/etf, excluding index) recovers OOS SR 0.00 -> **0.37** and full SR 0.29 -> 0.49. Using the
+per-class evidence instead of a blanket rule is worth ~0.37 of Sharpe.
+**THE SEASONAL TILT ADDS ESSENTIALLY NOTHING** (+0.2pp ann full, neutral OOS) — exactly as D-403's magnitudes predicted. It is
+honest to report a layer that did not help; it stays in the book at mild weight only because it is free.
+**THE HONEST BOTTOM LINE, stated plainly:** the best RISK-ADJUSTED book is the simplest one — **diversified passive, OOS Sharpe
+0.57**. The combined book trades ~5pp/yr of return and 0.20 of Sharpe to HALVE the drawdown (-25.1% -> -12.4% OOS) and cushion
+every crisis (GFC +5.3pp, COVID +1.6pp, 2022 bear +11.2pp, 2018 Q4 +4.0pp — 4 of 4).
+So the deliverable is not "a strategy that beats the market". It is a **calibrated choice**: if drawdown is the binding
+constraint, the selective overlay halves it for a measured price; if risk-adjusted return is the objective, diversify and stop.
+That is the correct, complete, and unflattering answer, and it is the one the evidence supports.
