@@ -15,6 +15,23 @@ const pit = (a: { e: number; v: number }[] | undefined, at: number) => { if (!a)
 const hdr = await H();
 console.log("==> AEGIS POSITIONING (the culmination) — combining validated edges, DORMANT/capital-safe");
 
+// EARNING METER (D-381): before emitting a new book, score the PRIOR book's realised PAPER return since it was generated.
+// This accrues a live-forward track record with NO capital — the honest evidence that will "earn" the owned box. The Mac Mini
+// is justified only when this paper track record crosses the operator's threshold (e.g. N months, positive, in-line Sharpe).
+async function scorePrior() {
+  const prior = await fetch(`${OWNED}/trd_positions?select=id,generated_at,book&order=generated_at.desc&limit=1`, { headers: hdr }).then((r) => r.json()).catch(() => []) as { id: number; generated_at: string; book: Record<string, unknown> }[];
+  if (!Array.isArray(prior) || !prior.length || !prior[0].book) return;
+  const b = prior[0].book as { core_trend?: { top_positions?: { sym: string; weight: number }[] }; satellite_equity_quality_value?: { longs?: { sym: string; px: number }[]; shorts?: { sym: string; px: number }[] } };
+  const priced: { sym: string; w: number; px0: number }[] = [];
+  for (const p of b.satellite_equity_quality_value?.longs ?? []) priced.push({ sym: p.sym, w: 1, px0: p.px });
+  for (const p of b.satellite_equity_quality_value?.shorts ?? []) priced.push({ sym: p.sym, w: -1, px0: p.px });
+  if (!priced.length) return;
+  let pnl = 0, n = 0;
+  for (const p of priced) { const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(p.sym)}&select=bars`, { headers: hdr }).then((x) => x.json()).catch(() => []); const bars = Array.isArray(r) && r.length ? r[0].bars : null; if (!bars?.length) continue; const pxNow = bars[bars.length - 1][4]; if (!(pxNow > 0) || !(p.px0 > 0)) continue; pnl += p.w * (pxNow / p.px0 - 1); n++; }
+  if (n) { const ret = pnl / n; await fetch(`${OWNED}/trd_positions?id=eq.${prior[0].id}`, { method: "PATCH", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({ forward_return: +ret.toFixed(4), forward_scored_at: new Date().toISOString() }) }).catch(() => {}); console.log(`   earning-meter: prior equity book paper return ${(ret * 100).toFixed(2)}% over ${n} names (no capital)`); }
+}
+await scorePrior();
+
 // ---- CORE: diversified trend book (current signals across non-equity instruments) ----
 const meta = await fetch(`${OWNED}/trd_bars_deep?asset_class=neq.equity&select=symbol,asset_class`, { headers: hdr }).then((r) => r.json()) as { symbol: string; asset_class: string }[];
 const trend: { sym: string; cls: string; dir: string; weight: number; trend12: number }[] = [];
