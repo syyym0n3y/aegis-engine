@@ -13,27 +13,40 @@ const hdr = await H();
 console.log("==> AEGIS DAILY — favourable-condition scan across the whole stack (DORMANT)");
 
 const meta = await fetch(`${OWNED}/trd_bars_deep?select=symbol,asset_class`, { headers: hdr }).then((r) => r.json()) as { symbol: string; asset_class: string }[];
-const setups: { sym: string; cls: string; dir: string; align: number; regime: string; edge: number; d21: number; d63: number; d252: number; volpct: number }[] = [];
+const setups: { sym: string; cls: string; dir: string; align: number; regime: string; edge: number; size: number; dvol_m: number; vol_ann_pct: number; d21: number; d63: number; d252: number; volpct: number }[] = [];
 for (let i = 0; i < meta.length; i += 25) {
   const rows = await fetch(`${OWNED}/trd_bars_deep?symbol=in.(${meta.slice(i, i + 25).map((m) => `"${m.symbol}"`).join(",")})&select=symbol,bars`, { headers: hdr }).then((r) => r.json()) as { symbol: string; bars: number[][] }[];
   for (const row of rows) {
-    const b = row.bars; if (!b || b.length < 300) continue; const c = b.map((r) => r[4]); const k = c.length - 1; const px = c[k]; if (!(px > 0)) continue;
+    const b = row.bars; if (!b || b.length < 300) continue; const c = b.map((r) => r[4]), v = b.map((r) => r[5]); const k = c.length - 1; const px = c[k]; if (!(px > 0)) continue;
+    const cls = meta.find((m) => m.symbol === row.symbol)!.asset_class;
+    // LIQUIDITY FLOOR (D-383): trailing-21d avg $volume ≥ $5M/day for equities (the fix — the old score surfaced quiet
+    // micro-caps). Non-equity instruments (FX/index/commodity/crypto ETFs) are liquid by nature → exempt from the $ floor.
+    let dv = 0, cn = 0; for (let j = k - 21; j < k; j++) { if (c[j] > 0 && v[j] > 0) { dv += c[j] * v[j]; cn++; } } dv = cn ? dv / cn : 0;
+    if (cls === "equity" && dv < 5e6) continue;
     // MTF trend: daily(21) / weekly(63) / monthly(252) horizons — do they agree?
     const t21 = c[k] / c[k - 21] - 1, t63 = c[k] / c[k - 63] - 1, t252 = c[k] / c[k - 252] - 1;
     if (![t21, t63, t252].every(Number.isFinite)) continue;
     const signs = [Math.sign(t21), Math.sign(t63), Math.sign(t252)]; const up = signs.filter((s) => s > 0).length, dn = signs.filter((s) => s < 0).length;
-    const align = Math.max(up, dn); if (align < 2) continue; // need ≥2 of 3 timeframes aligned to be a "condition"
-    const dir = up > dn ? "LONG" : "SHORT";
-    // vol regime: current 21d realised vol vs its own 2yr history → percentile
+    const align = Math.max(up, dn); if (align < 2) continue; const dir = up > dn ? "LONG" : "SHORT";
+    // vol regime: current 21d realised vol vs its own 2yr history → percentile (relative, so high-vol classes aren't auto-excluded)
     const rets: number[] = []; for (let j = k - 504; j <= k; j++) if (j > 0 && c[j - 1] > 0) rets.push(c[j] / c[j - 1] - 1);
     const rvNow = Math.sqrt(rets.slice(-21).reduce((s, x) => s + x * x, 0) / 21);
     const win: number[] = []; for (let j = 21; j < rets.length; j++) win.push(Math.sqrt(rets.slice(j - 21, j).reduce((s, x) => s + x * x, 0) / 21));
     const volpct = win.length ? win.filter((v) => v <= rvNow).length / win.length : 0.5;
     const regime = volpct < 0.4 ? "calm" : volpct > 0.75 ? "turbulent" : "normal";
-    if (regime === "turbulent") continue; // stand aside when the instrument is in a turbulent regime (trend unreliable)
-    // edge score: alignment × |medium trend| / vol (vol-scaled conviction)
-    const edge = align * Math.abs(t63) / (rvNow * Math.sqrt(252) || 0.1);
-    setups.push({ sym: row.symbol, cls: meta.find((m) => m.symbol === row.symbol)!.asset_class, dir, align, regime, edge: +edge.toFixed(2), d21: +(t21 * 100).toFixed(1), d63: +(t63 * 100).toFixed(1), d252: +(t252 * 100).toFixed(1), volpct: +volpct.toFixed(2) });
+    if (regime === "turbulent") continue;
+    const rvAnn = rvNow * Math.sqrt(252) || 0.1;
+    // REFINED EDGE = CONVICTION only (NOT vol-scaled — that was the bug conflating edge with sizing): 3/3-alignment bonus ×
+    // capped trend strength × acceleration (short trend stronger than long = fresh, not exhausted) × calm-regime bonus.
+    // strength: RISK-ADJUSTED trend (trend ÷ its own vol = t-like consistency), squashed by tanh so extremes compress
+    // smoothly instead of hitting a hard cap (the hard cap saturated every strong trender to an identical score — a real
+    // ranking failure caught in review, D-383). tanh keeps it monotonic: bigger risk-adjusted trend always ranks higher.
+    const strength = Math.tanh(Math.abs(t63) / (rvAnn * Math.sqrt(63 / 252) || 0.1));
+    const accel = (dir === "LONG" ? t21 / 21 > t252 / 252 : t21 / 21 < t252 / 252) ? 1.2 : 1.0; // per-day pace rising = fresh trend
+    const edge = +((align === 3 ? 1.5 : 1.0) * strength * accel * (regime === "calm" ? 1.15 : 1.0) * 100).toFixed(1);
+    // SIZE = the vol-scaled risk-parity weight, reported SEPARATELY (target ~15% annualised per position, capped 2.5×)
+    const size = +Math.min(2.5, 0.15 / rvAnn).toFixed(2);
+    setups.push({ sym: row.symbol, cls, dir, align, regime, edge, size, dvol_m: +(dv / 1e6).toFixed(1), vol_ann_pct: +(rvAnn * 100).toFixed(0), d21: +(t21 * 100).toFixed(1), d63: +(t63 * 100).toFixed(1), d252: +(t252 * 100).toFixed(1), volpct: +volpct.toFixed(2) });
   }
 }
 setups.sort((a, b) => b.edge - a.edge);
@@ -41,6 +54,6 @@ const longs = setups.filter((s) => s.dir === "LONG"), shorts = setups.filter((s)
 const day = { scanned_at: new Date().toISOString(), universe: meta.length, favourable: setups.length, dormant: true,
   top_long_conditions: longs.slice(0, 15), top_short_conditions: shorts.slice(0, 10),
   by_class: Object.fromEntries([...new Set(setups.map((s) => s.cls))].map((cl) => [cl, { long: setups.filter((s) => s.cls === cl && s.dir === "LONG").length, short: setups.filter((s) => s.cls === cl && s.dir === "SHORT").length }])),
-  note: "Favourable = ≥2/3 timeframes trend-aligned AND not in a turbulent vol regime. Edge = alignment×|trend|/vol. Enter while favourable, exit when alignment breaks or regime turns turbulent. DORMANT — surfaced daily, never auto-armed." };
+  note: "Favourable = liquid (equities >=$5M/day) AND >=2/3 timeframes aligned AND not turbulent. EDGE = conviction (alignment x capped trend x acceleration x calm-bonus) — SIZE is reported separately (vol-scaled, 15% target) so conviction is never conflated with sizing. Enter while favourable, exit when alignment breaks or regime turns turbulent. DORMANT." };
 await fetch(`${OWNED}/trd_daily_conditions`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify([{ scanned_at: day.scanned_at, conditions: day }]) }).catch(() => {});
 console.log(JSON.stringify({ favourable_today: setups.length, longs: longs.length, shorts: shorts.length, top_longs: longs.slice(0, 8).map((s) => `${s.sym}(${s.cls},edge${s.edge},${s.regime})`), top_shorts: shorts.slice(0, 6).map((s) => `${s.sym}(${s.cls})`), by_class: day.by_class }, null, 2));

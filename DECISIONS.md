@@ -7601,3 +7601,18 @@ skew LONG (risk-on trend), individual equities skew SHORT. Condition-driven, not
 when alignment breaks or the regime turns turbulent. DORMANT. Caveat (unaccounted): the edge score favours low-vol trenders →
 add a liquidity floor before acting. The autonomous stack is now DAILY: scan conditions (daily) → grade (autopilot) → discover
 (loop) → position (book). All owned, all capital-safe.
+
+## D-383 — daily engine hardened: liquidity floor + edge/size separation + saturation fix (3 real gaps closed)
+Review pass on the daily condition engine found and fixed THREE calculation gaps:
+1. **NO LIQUIDITY FLOOR** (flagged at D-382): the scan surfaced quiet micro-caps that trend cleanly but can't be traded. FIXED:
+   equities require trailing-21d avg $volume >= $5M/day (non-equity classes exempt — liquid by nature). Favourable set went
+   2,756 -> 1,348 of 4,236, and the top names became genuinely institutional (SNOW $1.46B/day, BAC $1.81B/day) instead of
+   quiet small-caps.
+2. **EDGE CONFLATED WITH SIZING**: the old score divided trend by vol, so low-vol names scored highest — that is a SIZING
+   input, not a conviction input. FIXED: EDGE = conviction only (alignment bonus x risk-adjusted trend x acceleration x
+   calm-regime bonus); SIZE = the vol-scaled risk-parity weight, reported SEPARATELY. Never conflate the two again.
+3. **SCORE SATURATION** (caught in the verification readback, not by assumption): the hard 50% trend cap made EVERY strong
+   trender score an identical 103.5 — the ranking collapsed into ties and was useless. FIXED: tanh-squashed RISK-ADJUSTED
+   trend (trend / its own vol) — monotonic, no ties (207 -> 206.5 spread), extremes compress smoothly.
+Verified by readback each time, not assumed. An adversarial audit of the wider session's calculations (look-ahead, survivorship,
+pooling, deflation math, cost realism, the combined-Sharpe formula) is running in parallel — findings to be recorded honestly.
