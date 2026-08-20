@@ -7894,3 +7894,25 @@ drawdowns (-56% to -81%). Once you simply DIVERSIFY, the passive portfolio's dra
 does most of the risk management at ZERO return cost**, and the trend overlay then adds a further 11pp for a steep 7.3pp/yr
 premium. Correct ordering for a risk-managed book: diversify FIRST (free), and add a trend overlay only if drawdown beyond
 that is genuinely intolerable and the return give-up is acceptable. This refines — and partially deflates — D-400.
+
+## D-402 — cross-sectional crypto: a STATISTICALLY REAL signal that is ECONOMICALLY INACCESSIBLE (the extremes invert)
+Tested the one mechanism never tried: CROSS-SECTIONAL crypto (rank coins against each other; market-neutral by construction,
+so it cannot be crypto beta in disguise — the trap that inflated D-392). Exchange-quality data, 19 instruments, 2,055 days.
+- xsec MOMENTUM (1w/1m/3m): all null, TEST ICs ~0 or negative.
+- xsec REVERSAL 1w: null.
+- **xsec REVERSAL 1d: IC 0.0354 (t 4.96) full, and 0.0326 (t 2.96) OUT-OF-SAMPLE — genuinely significant, twice.**
+Then the economics. Tercile gross spread is only +0.012%/day (~+4%/yr gross), which any realistic cost erases. The natural
+rescue — concentrate on the extreme tail where a real signal should be strongest — makes it WORSE, monotonically:
+| concentration | gross/day |
+|---|---|
+| tercile 1/3 | **+0.012%** |
+| quintile 1/5 | -0.014% |
+| decile 1/10 | **-0.143%** |
+Dispersion-gating (trade only the widest-dispersion days) also fails (all gross negative). Even at 2bp maker-rebate costs the
+best variant is -3%/yr.
+THE INSIGHT: the significant IC lives in the MIDDLE of the cross-section — the extreme movers KEEP moving (tail momentum)
+while the middle reverts. The signal is real and the tradable part of it is not. This is the SAME structure D-375 found in
+equities ("the EXTREME top reverses") and the same lesson as D-398's last-hour momentum (t=-2.60, exactly 0.000% gross):
+**statistical significance without economic accessibility is the dominant failure mode in this entire research program.**
+Six separate signals now show it. That is a finding about markets, not a series of accidents: the accessible parts of these
+inefficiencies are competed away, and what remains is measurable but not harvestable at retail cost.
