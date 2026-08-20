@@ -7916,3 +7916,23 @@ equities ("the EXTREME top reverses") and the same lesson as D-398's last-hour m
 **statistical significance without economic accessibility is the dominant failure mode in this entire research program.**
 Six separate signals now show it. That is a finding about markets, not a series of accidents: the accessible parts of these
 inefficiencies are competed away, and what remains is measurable but not harvestable at retail cost.
+
+## D-403 — CALENDAR effects: the first family where something PERSISTS out-of-sample (but the effects are tiny)
+Tested the never-examined calendar family across 60 liquid instruments / 326,539 instrument-days (unconditional mean 4.00bp/day).
+Calendar effects are the most notoriously data-mined family in finance, so the train(pre-2016)/test(post-2016) split IS the test.
+| effect | full excess | TRAIN | TEST | verdict |
+|---|---|---|---|---|
+| turn-of-month (last 2 + first 3 days) | +3.45bp/d (t 3.34) | +3.92 (t 3.74) | +2.79 (t 1.41) | **sign + magnitude persist**, significance decays |
+| Monday | +2.64bp (t 2.60) | +2.52 (t 2.45) | +2.82 (t 1.40) | **most consistent across halves** |
+| Nov-Apr vs May-Oct | +1.60 / -1.56 | +1.08 / -2.43 | +2.32 / -0.36 | winter persists, summer decays |
+| September | -4.32bp (t -3.17) | -4.97 | -3.36 (t -1.34) | sign persists |
+| Wednesday / Thursday | t 3.21 / -3.68 | -0.55 / -0.67 | **+8.25 / -7.47** | pure noise — signs flip violently |
+NOTE the Monday result is POSITIVE, contradicting the classic negative "weekend effect" — consistent with the documented
+post-2000 reversal of that anomaly, but it means this is not a confirmation of the literature so much as a measurement of the
+current regime.
+HONEST ECONOMICS (the part that matters): turn-of-month is ~3.45bp/day over ~60 days/yr = **~2%/yr gross**. Trading it means
+entering and exiting monthly — ~12 round-trips/yr, which at 20bp costs ~2.4%/yr. **The cost exceeds the edge.** It is only
+harvestable as a TILT on a position already held (shade exposure up at the turn, down mid-month), never as a standalone
+strategy. Same for September/seasonal: real, tiny, and only useful as a weighting adjustment.
+This is the FIRST family where effects survive OOS in sign and magnitude rather than flipping — a genuine, if small, result.
+It fits the program-wide pattern (D-402): real effects exist, and they are smaller than the cost of accessing them directly.
