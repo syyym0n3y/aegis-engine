@@ -7741,3 +7741,23 @@ NON-PRICE FRONTIER — COMPLETE. Three signals hunted to decisive verdicts: 8-K 
 a time-clustered BETA TRAP (D-388), short-sale volume NULL after a look-ahead was caught (D-389). Together with price (D-364)
 and fundamental (D-373) information, Aegis has now tested every reachable information class and found NO validated tradable
 edge. Nothing armed, $0 at risk. Three would-be "discoveries" were killed by controls this session; that is the engine working.
+
+## D-390 — short-sale volume at the DAILY horizon: NULL. The non-price frontier is now exhausted.
+D-389 was null at the monthly horizon but explicitly did NOT refute the daily literature. Tested directly: **1,003 CONSECUTIVE
+FINRA daily files (2022-2025), 3,000 equities**, within-DAY cross-sections, liquid-only, conservative no-look-ahead entry
+(FINRA publishes day D after the close -> signal known at close(D), ENTER at close(D+1), exit close(D+1+K)).
+- **K=1d: IC -0.0014 (t -0.91). GROSS long-short spread +0.005% — i.e. ZERO before costs.** Net -0.207%/day (cost dominates).
+- **K=5d: IC +0.0020 (t 1.26). GROSS -0.074%.** Net -0.334%/5d.
+- Train/test consistent (all |t| < 1.3), sign unstable between horizons.
+The decisive point: **the GROSS spread is ~0**, so this is not "a real edge eaten by costs" — there is no edge to eat. Short-sale
+volume does not predict cross-sectional returns at 1d or 5d in this sample.
+CAVEAT (stated, not hidden): FINRA's CNMS file is consolidated OFF-EXCHANGE volume (ATS + non-ATS); Boehmer-Jones-Zhang used
+2005-2007 EXCHANGE short volume. Different venue mix and regime — our null is evidence about THIS data in THIS period, not a
+refutation of their sample. Also unchanged: short VOLUME is flow, not short INTEREST (open positions), which remains uningested.
+**FRONTIER EXHAUSTED.** Every reachable information class has now been tested to a decisive verdict: PRICE (D-364 century canon
+fails deflation; D-384 the trend "edge" was an accounting artifact), FUNDAMENTAL (D-373 real IC, no tradable edge; D-386 all
+numbers are upper bounds under survivorship + restatement bias), NON-PRICE (D-387 8-K intensity null; D-388 insider clusters a
+time-clustered beta trap; D-389/390 short-sale volume null at monthly AND daily horizons after catching a look-ahead).
+**NO VALIDATED TRADABLE EDGE EXISTS IN AEGIS.** Nothing armed, $0 at risk. Five would-be discoveries were killed by controls in
+this session (trend accounting artifact, daily edge-score OOS-negative, equity tilt tail-lottery, insider-cluster beta trap,
+short-volume look-ahead) — four of which looked strong enough to publish. That is the engine working exactly as designed (D-070).
