@@ -7717,3 +7717,27 @@ D-364 (century factor canon fails deflation), D-372 (stocks idiosyncratic to mac
 tradable edge), D-384/386 (trend was an accounting artifact; every equity number an upper bound): **Aegis has now tested price,
 fundamental, and non-price information and found NO validated tradable edge.** That is the D-070 terminal state, reached by
 exhaustion rather than assumption. Nothing armed, $0 at risk.
+
+## D-389 — FINRA short-sale volume: NULL. And the first version was a look-ahead artifact CAUGHT PRE-PUBLICATION.
+Operator added cdn.finra.org/finra.org to the endpoint allowlist (explicit instruction, per Hard Rule #2). Ingested FINRA
+daily short-sale volume: **332 daily files, 21,184 tickers, 3,685 joined to owned prices, 131,904 monthly observations
+2019-2026** — the Boehmer-Jones-Zhang dataset ("Which Shorts Are Informed?"), the strongest remaining documented NON-PRICE
+signal. Zero price input: it is the fraction of each day's volume executed short.
+**FIRST RUN LOOKED SPECTACULAR AND WAS WRONG.** IC -0.0477 (level) / -0.0615 (change), t up to -11.3, stable across
+train/test, quintile-LS ~22-24%/yr net, **SR 3.2** — with the sign INVERTED vs the literature (heavily-shorted names
+outperforming). Both the absurd magnitude and the inverted sign were the tells. Root cause found before publishing: the month-M
+short ratio (sampled days 5/12/19/26) was used to predict the return starting day 1 of month M — **the signal was measured
+INSIDE the return window**, and short volume rises as a stock rallies, so it was mechanically correlated with the return it
+"predicted". Identical bug class to F5. Fixed: the signal now comes from a STRICTLY PRIOR month (and the change-baseline from
+months -2..-4).
+**CORRECTED RESULT — NULL.** LEVEL: IC +0.0056 (t 1.06), quintile-LS -5.6%/yr, t -0.12. CHANGE: IC -0.0020 (t -0.57),
+-5.3%/yr, t 0.05. Consistent across TRAIN and TEST. Short-sale volume does not predict cross-sectional returns at our horizon.
+HONEST CAVEATS (so nothing is unaccounted for): (1) we sample 4 days/month, not every day — a coarser estimator than the
+literature's; (2) the documented informed-shorting effect operates at DAILY horizons, ours is 21-day, so this is evidence the
+signal does not SURVIVE to a monthly horizon net of cost, NOT a refutation of the daily literature; (3) FINRA short VOLUME is
+flow, not short INTEREST (open positions), which is a different (bi-monthly) dataset we have not ingested; (4) the D-386
+survivorship + restated-fundamentals biases still apply to every equity number.
+NON-PRICE FRONTIER — COMPLETE. Three signals hunted to decisive verdicts: 8-K filing intensity NULL (D-387), insider clusters
+a time-clustered BETA TRAP (D-388), short-sale volume NULL after a look-ahead was caught (D-389). Together with price (D-364)
+and fundamental (D-373) information, Aegis has now tested every reachable information class and found NO validated tradable
+edge. Nothing armed, $0 at risk. Three would-be "discoveries" were killed by controls this session; that is the engine working.
