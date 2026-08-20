@@ -7616,3 +7616,37 @@ Review pass on the daily condition engine found and fixed THREE calculation gaps
    trend (trend / its own vol) — monotonic, no ties (207 -> 206.5 spread), extremes compress smoothly.
 Verified by readback each time, not assumed. An adversarial audit of the wider session's calculations (look-ahead, survivorship,
 pooling, deflation math, cost realism, the combined-Sharpe formula) is running in parallel — findings to be recorded honestly.
+
+---
+
+## D-384 — RETRACTION: D-379's "validated trend edge" was an ACCOUNTING ARTIFACT. Honest Sharpe 0.22, psr_z 1.26 — FAILS.
+An adversarial audit (Opus, bounded to falsifying the claims) found the D-379 headline was wrong. VERIFIED BY DIRECT RE-RUN,
+not accepted on assertion. The bugs, all real:
+- **F1 (fatal): the vol-regime overlay levered RETURNS but not COSTS.** Code did `L·r − c`; correct is `L·(r − c)`. With mean
+  leverage 1.66× (the auditor predicted 1.66 from the published numbers alone; the corrected run printed exactly 1.66×) the
+  book was credited a phantom (L−1)·c every month. That phantom is PRECISELY what carried psr_z over the ceiling.
+- **F2: 1.66× leverage on CASH instruments (ETFs/spot FX/crypto — not futures) was financed for free.** Excess notional costs
+  margin interest; charging 4% removes another ~0.19 Sharpe.
+- **F3: 4 of 52 legs were NOT INVESTABLE** — ^TNX/^TYX/^IRX are yields IN PERCENT (a "return" on a yield is unearnable; near
+  the ZLB ^IRX produced explosive fake returns) and ^VIX has no instrument delivering it. They carried ~7.7% of book risk on
+  fictional P&L. Dropped.
+- **F4: "diversified 55-year cross-asset book" was false for 41% of the sample** — pre-1993 it held ONLY equity index levels
+  (levered index timing across the most flattering trend window in history). Breadth floor >=8 instruments applied → the
+  honest sample is 403 months from 1993, not 667 from 1970.
+**HONEST RESULT after fixes: regime overlay NET Sharpe 0.22, psr_z 1.26 (ceiling 3.72) — FAILS DECISIVELY. Base risk-parity
+book NET 0.34, psr_z 1.94 — also fails.** D-379's "first non-marginal, deflation-surviving edge" DOES NOT EXIST. It is
+retracted in full. The per-era shape survives (pre15 +0.45, 15-19 −0.26, covid +0.35, 22-26 +0.16) — trend is real but small
+and drought-prone, exactly as the literature says, and NOT tradable at these costs on cash instruments.
+OTHER AUDIT FINDINGS (open, to fix before any further claim): F5 value/eyield uses c[j] in BOTH the signal denominator and the
+forward return (mechanical reversal — the one-line fix is to lag the price); F6 discovery turnover keyed on ARRAY INDEX not
+symbol (so the cost model is fabricated and cannot discriminate candidates); F7 psr_z at skew +8.22 is outside PSR validity and
+the Math.max(1e-9) clamp is a silent catastrophic-distortion path; F8 survivorship is STRUCTURAL (universe = currently-listed
+only; 1.5-3%/yr overstatement on a value decile) plus EDGAR frames returns RESTATED fundamentals (look-ahead in quality);
+F9 aegis-discovery claims an OOS split IN ITS HEADER THAT DOES NOT EXIST (all stats in-sample) and nothing increments
+trd_trial_counter — two stated non-negotiables violated; F10 combined-Sharpe formula is wrong and INCREASES with correlation
+(0.81 reported vs 0.735 correct at rho=0.1, and rho was asserted not measured); F11-F14 positioning ranks by LOWEST VOL (the
+same edge/size conflation D-383 fixed in daily), mislabels target_vol 0.12 (true ~29%), the earning-meter measures BETA (+33%
+net long), and the 12/6-name book is not the 150-name decile that measured 0.52; F15 aegis-daily's edge score has NEVER been
+validated against forward returns and its constants were tuned by looking at output; F20 prices are dividend-UNADJUSTED.
+STANDING VERDICT RESTORED: there is NO validated tradable edge in Aegis. Nothing armed, $0 at risk. The engine caught its own
+false positive — which is the engine working — but only because an adversarial check was run. Self-certification failed again.

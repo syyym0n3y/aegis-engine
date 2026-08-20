@@ -22,7 +22,13 @@ const stat = (a: number[], ann: number, cost = 0) => {
 console.log(`==> MOMENTUM FRONTIER (owned:${OWNED})`);
 const hdr = await H();
 // non-equity instruments (the trending classes) + their bars
-const meta = await fetch(`${OWNED}/trd_bars_deep?asset_class=neq.equity&select=symbol,asset_class`, { headers: hdr }).then((r) => r.json()).catch(() => []) as { symbol: string; asset_class: string }[];
+// F3 (audit): DROP NON-INVESTABLE legs. ^TNX/^TYX/^IRX are YIELDS IN PERCENT — mc[k+1]/mc[k]−1 on a yield is not a return
+// anyone can earn (and near the ZLB ^IRX produced explosive fake "returns"); ^VIX has no instrument that delivers its return.
+// Under risk parity these 4 carried ~7.7% of book risk on fictional P&L. Rate exposure belongs via TLT/IEF/SHY total returns.
+const NON_INVESTABLE = new Set(["^TNX", "^TYX", "^IRX", "^VIX"]);
+const metaAll = await fetch(`${OWNED}/trd_bars_deep?asset_class=neq.equity&select=symbol,asset_class`, { headers: hdr }).then((r) => r.json()).catch(() => []) as { symbol: string; asset_class: string }[];
+const meta = metaAll.filter((m) => !NON_INVESTABLE.has(m.symbol));
+console.log(`excluded non-investable: ${metaAll.length - meta.length} (${[...NON_INVESTABLE].join(",")})`);
 console.log(`instruments: ${meta.length} (${[...new Set(meta.map((m) => m.asset_class))].join(",")})`);
 // pull bars, resample monthly, build per-instrument monthly close series
 const inst: { sym: string; cls: string; mc: number[]; mt: string[] }[] = [];
@@ -46,7 +52,13 @@ for (const it of inst) {
     (port.get(mo) ?? port.set(mo, []).get(mo)!).push({ r: contrib, w: scale }); (portPlain.get(mo) ?? portPlain.set(mo, []).get(mo)!).push(Math.sign(trend) * fwd);
   }
 }
-const months = [...port.keys()].sort();
+// F4 (audit): BREADTH FLOOR. Pre-1993 the book held only equity-index levels (~41% of the sample) — that is levered equity
+// index timing across the most flattering trend window ever, NOT a diversified cross-asset book. Require >=MIN_BREADTH
+// instruments in a month for it to count, and report the breadth path so the claim matches what was actually held.
+const MIN_BREADTH = Number(Deno.env.get("MIN_BREADTH") || 8);
+const allMonths = [...port.keys()].sort();
+const months = allMonths.filter((mo) => (port.get(mo)?.length ?? 0) >= MIN_BREADTH);
+console.log(`breadth floor >=${MIN_BREADTH}: ${months.length} of ${allMonths.length} months qualify (${months[0]} .. ${months[months.length - 1]})`);
 const rpBook = months.map((mo) => { const a = port.get(mo)!; const W = a.reduce((s, x) => s + x.w, 0); return W > 0 ? a.reduce((s, x) => s + x.r, 0) / W : 0; }); // risk-weighted
 const plainBook = months.map((mo) => { const a = portPlain.get(mo)!; return a.reduce((s, x) => s + x, 0) / a.length; });
 
@@ -57,7 +69,17 @@ console.log("  sign-only equal-weight book, NET:", JSON.stringify(stat(plainBook
 // per-era + regime overlay (trade lighter when the book's own recent vol is high)
 const ERAS: [string, number, number][] = [["pre15", 0, 2015], ["15_19", 2015, 2020], ["covid_20_21", 2020, 2022], ["22_26", 2022, 2100]];
 console.log("  per-era NET Sharpe:"); for (const [en, a, b] of ERAS) { const sub = rpBook.filter((_, i) => { const y = +months[i].slice(0, 4); return y >= a && y < b; }); const s = stat(sub, 12, 0.0015); if (s) console.log(`    ${en}: Sharpe ${s.sharpe} (n=${s.n})`); }
-// vol-regime overlay: scale exposure inversely to trailing-6mo book vol
-const regime: number[] = []; for (let i = 6; i < rpBook.length; i++) { const w = rpBook.slice(i - 6, i); const v = Math.sqrt(w.reduce((s, x) => s + x * x, 0) / 6) || 0.05; regime.push(rpBook[i] * Math.min(2, 0.04 / v)); }
-console.log("  + vol-REGIME overlay (lighter in high-vol), NET:", JSON.stringify(stat(regime, 12, 0.0015)));
+// vol-regime overlay — AUDIT-CORRECTED (D-384). Bugs found by adversarial audit and fixed here:
+//  F1: cost must be LEVERED too — old code did L·r − c (phantom (L−1)·c gain); correct is L·(r − c).
+//  F2: leverage above 1× must pay FINANCING — these are cash instruments (ETFs/spot FX/crypto), not futures, so the
+//      excess notional costs margin interest (~4%/yr). Ignoring it manufactured Sharpe out of thin air.
+const RF_M = Number(Deno.env.get("RF_ANNUAL") || 0.04) / 12; const COST_M = 0.0015;
+const regime: number[] = []; const levs: number[] = [];
+for (let i = 6; i < rpBook.length; i++) {
+  const w = rpBook.slice(i - 6, i); const v = Math.sqrt(w.reduce((s, x) => s + x * x, 0) / 6) || 0.05;
+  const L = Math.min(2, 0.04 / v); levs.push(L);
+  regime.push(L * (rpBook[i] - COST_M) - Math.max(0, L - 1) * RF_M); // levered net + financing on the excess notional
+}
+const meanL = levs.reduce((s, x) => s + x, 0) / levs.length;
+console.log(`  + vol-REGIME overlay, HONEST NET (levered cost + ${(RF_M * 12 * 100).toFixed(0)}% financing, mean leverage ${meanL.toFixed(2)}x):`, JSON.stringify(stat(regime, 12, 0)));
 console.log("\n(honest: this is the century-documented trend edge measured on OUR stack — believe the NET Sharpe + per-era, not the gross)");
