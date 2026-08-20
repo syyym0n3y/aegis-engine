@@ -9,17 +9,28 @@ const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=D
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"cf",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const H=async()=>{const t=await jwt();return{"Content-Type":"application/json",Authorization:`Bearer ${t}`,apikey:t};};
 const hdr=await H();
-const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.crypto&select=symbol,bars`,{headers:hdr}).then(r=>r.json()) as {symbol:string;bars:number[][]}[];
+// D-399: use the EXCHANGE-quality feed (Alpaca, D-397). Yahoo's aggregated crypto produced a false positive that forced a
+// retraction; the forward record must not be built on the weaker source.
+const CLS=Deno.env.get("FWD_CLS")||"crypto_ex";
+const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${CLS}&select=symbol,bars`,{headers:hdr}).then(r=>r.json()) as {symbol:string;bars:number[][]}[];
 // 1. score the most recent prior snapshot (paper, no capital)
 const prior=await fetch(`${OWNED}/trd_crypto_forward?scored_at=is.null&select=id,asof,sym,px,weight,in_uptrend&order=asof.asc&limit=500`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {id:number;asof:string;sym:string;px:number;weight:number;in_uptrend:boolean}[];
+const MIN_HOLD_D=Number(Deno.env.get("MIN_HOLD_D")||5);
 if(Array.isArray(prior)&&prior.length){
-  const oldest=prior[0].asof; const batch=prior.filter(p=>p.asof===oldest);
+  const oldest=prior[0].asof;
+  // FLAW FIXED: the first version scored a snapshot the same day it was written (~zero elapsed time), stamping a meaningless
+  // observation. Require MIN_HOLD_D calendar days before a snapshot counts — a forward record must measure forward time.
+  const elapsed=(Date.now()-new Date(oldest+"T00:00:00Z").getTime())/864e5;
+  if(elapsed<MIN_HOLD_D){ console.log(`  forward-test: newest unscored snapshot ${oldest} is only ${elapsed.toFixed(1)}d old (<${MIN_HOLD_D}d) — not scoring yet`); }
+  else {
+  const batch=prior.filter(p=>p.asof===oldest);
   let wsum=0,pnl=0,n=0;
   for(const p of batch){ const r=rows.find(x=>x.symbol===p.sym); if(!r) continue;
     const pxNow=r.bars[r.bars.length-1][4]; if(!(pxNow>0)||!(p.px>0)) continue;
     const ret=pxNow/p.px-1; const w=p.in_uptrend?(+p.weight||0):0; pnl+=w*ret; wsum+=w; n++;
     await fetch(`${OWNED}/trd_crypto_forward?id=eq.${p.id}`,{method:"PATCH",headers:{...hdr,Prefer:"return=minimal"},body:JSON.stringify({fwd_return:+ret.toFixed(4),scored_at:new Date().toISOString()})}).catch(()=>{});}
-  if(wsum>0) console.log(`  forward-test: snapshot ${oldest} paper return ${(100*pnl/wsum).toFixed(2)}% across ${n} legs (NO capital)`);
+  if(wsum>0) console.log(`  forward-test: snapshot ${oldest} (${elapsed.toFixed(0)}d held) paper return ${(100*pnl/wsum).toFixed(2)}% across ${n} legs (NO capital)`);
+  }
 }
 // 2. emit today's positions
 const asof=new Date().toISOString().slice(0,10); const out:Record<string,unknown>[]=[];

@@ -7849,3 +7849,28 @@ With 722 sessions the verdict is no longer underpowered: **all three gross effec
 hypothesis and still produces zero gross return — a textbook example of statistical significance without economic significance.
 HONEST RESIDUAL CAVEAT: hourly bars cannot see order-flow, queue position or sub-second dynamics — the layer where real
 market-making profit lives, and which is structurally unreachable without colocation (D-070 explicitly refuses that tier).
+
+## D-399/400 — the surviving finding GENERALISES across asset classes. Forward-test hardened.
+**D-399 forward-test hardened.** Two real flaws fixed before the record starts accruing: (1) it scored a snapshot the same day
+it was written (~zero elapsed time — the same class of flaw as the beta-meter), now requires MIN_HOLD_D=5 calendar days;
+(2) it ran on Yahoo's aggregated crypto, the feed that caused the D-395 false positive — now uses the Alpaca EXCHANGE feed.
+Re-seeded clean: 4/23 in a 100d uptrend (ETH, LINK, AAVE, MKR). DORMANT.
+**D-400 — DOES THE DRAWDOWN PROTECTION GENERALISE? YES, in 6 of 7 asset classes.** The one surviving finding was crypto-only;
+if it is a universal property of trend-following ("crisis alpha") it is a portfolio-level RISK OVERLAY, not a quirk. Tested
+long-only 100d trend vs buy-and-hold per class, full-sample and out-of-sample:
+| class | trend SR/dd | buy&hold SR/dd | dd advantage | OOS dd adv |
+|---|---|---|---|---|
+| commodity | 0.42 / -44.1% | 0.46 / -78.3% | **+34.2pp** | **+46.0pp** |
+| crypto_ex | -0.01 / -56.9% | 0.03 / -81.2% | **+24.3pp** | +20.3pp |
+| sector | 0.25 / -30.4% | 0.46 / -53.9% | **+23.5pp** | +17.3pp |
+| equity (134) | 0.51 / -40.4% | 1.04 / -56.5% | **+16.1pp** | **+28.8pp** |
+| etf | 0.60 / -42.4% | 0.64 / -56.0% | +13.6pp | +9.1pp |
+| fx | -0.03 / -23.3% | 0.06 / -31.0% | +7.7pp | -13.1pp (flips) |
+| index | 0.32 / -68.0% | 0.98 / -48.9% | **-19.1pp (WORSE)** | -16.4pp |
+THE CONSISTENT PATTERN, and it is the same one crypto showed: **trend-following LOWERS return (SR is worse in EVERY class —
+equity 0.51 vs 1.04, sector 0.25 vs 0.46) and LOWERS drawdown (better in 6 of 7).** It is unambiguously a risk-management
+overlay, NOT alpha, and that now holds across commodities, equities, sectors, ETFs, FX and crypto — 5 of 6 confirmed
+out-of-sample. The exception is INDEX (trend is 19pp WORSE), which makes sense: broad indices mean-revert and grind upward, so
+exiting on a 100d downtrend sells the dip and misses the recovery.
+**SIGN ERROR CAUGHT PRE-REPORT:** the first version computed `B.dd - L.dd` on NEGATIVE drawdowns, inverting every verdict —
+it would have reported the exact opposite conclusion for all 7 classes. Fixed and re-run before anything was claimed.
