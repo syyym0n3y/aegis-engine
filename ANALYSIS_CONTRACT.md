@@ -85,3 +85,31 @@ laziest possible read and is forbidden as a verdict.
    far stronger evidence than one isolated t past the bar, and far harder for noise to fake.
 
 The one line: **the average is where signal goes to hide — cut it apart, then make every piece earn belief.**
+
+
+---
+
+## THE COVERAGE LAW (added 2026-08-21 after a grave failure — binds every analysis, forever)
+
+**A null result is evidence about the MARKET only if the data was adequate to detect the effect. Otherwise it is evidence
+about our DATA.** Absence of data is not evidence of absence.
+
+### The failure this exists to prevent
+Aegis ran ~45 tests and reported a program-wide conclusion that documented premia were absent — while holding **five** EDGAR
+fundamental concepts out of the hundreds available. Accruals (Sloan 1996, one of the most robust anomalies ever documented),
+cash-flow-to-price, gross profitability and net-operating-assets were never tested **because the data was never fetched**.
+The absence of findings was then narrated as a property of markets. That inverted the burden of proof and would have closed
+the research program on a false premise.
+
+### The law, operationally
+1. **No null verdict without a coverage statement.** Every negative/null result MUST report the data that produced it:
+   instruments, observations, date span, and the specific inputs required by the hypothesis. A null without coverage is
+   reported as **"UNTESTED — insufficient data"**, never as "no effect".
+2. **Check the input before blaming the market.** Before writing any null, ask explicitly: *is the required input actually
+   loaded?* If a factor needs a concept/field we do not hold, the verdict is UNTESTED, not NULL.
+3. **Underpowered is its own verdict.** If n is below the floor for the effect size claimed by the literature, say
+   UNDERPOWERED and state what n would be needed. (Applied correctly in D-391: 26 settlements -> "underpowered, not disproven".)
+4. **Free data unfetched is a research failure, not a market finding.** Any Tier-1 gap in docs/RESEARCH_GAPS.md invalidates a
+   program-level efficiency claim until it is closed.
+5. **Enforced by machine, not memory:** `scripts/coverage-guard.ts` measures live coverage against the declared requirement of
+   every factor family and exits RED when a verdict rests on inadequate data. Documented is not enforced; the guard is.

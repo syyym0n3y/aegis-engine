@@ -42,6 +42,9 @@ which is a SUCCESS of the engine, not a failure.** See [`DECISIONS.md`](./DECISI
   feature carries the `effectiveDate` it was legally knowable (`trd_features`),
   and the backtest may only read via `asOf()`. The 45-day STOCK Act lag lives in
   that column and cannot be engineered away.
+- **A null is only a market finding if the data could have detected it** (COVERAGE LAW is an invariant):
+  before writing any null, verify the required input is actually loaded; if not the verdict is UNTESTED. Enforced by
+  `scripts/coverage-guard.ts`, which exits RED on inadequate coverage.
 - **Every Sharpe is reported next to N** (its trial count). A Sharpe without its
   N is a lie. `trd_trial_counter` increments on EVERY backtest run, including
   failed/iterated ones.
@@ -86,3 +89,15 @@ owns; doesn't break what worked; source committed with `deno check` passing;
 STATE.md / DECISIONS.md updated. A strategy is NEVER "done/profitable" on a
 backtest — only after it clears paper → micro → small with REAL samples and a
 clean kill-switch record.
+
+
+## THE COVERAGE LAW (2026-08-21) — binds every conclusion
+**A null result is evidence about the MARKET only if the data was adequate to detect the effect; otherwise it is evidence
+about our DATA.** Absence of data is not evidence of absence.
+Origin: Aegis reported program-level "no edge" conclusions while holding 5 of hundreds of available EDGAR concepts — accruals,
+cash-flow-to-price, gross profitability and NOA were never tested because their inputs were never fetched, and that absence
+was narrated as a market property. Inverted burden of proof; nearly closed the program on a false premise.
+Rules: (1) no null verdict without a coverage statement (instruments, observations, span, required inputs); (2) check whether
+the INPUT exists before blaming the market — if it does not, the verdict is **UNTESTED**, not NULL; (3) underpowered is its
+own verdict, with the n required stated; (4) an unfetched free dataset is a RESEARCH failure, not a market finding;
+(5) enforced by `scripts/coverage-guard.ts` (exits RED on inadequate coverage — verified to fail, not just to pass).

@@ -63,3 +63,15 @@ IMPLICATION: intraday-multi-year testing across the CRYPTO universe is now FREE+
 Equities intraday-multi-year keyless remains genuinely scarce (Yahoo ~60d, Stooq blocked) — keep hunting (bulk
 dumps, exchange APIs, archive mirrors) before ever proposing a paid feed. The doctrine binds: research the free
 keyless path and VERIFY it before deferring to any dollar cost.
+
+
+## THE COVERAGE LAW (2026-08-21) — binds every conclusion
+**A null result is evidence about the MARKET only if the data was adequate to detect the effect; otherwise it is evidence
+about our DATA.** Absence of data is not evidence of absence.
+Origin: Aegis reported program-level "no edge" conclusions while holding 5 of hundreds of available EDGAR concepts — accruals,
+cash-flow-to-price, gross profitability and NOA were never tested because their inputs were never fetched, and that absence
+was narrated as a market property. Inverted burden of proof; nearly closed the program on a false premise.
+Rules: (1) no null verdict without a coverage statement (instruments, observations, span, required inputs); (2) check whether
+the INPUT exists before blaming the market — if it does not, the verdict is **UNTESTED**, not NULL; (3) underpowered is its
+own verdict, with the n required stated; (4) an unfetched free dataset is a RESEARCH failure, not a market finding;
+(5) enforced by `scripts/coverage-guard.ts` (exits RED on inadequate coverage — verified to fail, not just to pass).

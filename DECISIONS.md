@@ -7978,3 +7978,27 @@ every crisis (GFC +5.3pp, COVID +1.6pp, 2022 bear +11.2pp, 2018 Q4 +4.0pp — 4 
 So the deliverable is not "a strategy that beats the market". It is a **calibrated choice**: if drawdown is the binding
 constraint, the selective overlay halves it for a measured price; if risk-adjusted return is the objective, diversify and stop.
 That is the correct, complete, and unflattering answer, and it is the one the evidence supports.
+
+## D-406/407 — THE COVERAGE LAW: the grave failure, instrumented so it cannot recur
+**THE FAILURE.** Aegis reported program-level conclusions about market efficiency while holding **5 of the hundreds of EDGAR
+concepts available**. Accruals (Sloan 1996 — among the most robust anomalies ever documented), cash-flow-to-price, gross
+profitability and net-operating-assets were never tested **because their inputs were never fetched** — and that absence was
+narrated as a property of markets. The burden of proof was inverted, and the research program nearly closed on a false premise.
+The operator caught it; the system did not.
+**D-406 GAP CLOSED (partially).** Loaded 5 new concepts x 14 years: AssetsCurrent, LiabilitiesCurrent, Cash, InventoryNet,
+AccountsReceivableNetCurrent = **700,684 new rows**. Fundamentals went 5 -> 10 concepts, ~200k -> ~900k rows. **Accruals,
+net-operating-assets and working-capital growth are now testable for the first time.** docs/RESEARCH_GAPS.md maps the rest,
+tiered: Tier-1 self-inflicted (13F, on-chain, crypto funding, options IV surface, ETF flows — all FREE and unfetched),
+Tier-2 method (ML/non-linear — every test so far is a linear rank-IC; longer 6-24mo horizons — almost everything was 1-63d),
+Tier-3 structural and honest (colocation, prime-broker borrow, paid alt-data, survivorship-free CRSP).
+**D-407 THE LAW + ITS GUARD.** Principle, now an invariant in CLAUDE.md, ANALYSIS_CONTRACT.md and OPERATING_DOCTRINE.md:
+> **A null result is evidence about the MARKET only if the data was adequate to detect the effect. Otherwise it is evidence
+> about our DATA. Absence of data is not evidence of absence.**
+Operational rules: no null without a coverage statement; verify the INPUT exists before blaming the market (if absent the
+verdict is **UNTESTED**, not NULL); underpowered is its own verdict with the required n stated; an unfetched free dataset is a
+research failure, not a market finding.
+**ENFORCED BY MACHINE, NOT MEMORY** — `scripts/coverage-guard.ts` declares each factor family's required inputs, measures live
+coverage, and EXITS RED when a verdict would rest on inadequate data. **Verified in BOTH directions** (a guard that only ever
+passes is theatre): it goes RED and exits 1 both on an inflated floor AND on the exact failure mode — a family whose concept
+has 0 coverage ("cash-flow-to-price UNFETCHED") — and exits 0 on the true current state. Wired as a 6th launchd agent so a
+regression is CAUGHT, not remembered. Current state: all 7 declared families PASS.
