@@ -7687,3 +7687,33 @@ STANDING VERDICT: **no validated tradable edge exists in Aegis.** Trend is real 
 a tail lottery with an unstable train/test split; the daily edge score does not predict. Nothing armed, $0 at risk. What IS
 validated and kept: the turbulent-regime filter, the short-side exclusion, the liquidity floor, and the measurement machinery
 itself — which is now honest enough to have killed three of my own claims in one session.
+
+---
+
+## D-387/388 — NON-PRICE FRONTIER HUNTED: both testable signals are NULL (one was a textbook beta trap)
+The last untested territory: genuinely non-price information for the idiosyncratic residual (D-372: ~85% of a stock's variance).
+Two signals were testable with free/keyless data; both were hunted to a decisive verdict.
+**1. SEC 8-K FILING INTENSITY (D-387) — NULL.** Abnormal corporate-event flow (this month's 8-K count vs the company's own
+trailing-12m baseline, z-scored — zero price input). Built from EDGAR full-index (28 quarterly indexes, 5,334 tickers with
+8-K activity, 3,123 joined to prices, 68,101 monthly observations 2019-2026). Cross-sectional rank-IC **0.0025 (t 0.55)**;
+quintile long-short 1.2%/yr net, SR 0.15; TRAIN 0.0022 / TEST 0.0030 — consistently, honestly ZERO. Corporate event-flow does
+not predict returns in the cross-section.
+**2. INSIDER CLUSTER BUYING (D-388) — NULL, and it was a BETA TRAP that would have been reported as a discovery.** The
+documented claim (Cohen-Malloy-Pomorski) is that aggregate insider buying hides the signal and CLUSTER buying (several
+distinct insiders, same name, short window) is what predicts. Tested on 278,456 Form-4 filings / 3,151 liquid names /
+316,020 monthly observations. The pooled event study looked STRONG and monotone: cluster 0 -> +0.84%, 1 -> 1.27%, 2 -> 1.28%,
+3-4 -> 1.22%, **5+ -> 2.29% (+1.39pp over universe, n=4,175)**. The monthly cross-sectional long-short then collapsed
+(TRAIN -4.8%/yr, TEST +5.1%/yr, t insignificant), which flagged the contradiction. The decisive control: **within-month excess
+of 5+ vs the SAME month's universe is -0.04%/21d, t = -0.16** — exactly zero. And the 5+ observations concentrate in
+**2020 (514), 2022 (368)**: insiders buy en masse at market BOTTOMS, so the pooled study was crediting the signal for the
+market's subsequent bounce. The entire +1.39pp is TIME-CLUSTERED BETA, not cross-sectional alpha. Without the within-month
+control this would have shipped as "the non-price edge we were hunting."
+NOT TESTED — blocked on Hard Rule #2: **FINRA short interest** (the strongest remaining documented non-price candidate:
+Boehmer-Jones-Zhang) is free and keyless but finra.org is NOT on the endpoint allowlist, and SEC's fails-to-deliver files
+404'd on the pattern tried (2 probes, then stopped per the no-endpoint-guessing rule). Operator decision required to add
+`^https?://(www\.)?finra\.org/` or the cdn host.
+FRONTIER VERDICT: of the non-price territory reachable with allowlisted free data, both signals are null. Combined with
+D-364 (century factor canon fails deflation), D-372 (stocks idiosyncratic to macro), D-373 (per-name fundamentals: IC but no
+tradable edge), D-384/386 (trend was an accounting artifact; every equity number an upper bound): **Aegis has now tested price,
+fundamental, and non-price information and found NO validated tradable edge.** That is the D-070 terminal state, reached by
+exhaustion rather than assumption. Nothing armed, $0 at risk.
