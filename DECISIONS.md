@@ -7590,3 +7590,14 @@ THE canonical trend strategy, not one of 100k configs), and it clears. Honest ca
 deflation-surviving, cost-net, regime-improved, externally-corroborated candidate — a legitimate PAPER-FORWARD + eventual
 staged-micro candidate (not yet armed). Frontier #3 (genuinely new non-price data — short interest, search trends, news) is the
 remaining untested territory where the idiosyncratic residual could yield more; queued for the autonomous discovery loop.
+
+## D-382 — DOCTRINE CORRECTED: use ALL data DAILY to identify favourable conditions (not "make money months later")
+Operator: the doctrine is not monthly-hold-and-wait; it is to use all the data EVERY DAY to identify which instruments are in
+favourable conditions to trade NOW. Built aegis-daily.ts (the daily condition engine, launchd agent): for every instrument it
+reads MTF trend alignment (daily 21d / weekly 63d / monthly 252d — do they agree?), the vol REGIME (calm=trend-friendly,
+turbulent=stand aside), and vol-scaled conviction, then flags today's favourable LONG/SHORT setups ranked by edge, with the
+condition rationale, to trd_daily_conditions. First run: 2,756/4,236 instruments favourable; today indices/ETFs/FX/commodities
+skew LONG (risk-on trend), individual equities skew SHORT. Condition-driven, not calendar-driven: enter while favourable, exit
+when alignment breaks or the regime turns turbulent. DORMANT. Caveat (unaccounted): the edge score favours low-vol trenders →
+add a liquidity floor before acting. The autonomous stack is now DAILY: scan conditions (daily) → grade (autopilot) → discover
+(loop) → position (book). All owned, all capital-safe.
