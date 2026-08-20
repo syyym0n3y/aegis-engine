@@ -7798,3 +7798,30 @@ positions. DORMANT — recorded, never armed. First run is itself informative: *
 strategy is FLAT** — the drawdown protection behaving exactly as designed rather than holding through a downtrend.
 The bar it must clear before capital: a meaningful forward window with the drawdown advantage intact (the in-sample SR edge
 alone was t~0.7, not significant).
+
+## D-395/396 — crypto extended (12->50, data corruption found); D-392's SHARPE claim RETRACTED, its DRAWDOWN claim SURVIVES.
+Intraday microstructure hunted and null.
+**D-395 crypto extension exposed a data-quality failure I had not checked.** Extending 12 -> 50 Yahoo crypto series produced
+nonsense (ann 700%, "maxDD -1790%"). Diagnosis: **ARB-USD carries a 297,915% single-day move and OP-USD 200,020%** (Yahoo
+ticker reuse / pre-launch garbage); 16/50 had >100% daily moves, 12 had sub-penny prices. A first filter at 60% was WRONG in
+the other direction — it dropped REAL moves (XRP 83%, DOGE +356% in Jan-2021 are genuine). Settled on >1000% + sub-penny
+exclusion (37 kept), and verified the conclusion is stable at a 200% threshold (36 kept).
+**PARTIAL RETRACTION of D-392.** On 12 instruments the long-only crypto trend showed OOS SR 0.32 vs buy-and-hold 0.14 with
+drawdown -42% vs -73%. On the clean 37-instrument universe:
+- **The SHARPE advantage VANISHES: TEST SR 0.04-0.07 vs buy-and-hold 0.02-0.03 — both ~zero, the difference is noise.** The
+  0.32-vs-0.14 was a thin-universe artifact. That half of D-392 is RETRACTED.
+- **The DRAWDOWN advantage SURVIVES and is large: -53.1% vs -77.0% at 20d (-59.6% vs -77.0% at 100d)** — 17-24pp better,
+  consistent across every lookback and both filter thresholds.
+HONEST READ: crypto trend-following does NOT add return out-of-sample. It DOES materially reduce drawdown. That is risk
+management, not alpha — precisely the component D-070 identifies as having near-certain positive EV, and the only thing this
+whole engine has found that repeatedly survives its own controls. The forward-test (D-394) continues on that basis, with the
+Sharpe claim removed.
+**D-396 INTRADAY MICROSTRUCTURE — the untouched frontier, hunted, NULL.** 5-minute bars (Yahoo, free) across 57 mega-cap
+equities + liquid ETFs, 58 sessions. Three documented effects, cross-sectional, no look-ahead (signal window strictly precedes
+the return window):
+- GAP FADE: IC -0.0237 (t -0.49), gross -0.177%/day, TRAIN -0.663% -> TEST +0.510% (sign flip).
+- FIRST-30MIN REVERSAL: IC 0.0087 (t 0.20), gross +0.107%/day, TRAIN +0.501% -> TEST -0.452% (sign flip).
+- LAST-HOUR MOMENTUM: IC 0.0438 (t 1.30), gross +0.018%/day — essentially zero.
+All three: gross effects ~zero, signs unstable, and even a 5bp/leg spread makes every one negative. CAVEAT: 58 sessions is
+UNDERPOWERED — this is evidence these three simple patterns are not capturable with retail-grade data and costs, NOT evidence
+that microstructure is dead (real intraday edges live in order-flow/queue position at latencies we cannot reach).

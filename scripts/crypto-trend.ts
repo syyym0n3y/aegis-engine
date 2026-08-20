@@ -13,7 +13,24 @@ const H=async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:
 const hdr=await H();
 const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.crypto&select=symbol,bars`,{headers:hdr}).then(r=>r.json()) as {symbol:string;bars:number[][]}[];
 console.log(`==> CRYPTO TREND (the dropped lead): ${rows.length} instruments`);
-const inst=rows.map(r=>({sym:r.symbol,ts:r.bars.map(b=>b[0]),c:r.bars.map(b=>b[4])})).filter(x=>x.c.length>400);
+// DATA-QUALITY FILTER (D-395b): extending to 50 instruments exposed corrupted Yahoo series — ARB-USD showed a 297,915%
+// single-day move, OP-USD 200,020% (ticker reuse / pre-launch garbage). 16/50 had >100% daily moves and 12 had sub-penny
+// prices. Those produce nonsense (ann 700%, "maxDD -1790%"). Exclude: any series with a >60% single-day move (real crypto
+// crashes are large but ~50% is the practical ceiling for a liquid major), sub-penny prices (not investable at size), or
+// <400 bars. Report exactly what was dropped so the universe is never silently curated.
+// THRESHOLD SENSITIVITY: a 60% cut wrongly dropped REAL moves (XRP 83%, DOGE +356% in Jan-2021 are genuine). Only the
+// ~200,000% series (ARB/OP ticker reuse) are physically impossible. Default 1000%; override with MAXMOVE to show sensitivity.
+const MAXMOVE=Number(Deno.env.get("MAXMOVE")||10);
+const raw=rows.map(r=>({sym:r.symbol,ts:r.bars.map(b=>b[0]),c:r.bars.map(b=>b[4])}));
+const dropped:string[]=[];
+const inst=raw.filter(x=>{
+  if(x.c.length<=400){dropped.push(`${x.sym}(short)`);return false;}
+  let mx=0,minp=Infinity;
+  for(let i=1;i<x.c.length;i++){ if(x.c[i-1]>0){const r=Math.abs(x.c[i]/x.c[i-1]-1); if(r>mx)mx=r;} if(x.c[i]>0&&x.c[i]<minp)minp=x.c[i];}
+  if(mx>MAXMOVE){dropped.push(`${x.sym}(${(mx*100).toFixed(0)}% day)`);return false;}
+  if(minp<0.01){dropped.push(`${x.sym}(sub-penny)`);return false;}
+  return true;});
+console.log(`  data-quality filter: kept ${inst.length}, dropped ${dropped.length} -> ${dropped.slice(0,8).join(", ")}${dropped.length>8?" ...":""}`);
 // align on a common daily date axis
 const dates=[...new Set(inst.flatMap(i=>i.ts.map(t=>new Date(t*1000).toISOString().slice(0,10))))].sort();
 const px=new Map<string,Map<string,number>>();
