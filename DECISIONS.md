@@ -8215,3 +8215,46 @@ point estimate is nearer 8-12%/yr.
 **QUALITY and EARNINGS-YIELD show the program's signature failure mode again:** non-overlapping ICs are SIGNIFICANT
 (t 2.53 / 2.56 / 2.29 across horizons) while net long-short returns are NEGATIVE (-2.3%, -1.7%, -0.9%/yr). Real ranking
 information, no economic value — the seventh instance of this pattern.
+
+## D-417/418 — CROSS-ASSET LEAD-LAG: **NULL** (216 "survivors" were artifacts + rediscovered own-asset reversal)
+
+**Tier-2 gap hunted:** does one asset's move predict another's? Never tested before. 27 instruments, 6,519 common days
+(2000-08-30..2026-08-17), 1,404 ordered pairs, no pooling (D-415's grave), per-pair train/test, multiple-testing bar
+|t| > sqrt(2 ln 1404) = 3.81 rather than 2.
+
+**Raw scan looked spectacular and was wrong twice over:**
+- 305 pairs cleared the bar in-sample; 286 also held OOS with the same sign. The entire top of the list was
+  `US -> ^N225` (beta 0.51, t_full 40.0, t_TEST 22.8). **Non-synchronous trading artifact** — the Nikkei bar stamped day D
+  closes ~8h BEFORE the US bar stamped day D, so it is gapping to a move that already happened. Not information.
+- Excluding foreign, the next tier was `XLB/XLE/SPY -> SI=F, GLD -> GC=F`. **Same artifact in a different costume** —
+  COMEX settles 13:30 ET vs equity 16:00 ET.
+- Both filtered pre-report (`FOREIGN` set in `scripts/lead-lag.ts`).
+
+**What survived was one mechanism, and it is not cross-asset.** The remaining hits were all NEGATIVE betas among US indices
+(^GSPC->^IXIC -0.12 t_TEST -7.73). On tradable ETFs with cost charged on ACTUAL turnover (~51%/day, not a forced daily
+round-trip), it looked live: SPY->IWM +10.7%/yr SR 0.45 @2bp, strongest in 2021-2026 (+15.7% SR 0.70).
+
+**The decisive falsification (`scripts/reversal-cross.ts`):** SPY's daily sign agrees with IWM's on 83% of days, so the
+"lead" may just be a correlated proxy for the lag's OWN prior move. Test on DISAGREE days only — the ~17-28% where the two
+hypotheses predict OPPOSITE signs:
+
+| pair | lead wins? | follow LEAD | follow OWN |
+|---|---|---|---|
+| SPY->QQQ | lead | +5.8% (t 0.45) | -3.9% (t -0.30) |
+| SPY->IWM | lead | +6.0% (t 0.58) | -11.0% (t -1.05) |
+| SPY->XLK | **own** | -12.2% (t -1.03) | +9.3% (t 0.77) |
+| XLF->IWM | lead | +2.2% (t 0.24) | -7.2% (t -0.80) |
+| SPY->XLP | **own** | -6.5% (t -1.21) | +3.6% (t 0.65) |
+
+A coin flip: 3 pairs favour the lead, 2 favour the own-asset, and **every |t| < 1.25**. There is no cross-asset information.
+
+**VERDICT: cross-asset lead-lag = NULL (genuine market finding, coverage adequate: 27 instruments x 6,519 days x 1,404
+pairs).** What is really there is short-term OWN-asset reversal, one of the most arbitraged effects in existence — and our
+own measure of it is weak (t 0.81-1.92 for 4 of 5 lags; only XLP reaches t 4.32) and dies between 5 and 10bp round-trip.
+
+**Coverage statement (COVERAGE LAW):** inputs required = synchronous daily closes for >=2 instruments; held = 27
+instruments, 6,519 common days, all loaded. This null is about the MARKET, not our data.
+
+**Kept as doctrine:** the multiple-testing bar sqrt(2 ln N) and the disagree-day separation test. 286/1404 pairs "surviving
+OOS" at |t|>2 is what a scan of correlated series produces by construction; OOS survival is NOT proof when the pairs are
+not independent.
