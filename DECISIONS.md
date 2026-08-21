@@ -8538,3 +8538,39 @@ tail is not measuring a strategy, it is measuring a survivor.
 Binance term structure daily, states net carry against the hurdle, and says plainly when the condition is met. DORMANT:
 surfaces only, no order path exists. It names the unmodelled risks every time it runs rather than pricing them at zero.
 This is the first thing in the program with a deployable trigger and no forecasting component.
+
+## D-433 — FUNDING CARRY vs CASH: a **correction** to D-409, and the same decay as the basis
+
+**The omission being fixed.** D-409 recorded "carry is systematically positive: 1.9%/yr, t=18" as a real finding and never
+compared it with the RISK-FREE RATE. A 1.9%/yr gross carry against ~4% in T-bills is negative before a single fee — the
+delta-neutral harvest would tie up capital in exchange-custodied assets to underperform cash. The benchmark was missing.
+
+**And the 1.9%/yr number itself was ~6x too low.** On full history (7,613 funding intervals per symbol, 2019-2026 vs
+D-409's ~500) BTCUSDT funding carry is **11.61%/yr gross**, not 1.9%. The long-run level sits at Binance's base funding of
+0.01%/8h (= 10.95%/yr), which is what a structurally-long perp market pays; D-409's figure came from a ~167-day window and
+was never re-measured. **The prior record understated the size of the only category in this program that has ever paid.**
+
+**Net of an 18bp round trip over a 90-day hold AND the 4% risk-free rate:**
+
+| era | BTC gross | BTC net vs cash | symbols beating cash |
+|---|---|---|---|
+| 2019-2021 | — | — | ETH +26.7%, XRP +31.7%, ADA +28.5%, DOGE +24.4% |
+| 2022 | ~0 | negative | 0 of 8 |
+| 2023-2024 | 10.61% | **+5.88%** | 7 of 8 |
+| **2025-2026** | 4.03% | **−0.70%** | **1 of 8 (LINK, +0.12%/yr)** |
+
+Overall 17 of 32 symbol-era cells beat cash — but **1 of 8 in the current era, by 0.12%/yr**, which is indistinguishable
+from zero once exchange risk is acknowledged.
+
+**BNBUSDT is the exception worth naming:** its funding is structurally NEGATIVE (positive in only 26% of intervals, −5.8%/yr
+in 2023-24). That is a real asymmetry, not noise — but harvesting it requires being long the perp and SHORT spot BNB, and
+borrowing spot BNB to short is expensive-to-impossible at size. Recorded as an observation, not a strategy.
+
+**VERDICT: same shape as the basis (D-431).** A real, structural, capacity-rich, forecast-free carry that paid 25-30%/yr in
+2021, ~6%/yr in 2023-24, and ~0 vs cash today. Not promoted. Folded into `scripts/basis-watch.ts` so the daily watch now
+covers BOTH maturities of the same trade — they decayed in lockstep, and a watch on one alone would miss the other
+returning first.
+
+**The pattern across D-431 and D-433 is the program's clearest structural result:** the only two things Aegis has found that
+genuinely paid were CARRY trades requiring no forecast, both were competed away on the same timeline, and both had their
+best years as compensation for a counterparty tail that then materialised in 2022.

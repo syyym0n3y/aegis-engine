@@ -30,7 +30,21 @@ for(const base of ["BTCUSDT","ETHUSDT"]){
     console.log(`  ${hit?"FIRE":"    "} ${c.symbol.padEnd(16)} ${days.toFixed(0).padStart(3)}d  gross ${(ann*100).toFixed(1).padStart(6)}%/yr  net ${(net*100).toFixed(1).padStart(6)}%/yr  ${hit?"<- condition MET":""}`);
   }
 }
+// FUNDING LEG. The quarterly basis and the perp funding rate are the same structural trade at two maturities, and D-433
+// showed they have decayed in lockstep (both were worth +25-30%/yr in 2021 and are ~0 vs cash now). A watch that saw only
+// one of them would miss the other returning first, so both are reported side by side against the same cash benchmark.
+console.log(`\n  --- perp funding carry (short perp / long spot), trailing 30d annualised vs cash ---`);
+for(const base of ["BTCUSDT","ETHUSDT","SOLUSDT","LINKUSDT"]){
+  const j=await fetch(`${FAPI}/fundingRate?symbol=${base}&limit=90`).then(r=>r.json()).catch(()=>null);
+  if(!Array.isArray(j)||!j.length){console.log(`  ${base}: funding unavailable — UNKNOWN`);continue;}
+  const rates=(j as {fundingRate:string}[]).map(x=>Number(x.fundingRate)).filter(Number.isFinite);
+  if(!rates.length)continue;
+  const ann=(rates.reduce((s,x)=>s+x,0)/rates.length)*3*365;
+  const net=ann-RF-(FEE_RT_BP/1e4)*(365/90);
+  const hit=net>HURDLE; if(hit)fire++;
+  console.log(`  ${hit?"FIRE":"    "} ${base.padEnd(16)} 30d  gross ${(ann*100).toFixed(1).padStart(6)}%/yr  net ${(net*100).toFixed(1).padStart(6)}%/yr  ${hit?"<- condition MET":""}`);
+}
 console.log(`\n  ${fire?`${fire} contract(s) meet the condition. STILL DORMANT — surfacing only; nothing is armed and no order path exists.`
-  :"No contract meets the condition. Correct action: hold cash. (Net carry last exceeded 5%/yr on 2025-02-02.)"}`);
+  :"Neither carry meets the condition. Correct action: hold cash. (Basis last cleared 5%/yr on 2025-02-02; funding beat cash for only 1 of 8 symbols in 2025-2026, by 0.12%/yr.)"}`);
 console.log(`  Unmodelled and material: exchange/counterparty risk (this trade was destroyed by FTX in 2022), margin calls`);
 console.log(`  on the short leg during a squeeze, settlement/withdrawal risk. Clearing the hurdle is necessary, not sufficient.`);

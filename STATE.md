@@ -21,9 +21,18 @@ basis from 48 contracts, 1,659 days. Net of 18bp fees + 4% opportunity cost: **+
 Its best years paid for exchange/counterparty risk that then MATERIALISED (LUNA/FTX 2022). **CONDITIONAL, not dead** —
 `scripts/basis-watch.ts` runs daily (DORMANT, no order path) and fires when net carry clears the hurdle.
 
+**D-433 FUNDING CARRY vs CASH — corrects D-409 and shows the same decay.** D-409 recorded "1.9%/yr, t=18" as a real
+finding and never benchmarked it against the risk-free rate. On full history (7,613 intervals/symbol vs D-409's ~500) BTC
+carry is **11.61%/yr gross, not 1.9%** — the long-run level is Binance base funding 0.01%/8h. Net of fees AND 4% cash:
+2019-2021 +24 to +32%/yr; 2022 negative for all 8; 2023-2024 +5.9% (7/8 beat cash); **2025-2026 -0.70%, only 1/8 beats
+cash by 0.12%/yr.** Folded into the daily carry watch alongside the basis — they decayed in lockstep.
+
 **THE STRUCTURAL CONCLUSION.** Where capacity binds (equities) the edge cannot absorb size; where capacity is abundant
-(perps) the edge is smaller than the fee. **The only thing in this entire program that ever genuinely paid was a CARRY /
-structural spread requiring no forecast at all — and it was competed away.** That is a strategic finding, not a null.
+(perps) the edge is smaller than the fee. **The only two things in this entire program that ever genuinely paid were CARRY
+trades requiring no forecast at all — the quarterly basis and the perp funding harvest — they were competed away on the
+SAME timeline, and both had their best years as compensation for a counterparty tail that then materialised in 2022.**
+That is a strategic finding, not a null: it says where to look (structural spreads, not forecasts) and what to wait for
+(the condition returning), which is why both are now watched daily rather than filed.
 
 **Three laws now enforced daily** by `io.aegis.coverage` (coverage+staleness, liquidity tercile, effect-size-vs-fee) plus
 the basis watch. Each verified RED by exit code, not by reading its output. **$0 at risk, nothing armed, nothing promoted.**
