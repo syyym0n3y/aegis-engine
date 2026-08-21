@@ -8369,3 +8369,41 @@ tilts toward low-vol names whose smaller spread-to-return ratio is eaten by cost
 **VERDICT: Tier-2 portfolio-construction gap CLOSED.** Conviction weighting is now the default construction for any future
 candidate (it is free — same turnover); the no-trade band is retired as a cost lever for month-horizon signals. **No
 strategy is promoted:** D-419's regime failure (16 dead years, 2005-2020) is unaffected by how the book is weighted.
+
+## D-422 — REGIME CONDITIONING: **does not rescue it**, and the per-era check is why we know
+
+**The gap:** D-419's own economics said the effect is regime-dependent (16 dead years bracketed by two strong windows), yet
+nothing in this program had ever CONDITIONED a signal on a measured regime state — every verdict reported the pooled average
+across regimes, which is the exact error the operator's doctrine names ("never conclude from aggregates").
+
+**Method:** at each month, condition the GBM decile spread on the PRIOR month's regime state (lagged, so it was observable
+at trade time), with the high/low boundary set from an **expanding window of past months only**. A full-sample median would
+be look-ahead — it would use the future to decide which months were "high dispersion" and manufacture the result.
+
+**Pooled, one of them looked promotable:**
+
+| regime (prior month) | gross %/yr | net30 | SR net30 | t | n_mo |
+|---|---|---|---|---|---|
+| dispersion HIGH | 12.8 | 9.2 | 0.40 | 2.17 | 184 |
+| dispersion LOW | 9.3 | 5.7 | 0.52 | 2.95 | 147 |
+| **breadth HIGH** | **17.2** | **13.6** | **0.71** | 2.66 | 106 |
+| breadth LOW | 8.4 | 4.8 | 0.26 | 1.97 | 225 |
+
+**Then the decisive check — does the filter REVIVE THE DEAD ERA, or just re-label the good ones?**
+
+| filter | 1996-2004 | 2005-2012 | 2013-2020 | 2021-2026 |
+|---|---|---|---|---|
+| HIGH-dispersion | +20.8% (n43) | **−9.1%** (n31) | **−9.1%** (n45) | +33.2% (n65) |
+| HIGH-breadth | +11.2% (n18) | +8.4% (n20) | **−0.4%** (n14) | +27.0% (n54) |
+
+**Dispersion is FALSIFIED outright** — the natural hypothesis (the effect needs cross-sectional dispersion) is not merely
+absent, it INVERTS in both dead eras. **Breadth partially revives 2005-2012** (+0.8% unconditional -> +8.4% conditional) but
+on 20 months, leaves 2013-2020 dead, and puts 54 of its 106 months in the single era our currently-listed universe measures
+least honestly.
+
+**VERDICT: regime conditioning does not rescue D-419. Nothing promoted.**
+
+**The transferable lesson is the method, not the result.** Pooled, high-breadth showed SR 0.71 at t 2.66 — a number this
+program would have been entitled to call a regime edge. The per-era decomposition showed it was era selection. **A regime
+filter is only real if it revives the era where the signal was dead; if it merely concentrates the months that already
+worked, it is fitting the calendar.** That test is now doctrine and is built into `scripts/nonlinear.ts`.
