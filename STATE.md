@@ -1,5 +1,33 @@
 # STATE — Aegis (live state)
 
+## 2026-08-21 (crypto/derivatives pivot) — capacity constraint REMOVED, and the edge died of a different constraint
+
+Operator directive: pivot to where capacity is not the constraint. Done, and it answered the question.
+
+**D-425/426 PERP ORDER FLOW — real, and SUB-FEE.** Ingested 730,682 hourly bars x 25 Binance perps with `takerBuyBaseVolume`
+and `numberOfTrades` (exchange-side aggressor imbalance; Aegis had never held this data). Signal = residual flow after
+projecting out the contemporaneous return, train-fitted. **Strongest statistics this program has produced: rank IC negative
+on 20 of 20 symbols (P~2e-6), |t| to 4.88, holding OOS, on BTCUSDT clearing $523M PER HOUR.** And untradable, by three
+agreeing measurements: the rule loses at ZERO fees, the decile profile is flat noise, and the effect is **0.02x-0.14x the
+maker round-trip fee** with OLS |t| < 1.3. Rank IC and mean effect diverge in fat-tailed hourly crypto — the rank statistic
+orders the 99% of small moves that carry no money. **-> THE EFFECT-SIZE LAW + guard.**
+
+**D-430 OPEN INTEREST (daily) — NULL.** 24,751 daily OI points, 15 perps, 6 years. Both pre-registered hypotheses
+falsified; sign consistency a coin flip; 0 of 126 tests survived the joint bar.
+
+**D-431/432 QUARTERLY BASIS CARRY — real, capacity-rich, needs NO forecast, and arbitraged away.** ~60-day constant-maturity
+basis from 48 contracts, 1,659 days. Net of 18bp fees + 4% opportunity cost: **+13.0%/yr (2021) -> -2.3% (2022) -> +4.3%
+(2023-24) -> +0.3% (2025-26)**. Last exceeded 5%/yr on 2025-02-02; live now = NEGATIVE on all four dated contracts.
+Its best years paid for exchange/counterparty risk that then MATERIALISED (LUNA/FTX 2022). **CONDITIONAL, not dead** —
+`scripts/basis-watch.ts` runs daily (DORMANT, no order path) and fires when net carry clears the hurdle.
+
+**THE STRUCTURAL CONCLUSION.** Where capacity binds (equities) the edge cannot absorb size; where capacity is abundant
+(perps) the edge is smaller than the fee. **The only thing in this entire program that ever genuinely paid was a CARRY /
+structural spread requiring no forecast at all — and it was competed away.** That is a strategic finding, not a null.
+
+**Three laws now enforced daily** by `io.aegis.coverage` (coverage+staleness, liquidity tercile, effect-size-vs-fee) plus
+the basis watch. Each verified RED by exit code, not by reading its output. **$0 at risk, nothing armed, nothing promoted.**
+
 ## 2026-08-21 (later) — TIER-2 RESEARCH GAPS: 3 closed, 1 positive; a COVERAGE failure the guard had missed
 
 **D-417/418 cross-asset lead-lag -> NULL.** 1,404 pairs x 6,519 days. 286 pairs "survived OOS" and every one was an artifact:

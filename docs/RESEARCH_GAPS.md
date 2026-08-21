@@ -129,3 +129,19 @@ finding about 2024-2026. Refreshing those four concepts is a free EDGAR fetch an
 6. **When a candidate correlates with a known effect, find the days they DISAGREE** — the only clean separation (D-418).
 7. **A regime filter must revive the dead era**, not concentrate the live one (D-422).
 8. **Coverage has a recency dimension.** Breadth alone let a 3-year-stale panel pass as green (D-420).
+
+
+## Crypto / derivatives sweep (2026-08-21) — what is now CLOSED and what is genuinely OPEN
+
+CLOSED: perp order flow (D-426, real but sub-fee) - open interest (D-430, null) - quarterly basis carry (D-431, real,
+competed away, now watched).
+
+**OPEN, and the biggest one is BLOCKED ON AN ALLOWLIST ENTRY:**
+- **Crypto OPTIONS (Deribit) — the largest untested derivatives class.** BTC/ETH implied-volatility surface, skew, and the
+  VARIANCE RISK PREMIUM. This matters more than it looks: VRP was the single strongest structural premium found in the
+  equity work (D-404, t=48.8, though with a -83% single-day tail), and crypto VRP is documented as substantially larger.
+  It is also a CARRY/structural premium rather than a forecast — the only category that has ever paid in this program.
+  `www.deribit.com/api/v2/public/` is free and keyless but is **NOT in `~/.claude/hooks/endpoints.allowlist`**, so it
+  cannot be called. **OPERATOR ACTION:** `echo '^https?://www\.deribit\.com/api/v2/public/' >> ~/.claude/hooks/endpoints.allowlist`
+- **Cross-venue basis / dislocation** (Binance vs Bybit vs OKX) — all three are already allowlisted, untested.
+- **Funding carry re-run under the three new laws** — D-409/415 predates the effect-size and liquidity laws.
