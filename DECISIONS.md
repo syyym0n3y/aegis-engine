@@ -8676,3 +8676,36 @@ inefficiency would be worth to someone who knew the answer in advance; the ~1%/y
 has to decide first. The gap between those two numbers is the market's price for that knowledge.
 
 **VERDICT: NULL for promotion. No watch. The last free structural spread in the stack is closed.**
+
+## D-438/439 — BITCOIN ON-CHAIN FUNDAMENTALS: **0 of 12 beat buy-and-hold**
+
+**The last large untested dataset in the stack**, and a different KIND of data from anything tried: not price, not
+derivatives positioning, but the settlement layer itself. 966,943 points across 7 series from blockchain.info (allowlisted,
+free), **2009-2026** — longer history than any crypto price series Aegis holds.
+
+**Four hypotheses, each documented, each stated with a direction before looking:** H1 NVT (market cap / on-chain
+transaction value = crypto's P/E) high -> lower forward returns; H2 network growth (30d change in unique addresses) rising
+-> higher returns (Metcalfe); H3 miner revenue-per-hash low = capitulation -> higher returns; H4 hash ribbon (30d/60d
+hash-rate MA) recovering -> higher returns. Every on-chain input lagged one day (these series are revised intraday; using
+same-day values would be the same look-ahead this program caught in itself at D-414).
+
+**THE CONTROL THAT DECIDED IT.** BTC went from cents to ~$78,000, so ANY signal that is long most of the time inherits the
+trend and shows a spectacular return and t-stat while timing nothing. Every rule is therefore measured against
+BUY-AND-HOLD over the identical window, and the number reported is the DIFFERENCE.
+
+| signal | h=7 | h=30 | h=90 |
+|---|---|---|---|
+| H1 NVT | −16.7% (t −1.30) | −49.2% (t −2.11) | −71.9% (t −2.05) |
+| H2 network growth | −39.4% (t −2.60) | −46.6% (t −2.21) | −42.0% (t −1.41) |
+| H3 miner rev/hash | −44.8% (t −2.56) | −50.8% (t −2.33) | −100.8% (t −2.71) |
+| H4 hash ribbon | −23.3% (t −1.76) | −41.5% (t −2.08) | −51.2% (t −1.65) |
+
+**All twelve are NEGATIVE against holding, and seven are significantly negative past the bar.** In isolation these rules
+look magnificent — H1 at h=7 "returns 76.3%/yr" — because buy-and-hold over the same window returned 93.1%. **Without the
+control, this would have been written up as a discovery.** That is the single most important thing this test produced.
+
+**VERDICT: NULL, coverage adequate** (5,848 daily observations, 16 years, four independent documented signals). On-chain
+fundamentals do not time Bitcoin. The mechanism they describe is real; the timing information is not there.
+
+**Doctrine reinforced:** a single-asset timing signal must be measured against BUY-AND-HOLD, never against zero. In a market
+with a large secular trend, "positive return" and "significant t-stat" are the null hypothesis, not evidence against it.
