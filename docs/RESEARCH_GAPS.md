@@ -73,3 +73,30 @@ premature.
 Every test in this program is a **linear rank-IC or decile sort**. Untried: gradient boosting / non-linear models on the
 existing panel, conditional & interaction models, **longer horizons (6-24 months, where retail latency disadvantage does not
 apply)**, portfolio construction beyond decile sorts, cross-asset lead-lag. The data is already loaded for all of these.
+
+
+## Tier-2 hunt log (2026-08-21)
+
+### CLOSED — cross-asset lead-lag (D-417/418): **NULL**, coverage adequate
+1,404 ordered pairs over 27 instruments x 6,519 common days. 286 pairs "survived OOS" at |t|>2 — and that number is exactly
+what a scan over correlated series manufactures. Two artifact classes had to be filtered before anything could be read:
+non-synchronous foreign closes (US -> ^N225, beta 0.51 t 40) and non-synchronous futures settlement (equity -> SI=F/GC=F,
+COMEX 13:30 ET vs equity 16:00 ET). What remained was short-horizon reversal, and the **disagree-day test** — restricting to
+the ~17-28% of days where "follow the lead" and "follow the asset's own prior move" predict OPPOSITE signs — showed a coin
+flip (3 pairs favour lead, 2 favour own, every |t| < 1.25). No cross-asset information exists in this panel.
+**Method now doctrine:** (a) multiple-testing bar sqrt(2 ln N), not 2; (b) exclude non-synchronous pairs BEFORE reading a
+lead-lag result; (c) when a candidate signal is correlated with a known effect, find the observations where they DISAGREE —
+that is the only clean separation.
+
+### OPEN — remaining Tier-2
+- **non-linear / conditional models** — IN PROGRESS (`scripts/nonlinear.ts`, D-419). Gradient-boosted trees vs linear
+  baselines, strict walk-forward, on the monthly cross-sectional equity panel. Pre-registered null: if GBM does not beat the
+  linear composite OOS on a paired t, non-linearity adds nothing to THIS panel.
+- **portfolio construction beyond decile sorts** — mean-variance / risk-parity / turnover-constrained optimisation over the
+  measured signals, rather than equal-weight top-decile.
+
+### COVERAGE NOTE (raised by this hunt, unresolved)
+`StockholdersEquity`, `Assets`, `Liabilities`, `NetIncomeLoss` in `trd_fundamentals` **stop at 2023-07**; only the 5
+deep-loaded balance-sheet concepts run to 2026. Every value/quality/profitability conclusion in this program is therefore
+measured on a panel that ENDS IN MID-2023. Under the COVERAGE LAW that is a stated limit on those verdicts, not a market
+finding about 2024-2026. Refreshing those four concepts is a free EDGAR fetch and is now the top Tier-1 item.
