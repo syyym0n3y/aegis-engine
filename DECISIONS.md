@@ -8143,3 +8143,25 @@ microstructure risk; (d) capacity — funding strategies move the rate at size.
 not freely available at scale.** Without it the holdings cannot be joined to prices. Per the COVERAGE LAW this is recorded as
 **UNTESTED — blocked on a missing identifier map**, NOT as a null. Options: a paid CUSIP map, or a partial free map from
 SEC filings' own ticker/CUSIP co-occurrences (incomplete, biased to large caps).
+
+## D-414 — REPLICATION FAILED on a second venue. The funding result is DOWNGRADED, not defended.
+Tested whether D-411's funding-crowding signal is a property of crypto positioning or of ONE venue. Same hypothesis, same
+construction, independent exchange (Bybit), 20 perps, 1,577 intervals:
+| venue | IC full | IC test | gross spread |
+|---|---|---|---|
+| Binance (D-411) | 0.1404 (**t 38.35**) | 0.2492 (t 37.64) | +0.040%/8h |
+| **Bybit** | **0.0005 (t 0.08)** | 0.0066 (t 0.67) | +0.028%/8h (t 1.21) |
+**IT DOES NOT REPLICATE.** The Bybit IC is indistinguishable from zero in both halves. A real cross-sectional positioning
+effect should appear on any venue where the same traders are crowded; this did not.
+**HONEST ACCOUNTING OF THE ASYMMETRY (stated, not used as an excuse):** the Bybit test is CRUDER — 1,577 intervals vs 8,456
+(5x less), 20 symbols vs 180, and price alignment uses 4h klines matched to funding stamps rather than Binance's exact 8h
+klines. So this is not a clean falsification; it is a FAILED REPLICATION with a weaker instrument. Either reading is bad for
+the result: it is venue-specific (concerning) or my replication is inadequate (my problem).
+**STATUS DOWNGRADE — the honest response to failed replication is to lower confidence, not to defend the original.** The
+funding-crowding finding moves from "the strongest result in the program" to **"an unreplicated single-venue result"**. It has
+survived four of my own bugs and a survivorship correction, which is genuinely rare — but it has now failed the test that
+matters most for believing a signal is about MARKETS rather than about one exchange's plumbing.
+BEFORE IT COULD BE BELIEVED AGAIN: (1) a like-for-like Bybit/OKX test with matched data quality and history length;
+(2) an explanation of WHY Binance would differ (fee schedule, retail mix, funding-cap mechanics) that is testable rather
+than post-hoc; (3) the still-unresolved execution constraint (break-even 3.51bp/leg) and delisting-tradability question.
+NOT armed. NOT forward-tested. This is the correct outcome of a discipline that is supposed to catch its own enthusiasm.
