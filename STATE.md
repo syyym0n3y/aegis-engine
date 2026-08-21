@@ -1,5 +1,29 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 — REST-OF-HUNT: on-chain NULL, skew UNTESTED, and one signal still standing pending survivorship
+
+**D-438/439 BITCOIN ON-CHAIN FUNDAMENTALS — 0 of 12 beat buy-and-hold.** 966,943 points / 7 series from blockchain.info,
+**2009-2026** (longer history than any crypto price series held). Four documented hypotheses (NVT, network growth, miner
+revenue-per-hash, hash ribbon) x three horizons. **All twelve NEGATIVE against holding; seven significantly so.** In
+isolation they look magnificent — NVT at h=7 "returns 76.3%/yr" — because buy-and-hold returned 93.1% over the same window.
+Without that control this would have been written up as a discovery. Doctrine reinforced: **a single-asset timing signal
+must be measured against BUY-AND-HOLD, never against zero.**
+
+**D-444 OPTION SKEW / TERM STRUCTURE — UNTESTED, not null.** Deribit publishes DVOL history but NO historical option chain
+(get_last_trades for past windows returns empty, verified). Under the COVERAGE LAW that is a data absence, not a market
+finding. Correct response to a genuinely-unavailable history: start the clock. `scripts/collect-option-skew.ts` now
+snapshots the live surface daily (25-delta skew proxy + ATM term structure), wired into the agent, idempotent, testable at
+~250 days.
+
+**D-440/441 CRYPTO CROSS-SECTION — the only signal still standing, and it is being stress-tested.** 14 perps, daily,
+costed with 9bp turnover-charged fees **AND actual per-symbol funding** (most crypto backtests omit funding; it ran +24 to
++32%/yr in 2021). Momentum 30d: **94.2%/yr net, SR 1.13, alpha t 2.93, beta to BTC -0.033** — genuinely market-neutral,
+not disguised beta. Positive in all four eras. Reversal is significantly NEGATIVE (continuation works) and low-vol is
+negative (high-vol wins), both consistent. BUT: **maxDD -67%**, current era insignificant (t 0.66), only +7.4%/yr over
+equal-weight long-only, and **t 2.93 does NOT clear this program's own deflated bar of t~5.34 (D-363/364)**.
+**D-442/443 in flight:** rebuilding the universe to INCLUDE DELISTED perps (verified queryable — LUNAUSDT ends 2022-05-13),
+because a momentum book is precisely what a currently-listed universe flatters.
+
 ## 2026-08-21 (crypto/derivatives pivot) — capacity constraint REMOVED, and the edge died of a different constraint
 
 Operator directive: pivot to where capacity is not the constraint. Done, and it answered the question.
