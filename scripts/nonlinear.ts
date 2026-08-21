@@ -202,4 +202,48 @@ for(const k of ["ALL","1996-2004","2005-2012","2013-2020","2021-2026","liq:LOW",
   const m=mean(a), sg=sdv(a); const n30=m-0.003, n60=m-0.006;
   console.log(`    ${k.padEnd(14)}${(m*12*100).toFixed(1).padEnd(13)}${(n30*12*100).toFixed(1).padEnd(12)}${(n60*12*100).toFixed(1).padEnd(12)}${((n30/sg)*Math.sqrt(12)).toFixed(2).padEnd(10)}${((m/sg)*Math.sqrt(a.length)).toFixed(2).padEnd(8)}${a.length}`);
 }
+
+// ============================================================================================================
+// TIER-2 GAP #2: PORTFOLIO CONSTRUCTION. Every result in this program has been an EQUAL-WEIGHT TOP-DECILE sort rebalanced
+// monthly -- the crudest possible construction, and the one that pays the most cost. The signal is not the only decision;
+// how it is held is. Three alternatives measured against the same GBM score, on the same walk-forward predictions:
+//   (a) score-proportional weights (conviction-weighted rather than equal-weight)
+//   (b) inverse-vol weights (risk parity within the leg -- stops one volatile name dominating)
+//   (c) a NO-TRADE BAND: hold a name until it leaves the top/bottom TERCILE rather than the decile. This is the cheapest
+//       real lever available -- it cuts turnover directly, and turnover x spread is what killed several earlier results.
+console.log(`\n    ==> PORTFOLIO CONSTRUCTION on the same GBM score (the decile sort is a choice, not a law)`);
+type Book={r:number[];to:number[]};
+const books:Record<string,Book>={equal:{r:[],to:[]},conviction:{r:[],to:[]},invvol:{r:[],to:[]},band:{r:[],to:[]}};
+let prevW:Record<string,Map<string,number>>={equal:new Map(),conviction:new Map(),invvol:new Map(),band:new Map()};
+for(const [,packs] of wf) for(const [,g,pred] of packs){
+  const n=g.length; const ord=[...g.keys()].sort((a,b)=>pred[b]-pred[a]); const d=Math.max(1,Math.floor(n/10)), t3=Math.max(1,Math.floor(n/3));
+  const mk=(pairs:[string,number][]):Map<string,number>=>{const gross=pairs.reduce((s2,x)=>s2+Math.abs(x[1]),0)||1;return new Map(pairs.map(([k,v])=>[k,v/gross*2]));};
+  const W:Record<string,Map<string,number>>={};
+  W.equal=mk([...ord.slice(0,d).map(i=>[g[i].sym,1] as [string,number]),...ord.slice(-d).map(i=>[g[i].sym,-1] as [string,number])]);
+  const pm=mean(pred), ps=sdv(pred)||1e-9;
+  W.conviction=mk(ord.filter(i=>Math.abs(pred[i]-pm)/ps>1).map(i=>[g[i].sym,(pred[i]-pm)/ps] as [string,number]));
+  W.invvol=mk([...ord.slice(0,d).map(i=>[g[i].sym,1/Math.max(0.1,g[i].x[3]+0.6)] as [string,number]),
+               ...ord.slice(-d).map(i=>[g[i].sym,-1/Math.max(0.1,g[i].x[3]+0.6)] as [string,number])]);
+  const held=prevW.band; const bandPairs:[string,number][]=[];
+  for(let r=0;r<n;r++){const i=ord[r], sym=g[i].sym, was=held.get(sym)||0;
+    if(r<d) bandPairs.push([sym,1]); else if(r>=n-d) bandPairs.push([sym,-1]);
+    else if(was>0&&r<t3) bandPairs.push([sym,1]);            // stay long until it leaves the top tercile
+    else if(was<0&&r>=n-t3) bandPairs.push([sym,-1]);}       // stay short until it leaves the bottom tercile
+  W.band=mk(bandPairs);
+  const symRet=new Map(g.map(r=>[r.sym,r.yraw]));
+  for(const k of Object.keys(books)){
+    let ret=0; for(const [sym,w] of W[k]) ret+=w*(symRet.get(sym)??0);
+    let to=0; const keys=new Set([...W[k].keys(),...prevW[k].keys()]);
+    for(const sym of keys) to+=Math.abs((W[k].get(sym)||0)-(prevW[k].get(sym)||0));
+    books[k].r.push(ret); books[k].to.push(to/2);
+  }
+  prevW=W;
+}
+console.log(`    ${"construction".padEnd(14)}${"turnover/mo".padEnd(13)}${"GROSS %/yr".padEnd(13)}${"NET @30bp".padEnd(12)}${"NET @60bp".padEnd(12)}${"SR net30".padEnd(10)}t`);
+for(const [k,b] of Object.entries(books)){ if(b.r.length<24)continue;
+  const m=mean(b.r), sg=sdv(b.r), tu=mean(b.to);
+  const n30=m-tu*0.003, n60=m-tu*0.006;
+  const nm={equal:"equal-wt decile",conviction:"score-weighted",invvol:"inverse-vol",band:"no-trade band"}[k];
+  console.log(`    ${nm!.padEnd(14)}${(tu*100).toFixed(0).padEnd(13)}%${(m*12*100).toFixed(1).padEnd(12)}${(n30*12*100).toFixed(1).padEnd(12)}${(n60*12*100).toFixed(1).padEnd(12)}${((n30/sg)*Math.sqrt(12)).toFixed(2).padEnd(10)}${((m/sg)*Math.sqrt(b.r.length)).toFixed(2)}`);
+}
 console.log(`\n    GBM - linear: delta IC ${(gm-lm).toFixed(4)}, paired t ${dt.toFixed(2)}  ->  ${Math.abs(dt)>2?(dt>0?"NON-LINEARITY ADDS":"non-linearity HURTS"):"NULL: non-linearity adds NOTHING over linear"}`);

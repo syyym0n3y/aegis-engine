@@ -18,7 +18,10 @@ const addDays=(d:string,n:number)=>{const t=new Date(d+"T00:00:00Z");t.setUTCDat
 let total=0;
 for(const c of CONCEPTS){
   let stored=0;
-  for(let y=2012;y<=2025;y++) for(const q of ["Q1I","Q2I","Q3I","Q4I"]){
+  // year range is env-configurable so the loader can TOP UP rather than refetch 14 years. The deep concepts had gone 199 days
+// stale (newest period_end 2026-02-03) — caught by the coverage guard's new staleness dimension, which is exactly what it
+// was added for.
+for(let y=Number(Deno.env.get("FROM_YEAR")||2012);y<=Number(Deno.env.get("TO_YEAR")||2025);y++) for(const q of ["Q1I","Q2I","Q3I","Q4I"]){
     const per=`CY${y}${q}`;
     try{
       const r=await fetch(`https://data.sec.gov/api/xbrl/frames/us-gaap/${c}/USD/${per}.json`,{headers:UA});
