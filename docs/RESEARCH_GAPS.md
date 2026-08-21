@@ -104,11 +104,28 @@ turnover-reduction as a cost lever for month-horizon signals here.
 ### OPEN — Tier-2 remaining
 - **conditional/interaction models with FUNDAMENTAL features** — D-419 used price/volume only. The fundamentals panel is now
   fresh to 2026-08 (D-420) and has never been run through a non-linear model.
-- **regime conditioning** — D-419's own result says the effect is regime-dependent (dead 2005-2020). Nothing in this program
-  has yet CONDITIONED a signal on a measured regime state rather than reporting the pooled average.
+### CLOSED — regime conditioning (D-422): **does not rescue D-419**
+Dispersion (the natural hypothesis) is falsified — it INVERTS in both dead eras (-9.1%, -9.1%). Breadth looked promotable
+pooled (SR 0.71, t 2.66, n=106) and turned out to be era selection: it revives 2005-2012 on only 20 months, leaves 2013-2020
+dead, and puts 54 of its 106 months in 2021-2026. **New doctrine: a regime filter is only real if it revives the era where
+the signal was dead. If it concentrates the months that already worked, it is fitting the calendar.**
 
 ### COVERAGE NOTE (raised by this hunt, unresolved)
 `StockholdersEquity`, `Assets`, `Liabilities`, `NetIncomeLoss` in `trd_fundamentals` **stop at 2023-07**; only the 5
 deep-loaded balance-sheet concepts run to 2026. Every value/quality/profitability conclusion in this program is therefore
 measured on a panel that ENDS IN MID-2023. Under the COVERAGE LAW that is a stated limit on those verdicts, not a market
 finding about 2024-2026. Refreshing those four concepts is a free EDGAR fetch and is now the top Tier-1 item.
+
+
+## Method upgrades banked this session (these change every FUTURE verdict)
+
+1. **Test non-linearly.** A linear rank-IC of ~0 does not license a null — GBM found +0.0098 IC that linear cannot represent,
+   robustly across universes (D-419). Every prior null in this program was measured with the weaker instrument.
+2. **Weight by conviction, not equally.** +0.22 Sharpe for free, at identical turnover (D-421).
+3. **Do not reach for turnover reduction.** For month-horizon signals here it costs more gross than it saves (D-421).
+4. **Multiple-testing bar is sqrt(2 ln N), not 2** — and OOS survival is NOT proof when the candidates are correlated
+   (D-417: 286 of 1,404 pairs "survived OOS" and all were artifacts).
+5. **Exclude non-synchronous pairs before reading any lead-lag** (foreign closes, futures settlement) (D-418).
+6. **When a candidate correlates with a known effect, find the days they DISAGREE** — the only clean separation (D-418).
+7. **A regime filter must revive the dead era**, not concentrate the live one (D-422).
+8. **Coverage has a recency dimension.** Breadth alone let a 3-year-stale panel pass as green (D-420).
