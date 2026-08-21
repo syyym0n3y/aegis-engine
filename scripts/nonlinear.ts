@@ -17,11 +17,46 @@ const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`
 // edge survives at a $5 price floor and a $10M/day liquidity floor it is not primarily a survivorship artifact.
 const PRICE_MIN=Number(Deno.env.get("PRICE_MIN")||1);
 const DV_MIN=Number(Deno.env.get("DV_MIN")||1e6);
-const FEAT=["mom12_1","rev1m","mom6_1","vol12","maxret","dvol","hi52","skew","relvol","amihud"];
+// FUNDAMENTAL FEATURES (opt-in via FUND=1). D-419 tested price/volume only. The fundamentals panel only became fresh to
+// 2026-08 in D-420 -- before that it ended in 2023-07 -- so a non-linear model has NEVER seen these. Point-in-time
+// throughout: every value is read asOf() its effective_date (period_end + filing lag), never its period_end.
+const USE_FUND=Deno.env.get("FUND")==="1";
+const FUND_FEAT=["bm","ep","agrow","issu","curr","cashta"];
+const FEAT=["mom12_1","rev1m","mom6_1","vol12","maxret","dvol","hi52","skew","relvol","amihud",...(USE_FUND?FUND_FEAT:[])];
 type Row={mo:string;sym:string;x:number[];y:number;yraw:number;dv:number};
 const panel:Row[]=[];
 
 // --- stream the universe in chunks (a full preload OOM'd this box before) ---
+// ---- point-in-time fundamentals index (only when FUND=1) ----
+type FRec={eff:string;v:number};
+const fund=new Map<string,Map<string,FRec[]>>();   // ticker -> concept -> sorted by effective_date
+if(USE_FUND){
+  const CONC=["StockholdersEquity","NetIncomeLoss","Assets","EntityCommonStockSharesOutstanding","AssetsCurrent","LiabilitiesCurrent","CashAndCashEquivalentsAtCarryingValue"];
+  let n=0;
+  for(const c of CONC){ for(let off=0;;off+=10000){
+    const p=await fetch(`${OWNED}/trd_fundamentals?concept=eq.${c}&select=ticker,effective_date,value&order=effective_date&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p)||!p.length)break;
+    for(const r of p as {ticker:string;effective_date:string;value:number}[]){
+      if(!r.ticker||!r.effective_date||!Number.isFinite(r.value))continue;
+      ((fund.get(r.ticker)??fund.set(r.ticker,new Map()).get(r.ticker)!).get(c)??(fund.get(r.ticker)!.set(c,[]).get(c)!)).push({eff:r.effective_date,v:r.value});
+      n++;}
+    if(p.length<10000)break; } }
+  for(const [,m] of fund) for(const [,a] of m) a.sort((x,y)=>x.eff<y.eff?-1:1);
+  console.log(`    fundamentals loaded: ${n.toLocaleString()} facts across ${fund.size} tickers`);
+}
+// asOf: the most recent value whose effective_date is <= the decision date. This is the ONLY read path -- a fundamental is
+// unusable before it was legally knowable, and that lag lives in effective_date, not here.
+function asOf(t:string,c:string,date:string):number|null{
+  const a=fund.get(t)?.get(c); if(!a||!a.length)return null;
+  let lo=0,hi=a.length-1,best=-1;
+  while(lo<=hi){const mid=(lo+hi)>>1; if(a[mid].eff<=date){best=mid;lo=mid+1;}else hi=mid-1;}
+  return best<0?null:a[best].v;
+}
+// prior value at least `back` days before `date` -- for growth rates (asset growth, issuance)
+function asOfBack(t:string,c:string,date:string,back:number):number|null{
+  const d=new Date(date+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()-back);
+  return asOf(t,c,d.toISOString().slice(0,10));
+}
 const meta:{symbol:string}[]=[];
 for(let off=0;;off+=1000){const p=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);if(!Array.isArray(p)||!p.length)break;meta.push(...p);if(p.length<1000)break;}
 console.log(`==> NON-LINEAR / CONDITIONAL TEST — universe ${meta.length} equities | PRICE_MIN=$${PRICE_MIN} DV_MIN=$${(DV_MIN/1e6).toFixed(0)}M/day`);
@@ -58,10 +93,24 @@ for(let i=0;i<meta.length;i+=30){
       for(let q=k-252;q<k;q++)if(v[q]>0){v252+=v[q];n252++;}
       const relvol=(n21&&n252&&v252>0)?Math.log(((v21/n21)+1)/((v252/n252)+1)):0;
       const amihud=mean(w21.map((x,q)=>Math.abs(x)/Math.max(1,c[k-21+q]*v[k-21+q])))*1e9;
+      const fx:number[]=[];
+      if(USE_FUND){
+        const dt=new Date(b[k][0]*1000).toISOString().slice(0,10);
+        const sh=asOf(r.symbol,"EntityCommonStockSharesOutstanding",dt);
+        const mc=(sh&&sh>0)?px*sh:null;
+        const eq=asOf(r.symbol,"StockholdersEquity",dt), ni=asOf(r.symbol,"NetIncomeLoss",dt), at=asOf(r.symbol,"Assets",dt);
+        const atP=asOfBack(r.symbol,"Assets",dt,400), shP=asOfBack(r.symbol,"EntityCommonStockSharesOutstanding",dt,400);
+        const ac=asOf(r.symbol,"AssetsCurrent",dt), lc=asOf(r.symbol,"LiabilitiesCurrent",dt), csh=asOf(r.symbol,"CashAndCashEquivalentsAtCarryingValue",dt);
+        // A missing fundamental is NOT zero -- zero is a real, extreme rank. Missing rows are dropped from the fundamental
+        // panel entirely rather than imputed, so the model never learns from a fabricated value.
+        if(mc===null||eq===null||ni===null||at===null||atP===null||!atP||shP===null||!shP||ac===null||lc===null||!lc||csh===null||!at)continue;
+        fx.push(eq/mc, ni/mc, at/atP-1, sh!/shP-1, ac/lc, csh/at);
+        if(!fx.every(Number.isFinite))continue;
+      }
       const y=c[kn]/c[k]-1;                                      // forward 1-month return
       if(![mom12_1,rev1m,mom6_1,vol12,maxret,hi52,skew,relvol,amihud,y].every(Number.isFinite))continue;
       if(Math.abs(y)>3)continue;                                 // data-corruption guard (Yahoo crypto lesson)
-      panel.push({mo:mos[j],sym:r.symbol,x:[mom12_1,rev1m,mom6_1,vol12,maxret,Math.log(dv),hi52,skew,relvol,amihud],y,yraw:y,dv});
+      panel.push({mo:mos[j],sym:r.symbol,x:[mom12_1,rev1m,mom6_1,vol12,maxret,Math.log(dv),hi52,skew,relvol,amihud,...fx],y,yraw:y,dv});
     }
   }
   if(i%600===0)Deno.stderr.write(new TextEncoder().encode(`  ..${i}/${meta.length} panel=${panel.length}\r`));
@@ -286,5 +335,18 @@ for(const key of ["disp","bread"] as const){
     return `${(m*12*100).toFixed(1)}%/yr gross, ${((m-0.003)*12*100).toFixed(1)}% net30, SR${(((m-0.003)/sg)*Math.sqrt(12)).toFixed(2)}, t${((m/sg)*Math.sqrt(a.length)).toFixed(2)}, n=${a.length}`;};
   console.log(`      prior-month ${key.padEnd(6)} HIGH : ${rep(hi)}`);
   console.log(`      prior-month ${key.padEnd(6)} LOW  : ${rep(lo)}`);
+  // THE DECISIVE CHECK: a regime filter is only real if it REVIVES THE DEAD ERA. If the "good regime" months are simply the
+  // months inside the eras that already worked (1996-2004, 2021-2026), the filter has re-labelled the result, not improved
+  // it -- and applying it forward would be fitting the calendar. So the same conditioning is reported PER ERA.
+  const hiE=new Map<string,number[]>(); const past2:number[]=[];
+  for(let i=1;i<seq.length;i++){
+    const signal=(seq[i-1] as unknown as Record<string,number>)[key]; past2.push(signal);
+    if(past2.length<36)continue;
+    const srt=[...past2].sort((a,b)=>a-b);
+    if(signal>srt[Math.floor(srt.length/2)]) (hiE.get(ERA(seq[i].mo))??hiE.set(ERA(seq[i].mo),[]).get(ERA(seq[i].mo))!).push(seq[i].spread);
+  }
+  const eraLine=["1996-2004","2005-2012","2013-2020","2021-2026"].map(e=>{const a=hiE.get(e);
+    return a&&a.length>=12?`${e}: ${(mean(a)*12*100).toFixed(1)}% (n${a.length})`:`${e}: (thin)`;}).join("  ");
+  console.log(`        HIGH-${key} by era, GROSS: ${eraLine}`);
 }
 console.log(`\n    GBM - linear: delta IC ${(gm-lm).toFixed(4)}, paired t ${dt.toFixed(2)}  ->  ${Math.abs(dt)>2?(dt>0?"NON-LINEARITY ADDS":"non-linearity HURTS"):"NULL: non-linearity adds NOTHING over linear"}`);
