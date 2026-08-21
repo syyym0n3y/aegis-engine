@@ -23,5 +23,9 @@ while true; do
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true
+  # OPTION SKEW COLLECTOR (D-444): Deribit publishes no historical option chain, so skew and term structure are UNTESTED
+  # rather than null. The honest response to a genuinely-unavailable history is to start the clock — this snapshots the
+  # live surface daily so the series exists to test later. Idempotent (UTC day bucket); measures, never trades.
+  deno run --allow-net --allow-env ../scripts/collect-option-skew.ts || true
   sleep 86400
 done
