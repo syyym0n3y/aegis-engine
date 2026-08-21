@@ -145,3 +145,31 @@ competed away, now watched).
   cannot be called. **OPERATOR ACTION:** `echo '^https?://www\.deribit\.com/api/v2/public/' >> ~/.claude/hooks/endpoints.allowlist`
 - **Cross-venue basis / dislocation** (Binance vs Bybit vs OKX) — all three are already allowlisted, untested.
 - **Funding carry re-run under the three new laws** — D-409/415 predates the effect-size and liquidity laws.
+
+
+## Rest-of-hunt sweep (2026-08-22)
+
+### CLOSED
+- **Bitcoin on-chain fundamentals (D-439): NULL.** 966,943 pts / 7 series / 2009-2026. 0 of 12 rules beat buy-and-hold;
+  seven significantly WORSE. Without the buy-and-hold control they would have read as discoveries (NVT h=7 "returns
+  76.3%/yr" against a 93.1% benchmark).
+- **Cross-venue funding dislocation (D-437): NULL, and permanently so.** Real and persistent (t 8-15, 5/5 beat fees) but
+  0/5 beat cash, and below cash even at ZERO fees — no fee tier rescues it.
+- **Perp intraday seasonality (D-445): funding-settlement hypothesis FALSIFIED.** A US-afternoon session effect is real
+  (hours 21-22 UTC, 14/14 symbols) but sits ON the fee boundary.
+
+### UNTESTED (data genuinely unavailable — COVERAGE LAW, not a market finding)
+- **Option skew / term structure.** Deribit publishes DVOL history but NO historical option chain. `collect-option-skew.ts`
+  now snapshots the live surface daily, wired into the agent. Testable at ~250 days.
+
+### THE FAILURE-MODE LADDER (what this program has actually learned)
+Every candidate now dies at a nameable, *different* stage — which is more informative than any single null:
+1. **Capacity** — equity cross-section: real signal, only in names too small to trade (D-424).
+2. **Effect size far below fee** — perp order flow: 20/20 sign consistency, t 4.9, and 0.02-0.14x the fee (D-426).
+3. **Competed away** — basis, funding, variance: paid 13-32%/yr in 2021, ~0 now, all three on the SAME timeline (D-431/433/435).
+4. **Structurally below cash** — cross-venue funding: never decayed, simply bounded under the risk-free rate (D-437).
+5. **Fee boundary / execution-dependent** — US-afternoon window: 0.6-1.6x its fee depending on fills (D-445).
+6. **Beaten by the benchmark** — on-chain: positive in isolation, negative against buy-and-hold (D-439).
+
+**The pattern: signal is abundant and accessibility is not.** Six distinct mechanisms, each of which converts a real
+statistical effect into an untradable one. Nothing found so far fails because the effect is absent.
