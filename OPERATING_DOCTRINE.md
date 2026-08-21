@@ -103,3 +103,18 @@ Rules: (1) every reported signal states bp-of-expected-return per 1sd of signal,
 the two disagree, the mean one decides; (3) an effect below 1.0x its cost is recorded as SUB-FEE, never as an edge;
 (4) enforced by `scripts/effect-size-guard.ts` (verified RED on sub-fee, RED on significance-without-magnitude, PASS on
 compliant, exit-code-checked both directions).
+
+
+## THE BREADTH LAW (2026-08-22) — binds every cross-sectional result
+**A cross-sectional statistic computed on a thin universe is a statement about a few names, not about a factor. Report
+breadth beside every cross-sectional Sharpe; treat any cross-section under ~50 names as UNTESTED, not as evidence.**
+Origin: three separate concentration artifacts. D-415 — funding crowding, IC 0.1404 at t 38.35, a POOLING artifact across
+180 heterogeneous perps, retracted in full. D-423 — score-weighted construction showing 72.1%/yr at SR 1.49 from ~160 names
+normalised to gross 2, flagged as concentration rather than alpha. D-443 — crypto momentum at 94.2%/yr, SR 1.13, alpha
+t 2.93, computed on **fourteen** perps, where quintiles mean 3 long and 3 short; at 162-name breadth the identical rule
+gives **SR 0.34, t 0.86**. In all three the t-stat was large and the number was not real.
+Rules: (1) every cross-sectional result states the mean number of names per rebalance; (2) under ~50 names the verdict is
+UNTESTED; (3) when a result is large, EXPAND BREADTH before believing it — that test is cheaper than the retraction;
+(4) survivorship and breadth are different problems and must be fixed separately (in D-443 the survivorship effect was
+small and POSITIVE at +5.2pp while breadth accounted for the entire collapse); (5) enforced by `scripts/breadth-guard.ts`
+(verified RED on a thin cross-section, RED on one that never states breadth, PASS on a broad one, exit-code-checked).

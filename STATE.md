@@ -21,8 +21,12 @@ costed with 9bp turnover-charged fees **AND actual per-symbol funding** (most cr
 not disguised beta. Positive in all four eras. Reversal is significantly NEGATIVE (continuation works) and low-vol is
 negative (high-vol wins), both consistent. BUT: **maxDD -67%**, current era insignificant (t 0.66), only +7.4%/yr over
 equal-weight long-only, and **t 2.93 does NOT clear this program's own deflated bar of t~5.34 (D-363/364)**.
-**D-442/443 in flight:** rebuilding the universe to INCLUDE DELISTED perps (verified queryable — LUNAUSDT ends 2022-05-13),
-because a momentum book is precisely what a currently-listed universe flatters.
+**D-442/443 RESOLVED — and it CORRECTS D-441 to NULL.** Universe rebuilt survivorship-free: 328 contracts incl. 10 delisted
+(LUNA, MATIC, SRM, ANT, HNT, TOMO, BTS, AUDIO, GAL, DODO), breadth 14 -> **162 names/day**. Result: **SR 1.13 -> 0.34,
+t 2.93 -> 0.86**, maxDD -68%. The survivorship effect was small and POSITIVE (+5.2pp — dead contracts were profitable
+shorts); **BREADTH was the whole story**: 14 names means 3 long / 3 short, a few idiosyncratic bets rather than a factor.
+Third concentration artifact after D-415 and D-423 -> **THE BREADTH LAW + `scripts/breadth-guard.ts`**, verified both
+directions, wired into the agent. **Nothing survives. Every candidate in the program is now closed.**
 
 ## 2026-08-21 (crypto/derivatives pivot) — capacity constraint REMOVED, and the edge died of a different constraint
 

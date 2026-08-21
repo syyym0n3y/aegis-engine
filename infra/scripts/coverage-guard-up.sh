@@ -20,6 +20,12 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/effect-size-guard.ts; then
     echo "$(date -u +%FT%TZ) EFFECT-SIZE GUARD RED — a promoted strategy has no stated edge larger than its own cost"
   fi
+  # BREADTH LAW (D-446): three times a large number came from a CONCENTRATED book and evaporated when the concentration
+  # was removed (D-415 pooling, D-423 score-weighting, D-443 a 14-name quintile sort at "SR 1.13"). A t-stat cannot tell
+  # a factor from a few idiosyncratic bets; this can.
+  if ! deno run --allow-net --allow-env ../scripts/breadth-guard.ts; then
+    echo "$(date -u +%FT%TZ) BREADTH GUARD RED — a promoted cross-sectional result was computed on too few names"
+  fi
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true
