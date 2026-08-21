@@ -8709,3 +8709,46 @@ fundamentals do not time Bitcoin. The mechanism they describe is real; the timin
 
 **Doctrine reinforced:** a single-asset timing signal must be measured against BUY-AND-HOLD, never against zero. In a market
 with a large secular trend, "positive return" and "significant t-stat" are the null hypothesis, not evidence against it.
+
+## D-445 — PERP SEASONALITY: the funding-settlement hypothesis is FALSIFIED; a US-afternoon effect is real and sits ON the fee boundary
+
+**Mechanism first, not data-mining.** Binance settles funding at 00:00 / 08:00 / 16:00 UTC. Positions are opened and closed
+around those stamps to collect or avoid the payment — a real recurring flow on a known clock, which is the kind of thing
+that can leave a footprint. 14 perps with >=20,000 hourly bars (~2,500 observations per hour-of-day per symbol).
+
+**FUNDING-SETTLEMENT HYPOTHESIS: FALSIFIED.** Hours 0, 8 and 16 show 9/14, 7/14 and 9/14 symbols positive — mixed at every
+one. The most mechanically-motivated hypothesis in the test produced nothing.
+
+**What did show up was a session effect.** Cross-symbol sign consistency by UTC hour:
+
+| hour | mean bp | symbols positive | |
+|---|---|---|---|
+| **21** | **+5.34** | **14/14** | US afternoon (16:00 ET) |
+| **22** | **+4.28** | **14/14** | |
+| 20 | +2.19 | 12/14 | |
+| 7 | +2.23 | 12/14 | |
+| 14 | −2.10 | 2/14 | consistently negative |
+
+Day-of-week is consistent for Wed (14/14) and Fri (14/14) but tiny (1.88 and 2.12 bp = 0.21-0.24x the fee).
+
+**Tested as a strategy (buy the 20:00 UTC close, sell the 22:00 close, daily):**
+
+| | result |
+|---|---|
+| gross | 5.86 to 14.85 bp/day, **14/14 symbols positive** |
+| net TAKER (9bp round trip) | **9/14 profitable**, SR 0.08 to 0.66, five symbols NEGATIVE |
+| net MAKER (3.6bp round trip)* | 14/14 profitable, SR 0.25 to 1.30 |
+
+\* **The maker column is an OPTIMISTIC BOUND, not an achievable return.** Resting orders are filled preferentially when the
+market is moving against you, and that adverse selection is precisely the cost a timed directional window would pay. It
+cannot be measured from historical bars, so it is named rather than assumed away.
+
+**A control that must be stated:** the summed hourly drift across all 24 hours is ~+19.8bp/day — enormous, and inflated by
+survivorship (these are coins that survived). The absolute return therefore inherits that bias. What is far less sensitive
+to it is the CONCENTRATION: hours 21-22 capture ~49% of the entire day's drift while holding for 8% of the day, versus an
+average hour of +0.82bp. The concentration is the finding; the level is not trustworthy.
+
+**VERDICT: real but ON the fee boundary — a NEW failure mode for this program.** Everything prior failed on capacity
+(equities), on effect-size far below fee (D-426, 0.02-0.14x), or was null. This one is roughly 0.6-1.6x its fee depending
+on execution, which means **execution quality decides it, not the signal**. That is not a question historical bars can
+answer. Not promoted; recorded as the only candidate whose fate turns on execution rather than on edge.
