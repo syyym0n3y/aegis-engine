@@ -51,3 +51,25 @@ But that argues for hunting **where those advantages do not apply** — longer h
 micro-caps), and data nobody bothers to parse (filings text, on-chain) — NOT for concluding the market is closed. Every Tier-1
 gap above is FREE and unexploited by us. Until Tier 1 is exhausted, any claim about market efficiency from this program is
 premature.
+
+
+---
+
+## GAP STATUS as of 2026-08-21 (updated as they close)
+
+| Tier-1 gap | status | outcome |
+|---|---|---|
+| Deep EDGAR concepts | **CLOSED** | 700,684 rows, 5 -> 10 concepts (D-406) |
+| Accruals / NOA / working-capital | **CLOSED — tested** | real in-sample (t 2.51), **decays to zero OOS** (D-408) |
+| Crypto funding / basis | **CLOSED — tested** | carry real (1.9%/yr, t 18); crowding signal DOWNGRADED, see below (D-409/410/411/414) |
+| Options: VIX term structure | **CLOSED — tested** | backwardation pays MOST; contango-gating gives ZERO tail protection (D-412) |
+| Volatility risk premium | **CLOSED — tested** | real (t 48.8) but paid for in a -83% day (D-404) |
+| 13F institutional holdings | **BLOCKED — UNTESTED** | filings parse; **no free CUSIP->ticker map at scale** (D-413) |
+| Options: full IV surface / skew | open | needs per-name chains at scale |
+| Crypto on-chain | open | hosts allowlisted, not yet built |
+| ETF flows | open | no free source identified |
+
+### Tier-2 method gaps — still entirely open, and now the highest-value remaining work
+Every test in this program is a **linear rank-IC or decile sort**. Untried: gradient boosting / non-linear models on the
+existing panel, conditional & interaction models, **longer horizons (6-24 months, where retail latency disadvantage does not
+apply)**, portfolio construction beyond decile sorts, cross-asset lead-lag. The data is already loaded for all of these.
