@@ -8065,3 +8065,34 @@ intervals:
    most promising untested lead in the program** and queued for a full test.
 A BUG CAUGHT MID-TEST: the first funding-reversal run used FIXED thresholds ~10x too high (mean funding is 0.0017%, the "pos"
 cut was 0.02%), leaving 4 of 5 buckets empty. Fixed to percentile cuts — the correct way to define "extreme" for any signal.
+
+## D-410 — FUNDING CROWDING: the strongest result in the program, and it survived three of my own bugs
+Full test of the D-409 lead. 20 Binance perps, **7,137 funding intervals (6.5 years)**, cross-sectional (long the most-negative
+funding / short the most-positive — market-neutral by construction, so it cannot be crypto beta).
+**THE SIGNAL:** IC 0.0398 (t **11.35**) full, **0.0247 (t 4.67) OUT-OF-SAMPLE**. Gross spread is remarkably stable across the
+split: 0.047%/8h train -> 0.045%/8h test. Combined edge (price spread + funding received) = **0.065%/8h**.
+**HELD-BOOK RESULTS (real book, held N intervals, 1bp/leg maker cost):**
+| rebalance | full ann / SR | **OOS ann / SR** |
+|---|---|---|
+| 8h | 49% / 1.04 | 37% / 1.15 |
+| **1 day** | 59% / 1.17 | **64% / 1.90** |
+| **3 days** | 62% / 1.15 | **63% / 1.85** |
+| 7 days | 38% / 0.69 | 33% / 0.90 |
+**THREE OF MY OWN BUGS WERE CAUGHT AND FIXED BEFORE REPORTING — each one inflated the result:**
+1. **Pagination**: endTime did not walk backward; every symbol returned exactly 500 records, so the first run had 0 usable
+   cross-sections. Fixed to a forward startTime walk -> 7,137 intervals.
+2. **Held-book misalignment**: `legs` is filtered (intervals with >=8 perps) but I indexed `stamps[i+k]` with the FILTERED
+   index, so the held book evaluated the wrong periods. Fixed by storing each leg's own (t, tNext).
+3. **FUNDING LOOK-AHEAD (the serious one)**: funding is exchanged AT the timestamp you hold through, so a position opened at
+   t0 and held to t1 earns f(t1) — I credited f(t0), which IS the ranking signal. I was ranking on a number and crediting it
+   as income. Circular. Fixed -> the result dropped from 60% to 49% ann at 8h and **survived**.
+**THE BINDING CONSTRAINT IS EXECUTION COST. Break-even is 3.24bp per leg.** At 1-2bp (maker) it is strongly positive; at 4bp
+(taker) it is NEGATIVE (-17%/yr). This is not a signal problem, it is an execution problem: it requires posting limit orders
+and getting filled on 20 perps every 1-3 days.
+**UNRESOLVED CAVEATS, stated plainly:** (a) **SURVIVORSHIP** — the 20 perps are currently-listed; delisted/failed perps are
+excluded and they would have had extreme funding, so this is an upper bound; (b) **single venue** (Binance) = counterparty
+risk and one exchange's microstructure; (c) **capacity** — funding strategies move the rate at size; (d) the train half is
+dominated by 2020-21, though the OOS half (2023-26) is where SR 1.85-1.90 appears.
+STATUS: the best candidate the program has produced — OOS-significant, mechanism-backed (crowded positioning pays), and
+survived a look-ahead fix that cost it 11 points of annual return. NOT armed. Next: survivorship-corrected universe, a second
+venue, and a forward test.
