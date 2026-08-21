@@ -8038,3 +8038,30 @@ deleted)`), exit **0** against a reachable host via `AEGIS_RENTED_BASE`. `deno c
 the project, re-run `deno run -A scripts/infra-guard.ts` for GREEN. **The durable fix is D-367/368:** finish the
 owned-infra migration in `infra/RUNBOOK.md` so an unpaid invoice can never again stop the research engine —
 this outage is the strongest evidence yet for owning the substrate.
+
+## D-408/409 — GAP CLOSING: accruals TESTED at last (real, then decayed); crypto funding carry + crowding are REAL
+**D-408 ACCRUALS (Sloan 1996) — the factor whose ABSENCE exposed the Coverage-Law failure — is now TESTED.** 4,184 equities,
+168 months, 165,045 observations, point-in-time, liquid-only, net of cost:
+| factor | FULL | TRAIN | TEST |
+|---|---|---|---|
+| **ACCRUALS** | IC 0.0118 (t **2.51**) | IC 0.0178 (t 2.98) | IC 0.0027 (t 0.36) — **decays to zero** |
+| net operating assets | IC 0.0095 (t 1.53) | IC 0.0291 (t 4.01) | IC **-0.0199** (t -1.98) — **sign flips** |
+| working-capital growth | IC 0.0124 (t 2.73) | IC 0.0150 (t 2.54) | IC 0.0085 (t 1.20) — decays, sign holds |
+VERDICT: **accruals is REAL in-sample with the sign Sloan predicted (high accruals -> low returns), and has DECAYED to nothing
+out-of-sample** — textbook McLean-Pontiff post-publication decay on a factor published in 1996 and arbitraged for 30 years.
+Net of cost: +0.4%/yr full sample, NEGATIVE in test. Not tradable. **But the distinction matters enormously: this is now
+"TESTED and decayed", not "never tested and assumed absent".** That is exactly what the Coverage Law exists to force, and it
+worked on its first application.
+**D-409 CRYPTO FUNDING / PERP BASIS (Tier-1 gap) — TWO REAL FINDINGS.** Free Binance public data, 10 perps, 5,000 funding
+intervals:
+1. **CARRY IS SYSTEMATICALLY POSITIVE: mean 0.0017%/8h = 1.9%/yr, t = 18.0, positive in 63% of intervals** (LINK 4.6%/yr at
+   80% positive; BNB 3.1%; DOGE 3.3%; BTC 2.4%). That is the gross return to the delta-neutral basis trade (short perp /
+   long spot). Real, but thin once both legs' costs and exchange/counterparty risk are charged.
+2. **FUNDING PREDICTS RETURNS MONOTONICALLY — a genuine crowding signal.** By funding quintile, next-8h return:
+   most-negative **+0.201% (t 3.63)** -> +0.081% -> +0.125% -> +0.033% -> most-positive **-0.023%**. Crowded shorts (negative
+   funding) precede rallies; crowded longs precede falls. Spread 0.224%/8h.
+   HONEST CAVEATS: only ~500 intervals/symbol (~167 days) — SHORT sample; 8h rebalancing means costs of ~0.2% per round trip
+   against a 0.224% spread, so it is cost-fragile; and it needs a proper train/test split before any claim. **Flagged as the
+   most promising untested lead in the program** and queued for a full test.
+A BUG CAUGHT MID-TEST: the first funding-reversal run used FIXED thresholds ~10x too high (mean funding is 0.0017%, the "pos"
+cut was 0.02%), leaving 4 of 5 buckets empty. Fixed to percentile cuts — the correct way to define "extreme" for any signal.
