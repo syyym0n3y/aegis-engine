@@ -33,6 +33,12 @@ Decay: 22.20 (2021) -> 14.09 (2022) -> 7.32 (2023-24) -> **1.83 (2025-26, below 
 TAIL: worst 30d window **-11x the average premium (BTC), -48x (ETH)**, both May 2021. DVOL is not directly tradable, so
 3.6x is an UPPER BOUND.
 
+**D-436/437 CROSS-VENUE FUNDING DISLOCATION — real, never decayed, structurally below cash.** 67,875 funding points across
+Binance/Bybit/OKX. Direction chosen from a trailing mean (no oracle). Binance/Bybit over ~6 years: captured 2.85-3.92%/yr,
+net of 20bp fees **+0.42 to +1.49%/yr, t 8-15, 5/5 pairs** — and **0/5 beat the 4% risk-free rate**. **Even at ZERO fees the
+captured spread is below cash**, so no fee tier rescues it: a DEFINITIVE kill, not a conditional one, and it gets no watch.
+Coverage limit stated: OKX publishes only ~96 days, so OKX pairs are underpowered by construction.
+
 **THE STRUCTURAL CONCLUSION.** Where capacity binds (equities) the edge cannot absorb size; where capacity is abundant
 (perps) the edge is smaller than the fee. **The only three things in this entire program that ever genuinely paid were CARRY
 trades requiring no forecast at all — the quarterly basis, the perp funding harvest, and the variance premium — measured on

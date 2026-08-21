@@ -8630,3 +8630,49 @@ forecast — was either capacity-bound (equities), sub-fee (perp microstructure)
 required no forecast at all, and they are not paying now.
 
 `scripts/basis-watch.ts` now watches all three daily, DORMANT, and states the tail alongside every premium.
+
+## D-436/437 — CROSS-VENUE FUNDING DISLOCATION: real, persistent, never decayed — and structurally below cash
+
+**Scope set honestly first.** Cross-venue PRICE arbitrage is a sub-second latency game and Aegis has no infrastructure for
+it; claiming to test it would be dishonest. What IS testable at our resolution is the FUNDING RATE: published every 8h, and
+the same contract can pay materially different funding on different venues at the same settlement. Long the low-funding
+venue, short the high-funding venue — delta-neutral across venues, no forecast, no spot custody.
+
+**Data (D-436):** 67,875 funding points across Binance, Bybit and OKX for BTC/ETH/SOL/XRP/DOGE. All three settle on
+identical 8h boundaries, so alignment is exact rather than interpolated.
+**COVERAGE LIMIT (stated, not papered over):** OKX's public funding history returns only ~287 points (~96 days) regardless
+of pagination. The long-history test is therefore **Binance vs Bybit (5,700-7,000 aligned intervals, ~6 years)**; every OKX
+pair is underpowered and its negative results are labelled as such, not read as venue-specific findings.
+
+**THE TRAP THIS TEST WAS BUILT AROUND.** `max(funding) - min(funding)` is >= 0 BY CONSTRUCTION, so a "positive average
+spread" is guaranteed and means nothing — it is the payoff to an oracle who already knows which venue will pay more. The
+tradable question is whether the ORDERING PERSISTS, so the direction here is chosen from a 45-interval trailing mean
+(information available BEFORE settlement) and the capture is measured at the next settlement.
+
+| pair (binance/bybit) | oracle %/yr | CAPTURED %/yr | net of 20bp | vs 4% cash | win/tie | t | n |
+|---|---|---|---|---|---|---|---|
+| BTC | 9.98 | 3.75 | +1.32 | **−2.68** | 46/24% | 13.01 | 7,021 |
+| ETH | 8.73 | 2.85 | +0.42 | −3.58 | 47/22% | 10.00 | 6,391 |
+| SOL | 10.43 | 3.92 | +1.49 | −2.51 | 48/25% | 8.14 | 5,710 |
+| XRP | 7.26 | 3.46 | +1.03 | −2.97 | 46/29% | 15.03 | 5,778 |
+| DOGE | 7.15 | 3.16 | +0.73 | −3.27 | 44/31% | 12.37 | 5,719 |
+
+**5 of 5 beat fees. 0 of 5 beat cash.**
+
+**A reporting bug caught and fixed:** the first run showed hit rates of 44-48%, reading as worse than a coin flip. Both
+venues frequently sit at the same 0.01%/8h default, giving a spread of exactly zero, and those flat intervals were being
+counted as losses. Win/tie/loss are now separated: of DECIDED intervals the direction is right **60-66%** of the time. The
+direction choice is genuinely good — and it changes nothing about the verdict.
+
+**WHY THIS ONE IS DIFFERENT FROM D-431/433/435, and why it is a harder kill.** The other three structural premia DECAYED —
+they paid handsomely in 2021 and are ~0 now, so they are conditional and are watched. This one never decayed: t of 13-15
+over six years, stable throughout. It is simply **bounded at a level below cash**. And critically, **even at ZERO fees the
+captured spread (2.85-3.92%/yr) is still under the 4% risk-free rate** — so no VIP tier, maker rebate or fee negotiation
+rescues it. That makes it a DEFINITIVE kill rather than a conditional one, and it gets no watch.
+
+**This is what an efficient market looks like from the inside:** the dislocation is real, persistent and measurable, and it
+is compressed to precisely the level at which capturing it is not worth doing. The oracle bound of 7-10%/yr is what the
+inefficiency would be worth to someone who knew the answer in advance; the ~1%/yr net is what it is worth to someone who
+has to decide first. The gap between those two numbers is the market's price for that knowledge.
+
+**VERDICT: NULL for promotion. No watch. The last free structural spread in the stack is closed.**
