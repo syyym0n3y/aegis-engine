@@ -38,7 +38,13 @@ const perp=new Map<string,Map<number,number>>();
 for(const base of ["BTCUSDT","ETHUSDT"]){ perp.set(base,await klines(base));
   console.log(`  perp ${base}: ${perp.get(base)!.size} daily closes`); }
 
-const rows:{symbol:string;venue:string;interval:string;ts:number;open_interest:number}[]=[];
+// CONSTANT-MATURITY SELECTION. At any date BOTH the current-quarter and next-quarter contracts are live, so a naive append
+// produces two basis values for the same (symbol, ts) and the upsert fails on its own primary key (it did — caught here,
+// not in analysis). Beyond the mechanics, mixing maturities would make the series meaningless: annualised basis explodes as
+// expiry approaches, so a 10-day and an 80-day observation are not the same quantity. Keep, per date, the contract whose
+// days-to-expiry is CLOSEST TO 60 within [25,100] — a stable ~2-month constant-maturity basis.
+const TARGET_DAYS=60;
+const pick=new Map<string,{ann:number;days:number}>();   // "SYM|ts" -> best observation
 // NOTE ON STORAGE: the basis series is written into trd_perp_oi's numeric column under a distinct `interval` tag rather
 // than a new table -- the column is a plain double and the primary key already separates series. Labelled explicitly as
 // 'basis_ann' so it can never be mistaken for open interest by a later reader.
@@ -53,13 +59,21 @@ for(const c of contracts){
   for(const [ts,f] of fk){
     const s=sp.get(ts); if(!s||!(s>0)||!(f>0))continue;
     const days=(c.expiry-ts)/86400; if(days<5||days>120)continue;   // drop the noisy final week and pre-listing stub
+    if(days<25||days>100)continue;
     const ann=(f/s-1)*365/days;
     if(!Number.isFinite(ann)||Math.abs(ann)>3)continue;
-    rows.push({symbol:c.base,venue:"binance",interval:"basis_ann",ts,open_interest:ann}); n++;
+    const key=`${c.base}|${ts}`; const prev=pick.get(key);
+    if(!prev||Math.abs(days-TARGET_DAYS)<Math.abs(prev.days-TARGET_DAYS)){pick.set(key,{ann,days});n++;}
   }
   console.log(`  ${c.sym.padEnd(16)} ${String(fk.size).padStart(4)} closes -> ${String(n).padStart(4)} basis points`);
 }
 console.log(`\n  contracts with history: ${found}/${contracts.length}`);
+const rows=[...pick.entries()].map(([k,v])=>{const [symbol,ts]=k.split("|");
+  return {symbol,venue:"binance",interval:"basis_ann",ts:Number(ts),open_interest:v.ann};})
+  .sort((a,b)=>a.symbol<b.symbol?-1:a.symbol>b.symbol?1:a.ts-b.ts);
+const spanOf=(sym:string)=>{const t=rows.filter(r=>r.symbol===sym).map(r=>r.ts);
+  return t.length?`${new Date(Math.min(...t)*1000).toISOString().slice(0,10)} .. ${new Date(Math.max(...t)*1000).toISOString().slice(0,10)} (${t.length} days)`:"none";};
+for(const sym of ["BTCUSDT","ETHUSDT"]) console.log(`  ${sym} constant-maturity basis: ${spanOf(sym)}`);
 for(let i=0;i<rows.length;i+=2000){
   const res=await fetch(`${OWNED}/trd_perp_oi?on_conflict=symbol,venue,interval,ts`,{method:"POST",
     headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows.slice(i,i+2000))});
