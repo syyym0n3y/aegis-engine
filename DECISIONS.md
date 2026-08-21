@@ -8752,3 +8752,35 @@ average hour of +0.82bp. The concentration is the finding; the level is not trus
 (equities), on effect-size far below fee (D-426, 0.02-0.14x), or was null. This one is roughly 0.6-1.6x its fee depending
 on execution, which means **execution quality decides it, not the signal**. That is not a question historical bars can
 answer. Not promoted; recorded as the only candidate whose fate turns on execution rather than on edge.
+
+## D-441 CORRECTED by D-442/443 — crypto momentum was a CONCENTRATION artifact, not an edge
+
+**What D-441 reported:** cross-sectional momentum on 14 perps — 94.2%/yr net of fees AND funding, SR 1.13, alpha t 2.93,
+beta to BTC −0.033 (genuinely market-neutral), positive in all four eras. I called it the only signal still standing.
+
+**What the survivorship rebuild found, and it is not what I was looking for.** The universe was expanded from 14
+currently-listed perps to **328 contracts including 10 delisted** (LUNAUSDT ending 2022-05-13, MATICUSDT 2024-09-11,
+SRMUSDT, ANTUSDT, HNTUSDT, TOMOUSDT, BTSUSDT, AUDIOUSDT, GALUSDT, DODOUSDT), lifting cross-sectional breadth from 14 to
+**162 names per day**.
+
+| universe | net %/yr | SR | t | maxDD | breadth |
+|---|---|---|---|---|---|
+| survivorship-free (328 contracts) | **18.8%** | **0.34** | **0.86** | −68% | 162 |
+| currently-listed only | 13.6% | 0.24 | 0.62 | −74% | 158 |
+
+**The survivorship effect was small and POSITIVE (+5.2pp/yr, t 0.24)** — including dead contracts HELPED, because they were
+profitable shorts the biased universe was missing. Survivorship was not the problem.
+
+**BREADTH was the problem.** With 14 names, quintile sorts meant 3 long and 3 short — a handful of large idiosyncratic
+bets, not a factor portfolio. The 94%/yr was the variance of that concentration resolving favourably. At 162 names the same
+rule gives **SR 0.34, t 0.86**, nowhere near this program's own deflated noise ceiling of **t ~ 5.34 (D-363/364)**.
+
+**VERDICT: NULL. D-441's reading was wrong and is corrected here.** This is the third time this program has produced a
+large number from a concentrated book — after D-415 (pooling artifact, retracted) and D-423 (score-weighted 72%/yr flagged
+as concentration, not alpha). The lesson is now explicit: **a cross-sectional result computed on a thin universe is a
+statement about a few names, not about a factor. Report breadth beside every cross-sectional Sharpe, and treat any
+cross-section under ~50 names as untested rather than as evidence.**
+
+**Method note:** the funding leg is not applied in the survivorship-free run (funding history was not fetched for delisted
+contracts and imputing it would be inventing data). D-441 measured funding's effect on momentum at +1.3pp/yr, which does
+not approach changing this verdict.
