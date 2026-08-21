@@ -89,11 +89,23 @@ lead-lag result; (c) when a candidate signal is correlated with a known effect, 
 that is the only clean separation.
 
 ### OPEN — remaining Tier-2
-- **non-linear / conditional models** — IN PROGRESS (`scripts/nonlinear.ts`, D-419). Gradient-boosted trees vs linear
-  baselines, strict walk-forward, on the monthly cross-sectional equity panel. Pre-registered null: if GBM does not beat the
-  linear composite OOS on a paired t, non-linearity adds nothing to THIS panel.
-- **portfolio construction beyond decile sorts** — mean-variance / risk-parity / turnover-constrained optimisation over the
-  measured signals, rather than equal-weight top-decile.
+### CLOSED — non-linear / conditional models (D-419): **POSITIVE**, the first Tier-2 gap that was not a null
+GBM beats the linear composite OOS by delta IC +0.0098 (paired t 2.13-2.49), and the delta is IDENTICAL on the loose and the
+strict ($5 / $10M/day) universes — so it is signal linear rank-IC cannot represent, not a microcap artifact. **Every prior
+null verdict in this program was measured with a method that leaves this much on the table.** Economics do NOT clear the bar:
+16 consecutive years (2005-2020) are flat-to-negative net of cost, and the strong window (2021-2026, SR 1.42) is the one our
+currently-listed universe measures least honestly. Methodological gap closed; nothing promoted.
+
+### CLOSED — portfolio construction (D-421)
+Conviction (score-proportional) weighting beats equal-weight decile at identical turnover: SR 0.35 -> 0.57. The no-trade band
+FAILS — cutting turnover 40% costs more gross than it saves, proving the signal decays inside the month, which retires
+turnover-reduction as a cost lever for month-horizon signals here.
+
+### OPEN — Tier-2 remaining
+- **conditional/interaction models with FUNDAMENTAL features** — D-419 used price/volume only. The fundamentals panel is now
+  fresh to 2026-08 (D-420) and has never been run through a non-linear model.
+- **regime conditioning** — D-419's own result says the effect is regime-dependent (dead 2005-2020). Nothing in this program
+  has yet CONDITIONED a signal on a measured regime state rather than reporting the pooled average.
 
 ### COVERAGE NOTE (raised by this hunt, unresolved)
 `StockholdersEquity`, `Assets`, `Liabilities`, `NetIncomeLoss` in `trd_fundamentals` **stop at 2023-07**; only the 5

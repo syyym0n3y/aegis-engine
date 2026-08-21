@@ -8258,3 +8258,114 @@ instruments, 6,519 common days, all loaded. This null is about the MARKET, not o
 **Kept as doctrine:** the multiple-testing bar sqrt(2 ln N) and the disagree-day separation test. 286/1404 pairs "surviving
 OOS" at |t|>2 is what a scan of correlated series produces by construction; OOS survival is NOT proof when the pairs are
 not independent.
+
+## D-419 — NON-LINEAR MODELS: the first Tier-2 gap that came back **POSITIVE** (methodological), economics still regime-bound
+
+**The gap:** every test in this program had been a LINEAR rank-IC or a single-variable decile sort. A linear IC of ~0 is
+fully compatible with a strong CONDITIONAL or NON-MONOTONIC relationship — and this program had already observed tail
+inversions twice, which is precisely the shape a rank-IC cannot see. So the linear-only methodology was itself a hole.
+
+**Test (`scripts/nonlinear.ts`):** monthly cross-sectional equity panel, 10 price/volume features, cross-sectionally
+rank-normalised per month. Gradient-boosted depth-3 trees (histogram splits) vs a ridge linear composite vs single factors.
+Strict walk-forward: train on everything <= Y-1, predict Y, for Y = 1996..2026. Pre-registered null: if GBM does not beat
+the linear composite OOS on a paired t, non-linearity is NULL for this panel.
+
+| | loose universe ($1, $1M/day) | strict universe ($5, $10M/day) |
+|---|---|---|
+| panel rows | 497,234 | 280,434 |
+| GBM OOS rank IC | **0.0450** (t 9.25) | **0.0313** (t 6.05) |
+| linear composite | 0.0353 (t 5.12) | 0.0215 (t 2.76) |
+| momentum 12-1 alone | 0.0206 (t 2.48) | 0.0181 (t 1.84) |
+| **GBM − linear, paired t** | **+0.0097, t 2.49** | **+0.0098, t 2.13** |
+
+**The non-linear gain is REAL and robust.** The delta is essentially identical in both universes (0.0097 vs 0.0098), so it
+is not a microcap or survivorship artifact — it is signal that linear rank-IC structurally cannot represent. **This closes a
+methodological hole that silently weakened every prior null verdict in this program.**
+
+**The economics are a different story — and this is the part that matters.** Decile long-short in REAL returns
+(strict universe, monthly rebalance):
+
+| segment | GROSS %/yr | net @30bp | net @60bp | SR net30 | n_mo |
+|---|---|---|---|---|---|
+| ALL | 11.3 | 7.7 | 4.1 | 0.43 | 367 |
+| 1996-2004 | 15.3 | 11.7 | 8.1 | 0.65 | 108 |
+| **2005-2012** | **0.8** | **-2.8** | -6.4 | -0.16 | 96 |
+| **2013-2020** | **3.0** | **-0.6** | -4.2 | -0.04 | 96 |
+| 2021-2026 | 31.9 | 28.3 | 24.7 | 1.42 | 67 |
+
+**Sixteen consecutive years (2005-2020, 192 months) are flat-to-NEGATIVE net of cost.** The headline 11.3%/yr is the average
+of a strong late-90s window, a dead middle, and a very strong recent window. A 2021-2026 SR of 1.42 is not a forward
+expectation: 67 months is short, and it is exactly the era where a currently-listed universe flatters us most (the 2021-2023
+small-cap/SPAC bust delisted precisely the names that would sit in the short leg, and they are absent from our data).
+
+**VERDICT: methodological gap CLOSED and the finding is positive; the strategy is NOT promoted.** It fails the "works across
+regimes" bar that any real edge must clear, and its best era is the one our data is least able to measure honestly.
+Recorded as a genuine improvement to HOW Aegis tests, not as an edge.
+
+**Bugs caught and fixed in the course of this test (recorded because they nearly shipped):**
+1. The naive split-finder (90 full scans/node) stalled the walk-forward — replaced with histogram splits.
+2. Features `x[5]` and `x[8]` were **both** `log(dv)` — a duplicated feature. Harmless to trees, but the feature list was
+   lying about itself; slot 8 is now relative volume.
+3. The first walk-forward started in 1982, on a universe that only contains firms still listed in 2026 — a survivor-only
+   sample. Floor moved to 1996.
+
+## D-420 — COVERAGE LAW repair + the guard that MISSED it
+
+**The failure:** while auditing the panel for D-419 I found that `Assets`, `Liabilities`, `StockholdersEquity` and
+`NetIncomeLoss` in `trd_fundamentals` **stopped at 2023-07**. Every value / quality / profitability verdict this program has
+issued was measured on a panel that ended three years ago, with the last three years silently absent. Under the COVERAGE LAW
+that is a RESEARCH failure — an unfetched free dataset — not a market finding.
+
+**Worse: `scripts/coverage-guard.ts` was GREEN throughout.** It measured breadth (ticker count) and nothing else, so a
+dataset with 4,000+ tickers that quietly stopped updating passed cleanly. **Breadth alone is not coverage.**
+
+**Repairs, all verified against live state:**
+- `scripts/refresh-core-fundamentals.ts` — +294,569 rows; re-reads max(effective_date) per concept and EXITS 1 if any
+  concept failed to advance. All 5 verified past 2024.
+- `scripts/load-deep-fundamentals.ts` — year range made env-configurable; topped up +100,358 rows (the deep concepts were
+  199 days stale).
+- All four fundamental families now report `newest 2026-08-01` in the guard.
+- **Future-period guard:** EDGAR returned one filing with `period_end 2026-12-31` (a shell company's forward fiscal
+  year-end). Inert under `asOf()`, but a fact that "was knowable" before it happened has no place in a point-in-time store.
+  Filtered at the door; 3 existing rows deleted.
+
+**The guard now has a STALENESS dimension**, and is verified in BOTH directions by exit code, not by reading its output:
+
+```
+GREEN path exit=0  (expect 0)     # true current state
+STALE path exit=1  (expect 1)     # MAX_STALE_DAYS=1 — staleness trigger isolated
+SELFTEST  exit=1  (expect 1)      # inflated floor + a concept that was never fetched
+```
+
+**Doctrine added:** a dataset that silently stopped updating is the same Coverage-Law failure as one never fetched. Absence
+of recent data is not evidence about recent markets.
+
+## D-421 — PORTFOLIO CONSTRUCTION: the construction choice was worth more than the model choice
+
+**The gap:** every result in this program had been an EQUAL-WEIGHT TOP-DECILE sort rebalanced monthly — the crudest
+construction available, and the one that pays the most cost. The signal is not the only decision; how it is held is.
+Four constructions measured on the SAME GBM walk-forward score, strict universe ($5 / $10M/day), same cost model:
+
+| construction | turnover/mo | GROSS %/yr | net @30bp | net @60bp | SR net30 |
+|---|---|---|---|---|---|
+| equal-weight decile | 138% | 11.3 | 6.4 | 1.4 | 0.35 |
+| **score-weighted (conviction)** | 137% | **25.9** | **20.9** | 16.0 | **0.57** |
+| inverse-vol within leg | 146% | 9.8 | 4.6 | -0.7 | 0.38 |
+| no-trade band (hold to tercile) | 83% | 7.9 | 4.9 | 2.0 | 0.31 |
+
+**Finding 1 — conviction weighting beats equal weight at IDENTICAL turnover** (137% vs 138%): gross return more than
+doubles. But read the Sharpe, not the return: 0.35 -> 0.57. Most of the extra return is CONCENTRATION (a smaller book in
+the tails, i.e. leverage), not new information. The honest number is +0.22 Sharpe, which is still the largest single
+improvement any construction change has produced here.
+
+**Finding 2 — the no-trade band FAILS, and that is informative.** Cutting turnover 138% -> 83% (a 40% reduction) dropped
+gross from 11.3% to 7.9%, so net@30bp got WORSE (6.4 -> 4.9). **The signal decays inside the month.** Turnover reduction —
+the standard first lever for a cost-killed strategy, and the one that would have been reached for on intuition — does not
+rescue this one. That closes a line of enquiry that would otherwise have consumed weeks.
+
+**Finding 3 — inverse-vol has the highest gross t (4.56) but the worst net@60bp (-0.7%).** Risk-parity within the leg
+tilts toward low-vol names whose smaller spread-to-return ratio is eaten by cost. Consistency is not accessibility.
+
+**VERDICT: Tier-2 portfolio-construction gap CLOSED.** Conviction weighting is now the default construction for any future
+candidate (it is free — same turnover); the no-trade band is retired as a cost lever for month-horizon signals. **No
+strategy is promoted:** D-419's regime failure (16 dead years, 2005-2020) is unaffected by how the book is weighted.

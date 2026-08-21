@@ -244,6 +244,6 @@ for(const [k,b] of Object.entries(books)){ if(b.r.length<24)continue;
   const m=mean(b.r), sg=sdv(b.r), tu=mean(b.to);
   const n30=m-tu*0.003, n60=m-tu*0.006;
   const nm={equal:"equal-wt decile",conviction:"score-weighted",invvol:"inverse-vol",band:"no-trade band"}[k];
-  console.log(`    ${nm!.padEnd(14)}${(tu*100).toFixed(0).padEnd(13)}%${(m*12*100).toFixed(1).padEnd(12)}${(n30*12*100).toFixed(1).padEnd(12)}${(n60*12*100).toFixed(1).padEnd(12)}${((n30/sg)*Math.sqrt(12)).toFixed(2).padEnd(10)}${((m/sg)*Math.sqrt(b.r.length)).toFixed(2)}`);
+  console.log(`    ${nm!.padEnd(14)}${(String((tu*100).toFixed(0))+"%").padEnd(13)}${(m*12*100).toFixed(1).padEnd(13)}${(n30*12*100).toFixed(1).padEnd(12)}${(n60*12*100).toFixed(1).padEnd(12)}${((n30/sg)*Math.sqrt(12)).toFixed(2).padEnd(10)}${((m/sg)*Math.sqrt(b.r.length)).toFixed(2)}`);
 }
 console.log(`\n    GBM - linear: delta IC ${(gm-lm).toFixed(4)}, paired t ${dt.toFixed(2)}  ->  ${Math.abs(dt)>2?(dt>0?"NON-LINEARITY ADDS":"non-linearity HURTS"):"NULL: non-linearity adds NOTHING over linear"}`);
