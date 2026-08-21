@@ -4,8 +4,21 @@
 // no cost model. This is the proper test: deep history, cross-sectional (rank perps against each other each interval, so it
 // is market-neutral and cannot be crypto beta), strict train/test, and net of realistic perp costs INCLUDING the funding
 // actually paid/received — which for a funding-based signal is the whole economics, not a footnote.
-const SYMS=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT","ADAUSDT","LINKUSDT","AVAXUSDT","LTCUSDT",
- "DOTUSDT","MATICUSDT","ATOMUSDT","FILUSDT","ETCUSDT","NEARUSDT","APTUSDT","ARBUSDT","OPUSDT","INJUSDT"];
+// SURVIVORSHIP FIX (D-411): the first universe was 20 CURRENTLY-LISTED perps — the exact bias flagged as the biggest
+// unresolved caveat. Binance exchangeInfo exposes 654 USDT perps of which 127 are DELISTED/SETTLED (OMG, WAVES, FTM, REN...).
+// Build the universe from BOTH so failed coins — which had the most extreme funding — are included. SURV=0 reproduces the
+// old biased universe for comparison.
+const SURV=Deno.env.get("SURV")!=="0";
+const NUNI=Number(Deno.env.get("NUNI")||60);
+let SYMS:string[]=[];
+try{
+  const ei=await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo").then(r=>r.json());
+  const all=(ei.symbols||[]).filter((x:{quoteAsset:string;contractType:string})=>x.quoteAsset==="USDT"&&x.contractType==="PERPETUAL");
+  const live=all.filter((x:{status:string})=>x.status==="TRADING").map((x:{symbol:string})=>x.symbol);
+  const dead=all.filter((x:{status:string})=>x.status!=="TRADING").map((x:{symbol:string})=>x.symbol);
+  SYMS = SURV ? [...live.slice(0,NUNI-dead.length>0?NUNI-dead.length:NUNI), ...dead] : live.slice(0,20);
+  console.log(`  universe: ${SYMS.length} perps (${SURV?`SURVIVORSHIP-FREE: includes ${dead.length} delisted`:"currently-listed only (BIASED)"})`);
+}catch{ SYMS=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT"]; }
 const mean=(a:number[])=>a.reduce((s,x)=>s+x,0)/a.length;
 const tst=(a:number[])=>{const m=mean(a);const sd=Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1));return sd>0?m/(sd/Math.sqrt(a.length)):0;};
 const rankIC=(xs:number[],ys:number[])=>{const n=xs.length;if(n<5)return 0;const rk=(a:number[])=>{const ix=a.map((v,i)=>[v,i] as [number,number]).sort((p,q)=>p[0]-q[0]);const r=new Array(n);for(let k=0;k<n;k++)r[ix[k][1]]=k;return r;};const rx=rk(xs),ry=rk(ys),mx=(n-1)/2;let sxy=0,sx=0,sy=0;for(let i=0;i<n;i++){const dx=rx[i]-mx,dy=ry[i]-mx;sxy+=dx*dy;sx+=dx*dx;sy+=dy*dy;}return sx>0&&sy>0?sxy/Math.sqrt(sx*sy):0;};
