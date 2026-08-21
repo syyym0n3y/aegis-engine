@@ -8096,3 +8096,24 @@ dominated by 2020-21, though the OOS half (2023-26) is where SR 1.85-1.90 appear
 STATUS: the best candidate the program has produced — OOS-significant, mechanism-backed (crowded positioning pays), and
 survived a look-ahead fix that cost it 11 points of annual return. NOT armed. Next: survivorship-corrected universe, a second
 venue, and a forward test.
+
+## D-412 — VIX TERM STRUCTURE: two findings that CONTRADICT standard practitioner belief
+Tier-1 options gap, complementing D-404's VRP. VIX (30d) vs VIX3M (93d), 5,033 overlapping days (2006-2026).
+**1. TERM STRUCTURE PREDICTS MONOTONICALLY — IN THE OPPOSITE DIRECTION TO THE COMMON RULE.** Forward 21d returns by quintile
+of VIX/VIX3M:
+| state | SPY fwd | short-vol (SVXY) fwd |
+|---|---|---|
+| deep contango ("calm") | +0.57% (t 6.09) | +2.71% (t 5.67) |
+| contango | +0.64% | +0.77% |
+| flat | +0.86% | +2.02% |
+| mild backwardation | +0.82% | +3.45% |
+| **backwardation ("stress")** | **+1.42% (t 6.57)** | **+4.94% (t 7.08)** |
+Backwardation — the state practitioners treat as the signal to REDUCE risk — has the HIGHEST forward returns for both equity
+and short-vol. This is the risk-premium mechanism, not an anomaly: you are paid most when fear is highest (consistent with
+D-404, where the VRP itself rose monotonically with VIX level: 2.52 -> 5.95 vol points).
+**2. THE "ONLY SHORT VOL IN CONTANGO" RULE PROVIDES ZERO TAIL PROTECTION.** Worst 21d outcome: **-93.0% ALWAYS-short vs
+-93.0% CONTANGO-GATED** — identical. Mean is barely different (2.57% vs 2.42%). The rule is widely used to make short-vol
+"safe"; it does not, because the catastrophic move (Feb-2018) happens FROM a contango state — that is precisely what makes it
+catastrophic. Gating on term structure filters the wrong variable.
+COMBINED WITH D-404: the VRP is real (t=48.8), it is largest exactly when it is most dangerous, and the popular safety rule
+does not work. Anyone harvesting vol premium on a contango filter is holding an unhedged -93% tail and believing otherwise.
