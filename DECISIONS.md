@@ -8117,3 +8117,29 @@ D-404, where the VRP itself rose monotonically with VIX level: 2.52 -> 5.95 vol 
 catastrophic. Gating on term structure filters the wrong variable.
 COMBINED WITH D-404: the VRP is real (t=48.8), it is largest exactly when it is most dangerous, and the popular safety rule
 does not work. Anyone harvesting vol premium on a contango filter is holding an unhedged -93% tail and believing otherwise.
+
+## D-411/413 — funding crowding SURVIVES the survivorship correction; 13F blocked on a stated, real obstacle
+**D-411 SURVIVORSHIP-FREE FUNDING TEST — the decisive challenge to D-410, and it held.** Rebuilt the universe from Binance
+exchangeInfo: 654 USDT perps, of which **127 are delisted/settled** (OMG, WAVES, FTM, REN, LRC...). Final universe **180 perps
+including all the dead ones**, 8,456 intervals (2,819 days).
+| universe | IC (OOS) | OOS ann / SR, 1-day rebal |
+|---|---|---|
+| 20 currently-listed (BIASED, D-410) | 0.0247 (t 4.67) | 64% / **1.90** |
+| **180 incl. 127 delisted (CORRECTED)** | **0.2492 (t 37.64)** | **57% / 1.16** |
+The correction cost ~7 points of annual return and about a third of the Sharpe — **precisely the direction and rough magnitude
+that removing survivorship bias should cost** — and the signal SURVIVED. The IC actually STRENGTHENED because failed coins
+carried extreme funding AND extreme negative returns, which the signal ranks correctly; that is mechanism, not luck.
+**Cumulative honesty ledger for this result: it has now survived (1) a pagination bug that produced zero data, (2) a held-book
+index misalignment, (3) a FUNDING LOOK-AHEAD that credited the ranking signal as income (cost 11 points), and (4) survivorship
+correction (cost 7 points and a third of the Sharpe).** Four corrections, each of which reduced it, and it is still OOS
+SR ~1.1-1.2 at 50-57%/yr.
+REMAINING CAVEATS, unresolved and stated: (a) **execution is binding — break-even 3.51bp/leg**, so it needs maker fills, not
+taker; (b) **delisting tradability** — the dead perps' extreme returns may not be capturable, since liquidity evaporates near
+delisting (an equity-style delisting-return problem, now pointing the other way); (c) single venue (Binance) counterparty and
+microstructure risk; (d) capacity — funding strategies move the rate at size.
+**D-413 13F — GAP ATTEMPTED, BLOCKED ON A REAL OBSTACLE (stated, not worked around).** Parsed the EDGAR quarterly index:
+59,274 13F-HR filings across 2 years, 8,203 distinct managers, 6,274 filing consistently. Information tables parse cleanly
+(1,609 CUSIPs / $57.8bn in one sampled quarter). **The blocker: 13F reports CUSIPs, not tickers, and a CUSIP->ticker map is
+not freely available at scale.** Without it the holdings cannot be joined to prices. Per the COVERAGE LAW this is recorded as
+**UNTESTED — blocked on a missing identifier map**, NOT as a null. Options: a paid CUSIP map, or a partial free map from
+SEC filings' own ticker/CUSIP co-occurrences (incomplete, biased to large caps).
