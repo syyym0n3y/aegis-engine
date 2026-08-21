@@ -8407,3 +8407,46 @@ least honestly.
 program would have been entitled to call a regime edge. The per-era decomposition showed it was era selection. **A regime
 filter is only real if it revives the era where the signal was dead; if it merely concentrates the months that already
 worked, it is fitting the calendar.** That test is now doctrine and is built into `scripts/nonlinear.ts`.
+
+## D-423 — FUNDAMENTALS x NON-LINEAR: non-linearity adds NOTHING here, and the liquidity gradient is the real story
+
+**The test:** D-419 used price/volume features only. D-420 made the fundamentals panel fresh to 2026-08 for the first time,
+so a non-linear model had never seen them. Added 6 point-in-time fundamental features (book/market, E/P, asset growth, net
+issuance, current ratio, cash/assets), every one read via `asOf(effective_date)` and **dropped rather than imputed when
+missing** — a missing fundamental is not zero, and zero is a real, extreme rank.
+
+**Result 1 — non-linearity is NULL on this panel.** GBM OOS rank IC 0.0197 (t 2.22) vs linear composite 0.0232 (t 2.01):
+**delta IC −0.0035, paired t −0.46.** The linear model is, if anything, slightly better. This does not contradict D-419 — it
+bounds it. D-419's gain was 10 features over 367 months and 280k rows; here it is 16 features over **103 months and 86,763
+rows**, and the tree ensemble has nothing left to find that ridge regression cannot. **Non-linearity buys signal when the
+panel is long and the features are price-based; it buys nothing on the short fundamentals panel.**
+
+**Result 2 — and this is the finding that matters most in the whole hunt — the return is ENTIRELY in the illiquid tail,
+even above a $10M/day floor:**
+
+| liquidity tercile (within the $10M/day universe) | GROSS %/yr | net @30bp | SR net30 |
+|---|---|---|---|
+| LOW | 39.7 | 36.1 | 1.36 |
+| MID | 14.4 | 10.8 | 0.54 |
+| **HIGH** | **4.5** | **0.9** | **0.04** |
+
+**In the genuinely liquid third, the strategy earns 0.9%/yr net — nothing.** The same pattern held on the price-only panel
+(liq:HIGH 5.7% net30, SR 0.26). Two independent panels, one conclusion: **every apparently strong cross-sectional result in
+this program lives in the part of the universe that cannot absorb size.** That is not a cost-model quibble; it is the
+economic ceiling on this entire line of research.
+
+**Result 3 — the 72%/yr score-weighted number is an artifact, and is reported as such.** With ~510 names/month, filtering to
+|z|>1 leaves ~160 names normalised to gross 2, so conviction weighting concentrates hard; 72.1% gross at SR 1.49 is
+concentration, not alpha. It is recorded here so it is never quoted as a result.
+
+**Result 4 — regime conditioning is UNTESTABLE on this panel** (COVERAGE LAW): the expanding-window threshold needs 36
+months of history and the panel starts 2012, so every qualifying month falls in 2021-2026 and both LOW buckets are empty.
+The verdict is **UNTESTED, not null.**
+
+**COVERAGE STATEMENT:** EDGAR XBRL frames begin ~2010-2012 (the XBRL mandate), so this panel is structurally incapable of
+testing fundamentals before 2012. Pre-2010 fundamental history requires a different source and is an OPEN Tier-1 gap — not
+a market finding.
+
+**VERDICT: nothing promoted. The Tier-2 non-linear gap is now fully bounded** — positive on the long price/volume panel
+(D-419), null on the short fundamentals panel (D-423) — and the binding constraint on the whole program is revealed to be
+**liquidity, not signal.**
