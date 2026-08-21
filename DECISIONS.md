@@ -8193,3 +8193,25 @@ the last one killed the finding. That is the system working as designed: a resul
 was destroyed by its own controls before a cent was risked.
 STANDING VERDICT RESTORED: no validated tradable edge. The only surviving results remain risk-management, not alpha:
 trend-overlay drawdown reduction (D-400/401, priced honestly) and the VRP's existence-with-a-tail (D-404/412).
+
+## D-416 — LONG HORIZONS (Tier-2 gap): value is suggestive but UNDERPOWERED once overlap is corrected
+First Tier-2 method gap attacked: almost every prior test used 1-63d horizons. Long horizons (6-24 months) are where retail is
+NOT structurally disadvantaged (no latency/colocation edge required) and where value/quality premia are documented to live.
+Uses data already loaded — no new fetching.
+**THE OVERLAP TRAP, caught before reporting:** sampling an h-day forward return MONTHLY means consecutive observations share
+~(h-21)/h of their window. Treating them as independent inflates t and SR by ~sqrt(h/21). Applied the same effective-N
+discipline as D-341:
+| horizon | value (B/M) OVERLAPPING | value NON-OVERLAPPING (independent) |
+|---|---|---|
+| 126d | IC 0.0202, t **1.74** | n=27: IC 0.0298, **t 1.14**, net ann 10.2%, SR 0.50 |
+| 252d | IC 0.0233, t **1.84** | n=14: IC 0.0360, **t 0.87**, net ann 13.8%, SR 0.39 |
+| 504d | IC 0.0364, t **2.96** | (n=7 — far too few to interpret) |
+**VERDICT: UNDERPOWERED, not a finding.** The point estimates are positive and economically meaningful (10-14%/yr net, SR
+0.39-0.50, improving with horizon) but with only 14-27 INDEPENDENT observations the t-stats are ~1 and indistinguishable from
+zero. Per the COVERAGE LAW this is reported as UNDERPOWERED with the required n stated: to reach t>2 at this effect size needs
+roughly 4-6x more independent periods, i.e. 50-80 years of data, which is exactly what the free EDGAR window (2012-2026)
+cannot provide. Additionally the D-386 survivorship bias inflates VALUE specifically by a documented 1.5-3%/yr, so the honest
+point estimate is nearer 8-12%/yr.
+**QUALITY and EARNINGS-YIELD show the program's signature failure mode again:** non-overlapping ICs are SIGNIFICANT
+(t 2.53 / 2.56 / 2.29 across horizons) while net long-short returns are NEGATIVE (-2.3%, -1.7%, -0.9%/yr). Real ranking
+information, no economic value — the seventh instance of this pattern.

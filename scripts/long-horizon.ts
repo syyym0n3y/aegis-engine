@@ -50,8 +50,14 @@ for(const h of HZS){
       const s=[...a].sort((p,q2)=>get(p)-get(q2)); const q3=Math.max(1,Math.floor(s.length/5));
       ls.push(mean(s.slice(s.length-q3).map(x=>x.fwd))-mean(s.slice(0,q3).map(x=>x.fwd)));}
     if(ls.length<12){console.log(`    ${nm}: thin`);continue;}
+    // OVERLAP CORRECTION: monthly sampling of an h-day forward return means consecutive observations share ~(h-21)/h of
+    // their window. Treating them as independent inflates t and SR by roughly sqrt(h/21). Report the NON-OVERLAPPING series
+    // (every h/21-th month) alongside — that is the honest significance. This is the same effective-N discipline as D-341.
+    const step=Math.max(1,Math.round(h/21));
+    const lsNO=ls.filter((_,i)=>i%step===0), icsNO=ics.filter((_,i)=>i%step===0);
     const sp=Math.floor(ls.length*0.6), cost=0.004, per=252/h;
     const f=(l:number[])=>{const m=mean(l)-cost;const sd=Math.sqrt(l.reduce((s,x)=>s+(x-mean(l))**2,0)/(l.length-1));return `NET ${(m*100).toFixed(2)}% ann ${(m*per*100).toFixed(1)}% SR ${(sd>0?(m/sd)*Math.sqrt(per):0).toFixed(2)}`;};
-    console.log(`    ${nm.padEnd(16)} IC ${mean(ics).toFixed(4)} (t ${tst(ics).toFixed(2)}) | FULL ${f(ls)} | TEST IC ${mean(ics.slice(sp)).toFixed(4)} ${f(ls.slice(sp))}`);
+    console.log(`    ${nm.padEnd(16)} IC ${mean(ics).toFixed(4)} (t ${tst(ics).toFixed(2)} OVERLAPPING) | FULL ${f(ls)} | TEST ${f(ls.slice(sp))}`);
+    console.log(`      ${" ".repeat(14)} NON-OVERLAPPING (n=${lsNO.length} independent): IC ${mean(icsNO).toFixed(4)} (t ${tst(icsNO).toFixed(2)})  ${f(lsNO)}`);
   }
 }
