@@ -34,7 +34,11 @@ for(const c of CONCEPTS){
       const rows=data.filter(d=>Number.isFinite(d.val)&&d.end)
         .map(d=>({cik:c2t.get(String(d.cik))??String(d.cik),ticker:c2t.get(String(d.cik))??null,concept:c,
                   period_end:d.end,effective_date:addDays(d.end,75),value:d.val,updated_at:new Date().toISOString()}))
-        .filter(x=>x.ticker);
+        .filter(x=>x.ticker)
+        // FUTURE-PERIOD GUARD: EDGAR frames occasionally carry a filing whose period_end is in the future (shell companies
+        // reporting a forward fiscal year-end). asOf() filtering makes them inert, but a fact that "was knowable" before it
+        // happened has no place in a point-in-time store. Drop them at the door.
+        .filter(x=>x.period_end<=new Date().toISOString().slice(0,10));
       for(let i=0;i<rows.length;i+=1000){
         await fetch(`${OWNED}/trd_fundamentals?on_conflict=cik,concept,period_end`,{method:"POST",
           headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows.slice(i,i+1000))}).catch(()=>{});}

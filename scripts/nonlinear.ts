@@ -70,26 +70,42 @@ console.log(`    usable months (>=30 names): ${clean.length}`);
 // A compact gradient-boosted regression forest. Depth-3 trees on rank-normalised features can express BOTH interactions
 // ("momentum only in low-vol names") and non-monotonicity ("works in the middle, inverts in the tails") -- exactly the two
 // shapes a linear rank-IC is blind to and that this program has already observed twice in its tail results.
-type Node={leaf?:number;f?:number;thr?:number;l?:Node;r?:Node};
-function fitTree(X:number[][],g:number[],idx:number[],depth:number):Node{
-  if(depth===0||idx.length<50){let s=0;for(const i of idx)s+=g[i];return{leaf:s/Math.max(1,idx.length)};}
-  let best={gain:0,f:-1,thr:0}; const tot=idx.reduce((a,i)=>a+g[i],0), n=idx.length;
-  for(let f=0;f<X[0].length;f++) for(const thr of [-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4]){
-    let sl=0,nl=0; for(const i of idx){ if(X[i][f]<=thr){sl+=g[i];nl++;} }
-    const nr=n-nl; if(nl<25||nr<25)continue;
-    const gain=(sl*sl)/nl+((tot-sl)*(tot-sl))/nr-(tot*tot)/n;
-    if(gain>best.gain)best={gain,f,thr};
-  }
-  if(best.f<0){let s=0;for(const i of idx)s+=g[i];return{leaf:s/n};}
-  const L:number[]=[],R:number[]=[]; for(const i of idx)(X[i][best.f]<=best.thr?L:R).push(i);
-  return{f:best.f,thr:best.thr,l:fitTree(X,g,L,depth-1),r:fitTree(X,g,R,depth-1)};
+type Node={leaf?:number;f?:number;bin?:number;l?:Node;r?:Node};
+const NBIN=16;
+// HISTOGRAM SPLIT FINDING. The naive version (90 full scans per node) was O(90*n) per node and stalled once the expanding
+// training window passed ~10k rows. Features are already cross-sectionally rank-normalised, so they bin exactly into NBIN
+// equal buckets; one pass per node fills all 10 histograms and every candidate split is then read off cumulative sums.
+function fitTreeB(B:Uint8Array[],g:Float64Array,idx:Int32Array,depth:number):Node{
+  const n=idx.length;
+  let tot=0; for(let q=0;q<n;q++)tot+=g[idx[q]];
+  if(depth===0||n<50)return{leaf:tot/Math.max(1,n)};
+  const P=B.length; const hs=new Float64Array(P*NBIN), hc=new Int32Array(P*NBIN);
+  for(let q=0;q<n;q++){const i=idx[q],gv=g[i];for(let f=0;f<P;f++){const o=f*NBIN+B[f][i];hs[o]+=gv;hc[o]++;}}
+  let bg=0,bf=-1,bb=0;
+  for(let f=0;f<P;f++){let cs=0,cc=0;
+    for(let b=0;b<NBIN-1;b++){cs+=hs[f*NBIN+b];cc+=hc[f*NBIN+b];const cr=n-cc;
+      if(cc<25||cr<25)continue;
+      const gain=(cs*cs)/cc+((tot-cs)*(tot-cs))/cr-(tot*tot)/n;
+      if(gain>bg){bg=gain;bf=f;bb=b;}}}
+  if(bf<0)return{leaf:tot/n};
+  let nl=0; for(let q=0;q<n;q++)if(B[bf][idx[q]]<=bb)nl++;
+  const L=new Int32Array(nl),R=new Int32Array(n-nl); let a=0,c2=0;
+  for(let q=0;q<n;q++){const i=idx[q];if(B[bf][i]<=bb)L[a++]=i;else R[c2++]=i;}
+  return{f:bf,bin:bb,l:fitTreeB(B,g,L,depth-1),r:fitTreeB(B,g,R,depth-1)};
 }
-const predTree=(t:Node,x:number[]):number=>t.leaf!==undefined?t.leaf:(x[t.f!]<=t.thr!?predTree(t.l!,x):predTree(t.r!,x));
-function fitGBM(X:number[][],y:number[],trees=120,lr=0.06,depth=3){
-  const F=new Array(X.length).fill(0); const model:Node[]=[]; const idx=[...X.keys()];
-  for(let t=0;t<trees;t++){ const g=y.map((yv,i)=>yv-F[i]); const tr=fitTree(X,g,idx,depth); model.push(tr);
-    for(let i=0;i<X.length;i++)F[i]+=lr*predTree(tr,X[i]); }
-  return (x:number[])=>model.reduce((s,t)=>s+lr*predTree(t,x),0);
+const predB=(t:Node,b:number[]):number=>t.leaf!==undefined?t.leaf:(b[t.f!]<=t.bin!?predB(t.l!,b):predB(t.r!,b));
+const toBin=(v:number)=>Math.max(0,Math.min(NBIN-1,Math.floor((v+0.5)*NBIN)));
+function fitGBMB(rows:Row[],trees=150,lr=0.06,depth=3){
+  const n=rows.length,P=rows[0].x.length;
+  const B:Uint8Array[]=Array.from({length:P},()=>new Uint8Array(n));
+  for(let i=0;i<n;i++)for(let f=0;f<P;f++)B[f][i]=toBin(rows[i].x[f]);
+  const y=Float64Array.from(rows.map(r=>r.y)), F=new Float64Array(n), g=new Float64Array(n);
+  const idx=new Int32Array(n); for(let i=0;i<n;i++)idx[i]=i;
+  const model:Node[]=[];
+  for(let t=0;t<trees;t++){ for(let i=0;i<n;i++)g[i]=y[i]-F[i];
+    const tr=fitTreeB(B,g,idx,depth); model.push(tr);
+    const bb=new Array(P); for(let i=0;i<n;i++){for(let f=0;f<P;f++)bb[f]=B[f][i];F[i]+=lr*predB(tr,bb);} }
+  return (x:number[])=>{const b=x.map(toBin);return model.reduce((s2,t)=>s2+lr*predB(t,b),0);};
 }
 function fitOLS(X:number[][],y:number[]){ // ridge-regularised linear baseline
   const p=X[0].length, A=Array.from({length:p},()=>new Array(p).fill(0)), bv=new Array(p).fill(0);
@@ -110,7 +126,9 @@ const spearman=(a:number[],b:number[])=>{const n=a.length;const ra=[...a.keys()]
 // Train on EVERYTHING up to year Y-1, predict year Y. Never touches future data. Same protocol for every model, so the
 // comparison is apples-to-apples and the only question is whether non-linearity buys anything.
 const years=[...new Set(clean.map(([mo])=>+mo.slice(0,4)))].sort((a,b)=>a-b);
-const START=years[0]+6;
+// SURVIVORSHIP FLOOR: `trd_bars_deep` is a currently-listed universe, so pre-1996 rows are firms that survived 30+ years.
+// Any conclusion drawn there is about survivors, not about the market. Walk-forward starts where the panel is broad.
+const START=Math.max(years[0]+6,1996);
 console.log(`\n    walk-forward: train <= Y-1, predict Y, for Y = ${START}..${years.at(-1)}`);
 const res:Record<string,{ic:number[];ls:number[]}>={gbm:{ic:[],ls:[]},lin:{ic:[],ls:[]},mom:{ic:[],ls:[]},rev:{ic:[],ls:[]}};
 let rnd=12345; const rand=()=>((rnd=(rnd*1103515245+12345)&0x7fffffff)/0x7fffffff);
@@ -120,7 +138,7 @@ for(const Y of years.filter(y=>y>=START)){
   if(tr.length<5000||!te.length)continue;
   const samp=tr.length>120000?tr.filter(()=>rand()<120000/tr.length):tr;
   const X=samp.map(r=>r.x), yv=samp.map(r=>r.y);
-  const gbm=fitGBM(X,yv), lin=fitOLS(X,yv);
+  const gbm=fitGBMB(samp), lin=fitOLS(X,yv);
   for(const [,g] of te){
     const yy=g.map(r=>r.y);
     const preds:Record<string,number[]>={gbm:g.map(r=>gbm(r.x)),lin:g.map(r=>lin(r.x)),mom:g.map(r=>r.x[0]),rev:g.map(r=>-r.x[1])};
