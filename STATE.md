@@ -1,5 +1,14 @@
 # STATE — Aegis (live state)
 
+## 🔴 2026-08-21 — ENGINE DOWN (D-408): rented Supabase org PAUSED for unpaid invoices
+`nslookup glzzoomuhnugsiichnub.supabase.co` -> **NXDOMAIN**; `list_projects` -> all 3 projects `INACTIVE`;
+`restore_project` -> `PaymentRequiredException: unpaid invoices`. Network is fine (github 200). The
+edge-factory + stage-2 crons have not fired since the pause, and the factory tables live ONLY there —
+**queue progress / fac:* candidates / stage-2 verdicts / forward candidates are UNKNOWN, not null.**
+Owned mirror (`aegis-db` + `aegis-rest`, 2d uptime, 66 `trd_*` tables) is UP but does NOT carry the factory
+tables. Guard: `deno run -A scripts/infra-guard.ts` (RED now; verified both directions).
+**OPERATOR:** settle invoices -> restore -> re-run the guard. Durable fix = finish `infra/RUNBOOK.md`.
+
 ## Last updated
 **2026-08-19 (Opus 4.8, long session) — D-360→D-368: from a silent-write bug to owned infrastructure. The arc:**
 - **D-360 P&L silent-write** (3 closers wrote no realized_pnl) fixed + root-caused a 47-position DB/broker divergence

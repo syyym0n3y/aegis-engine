@@ -8002,3 +8002,39 @@ coverage, and EXITS RED when a verdict would rest on inadequate data. **Verified
 passes is theatre): it goes RED and exits 1 both on an inflated floor AND on the exact failure mode — a family whose concept
 has 0 coverage ("cash-flow-to-price UNFETCHED") — and exits 0 on the true current state. Wired as a 6th launchd agent so a
 regression is CAUGHT, not remembered. Current state: all 7 declared families PASS.
+
+## D-408 — THE ENGINE IS DOWN: the rented substrate is paused for unpaid invoices (measured, not inferred)
+**MEASUREMENT (2026-08-21, scheduled edge-factory run).** The full-gauntlet loop could not read a single row.
+Evidence, in the order it was obtained:
+- `execute_sql "select 1"` on `glzzoomuhnugsiichnub` -> `Connection terminated due to connection timeout` (x3).
+- `curl https://glzzoomuhnugsiichnub.supabase.co/functions/v1/trd-edge-stage2?batch=12` -> exit 6, `HTTP=000`,
+  `time=0.0013s` — never left the machine.
+- `nslookup glzzoomuhnugsiichnub.supabase.co` -> **NXDOMAIN** on both the local resolver and 1.1.1.1. Network
+  itself is healthy (`api.github.com` -> HTTP 200).
+- `list_projects` -> **all three projects `status: INACTIVE`** (command-centre, ygs staging, YGS prod).
+- `restore_project(glzzoomuhnugsiichnub)` -> `PaymentRequiredException: This organization has unpaid invoices.
+  Settle outstanding payments before trying to restore project.`
+
+**ROOT CAUSE: billing, not engineering.** Supabase paused the entire org. No change in this repo can restart the
+pipeline. STATE.md flagged the overdue invoices on 2026-08-19 as blocking only the NEW Aegis project (D-367); it
+has since escalated to pausing the project that actually RUNS the engine. The `trd_edge_factory_par_1m` and
+`trd_edge_stage2_3m` crons have not fired since the pause.
+
+**WHAT IS NOT KNOWN (stated as UNKNOWN, per the COVERAGE LAW).** Queue progress, `fac:*` candidate count,
+`trd_stage2_results` verdicts and `trd_forward_candidates` are **unreadable**. The expected terminal state of the
+gauntlet is "almost nothing survives" — but reporting that now would be a claim about MARKETS derived from a claim
+about our BILLING. The verdict is UNKNOWN. No fallback exists: the owned Postgres mirror is UP (`aegis-db`,
+`aegis-rest`, 2 days uptime, 66 `trd_*` tables) but does **not** carry the factory tables —
+`trd_edge_queue` / `trd_stage2_results` / `trd_forward_candidates` / `trd_edge_ingest` are absent there, and
+`trd_edge_scorecard` / `trd_lineage` / `trd_trial_counter` exist with **0 rows**.
+
+**THE GUARD (documented is not enforced).** `scripts/infra-guard.ts` probes the rented substrate and the owned
+mirror and exits RED with the operator remediation, so the next scheduled run gets an unambiguous answer in
+under a second instead of a 120s hang and a misleading "connection timeout" that reads like DB load.
+**Verified in BOTH directions:** exit **1** against the real paused project (`UNRESOLVABLE (project paused/
+deleted)`), exit **0** against a reachable host via `AEGIS_RENTED_BASE`. `deno check` passes.
+
+**OPERATOR ACTION REQUIRED (Claude will not and must not pay invoices):** settle the Supabase invoices, restore
+the project, re-run `deno run -A scripts/infra-guard.ts` for GREEN. **The durable fix is D-367/368:** finish the
+owned-infra migration in `infra/RUNBOOK.md` so an unpaid invoice can never again stop the research engine —
+this outage is the strongest evidence yet for owning the substrate.
