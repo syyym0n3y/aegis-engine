@@ -113,3 +113,16 @@ the research program on a false premise.
    program-level efficiency claim until it is closed.
 5. **Enforced by machine, not memory:** `scripts/coverage-guard.ts` measures live coverage against the declared requirement of
    every factor family and exits RED when a verdict rests on inadequate data. Documented is not enforced; the guard is.
+
+
+## THE LIQUIDITY LAW (2026-08-21) — binds every promotion
+**A cross-sectional result is a claim about a TRADABLE strategy only if the edge survives in the LIQUID tercile. Otherwise it
+is a claim about names that cannot absorb size.**
+Origin: two independent panels reached it by different routes — D-419 (price/volume, 367 months) and D-423 (fundamentals,
+103 months). Headline returns of 11-19%/yr decomposed into liq:LOW 20-40%/yr and **liq:HIGH 0.9-5.7%/yr (SR 0.04-0.26)** —
+i.e. nothing where size can actually go. Every strong cross-sectional number this program has produced has had this shape.
+Rules: (1) no strategy number is reported without its liquidity decomposition; (2) the promotable number is the LIQUID
+tercile's, never the pooled one; (3) a headline whose edge vanishes above the liquidity floor is recorded as CAPACITY-BOUND,
+not as an edge; (4) enforced by `scripts/liquidity-guard.ts` — no lineage row may sit in a promoted state without a recorded
+liquid-tercile Sharpe clearing the floor (verified RED on a below-floor row, RED on a row that never states one, PASS on a
+compliant row, and exit-code-checked in both directions).
