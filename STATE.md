@@ -1,5 +1,30 @@
 # STATE — Aegis (live state)
 
+## 2026-08-21 (later) — TIER-2 RESEARCH GAPS: 3 closed, 1 positive; a COVERAGE failure the guard had missed
+
+**D-417/418 cross-asset lead-lag -> NULL.** 1,404 pairs x 6,519 days. 286 pairs "survived OOS" and every one was an artifact:
+non-synchronous foreign closes (US->^N225 beta 0.51 t 40) and futures settlement (equity->SI=F, COMEX 13:30 vs equity 16:00).
+The residue was short-horizon OWN-asset reversal, killed by the disagree-day test (every |t| < 1.25).
+
+**D-419 non-linear models -> POSITIVE (the first Tier-2 gap that was not a null).** GBM beats the linear composite OOS by
+delta IC **+0.0098, paired t 2.13-2.49**, and the delta is IDENTICAL on the loose and the strict ($5/$10M-per-day) universe,
+so it is not a microcap or survivorship artifact. **Every prior null verdict in this program was produced by a method that
+leaves this much on the table.** Economics do NOT clear the bar: 2005-2020 (16yr, 192 months) is flat-to-negative net of
+cost. Nothing promoted.
+
+**D-420 COVERAGE repair — and the guard was GREEN through the whole failure.** `Assets`/`Liabilities`/`StockholdersEquity`/
+`NetIncomeLoss` had silently **stopped at 2023-07**; every value/quality verdict was measured on a panel ending 3 years ago.
+`coverage-guard.ts` measured breadth only, so 4,000+ stale tickers passed. Fixed: +294,569 core rows +100,358 deep rows, all
+families now `newest 2026-08-01`, write-landing verified by re-read, future-period filings filtered. **The guard now has a
+STALENESS dimension, verified by EXIT CODE in both directions** (green=0, staleness-isolated=1, selftest=1).
+
+**D-421 portfolio construction -> conviction weighting SR 0.35 -> 0.57 at identical turnover; the no-trade band FAILS**
+(turnover -40% cost more gross than it saved), which proves the signal decays inside the month and retires turnover
+reduction as a cost lever here.
+
+**Standing position unchanged: no validated tradable edge, $0 at risk, nothing armed.** What changed is the METHOD -- the
+program now tests non-linearly, weights by conviction, and its coverage guard can see staleness as well as breadth.
+
 ## 🔴 2026-08-21 — ENGINE DOWN (D-408): rented Supabase org PAUSED for unpaid invoices
 `nslookup glzzoomuhnugsiichnub.supabase.co` -> **NXDOMAIN**; `list_projects` -> all 3 projects `INACTIVE`;
 `restore_project` -> `PaymentRequiredException: unpaid invoices`. Network is fine (github 200). The

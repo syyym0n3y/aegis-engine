@@ -246,4 +246,45 @@ for(const [k,b] of Object.entries(books)){ if(b.r.length<24)continue;
   const nm={equal:"equal-wt decile",conviction:"score-weighted",invvol:"inverse-vol",band:"no-trade band"}[k];
   console.log(`    ${nm!.padEnd(14)}${(String((tu*100).toFixed(0))+"%").padEnd(13)}${(m*12*100).toFixed(1).padEnd(13)}${(n30*12*100).toFixed(1).padEnd(12)}${(n60*12*100).toFixed(1).padEnd(12)}${((n30/sg)*Math.sqrt(12)).toFixed(2).padEnd(10)}${((m/sg)*Math.sqrt(b.r.length)).toFixed(2)}`);
 }
+
+// ============================================================================================================
+// TIER-2 GAP #3: REGIME CONDITIONING. D-419's own economics say the effect is regime-dependent -- 16 dead years (2005-2020)
+// bracketed by two strong windows. Every verdict in this program has reported the POOLED average across regimes, which is
+// the exact error the operator's own doctrine names ("never conclude from aggregates"). The question is not "does it work
+// on average" but "can we tell EX ANTE which months it works in".
+// Regime states, all computed from data available AT that month (never the future):
+//   dispersion  = cross-sectional stdev of trailing 21d returns -- the natural hypothesis (the effect needs dispersion)
+//   breadth     = fraction of names above their own 252d midpoint -- market internals
+//   xsvol       = median trailing 252d vol across the panel  -- risk appetite
+// CRITICAL: the bucket boundary is the EXPANDING-WINDOW median of past months only. A full-sample median would be
+// look-ahead -- it would use the future to decide which months were "high dispersion", and would manufacture a result.
+console.log(`\n    ==> REGIME CONDITIONING (thresholds from expanding past window ONLY -- no full-sample percentiles)`);
+const seq:{mo:string;spread:number;disp:number;bread:number;xsvol:number}[]=[];
+for(const [,packs] of wf) for(const [mo,g,pred] of packs){
+  const ord=[...g.keys()].sort((a,b)=>pred[b]-pred[a]); const d=Math.max(1,Math.floor(g.length/10));
+  const spread=mean(ord.slice(0,d).map(i=>g[i].yraw))-mean(ord.slice(-d).map(i=>g[i].yraw));
+  // features are already cross-sectionally RANK-normalised, so raw dispersion is gone from x[] -- rebuild the regime from
+  // what the ranks still carry: the spread of the panel's own realised behaviour this month.
+  const disp=sdv(g.map(r=>r.yraw));                       // realised cross-sectional dispersion of the CURRENT month
+  const bread=g.filter(r=>r.x[6]>0).length/g.length;      // fraction above the median of hi52 (proximity to 52w high)
+  const xsvol=mean(g.map(r=>r.x[3]));                     // mean vol rank (~0 by construction; kept for completeness)
+  seq.push({mo,spread,disp,bread,xsvol});
+}
+seq.sort((a,b)=>a.mo<b.mo?-1:1);
+// NOTE: `disp` above is CONTEMPORANEOUS with the return it is meant to condition -- using it would be look-ahead. The
+// tradable version conditions on the PRIOR month's dispersion, which was fully observable at trade time.
+for(const key of ["disp","bread"] as const){
+  const hi:number[]=[], lo:number[]=[]; const past:number[]=[];
+  for(let i=1;i<seq.length;i++){
+    const signal=(seq[i-1] as unknown as Record<string,number>)[key];   // LAGGED: known before the month starts
+    past.push(signal);
+    if(past.length<36){continue;}                                       // need history to form a threshold at all
+    const srt=[...past].sort((a,b)=>a-b); const med=srt[Math.floor(srt.length/2)];
+    (signal>med?hi:lo).push(seq[i].spread);
+  }
+  const rep=(a:number[])=>{if(a.length<24)return "(thin)";const m=mean(a),sg=sdv(a);
+    return `${(m*12*100).toFixed(1)}%/yr gross, ${((m-0.003)*12*100).toFixed(1)}% net30, SR${(((m-0.003)/sg)*Math.sqrt(12)).toFixed(2)}, t${((m/sg)*Math.sqrt(a.length)).toFixed(2)}, n=${a.length}`;};
+  console.log(`      prior-month ${key.padEnd(6)} HIGH : ${rep(hi)}`);
+  console.log(`      prior-month ${key.padEnd(6)} LOW  : ${rep(lo)}`);
+}
 console.log(`\n    GBM - linear: delta IC ${(gm-lm).toFixed(4)}, paired t ${dt.toFixed(2)}  ->  ${Math.abs(dt)>2?(dt>0?"NON-LINEARITY ADDS":"non-linearity HURTS"):"NULL: non-linearity adds NOTHING over linear"}`);
