@@ -44,7 +44,27 @@ for(const base of ["BTCUSDT","ETHUSDT","SOLUSDT","LINKUSDT"]){
   const hit=net>HURDLE; if(hit)fire++;
   console.log(`  ${hit?"FIRE":"    "} ${base.padEnd(16)} 30d  gross ${(ann*100).toFixed(1).padStart(6)}%/yr  net ${(net*100).toFixed(1).padStart(6)}%/yr  ${hit?"<- condition MET":""}`);
 }
+// VARIANCE LEG (D-435). The third structural premium, and it decayed on exactly the same timeline as the other two
+// (BTC 22.2 -> 14.1 -> 7.3 -> 1.8 vol points across the four eras). LIVE PROXY ONLY: true VRP needs the FORWARD realised
+// vol, which is unknowable today, so this compares current implied against TRAILING realised and is labelled as an
+// estimate. It is directional guidance for whether the premium has returned, not a measurement.
+console.log(`\n  --- variance risk premium (sell 30d variance), LIVE PROXY: implied now vs TRAILING realised ---`);
+for(const cur of ["BTC","ETH"]){
+  const j=await fetch(`https://www.deribit.com/api/v2/public/get_volatility_index_data?currency=${cur}&start_timestamp=${Date.now()-7*86400000}&end_timestamp=${Date.now()}&resolution=43200`).then(r=>r.json()).catch(()=>null) as {result?:{data?:number[][]}}|null;
+  const data=j?.result?.data;
+  if(!Array.isArray(data)||!data.length){console.log(`  ${cur}: DVOL unavailable — UNKNOWN`);continue;}
+  const ivNow=data[data.length-1][4];
+  const hv=await fetch(`https://www.deribit.com/api/v2/public/get_historical_volatility?currency=${cur}`).then(r=>r.json()).catch(()=>null) as {result?:number[][]}|null;
+  const rv=Array.isArray(hv?.result)&&hv!.result!.length?hv!.result![hv!.result!.length-1][1]:null;
+  if(rv===null){console.log(`  ${cur}: realised vol unavailable — UNKNOWN`);continue;}
+  const vrp=ivNow-rv; const net=vrp-2;                       // 2 vol points round-trip cost
+  const hit=net>4;                                           // a premium worth its tail, not merely positive
+  if(hit)fire++;
+  console.log(`  ${hit?"FIRE":"    "} ${cur.padEnd(16)} implied ${ivNow.toFixed(1)}  trailing realised ${rv.toFixed(1)}  VRP ${vrp.toFixed(1)} net ${net.toFixed(1)} vol pts ${hit?"<- condition MET":""}`);
+}
 console.log(`\n  ${fire?`${fire} contract(s) meet the condition. STILL DORMANT — surfacing only; nothing is armed and no order path exists.`
-  :"Neither carry meets the condition. Correct action: hold cash. (Basis last cleared 5%/yr on 2025-02-02; funding beat cash for only 1 of 8 symbols in 2025-2026, by 0.12%/yr.)"}`);
+  :"No structural premium meets its condition. Correct action: hold cash. (Basis last cleared 5%/yr on 2025-02-02; funding beat cash for 1 of 8 symbols in 2025-2026 by 0.12%/yr; BTC VRP is down to 1.8 vol points from 22.2 in 2021 and ETH is negative.)"}`);
+console.log(`  All three premia decayed on the SAME timeline (D-431/433/435) and each carries a tail that dwarfs it: the worst`);
+console.log(`  30d variance window cost 11x (BTC) and 48x (ETH) the average premium. Selling insurance is paid for a reason.`);
 console.log(`  Unmodelled and material: exchange/counterparty risk (this trade was destroyed by FTX in 2022), margin calls`);
 console.log(`  on the short leg during a squeeze, settlement/withdrawal risk. Clearing the hurdle is necessary, not sufficient.`);

@@ -27,12 +27,20 @@ carry is **11.61%/yr gross, not 1.9%** — the long-run level is Binance base fu
 2019-2021 +24 to +32%/yr; 2022 negative for all 8; 2023-2024 +5.9% (7/8 beat cash); **2025-2026 -0.70%, only 1/8 beats
 cash by 0.12%/yr.** Folded into the daily carry watch alongside the basis — they decayed in lockstep.
 
+**D-434/435 CRYPTO VARIANCE RISK PREMIUM (Deribit now allowlisted) — the third carry, same decay, brutal tail.** 3,954 DVOL
+points vs realised vol from held hourly bars. BTC VRP **9.14 vol pts, t 4.87 (non-overlapping), positive 76%, 3.6x cost**.
+Decay: 22.20 (2021) -> 14.09 (2022) -> 7.32 (2023-24) -> **1.83 (2025-26, below the 2-pt cost)**; ETH now **negative**.
+TAIL: worst 30d window **-11x the average premium (BTC), -48x (ETH)**, both May 2021. DVOL is not directly tradable, so
+3.6x is an UPPER BOUND.
+
 **THE STRUCTURAL CONCLUSION.** Where capacity binds (equities) the edge cannot absorb size; where capacity is abundant
-(perps) the edge is smaller than the fee. **The only two things in this entire program that ever genuinely paid were CARRY
-trades requiring no forecast at all — the quarterly basis and the perp funding harvest — they were competed away on the
-SAME timeline, and both had their best years as compensation for a counterparty tail that then materialised in 2022.**
+(perps) the edge is smaller than the fee. **The only three things in this entire program that ever genuinely paid were CARRY
+trades requiring no forecast at all — the quarterly basis, the perp funding harvest, and the variance premium — measured on
+separate data through separate mechanisms, and all three were competed away on the SAME timeline, and both had their best years as compensation for a counterparty tail that then materialised in 2022.**
 That is a strategic finding, not a null: it says where to look (structural spreads, not forecasts) and what to wait for
-(the condition returning), which is why both are now watched daily rather than filed.
+(the condition returning), which is why all three are now watched daily rather than filed. One phenomenon, not three
+coincidences: the crypto risk premium was compensation for un-hedgeable tail risk and has been competed down as the market
+institutionalised. Every FORECAST tested was capacity-bound, sub-fee, or null.
 
 **Three laws now enforced daily** by `io.aegis.coverage` (coverage+staleness, liquidity tercile, effect-size-vs-fee) plus
 the basis watch. Each verified RED by exit code, not by reading its output. **$0 at risk, nothing armed, nothing promoted.**

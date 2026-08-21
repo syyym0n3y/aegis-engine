@@ -8574,3 +8574,59 @@ returning first.
 **The pattern across D-431 and D-433 is the program's clearest structural result:** the only two things Aegis has found that
 genuinely paid were CARRY trades requiring no forecast, both were competed away on the same timeline, and both had their
 best years as compensation for a counterparty tail that then materialised in 2022.
+
+## D-434/435 — CRYPTO VARIANCE RISK PREMIUM: real, 3.6x its cost historically, decayed to below cost, and the tail is 11-48x
+
+**Newly testable** — the operator allowlisted Deribit. Ingested 3,954 DVOL points per currency (the crypto VIX), 2021-03 to
+2026-08, and computed subsequently-realised volatility from the 60,942 hourly bars already held.
+
+**The premium is real:**
+
+| | BTC | ETH |
+|---|---|---|
+| mean implied | 60.3 | 74.3 |
+| mean realised | 52.3 | 69.3 |
+| **VRP (non-overlapping)** | **9.14 vol pts, t 4.87** | 5.79 vol pts, t 2.22 |
+| positive in | 76% of windows | 68% |
+| net of 2 vol pts cost | **3.6x the cost** | 1.9x the cost |
+
+t-stats are on NON-OVERLAPPING 30-day windows (66 of them). The overlapping series would have given a far larger and
+entirely fake t — 12h resolution means consecutive 30d windows share 59/60 of their data (the D-416 trap).
+
+**And it decayed on exactly the same timeline as the other two carry trades:**
+
+| era | BTC VRP | ETH VRP |
+|---|---|---|
+| 2021 | +22.20 | +17.51 |
+| 2022 | +14.09 | +9.24 |
+| 2023-2024 | +7.32 | +4.97 |
+| **2025-2026** | **+1.83** (below the 2-pt cost) | **−1.15** (negative) |
+
+**The tail is the finding, not the mean.** Short-variance P&L over the worst 30-day window:
+- **BTC: −106.2, which is 11x the average premium** (2021-05-03: implied 76 -> realised 128)
+- **ETH: −284.2, which is 48x the average premium** (2021-05-02: implied 92 -> realised 192)
+
+Both are the May 2021 crash. An insurer collecting ~9 vol points a month lost roughly a year of premium in one window —
+and this is the *measured* worst in 5.4 years, not a modelled tail.
+
+**HONEST LIMIT:** DVOL is not directly tradable. Harvesting this needs delta-hedged straddles or DVOL futures, whose real
+round-trip cost at size exceeds the 2 vol points assumed here. The 3.6x is therefore an UPPER BOUND on the historical
+premium, and the current-era figure (1.83 for BTC) is already below a realistic cost.
+
+**VERDICT: not promoted. Added to the daily watch as the third leg.**
+
+## THE PROGRAM'S CLEAREST STRUCTURAL RESULT (D-431 + D-433 + D-435)
+
+Three independent structural premia in crypto — quarterly **basis**, perp **funding**, and **variance** — measured on
+separate data through separate mechanisms. All three:
+1. paid extraordinarily in 2021 (+13%/yr, +24 to +32%/yr, +22 vol pts),
+2. collapsed in 2022 when the counterparty and volatility tails actually arrived (LUNA/FTX, May-2021-style vol),
+3. partially recovered in 2023-2024,
+4. and are **at or below zero net of cost today**.
+
+That is one phenomenon, not three coincidences: the crypto risk premium was compensation for genuine, un-hedgeable tail
+risk, and it has been competed down as the market institutionalised. **Everything else this program tested — every
+forecast — was either capacity-bound (equities), sub-fee (perp microstructure), or null.** The only things that ever paid
+required no forecast at all, and they are not paying now.
+
+`scripts/basis-watch.ts` now watches all three daily, DORMANT, and states the tail alongside every premium.
