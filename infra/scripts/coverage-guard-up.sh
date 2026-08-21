@@ -20,5 +20,8 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/effect-size-guard.ts; then
     echo "$(date -u +%FT%TZ) EFFECT-SIZE GUARD RED — a promoted strategy has no stated edge larger than its own cost"
   fi
+  # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
+  # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
+  deno run --allow-net --allow-env ../scripts/basis-watch.ts || true
   sleep 86400
 done

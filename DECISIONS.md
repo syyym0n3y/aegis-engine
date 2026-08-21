@@ -8495,3 +8495,46 @@ the accessible part of these markets is efficiently priced to the level of the f
 See the law appended to `CLAUDE.md` / `ANALYSIS_CONTRACT.md` / `OPERATING_DOCTRINE.md`. Guard: `scripts/effect-size-guard.ts`,
 wired into the daily agent alongside the coverage and liquidity guards. Verified by exit code: RED on a sub-fee row, RED on
 a row that states significance but never magnitude, PASS on a compliant row, exit 0 on true state.
+
+## D-430 — OPEN INTEREST at the daily horizon: **NULL**
+
+Deliberately tested at DAILY frequency because D-426 died on effect-size-vs-fee, and a daily signal held several days
+amortises the same fee over a move ~100x larger. 24,751 daily OI points, 15 Bybit perps, 2020-08 to 2026-08 (BTCUSDT 2,208
+days). Two hypotheses stated in advance: (H1) OI above its trailing norm = crowded = lower forward returns; (H2) the four
+price/OI quadrants differ. **Both falsified.** Sign consistency is a coin flip at every horizon and every signal
+(crowding 5/14, 5/14, 8/14; dOI 3/14, 6/14, 7/14; quadrant 9/14, 7/14, 8/14). Zero of 126 tests survived the joint bar
+(multiple-testing AND out-of-sample AND |effect| > 9bp). Coverage adequate — this is a market finding.
+
+## D-431/432 — QUARTERLY BASIS CARRY: real, capacity-rich, needs no forecast — and **arbitraged away**
+
+**Why this is different from everything else in the program.** Every prior test asked "does X forecast returns". The basis
+does not require a forecast: long spot, short the dated future, hold to expiry — the future MUST converge at delivery, so
+the annualised basis is collected, not predicted. There is no forecasting error to be wrong about, only costs to beat and
+risks to name.
+
+**Data (D-431):** reconstructed a ~60-day constant-maturity basis from 48 expired and live Binance quarterly contracts,
+2021-02 to 2026-08, 1,659 daily observations each for BTC and ETH. (A duplicate-key failure on the first run exposed that
+current-quarter and next-quarter contracts overlap; mixing maturities would have made the series meaningless, since
+annualised basis explodes near expiry. Fixed to select, per date, the contract closest to 60 days.)
+
+**Net of 18bp round-trip fees and a 4% opportunity cost:**
+
+| era | BTC net carry | days above hurdle | ETH net carry |
+|---|---|---|---|
+| 2020-2021 | **+13.0%/yr** | 88% | +14.7%/yr |
+| 2022 (post-LUNA/FTX) | −2.3%/yr | 16% | −4.5%/yr |
+| 2023-2024 | +4.3%/yr | 84% | +3.6%/yr |
+| **2025-2026** | **+0.3%/yr** | 46% | **−0.5%/yr** |
+
+**Net carry last exceeded 5%/yr on 2025-02-02; 10%/yr on 2024-12-02.** Live check at the time of writing: all four dated
+contracts are NEGATIVE net (−0.1% to −4.2%). The correct action today is to hold cash.
+
+**The honest read is not "it decayed", it is "it was competed away, and its best years paid for a risk that then
+materialised".** The +13%/yr of 2021 was compensation for exchange and counterparty risk — and in 2022 that risk arrived
+via LUNA and FTX and destroyed the trade for everyone running it. A model that books the 2021 carry without pricing that
+tail is not measuring a strategy, it is measuring a survivor.
+
+**VERDICT: not promoted, but NOT filed away either — it is CONDITIONAL, not dead.** `scripts/basis-watch.ts` reads the live
+Binance term structure daily, states net carry against the hurdle, and says plainly when the condition is met. DORMANT:
+surfaces only, no order path exists. It names the unmodelled risks every time it runs rather than pricing them at zero.
+This is the first thing in the program with a deployable trigger and no forecasting component.
