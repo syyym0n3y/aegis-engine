@@ -31,13 +31,31 @@ for(let off=0;;off+=1000){
 }
 const perConcept=new Map<string,number>();
 for(const k of counts.keys()){const c=k.split("|")[0]; perConcept.set(c,(perConcept.get(c)||0)+1);}
+
+// STALENESS DIMENSION (added D-420 after this guard MISSED a live failure). Breadth alone is not coverage. On 2026-08-21 the
+// four core concepts (Assets/Liabilities/StockholdersEquity/NetIncomeLoss) had breadth of 4,000+ tickers and passed this
+// guard cleanly — while their data STOPPED AT 2023-07. Every value/quality verdict was silently being measured on a panel
+// that ended three years earlier, and the guard said green. A dataset that quietly stopped updating is the same Coverage-Law
+// failure as one never fetched: absence of recent data is not evidence about recent markets.
+const MAX_STALE_DAYS=Number(Deno.env.get("MAX_STALE_DAYS")||400);
+const today=new Date().toISOString().slice(0,10);
+const ageDays=(d:string)=>Math.round((Date.parse(today)-Date.parse(d))/86400000);
+const freshness=new Map<string,string>();
+for(const c of [...new Set(FAMILIES.flatMap(f=>f.concepts??[]))]){
+  const r=await fetch(`${OWNED}/trd_fundamentals?concept=eq.${c}&select=period_end&order=period_end.desc&limit=1`,{headers:hdr}).then(x=>x.json()).catch(()=>[]);
+  freshness.set(c,Array.isArray(r)&&r[0]?r[0].period_end:"NONE");
+}
 for(const f of FAMILIES){
   let have=Infinity, missing:string[]=[];
-  if(f.concepts){ for(const c of f.concepts){const n=perConcept.get(c)||0; if(n<f.minTickers) missing.push(`${c}(${n})`); have=Math.min(have,n);} }
+  if(f.concepts){ for(const c of f.concepts){const n=perConcept.get(c)||0; if(n<f.minTickers) missing.push(`${c}(${n})`); have=Math.min(have,n);
+      const fd=freshness.get(c)||"NONE"; const age=fd==="NONE"?99999:ageDays(fd);
+      // STRICT self-test tightens the bar so the guard is proven to go RED on staleness, not merely to pass on fresh data.
+      if(age>(STRICT?1:MAX_STALE_DAYS)) missing.push(`${c} STALE: newest period_end ${fd} (${age}d old)`); } }
   else if(f.table){ const r=await fetch(`${OWNED}/${f.table}?select=ticker&limit=1`,{headers:{...hdr,Prefer:"count=exact"}}); const cr=r.headers.get("content-range")||""; have=+(cr.split("/")[1]||0); if(have<f.minTickers) missing.push(`${f.table}(${have})`); }
   const ok=missing.length===0;
   if(!ok) red++;
-  console.log(`  ${ok?"PASS":"RED "} ${f.name.padEnd(26)} min ${String(f.minTickers).padStart(5)} | ${ok?`coverage ${have}`:`INADEQUATE: ${missing.join(", ")}`}  — ${f.note}`);
+  const fresh=f.concepts?` | newest ${f.concepts.map(c=>freshness.get(c)||"NONE").sort()[0]}`:"";
+  console.log(`  ${ok?"PASS":"RED "} ${f.name.padEnd(26)} min ${String(f.minTickers).padStart(5)} | ${ok?`coverage ${have}${fresh}`:`INADEQUATE: ${missing.join(", ")}`}  — ${f.note}`);
 }
 console.log(`\n  ${red===0?"ALL FAMILIES ADEQUATELY COVERED — a null here is evidence about the MARKET."
   :`${red} FAMILY(S) RED — a null in those is evidence about OUR DATA, not the market. Report them as UNTESTED, not NULL.`}`);
