@@ -8165,3 +8165,31 @@ BEFORE IT COULD BE BELIEVED AGAIN: (1) a like-for-like Bybit/OKX test with match
 (2) an explanation of WHY Binance would differ (fee schedule, retail mix, funding-cap mechanics) that is testable rather
 than post-hoc; (3) the still-unresolved execution constraint (break-even 3.51bp/leg) and delisting-tradability question.
 NOT armed. NOT forward-tested. This is the correct outcome of a discipline that is supposed to catch its own enthusiasm.
+
+## D-415 — FULL RETRACTION: the funding-crowding result was a POOLING ARTIFACT. Killed by our own "never aggregate" law.
+D-414's failed Bybit replication prompted a decomposition of the Binance result into homogeneous slices. It does not survive.
+| slice | IC | t |
+|---|---|---|
+| **POOLED 180 perps (D-411 headline)** | **0.1404** | **38.35** |
+| MAJORS only (20 liquid) | 0.0070 | 1.60 |
+| LIVE non-major | **-0.0111** | **-4.28** |
+| DELISTED only | -0.0014 | -0.36 |
+| pre-2023 | 0.0036 | 0.79 |
+| 2023 onward | -0.0039 | -1.55 |
+**NOT ONE homogeneous slice reproduces the pooled IC.** The 0.14 was an artifact of pooling 180 heterogeneous instruments
+into a single cross-section: delisted/small perps have systematically different funding levels AND systematically worse
+returns, so a static LEVEL difference between groups was read as a predictive RANKING. Split the groups and it vanishes —
+in one slice it is significantly NEGATIVE.
+**This is precisely the operator's own standing doctrine — "never conclude from aggregates; disaggregate by symbol/regime/
+epoch" — and I violated it while believing I was being rigorous.** The pooled t of 38.35 was not evidence of a strong signal;
+it was evidence of a heterogeneous panel.
+**D-410/411 ARE RETRACTED IN FULL.** What remains is far smaller and is NOT a ranking signal: the MAJORS tercile spread is
++0.128%/8h full (t 3.53) and +0.075%/8h in 2023+ (t 3.01) with IC ~0 — i.e. whatever is there lives in the extremes, not in a
+monotone ordering, and +0.075%/8h sits essentially AT the 7bp round-trip break-even. Not tradable, not a signal.
+**THE HONESTY LEDGER on this one result: SIX corrections, each one reducing it — (1) pagination bug (zero data), (2) held-book
+index misalignment, (3) funding look-ahead crediting the signal as income (-11 points), (4) survivorship correction (-7 points,
+-1/3 Sharpe), (5) failed venue replication, (6) pooling artifact — TERMINAL.** The engine caught every one of them itself, and
+the last one killed the finding. That is the system working as designed: a result that would have been the program's headline
+was destroyed by its own controls before a cent was risked.
+STANDING VERDICT RESTORED: no validated tradable edge. The only surviving results remain risk-management, not alpha:
+trend-overlay drawdown reduction (D-400/401, priced honestly) and the VRP's existence-with-a-tail (D-404/412).
