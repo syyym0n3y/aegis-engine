@@ -15,5 +15,10 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/liquidity-guard.ts; then
     echo "$(date -u +%FT%TZ) LIQUIDITY GUARD RED — a promoted strategy has no demonstrated edge in the liquid tercile"
   fi
+  # EFFECT-SIZE LAW (D-429): D-426 produced 20/20 sign consistency at |t| 4.9 on a $523M/hour instrument and was STILL
+  # untradable at 0.02-0.14x the fee. Significance answers "is it there"; only fee-multiples answer "is it worth acting on".
+  if ! deno run --allow-net --allow-env ../scripts/effect-size-guard.ts; then
+    echo "$(date -u +%FT%TZ) EFFECT-SIZE GUARD RED — a promoted strategy has no stated edge larger than its own cost"
+  fi
   sleep 86400
 done

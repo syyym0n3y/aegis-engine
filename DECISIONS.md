@@ -8450,3 +8450,48 @@ a market finding.
 **VERDICT: nothing promoted. The Tier-2 non-linear gap is now fully bounded** — positive on the long price/volume panel
 (D-419), null on the short fundamentals panel (D-423) — and the binding constraint on the whole program is revealed to be
 **liquidity, not signal.**
+
+## D-425/426 — THE CRYPTO PIVOT: capacity constraint removed, and the edge died of a DIFFERENT constraint
+
+**Why the pivot:** D-424 showed the equity cross-section is capacity-bound — the edge lives only where size cannot go
+(liq:HIGH SR 0.04-0.26). Perps invert that: BTCUSDT alone clears >$10B/day. And they expose a data class equities have no
+free analogue for — **exchange-side aggressor imbalance**. Binance futures klines carry `takerBuyBaseVolume` and
+`numberOfTrades` in every bar, for the full history, free and keyless. Aegis had never held this data.
+
+**Ingested (D-425):** 730,682 hourly bars across 25 perps, 2019-09 to 2026-08, with a hard abort if `takerBuy > volume`
+(a wrong field mapping would silently invert the whole signal rather than fail).
+
+**The signal (D-426):** raw taker-buy ratio is MECHANICALLY correlated with the bar's own return, so the tested signal is
+the **residual** after projecting out the contemporaneous return, with the projection fitted on TRAIN ONLY. Residual flow
+is information the price did not already contain; raw flow is not.
+
+**The statistics are the strongest this program has produced:**
+
+| | |
+|---|---|
+| sign consistency at 1h | **0 of 20 symbols positive** (P ~ 2e-6 under the null) |
+| BTCUSDT | IC -0.0198, t -4.88; OOS IC -0.0183, t -2.86 |
+| symbols clearing sqrt(2 ln N)=2.84 AND holding OOS | 6 |
+| capacity | BTCUSDT $523M **per hour** |
+
+**And it is untradable. Three independent measurements say so, and they agree:**
+1. **Trading rule loses at ZERO fees** — fading extreme flow (|z|>1.5 and >2.5) returns -0.64bp/trade on BTC, -2.69bp on XRP.
+2. **Decile profile is flat noise** — mean next-bar return by flow decile shows no monotone structure on any symbol
+   (mid-down 2-3 of 5; a coin flip is 2.5).
+3. **Effect size is 0.02x-0.14x the maker round-trip fee** — 7 to 50 times too small — and the OLS slope has |t| < 1.3 on
+   every symbol, versus rank-IC t of -4.9.
+
+**The reconciliation is the finding.** Rank IC and mean effect diverge completely in fat-tailed hourly crypto: the rank
+statistic orders the 99% of small moves that carry no money, while the money sits in a tail where the relationship is
+absent. **A rank IC on fat-tailed high-frequency data is not evidence about tradability.** That invalidates a whole class
+of conclusion this program could easily have drawn — and nearly did, on 20-of-20 sign consistency.
+
+**VERDICT: real, sub-fee, NOT promoted.** The pivot succeeded in its stated purpose — it removed the capacity constraint and
+proved the constraint is not unique to equities. **Where capacity was the binding constraint (equities), the edge cannot
+absorb size; where capacity is abundant (perps), the edge is smaller than the fee.** Both are the same underlying fact:
+the accessible part of these markets is efficiently priced to the level of the frictions.
+
+## D-429 — THE EFFECT-SIZE LAW instrumented
+See the law appended to `CLAUDE.md` / `ANALYSIS_CONTRACT.md` / `OPERATING_DOCTRINE.md`. Guard: `scripts/effect-size-guard.ts`,
+wired into the daily agent alongside the coverage and liquidity guards. Verified by exit code: RED on a sub-fee row, RED on
+a row that states significance but never magnitude, PASS on a compliant row, exit 0 on true state.

@@ -114,3 +114,18 @@ tercile's, never the pooled one; (3) a headline whose edge vanishes above the li
 not as an edge; (4) enforced by `scripts/liquidity-guard.ts` — no lineage row may sit in a promoted state without a recorded
 liquid-tercile Sharpe clearing the floor (verified RED on a below-floor row, RED on a row that never states one, PASS on a
 compliant row, and exit-code-checked in both directions).
+
+
+## THE EFFECT-SIZE LAW (2026-08-21) — binds every "we found something"
+**A significance test answers "is it there". Only effect size measured in MULTIPLES OF THE ROUND-TRIP COST answers "is it
+worth acting on". No signal is reported as an edge without that number.**
+Origin: D-426, perp order flow — the most statistically convincing result this program has produced. Residual aggressor
+imbalance had rank IC negative on **20 of 20 instruments** (P ~ 2e-6 under the null), |t| to 4.9, holding out-of-sample, on
+BTCUSDT clearing **$523M per hour** — capacity was emphatically not the constraint. Effect size: **0.02x-0.14x the maker
+round-trip fee.** The same data gives OLS |t| < 1.3, because in fat-tailed hourly returns a RANK statistic orders the 99%
+of small moves that carry no money while the money sits in a tail where the relationship is absent.
+Rules: (1) every reported signal states bp-of-expected-return per 1sd of signal, beside the round-trip cost it must beat;
+(2) **rank IC on fat-tailed high-frequency data is NOT evidence of tradability** — pair it with an OLS/mean effect, and if
+the two disagree, the mean one decides; (3) an effect below 1.0x its cost is recorded as SUB-FEE, never as an edge;
+(4) enforced by `scripts/effect-size-guard.ts` (verified RED on sub-fee, RED on significance-without-magnitude, PASS on
+compliant, exit-code-checked both directions).
