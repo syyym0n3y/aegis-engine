@@ -197,10 +197,13 @@ async function record(spec_key:string,family:string,spec:unknown,universe:string
 // ---------- main ----------
 const t0=Date.now();
 await log("==> AEGIS FACTORY — building panels");
-await loadFund(); await loadFTD(); await buildEqPanel();
+const PASS0=(Deno.env.get("PASS")||"all");
+// panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
+// (~4 min) just to ignore it.
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
-const PASS=(Deno.env.get("PASS")||"all");
+const PASS=PASS0;
 const SIGNALS=Object.keys(eqPanel[0]?.sig??{});
 await log(`  equity signals: ${SIGNALS.length} → grid = signals x lag{0,1} x hold{1,3} x buckets{5,10} x universe{all,liquid-top-third}`);
 let done=0;
