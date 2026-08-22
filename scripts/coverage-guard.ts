@@ -22,31 +22,15 @@ const FAMILIES:{name:string;concepts?:string[];table?:string;minTickers:number;n
 ];
 console.log("==> COVERAGE GUARD — is every factor family's verdict backed by adequate data?");
 let red=0;
-const counts=new Map<string,number>();
-// D-467: offset pagination without a TOTAL ORDER is undefined — Postgres may repeat or skip rows across pages, which in
-// this guard would mean phantom or missing coverage. Ordered by the natural key so every page is deterministic.
-for(let off=0;;off+=1000){
-  const p=await fetch(`${OWNED}/trd_fundamentals?select=concept,ticker&order=cik,concept,period_end&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
-  if(!Array.isArray(p)||!p.length)break;
-  for(const r of p as {concept:string;ticker:string}[]) if(r.ticker) counts.set(r.concept+"|"+r.ticker,1);
-  if(p.length<1000)break;
-}
-const perConcept=new Map<string,number>();
-for(const k of counts.keys()){const c=k.split("|")[0]; perConcept.set(c,(perConcept.get(c)||0)+1);}
-
-// STALENESS DIMENSION (added D-420 after this guard MISSED a live failure). Breadth alone is not coverage. On 2026-08-21 the
-// four core concepts (Assets/Liabilities/StockholdersEquity/NetIncomeLoss) had breadth of 4,000+ tickers and passed this
-// guard cleanly — while their data STOPPED AT 2023-07. Every value/quality verdict was silently being measured on a panel
-// that ended three years earlier, and the guard said green. A dataset that quietly stopped updating is the same Coverage-Law
-// failure as one never fetched: absence of recent data is not evidence about recent markets.
+// D-467c: breadth AND freshness now come from trd_fundamentals_coverage_v — one server-side grouped scan instead of
+// paginating 1.2M rows client-side (which, once correctly ORDER'd, took >2 minutes; the view answers in milliseconds).
+const cov=await fetch(`${OWNED}/trd_fundamentals_coverage_v?select=concept,tickers,newest_period_end`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {concept:string;tickers:number;newest_period_end:string}[];
+if(!Array.isArray(cov)||!cov.length){console.error("!! coverage view unreadable — cannot certify anything. RED.");Deno.exit(1);}
+const perConcept=new Map<string,number>(cov.map(r=>[r.concept,+r.tickers]));
 const MAX_STALE_DAYS=Number(Deno.env.get("MAX_STALE_DAYS")||400);
 const today=new Date().toISOString().slice(0,10);
 const ageDays=(d:string)=>Math.round((Date.parse(today)-Date.parse(d))/86400000);
-const freshness=new Map<string,string>();
-for(const c of [...new Set(FAMILIES.flatMap(f=>f.concepts??[]))]){
-  const r=await fetch(`${OWNED}/trd_fundamentals?concept=eq.${c}&select=period_end&order=period_end.desc&limit=1`,{headers:hdr}).then(x=>x.json()).catch(()=>[]);
-  freshness.set(c,Array.isArray(r)&&r[0]?r[0].period_end:"NONE");
-}
+const freshness=new Map<string,string>(cov.map(r=>[r.concept,r.newest_period_end||"NONE"]));
 for(const f of FAMILIES){
   let have=Infinity, missing:string[]=[];
   if(f.concepts){ for(const c of f.concepts){const n=perConcept.get(c)||0; if(n<f.minTickers) missing.push(`${c}(${n})`); have=Math.min(have,n);
