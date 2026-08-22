@@ -13,6 +13,13 @@ const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application
 const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
 // candidate tickers: CoinGecko top coins by market cap, several pages
 const cands=new Set<string>();
+// D-469: FULL=1 seeds from Binance exchangeInfo (every CURRENTLY listed perp, 698) in addition to CoinGecko — the
+// authoritative current list; CoinGecko supplies the delisted-candidate names exchangeInfo can no longer show.
+if(Deno.env.get("FULL")==="1"){
+  const info=await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo").then(r=>r.json()).catch(()=>null) as {symbols?:{symbol:string;contractType?:string}[]}|null;
+  for(const x of info?.symbols??[]) if(x.contractType==="PERPETUAL"&&x.symbol.endsWith("USDT")) cands.add(x.symbol.replace(/USDT$/,""));
+  console.log(`  exchangeInfo seeded ${cands.size} current perps`);
+}
 for(let page=1;page<=4;page++){
   const j=await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${page}`).then(r=>r.json()).catch(()=>null);
   await sleep(2500);                                    // CoinGecko free tier is rate-limited; be polite

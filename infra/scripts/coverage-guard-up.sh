@@ -58,5 +58,8 @@ while true; do
   # rather than null. The honest response to a genuinely-unavailable history is to start the clock — this snapshots the
   # live surface daily so the series exists to test later. Idempotent (UTC day bucket); measures, never trades.
   deno run --allow-net --allow-env ../scripts/collect-option-skew.ts || true
+  # US OPTIONS SURFACE (D-469): CBOE free delayed chains — ATM IV / skew / term / P/C-OI for SPX+majors. Same start-the-
+  # clock rationale as the Deribit collector; no free US chain history exists either.
+  deno run --allow-net --allow-env ../scripts/collect-us-options.ts || true
   sleep 86400
 done

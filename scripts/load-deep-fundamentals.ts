@@ -13,7 +13,11 @@ const hdr=await H();
 const c2t=new Map<string,string>();
 try{const j=await fetch("https://www.sec.gov/files/company_tickers.json",{headers:UA}).then(r=>r.json());
   for(const v of Object.values(j as Record<string,{cik_str:number;ticker:string}>)) c2t.set(String(v.cik_str),(v.ticker||"").toUpperCase());}catch{/*ignore*/}
-const CONCEPTS=["AssetsCurrent","LiabilitiesCurrent","CashAndCashEquivalentsAtCarryingValue","InventoryNet","AccountsReceivableNetCurrent"];
+// D-469: concept list is env-overridable so the same verified loader (with its landing checks) serves every expansion.
+// FLOW concepts use duration frames (CY2024Q1); STOCK concepts use instantaneous (CY2024Q1I). Getting this wrong 404s
+// silently and looks like "data does not exist" — the exact Coverage-Law failure mode.
+const CONCEPTS=(Deno.env.get("CONCEPTS")||"AssetsCurrent,LiabilitiesCurrent,CashAndCashEquivalentsAtCarryingValue,InventoryNet,AccountsReceivableNetCurrent").split(",");
+const FLOW=new Set((Deno.env.get("FLOW_CONCEPTS")||"").split(",").filter(Boolean));
 const addDays=(d:string,n:number)=>{const t=new Date(d+"T00:00:00Z");t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10);};
 let total=0;
 for(const c of CONCEPTS){
@@ -21,8 +25,8 @@ for(const c of CONCEPTS){
   // year range is env-configurable so the loader can TOP UP rather than refetch 14 years. The deep concepts had gone 199 days
 // stale (newest period_end 2026-02-03) — caught by the coverage guard's new staleness dimension, which is exactly what it
 // was added for.
-for(let y=Number(Deno.env.get("FROM_YEAR")||2012);y<=Number(Deno.env.get("TO_YEAR")||2025);y++) for(const q of ["Q1I","Q2I","Q3I","Q4I"]){
-    const per=`CY${y}${q}`;
+for(let y=Number(Deno.env.get("FROM_YEAR")||2012);y<=Number(Deno.env.get("TO_YEAR")||2025);y++) for(const q of ["Q1","Q2","Q3","Q4"]){
+    const per=`CY${y}${q}${FLOW.has(c)?"":"I"}`;   // duration frame for flows, instantaneous for stocks
     try{
       const r=await fetch(`https://data.sec.gov/api/xbrl/frames/us-gaap/${c}/USD/${per}.json`,{headers:UA});
       if(!r.ok){await new Promise(x=>setTimeout(x,120));continue;}
