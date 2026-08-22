@@ -1,5 +1,29 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (plumbing pass, D-467) — the classes are fixed at source and can no longer grow
+
+**The flagship find: the trial counter was fiction in three places at once.** `aegis-discovery` wrote a shape the table
+does not have — every write **400'd**, and because `fetch()` does not throw on HTTP errors, the agent printed
+`trial counter: 0 -> N` as SUCCESS on every cycle. Both readers (autopilot, agent-output guard) queried a `trials` column
+that never existed and silently fell back to a constant. **The program's stated non-negotiable — "the counter increments on
+EVERY backtest run" — was falsified in production with all guards green.** Rebuilt end-to-end: append-only event rows in
+the table's real shape, `res.ok` checked, landing verified by re-read; readers compute N = 1.53M baseline + live count, so
+the deflation ceiling finally RISES as the daemon searches.
+
+**Other dangerous instances fixed at source:**
+- `trd-insider-ic`: `limit=250000` vs **278,456 rows — 10% of the table silently dropped, selection decided by physical
+  layout**. The insider-IC verdict ran on an arbitrary 90% sample. Fixed to ordered full pagination; re-run queued for org restore.
+- `coverage-guard.ts` paginated **1.2M rows by offset with no total order** — pages may overlap or skip, meaning phantom or
+  missing coverage inside the Coverage Law's own guard. Now ordered by the natural key.
+- All six live agents now print `WRITE-FAILED <table> <status>` on any non-ok write, and the agent-output guard PAGES on
+  that marker. A failed state write is now a red condition, not a silent one.
+- Server-side truncation (the F19 fear): **empirically absent** — no `db-max-rows`; an unlimited fetch returned all 1,199,323 rows.
+
+**Enforcement: `scripts/plumbing-guard.ts`** — 3 rules (truncation ≥50 without order / swallowed writes / frozen deflation
+ceilings), audited per-line waivers, and a **ratchet**: baseline of 155 legacy sites committed; RED only when any (rule,
+file) count EXCEEDS baseline. The backlog burns down; it cannot grow. Verified in four directions by unmasked exit code
+(selftest 1 / baseline 0 / planted regression 1 / clean 0). Wired into the daily runner — **nine guards now run daily.**
+
 ## 2026-08-22 (latest) — D-465's residual EXPLAINED: every equity in the recommended book began with "A"
 
 **D-466.** The unexplained gap in the headline number traced to the universe fetch in `combined-book.ts`:
