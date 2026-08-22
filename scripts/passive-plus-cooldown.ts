@@ -63,6 +63,28 @@ const stat=(a:number[])=>{const m=mean(a),sd=sdv(a)||1e-9;let c=1,p=1,dd=0;
   for(const r of a){c*=1+r;p=Math.max(p,c);dd=Math.min(dd,c/p-1);}
   return {sr:(m/sd)*Math.sqrt(252),ann:m*252*100,dd:dd*100,worst:Math.min(...a)*100};};
 
+// ---- RECONCILIATION AGAINST D-405 ----
+// My passive book shows OOS Sharpe 1.15 where D-405 reported 0.57. That is a 2x difference in the program's HEADLINE
+// recommendation, so it is not acceptable to note it and move on: either my construction is optimistic or D-405's is
+// pessimistic, and the operator's central conclusion depends on which. Reproducing D-405's exact accumulation here, on the
+// same instruments and the same date axis, isolates the cause to construction rather than universe or period.
+// D-405 (combined-book.ts) computes, per class per day: mean over instruments of (price[next]/price[day] - 1), requiring
+// BOTH prices to exist on the GLOBAL date axis; then averages across classes with >=3 instruments.
+function bookD405(){
+  const out:{d:string;r:number}[]=[];
+  for(let dI=LB+30;dI<dates.length-1;dI++){
+    const day=dates[dI], nxt=dates[dI+1];
+    let acc=0,nc=0;
+    for(const [,list] of byCls){
+      let rp=0,n=0;
+      for(const i of list){ const p0=i.m.get(day), p1=i.m.get(nxt);
+        if(!p0||!p1||!(p0>0))continue; const r=p1/p0-1; if(!Number.isFinite(r))continue; rp+=r; n++; }
+      if(n<3)continue; acc+=rp/n; nc++;
+    }
+    if(nc>=3) out.push({d:nxt,r:acc/nc});
+  }
+  return out;
+}
 const passive=book(null,0);
 const kept=passive.map(x=>x.d);
 const sp=Math.floor(passive.length/1.667);                        // same 60/40 split as D-405
@@ -82,5 +104,14 @@ for(const [lab,b] of rows){
   console.log(`    ${lab.padEnd(30)}${F.sr.toFixed(2).padEnd(10)}${(F.ann.toFixed(1)+"%").padEnd(9)}${(F.dd.toFixed(1)+"%").padEnd(10)}${(F.worst.toFixed(1)+"%").padEnd(12)}${O.sr.toFixed(2).padEnd(9)}${(O.ann.toFixed(1)+"%").padEnd(10)}${(O.dd.toFixed(1)+"%").padEnd(11)}${O.worst.toFixed(1)}%`);
 }
 const P=stat(passive.slice(sp).map(x=>x.r)), C=stat(cd.slice(sp).map(x=>x.r));
+// print the reconciliation before the verdict
+const d405=bookD405();
+const sp405=Math.floor(d405.length/1.667);
+const F5=stat(d405.map(x=>x.r)), O5=stat(d405.slice(sp405).map(x=>x.r));
+console.log(`\n    RECONCILIATION — D-405's exact accumulation on these same instruments and dates:`);
+console.log(`      D-405-style passive: ${d405.length} days (${d405[0].d} .. ${d405[d405.length-1].d}) FULL SR ${F5.sr.toFixed(2)} ann ${F5.ann.toFixed(1)}% maxDD ${F5.dd.toFixed(1)}%  |  OOS SR ${O5.sr.toFixed(2)} ann ${O5.ann.toFixed(1)}% maxDD ${O5.dd.toFixed(1)}%`);
+console.log(`      this script's passive: ${passive.length} days (${kept[0]} .. ${kept[kept.length-1]}) FULL SR ${stat(passive.map(x=>x.r)).sr.toFixed(2)}  |  OOS SR ${stat(passive.slice(sp).map(x=>x.r)).sr.toFixed(2)}`);
+console.log(`      -> ${Math.abs(O5.sr-stat(passive.slice(sp).map(x=>x.r)).sr)<0.15?"the two constructions AGREE: the gap vs the recorded 0.57 is period/universe, not method."
+  :"the two constructions DISAGREE: the difference is in the METHOD, and one of them is wrong."}`);
 console.log(`\n    OOS verdict: Sharpe ${P.sr.toFixed(2)} -> ${C.sr.toFixed(2)} (${(C.sr-P.sr>=0?"+":"")}${(C.sr-P.sr).toFixed(2)}), maxDD ${P.dd.toFixed(1)}% -> ${C.dd.toFixed(1)}% (${(C.dd-P.dd>=0?"+":"")}${(C.dd-P.dd).toFixed(1)}pp), return ${P.ann.toFixed(1)}% -> ${C.ann.toFixed(1)}%`);
 console.log(`    (D-401's blanket 200MA trend overlay on this same book gave OOS Sharpe 0.00 — the bar this has to clear.)`);

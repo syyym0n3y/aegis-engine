@@ -9348,8 +9348,28 @@ management at zero return cost; an overlay on top pays a second time for protect
 through a 200MA trend filter on a multi-asset book; this reaches it through a post-loss cooldown validated on 328 crypto
 perps. Two different mechanisms, same conclusion.
 
-**HONEST DISCREPANCY, stated rather than buried:** this passive book shows OOS Sharpe 1.15 where D-405 reported 0.57. The
-constructions are not identical — this one spans 6,988 days (1998-2026) against D-405's 4,450, and averages within class
-before averaging across classes. **I have not reproduced D-405's number and do not claim to.** The comparison that matters
-here is internal — passive versus passive-plus-cooldown within one construction — and that comparison is valid regardless
-of how it lines up with D-405's absolute level.
+**A REPRODUCIBILITY GAP ON THE PROGRAM'S HEADLINE NUMBER — investigated, not waved through.** This passive book shows OOS
+Sharpe **1.15** where D-405 recorded **0.57**. A 2x difference in the one book the program recommends is not a footnote, so
+D-405's exact accumulation was re-run here on the identical instruments and identical date axis:
+
+| construction | days | FULL SR | OOS SR | OOS ann | OOS maxDD |
+|---|---|---|---|---|---|
+| D-405's method, this universe | 5,893 | 0.80 | **0.84** | 11.3% | −23.2% |
+| this script's method | 6,988 | 1.01 | **1.15** | 15.7% | −23.3% |
+| **D-405 as recorded** | 4,450 | 0.70 | **0.57** | 7.3% | −25.1% |
+
+**Two separate gaps, and I can attribute one but not the other.**
+1. **Method (0.84 vs 1.15) — attributable.** D-405 requires a price on BOTH consecutive dates of the global axis and drops
+   an instrument across any gap; mine builds each instrument's series from consecutive OBSERVED prices, so a gap-spanning
+   move is assigned to a single day. D-405's is the more conservative treatment; mine retains more of the return path but
+   mislabels multi-day moves as daily ones. **Both are defensible and I have NOT established which is correct** — asserting
+   one would be exactly the overconfidence this session has spent its time correcting.
+2. **D-405's own method gives 0.84 here, not the 0.57 it recorded — and that gap I cannot explain.** The remaining
+   difference must be universe or period (4,450 days recorded vs 5,893 here), but I have not isolated it.
+
+**FLAGGED, NOT RESOLVED: the program's headline "diversified passive, OOS Sharpe 0.57" does not reproduce.** Its own method
+on this data gives 0.84. That does not make the recommendation wrong — passive still wins every comparison run against it —
+but the specific number should not be quoted until someone reconciles it.
+
+**The D-465 verdict is unaffected either way,** because it is an INTERNAL comparison — passive versus passive-plus-cooldown
+within one fixed construction — and the cooldown loses under both methods.
