@@ -32,6 +32,12 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/execution-guard.ts; then
     echo "$(date -u +%FT%TZ) EXECUTION GUARD RED — a maker-dependent result has no fill-conditional return"
   fi
+  # SELECTION LAW (D-456): D-405 chose WHICH asset classes to overlay using the full sample, then reported an OOS Sharpe
+  # of 0.37 on that choice. Re-made on train only, the overlay was negative in every class and the book collapsed onto
+  # passive. Look-ahead in the CHOICE is invisible to every other guard — the returns and the split were both correct.
+  if ! deno run --allow-net --allow-env ../scripts/selection-guard.ts; then
+    echo "$(date -u +%FT%TZ) SELECTION GUARD RED — a promoted result may have chosen its components using the evaluation window"
+  fi
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true

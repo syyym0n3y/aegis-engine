@@ -170,3 +170,20 @@ return is measured; (3) report the fill RATE and the return on filled days, not 
 `scripts/execution-guard.ts` (verified RED on a maker assumption with no fill study, PASS on one with a measured
 fill-conditional return, and correctly EXEMPT for taker-costed results — a negation-handling flaw found by its own
 self-test, where "no passive assumption" tripped a naive keyword match).
+
+
+## THE SELECTION LAW (2026-08-22) — binds every result that CHOOSES among components
+**Choosing which components to keep using the full sample, and then reporting an out-of-sample number on that choice, is
+not out of sample. The choice must be made on train only, frozen, and applied forward.**
+Origin: D-455. The combined book reported that overlaying trend SELECTIVELY — only on classes where it measured positive —
+recovered OOS Sharpe from 0.00 to **0.37**, concluding that selectivity was "worth ~0.37 of Sharpe". The class set was
+hardcoded from a FULL-SAMPLE measurement and applied across the OOS window. Re-made on TRAIN ONLY, the overlay was negative
+in **every** class (equity −22.0pp, commodity −8.8pp, sector −4.6pp, index −3.5pp, etf −1.7pp, fx −0.9pp) — **no class
+qualified**, and the "selective" book collapsed exactly onto the passive book it was supposed to beat.
+This leak is invisible to every other guard: the returns were computed correctly, the train/test split was real, and no
+future price was touched. What leaked was WHICH COMPONENTS TO KEEP.
+Rules: (1) any pick among classes, symbols, parameters or variants is declared with the window it was made on; (2) a pick
+made on the full sample makes the result IN-SAMPLE, whatever the split says; (3) when a "selective" version beats a blanket
+one, re-make the selection on train before believing the difference — that test is cheaper than the retraction;
+(4) enforced by `scripts/selection-guard.ts` (verified RED on a full-sample pick, PASS on a train-only pick, and exempt
+where nothing is chosen — a negation flaw caught by its own self-test, exactly as the execution guard's was).
