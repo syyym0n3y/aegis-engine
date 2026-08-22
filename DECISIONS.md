@@ -9502,3 +9502,46 @@ end-to-end into the permanent record. Trial counter took its second increment (1
 Four defects found and fixed in the hour after the pass "completed" — three of them in the fixes themselves. That is not
 sloppiness unique to today; it is why every guard here must be verified to FAIL, from the cwd it actually runs in, before
 its green means anything.
+
+## D-468 — the LAST unaudited claim: BTC/5m/short is real GROSS, dead at cost, and decayed since 2021
+
+The final item in the back catalogue: D-170's *"the ONE strategy that cleared every gate"* (t=8.07, both-halves, OOS,
+fee-laddered). Re-run byte-faithful — indicator and trade logic copied verbatim from
+`_shared/trd-forward-setup.ts` (Wilder RSI, stop-first pessimistic) — on 946,485 spot 5m bars, 2017-08 to 2026-08.
+
+**1. THE HEADLINE STATISTIC DOES NOT REPRODUCE, and I flag rather than explain it.** At D-170's own configuration
+(overlapping fires, 5bp/side) this audit gets mean +0.108R at **trade-t 1.94** against a recorded **t 8.07**. The mean is
+in the right neighbourhood of D-170's +0.14R; the t is 4x smaller. I could not isolate the cause (candidates: the sweep's
+exact window, its variance accounting, overlap treatment) and assert none of them. **The recorded t=8.07 should not be
+quoted.**
+
+**2. The tradable (one-at-a-time) version: real gross, killed by the fee, in agreement with D-170's own ladder.**
+
+| fee/side | mean R | portfolio-t (n=519 days) |
+|---|---|---|
+| 0bp | +0.335 | **4.77** |
+| 2bp | +0.196 | 2.78 |
+| **4.5bp (futures taker)** | **+0.023** | **0.32** |
+| 7.5bp | −0.184 | −2.42 |
+
+Gross portfolio-t 4.77 is a genuinely strong single-instrument signal — and still below the deflated ceiling of 5.34.
+
+**3. PER-ERA (4.5bp): dead in every era since 2021.** +0.184R (2017-20, t 1.45) → −0.031 → −0.046 → **−0.103 (2025-26)**.
+Gross, the signal persists at roughly +0.21-0.28R in the recent eras — about HALF its 2017-2020 level — and at realistic
+cost that halving is exactly the difference between paying and dead. Same decay pattern, same timeline, as every crypto
+premium measured this session (D-431/433/435).
+
+**4. THE EXECUTION LAW, fill-tested — and for the first time the maker assumption SURVIVES.** Resting a sell-limit at the
+signal close: **fill rate 97.0%**, net on filled trades @1bp/side **+0.275R (t 3.69)**; the 3% of trades missed average
++0.618R gross (you miss some of the best, as adverse selection predicts) but at 97% fill the effect is minor. Unlike the
+US-afternoon window (D-448: 92% fill, filled days NEGATIVE), a short entry after an RSI-70 spike almost always gets
+touched again — the mechanics genuinely favour the resting order here. Fill-conditional, the full-sample maker path is
+real; per-era decay still applies to it (recent-era net ≈ +0.1R, marginal).
+
+**VERDICT: KILLED as a current edge** — below the deflated ceiling gross, dead at taker, negative in every era since 2021,
+and the recorded headline statistic does not reproduce. The maker finding is retained as the one validated execution
+result in the program. **A first design flaw in this audit was caught pre-run:** the maker test originally checked
+"entry-bar high ≥ entry-bar open", which is true by definition — a 100% fill rate measuring nothing.
+
+**THE BACK CATALOGUE IS NOW CLOSED.** Every claim in the program's history is either re-earned (equity VRP, corrected) or
+refuted/killed under the eight laws. The unaudited column is empty.
