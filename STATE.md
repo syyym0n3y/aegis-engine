@@ -1,5 +1,27 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (live-agent audit) — THREE defects in production while all seven guards were GREEN
+
+Watching the six launchd agents — reading their OUTPUT, not just confirming they were alive — found three real defects.
+Every agent had empty stderr and was "healthy" by the usual check, which is precisely why that check is not enough.
+
+| agent | defect | fix |
+|---|---|---|
+| **autopilot** | deflation ceiling from a **hardcoded N=1000** (3.72) instead of the program's ~1.53M trials (5.34). Had **SURFACED** Ken French momentum at psr_z 3.73 as "clearing" — by 0.01 — for **nine consecutive cycles** | reads the live trial counter, falls back to the documented 1.53M. Verified live: `ceil=5.34 (N=1,530,000) clearing=0` |
+| **positioning** | console printed *"combining validated edges"* / *"two decorrelated edges"* while the `honest_note` it writes to the DB says **neither leg is validated** | both summary lines rewritten to match the stored caveat |
+| **discovery** | reported Sharpe **and** psr_z for RUINED candidates — maxDD −114.8% means cumulative equity went NEGATIVE | ruin check: nulls the Sharpe/psr_z, prints `*** RUINED ***`. A wiped-out book cannot earn the returns after its own bankruptcy |
+
+**THE STRUCTURAL FINDING:** all seven laws inspect `trd_lineage` — the RECORD of what was concluded. **None inspected what
+the agents actually compute and print.** A guard on the ledger does not constrain the code, and these three sat in
+production the entire time the guards were green.
+
+**Closed by `scripts/agent-output-guard.ts` (D-459)** — the eighth guard, and the first that reads the running system. Goes
+RED on: a drawdown past −100% not labelled RUINED, a noise ceiling below the current trial count, a "validated edge" claim
+while the ledger promotes nothing, a stale log, or non-empty stderr. All five branches verified by self-test; exit codes
+checked without pipe masking. **Two flaws in the guard were caught while building it**: it first scanned whole log tails
+(so it flagged already-FIXED defects and could never go green — worse than useless) and repeated one problem per matching
+line. Both corrected.
+
 ## 2026-08-22 (audit complete) — FIVE back-catalogue claims audited: 4 refuted, 1 confirmed-with-correction
 
 | claim | prior status | outcome | law that caught it |
