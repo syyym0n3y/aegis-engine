@@ -1,5 +1,35 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (audit complete) — FIVE back-catalogue claims audited: 4 refuted, 1 confirmed-with-correction
+
+| claim | prior status | outcome | law that caught it |
+|---|---|---|---|
+| crypto momentum | "verified tradeable" | **REFUTED** | BREADTH — 94.2%/yr on 14 names; at 162-name breadth SR 0.34 and the IC sign flips negative |
+| rip-short | "verified, p=1e-7" | **REFUTED** | PSEUDO-REPLICATION — trade t 2.04-4.66 reproduces, portfolio t −1.60; with its own 1R stop trade t falls to 0.23 |
+| bbfade | "ONE survivor of 24 setups" | **REFUTED** | BENCHMARK — raw t 56.11, but −1.250% vs buy-and-hold at t −14.27 |
+| **equity VRP** | "most robust finding, t=48.8" | **CONFIRMED, corrected** | OVERLAP — non-overlapping t is **12.6**, still clears the deflated bar. Sub-claim "all buckets t>11" withdrawn (VIX>30 is t 1.89, n=35) |
+| combined-book selective overlay | "worth ~0.37 Sharpe" | **REFUTED** | SELECTION — classes picked on the FULL sample; on train the overlay is negative in EVERY class, honest book collapses onto passive |
+
+**The VRP result matters as much as the four refutations: the laws correct overstatement, they do not simply destroy.**
+Where the underlying finding was sound it survived, and D-404's interpretation (the VRP is compensation for crash risk —
+SVXY lost 83% in one day) stands unchanged.
+
+**D-405's practical bottom line is UNCHANGED and strengthened:** diversified passive (OOS SR 0.57) is the best
+risk-adjusted book. What is withdrawn is the "calibrated choice" framing — the honest trade is **0.00 Sharpe for half the
+drawdown**, not 0.37.
+
+**SEVEN enforced laws**, each with a machine guard verified RED by exit code, all running daily: COVERAGE (+staleness),
+LIQUIDITY, EFFECT-SIZE, BREADTH, EXECUTION, SELECTION, plus the PSEUDO-REPLICATION and BENCHMARK rules in doctrine.
+Two guards had negation flaws caught by their OWN self-tests ("no passive assumption" / "nothing chosen" tripping naive
+keyword matches) — the self-tests are doing real work, not decorating the guards.
+
+**A bug worth recording:** the first version of the D-455 audit misaligned per-class series positionally and produced a
+book with **Sharpe 1.9 — better than every other line in the table.** A bug flatters a result far more readily than it
+damages one. That is why results get audited rather than trusted.
+
+**$0 at risk. Nothing armed. Nothing promoted. Aegis holds ZERO claimed edges** — one confirmed risk premium (equity VRP,
+compensation for a measured tail), three dormant carry watches, and a method that now catches its own errors.
+
 ## 2026-08-22 — THE AUDIT: all three claimed "verified" edges REFUTED, each by a different new law
 
 The prior record listed a **"verified tradeable set = 3"**. All three are now refuted, and — this is the point — **each
