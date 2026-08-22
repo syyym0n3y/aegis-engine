@@ -1,5 +1,37 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (continued) — nulls RE-EARNED on repaired data; the one confirmed premium gets a measured tail cap
+
+**D-460 FUNDAMENTAL FACTORS RE-EARNED.** D-420 found the fundamentals panel had silently stopped at 2023-07, so every
+value/quality verdict — including D-363/364's "nothing clears deflation" — was partly evidence about our DATA. Re-run on
+the repaired panel (fresh to 2026-08, 197,757 monthly rows, 186 months, breadth **728-1,048 names**, ranked inside a
+$10M/day tradable universe, portfolio t not IC t):
+
+| factor | net@10bp | SR | portfolio t | vs fee |
+|---|---|---|---|---|
+| **value B/M** | **+6.1%/yr** | **0.50** | **1.98** | **5.1x** |
+| quality ROE | +3.6% | 0.24 | 0.95 | 3.0x |
+| accruals | −0.8% | −0.11 | −0.41 | 0.7x |
+| asset growth | −0.6% | −0.06 | −0.22 | 0.5x |
+| net issuance | +0.8% | 0.08 | 0.31 | 0.6x |
+
+**Nulls hold, now honestly earned on complete data.** Nothing approaches the deflated ceiling of 5.34. Sloan accruals are
+worth 0.7x their own fee. **Value B/M is the healthiest cross-sectional equity result the program has produced under full
+discipline** — 5.1x its fee on 728 names — and still fails at t 1.98.
+
+**D-461 VRP TAIL TRUNCATION — the first actionable risk-management result of the session.** The equity VRP is the only
+audit survivor (t 12.6). Harvesting it lost **−83.0% in one day**. A post-loss cooldown (flat 10d after a −8% day) caps the
+worst day at **−18.3%** while keeping 29.8% of 31.5%/yr. I then applied my own SELECTION LAW to it:
+- **PARAMETER GRID: STRUCTURAL** — all 20 combinations cap the worst day at −18% to −26% vs −83%. Not fitted.
+- **TRAIN/TEST: the Sharpe gain does NOT survive** — frozen parameters give OOS SR 0.65 vs RAW 0.83.
+- **The correct reading:** the test window has no catastrophe, and **insurance costs money when nothing burns.** Precise
+  finding: **the single-day tail is capped near −20% instead of −83%, for ~0.18 of Sharpe in calm periods.** Whether that
+  trade is worth making is a risk-preference decision for the operator, not an empirical one.
+- Limits stated: n=1 catastrophe in the whole sample; SVXY cut leverage −1x to −0.5x after Feb 2018, so the test
+  instrument differs from the training one.
+
+**All three live-agent fixes verified in output.** Eight guards green; six agents PASS the agent-output guard.
+
 ## 2026-08-22 (live-agent audit) — THREE defects in production while all seven guards were GREEN
 
 Watching the six launchd agents — reading their OUTPUT, not just confirming they were alive — found three real defects.
