@@ -9135,3 +9135,39 @@ event are earned by capital that no longer exists. Added a ruin check that nulls
 RECORD of what was concluded. None of them inspects what the live agents are computing and printing right now. The agents
 predate the laws and had never been audited against them. **A guard on the ledger does not constrain the code**, and the
 three defects above sat in production the entire time the guards were green.
+
+## D-460 — FUNDAMENTAL FACTORS RE-EARNED on the repaired panel: nulls hold, and value is the only one with life
+
+**Why this was owed.** D-420 found that Assets / Liabilities / StockholdersEquity / NetIncomeLoss had silently STOPPED AT
+2023-07, and the deep balance-sheet concepts were 199 days stale. Every value/quality/profitability verdict this program
+issued — including D-363/364's *"nothing clears clean deflation"* — was measured on a panel that ended three years before
+the verdict was written. Under the program's own COVERAGE LAW those nulls were, in part, evidence about OUR DATA. The panel
+is now fresh to 2026-08 (+394,927 rows), so they had to be **re-earned rather than inherited**.
+
+Panel: 898,871 facts / 7,257 tickers -> 197,757 monthly rows, 186 months (2011-02 .. 2026-07), ranked INSIDE a $10M/day
+tradable universe (D-450), quintile long-short, 10bp round trip.
+
+| factor | breadth | gross %/yr | net@10bp | SR | **PORTFOLIO t** | vs EW hold | vs fee |
+|---|---|---|---|---|---|---|---|
+| **value B/M** | 728 | 7.3 | **+6.1** | **0.50** | **1.98** | −4.0 | **5.1x** |
+| quality ROE | 920 | 4.8 | +3.6 | 0.24 | 0.95 | −6.7 | 3.0x |
+| accruals | 816 | 0.4 | −0.8 | −0.11 | −0.41 | −11.4 | 0.7x |
+| asset growth | 1048 | 0.6 | −0.6 | −0.06 | −0.22 | −11.3 | 0.5x |
+| net issuance | 765 | 2.0 | +0.8 | 0.08 | 0.31 | −10.3 | 0.6x |
+
+**BREADTH IS NOT THE ISSUE HERE** — 728 to 1,048 names per rebalance, far above the D-446 floor. Whatever these numbers
+are, they are not concentration artifacts, which distinguishes them from D-441/443.
+
+**VERDICT: the nulls HOLD, and are now honestly earned on complete data.** No factor approaches the deflated ceiling of
+5.34. Accruals, asset growth and net issuance are at or below their own transaction cost — Sloan's accrual anomaly, which
+D-408 first got to test only after the Coverage-Law repair, is worth 0.7x its fee.
+
+**Value B/M is the one with life, and deserves to be stated precisely rather than lumped in:** +6.1%/yr net of cost at
+SR 0.50 on 728 names, clearing its fee **5.1x**. That is the healthiest cross-sectional equity number this program has
+produced under full discipline. It still fails: **portfolio t 1.98 against a required 5.34.**
+
+**A CAVEAT AGAINST MY OWN BENCHMARK COLUMN.** The "vs EW hold" figures (−4.0 to −11.4pp) must NOT be read the way they were
+read for bbfade (D-453). bbfade was a LONG-ONLY rule, so losing to buy-and-hold was decisive. These are MARKET-NEUTRAL
+long-short books: they carry no market beta, so underperforming a long-only benchmark during a rising sample is expected
+and is not evidence against them. The decisive numbers here are the portfolio t and the deflated ceiling — not that column.
+Applying a control where it does not belong would be the same error as omitting one where it does.
