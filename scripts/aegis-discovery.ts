@@ -92,20 +92,32 @@ async function cycle() {
       // near-normal second-order expansion; at skew 8 it is far outside its regime of validity).
       const dn2 = 1 - sk * msr + ((ku - 1) / 4) * msr * msr;
       const psrValid = dn2 > 0 && Math.abs(sk) <= 2;
-      const dn = dn2 > 0 ? Math.sqrt(dn2) : NaN; let cum = 1, peak = 1, dd = 0; for (const r of a) { cum *= 1 + r; peak = Math.max(peak, cum); dd = Math.min(dd, cum / peak - 1); } // robustness: Sharpe with the best 1 and best 3 months removed (a tail-lottery collapses here)
+      const dn = dn2 > 0 ? Math.sqrt(dn2) : NaN; let cum = 1, peak = 1, dd = 0, ruined = false;
+      // RUIN CHECK (added 2026-08-22, D-458). The agent was reporting maxDD of -94.7% and -114.8% alongside a Sharpe and a
+      // psr_z. A drawdown past -100% is only arithmetically reachable if cumulative equity goes NEGATIVE — i.e. the series
+      // contains a period worse than -100% and the strategy was WIPED OUT. A bankrupt strategy has no meaningful Sharpe:
+      // the survivor of a ruin event is a fiction, because there is no capital left to earn the subsequent returns. Flag
+      // it and refuse the ratio rather than ranking a corpse alongside live candidates.
+      for (const r of a) { cum *= 1 + r; if (cum <= 0) { ruined = true; break; } peak = Math.max(peak, cum); dd = Math.min(dd, cum / peak - 1); }
+      if (ruined) dd = -1;
+      // robustness: Sharpe with the best 1 and best 3 months removed (a tail-lottery collapses here)
       const srt = [...a].sort((x, y) => y - x); const exTop = (k: number) => { const z = srt.slice(k); const mm = z.reduce((s, x) => s + x, 0) / z.length; const ss = Math.sqrt(z.reduce((s, x) => s + (x - mm) ** 2, 0) / (z.length - 1)); return +(ss > 0 ? (mm / ss) * Math.sqrt(12) : 0).toFixed(2); };
-      return { sharpe: +(msr * Math.sqrt(12)).toFixed(2), ann_pct: +(m * 1200).toFixed(1), win_pct: +(100 * a.filter((x) => x > 0).length / n).toFixed(0), skew: +sk.toFixed(2), maxdd_pct: +(dd * 100).toFixed(1), psr_z: psrValid ? +((msr * Math.sqrt(n - 1)) / dn).toFixed(2) : null, psr_valid: psrValid, sharpe_ex_top1: exTop(1), sharpe_ex_top3: exTop(3), n }; };
+      // A ruined candidate reports NO Sharpe and NO psr_z — nulls, not flattering numbers.
+      if (ruined) return { sharpe: null, ann_pct: null, win_pct: +(100 * a.filter((x) => x > 0).length / n).toFixed(0), skew: +sk.toFixed(2), maxdd_pct: -100, psr_z: null, psr_valid: false, ruined: true, sharpe_ex_top1: null, sharpe_ex_top3: null, n };
+      return { ruined: false, sharpe: +(msr * Math.sqrt(12)).toFixed(2), ann_pct: +(m * 1200).toFixed(1), win_pct: +(100 * a.filter((x) => x > 0).length / n).toFixed(0), skew: +sk.toFixed(2), maxdd_pct: +(dd * 100).toFixed(1), psr_z: psrValid ? +((msr * Math.sqrt(n - 1)) / dn).toFixed(2) : null, psr_valid: psrValid, sharpe_ex_top1: exTop(1), sharpe_ex_top3: exTop(3), n }; };
     const gS = ann(gross), nS = ann(net);
     const nTrain = ann(net.slice(0, splitIdx)), nTest = ann(net.slice(splitIdx));
     // per-era net sharpe
     const eraSharpe: Record<string, number> = {}; for (const [en, a, b] of ERAS) { const sub = net.filter((_, i) => { const y = +ls[i].mo.slice(0, 4); return y >= a && y < b; }); if (sub.length >= 8) { const m = sub.reduce((s, x) => s + x, 0) / sub.length; const sd = Math.sqrt(sub.reduce((s, x) => s + (x - m) ** 2, 0) / sub.length); eraSharpe[en] = +(sd > 0 ? m / sd * Math.sqrt(12) : 0).toFixed(2); } }
-    results.push({ candidate: cand.name, family: cand.family, train_net_sharpe: nTrain ? nTrain.sharpe : null, TEST_net_sharpe: nTest ? nTest.sharpe : null, test_months: nTest ? nTest.n : 0, gross_sharpe: gS.sharpe, net_sharpe: nS.sharpe, net_ann_pct: nS.ann_pct, win_pct: nS.win_pct, skew: nS.skew, maxdd_pct: nS.maxdd_pct, psr_z: nS.psr_z, psr_valid: nS.psr_valid, sharpe_ex_top1: nS.sharpe_ex_top1, sharpe_ex_top3: nS.sharpe_ex_top3, noise_ceiling: +ceil.toFixed(2), passes_deflation: !!(nS.psr_valid && nS.psr_z != null && nS.psr_z > ceil), per_era_net_sharpe: eraSharpe, n_months: nS.n });
+    results.push({ candidate: cand.name, family: cand.family, ruined: !!nS.ruined, train_net_sharpe: nTrain ? nTrain.sharpe : null, TEST_net_sharpe: nTest ? nTest.sharpe : null, test_months: nTest ? nTest.n : 0, gross_sharpe: gS.sharpe, net_sharpe: nS.sharpe, net_ann_pct: nS.ann_pct, win_pct: nS.win_pct, skew: nS.skew, maxdd_pct: nS.maxdd_pct, psr_z: nS.psr_z, psr_valid: nS.psr_valid, sharpe_ex_top1: nS.sharpe_ex_top1, sharpe_ex_top3: nS.sharpe_ex_top3, noise_ceiling: +ceil.toFixed(2), passes_deflation: !!(nS.psr_valid && nS.psr_z != null && nS.psr_z > ceil), per_era_net_sharpe: eraSharpe, n_months: nS.n });
   }
   const base = results.find((r) => r.candidate === "base_composite"); const baseSr = base ? ((base.TEST_net_sharpe as number) ?? 0) : 0;
   for (const r of results) { r.beats_base = ((r.TEST_net_sharpe as number) ?? -9) > baseSr && r.candidate !== "base_composite"; }
   results.sort((a, b) => ((b.TEST_net_sharpe as number) ?? -9) - ((a.TEST_net_sharpe as number) ?? -9)); // rank by OOS, not full-sample
   console.log(`  candidates (NET of ~20bp, full history, deflation N=${N_TRIALS} ceil=${ceil.toFixed(2)}):`);
-  for (const r of results) console.log(`   ${String(r.candidate).padEnd(20)} TEST(OOS) ${String(r.TEST_net_sharpe).padStart(6)} train ${String(r.train_net_sharpe).padStart(6)} full ${String(r.net_sharpe).padStart(6)} exTop1 ${String(r.sharpe_ex_top1).padStart(5)} exTop3 ${String(r.sharpe_ex_top3).padStart(5)} win ${r.win_pct}% skew ${r.skew} psr_z ${r.psr_valid ? r.psr_z : "INVALID(|skew|>2)"} ${r.passes_deflation ? "CLEARS" : "fails"} ${r.beats_base ? "BEATS-BASE" : ""} eras:${JSON.stringify(r.per_era_net_sharpe)}`);
+  for (const r of results) console.log(r.ruined
+    ? `   ${String(r.candidate).padEnd(20)} *** RUINED *** cumulative equity went to zero or below — no Sharpe is reported, because a wiped-out book cannot earn the returns that follow its own bankruptcy (win ${r.win_pct}% skew ${r.skew}, n=${r.n_months})`
+    : `   ${String(r.candidate).padEnd(20)} TEST(OOS) ${String(r.TEST_net_sharpe).padStart(6)} train ${String(r.train_net_sharpe).padStart(6)} full ${String(r.net_sharpe).padStart(6)} exTop1 ${String(r.sharpe_ex_top1).padStart(5)} exTop3 ${String(r.sharpe_ex_top3).padStart(5)} win ${r.win_pct}% skew ${r.skew} psr_z ${r.psr_valid ? r.psr_z : "INVALID(|skew|>2)"} ${r.passes_deflation ? "CLEARS" : "fails"} ${r.beats_base ? "BEATS-BASE" : ""} eras:${JSON.stringify(r.per_era_net_sharpe)}`);
   // F9 FIX: increment trd_trial_counter — the stated non-negotiable ("increments on EVERY backtest run, including failed").
   // The daemon re-tests candidates every cycle; N must grow so the deflation ceiling reflects the true search breadth.
   try {
