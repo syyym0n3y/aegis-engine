@@ -9495,6 +9495,10 @@ the runner's `infra/` cwd, it scanned ZERO files and passed vacuously ("0 sites 
 see its subject certifies instead of checking. Roots now resolve from the guard's own file location; verified identical
 from both cwds.
 
+**LANDING CONFIRMED (2026-08-22 12:14):** the next discovery cycle wrote 6 rows to the widened `trd_discovery_log` with no
+WRITE-FAILED — including `quality_x_momentum` persisted as `ruined=true` with NULL Sharpes, the D-458 design now flowing
+end-to-end into the permanent record. Trial counter took its second increment (12 live rows): the ceiling is monotonic.
+
 Four defects found and fixed in the hour after the pass "completed" — three of them in the fixes themselves. That is not
 sloppiness unique to today; it is why every guard here must be verified to FAIL, from the cwd it actually runs in, before
 its green means anything.
