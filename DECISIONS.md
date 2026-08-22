@@ -8921,3 +8921,38 @@ approach the deflated bar. The economics are ordinary; only the method finding s
 must never be reported as evidence of tradability. Report the portfolio t-stat (n = number of rebalances) beside it. This
 program has quoted IC t-stats throughout — including earlier in this session — and where the two disagree, **the portfolio
 number decides.**
+
+## D-452 — AUDIT OF THE FLAGSHIP EDGE: rip-short is POSITIVE per trade and NEGATIVE as a portfolio
+
+**Why this audit was mandatory, not optional.** The prior record lists a "verified tradeable set" of three: rip-short
+(equity daily, "p=1e-7"), bbfade, and crypto momentum. **Crypto momentum is already refuted** — D-443 showed the 94%/yr was
+a concentration artifact on 14 names, and D-451 showed the sign FLIPS negative at proper breadth (IC −0.0395, t −8.74). One
+of three being wrong obliges a check of the others.
+
+**Rule, taken verbatim from `supabase/functions/trd-ripshort-scan/index.ts`:** RSI(14) > 70 AND close < 200MA, in a bull
+tape (SPY > its 200MA) -> SHORT. Re-run locally on the owned panel: **99,861 trades**, $10M/day liquidity floor, 10bp
+round trip charged.
+
+| hold | trades | mean/trade | **TRADE-level t** | portfolio days | **PORTFOLIO %/yr** | SR | **PORTFOLIO t** |
+|---|---|---|---|---|---|---|---|
+| 5d | 99,861 | +0.050% | 2.04 | 6,299 | **−8.3%** | −0.32 | **−1.60** |
+| 10d | 99,861 | +0.069% | 2.26 | 6,642 | −1.3% | −0.06 | −0.29 |
+| 21d | 99,861 | +0.209% | 4.66 | 6,986 | −2.3% | −0.11 | −0.57 |
+
+**The trade-level statistic REPRODUCES the original claim** — positive mean, t 2.04 to 4.66. So this is not a failure to
+replicate. **The portfolio is negative at every horizon tested.** The two views disagree in SIGN.
+
+**Why:** rip-short fires on overbought names inside downtrends, which cluster on the same days. A trade-average weights
+every signal equally no matter how many fired that day; a portfolio weights every DAY equally. When the heavy-signal days
+are the losing days, the trade-average is positive while the book loses money. This is precisely the pseudo-replication
+that D-451 exposed, and it is the difference between a claimed edge and a losing strategy.
+
+**LIMITS OF THIS AUDIT, stated plainly.** This tests the rule AS WRITTEN in the scanner, with fixed 5/10/21-day holds. The
+prior record describes a **1R-capped stop**, which I did not implement and which materially changes the payoff
+distribution (it truncates the left tail of a SHORT, which is where short strategies bleed). A capped-stop version could
+behave differently and has not been tested here.
+
+**VERDICT: the "verified" status of rip-short does not survive portfolio accounting and is withdrawn pending re-validation
+with its stop.** The burden has shifted: a trade-level p-value is no longer evidence for it. Two of the three claimed
+edges are now refuted or withdrawn (crypto momentum refuted, rip-short withdrawn); bbfade remains un-audited and is
+recorded as UNVERIFIED rather than verified, since it rests on the same trade-level methodology.
