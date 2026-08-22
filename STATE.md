@@ -1,5 +1,34 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (latest) — the first RELIABLE mechanism in the program, and it is not an edge
+
+**D-461/462/463 THE POST-LOSS COOLDOWN.** Chased from one instrument to 328, then through my own Selection Law twice.
+
+- **D-461** — on SVXY it capped the worst day at −18.3% vs **−83.0%**, structurally across all 20 parameter cells. But it
+  rested on **n=1 catastrophe**, which I named as its fatal limit.
+- **D-462** — closed that limit on 328 survivorship-free perps **including 10 that actually died**. maxDD improved on
+  **304/328 (93%)**; on the delisted contracts **10/10** improved (LUNAUSDT worst day **−99.3% → −13.7%**). Sharpe improved
+  on exactly 50%, median change **0.00**.
+- **D-463** — parameter choice tested out of sample. **Rank correlation TRAIN↔TEST = 0.53** across 33 settings, so choosing
+  on train is meaningful. Drawdown control holds OOS on **88-90%** of instruments.
+
+**TWO CLAIMS OF MY OWN THAT I REFUTED IN THE SAME SESSION I MADE THEM:**
+1. I wrote that this rule's 7.3pp/yr cost matching D-401's trend overlay "to the decimal" revealed an **invariant price of
+   de-risking**. A 12-setting sweep killed it: the exchange rate ranges **0.09 to 21.03**. An anecdote, not a price.
+2. Worse — the OOS test showed the return effect **flips sign with regime**: −7.0%/yr in the rising train window, **+1.3 to
+   +20%/yr** in the falling test window. It is not a constant in magnitude *or* sign.
+
+**THE CORRECT, NARROW SUMMARY:** a post-loss cooldown is a reliable **drawdown reducer** (88-93% of instruments, in and out
+of sample) whose return impact is regime-dependent — it costs in rising markets and pays in falling ones. It adds **no
+Sharpe and no predictive information**. It is insurance whose premium is negative exactly when it is needed. Shallow
+trigger + long cooldown dominates; the intuitive tight-stop/quick-re-entry (−12%/3d) costs 17.4pp/yr and makes drawdown
+WORSE.
+
+**Also fixed: a bug in my own metric** — the cost/drawdown ratio used `Math.abs(cost)`, so a setting that ADDED 20%/yr
+displayed identically to one that COST 20%/yr, and the OOS table read backwards until corrected.
+
+**Nothing promoted. Nothing armed. $0 at risk.**
+
 ## 2026-08-22 (continued) — nulls RE-EARNED on repaired data; the one confirmed premium gets a measured tail cap
 
 **D-460 FUNDAMENTAL FACTORS RE-EARNED.** D-420 found the fundamentals panel had silently stopped at 2023-07, so every
