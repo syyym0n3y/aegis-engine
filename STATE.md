@@ -1,5 +1,21 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (final) — THE BACK CATALOGUE IS CLOSED: zero unaudited claims remain
+
+**D-468 — the last one: BTC/5m/short ("the ONE strategy that cleared every gate") KILLED.** Byte-faithful re-run on
+946,485 bars, 2017-2026:
+- exact-config replication: trade-t **1.94** vs the recorded **8.07** — unreconciled; the record's headline must not be quoted
+- one-at-a-time gross: +0.335R, portfolio-t **4.77** — a genuinely strong single-instrument signal, still below the 5.34 ceiling
+- @4.5bp futures taker: +0.023R (t 0.32); **negative in every era since 2021** — the same decay timeline as basis/funding/variance
+- **the first maker assumption to SURVIVE fill-testing**: 97.0% fill at the signal close, +0.275R (t 3.69) on filled trades
+  (vs the US-afternoon window, where 92% fill and negative filled-days killed it) — retained as the program's one validated
+  execution result; recent-era maker net ~+0.1R, marginal
+
+**Full audit tally: 6 refuted/killed** (crypto momentum, rip-short, bbfade, selective overlay, BTC/5m/short, plus the
+concentration/era artifacts), **1 confirmed-corrected** (equity VRP, t 48.8 -> 12.6, still clears), **1 headline restated**
+(diversified passive 0.57 -> 0.78-0.84). **The unaudited column is EMPTY** — every claim in the program's history now has
+a current-law verdict in `trd_lineage`. Memory updated so no future session inherits a dead claim.
+
 ## 2026-08-22 (plumbing pass, D-467) — the classes are fixed at source and can no longer grow
 
 **The flagship find: the trial counter was fiction in three places at once.** `aegis-discovery` wrote a shape the table
