@@ -9545,3 +9545,15 @@ result in the program. **A first design flaw in this audit was caught pre-run:**
 
 **THE BACK CATALOGUE IS NOW CLOSED.** Every claim in the program's history is either re-earned (equity VRP, corrected) or
 refuted/killed under the eight laws. The unaudited column is empty.
+
+## D-469 — OPERATOR DIRECTIVE: B+E adopted; public content GATED behind a complete frontier + factory sweep
+
+Operator: *"go with B + E — and before any video goes out, we need to have acquired all the data we don't have and
+back-tested thousands of favourable strategies; identify the most lucrative ways of making money before any video."*
+
+Adopted verbatim as the gate. The map is `docs/DATA_FRONTIER.md` (Tier A acquiring now; Tier B = one operator action;
+Tier C/D/E stated honestly rather than silently skipped). The sweep instrument is the STRATEGY FACTORY (D-470): enumerate
+the spec grid — signal family x parameters x universe x horizon x construction — and push every run through the eight
+laws with the live trial counter, so "thousands of strategies" raises the deflation ceiling honestly instead of quietly
+mining. The video ships only when the factory has either surfaced the most lucrative surviving configurations or proven
+their absence at that breadth — which is itself the content.
