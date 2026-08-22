@@ -26,6 +26,12 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/breadth-guard.ts; then
     echo "$(date -u +%FT%TZ) BREADTH GUARD RED — a promoted cross-sectional result was computed on too few names"
   fi
+  # EXECUTION LAW (D-449): the strongest candidate in the program (D-447) cleared its bar only under a MAKER assumption,
+  # and that assumption was false — measured on 5m bars the passive order fills 92% of the time and those days return
+  # -1.85bp, while the +68bp lives in the 8% that never fill. A maker fee is a hypothesis about fills, not a cost.
+  if ! deno run --allow-net --allow-env ../scripts/execution-guard.ts; then
+    echo "$(date -u +%FT%TZ) EXECUTION GUARD RED — a maker-dependent result has no fill-conditional return"
+  fi
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true

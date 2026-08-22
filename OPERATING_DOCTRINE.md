@@ -118,3 +118,29 @@ UNTESTED; (3) when a result is large, EXPAND BREADTH before believing it — tha
 (4) survivorship and breadth are different problems and must be fixed separately (in D-443 the survivorship effect was
 small and POSITIVE at +5.2pp while breadth accounted for the entire collapse); (5) enforced by `scripts/breadth-guard.ts`
 (verified RED on a thin cross-section, RED on one that never states breadth, PASS on a broad one, exit-code-checked).
+
+
+## THE EXECUTION LAW (2026-08-22) — binds every result that leans on passive fills
+**A maker/limit-order fee is not a cost model. It is a HYPOTHESIS ABOUT FILLS, and it must be tested by measuring the
+return CONDITIONAL ON FILLING.**
+Origin: D-445/447 produced the strongest candidate this program has found — the 20:00-22:00 UTC perp window, ranked #1 of
+22 possible 2-hour windows, 3.61sd above a typical one, drift-neutral excess 7.83bp at **t 10.92 with 14 of 14 symbols
+agreeing**, positive in three of four eras. It failed at taker fees (0.87x) and cleared at maker fees (2.17x), so the
+entire verdict rested on the maker assumption. Measured on 5-minute bars that assumption was FALSE:
+
+| | BTCUSDT | ETHUSDT |
+|---|---|---|
+| passive fill rate | 92% | 91% |
+| return, ALL days | +3.81bp | +5.91bp |
+| **return on days FILLED** | **−1.85bp** | **−2.80bp** |
+| return on days NOT filled | +68.18bp | +96.53bp |
+| net at maker on filled days | −1.51x the fee | −1.78x the fee |
+
+You are filled when the market comes back to you — which is exactly when the move is not happening. The entire positive
+return lived in the days the order never filled.
+Rules: (1) quoting an all-days return beside a maker fee is invalid — it assumes the fill is independent of the outcome,
+and it never is; (2) any result whose viability depends on passive execution is **UNTESTED** until its fill-conditional
+return is measured; (3) report the fill RATE and the return on filled days, not just the average; (4) enforced by
+`scripts/execution-guard.ts` (verified RED on a maker assumption with no fill study, PASS on one with a measured
+fill-conditional return, and correctly EXEMPT for taker-costed results — a negation-handling flaw found by its own
+self-test, where "no passive assumption" tripped a naive keyword match).
