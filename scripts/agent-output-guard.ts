@@ -30,7 +30,7 @@ const push=(f:Finding)=>{ if(!bad.some(b=>b.agent===f.agent&&b.what===f.what)) b
 const check=(agent:string,text:string,ageH:number|null,errBytes:number)=>{
   // 1. RUIN reported as an ordinary drawdown
   for(const m of text.matchAll(/maxDD\s*(-?\d+(?:\.\d+)?)%/gi)){ const v=Math.abs(+m[1]);
-    if(v>100&&!/RUINED/i.test(text)) push({agent,what:`maxDD worse than -100% — worse than -100% means equity went NEGATIVE; that is ruin, not a drawdown`}); }
+    if(v>100&&!/RUINED/i.test(text)) push({agent,what:`maxDD ${m[1]}% — past -100% means cumulative equity went NEGATIVE; that is RUIN, not a drawdown`}); }
   // 2. a deflation ceiling set below the program's real trial count
   for(const m of text.matchAll(/ceil=(\d+(?:\.\d+)?)/g)){ const v=+m[1];
     if(v<CEIL-0.01) push({agent,what:`noise ceiling ${v} is below the program's ${CEIL.toFixed(2)} (N=${TRIALS.toLocaleString()}) — the bar is set too low`}); }
