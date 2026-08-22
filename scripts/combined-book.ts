@@ -10,6 +10,11 @@
 //                                       index (-19pp). D-401 applied it BLANKET and paid 7.3pp/yr. Applying it only where it
 //                                       measured positive is the testable improvement.
 // Everything is compared against the honest benchmark (diversified passive) with a train/test split. Nothing is armed.
+// UNIVERSE FIX (D-466): the equity fetch had limit= with NO order=, and Postgres returned physical order — which is
+// alphabetical. The D-405 book therefore held the first 150 tickers A..AHRT out of 4,184: every equity began with "A".
+// D-466 measured the damage: OOS Sharpe 0.84 (A-only) vs 0.82 (alphabet spread) vs 0.78 (most-liquid 150) — the
+// RECOMMENDATION survives, the absolute number is universe-dependent. order=symbol makes the truncation deterministic
+// and visible rather than an accident of row layout.
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"cb",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const H=async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};};
@@ -18,7 +23,7 @@ const OVERLAY_CLASSES=new Set(["commodity","crypto_ex","sector","equity","etf"])
 const CLASSES=["etf","index","sector","commodity","fx","equity","crypto_ex"];
 const byCls=new Map<string,{sym:string;m:Map<string,number>}[]>();
 for(const cls of CLASSES){
-  const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${cls}&select=symbol,bars&limit=${cls==="equity"?150:200}`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
+  const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${cls}&select=symbol,bars&order=symbol&limit=${cls==="equity"?150:200}`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
   const keep:{sym:string;m:Map<string,number>}[]=[];
   for(const r of (Array.isArray(rows)?rows:[])){const c=r.bars.map(b=>b[4]); if(c.length<LB+400)continue;
     let mx=0,mn=Infinity; for(let i=1;i<c.length;i++){if(c[i-1]>0){const q=Math.abs(c[i]/c[i-1]-1);if(q>mx)mx=q;} if(c[i]>0&&c[i]<mn)mn=c[i];}

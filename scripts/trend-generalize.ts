@@ -16,7 +16,7 @@ const CLASSES=["etf","index","sector","commodity","fx","rate","crypto_ex","equit
 console.log(`==> DOES TREND-FOLLOWING'S DRAWDOWN PROTECTION GENERALISE? (long-only ${LB}d trend vs buy&hold, per asset class)`);
 console.log(`    class          | TREND SR / dd        | BUY&HOLD SR / dd     | dd ADVANTAGE | OOS dd advantage`);
 for(const cls of CLASSES){
-  let rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${cls}&select=symbol,bars&limit=200`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
+  let rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${cls}&select=symbol,bars&order=symbol&limit=200`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
   if(!Array.isArray(rows)||rows.length<3) {console.log(`    ${cls.padEnd(14)} | (too few instruments)`); continue;}
   if(cls==="equity") rows=rows.slice(0,150);          // cap the equity pull for runtime
   // data-quality filter (the D-395 lesson: never trust a feed silently)

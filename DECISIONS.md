@@ -9390,3 +9390,44 @@ but the specific number should not be quoted until someone reconciles it.
 
 **The D-465 verdict is unaffected either way,** because it is an INTERNAL comparison — passive versus passive-plus-cooldown
 within one fixed construction — and the cooldown loses under both methods.
+
+## D-466 — THE RESIDUAL EXPLAINED: every equity in the recommended book began with the letter "A"
+
+Chasing D-465's unexplained ~0.15 Sharpe residual led to the universe fetch in `combined-book.ts`:
+
+```
+trd_bars_deep?asset_class=eq.equity&select=symbol,bars&limit=150        <- no order=
+```
+
+Postgres returns rows in unspecified order without an ORDER BY — here, physical order, which is alphabetical. **The equity
+leg of the program's headline recommendation held the first 150 tickers, A through AHRT, out of 4,184 available. Every
+single equity began with "A".** Not a sampling decision anyone made; a missing ORDER BY.
+
+**The class, not the instance (the D-464 lesson applied):** a repo sweep found the same limit-without-order pattern in
+five live scripts. Exposure assessed per script:
+- `combined-book.ts` (D-405/455), `trend-overlay-portfolio.ts` (D-400/401), `trend-generalize.ts` (D-379/384),
+  `passive-plus-cooldown.ts` (D-465, my own script — it inherited the bug when I copied the construction): **all exposed**.
+- `seasonality.ts` (D-403): **unaffected** — its non-equity classes total 60 instruments under a limit of 100; nothing was
+  truncated.
+
+**The damage, measured rather than assumed (D-466 test).** Three 150-name equity universes under identical filters and
+identical non-equity legs: the A-only accident, an even alphabet spread, and the 150 most liquid names (NVDA, AAPL,
+MSFT...):
+
+| equity universe | FULL SR | OOS SR | OOS ann | OOS maxDD |
+|---|---|---|---|---|
+| A-only (as the book ran) | 0.80 | **0.84** | 11.3% | −23.2% |
+| alphabet spread | 0.76 | 0.82 | 11.0% | −24.1% |
+| most liquid 150 | 0.66 | 0.78 | 10.8% | −23.2% |
+
+**OOS Sharpe spread across universes: 0.06. THE RECOMMENDATION IS ROBUST TO THE ACCIDENT.** Diversification across seven
+asset classes does the work; which 150 equities occupy one leg barely moves the book. The alphabetical fluke even ran
+slightly HOT (0.84 vs 0.78 liquid), so the recorded numbers were not flattered by it in any material way.
+
+**Fixes shipped:** `order=symbol` added to every affected fetch (deterministic, documented truncation instead of an
+accident of row layout), with the finding annotated at the fetch site in the two most important scripts.
+
+**Verdict on D-465's open residual:** partially explained. The A-universe is stable run-to-run, so it does not explain the
+0.72-vs-0.57 window-restricted gap on its own — but the liquid-universe number (OOS 0.78) sits closer to plausible reality
+than either, and the honest statement of the recommended book is now: **diversified passive, OOS Sharpe ~0.78-0.84
+depending on equity universe, maxDD ~-23%** — with the recorded 0.57 superseded as understated.

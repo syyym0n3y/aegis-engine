@@ -11,7 +11,7 @@ async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"
 const H=async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};};
 const hdr=await H();
 // use broad liquid proxies per class (calendar effects are market-level, not name-level)
-const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=in.(etf,index,sector,commodity,fx,crypto_ex)&select=symbol,asset_class,bars&limit=100`,{headers:hdr}).then(r=>r.json()) as {symbol:string;asset_class:string;bars:number[][]}[];
+const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=in.(etf,index,sector,commodity,fx,crypto_ex)&select=symbol,asset_class,bars&order=symbol&limit=100`,{headers:hdr}).then(r=>r.json()) as {symbol:string;asset_class:string;bars:number[][]}[];
 type R={date:Date;ret:number;cls:string};
 const all:R[]=[];
 for(const r of rows){const b=r.bars; if(!b||b.length<500)continue;
