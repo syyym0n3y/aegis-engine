@@ -74,3 +74,23 @@ One command each, the moment you have a box + SSH:
 - **Prerequisites only you can provide**: (1) a box + SSH (buy metal for true ownership, or a rented bare-metal interim);
   (2) each source project's DB connection string WITH password (Supabase dashboard); (3) for YGS, that project's edge-function
   repo (command-centre) + a cutover window. Claude never holds the passwords.
+
+## Watching the agents — two traps hit on 2026-08-22
+
+**1. `pgrep -f` matches the watcher itself.** A wait loop written as
+`until ! pgrep -f 'aegis-positioning'; do sleep 20; done` never exits: the shell running that loop has the string
+`aegis-positioning` in its OWN command line, so pgrep finds itself and the condition is permanently true. Hit twice in one
+session (first on `ingest-perp-flow`). Two fixes, both used here:
+- narrow the pattern so it only matches the real process: `pgrep -f 'deno run.*aegis-positioning'`
+- or use the bracket trick: `pgrep -f '[a]egis-positioning'` — the watcher's own cmdline contains the literal `[a]egis-...`
+  which the regex does not match.
+
+**2. `pkill -f "until ! pgrep"` kills every watcher, not the stuck one.** Used to clear one wedged loop, it terminated nine
+background monitors at once. No work was lost — every underlying job had already finished and been recorded, and that was
+VERIFIED afterwards by checking each log for its completion marker rather than assumed. Kill by PID (`pkill` prints
+nothing; use `pgrep -f ... ` first and inspect) rather than by a pattern that matches a whole class of shells.
+
+**3. Restarting an agent mid-edit gives a mixed binary.** `aegis-positioning` was restarted between two source edits and
+logged the OLD header with the NEW footer — the run had loaded the module after the first edit and before the second.
+When verifying a fix, confirm the banner AND the closing line come from the same version, or restart once more after all
+edits land.
