@@ -1,5 +1,29 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (latest) — D-465's residual EXPLAINED: every equity in the recommended book began with "A"
+
+**D-466.** The unexplained gap in the headline number traced to the universe fetch in `combined-book.ts`:
+`limit=150` with **no ORDER BY**. Postgres returned physical order — alphabetical — so the equity leg of the program's
+recommended book held tickers **A through AHRT: all 150 began with the letter "A"**, out of 4,184 available. Not a sampling
+decision; a missing clause.
+
+**The class, not the instance (D-464's lesson applied):** repo sweep found the same pattern in 4 live scripts —
+`combined-book` (D-405), `trend-overlay-portfolio` (D-400/401), `trend-generalize` (D-379), and my own
+`passive-plus-cooldown` (it inherited the bug when I copied the construction). `seasonality` (D-403) unaffected
+(60 instruments under a limit of 100). `order=symbol` shipped to all.
+
+**Damage measured, not assumed** — identical book on three 150-name equity universes:
+
+| equity universe | OOS SR | OOS maxDD |
+|---|---|---|
+| A-only (as it ran) | 0.84 | −23.2% |
+| alphabet spread | 0.82 | −24.1% |
+| most liquid 150 (NVDA, AAPL…) | 0.78 | −23.2% |
+
+**Spread 0.06 — THE RECOMMENDATION SURVIVES THE ACCIDENT.** Diversification across seven classes does the work; the
+composition of one leg barely moves the book. The honest restatement of the program's central recommendation:
+**diversified passive, OOS Sharpe ~0.78–0.84, maxDD ~−23%** — the recorded 0.57 is superseded as understated.
+
 ## 2026-08-22 (latest) — the recommended book, re-examined; and a reproducibility flag on its headline number
 
 **D-465 SYNTHESIS: the cooldown does NOT help the recommended book.** Applying the validated drawdown control
