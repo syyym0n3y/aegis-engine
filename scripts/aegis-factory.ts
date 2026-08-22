@@ -144,10 +144,15 @@ async function buildEqPanel(){
 // ---------- generic cross-section evaluator ----------
 type Gate={n_names:number;n_periods:number;gross_ann:number;net_ann:number;sharpe:number;t:number;dd:number;ruined:boolean;
   g_breadth:boolean;g_effect:boolean;g_benchmark:boolean;g_liquid:boolean;g_era:boolean;eras:number[]};
-function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,perYear:number):Gate|null{
+// hold: forward window in months. OVERLAP FIX (the factory's first two "survivors" were this bug): a 3-month forward
+// return sampled MONTHLY gives consecutive observations sharing 2/3 of their window — t inflated ~sqrt(3), the exact
+// D-454 trap. Periods are strided by `hold` so every observation is disjoint; n_periods drops accordingly and the t is
+// honest. Caught because the h3 rows carried the SAME n_periods as h1 — the number that cannot lie.
+function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,perYear:number,hold=1):Gate|null{
   const by=new Map<string,{fwd:number;v:number}[]>();
   for(const r of rows)(by.get(r.mo)??by.set(r.mo,[]).get(r.mo)!).push(r);
-  const per=[...by.entries()].filter(([,g])=>g.length>=30).sort((a,b)=>a[0]<b[0]?-1:1);
+  const perAll=[...by.entries()].filter(([,g])=>g.length>=30).sort((a,b)=>a[0]<b[0]?-1:1);
+  const per=hold>1?perAll.filter((_,i)=>i%hold===0):perAll;   // DISJOINT windows only
   if(per.length<24)return null;
   const rets:number[]=[],names:number[]=[],moKeys:string[]=[];
   for(const [mo,g] of per){
@@ -227,7 +232,7 @@ for(const sig of SIGNALS) for(const lag of [0,1]) for(const hold of [1,3]) for(c
     for(const [mo,g] of tmp){g.sort((a,b)=>b.dv-a.dv);
       for(const x of g.slice(0,Math.max(30,Math.floor(g.length/3))))use.push({mo,fwd:x.fwd,v:x.v});}
   }
-  const g=evalXsec(use,FEE_EQ*(hold>1?1:1),k,12/hold);
+  const g=evalXsec(use,FEE_EQ,k,12/hold,hold);
   await record(key,"xsec_eq",spec,uni==="liqtop"?"equity_liqtop":"equity_liquid",g,ceil);
   done++;
   if(done%50===0)await log(`  ..${done} specs (${((Date.now()-t0)/60000).toFixed(1)}m)`);
