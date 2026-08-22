@@ -9443,7 +9443,7 @@ node. One class cleared by measurement rather than assumption.
 
 **CLASS 1 — arbitrary truncation (`limit=` ≥ 50, no `order=`): 7 real sites.** The worst was
 `trd-insider-ic/index.ts`: `limit=250000` against a table holding **278,456 rows — 28,456 rows (10%) silently dropped,
-selection决 by physical layout. The insider-IC verdict ran on an arbitrary 90% sample.** Fixed to ordered pagination of the
+selection decided by physical layout. The insider-IC verdict ran on an arbitrary 90% sample.** Fixed to ordered pagination of the
 full table; flagged for re-run when the rented org is restored. Also fixed: `coverage-guard.ts` was paginating 1.2M rows
 by offset with NO total order (pages may overlap or skip — phantom or missing coverage in the Coverage Law's own guard);
 plus ordered fetches in autopilot and the universe-bias audit. Exchange-API hits (Binance/Bybit/OKX `limit=`) are false
