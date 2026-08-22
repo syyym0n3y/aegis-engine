@@ -9210,3 +9210,40 @@ risk-preference decision, not an empirical one, and it is the operator's to make
 not event-robustness — n=1 for the thing being insured against; (b) SVXY cut its own leverage from −1x to −0.5x after
 February 2018, so the test window is a materially different instrument from the training window, which flatters the OOS
 tail comparison; (c) this is not promoted and nothing is armed.
+
+## D-462 — THE TAIL COOLDOWN GENERALISES, and de-risking has a measured PRICE: ~7pp/yr for ~10pp of drawdown
+
+D-461 found a post-loss cooldown cut SVXY's worst day from −83.0% to −18.3%, robust across all 20 parameter combinations —
+but named its own fatal limit: **the sample contained exactly ONE catastrophe.** Parameter-robustness is not
+event-robustness. Crypto fixes that precisely: the survivorship-free universe (D-442) holds 328 perps INCLUDING contracts
+that were delisted after collapsing, so the sample contains many independent catastrophes rather than one.
+
+**Across 328 instruments (10 of them delisted), trigger −8% / cooldown 10d, using only prior returns:**
+
+| metric | improved on | median change |
+|---|---|---|
+| worst single day | 184/328 (56%) | +3.5pp |
+| **max drawdown** | **304/328 (93%)** | **+9.9pp** |
+| Sharpe | 163/328 (50%) | **0.00** |
+| annual return | — | **−7.3pp/yr** |
+
+**On the 10 contracts that actually died: 10/10 improved on BOTH tail metrics** (median +16.7pp worst-day, +23.2pp maxDD).
+LUNAUSDT: worst day **−99.3% -> −13.7%**, maxDD −100% -> −65%. SRMUSDT: −61.8% -> −26.1%. ANTUSDT: −35.7% -> −15.1%.
+
+**THE PRECISE CHARACTERISATION, and the distinction matters:** max drawdown improves near-universally (93%) while worst
+SINGLE DAY improves on only 56%. The rule catches **PROTRACTED COLLAPSES, not bolt-from-the-blue gaps.** LUNA's −99.3% day
+was preceded by −8% days, so the rule was already flat; a crash arriving with no warning is not caught, and cannot be by
+any rule that keys off prior losses.
+
+**It is NOT an edge, and the numbers say so plainly:** Sharpe improved on 163/328 — a coin flip — with a median change of
+exactly 0.00. A cooldown cannot add return; it removes exposure, and it removes it preferentially at the left tail.
+
+**THE TRANSFERABLE NUMBER — measured twice, independently.** D-401 found the 200MA trend overlay on a diversified
+multi-asset book cost **7.3pp/yr** to buy 11-13pp of drawdown reduction. This cooldown, a completely different mechanism on
+a completely different universe (328 crypto perps vs multi-asset equities/commodities/FX) over a different era, costs
+**7.3pp/yr** for a median 9.9pp of drawdown reduction. Two independent measurements of the same quantity agreeing to the
+decimal is worth more than either alone: **in these markets the price of systematic de-risking is roughly 7 percentage
+points of annual return per 10 points of drawdown reduction.**
+
+That is a real, reusable input to a risk-preference decision — and it is the operator's decision, not an empirical one.
+Nothing here is promoted and nothing is armed.
