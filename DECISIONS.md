@@ -9106,3 +9106,32 @@ POSITIONALLY. Classes are skipped on days they have too few instruments, so posi
 That misalignment produced a book with **Sharpe 1.9 — better than every other line in the table** — and it would have read
 as a spectacular discovery. Fixed by keying on date. **A bug flatters a result far more readily than it damages one**,
 which is the whole reason results get audited rather than trusted.
+
+## D-457/458 — LIVE-AGENT AUDIT: the seven laws were enforced on the LEDGER, never on the RUNNING CODE
+
+Watching the six launchd agents rather than merely confirming they were alive surfaced three real defects. All stderr was
+empty and every agent was "healthy" by the usual check — which is exactly why that check is insufficient.
+
+**1. `aegis-autopilot` had been SURFACING a false positive for nine consecutive cycles.** It computed its deflation noise
+ceiling from a **hardcoded N = 1000**, giving sqrt(2 ln 1000) = **3.72**, and reported Ken French momentum at psr_z 3.73 as
+CLEARING — by 0.01. But this program's own trial count is ~1.53M (D-363/364), whose ceiling is **5.34**. Under the correct
+ceiling nothing clears. Fixed to read the live `trd_trial_counter`, falling back to the documented 1.53M rather than to a
+flattering default. Verified live: `ceil=5.34 (N=1,530,000) clearing=0 score=-1.607`, previously
+`ceil=3.72 clearing=1 | SURFACED`. **A deflation bar is only as honest as the N inside it** — and this one had been
+quietly set 1,530x too low.
+
+**2. `aegis-positioning` contradicted its own stored caveat.** The `honest_note` written to the database has always said
+*"UNVALIDATED / RETRACTED (D-384, D-386). NEITHER leg is a validated edge"* — but the two console lines a human actually
+reads announced *"combining validated edges"* and *"the sum of two decorrelated edges."* The caveat was in the payload; the
+overstatement was in the summary. Both lines rewritten to match the note.
+
+**3. `aegis-discovery` was reporting a Sharpe and a psr_z for RUINED candidates.** It logged maxDD of −94.7% and −114.8%.
+A drawdown past −100% is only arithmetically reachable if cumulative equity goes NEGATIVE — the series contains a period
+worse than −100% and the book was wiped out. **A bankrupt strategy has no meaningful Sharpe**: the returns after the ruin
+event are earned by capital that no longer exists. Added a ruin check that nulls the Sharpe and psr_z and prints
+`*** RUINED ***` explicitly, so a corpse is never ranked beside live candidates.
+
+**THE STRUCTURAL POINT.** Aegis now has seven laws with machine guards, and every one of them inspects `trd_lineage` — the
+RECORD of what was concluded. None of them inspects what the live agents are computing and printing right now. The agents
+predate the laws and had never been audited against them. **A guard on the ledger does not constrain the code**, and the
+three defects above sat in production the entire time the guards were green.
