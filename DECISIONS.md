@@ -9476,3 +9476,25 @@ unmasked exit code: selftest 1, baseline 0, planted regression 1, clean again 0.
 **Two of my own recurring mistakes recurred DURING this fix and were caught:** unreachable legacy code broke the
 type-check, and I masked an exit code with a pipe for the third time this session. Both are exactly the class of error the
 guard philosophy exists for: instances repeat until the check is mechanical.
+
+### D-467 epilogue — the instrumentation paid for itself within one cycle, twice
+
+1. **The WRITE-FAILED marker caught its first real victim immediately:** `trd_discovery_log 400`. The discovery agent
+emits ~20 fields; the table had 12 — **every log write had been silently rejected since 2026-08-20** (6 stale rows, and
+nobody knew, because the failure was swallowed). Widened the table (migration 0068), fixed a case-sensitive key
+(`TEST_net_sharpe` -> `test_net_sharpe`; PostgREST matches JSON keys exactly), redeployed.
+2. **The trial counter is now visibly live end-to-end:** discovery logs `+6 this cycle, 6 live rows total (verified by
+re-read)`, and the agent-output guard's next run printed **`ceiling 5.34 at N=1,530,006`** — the live events flowing into
+the deflation bar, which is the entire point of the counter.
+3. **My ORDER-BY correctness fix was a performance regression** — the coverage guard went from ~40s to >2 minutes
+paginating 1.2M rows in index order. Correct fix: aggregation belongs in the database. `trd_fundamentals_coverage_v`
+(migration 0069) computes breadth + freshness server-side; the guard now answers in **2.4 seconds** with all three
+directions re-verified.
+4. **And the plumbing guard itself shipped with this session's signature bug:** relative ROOTS meant that, invoked from
+the runner's `infra/` cwd, it scanned ZERO files and passed vacuously ("0 sites vs baseline 155"). A guard that cannot
+see its subject certifies instead of checking. Roots now resolve from the guard's own file location; verified identical
+from both cwds.
+
+Four defects found and fixed in the hour after the pass "completed" — three of them in the fixes themselves. That is not
+sloppiness unique to today; it is why every guard here must be verified to FAIL, from the cwd it actually runs in, before
+its green means anything.

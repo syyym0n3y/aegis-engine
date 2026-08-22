@@ -9,12 +9,17 @@
 // Hand-fixing found instances; this keeps the CLASSES dead. Each rule can be waived per-line with `// plumbing-ok: <why>`
 // so audited exceptions are visible and reasoned, never silent.
 const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
-const ROOTS=["scripts","supabase/functions"];
+// Roots resolved from THIS FILE's location, not the process cwd — invoked from infra/ by the daily runner, relative
+// paths scanned NOTHING and the guard passed vacuously ("0 sites vs baseline 155"). A guard that cannot see its subject
+// is worse than no guard: it certifies. Caught on its first in-agent run.
+const REPO=new URL("..",import.meta.url).pathname;
+const ROOTS=[`${REPO}scripts`,`${REPO}supabase/functions`];
 type Hit={file:string;line:number;rule:string;snip:string};
 const hits:Hit[]=[];
 const OK=/plumbing-ok:/;
 
-function lint(file:string,src:string){
+function lint(fileAbs:string,src:string){
+  const file=fileAbs.startsWith(REPO)?fileAbs.slice(REPO.length):fileAbs;
   const lines=src.split("\n");
   for(let i=0;i<lines.length;i++){
     const L=lines[i]; if(OK.test(L)||OK.test(lines[i-1]??""))continue;
