@@ -9557,3 +9557,24 @@ the spec grid — signal family x parameters x universe x horizon x construction
 laws with the live trial counter, so "thousands of strategies" raises the deflation ceiling honestly instead of quietly
 mining. The video ships only when the factory has either surfaced the most lucrative surviving configurations or proven
 their absence at that breadth — which is itself the content.
+
+## D-470 — THE STRATEGY FACTORY: "thousands of strategies" made honest by construction
+
+The sweep instrument for the D-469 gate. Design principles, each mapped to a law learned this session:
+
+1. **The ledger IS the gate battery.** `trd_factory` (migration 0071) carries one column per law — breadth, effect-size,
+   benchmark, liquidity, era-consistency, deflation — and `survivor` is a GENERATED column: true only when every gate is
+   true and the run is not ruined. A spec cannot be called a survivor by prose; only by the schema.
+2. **Every run raises the bar for every other run.** Each factory run appends to `trd_trial_counter`, so the deflation
+   ceiling sqrt(2 ln N) climbs as the sweep widens. Sweeping 5,000 specs pushes the required portfolio-t toward ~4.2 —
+   mining harder makes the test harder, mechanically.
+3. **Spec keys are deterministic** — dedup and resume are structural; re-running the grid is idempotent.
+4. **Only portfolio-t is stored.** There is no column for a name-day IC t or a per-trade p-value; the pseudo-replication
+   mistake is unrepresentable in the ledger.
+5. **The grid runs AFTER Tier A lands**, so the new families (cash-flow yield, buyback yield, R&D intensity, leverage,
+   FTD stress, full-universe perp cross-sections) are in the space from the first pass. Sequencing: data first, then one
+   sweep over everything — not incremental sweeps that fragment the trial accounting.
+
+Runner (`scripts/aegis-factory.ts`) to be built once Tier-A ingestion completes; wired as a launchd daemon like discovery,
+DORMANT-surfacing like everything else. The video ships only on the factory's verdict — survivors identified, or their
+absence proven at full breadth, which is itself the content.
