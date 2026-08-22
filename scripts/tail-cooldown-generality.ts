@@ -21,6 +21,9 @@ const meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&select=symbol,n_ba
 if(!Array.isArray(meta)||!meta.length){console.error("!! no 1dSF universe");Deno.exit(1);}
 const nDead=meta.filter(m=>(NOW-m.last_ts)>10*86400).length;
 console.log(`==> TAIL COOLDOWN GENERALITY — ${meta.length} perps (${nDead} DELISTED, i.e. real catastrophes), trigger ${(TRIG*100).toFixed(0)}% / cooldown ${COOL}d`);
+const GRID:[number,number][]=[]; for(const t of [-0.05,-0.08,-0.12]) for(const c of [3,5,10,20]) GRID.push([t,c]);
+const cache=new Map<string,{cost:number;dd:number[];ddBet:number;srBet:number;n:number}>();
+for(const [t,c] of GRID) cache.set(`${t}|${c}`,{cost:0,dd:[],ddBet:0,srBet:0,n:0});
 type R={sym:string;dead:boolean;rawWorst:number;cdWorst:number;rawDD:number;cdDD:number;rawAnn:number;cdAnn:number;rawSR:number;cdSR:number;nEvents:number};
 const out:R[]=[];
 for(let i=0;i<meta.length;i+=25){
@@ -43,6 +46,15 @@ for(let i=0;i<meta.length;i+=25){
       cd.push(flat?0:ret[k]);
     }
     const A=stat(ret), B=stat(cd);
+    // same computation at every grid point, so the exchange-rate curve costs one extra pass rather than a re-run
+    for(const [t,c] of GRID){
+      const g:number[]=[];
+      for(let k=0;k<ret.length;k++){ let flat=false;
+        for(let q=Math.max(0,k-c);q<k;q++) if(ret[q]<t){flat=true;break;}
+        g.push(flat?0:ret[k]); }
+      const G=stat(g); const e=cache.get(`${t}|${c}`)!;
+      e.cost+=(G.ann-A.ann); e.dd.push(G.dd-A.dd); if(G.dd>A.dd)e.ddBet++; if(G.sr>A.sr)e.srBet++; e.n++;
+    }
     const meta1=meta.find(m=>m.symbol===r.symbol)!;
     out.push({sym:r.symbol,dead:(NOW-meta1.last_ts)>10*86400,rawWorst:A.worst,cdWorst:B.worst,rawDD:A.dd,cdDD:B.dd,rawAnn:A.ann,cdAnn:B.ann,rawSR:A.sr,cdSR:B.sr,nEvents:events});
   }
@@ -67,6 +79,36 @@ if(dead.length){
   console.log(`      maxDD improved on ${dead.filter(o=>o.cdDD>o.rawDD).length}/${dead.length}, median ${med(dead.map(o=>o.cdDD-o.rawDD)).toFixed(1)}pp`);
   for(const o of dead.sort((a,b)=>a.rawWorst-b.rawWorst).slice(0,6))
     console.log(`      ${o.sym.padEnd(13)} worst ${o.rawWorst.toFixed(1)}% -> ${o.cdWorst.toFixed(1)}%   maxDD ${o.rawDD.toFixed(0)}% -> ${o.cdDD.toFixed(0)}%   ann ${o.rawAnn.toFixed(0)}% -> ${o.cdAnn.toFixed(0)}%`);
+}
+// ============================================================================================================
+// IS 7.3pp AN INVARIANT OR A COINCIDENCE? The cost depends on the trigger/cooldown I happened to pick, so matching D-401's
+// 7.3pp/yr "to the decimal" may be luck. The number is only USABLE if the EXCHANGE RATE — return given up per point of
+// drawdown removed — is stable across parameters. If the ratio is flat, an operator can pick any point on the curve and
+// know the price. If it swings wildly, 7.3 is an anecdote.
+console.log(`\n    ==> EXCHANGE RATE: return given up per point of drawdown removed`);
+console.log(`    ${"trigger".padEnd(9)}${"cool".padEnd(7)}${"cost %/yr".padEnd(12)}${"median dd gain".padEnd(17)}${"cost per dd pt".padEnd(16)}${"maxDD improved".padEnd(16)}Sharpe improved`);
+const ratios:number[]=[];
+for(const trig of [-0.05,-0.08,-0.12]) for(const cool of [3,5,10,20]){
+  let costSum=0, ddSum:number[]=[], ddBet=0, srBet=0, n=0;
+  for(const o of out){
+    // recompute per instrument at these parameters — cheap because returns are already derived above
+    void o;
+  }
+  // recomputation needs the raw returns, so redo from the cached per-symbol series
+  const per=cache.get(`${trig}|${cool}`);
+  if(!per)continue;
+  costSum=per.cost; ddSum=per.dd; ddBet=per.ddBet; srBet=per.srBet; n=per.n;
+  costSum=costSum/Math.max(1,n);
+  const medDD=[...ddSum].sort((a,b)=>a-b)[Math.floor(ddSum.length/2)];
+  ratios.push(medDD>0?Math.abs(costSum)/medDD:NaN);
+  console.log(`    ${((trig*100).toFixed(0)+"%").padEnd(9)}${(cool+"d").padEnd(7)}${costSum.toFixed(1).padEnd(12)}${(medDD.toFixed(1)+"pp").padEnd(17)}${(medDD>0?(Math.abs(costSum)/medDD).toFixed(2):"—").padEnd(16)}${`${ddBet}/${n} (${(100*ddBet/n).toFixed(0)}%)`.padEnd(16)}${srBet}/${n} (${(100*srBet/n).toFixed(0)}%)`);
+}
+const clean=ratios.filter(Number.isFinite);
+if(clean.length){
+  const lo=Math.min(...clean), hi=Math.max(...clean), md=[...clean].sort((a,b)=>a-b)[Math.floor(clean.length/2)];
+  console.log(`\n    exchange rate across ${clean.length} parameter settings: ${lo.toFixed(2)} .. ${hi.toFixed(2)}, median ${md.toFixed(2)} pp of return per pp of drawdown`);
+  console.log(`    -> ${(hi-lo)/md<0.6?"STABLE: this is a usable exchange rate, not a coincidence of the parameters I chose."
+    :"UNSTABLE: the ratio swings with parameters, so 7.3pp/yr is an anecdote, not a price."}`);
 }
 console.log(`\n    A cooldown cannot ADD return — it can only remove exposure. The question is whether it removes exposure`);
 console.log(`    preferentially at the left tail, across many independent instruments and many separate crashes.`);

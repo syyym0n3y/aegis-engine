@@ -9238,12 +9238,29 @@ any rule that keys off prior losses.
 **It is NOT an edge, and the numbers say so plainly:** Sharpe improved on 163/328 — a coin flip — with a median change of
 exactly 0.00. A cooldown cannot add return; it removes exposure, and it removes it preferentially at the left tail.
 
-**THE TRANSFERABLE NUMBER — measured twice, independently.** D-401 found the 200MA trend overlay on a diversified
-multi-asset book cost **7.3pp/yr** to buy 11-13pp of drawdown reduction. This cooldown, a completely different mechanism on
-a completely different universe (328 crypto perps vs multi-asset equities/commodities/FX) over a different era, costs
-**7.3pp/yr** for a median 9.9pp of drawdown reduction. Two independent measurements of the same quantity agreeing to the
-decimal is worth more than either alone: **in these markets the price of systematic de-risking is roughly 7 percentage
-points of annual return per 10 points of drawdown reduction.**
+**A CLAIM I MADE AND THEN REFUTED MYSELF.** I first wrote that this cost (7.3pp/yr) matching D-401's trend-overlay cost
+(7.3pp/yr) "to the decimal", by a different mechanism on a different universe, revealed an invariant price of de-risking.
+That was over-reading a coincidence, and the obvious check killed it: the cost depends entirely on parameters I chose, so
+the number is only meaningful if the EXCHANGE RATE — return given up per point of drawdown removed — is stable.
 
-That is a real, reusable input to a risk-preference decision — and it is the operator's decision, not an empirical one.
-Nothing here is promoted and nothing is armed.
+**It is not. Measured across 12 parameter settings the exchange rate ranges 0.09 to 21.03, median 1.37.** 7.3pp/yr is an
+anecdote, not a price, and the "two independent measurements agreeing" framing is withdrawn.
+
+**What the sweep shows instead is more useful than the false invariant:**
+
+| trigger | cooldown | cost %/yr | median dd gain | cost per dd pt | maxDD improved | Sharpe improved |
+|---|---|---|---|---|---|---|
+| **−5%** | **5d** | **−1.2** | **14.0pp** | **0.09** | 313/328 (95%) | 163/328 (50%) |
+| −5% | 10d | −5.9 | 30.8pp | 0.19 | 323/328 (98%) | 179/328 (55%) |
+| −5% | 20d | −7.4 | 57.5pp | 0.13 | 326/328 (99%) | 176/328 (54%) |
+| −8% | 10d | −7.3 | 9.9pp | 0.74 | 304/328 (93%) | 163/328 (50%) |
+| −12% | 3d | −17.4 | **−0.2pp** | — | 126/328 (38%) | 78/328 (24%) |
+
+**SHALLOW TRIGGER + LONG COOLDOWN DOMINATES, and the intuitive setting is the worst.** A tight stop with quick re-entry
+(−12% / 3d) costs **17.4pp/yr and makes drawdown WORSE** — it sells the bottom and buys back into the same decline. A
+shallow trigger with a patient cooldown (−5% / 5d) buys 14pp of drawdown reduction for 1.2pp/yr, a ratio of roughly 12:1.
+**The parameter choice matters more than the decision to use the rule at all**, which is the opposite of what the original
+single-setting result implied.
+
+Sharpe remains a coin flip at every setting (24-55%), so this is still not an edge under any parameterisation. Nothing is
+promoted and nothing is armed.
