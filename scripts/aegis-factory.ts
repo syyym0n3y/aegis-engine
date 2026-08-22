@@ -180,7 +180,7 @@ let written=0,trialRows:{family:string;run_key:string}[]=[];
 async function record(spec_key:string,family:string,spec:unknown,universe:string,g:Gate|null,ceil:number){
   trialRows.push({family,run_key:spec_key});
   if(trialRows.length>=200){
-    const r=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);
+    const r=await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);
     if(!r||!r.ok)await log(`WRITE-FAILED trd_trial_counter ${r?r.status:"net"}`);
     trialRows=[];
   }
@@ -200,9 +200,11 @@ await log("==> AEGIS FACTORY — building panels");
 await loadFund(); await loadFTD(); await buildEqPanel();
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
+const PASS=(Deno.env.get("PASS")||"all");
 const SIGNALS=Object.keys(eqPanel[0]?.sig??{});
 await log(`  equity signals: ${SIGNALS.length} → grid = signals x lag{0,1} x hold{1,3} x buckets{5,10} x universe{all,liquid-top-third}`);
 let done=0;
+if(PASS==="all"||PASS==="eq")
 for(const sig of SIGNALS) for(const lag of [0,1]) for(const hold of [1,3]) for(const k of [5,10]) for(const uni of ["all","liqtop"]){
   if(uni==="liqtop"&&(lag>0||hold>1))continue;      // grid economy: the liquidity-stress variant runs at base lag/hold only
   const spec={sig,lag,hold_m:hold,buckets:k,universe:uni};
@@ -237,7 +239,131 @@ for(const sig of SIGNALS) for(const lag of [0,1]) for(const hold of [1,3]) for(c
   done++;
   if(done%50===0)await log(`  ..${done} specs (${((Date.now()-t0)/60000).toFixed(1)}m)`);
 }
-if(trialRows.length){await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);trialRows=[];}
+
+// ================= PASS 2 — PERP CROSS-SECTIONS (498-contract survivorship-free universe) =================
+if(PASS==="all"||PASS==="perp"){
+  const meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
+  type PRow={mo:string;fwd:number;sig:Record<string,number|null>};
+  const pp:PRow[]=[];
+  for(let i=0;i<meta.length;i+=25){
+    const part=meta.slice(i,i+25).map(m=>`"${m.symbol}"`).join(",");
+    const rows=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&symbol=in.(${encodeURIComponent(part)})&select=symbol,bars`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
+    if(!Array.isArray(rows))continue;
+    for(const r of rows){
+      const b=r.bars; if(!b||b.length<120)continue;
+      for(let k=61;k<b.length-1;k++){
+        const c=b[k][4]; if(!(c>0)||!(b[k+1][4]>0))continue;
+        const dv=b.slice(Math.max(0,k-30),k).map(x=>x[6]).filter(Number.isFinite);
+        if(!dv.length||mean(dv)<1e6)continue;
+        const fwd=b[k+1][4]/c-1; if(!Number.isFinite(fwd)||Math.abs(fwd)>2)continue;
+        const px=(n:number)=>b[k-n]?.[4]>0?c/b[k-n][4]-1:null;
+        const rets:number[]=[]; for(let q=k-30;q<k;q++)if(b[q][4]>0&&b[q-1]?.[4]>0)rets.push(b[q][4]/b[q-1][4]-1);
+        const fw=b.slice(k-7,k); let tb=0,tv=0; for(const x of fw){tb+=x[7]||0;tv+=x[5]||0;}
+        const v7=mean(b.slice(k-7,k).map(x=>x[5]||0)), v30=mean(b.slice(k-30,k).map(x=>x[5]||0));
+        pp.push({mo:new Date(b[k][0]*1000).toISOString().slice(0,10),fwd,sig:{
+          mom7:px(7),mom14:px(14),mom30:px(30),mom60:px(60),
+          rev1:px(1)!=null?-(px(1) as number):null,rev3:px(3)!=null?-(px(3) as number):null,
+          vol30:rets.length>20?-sdv(rets):null,                              // pre-registered: LOW vol good
+          hi60:c/Math.max(...b.slice(Math.max(0,k-60),k+1).map(x=>x[2])),
+          relvol7:(v7>0&&v30>0)?Math.log(v7/v30):null,
+          flow7:tv>0?-((2*tb-tv)/tv):null,                                   // D-426 sign: fade the aggressor
+        }});
+      }
+    }
+  }
+  await log(`  perp panel: ${pp.length.toLocaleString()} rows`);
+  const PSIG=Object.keys(pp[0]?.sig??{});
+  for(const sig of PSIG) for(const hold of [1,3,7]) for(const k of [5,10]){
+    const key=`xsec_perp|${sig}|h${hold}|k${k}`;
+    const rows=pp.filter(r=>r.sig[sig]!=null).map(r=>({mo:r.mo,fwd:r.fwd,v:r.sig[sig] as number}));
+    const g=evalXsec(rows,FEE_PERP,k,365/hold,hold);
+    await record(key,"xsec_perp",{sig,hold_d:hold,buckets:k},"perps_sf",g,ceil); done++;
+  }
+  await log(`  PASS 2 (perp) done: ${PSIG.length*6} specs`);
+}
+// ================= PASS 3 — TIMING vs BUY-AND-HOLD (single instruments; breadth-exempt by class) =================
+if(PASS==="all"||PASS==="timing"){
+  const INST=["SPY","QQQ","IWM","TLT","GLD","EFA","EEM","XLE"];
+  const PERPI=["BTCUSDT","ETHUSDT","SOLUSDT"];
+  const series=new Map<string,number[]>();
+  for(const s2 of INST){
+    const r=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${s2}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    if(r[0]?.bars) series.set(s2,r[0].bars.map(b=>b[4]).filter(x=>x>0));
+  }
+  for(const s2 of PERPI){
+    const r=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&symbol=eq.${s2}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    if(r[0]?.bars) series.set(s2,r[0].bars.map(b=>b[4]).filter(x=>x>0));
+  }
+  type Rule={name:string;pos:(c:number[],i:number,h:number[])=>number};
+  const sma2=(c:number[],i:number,n:number)=>{if(i<n)return NaN;let s3=0;for(let q=i-n+1;q<=i;q++)s3+=c[q];return s3/n;};
+  const rules:Rule[]=[];
+  for(const f of [20,50]) for(const sl of [100,200,400]) rules.push({name:`macross_${f}_${sl}`,pos:(c,i)=>sma2(c,i,f)>sma2(c,i,sl)?1:0});
+  for(const n of [20,55,100]) rules.push({name:`breakout_${n}`,pos:(c,i)=>i>n&&c[i]>=Math.max(...c.slice(i-n,i))?1:0});
+  rules.push({name:"rsi2_mr",pos:(c,i)=>{if(i<3)return 0;const up=Math.max(c[i]-c[i-1],0)+Math.max(c[i-1]-c[i-2],0);const dn=Math.max(c[i-1]-c[i],0)+Math.max(c[i-2]-c[i-1],0);const rs=100-100/(1+(up||1e-9)/(dn||1e-9));return rs<10?1:0;}});
+  for(const tr of [-0.05,-0.08,-0.12]) for(const cd of [5,10,20]) rules.push({name:`cooldown_${Math.abs(tr*100)}_${cd}`,pos:(c,i,h)=>{for(let q=Math.max(0,h.length-cd);q<h.length;q++)if(h[q]<tr)return 0;return 1;}});
+  for(const [inst,c] of series) for(const rule of rules){
+    const key=`timing|${inst}|${rule.name}`;
+    const strat:number[]=[],bh:number[]=[],hist:number[]=[]; let prev=0,switches=0;
+    for(let i=401;i<c.length-1;i++){
+      const w=rule.pos(c,i,hist);
+      const r=c[i+1]/c[i]-1; hist.push(r);
+      if(w!==prev){switches++;prev=w;}
+      strat.push(w*r-(w!==prev?0:0)-(switches&&w!==prev?0:0)); bh.push(r);
+    }
+    // fee: 10bp per switch, charged on the switch day
+    let sw=0,prev2=0; const net:number[]=[];
+    {let hist2:number[]=[];
+     for(let i=401;i<c.length-1;i++){const w=rule.pos(c,i,hist2);const r=c[i+1]/c[i]-1;hist2.push(r);
+       net.push(w*r-(w!==prev2?10/1e4:0)); if(w!==prev2){sw++;prev2=w;}}}
+    if(net.length<500){await record(key,"timing",{inst,rule:rule.name},"single",null,ceil);done++;continue;}
+    const ex=net.map((x,i)=>x-bh[i]);
+    const m=mean(ex),sd=sdv(ex)||1e-9,t=m/(sd/Math.sqrt(ex.length));
+    let cum=1,pk=1,dd=0,ruined=false; for(const x of net){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*ex.length/4),b2=Math.floor((e+1)*ex.length/4);return mean(ex.slice(a,b2));});
+    const gate:Gate={n_names:1,n_periods:ex.length,gross_ann:mean(net.map((x,i)=>x+ (0)))*252, net_ann:mean(net)*252,
+      sharpe:(mean(net)/(sdv(net)||1e-9))*Math.sqrt(252),t,dd:dd*100,ruined,
+      g_breadth:true /* single-instrument class: breadth law N/A, judged vs BH instead */,
+      g_effect:Math.abs(m)*252>=(sw/ (ex.length/252))*10/1e4,
+      g_benchmark:m>0 /* must BEAT buy-and-hold (D-439) */,
+      g_liquid:true,g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
+    await record(key,"timing",{inst,rule:rule.name,switches:sw},"single",gate,ceil); done++;
+  }
+  await log(`  PASS 3 (timing) done: ${series.size*rules.length} specs`);
+}
+// ================= PASS 4 — PAIRWISE INTERACTIONS on the equity panel (rank-sum of two signals) =================
+if(PASS==="all"||PASS==="pairs"){
+  // precompute per-month percentile ranks per signal (once)
+  const rankPanel=new Map<string,Map<string,number>>();   // sig -> "mo|idx" -> pct
+  const byMo=new Map<string,number[]>();                  // mo -> indices into eqPanel
+  eqPanel.forEach((r,i)=>{(byMo.get(r.mo)??byMo.set(r.mo,[]).get(r.mo)!).push(i);});
+  for(const sig of SIGNALS){
+    const m=new Map<string,number>();
+    for(const [mo,idxs] of byMo){
+      const have=idxs.filter(i=>eqPanel[i].sig[sig]!=null);
+      if(have.length<30)continue;
+      have.sort((a,b)=>(eqPanel[a].sig[sig] as number)-(eqPanel[b].sig[sig] as number));
+      have.forEach((i,rk)=>m.set(`${mo}|${i}`,rk/(have.length-1)));
+    }
+    rankPanel.set(sig,m);
+  }
+  let pd=0;
+  for(let a=0;a<SIGNALS.length;a++) for(let b2=a+1;b2<SIGNALS.length;b2++){
+    const A=SIGNALS[a],B=SIGNALS[b2];
+    const key=`pair|${A}+${B}|h1|k10`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const ra=rankPanel.get(A)!, rb=rankPanel.get(B)!;
+    for(const [mo,idxs] of byMo) for(const i of idxs){
+      const x=ra.get(`${mo}|${i}`), y=rb.get(`${mo}|${i}`);
+      if(x==null||y==null)continue;
+      rows.push({mo,fwd:eqPanel[i].fwd,v:x+y});
+    }
+    const g=evalXsec(rows,FEE_EQ,10,12,1);
+    await record(key,"pair",{a:A,b:B},"equity_liquid",g,ceil); done++; pd++;
+    if(pd%40===0)await log(`  ..pairs ${pd}`);
+  }
+  await log(`  PASS 4 (pairs) done: ${pd} specs`);
+}
+if(trialRows.length){await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);trialRows=[];}
 const {N:N2,ceil:c2}=await ceiling();
 await log(`\n==> XSEC_EQ pass done: ${done} specs, ${written} ledger rows. Ceiling ${ceil.toFixed(3)} -> ${c2.toFixed(3)} (N=${N2.toLocaleString()})`);
 const surv=await fetch(`${OWNED}/trd_factory?survivor=eq.true&select=spec_key,portfolio_t,net_ann,n_names&order=portfolio_t.desc&limit=10`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
