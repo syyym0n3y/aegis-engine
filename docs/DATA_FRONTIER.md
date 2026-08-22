@@ -7,9 +7,9 @@
 ## TIER A — free, allowlisted, ACQUIRING NOW (launched this session)
 | dataset | source | span | why it matters | status |
 |---|---|---|---|---|
-| **EDGAR expansion: 24 more concepts** (Revenues, OperatingIncome, GrossProfit, R&D, SG&A, **OperatingCashFlow** — the guard's known-unfetched — CapEx, D&A, LongTermDebt, InterestExpense, Tax, Dividends, Buybacks…) | data.sec.gov frames | 2010–2026 | income-statement + cash-flow factor families never testable before (cash-flow-to-price, buyback yield, R&D intensity, leverage) | **ingesting** |
-| **SEC fails-to-deliver** | sec.gov files (half-monthly zips) | 2004–2026 | settlement stress per symbol — squeeze/constraint signal, never held | **ingesting** |
-| **Full current Binance perp universe** (exchangeInfo 698 vs 328 held) | fapi.binance.com | listing→now | breadth for the factory sweep | **ingesting** |
+| **EDGAR expansion: 24 more concepts** (Revenues, OperatingIncome, GrossProfit, R&D, SG&A, **OperatingCashFlow** — the guard's known-unfetched — CapEx, D&A, LongTermDebt, InterestExpense, Tax, Dividends, Buybacks…) | data.sec.gov frames | 2010–2026 | income-statement + cash-flow factor families never testable before (cash-flow-to-price, buyback yield, R&D intensity, leverage) | **LANDED: +1,815,646 rows, 24 concepts** (WeightedAvgDilutedShares 0 — `shares`-unit frames, loader fetches `/USD/`; non-critical, DEI shares held) |
+| **SEC fails-to-deliver** | sec.gov files (half-monthly zips) | 2018–2026 (measured boundary — pre-2018 vintages 404 at every known path) | settlement stress per symbol — squeeze/constraint signal, never held | **LANDED: 10,787,275 rows, 39,316 symbols** |
+| **Full current Binance perp universe** (exchangeInfo 698 vs 328 held) | fapi.binance.com | listing→now | breadth for the factory sweep | **LANDED: 498 contracts (488 live + 10 delisted)** |
 | **US options surface collector** (SPX + majors: per-strike IV/OI → ATM IV, skew, term, P/C) | cdn.cboe.com delayed chains | forward from today | US twin of the Deribit skew collector; VRP/skew testable on equities in ~250d | **wired into daily agent** |
 
 ## TIER B — free, needs ONE operator action (allowlist/key), then acquirable
