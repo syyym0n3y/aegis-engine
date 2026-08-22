@@ -15,6 +15,14 @@ const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`
 // legs, and that bias is concentrated in cheap, illiquid, high-volatility names. There is no delisted-equity source in this
 // stack, so the bias cannot be removed -- but it CAN be starved: large, liquid, higher-priced names delist rarely, so if the
 // edge survives at a $5 price floor and a $10M/day liquidity floor it is not primarily a survivorship artifact.
+// LIQUID-TERCILE MODE (D-450). D-424's LIQUIDITY LAW says the equity cross-section's edge lives where size cannot go:
+// liq:HIGH earned 5.7%/yr net at SR 0.26 under EQUAL-WEIGHT deciles. But D-421 then showed conviction weighting is worth
+// +0.22 SR for free, at identical turnover — and that was never applied to the liquid tercile. Combining the program's
+// best MODEL (GBM) with its best CONSTRUCTION (conviction) on the ONLY part of the universe that can absorb size is the
+// direct attack on the binding constraint, and it has never been run.
+// LIQ_TERCILE=top restricts the panel, per month, to the most liquid third BEFORE ranking — so every rank, every decile
+// and every weight is computed inside the tradable universe rather than being sliced out of a wider one afterwards.
+const LIQ_TERCILE=Deno.env.get("LIQ_TERCILE")||"";
 const PRICE_MIN=Number(Deno.env.get("PRICE_MIN")||1);
 const DV_MIN=Number(Deno.env.get("DV_MIN")||1e6);
 // FUNDAMENTAL FEATURES (opt-in via FUND=1). D-419 tested price/volume only. The fundamentals panel only became fresh to
@@ -120,6 +128,14 @@ const months=[...new Set(panel.map(p=>p.mo))].sort();
 console.log(`    months: ${months.length} (${months[0]} .. ${months.at(-1)})`);
 // --- cross-sectional rank-normalise EVERY feature and the target, per month (so nothing is scale/outlier driven) ---
 const byMo=new Map<string,Row[]>(); for(const p of panel)(byMo.get(p.mo)??byMo.set(p.mo,[]).get(p.mo)!).push(p);
+if(LIQ_TERCILE==="top"){
+  let before=0,after=0;
+  for(const [mo,gg] of byMo){ before+=gg.length;
+    gg.sort((a,b)=>b.dv-a.dv);
+    const keep=gg.slice(0,Math.max(30,Math.floor(gg.length/3)));
+    byMo.set(mo,keep); after+=keep.length; }
+  console.log(`    LIQ_TERCILE=top: panel restricted to the most liquid third BEFORE ranking (${before.toLocaleString()} -> ${after.toLocaleString()} rows)`);
+}
 for(const [,g] of byMo){ if(g.length<30){g.length=0;continue;}
   for(let f=0;f<FEAT.length;f++){const ord=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]); ord.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
   const ordY=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); ordY.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});

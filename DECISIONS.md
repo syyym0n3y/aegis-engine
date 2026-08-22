@@ -8832,3 +8832,50 @@ and it must be tested by measuring the return CONDITIONAL ON FILLING. Quoting an
 assumes the fill is independent of the outcome. It never is: you are filled when the market comes back to you, which is
 when the move is not happening. Any future result whose viability depends on maker execution is UNTESTED until the
 conditional-on-fill return is measured.
+
+## D-448 CONFIRMED across 4/4 symbols — adverse selection is unanimous
+
+| symbol | fill rate | return on FILLED days | return on days NOT filled | net at maker |
+|---|---|---|---|---|
+| BTCUSDT | 92% | −1.85bp | +68.18bp | −1.51x the fee |
+| ETHUSDT | 91% | −2.80bp | +96.53bp | −1.78x the fee |
+| SOLUSDT | 91% | — | +115.77bp | −3.32x the fee |
+| DOGEUSDT | 92% | — | +143.70bp | −1.90x the fee |
+
+Unanimous. The passive order fills ~91% of the time and those are the days the move does not happen; the entire positive
+return of the window lives in the ~9% of days a resting bid never gets hit. **The maker case for the strongest candidate in
+the program is dead on all four symbols tested.**
+
+## D-450 — the LIQUIDITY LAW is stronger than stated: the SIGNAL lives in the illiquid names, not just the return
+
+**The last attack available on the binding constraint.** D-424 found the equity cross-section's edge lives where size
+cannot go (liq:HIGH 5.7%/yr net, SR 0.26) — but that was measured with EQUAL-WEIGHT deciles, and D-421 later showed
+conviction weighting is worth +0.22 SR for free. Combining the best MODEL (GBM, D-419) with the best CONSTRUCTION
+(conviction, D-421) on the ONLY part of the universe that can absorb size had never been run. Critically, `LIQ_TERCILE=top`
+restricts the panel to the most liquid third **BEFORE ranking**, so every rank, decile and weight is formed inside the
+tradable universe rather than sliced out of a wider one afterwards.
+
+**Result: the non-linear advantage DISAPPEARS.**
+
+| | full universe (D-419) | liquid tercile only |
+|---|---|---|
+| GBM − linear, delta IC | +0.0098 | +0.0060 |
+| **paired t** | **2.13** | **1.02 (NULL)** |
+
+| construction (liquid tercile) | turnover | GROSS %/yr | net @30bp | SR net30 |
+|---|---|---|---|---|
+| equal-weight decile | 144% | 3.0 | −2.2 | −0.10 |
+| score-weighted (conviction) | 143% | 2.6 | −2.5 | −0.08 |
+| inverse-vol | 151% | 2.0 | −3.4 | −0.25 |
+| no-trade band | 92% | 3.7 | **+0.4** | **0.02** |
+
+Regime conditioning inside the liquid tercile also gives nothing (best bucket SR 0.04).
+
+**VERDICT: NULL, and it refines D-424 into a sharper claim.** The Liquidity Law said the RETURN lives in names too small to
+trade. This shows **the SIGNAL does too**: the non-linear edge D-419 found was itself partly an artifact of letting
+illiquid names into the ranking. Rank only within the universe that can absorb size and the model's advantage over a
+linear one is no longer distinguishable from zero, and every construction — including the two that helped elsewhere —
+lands at or below zero net of cost.
+
+**This closes the equity cross-section completely.** There is no combination of model, construction or regime filter in
+this program's toolkit that produces a tradable equity cross-sectional edge.
