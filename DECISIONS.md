@@ -9264,3 +9264,39 @@ single-setting result implied.
 
 Sharpe remains a coin flip at every setting (24-55%), so this is still not an edge under any parameterisation. Nothing is
 promoted and nothing is armed.
+
+## D-463 — COOLDOWN OUT-OF-SAMPLE: drawdown control is ROBUST; the "price" is regime-dependent and has no fixed value
+
+D-462's sweep produced a striking cell (−5% / 5d: 14pp of drawdown for 1.2pp/yr) that I picked **by looking at the grid** —
+the same in-sample selection that killed D-405. So it was tested the way the Selection Law requires: choose one parameter
+pair on the TRAIN half across all 328 instruments, freeze it, measure on the TEST half.
+
+**1. THE PARAMETER RANKING PERSISTS: rank correlation TRAIN vs TEST = 0.53 across 33 settings.** Choosing parameters on
+train is meaningful here — unlike D-405, where the honest selection chose nothing at all. Train picked −10% / 30d (not the
+cell I picked by eye, which ranked 0.87 vs the winner's 0.23).
+
+**2. DRAWDOWN CONTROL SURVIVES OUT OF SAMPLE:**
+
+| setting | TRAIN ratio | TEST return | TEST dd gain | TEST maxDD improved |
+|---|---|---|---|---|
+| TRAIN-picked −10%/30d | 0.23 | **+1.3%/yr** | 14.9pp | 287/328 (88%) |
+| eye-picked −5%/5d | 0.87 | **+20.0%/yr** | 18.4pp | 294/328 (90%) |
+
+**3. THE RETURN EFFECT FLIPS SIGN WITH REGIME, which finishes the correction begun in D-462.** In the TRAIN window the
+cooldown COST return (−7.0%/yr at the picked setting); in the TEST window it ADDED return (+1.3%, +20.0%). The test half of
+each crypto instrument's history contains the major declines, and holding less of a falling asset adds return by
+construction. **There is no fixed "price of de-risking"** — the 7.3pp/yr figure I briefly presented as an invariant was not
+merely a coincidence of parameters, it is not even a constant in sign.
+
+**THE ADDED RETURN IS NOT ALPHA.** Being flat during a decline raises return without any predictive content, which is why
+Sharpe remains a coin flip at every parameter setting (24-55% of instruments improved, median change 0.00, D-462). The
+correct summary is narrow and, I think, genuinely usable:
+
+> **A post-loss cooldown is a reliable drawdown reducer — 88-93% of instruments, in-sample and out — whose effect on
+> return is regime-dependent: it costs in rising markets and pays in falling ones. It adds no Sharpe and no predictive
+> information. It is insurance whose premium is negative precisely when you need it.**
+
+**A BUG IN MY OWN METRIC, caught and fixed.** The first version computed the cost/drawdown ratio as `Math.abs(cost)/gain`,
+so a setting that ADDED 20%/yr displayed identically to one that COST 20%/yr — and the OOS table read as though the
+eye-picked cell were expensive when it was in fact profitable. Sign restored; the ratio is now reported only where the
+rule actually costs something, and 0.00 means it paid.
