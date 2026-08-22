@@ -65,7 +65,14 @@ async function cycle() {
   const months = [...byMonth.keys()].sort(); if (months.length < 40) { console.log(`  only ${months.length} months — skip`); return; }
   // THOROUGH: parameter-free candidates → full-sample decile-LS series + per-era + NET-of-cost + skew + drawdown + deflation.
   const ERAS: [string, number, number][] = [["qe_10_19", 2010, 2020], ["covid_20_21", 2020, 2022], ["tightening_22_26", 2022, 2100]];
-  const N_TRIALS = Number(Deno.env.get("N_TRIALS") || 1000), ceil = Math.sqrt(2 * Math.log(N_TRIALS)); const COST = 0.002; const BORROW_M = 0.03 / 12; // F18: 20bp round-trip on traded names + 3%/yr borrow on the SHORT leg
+  // TRIAL COUNT (fixed 2026-08-22, D-464 — found by the agent-output guard, not by me). This defaulted to N=1000, giving a
+  // noise ceiling of sqrt(2 ln 1000) = 3.72. That is not this program's trial count: D-363/364 established ~1.53M trials,
+  // whose ceiling is 5.34. The IDENTICAL bug was fixed in aegis-autopilot the same day and MISSED here — which is exactly
+  // why the guard reads every agent's output rather than trusting that a class of defect was fixed everywhere.
+  // Reads the live counter when populated, else the documented figure — never a flattering default.
+  const _cnt = await fetch(`${OWNED}/trd_trial_counter?select=trials&order=trials.desc&limit=1`, { headers: hdr }).then((r) => r.json()).catch(() => []);
+  const _liveN = Array.isArray(_cnt) && _cnt[0]?.trials > 0 ? +_cnt[0].trials : 0;
+  const N_TRIALS = Number(Deno.env.get("N_TRIALS") || 0) || _liveN || 1_530_000, ceil = Math.sqrt(2 * Math.log(N_TRIALS)); const COST = 0.002; const BORROW_M = 0.03 / 12; // F18: 20bp round-trip on traded names + 3%/yr borrow on the SHORT leg
   const results: Record<string, unknown>[] = [];
   for (const cand of CANDIDATES) {
     const ls: { mo: string; ret: number; longSet: Set<string>; shortSet: Set<string> }[] = [];

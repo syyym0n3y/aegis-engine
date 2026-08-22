@@ -9300,3 +9300,23 @@ correct summary is narrow and, I think, genuinely usable:
 so a setting that ADDED 20%/yr displayed identically to one that COST 20%/yr — and the OOS table read as though the
 eye-picked cell were expensive when it was in fact profitable. Sign restored; the ratio is now reported only where the
 rule actually costs something, and 0.00 means it paid.
+
+## D-464 — the AGENT-OUTPUT GUARD found a defect I MISSED, one hour after I built it
+
+`aegis-discovery` computed its deflation noise ceiling from `N_TRIALS || 1000` — **the identical bug fixed in
+`aegis-autopilot` earlier the same day (D-457)**. I fixed one agent and did not check whether the same class of defect
+existed elsewhere. The guard did, on its first real pass:
+
+```
+RED  discovery  noise ceiling 3.72 is below the program's 5.34 (N=1,530,000) — the bar is set too low
+```
+
+Fixed the same way: read the live `trd_trial_counter`, fall back to the documented 1.53M, never to a flattering default.
+
+**This is the strongest evidence available that D-459 was worth building.** The guard was written to catch defects in code
+that predated the laws. Within an hour it caught a defect in code I had just audited by hand, of a class I had just fixed
+by hand, in a file I had just edited by hand. **Hand-auditing finds instances; a guard finds the class.**
+
+It also validates the specific design choice that made the guard usable: reading only the LATEST run. An earlier version
+scanned whole log tails and flagged already-fixed defects, which would have buried this real one in noise from the three
+I had already repaired.
