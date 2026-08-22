@@ -13,7 +13,7 @@ const H = async () => { const t = await jwt(); return { "Content-Type": "applica
 const pit = (a: { e: number; v: number }[] | undefined, at: number) => { if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
 
 const hdr = await H();
-console.log("==> AEGIS POSITIONING (the culmination) — combining validated edges, DORMANT/capital-safe");
+console.log("==> AEGIS POSITIONING — combining UNVALIDATED legs into a watchlist book, DORMANT/capital-safe");
 
 // EARNING METER (D-381): before emitting a new book, score the PRIOR book's realised PAPER return since it was generated.
 // This accrues a live-forward track record with NO capital — the honest evidence that will "earn" the owned box. The Mac Mini
@@ -84,4 +84,8 @@ const book = { generated_at: new Date().toISOString(), per_leg_target_vol: TARGE
   honest_note: `UNVALIDATED / RETRACTED (D-384, D-386). NEITHER leg is a validated edge: the trend 0.57 was an accounting artifact (honest 0.22 after levered costs + financing + dropping non-investable legs) and the equity tilt is tail-driven (0.30 ex-top-3-months; psr_z REFUSED at skew 8.5). F14: this 12-long/6-short book is NOT the ~150-name decile that was measured, so realised Sharpe will be materially lower (idiosyncratic vol scales as 1/sqrt(n)), and the engine's own calibration found the EXTREME deciles REVERSE. Combined estimate ${combined} uses the corrected formula on honest inputs at rho=${rho}. WATCHLIST ONLY - DORMANT, never auto-armed.` };
 await fetch(`${OWNED}/trd_positions`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify([{ book, generated_at: book.generated_at }]) }).catch(() => {});
 console.log(JSON.stringify({ core_trend_n: trend.length, top_trend: trend.slice(0, 8).map((t) => `${t.sym}:${t.dir}`), equity_longs: eqScored.slice(0, 8).map((r) => r.sym), combined_expected_sharpe: combined }, null, 2));
-console.log(`\n==> BOOK written to trd_positions (DORMANT). Combined expected Sharpe ≈ ${combined} — the sum of two decorrelated edges.`);
+// The stored honest_note has always said NEITHER leg is validated (D-384/D-386 retractions), but this console line — the
+// part a human actually reads — called them "two decorrelated edges". Fixed 2026-08-22 (D-457): the summary line must not
+// contradict the caveat stored beside it.
+console.log(`\n==> BOOK written to trd_positions (DORMANT). Combined expected Sharpe ≈ ${combined} from two UNVALIDATED legs`);
+console.log(`    (D-384 trend = accounting artifact; D-386 equity tilt = tail-driven). WATCHLIST ONLY — not edges, never armed.`);
