@@ -9012,3 +9012,40 @@ failures in THIS session's new research, then applied to an independent back cat
 something wrong that had survived months of prior review.
 
 **Aegis now holds ZERO claimed edges.** Not one strategy in the program's history survives the current standard.
+
+## D-454 — AUDIT of the program's largest statistic: equity VRP SURVIVES, its headline does not
+
+D-404 records the equity variance risk premium as *"the most statistically robust finding in the program"* — **t = 48.8**,
+on **"8,444 OVERLAPPING days"**. The word *overlapping* is in the record and it is the whole problem: VIX is compared with
+the SUBSEQUENT 21-day realised vol, sampled DAILY, so consecutive observations share 20 of their 21 days. They are not
+independent draws (D-416's trap, D-451's rule).
+
+| method | VRP | t | n |
+|---|---|---|---|
+| overlapping (as recorded) | 4.05 vol pts | **57.9** | 9,202 |
+| **non-overlapping (disjoint windows)** | **3.90 vol pts** | **12.01** | 439 |
+| all 21 phase offsets | — | 11.91 to 13.54, median **12.59** | — |
+
+**Inflation factor 4.6x** — almost exactly sqrt(21) = 4.58, which is what the overlap predicts analytically. Every one of
+the 21 possible sampling phases was computed, so the answer cannot be an artefact of which day the sampling starts on.
+
+**THE FINDING SURVIVES.** A corrected t of **12.6 still clears this program's deflated ceiling of 5.34** — comfortably. The
+premium of ~3.9 vol points over 36 years is real, and correcting the denominator does not touch it.
+
+**One sub-claim does NOT survive.** D-404 states the VIX-level buckets rise monotonically *"(all t>11)"*. Non-overlapping:
+
+| bucket | VRP | t | n |
+|---|---|---|---|
+| VIX<15 | 3.02 | 10.00 | 141 |
+| 15-20 | 4.21 | 10.51 | 136 |
+| 20-30 | 4.27 | 6.27 | 127 |
+| **VIX>30** | **4.89** | **1.89** | **35** |
+
+The monotone PATTERN holds (3.02 -> 4.21 -> 4.27 -> 4.89) but the high-fear bucket — the most cited and most dramatic —
+rests on 35 independent windows and is **not significant**. "All t>11" was the overlap talking.
+
+**VERDICT: CONFIRMED with a corrected statistic.** The record is amended from t=48.8 to t~12.6, and the "all t>11" bucket
+claim is withdrawn. **This is the first back-catalogue item to survive audit**, and reporting that matters as much as
+reporting the three that did not: the laws are not simply destroying everything they touch. What they destroy is
+overstatement — and here the underlying finding was sound, which is exactly why D-404's *interpretation* (the VRP is
+compensation for crash risk, not a free lunch — SVXY lost 83% in one day) also stands unchanged.
