@@ -161,3 +161,20 @@ made on the full sample makes the result IN-SAMPLE, whatever the split says; (3)
 one, re-make the selection on train before believing the difference — that test is cheaper than the retraction;
 (4) enforced by `scripts/selection-guard.ts` (verified RED on a full-sample pick, PASS on a train-only pick, and exempt
 where nothing is chosen — a negation flaw caught by its own self-test, exactly as the execution guard's was).
+
+
+## GUARDS MUST INSPECT THE RUNNING CODE, NOT ONLY THE RECORD (2026-08-22)
+**A guard on the ledger does not constrain the agents.** Aegis had seven laws with seven machine guards, every one green,
+and three real defects sitting in production the whole time — because all seven inspected `trd_lineage` (what was
+CONCLUDED) and none inspected what the live agents were COMPUTING AND PRINTING:
+- `aegis-autopilot` derived its deflation ceiling from a hardcoded N=1000 (3.72) instead of the program's ~1.53M trials
+  (5.34), and had SURFACED Ken French momentum at psr_z 3.73 as "clearing" for **nine consecutive cycles**;
+- `aegis-positioning` printed "combining validated edges" while the `honest_note` it wrote to the database said neither
+  leg was validated;
+- `aegis-discovery` reported a Sharpe and a psr_z for candidates whose cumulative equity had gone NEGATIVE (maxDD −114.8%).
+Every one was visible in a log file that nothing was reading. Enforced by `scripts/agent-output-guard.ts`, which reads the
+LATEST run of each agent and goes RED on: a drawdown past −100% not labelled RUINED, a noise ceiling below the current
+trial count, a "validated/verified edge" claim while the ledger promotes nothing, a stale log, or non-empty stderr.
+**Two flaws in that guard were caught by building it:** it first scanned whole log tails and so flagged defects that had
+already been FIXED (a guard that cannot go green after a fix gets ignored — worse than useless), and it repeated one
+problem once per matching line. Both corrected: latest-run-only, deduped.

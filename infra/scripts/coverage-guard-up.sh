@@ -38,6 +38,13 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/selection-guard.ts; then
     echo "$(date -u +%FT%TZ) SELECTION GUARD RED — a promoted result may have chosen its components using the evaluation window"
   fi
+  # AGENT OUTPUT GUARD (D-459): every other guard here inspects trd_lineage — the RECORD of what was concluded. None
+  # inspected what the agents actually compute and print, and three real defects sat in production while all seven were
+  # green (autopilot surfacing a false positive off a ceiling 1,530x too low; positioning claiming "validated edges"
+  # against its own stored caveat; discovery ranking a bankrupt strategy by its Sharpe). This one reads the logs.
+  if ! deno run --allow-net --allow-env --allow-read ../scripts/agent-output-guard.ts; then
+    echo "$(date -u +%FT%TZ) AGENT OUTPUT GUARD RED — a live agent is printing an impossible value or an unsupported claim"
+  fi
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true
