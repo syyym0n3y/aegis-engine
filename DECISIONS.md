@@ -9171,3 +9171,42 @@ read for bbfade (D-453). bbfade was a LONG-ONLY rule, so losing to buy-and-hold 
 long-short books: they carry no market beta, so underperforming a long-only benchmark during a rising sample is expected
 and is not evidence against them. The decisive numbers here are the portfolio t and the deflated ceiling — not that column.
 Applying a control where it does not belong would be the same error as omitting one where it does.
+
+## D-461 — VRP TAIL TRUNCATION: the tail cap is STRUCTURAL, the Sharpe gain is NOT
+
+The equity VRP is the only back-catalogue claim to survive audit (D-454, corrected t 12.6 vs a required 5.34). D-404 also
+established why it is not a free lunch: harvesting it via SVXY gave 31.5%/yr at Sharpe 0.57 with **−83.0% in a SINGLE DAY**
+(2018-02-06). The untested question — the only one that matters for a premium this program has confirmed — is whether that
+tail can be truncated while keeping enough of the premium to be worth holding. This program's doctrine says risk management
+is the component with reliable positive expected value, so this is where that doctrine gets tested.
+
+| rule (same-day-or-earlier information only) | ann %/yr | SR | maxDD | **WORST DAY** | exposure |
+|---|---|---|---|---|---|
+| RAW (D-404 baseline) | 31.5 | 0.57 | −95.2% | **−83.0%** (2018-02-06) | 100% |
+| VIX-GATE >25 | 29.9 | 0.66 | −58.3% | −32.0% | 88% |
+| TERM-GATE (VIX > its 20d mean) | 22.8 | 0.74 | −42.7% | −19.2% | 59% |
+| VOL-TARGET 15%, capped 1x | 8.9 | 0.45 | −40.6% | −14.9% | 100% |
+| **STOP: flat 10d after a −8% day** | **29.8** | **0.77** | −65.9% | **−18.3%** | 86% |
+
+**I then applied my own SELECTION LAW (D-456) to my own result**, because the stop was picked as best-of-five with
+parameters I chose while looking at the data — and because its entire tail benefit rested on ONE event (its worst day is
+2017-05-17, meaning it happened to be flat on 2018-02-06). A tail rule validated on n=1 tail is a rule that worked once.
+
+**(1) PARAMETER GRID — STRUCTURAL.** Across all 20 combinations of trigger (−5% to −12%) and cooldown (5 to 20 days), the
+worst day lands between **−18% and −26%**, against RAW's −83%. 15 of 20 cells beat RAW on BOTH Sharpe and worst-day. The
+tail cap does not depend on the parameters I picked. Sharpe does vary (0.45-0.82), so the specific Sharpe is illustrative.
+
+**(2) TRAIN/TEST, parameters frozen on train — the Sharpe gain does NOT survive.** Train selected −8%/10d (train SR 0.85).
+Out of sample: RAW 29.2%/yr SR 0.83, worst −21.4%; STOP 19.8%/yr **SR 0.65**, worst −12.8%. The stop still truncated the
+tail, and **Sharpe FELL 0.83 -> 0.65.**
+
+**THE HONEST READING, and it is the correct one:** the test window contains no catastrophe (RAW's worst OOS day is −21.4%),
+and **in a period without a crash, insurance costs money**. That is not a failure of the rule — it is what insurance is.
+The finding is therefore precise: **a post-loss cooldown structurally caps the single-day tail at roughly −20% instead of
+−83%, at a cost of about 0.18 of Sharpe in periods that contain no crash.** Whether that trade is worth making is a
+risk-preference decision, not an empirical one, and it is the operator's to make.
+
+**LIMITS, stated:** (a) the full sample contains exactly ONE catastrophe, so the grid demonstrates parameter-robustness,
+not event-robustness — n=1 for the thing being insured against; (b) SVXY cut its own leverage from −1x to −0.5x after
+February 2018, so the test window is a materially different instrument from the training window, which flatters the OOS
+tail comparison; (c) this is not promoted and nothing is armed.
