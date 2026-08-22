@@ -363,6 +363,51 @@ if(PASS==="all"||PASS==="pairs"){
   }
   await log(`  PASS 4 (pairs) done: ${pd} specs`);
 }
+
+// ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================
+// The one venue where a portfolio-t can clear a 5.3 ceiling honestly: ~1,200 INDEPENDENT months. Signals are the
+// documented classics, applied cross-sectionally ACROSS portfolios (industry momentum, grid momentum/reversal). These
+// portfolios are not directly tradable at stated cost — the family's fee model uses 20bp/side ETF-implementation drag,
+// and the note records that implementation is via proxies. Survivor here means the PHENOMENON clears every gate at
+// century scale; implementability is assessed per-survivor afterward.
+if(PASS==="all"||PASS==="french"){
+  const ff=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
+    for(let off=0;;off+=10000){
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.ind49:*,factor.like.szbm100:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
+    return out;})();
+  await log(`  french panel: ${ff.length.toLocaleString()} obs`);
+  const bySeries=new Map<string,Map<string,number>>();
+  for(const r of ff)(bySeries.get(r.factor)??bySeries.set(r.factor,new Map()).get(r.factor)!).set(r.month,+r.ret);
+  const months=[...new Set(ff.map(r=>r.month))].sort();
+  function xsecFrench(prefix:string,form:number,skip:number,dirMom:1|-1,k:number,hold:number,key:string,spec:unknown){
+    const series=[...bySeries.entries()].filter(([f])=>f.startsWith(prefix));
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(let mi=form+skip;mi<months.length-hold;mi++){
+      const mo=months[mi];
+      for(const [,mmap] of series){
+        let mom=1,ok=true;
+        for(let q=mi-form-skip;q<mi-skip;q++){const r2=mmap.get(months[q]); if(r2==null){ok=false;break;} mom*=1+r2;}
+        if(!ok)continue;
+        let f=1;
+        for(let h=1;h<=hold;h++){const r2=mmap.get(months[mi+h-1]); if(r2==null){ok=false;break;} f*=1+r2;}
+        if(!ok)continue;
+        rows.push({mo,fwd:f-1,v:dirMom*(mom-1)});
+      }
+    }
+    const g=evalXsec(rows,40,k,12/hold,hold);       // 20bp/side ETF-proxy drag, round trip
+    return record(key,"french",spec,prefix==="ind49:"?"industries_49":"szbm_100",g,ceil).then(()=>{done++;});
+  }
+  // fix the >=30-names floor for the 49-industry panel: evalXsec requires >=30/mo — 49 industries pass; grid passes.
+  for(const prefix of ["ind49:","szbm100:"]) for(const form of [3,6,12]) for(const skip of [0,1]) for(const k of [3,5]) for(const hold of [1,3]){
+    await xsecFrench(prefix,form,skip,1,k,hold,`french|${prefix.replace(":","")}|mom${form}_s${skip}|k${k}|h${hold}`,{prefix,form,skip,dir:"mom",k,hold});
+  }
+  // long-horizon reversal (documented: 36-60m, sign flips)
+  for(const prefix of ["ind49:","szbm100:"]) for(const form of [36,60]) for(const k of [3,5]){
+    await xsecFrench(prefix,form,12,-1,k,1,`french|${prefix.replace(":","")}|ltrev${form}|k${k}|h1`,{prefix,form,skip:12,dir:"ltrev",k,hold:1});
+  }
+  await log(`  PASS 5 (french) done`);
+}
 if(trialRows.length){await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);trialRows=[];}
 const {N:N2,ceil:c2}=await ceiling();
 await log(`\n==> XSEC_EQ pass done: ${done} specs, ${written} ledger rows. Ceiling ${ceil.toFixed(3)} -> ${c2.toFixed(3)} (N=${N2.toLocaleString()})`);
