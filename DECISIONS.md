@@ -8784,3 +8784,51 @@ cross-section under ~50 names as untested rather than as evidence.**
 **Method note:** the funding leg is not applied in the survivorship-free run (funding history was not fetched for delisted
 contracts and imputing it would be inventing data). D-441 measured funding's effect on momentum at +1.3pp/yr, which does
 not approach changing this verdict.
+
+## D-447 — the US-afternoon window SURVIVES all three nulls (and D-445 understated it)
+
+D-445 flagged, without resolving, that a 2-hour window sits inside a ~+19.8bp/day drift and is positive almost by
+construction. Three nulls settle it:
+
+**NULL 1 — all 22 possible 2-hour windows ranked.** 20:00-22:00 UTC is **#1 of 22** at 9.59bp with 14/14 symbols positive.
+Mean of all other windows 1.39bp (sd 2.27), so it sits **3.61 sd above a typical window**. The worst window (12:00-14:00)
+is −2.75bp with only 2/14 positive. It is not a drift slice.
+
+**NULL 2 — drift-neutral.** Subtracting each symbol's own average 2-hour return across all hours leaves an excess of
+**7.83bp, 14/14 symbols positive, t 10.92**. That is the tradable quantity and it is independent of the drift.
+Against fees: **0.87x at taker (9bp), 2.17x at maker (3.6bp).**
+
+**NULL 3 — per-era.** +19.54bp (<=2021, 10/10 symbols), **−9.80bp (2022, 1/10)**, +15.37bp (2023-24, 14/14),
+**+4.77bp (2025-26, 13/14)**. Positive and cross-symbol-consistent in three of four eras, including the current one.
+
+On the evidence this is the strongest candidate the program has produced. It is not tradable by crossing the spread, and
+would be tradable by resting orders — **if resting orders fill**. That is a question hourly bars cannot answer, so it was
+answered separately.
+
+## D-448 — and the maker case is a MIRAGE: adverse selection, measured
+
+The whole candidate turns on whether a passive order fills. Measured on 5-minute bars, BTCUSDT, 730 days, placing a limit
+buy at the 20:00 reference:
+
+| | |
+|---|---|
+| passive fill rate | **92%** |
+| return on ALL days | +3.81bp |
+| **return on days the order FILLED** | **−1.85bp** (t −0.80) |
+| return on days it did NOT fill | **+68.18bp** |
+| adverse selection cost | **−5.66bp** |
+| net at maker (3.6bp) on filled days | **−5.45bp = −1.51x the fee** |
+
+**A passive strategy earns the FILLED-days return, not the all-days return.** The entire positive return of this window
+lives in the 8% of days on which price never trades back to the reference — which are exactly the days a resting bid does
+not fill. On the 92% of days it does fill, the window returns −1.85bp before fees.
+
+**VERDICT: the US-afternoon window is untradable at BOTH fee tiers** — 0.87x at taker, and NEGATIVE at maker once fills
+are selected honestly. The effect is real (rank #1 of 22, 3.61sd, t 10.92, 14/14 symbols, 3 of 4 eras) and it is
+inaccessible. This is the cleanest demonstration in the program of the difference between a signal and a strategy.
+
+**Doctrine added — the EXECUTION LAW:** a maker/limit-order assumption is not a cost model, it is a HYPOTHESIS about fills,
+and it must be tested by measuring the return CONDITIONAL ON FILLING. Quoting an all-days return next to a maker fee
+assumes the fill is independent of the outcome. It never is: you are filled when the market comes back to you, which is
+when the move is not happening. Any future result whose viability depends on maker execution is UNTESTED until the
+conditional-on-fill return is measured.
