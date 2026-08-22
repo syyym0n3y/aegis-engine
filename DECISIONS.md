@@ -9578,3 +9578,28 @@ The sweep instrument for the D-469 gate. Design principles, each mapped to a law
 Runner (`scripts/aegis-factory.ts`) to be built once Tier-A ingestion completes; wired as a launchd daemon like discovery,
 DORMANT-surfacing like everything else. The video ships only on the factory's verdict — survivors identified, or their
 absence proven at full breadth, which is itself the content.
+
+## D-471 — FACTORY SWEEP, PASSES 1-4: **682 specs, ZERO survivors** — and the leads are coherent
+
+First full accounting of the strategy factory against all six gates (ceiling 5.337 at N=1,530,694; every spec one trial):
+
+| family | specs | survivors | best portfolio-t |
+|---|---|---|---|
+| pairwise interactions | 231 | 0 | 3.79 |
+| equity cross-sections | 220 | 0 | 3.75 |
+| timing vs buy-and-hold | 171 | 0 | **0.75** |
+| perp cross-sections | 60 | 0 | 1.94 |
+
+**The sweep's first two "survivors" were my own overlap bug** (3-month holds sampled monthly, t inflated ~sqrt(3)) —
+caught because the h3 rows carried the same n_periods as h1, fixed with disjoint-window striding, and the corrected pass
+returned zero. The factory's first real catch was itself.
+
+**What the leads say, and it is consistent:**
+- **Shareholder payout is the strongest new signal in the stack.** Buyback yield — from data acquired THIS session —
+  posts t 3.0-3.75 across every variant, era-consistent, surviving the liquid tercile. Best pairs are payout-anchored.
+  Real, coherent, economically sensible — and t 3.75 against a required 5.34.
+- **Timing's best t of 0.75 across 171 rules x 11 instruments** is D-439 industrialised: nothing times better than
+  holding, now at scale.
+- Perps at 1.94: the cross-sectional structure there is weak once survivorship-free and honestly costed (confirms D-443).
+
+**Trial counter: 694 factory events**, every one raising the bar it must clear. PASS 5 (century panels) pending.
