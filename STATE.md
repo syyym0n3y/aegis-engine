@@ -1,5 +1,13 @@
 # STATE — Aegis (live state)
 
+## Strategic posture (2026-08-22) — WATCHES ACCRUE; options memo delivered
+Engine complete and self-maintaining. Options memo (with recommendation) published for the operator:
+**Aegis Strategic Options** — https://claude.ai/code/artifact/ed9b5076-395c-4e94-8b30-35dba6ce6b50
+(companion: **Aegis Audit Ledger** — https://claude.ai/code/artifact/1e6837d7-32c4-4579-9f97-79d90a9d0c57)
+Recommended: B (patience posture, already running) + E (redeploy effort to distribution); A (deploy passive core) is the
+operator's capital call; C (monetize the engine) = one cheap test via existing channels; D (paid data) rejected until a
+pre-registered hypothesis earns it. Standing triggers: carry >5%/yr net, VRP >4 net pts, skew series at ~250d, any guard red.
+
 ## 2026-08-22 (final) — THE BACK CATALOGUE IS CLOSED: zero unaudited claims remain
 
 **D-468 — the last one: BTC/5m/short ("the ONE strategy that cleared every gate") KILLED.** Byte-faithful re-run on
