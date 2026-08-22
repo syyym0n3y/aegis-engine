@@ -1,5 +1,33 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (latest) — the recommended book, re-examined; and a reproducibility flag on its headline number
+
+**D-465 SYNTHESIS: the cooldown does NOT help the recommended book.** Applying the validated drawdown control
+(D-461/462/463) to diversified passive costs **3.9pp/yr and 0.14 Sharpe to buy 0.6pp of drawdown**. The reason is one
+number: the book's worst day is **−6.7%**. Diversification has already removed the tail the cooldown exists to remove.
+**General principle: the value of a drawdown control is inversely proportional to how diversified you already are** — it was
+worth a great deal on single instruments (LUNA −99.3% → −13.7%) and is worth nothing on a book already at −23%, while
+charging full price either way. Independently restates D-401 through a different mechanism and different data.
+
+**REPRODUCIBILITY FLAG on the program's headline recommendation.** D-405 records diversified passive at OOS Sharpe **0.57**.
+It does not reproduce:
+
+| construction | days | OOS SR |
+|---|---|---|
+| D-405's own method, this universe | 5,893 | **0.84** |
+| D-405's method, restricted to its 4,450-day window | 4,450 | **0.72** |
+| this script's method (differs on gap handling) | 6,988 | **1.15** |
+| **D-405 as recorded** | 4,450 | **0.57** |
+
+Window length explains roughly half the gap (drawdowns nearly match: −34.4% vs −33.2%); the residual ~0.15 is unexplained
+and I stopped rather than grind, since the practical conclusion does not turn on it. **The direction is what matters: every
+reconstruction gives a HIGHER passive Sharpe than the record.** The headline understates the recommended book, which makes
+diversified passive look *better* against every overlay and strategy compared to it.
+
+**D-464: the agent-output guard earned itself within an hour** — it caught the SAME hardcoded-N=1000 ceiling bug in
+`discovery` that I had fixed by hand in `autopilot` the same day and failed to check for elsewhere. Hand-auditing finds
+instances; a guard finds the class. All six agents now PASS.
+
 ## 2026-08-22 (latest) — the first RELIABLE mechanism in the program, and it is not an edge
 
 **D-461/462/463 THE POST-LOSS COOLDOWN.** Chased from one instrument to 328, then through my own Selection Law twice.
