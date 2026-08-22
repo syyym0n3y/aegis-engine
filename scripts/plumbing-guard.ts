@@ -1,0 +1,93 @@
+#!/usr/bin/env -S deno run --allow-read --allow-env
+// plumbing-guard.ts (D-467) — THE MACHINE GUARD for the plumbing itself. Static lint over the repo's TypeScript.
+// Origin: a run of defects that were all INFRASTRUCTURE, not research — each one silently distorting recorded numbers:
+//   - `limit=150` with no `order=` -> the recommended book held 150 equities that ALL began with "A" (D-466);
+//   - fetch() does not throw on HTTP errors -> the trial counter 400'd on every write for its whole life while the agent
+//     printed "trial counter: 0 -> N" as success, falsifying a stated non-negotiable (D-467);
+//   - `.catch(()=>{})` on state writes -> five live agents could lose state with no trace;
+//   - a hardcoded trial count -> a deflation bar quietly set 1,530x too low, in TWO agents (D-457/464).
+// Hand-fixing found instances; this keeps the CLASSES dead. Each rule can be waived per-line with `// plumbing-ok: <why>`
+// so audited exceptions are visible and reasoned, never silent.
+const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
+const ROOTS=["scripts","supabase/functions"];
+type Hit={file:string;line:number;rule:string;snip:string};
+const hits:Hit[]=[];
+const OK=/plumbing-ok:/;
+
+function lint(file:string,src:string){
+  const lines=src.split("\n");
+  for(let i=0;i<lines.length;i++){
+    const L=lines[i]; if(OK.test(L)||OK.test(lines[i-1]??""))continue;
+    // RULE 1 — universe-scale truncation: a PostgREST-style fetch with limit >= 50 and no order= is an ARBITRARY sample
+    // (physical row order). limit<50 is exempt: those are existence checks and latest-row reads audited separately.
+    const lm=L.match(/[?&]limit=(\d+)/);
+    if(lm&&+lm[1]>=50&&!/[?&]order=/.test(L)&&/\$\{(OWNED|REST|SB|O)\}|rest\/v1/.test(L))
+      hits.push({file,line:i+1,rule:"truncation",snip:`limit=${lm[1]} with no order= — which ${lm[1]} rows you get is an accident of row layout`});
+    // RULE 2 — swallowed state write: POST/PATCH/DELETE whose failure handler discards the response. fetch() resolves on
+    // HTTP 400/500, so `.catch(()=>{})` OR ignoring the response entirely means a failed write is indistinguishable from
+    // a successful one. Requires visible handling: assign the response and check .ok, or print WRITE-FAILED.
+    if(/method:\s*"(POST|PATCH|DELETE)"/.test(L)){
+      const stmt=lines.slice(i,Math.min(lines.length,i+4)).join(" ");
+      const handled=/\.ok\b|WRITE-FAILED|res\s*=|const\s+\w*[Rr]es/.test(stmt);
+      const swallowed=/\.catch\(\s*\(\)\s*=>\s*\{\s*\}\s*\)/.test(stmt);
+      if(swallowed||!handled)
+        hits.push({file,line:i+1,rule:"silent-write",snip:swallowed?"write with .catch(()=>{}) — a failed write leaves no trace":"write whose response is never checked — fetch() does not throw on HTTP errors"});
+    }
+    // RULE 3 — hardcoded deflation N: sqrt(2*ln(<literal>)) with a large literal freezes the trial count. The honest N
+    // comes from the counter + baseline; a frozen small N sets the bar low forever (the 3.72-vs-5.34 bug, twice).
+    const cm=L.match(/Math\.sqrt\(\s*2\s*\*\s*Math\.log\(\s*(\d[\d_]*)\s*\)/);
+    if(cm&&+cm[1].replace(/_/g,"")<1_000_000)
+      hits.push({file,line:i+1,rule:"frozen-ceiling",snip:`deflation ceiling from literal N=${cm[1]} — the bar is frozen below the program's real trial count`});
+  }
+}
+async function walk(dir:string){
+  for await (const e of Deno.readDir(dir)){
+    const p=`${dir}/${e.name}`;
+    if(e.isDirectory) await walk(p);
+    else if(e.name.endsWith(".ts")&&!e.name.endsWith("_test.ts")&&!p.endsWith("plumbing-guard.ts")) lint(p,await Deno.readTextFile(p));
+  }
+}
+for(const r of ROOTS) await walk(r).catch(()=>{});
+if(SELFTEST){
+  // prove every rule fires on synthetic violations, and that plumbing-ok waives them
+  const bad=`const a=await fetch(\`\${OWNED}/trd_bars_deep?select=symbol,bars&limit=150\`,{headers:h});
+await fetch(\`\${OWNED}/trd_x\`,{method:"POST",body:b}).catch(()=>{});
+const ceil=Math.sqrt(2*Math.log(1000));
+// plumbing-ok: audited — existence check
+const c=await fetch(\`\${OWNED}/trd_y?limit=500\`,{headers:h});`;
+  const before=hits.length;
+  lint("SELFTEST.ts",bad);
+  console.log(`SELFTEST: ${hits.length-before} violations detected (expect 3 — the plumbing-ok line is waived):`);
+  for(const h of hits.slice(before)) console.log(`  ${h.rule.padEnd(15)} ${h.snip}`);
+  if(hits.length-before!==3){console.error("!! selftest mismatch");Deno.exit(2);}
+  Deno.exit(1);   // selftest is a deliberate red
+}
+// RATCHET (the repo's own pattern — "a CI ratchet keeps unguarded-paid red"). ~150 of these sites predate the rules and
+// cannot all be hand-fixed today. The baseline freezes today's count per (rule, file): the guard goes RED only when a
+// file EXCEEDS its baseline or a new violating file appears, so the classes cannot GROW while the backlog burns down.
+// Run with UPDATE_BASELINE=1 after genuine fixes to ratchet the recorded counts DOWN (never up without editing the file).
+const BASE_PATH=new URL("./plumbing-baseline.json",import.meta.url).pathname;
+const key=(h:Hit)=>`${h.rule}|${h.file}`;
+const now=new Map<string,number>();
+for(const h of hits) now.set(key(h),(now.get(key(h))||0)+1);
+let base:Record<string,number>={};
+try{ base=JSON.parse(await Deno.readTextFile(BASE_PATH)); }catch{ /* no baseline yet */ }
+if(Deno.env.get("UPDATE_BASELINE")==="1"){
+  await Deno.writeTextFile(BASE_PATH,JSON.stringify(Object.fromEntries([...now.entries()].sort()),null,1));
+  console.log(`==> PLUMBING GUARD — baseline written: ${now.size} (rule,file) entries, ${hits.length} sites`);
+  Deno.exit(0);
+}
+const regressions:string[]=[];
+for(const [k,n] of now){ const b=base[k]??0; if(n>b) regressions.push(`${k}: ${n} vs baseline ${b}`); }
+const totalBase=Object.values(base).reduce((a,b)=>a+b,0);
+console.log(`==> PLUMBING GUARD — ${hits.length} site(s) vs baseline ${totalBase}; ${regressions.length} REGRESSION(S)`);
+if(hits.length<totalBase) console.log(`    backlog burned down by ${totalBase-hits.length} — run UPDATE_BASELINE=1 to ratchet.`);
+if(regressions.length){
+  console.log(`\n  NEW violations beyond baseline:`);
+  for(const r of regressions) console.log(`    ${r}`);
+  const newKeys=new Set(regressions.map(r=>r.split(":")[0]));
+  for(const h of hits) if(newKeys.has(key(h))) console.log(`      ${h.file}:${h.line}  [${h.rule}] ${h.snip}`);
+  console.log(`\n  Fix the site or waive it with an audited \`// plumbing-ok: <reason>\`.`);
+  Deno.exit(1);
+}
+Deno.exit(0);

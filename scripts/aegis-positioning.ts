@@ -32,7 +32,8 @@ async function scorePrior() {
   const nL = priced.filter((p) => p.w > 0).length || 1, nSh = priced.filter((p) => p.w < 0).length || 1;
   let pnl = 0, n = 0, longAvg = 0, shortAvg = 0;
   for (const p of priced) { const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(p.sym)}&select=bars`, { headers: hdr }).then((x) => x.json()).catch(() => []); const bars = Array.isArray(r) && r.length ? r[0].bars : null; if (!bars?.length) continue; const pxNow = bars[bars.length - 1][4]; if (!(pxNow > 0) || !(p.px0 > 0)) continue; const rr = pxNow / p.px0 - 1; if (p.w > 0) { pnl += 0.5 * rr / nL; longAvg += rr / nL; } else { pnl -= 0.5 * rr / nSh; shortAvg += rr / nSh; } n++; }
-  if (n) { const ret = pnl; await fetch(`${OWNED}/trd_positions?id=eq.${prior[0].id}`, { method: "PATCH", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({ forward_return: +ret.toFixed(4), forward_scored_at: new Date().toISOString() }) }).catch(() => {}); console.log(`   earning-meter (dollar-neutral SPREAD = alpha proxy): ${(ret * 100).toFixed(2)}% | long-side ${(longAvg * 100).toFixed(2)}% (mostly beta) short-side ${(shortAvg * 100).toFixed(2)}% over ${n} names, no capital`); }
+  if (n) { const ret = pnl; { const res = await fetch(`${OWNED}/trd_positions?id=eq.${prior[0].id}`, { method: "PATCH", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({ forward_return: +ret.toFixed(4), forward_scored_at: new Date().toISOString() }) }).catch(() => null);
+      if (!res || !res.ok) console.log(`WRITE-FAILED trd_positions(patch) ${res ? res.status : "network"}`); } console.log(`   earning-meter (dollar-neutral SPREAD = alpha proxy): ${(ret * 100).toFixed(2)}% | long-side ${(longAvg * 100).toFixed(2)}% (mostly beta) short-side ${(shortAvg * 100).toFixed(2)}% over ${n} names, no capital`); }
 }
 await scorePrior();
 
@@ -82,7 +83,8 @@ const book = { generated_at: new Date().toISOString(), per_leg_target_vol: TARGE
   satellite_equity_quality_value: { n: eqScored.length, expected_sharpe: Se, longs: eqScored.slice(0, 12).map((r) => ({ ...r, dir: "LONG" })), shorts: eqScored.slice(-6).map((r) => ({ ...r, dir: "SHORT" })) },
   combined_expected_sharpe: combined,
   honest_note: `UNVALIDATED / RETRACTED (D-384, D-386). NEITHER leg is a validated edge: the trend 0.57 was an accounting artifact (honest 0.22 after levered costs + financing + dropping non-investable legs) and the equity tilt is tail-driven (0.30 ex-top-3-months; psr_z REFUSED at skew 8.5). F14: this 12-long/6-short book is NOT the ~150-name decile that was measured, so realised Sharpe will be materially lower (idiosyncratic vol scales as 1/sqrt(n)), and the engine's own calibration found the EXTREME deciles REVERSE. Combined estimate ${combined} uses the corrected formula on honest inputs at rho=${rho}. WATCHLIST ONLY - DORMANT, never auto-armed.` };
-await fetch(`${OWNED}/trd_positions`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify([{ book, generated_at: book.generated_at }]) }).catch(() => {});
+{ const res = await fetch(`${OWNED}/trd_positions`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify([{ book, generated_at: book.generated_at }]) }).catch(() => {}).catch(() => null);
+  if (!res || !res.ok) console.log(`WRITE-FAILED trd_positions ${res ? res.status : "network"}`); }
 console.log(JSON.stringify({ core_trend_n: trend.length, top_trend: trend.slice(0, 8).map((t) => `${t.sym}:${t.dir}`), equity_longs: eqScored.slice(0, 8).map((r) => r.sym), combined_expected_sharpe: combined }, null, 2));
 // The stored honest_note has always said NEITHER leg is validated (D-384/D-386 retractions), but this console line — the
 // part a human actually reads — called them "two decorrelated edges". Fixed 2026-08-22 (D-457): the summary line must not

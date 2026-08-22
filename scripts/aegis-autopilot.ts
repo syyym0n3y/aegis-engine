@@ -47,16 +47,18 @@ async function cycle(n: number) {
   // 2. ensure evidence base
   await ensureData(hdr);
   // 3. re-compute the deflated verdict on the latest data
-  const rows = await fetch(`${REST}/trd_ff_factors?select=factor,ret&limit=100000`, { headers: hdr }).then((r) => r.json()) as { factor: string; ret: number }[];
+  const rows = await fetch(`${REST}/trd_ff_factors?select=factor,ret&order=month,factor&limit=100000`, { headers: hdr }).then((r) => r.json()) as { factor: string; ret: number }[];
   const byF = new Map<string, number[]>(); for (const r of rows) (byF.get(r.factor) ?? byF.set(r.factor, []).get(r.factor)!).push(+r.ret);
   // TRIAL COUNT (fixed 2026-08-22, D-457). This used a hardcoded N=1000, giving a noise ceiling of sqrt(2 ln 1000) = 3.72.
   // That is NOT this program's trial count: D-363/364 established ~1.53M trials, whose ceiling is 5.34. Under the wrong
   // ceiling the agent had been reporting Ken French momentum (psr_z 3.73) as CLEARING — by 0.01 — and SURFACING it for
   // nine consecutive cycles. Under the correct ceiling nothing clears. A deflation bar is only as honest as the N in it.
   // Reads the live counter when populated, else falls back to the documented figure rather than to a flattering default.
-  const cnt = await fetch(`${REST}/trd_trial_counter?select=trials&order=trials.desc&limit=1`, { headers: hdr }).then((r) => r.json()).catch(() => []);
-  const liveN = Array.isArray(cnt) && cnt[0]?.trials > 0 ? +cnt[0].trials : 0;
-  const N = liveN || 1_530_000, ceil = Math.sqrt(2 * Math.log(N));
+  // counter is an append-only event log — count rows, add the documented baseline (~1.53M, D-363/364). The previous read
+  // queried a `trials` column that never existed (D-467).
+  const cntR = await fetch(`${REST}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
+  const liveN = cntR ? +((cntR.headers.get("content-range") || "").split("/")[1] || 0) : 0;
+  const N = 1_530_000 + liveN, ceil = Math.sqrt(2 * Math.log(N));
   const verdict: Record<string, number>[] = [];
   for (const [f, r] of byF) { if (f === "RF") continue; const d = dsr(r, N); if (d) verdict.push({ factor: f as unknown as number, psr_z: +d.psr_z.toFixed(2), sharpe: +d.sharpe.toFixed(2) } as unknown as Record<string, number>); }
   verdict.sort((a, b) => (b.psr_z as number) - (a.psr_z as number));
@@ -70,7 +72,7 @@ async function cycle(n: number) {
   // 5. SURFACE (never arm) — honest: a marginal clear (DSR≈0.5) is a coin-flip, not armable
   const surfaced = position_score > 0 ? `${best.factor} clears by ${position_score} (DSR≈${ncdf(position_score).toFixed(2)}) — MARGINAL, operator review; NOT auto-armed` : null;
   // 6. record
-  await fetch(`${REST}/trd_autopilot_log`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({
+  const _logRes = await fetch(`${REST}/trd_autopilot_log`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({
     cycle_n: n, data_rows: rows.length, best_factor: best.factor, best_psr_z: best.psr_z, noise_ceiling: +ceil.toFixed(2), trials_n: N,
     n_clearing, position_score, delta_vs_prev: delta, armed: ARMED, surfaced, verdict,
   }) });

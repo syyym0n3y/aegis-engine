@@ -23,8 +23,10 @@ const FAMILIES:{name:string;concepts?:string[];table?:string;minTickers:number;n
 console.log("==> COVERAGE GUARD — is every factor family's verdict backed by adequate data?");
 let red=0;
 const counts=new Map<string,number>();
+// D-467: offset pagination without a TOTAL ORDER is undefined — Postgres may repeat or skip rows across pages, which in
+// this guard would mean phantom or missing coverage. Ordered by the natural key so every page is deterministic.
 for(let off=0;;off+=1000){
-  const p=await fetch(`${OWNED}/trd_fundamentals?select=concept,ticker&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+  const p=await fetch(`${OWNED}/trd_fundamentals?select=concept,ticker&order=cik,concept,period_end&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
   if(!Array.isArray(p)||!p.length)break;
   for(const r of p as {concept:string;ticker:string}[]) if(r.ticker) counts.set(r.concept+"|"+r.ticker,1);
   if(p.length<1000)break;

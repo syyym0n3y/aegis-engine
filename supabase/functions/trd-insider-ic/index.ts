@@ -9,7 +9,16 @@ const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 Deno.serve(async () => {
   const cors = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
   try {
-    const rows = await fetch(`${SB}/rest/v1/trd_insider?select=ticker,disclosed_date,value_usd&disclosed_date=gte.2005-01-01&limit=250000`, { headers: H }).then((r) => r.json()).catch(() => []);
+    // D-467: this fetch was limit=250000 with NO order against a table holding 278,456 rows — 28,456 rows (10%) were
+    // silently dropped, and WHICH rows depended on physical layout. The insider-IC verdict computed here therefore ran on
+    // an arbitrary 90% sample. Fixed to paginate the FULL table in a deterministic order; the verdict should be re-run
+    // when the rented org is restored.
+    const rows: { ticker: string; disclosed_date: string; value_usd: number }[] = [];
+    for (let off = 0; ; off += 50000) {
+      const page = await fetch(`${SB}/rest/v1/trd_insider?select=ticker,disclosed_date,value_usd&disclosed_date=gte.2005-01-01&order=disclosed_date,accession&offset=${off}&limit=50000`, { headers: H }).then((r) => r.json()).catch(() => []);
+      if (!Array.isArray(page) || !page.length) break;
+      rows.push(...page); if (page.length < 50000) break;
+    }
     const byTall = new Map<string, string[]>(); const tval = new Map<string, number>();
     for (const r of (Array.isArray(rows) ? rows : []) as { ticker: string; disclosed_date: string; value_usd: number }[]) { if (!r.disclosed_date || r.disclosed_date < "2005-01-01" || r.disclosed_date > "2027-01-01" || !/^[A-Z]{1,5}$/.test(r.ticker) || r.ticker === "NONE") continue; (byTall.get(r.ticker) ?? byTall.set(r.ticker, []).get(r.ticker)!).push(r.disclosed_date); tval.set(r.ticker, (tval.get(r.ticker) || 0) + (r.value_usd || 0)); }
     // sample highest-DOLLAR-conviction tickers with buys spanning the decades (big buys = larger, Yahoo-covered companies).

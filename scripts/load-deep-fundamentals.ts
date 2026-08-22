@@ -32,6 +32,7 @@ for(let y=Number(Deno.env.get("FROM_YEAR")||2012);y<=Number(Deno.env.get("TO_YEA
         .map(d=>({cik:c2t.get(String(d.cik))??String(d.cik),ticker:c2t.get(String(d.cik))??null,concept:c,
                   period_end:d.end,effective_date:addDays(d.end,75),value:d.val,updated_at:new Date().toISOString()}))
         .filter(x=>x.ticker);
+      // plumbing-ok: chunk write failures tolerated — landing is VERIFIED by re-reading max(effective_date)/counts at the end
       for(let i=0;i<rows.length;i+=1000){
         await fetch(`${OWNED}/trd_fundamentals?on_conflict=cik,concept,period_end`,{method:"POST",
           headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows.slice(i,i+1000))}).catch(()=>{});}

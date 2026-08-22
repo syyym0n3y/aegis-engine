@@ -70,9 +70,12 @@ async function cycle() {
   // whose ceiling is 5.34. The IDENTICAL bug was fixed in aegis-autopilot the same day and MISSED here — which is exactly
   // why the guard reads every agent's output rather than trusting that a class of defect was fixed everywhere.
   // Reads the live counter when populated, else the documented figure — never a flattering default.
-  const _cnt = await fetch(`${OWNED}/trd_trial_counter?select=trials&order=trials.desc&limit=1`, { headers: hdr }).then((r) => r.json()).catch(() => []);
-  const _liveN = Array.isArray(_cnt) && _cnt[0]?.trials > 0 ? +_cnt[0].trials : 0;
-  const N_TRIALS = Number(Deno.env.get("N_TRIALS") || 0) || _liveN || 1_530_000, ceil = Math.sqrt(2 * Math.log(N_TRIALS)); const COST = 0.002; const BORROW_M = 0.03 / 12; // F18: 20bp round-trip on traded names + 3%/yr borrow on the SHORT leg
+  // The counter is an APPEND-ONLY EVENT LOG (one row per candidate per cycle), not a single-row total — the old read
+  // queried a `trials` column that never existed and silently fell back. Live N = documented historical baseline
+  // (~1.53M, D-363/364) + the count of logged runs since the owned counter went live.
+  const _bk = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
+  const _live = _bk ? +((_bk.headers.get("content-range") || "").split("/")[1] || 0) : 0;
+  const N_TRIALS = Number(Deno.env.get("N_TRIALS") || 0) || (1_530_000 + _live), ceil = Math.sqrt(2 * Math.log(N_TRIALS)); const COST = 0.002; const BORROW_M = 0.03 / 12; // F18: 20bp round-trip on traded names + 3%/yr borrow on the SHORT leg
   const results: Record<string, unknown>[] = [];
   for (const cand of CANDIDATES) {
     const ls: { mo: string; ret: number; longSet: Set<string>; shortSet: Set<string> }[] = [];
@@ -127,16 +130,26 @@ async function cycle() {
     : `   ${String(r.candidate).padEnd(20)} TEST(OOS) ${String(r.TEST_net_sharpe).padStart(6)} train ${String(r.train_net_sharpe).padStart(6)} full ${String(r.net_sharpe).padStart(6)} exTop1 ${String(r.sharpe_ex_top1).padStart(5)} exTop3 ${String(r.sharpe_ex_top3).padStart(5)} win ${r.win_pct}% skew ${r.skew} psr_z ${r.psr_valid ? r.psr_z : "INVALID(|skew|>2)"} ${r.passes_deflation ? "CLEARS" : "fails"} ${r.beats_base ? "BEATS-BASE" : ""} eras:${JSON.stringify(r.per_era_net_sharpe)}`);
   // F9 FIX: increment trd_trial_counter — the stated non-negotiable ("increments on EVERY backtest run, including failed").
   // The daemon re-tests candidates every cycle; N must grow so the deflation ceiling reflects the true search breadth.
-  try {
-    const cur = await fetch(`${OWNED}/trd_trial_counter?id=eq.global&select=total`, { headers: hdr }).then((r) => r.json()).catch(() => []);
-    const prev = Array.isArray(cur) && cur.length ? Number(cur[0].total) : 0;
-    const next = prev + results.length;
-    if (prev) await fetch(`${OWNED}/trd_trial_counter?id=eq.global`, { method: "PATCH", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify({ total: next, updated_at: new Date().toISOString() }) });
-    else await fetch(`${OWNED}/trd_trial_counter`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify([{ id: "global", total: next, updated_at: new Date().toISOString() }]) });
-    console.log(`  trial counter: ${prev} -> ${next} (+${results.length})`);
-  } catch { console.log("  WARN: trial counter not updated"); }
+  // REBUILT (D-467). The old block wrote {id:"global", total:N} into a table whose actual columns are
+  // (id uuid, family, run_key, counted_at) — every write 400'd, and because fetch() does NOT throw on HTTP errors the
+  // catch never fired and this printed "trial counter: 0 -> N" as SUCCESS on every cycle. The counter stayed EMPTY for
+  // the table's whole life while the log claimed it was incrementing: a live falsification of the program's own
+  // non-negotiable ("increments on EVERY backtest run"). Fix: write the append-only shape the table actually has, CHECK
+  // res.ok, and verify by re-reading the count — never by trusting the request.
+  {
+    const cyc = new Date().toISOString();
+    const rows = results.map((r) => ({ family: String(r.family ?? "discovery"), run_key: `${r.candidate}|${cyc}` }));
+    const res = await fetch(`${OWNED}/trd_trial_counter`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify(rows) }).catch(() => null);
+    if (!res || !res.ok) console.log(`  WRITE-FAILED trd_trial_counter ${res ? res.status + " " + (await res.text()).slice(0, 120) : "network"}`);
+    else {
+      const back = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
+      const cnt = back ? +((back.headers.get("content-range") || "").split("/")[1] || 0) : -1;
+      console.log(`  trial counter: +${rows.length} this cycle, ${cnt} live rows total (verified by re-read)`);
+    }
+  }
   // log to the owned discovery ledger
-  await fetch(`${OWNED}/trd_discovery_log`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify(results.map((r) => ({ ...r, tested_at: new Date().toISOString() }))) }).catch(() => {});
+  { const res = await fetch(`${OWNED}/trd_discovery_log`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify(results.map((r) => ({ ...r, tested_at: new Date().toISOString() }))) }).catch(() => null);
+    if (!res || !res.ok) console.log(`  WRITE-FAILED trd_discovery_log ${res ? res.status : "network"}`); }
 }
 
 console.log(`==> AEGIS DISCOVERY (owned:${OWNED}, ${ONCE ? "once" : "daemon"}) — creative search, OOS+deflation disciplined`);

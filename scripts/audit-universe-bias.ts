@@ -55,7 +55,7 @@ console.log(`    most liquid 150 : ${byLiq.slice(0,6).join(", ")} ...`);
 const OTHER=["etf","index","sector","commodity","fx","crypto_ex"];
 const base:Inst[]=[];
 for(const cls of OTHER){
-  const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${cls}&select=symbol&limit=200`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string}[];
+  const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${cls}&select=symbol&order=symbol&limit=200`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string}[];
   base.push(...await load(cls,rows.map(r=>r.symbol)));
 }
 console.log(`    shared non-equity legs: ${OTHER.map(c=>`${c}(${base.filter(b=>b.cls===c).length})`).join(" ")}`);

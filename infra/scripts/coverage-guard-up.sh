@@ -45,6 +45,12 @@ while true; do
   if ! deno run --allow-net --allow-env --allow-read ../scripts/agent-output-guard.ts; then
     echo "$(date -u +%FT%TZ) AGENT OUTPUT GUARD RED — a live agent is printing an impossible value or an unsupported claim"
   fi
+  # PLUMBING GUARD (D-467): static lint over the repo's own TypeScript — the defect classes that silently distorted
+  # recorded numbers (arbitrary truncation, swallowed writes, frozen deflation ceilings). Ratcheted: RED only on NEW
+  # violations beyond the committed baseline, so the legacy backlog burns down without ever growing.
+  if ! deno run --allow-read --allow-env ../scripts/plumbing-guard.ts; then
+    echo "$(date -u +%FT%TZ) PLUMBING GUARD RED — a new instance of a known defect class entered the codebase"
+  fi
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true

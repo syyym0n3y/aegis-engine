@@ -28,7 +28,7 @@ if(Array.isArray(prior)&&prior.length){
   for(const p of batch){ const r=rows.find(x=>x.symbol===p.sym); if(!r) continue;
     const pxNow=r.bars[r.bars.length-1][4]; if(!(pxNow>0)||!(p.px>0)) continue;
     const ret=pxNow/p.px-1; const w=p.in_uptrend?(+p.weight||0):0; pnl+=w*ret; wsum+=w; n++;
-    await fetch(`${OWNED}/trd_crypto_forward?id=eq.${p.id}`,{method:"PATCH",headers:{...hdr,Prefer:"return=minimal"},body:JSON.stringify({fwd_return:+ret.toFixed(4),scored_at:new Date().toISOString()})}).catch(()=>{});}
+    {const res=await fetch(`${OWNED}/trd_crypto_forward?id=eq.${p.id}`,{method:"PATCH",headers:{...hdr,Prefer:"return=minimal"},body:JSON.stringify({fwd_return:+ret.toFixed(4),scored_at:new Date().toISOString()})}).catch(()=>null); if(!res||!res.ok)console.log(`WRITE-FAILED trd_crypto_forward(patch) ${res?res.status:"network"}`);}}
   if(wsum>0) console.log(`  forward-test: snapshot ${oldest} (${elapsed.toFixed(0)}d held) paper return ${(100*pnl/wsum).toFixed(2)}% across ${n} legs (NO capital)`);
   }
 }
@@ -43,6 +43,6 @@ for(const r of rows){ const b=r.bars; if(!b||b.length<150) continue;
   const weight=Math.min(3,(0.60/Math.sqrt(365))/vol);
   out.push({asof,sym:r.symbol,in_uptrend:t100>0,trend100:+(t100*100).toFixed(1),px:+px.toFixed(4),weight:+weight.toFixed(3)});
 }
-await fetch(`${OWNED}/trd_crypto_forward?on_conflict=asof,sym`,{method:"POST",headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(out)}).catch(()=>{});
+{const res=await fetch(`${OWNED}/trd_crypto_forward?on_conflict=asof,sym`,{method:"POST",headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(out)}).catch(()=>null); if(!res||!res.ok)console.log(`WRITE-FAILED trd_crypto_forward ${res?res.status:"network"}`);}
 const longs=out.filter(o=>o.in_uptrend);
 console.log(`==> CRYPTO FORWARD-TEST ${asof}: ${longs.length}/${out.length} in 100d uptrend -> LONG ${longs.map(o=>o.sym).join(", ")||"(none — flat)"} [DORMANT]`);

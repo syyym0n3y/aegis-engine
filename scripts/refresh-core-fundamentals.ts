@@ -39,6 +39,7 @@ for(const c of CONCEPTS){
         // reporting a forward fiscal year-end). asOf() filtering makes them inert, but a fact that "was knowable" before it
         // happened has no place in a point-in-time store. Drop them at the door.
         .filter(x=>x.period_end<=new Date().toISOString().slice(0,10));
+      // plumbing-ok: chunk write failures tolerated — landing is VERIFIED by re-reading max(effective_date)/counts at the end
       for(let i=0;i<rows.length;i+=1000){
         await fetch(`${OWNED}/trd_fundamentals?on_conflict=cik,concept,period_end`,{method:"POST",
           headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows.slice(i,i+1000))}).catch(()=>{});}

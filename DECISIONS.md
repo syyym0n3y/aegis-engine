@@ -9431,3 +9431,48 @@ accident of row layout), with the finding annotated at the fetch site in the two
 0.72-vs-0.57 window-restricted gap on its own — but the liquid-universe number (OOS 0.78) sits closer to plausible reality
 than either, and the honest statement of the recommended book is now: **diversified passive, OOS Sharpe ~0.78-0.84
 depending on equity universe, maxDD ~-23%** — with the recorded 0.57 superseded as understated.
+
+## D-467 — THE PLUMBING PASS: fix the classes, then make the classes unable to grow
+
+Operator directive: fix all the plumbing. Method: enumerate every infrastructure defect class this session has found,
+sweep the ENTIRE repo for each, fix the dangerous instances at source, and ship a ratcheted lint so the classes stay dead.
+
+**CLASS 0 — silent server-side truncation: EMPIRICALLY ABSENT.** The owned PostgREST has no `db-max-rows`; an unlimited
+fetch on a 1.2M-row table returned all 1,199,323 rows. The F19-era fear (silent 1,000-row cap) does not exist on the owned
+node. One class cleared by measurement rather than assumption.
+
+**CLASS 1 — arbitrary truncation (`limit=` ≥ 50, no `order=`): 7 real sites.** The worst was
+`trd-insider-ic/index.ts`: `limit=250000` against a table holding **278,456 rows — 28,456 rows (10%) silently dropped,
+selection决 by physical layout. The insider-IC verdict ran on an arbitrary 90% sample.** Fixed to ordered pagination of the
+full table; flagged for re-run when the rented org is restored. Also fixed: `coverage-guard.ts` was paginating 1.2M rows
+by offset with NO total order (pages may overlap or skip — phantom or missing coverage in the Coverage Law's own guard);
+plus ordered fetches in autopilot and the universe-bias audit. Exchange-API hits (Binance/Bybit/OKX `limit=`) are false
+positives — those APIs define time ordering.
+
+**CLASS 2 — the trial counter was fiction in three places at once (the flagship find).**
+`aegis-discovery` wrote `{id:"global", total:N}` into a table whose real columns are `(id uuid, family, run_key,
+counted_at)` — every write 400'd. `fetch()` does not throw on HTTP status, so the catch never fired and the agent printed
+`trial counter: 0 -> N` as SUCCESS on every cycle. Meanwhile BOTH readers (autopilot, agent-output-guard) queried a
+`trials` column that never existed and silently fell back to the constant. **The program's stated non-negotiable — "the
+counter increments on EVERY backtest run" — was falsified in production with all guards green.**
+Rebuilt end-to-end: discovery now appends one event row per candidate per cycle in the table's real shape, checks
+`res.ok`, and verifies by re-reading the count; both readers now compute N = 1,530,000 (documented baseline, D-363/364)
++ live event count — so the deflation ceiling finally RISES as the daemon searches, which is the entire point of a trial
+counter.
+
+**CLASS 3 — swallowed state writes: 156 sites.** All six live agents fixed to print `WRITE-FAILED <table> <status>` on any
+non-ok response, and the agent-output guard now goes RED on that marker — a failed write in an agent is now a paged
+condition, not a silent one. The two EDGAR loaders were waived with audited annotations (their chunk failures are tolerated
+BECAUSE landing is verified by re-read at the end). The remaining ~140 legacy sites (mostly dormant edge functions on the
+paused org) are frozen under the ratchet.
+
+**CLASS 4 — frozen deflation ceilings: clean** after D-457/464 (both remaining `sqrt(2 ln N)` sites use live values).
+
+**THE ENFORCEMENT — `scripts/plumbing-guard.ts`.** Three rules (truncation ≥50 / silent-write / frozen-ceiling), per-line
+audited waivers via `// plumbing-ok: <reason>`, and a RATCHET: a committed baseline of 155 legacy sites, RED only when any
+(rule, file) count EXCEEDS baseline — so the backlog can only burn down, never grow. Verified in all four directions by
+unmasked exit code: selftest 1, baseline 0, planted regression 1, clean again 0. Wired into the daily runner.
+
+**Two of my own recurring mistakes recurred DURING this fix and were caught:** unreachable legacy code broke the
+type-check, and I masked an exit code with a pipe for the third time this session. Both are exactly the class of error the
+guard philosophy exists for: instances repeat until the check is mechanical.

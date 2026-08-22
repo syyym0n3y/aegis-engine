@@ -15,8 +15,9 @@ const AGENTS=["autopilot","coverage","cryptofwd","daily","discovery","positionin
 const MAX_STALE_H=Number(Deno.env.get("AGENT_MAX_STALE_H")||30);   // daily agents; a 24h loop plus slack
 
 // the program's real deflation ceiling, from the live trial counter or the documented figure
-const cnt=await fetch(`${OWNED}/trd_trial_counter?select=trials&order=trials.desc&limit=1`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
-const TRIALS=(Array.isArray(cnt)&&cnt[0]?.trials>0)?+cnt[0].trials:1_530_000;
+// counter is an append-only event log (D-467): live N = documented baseline + row count.
+const cntR=await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`,{headers:{...hdr,Prefer:"count=exact"}}).catch(()=>null);
+const TRIALS=1_530_000+(cntR?+((cntR.headers.get("content-range")||"").split("/")[1]||0):0);
 const CEIL=Math.sqrt(2*Math.log(TRIALS));
 // is anything actually promoted? if not, no agent may speak of "validated edges"
 const lin=await fetch(`${OWNED}/trd_lineage?select=id,status`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {status:string}[];
@@ -37,7 +38,9 @@ const check=(agent:string,text:string,ageH:number|null,errBytes:number)=>{
   // 3. claiming validated edges when the ledger promotes nothing
   if(nPromoted===0&&/validated edge|decorrelated edges|verified edge/i.test(text)&&!/UNVALIDATED|NOT a validated|never a validated/i.test(text))
     push({agent,what:`claims a "validated/verified edge" while the lineage ledger promotes NOTHING`});
-  // 4. staleness and 5. stderr
+  // 4. a failed state write the agent itself reported (agents now print WRITE-FAILED <table> on !res.ok, D-467)
+  for(const m of text.matchAll(/WRITE-FAILED\s+(\S+)/g)) push({agent,what:`state write to ${m[1]} FAILED in the latest run`});
+  // 5. staleness and 6. stderr
   if(ageH!==null&&ageH>MAX_STALE_H) push({agent,what:`log is ${ageH.toFixed(0)}h old (> ${MAX_STALE_H}h) — the agent may be wedged`});
   if(errBytes>0) push({agent,what:`stderr is non-empty (${errBytes} bytes)`});
 };
