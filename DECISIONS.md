@@ -8952,7 +8952,22 @@ prior record describes a **1R-capped stop**, which I did not implement and which
 distribution (it truncates the left tail of a SHORT, which is where short strategies bleed). A capped-stop version could
 behave differently and has not been tested here.
 
-**VERDICT: the "verified" status of rip-short does not survive portfolio accounting and is withdrawn pending re-validation
-with its stop.** The burden has shifted: a trade-level p-value is no longer evidence for it. Two of the three claimed
+**THE STOP VERSION WAS THEN TESTED, closing the caveat above.** Same 99,861 signals with a 1R-capped stop (R = ATR(14)/price;
+stop above entry at +1R, target below at −1R; when a daily bar touches both, the STOP is assumed first — the pessimistic
+assumption, never the flattering one):
+
+| hold | mean/trade | **TRADE-level t** | portfolio/entry-day | **PORTFOLIO t** |
+|---|---|---|---|---|
+| 5d | +0.003% | **0.23** | −0.0382% | −1.44 |
+| 10d | +0.007% | 0.54 | −0.0423% | −1.53 |
+| 21d | +0.006% | 0.47 | −0.0397% | −1.43 |
+
+**With the stop the edge disappears at BOTH levels** — it is not even significant per-trade (t 0.23-0.54), and negative as
+a portfolio. The reason is mechanical: a 1R cap truncates the short's PROFIT as well as its loss, so the asymmetry the
+un-stopped version relied on is removed. (The pessimistic tie-break does bite here, since stop and target are equidistant;
+an optimistic tie-break would improve it, but not from t 0.23 to the deflated bar of 5.34.)
+
+**VERDICT: rip-short is REFUTED, not merely withdrawn.** It fails portfolio accounting with fixed holds AND with the
+1R-capped stop the prior record specifically credits. The burden has shifted: a trade-level p-value is no longer evidence for it. Two of the three claimed
 edges are now refuted or withdrawn (crypto momentum refuted, rip-short withdrawn); bbfade remains un-audited and is
 recorded as UNVERIFIED rather than verified, since it rests on the same trade-level methodology.
