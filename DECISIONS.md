@@ -9049,3 +9049,60 @@ claim is withdrawn. **This is the first back-catalogue item to survive audit**, 
 reporting the three that did not: the laws are not simply destroying everything they touch. What they destroy is
 overstatement — and here the underlying finding was sound, which is exactly why D-404's *interpretation* (the VRP is
 compensation for crash risk, not a free lunch — SVXY lost 83% in one day) also stands unchanged.
+
+## D-455 — AUDIT of the COMBINED BOOK: the "selective overlay" improvement is a SELECTION ARTEFACT
+
+D-405 reports that applying the trend overlay **selectively** — only to the classes where it measured positive — recovers
+OOS Sharpe from 0.00 (blanket) to **0.37**, and concludes *"using the per-class evidence instead of a blanket rule is
+worth ~0.37 of Sharpe."* The class list is hardcoded in `scripts/combined-book.ts`:
+
+```ts
+const OVERLAY_CLASSES = new Set(["commodity","crypto_ex","sector","equity","etf"]);  // 'index' EXCLUDED (-19pp)
+```
+
+That set came from D-400's per-class measurement over the **FULL sample**, which includes the very OOS window the
+improvement is then reported on. The selection was informed by the test data.
+
+**THE AUDIT: make the identical choice on TRAIN ONLY, freeze it, apply to TEST.** Everything else — universe, filters,
+lookback, seasonal weights, split point — left exactly as the original.
+
+**Per-class overlay benefit, TRAIN WINDOW ONLY (annualised, overlay minus passive):**
+
+| class | passive | overlay | diff |
+|---|---|---|---|
+| fx | 3.3% | 2.3% | −0.9pp |
+| etf | 4.6% | 2.9% | −1.7pp |
+| index | 1.7% | −1.8% | −3.5pp |
+| sector | 7.3% | 2.6% | −4.6pp |
+| commodity | 16.6% | 7.8% | −8.8pp |
+| equity | 30.9% | 8.9% | **−22.0pp** |
+
+**The overlay is NEGATIVE in every class on the training window. NO class qualifies.** Four of the five classes D-405
+hardcodes as "positive" (commodity, equity, etf, sector) are clearly negative in train — their full-sample positivity comes
+from the test period.
+
+| book | FULL SR | OOS SR |
+|---|---|---|
+| 1. diversified PASSIVE | 0.70 | 0.57 |
+| 3. + BLANKET trend | 0.29 | 0.00 |
+| 4. + SELECTIVE (full-sample pick) | 0.49 | **0.37** |
+| **6. + SELECTIVE (TRAIN-only pick)** | **0.70** | **0.57** |
+
+With an honest selection the "selective" book **collapses exactly onto the passive book**, because the honest answer at the
+split point was to overlay nothing.
+
+**VERDICT: the ~0.37 Sharpe attributed to selectivity is an artefact.** An operator choosing honestly with only the data
+available at the split would have overlaid no class at all — and simply held the passive book.
+
+**What this changes, and what it does not.** D-405's *bottom line* already said the best risk-adjusted book is diversified
+passive (OOS SR 0.57), and that stands — strengthened, since the alternative it was compared against is now known to be
+contaminated. What is withdrawn is the intermediate claim and the "calibrated choice" framing built on it: the real trade
+is not *"0.37 Sharpe for half the drawdown"* but **"0.00 Sharpe for half the drawdown"** (the blanket overlay, which is
+the only honest overlay available, gives OOS −11.9% maxDD at 0.0% annual return). Drawdown reduction is purchasable; it
+costs the entire return, not a fifth of the Sharpe.
+
+**A BUG IN THIS AUDIT, recorded because it is the point in miniature.** The first version indexed the per-class series
+POSITIONALLY. Classes are skipped on days they have too few instruments, so position i is a different date in each class.
+That misalignment produced a book with **Sharpe 1.9 — better than every other line in the table** — and it would have read
+as a spectacular discovery. Fixed by keying on date. **A bug flatters a result far more readily than it damages one**,
+which is the whole reason results get audited rather than trusted.
