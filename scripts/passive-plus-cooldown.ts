@@ -111,6 +111,20 @@ const F5=stat(d405.map(x=>x.r)), O5=stat(d405.slice(sp405).map(x=>x.r));
 console.log(`\n    RECONCILIATION — D-405's exact accumulation on these same instruments and dates:`);
 console.log(`      D-405-style passive: ${d405.length} days (${d405[0].d} .. ${d405[d405.length-1].d}) FULL SR ${F5.sr.toFixed(2)} ann ${F5.ann.toFixed(1)}% maxDD ${F5.dd.toFixed(1)}%  |  OOS SR ${O5.sr.toFixed(2)} ann ${O5.ann.toFixed(1)}% maxDD ${O5.dd.toFixed(1)}%`);
 console.log(`      this script's passive: ${passive.length} days (${kept[0]} .. ${kept[kept.length-1]}) FULL SR ${stat(passive.map(x=>x.r)).sr.toFixed(2)}  |  OOS SR ${stat(passive.slice(sp).map(x=>x.r)).sr.toFixed(2)}`);
+// D-405 reported 190 instruments and 4,450 days; this universe has the same 190 instruments but 5,893 days under its own
+// method. Same instruments + more days => the underlying bars GREW since D-405 ran (price accumulation extended history).
+// If that is the whole story, restricting to the most recent 4,450 days should reproduce the recorded numbers.
+{
+  const tail=d405.slice(Math.max(0,d405.length-4450));
+  const spT=Math.floor(tail.length/1.667);
+  const FT=stat(tail.map(x=>x.r)), OT=stat(tail.slice(spT).map(x=>x.r));
+  console.log(`      restricted to D-405's window length (last ${tail.length} days, from ${tail[0].d}):`);
+  console.log(`        FULL SR ${FT.sr.toFixed(2)} ann ${FT.ann.toFixed(1)}% maxDD ${FT.dd.toFixed(1)}%  |  OOS SR ${OT.sr.toFixed(2)} ann ${OT.ann.toFixed(1)}% maxDD ${OT.dd.toFixed(1)}%`);
+  console.log(`        D-405 recorded:  FULL SR 0.70 ann 9.1% maxDD -33.2%  |  OOS SR 0.57 ann 7.3% maxDD -25.1%`);
+  const close=Math.abs(OT.sr-0.57)<0.12&&Math.abs(FT.sr-0.70)<0.12;
+  console.log(`        -> ${close?"REPRODUCED: the gap was simply that the price history has GROWN since D-405 ran."
+    :"still does NOT reproduce — the difference is not just window length."}`);
+}
 console.log(`      -> ${Math.abs(O5.sr-stat(passive.slice(sp).map(x=>x.r)).sr)<0.15?"the two constructions AGREE: the gap vs the recorded 0.57 is period/universe, not method."
   :"the two constructions DISAGREE: the difference is in the METHOD, and one of them is wrong."}`);
 console.log(`\n    OOS verdict: Sharpe ${P.sr.toFixed(2)} -> ${C.sr.toFixed(2)} (${(C.sr-P.sr>=0?"+":"")}${(C.sr-P.sr).toFixed(2)}), maxDD ${P.dd.toFixed(1)}% -> ${C.dd.toFixed(1)}% (${(C.dd-P.dd>=0?"+":"")}${(C.dd-P.dd).toFixed(1)}pp), return ${P.ann.toFixed(1)}% -> ${C.ann.toFixed(1)}%`);

@@ -9364,8 +9364,25 @@ D-405's exact accumulation was re-run here on the identical instruments and iden
    move is assigned to a single day. D-405's is the more conservative treatment; mine retains more of the return path but
    mislabels multi-day moves as daily ones. **Both are defensible and I have NOT established which is correct** — asserting
    one would be exactly the overconfidence this session has spent its time correcting.
-2. **D-405's own method gives 0.84 here, not the 0.57 it recorded — and that gap I cannot explain.** The remaining
-   difference must be universe or period (4,450 days recorded vs 5,893 here), but I have not isolated it.
+2. **D-405's own method gives 0.84 here, not the 0.57 it recorded. NARROWED, not closed.** D-405 reported 190 instruments
+   and 4,450 days; this universe has the SAME 190 instruments but 5,893 days under D-405's own method, which means the
+   underlying price history has GROWN since it ran. Restricting to the most recent 4,450 days moves it most of the way
+   back:
+
+   | | FULL SR | FULL ann | FULL maxDD | OOS SR | OOS ann | OOS maxDD |
+   |---|---|---|---|---|---|---|
+   | D-405's method, last 4,450 days | 0.83 | 10.8% | −34.4% | **0.72** | 10.7% | −23.2% |
+   | **D-405 as recorded** | 0.70 | 9.1% | −33.2% | **0.57** | 7.3% | −25.1% |
+
+   Drawdowns nearly match (−34.4% vs −33.2%, −23.2% vs −25.1%), so the universe is close. **Window length accounts for
+   roughly half the Sharpe gap; the residual ~0.15 is unexplained** — most likely the `limit=200` fetch returning a
+   slightly different instrument set now that more rows exist. I stopped here rather than grind further, because the
+   practical conclusion does not turn on it.
+
+**THE DIRECTION OF THE ERROR IS THE USEFUL PART:** every reconstruction gives a HIGHER passive Sharpe than the 0.57 on
+record (0.72, 0.84, 1.15). **The recorded number understates the recommended book**, which makes diversified passive look
+*better* relative to every overlay and strategy the program has compared against it — including the ones that were reported
+as close.
 
 **FLAGGED, NOT RESOLVED: the program's headline "diversified passive, OOS Sharpe 0.57" does not reproduce.** Its own method
 on this data gives 0.84. That does not make the recommendation wrong — passive still wins every comparison run against it —
