@@ -1,5 +1,23 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (SWEEP COMPLETE) — 738 specs, 0 survivors, 0 untested; 8 leads registered for trial-free forward confirmation
+
+**D-471/473 THE FACTORY VERDICT** (ceiling 5.337 at N=1,530,750; every spec one trial; the sweep's first catch was its own
+overlap bug): french-century 56 specs best **t 4.03** (industry momentum 12-1 on 395 disjoint quarters over 100 years —
+the literature's flagship does NOT clear this program's bar) · pairs 231 best 3.79 · equity 220 best 3.75 · perps 60 best
+1.94 · timing 171 best **0.75** (nothing beats holding, industrialised).
+
+**THE ANSWER TO "MOST LUCRATIVE":** one coherent family tops everything modern — **shareholder payout + quality**
+(cfo/fcf/buyback yields and their momentum/profitability pairs), ~10-14%/yr net, t 3.0-3.8, era-consistent,
+liquid-tercile-surviving, all gates green EXCEPT deflation. Real by any fresh-researcher standard; unprovable against OUR
+1.53M-trial search history. **D-474:** the 8 best are registered for forward confirmation — post-registration months only,
+forward ceiling ~2.04 (N=8), decided by ~24-36 months of live data. That is the honest path from t 3.5 to promotable, and
+the only one.
+
+**Content gate status:** data frontier complete (Tier A landed: +1.8M EDGAR rows/24 concepts, 10.8M FTD rows, 498-perp SF
+universe, century panels 174k obs, 2 live options-surface collectors); sweep complete at 738 specs. The video's story is
+either forward confirmation in time, or proven-absence-at-breadth now — both are true content.
+
 ## Strategic posture (2026-08-22) — WATCHES ACCRUE; options memo delivered
 Engine complete and self-maintaining. Options memo (with recommendation) published for the operator:
 **Aegis Strategic Options** — https://claude.ai/code/artifact/ed9b5076-395c-4e94-8b30-35dba6ce6b50

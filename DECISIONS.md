@@ -9603,3 +9603,42 @@ returned zero. The factory's first real catch was itself.
 - Perps at 1.94: the cross-sectional structure there is weak once survivorship-free and honestly costed (confirms D-443).
 
 **Trial counter: 694 factory events**, every one raising the bar it must clear. PASS 5 (century panels) pending.
+
+## D-473 — THE FULL SWEEP VERDICT: 738 specs, 0 survivors — and a ranked answer to "the most lucrative ways"
+
+All five passes complete. Ceiling **5.337** at N=1,530,750 (750 factory trials, each raising the bar). 0 untested — every
+spec has a verdict.
+
+| family | specs | best t | reading |
+|---|---|---|---|
+| french (century panels) | 56 | **4.03** | industry momentum 12-1: the literature's flagship, on 395 DISJOINT quarters over 100 years, net of 40bp — and still under the ceiling |
+| pairs | 231 | 3.79 | cfo_yield + buyback_yield — the payout complex |
+| equity xsec | 220 | 3.75 | buyback_yield |
+| perp xsec | 60 | 1.94 | weak once survivorship-free and costed |
+| timing | 171 | **0.75** | nothing beats holding, across 171 rules x 11 instruments |
+
+**The coherent structure at the top** — this is not scatter: the modern leaderboard is one family. Shareholder-payout and
+its combinations (cfo+buyback t 3.79 at 11.4%/yr; fcf+buyback 3.40; mom+buyback 3.17; mom+gross_prof t 3.15 at
+**14.3%/yr net**, the highest-return near-lead) — all gates green EXCEPT deflation (`++++-`). Era-consistent,
+liquid-tercile-surviving, effect >> fee, breadth 150-400 names.
+
+**A gate edge-case, stated rather than smoothed over:** the 49-industry panel fails g_breadth by exactly ONE unit (49 < 50)
+— a floor calibrated for single stocks applied to portfolios that each hold hundreds. Noted as a calibration artifact; it
+changes nothing (t 4.03 < 5.337 regardless).
+
+**THE HONEST INTERPRETATION, which is the deliverable.** The ceiling prices this program's OWN 1.53M-trial history — a
+global bar. Findings at t 3.2-4.0 with pre-registered signs, era consistency and liquidity survival are what a fresh
+researcher would call strong evidence; OUR bar treats them as unproven because WE have mined this much. Both statements
+are true at once: **the payout/quality complex at ~10-14%/yr net is the most lucrative structure in everything measured —
+and it is not provable against this search history.** The only test that can still promote it is TRIAL-FREE:
+post-registration forward confirmation, where N restarts at the handful of registered leads and the required t falls
+to ~1.9. That machinery is registered below (D-474). The gate for public content is therefore either forward confirmation
+in time, or the proven-absence story at 738-spec breadth — which is itself the content.
+
+## D-474 — FORWARD CONFIRMATION registered: 8 leads, trial-free from today
+
+`trd_factory_forward` (migration 0072): the payout complex — 4 buyback_yield variants + 4 payout/quality pairs — all
+`++++-` gates, t 3.0-3.8, tradable panels. Scored ONLY on months after 2026-08-22; forward N = 8 registered leads, so the
+forward ceiling is sqrt(2 ln 8) ≈ **2.04** instead of 5.34. At their measured monthly Sharpe, ~24-36 months of forward
+data decides promotion or refutation. Monthly scorer to be wired into the agent cycle; until then the registration date
+is the immutable line between mined and earned.
