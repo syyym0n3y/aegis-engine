@@ -8971,3 +8971,44 @@ an optimistic tie-break would improve it, but not from t 0.23 to the deflated ba
 1R-capped stop the prior record specifically credits. The burden has shifted: a trade-level p-value is no longer evidence for it. Two of the three claimed
 edges are now refuted or withdrawn (crypto momentum refuted, rip-short withdrawn); bbfade remains un-audited and is
 recorded as UNVERIFIED rather than verified, since it rests on the same trade-level methodology.
+
+## D-453 — bbfade REFUTED by the benchmark, completing the audit: all three "verified" edges fall, each to a DIFFERENT law
+
+**Rule (verbatim from `trd-bblo-exec/index.ts`):** close < MA20 − 2σ(20) -> LONG, unconditional, 2ATR stop (= −1R) and 3R
+target. Prior record: *"the 5th edge, the ONE survivor of the 24-setup global sweep, robust on 16/16 major liquid markets"*.
+**464,471 signals across 10,578 distinct entry days**, $10M/day liquidity floor, 10bp round trip, stop assumed first when a
+bar touches both levels.
+
+| view | mean | t | n |
+|---|---|---|---|
+| TRADE-level, raw | **+1.186%** | **56.11** | 464,471 |
+| **TRADE-level, vs buy-and-hold** | **−1.250%** | **−14.27** | 464,471 |
+| PORTFOLIO (per entry-day), raw | +1.209% | 17.28 | 10,578 |
+| **PORTFOLIO, vs buy-and-hold** | **−1.498%** | **−6.35** | 10,578 |
+
+Buy-and-hold over the same windows returns **+2.436% per signal**; bbfade returns +1.186%. **The bracket destroys roughly
+half of what simply holding the name would have delivered**, and the shortfall is significant in the NEGATIVE direction
+past this program's own deflated ceiling of 5.34.
+
+Note what did NOT kill it: pseudo-replication. The portfolio raw t is still 17.28 — day-clustering was not the problem
+here. **The benchmark was**, exactly as it was for all twelve on-chain rules in D-439.
+
+**FAIRNESS CAVEAT, stated because it cuts against my own conclusion:** the bracket exits early (on stop or target) while
+buy-and-hold is held the full 40 days, so bbfade is compared on less time-in-market. A pure per-unit-of-exposure
+comparison would be kinder to it. But the claim under audit was that the setup is an EDGE — and a rule that captures under
+half the drift available in the same names over the same windows does not support that claim as stated.
+
+## THE AUDIT'S RESULT: three claimed edges, three different laws, three refutations
+
+| claimed edge | prior status | refuted by | what happened |
+|---|---|---|---|
+| **crypto momentum** | "verified tradeable" | **THE BREADTH LAW** (D-446) | 94.2%/yr on 14 names was a concentration artifact; at 162-name breadth SR 1.13 -> 0.34 (D-443) and the rank-IC sign FLIPS negative, t −8.74 (D-451) |
+| **rip-short** | "verified, p=1e-7" | **PSEUDO-REPLICATION** (D-451) | trade-level t 2.04-4.66 REPRODUCES, portfolio t −1.60 to −0.57; with its own 1R stop the trade t collapses to 0.23-0.54 (D-452) |
+| **bbfade** | "the ONE survivor of 24 setups" | **THE BENCHMARK** (D-439) | raw t 56.11, but −1.250% vs buy-and-hold at t −14.27 (D-453) |
+
+**Each law caught a different false positive that had been sitting in the record as verified.** That is the strongest
+available evidence that the laws are doing real work rather than merely being restrictive — they were derived from
+failures in THIS session's new research, then applied to an independent back catalogue, and each one immediately found
+something wrong that had survived months of prior review.
+
+**Aegis now holds ZERO claimed edges.** Not one strategy in the program's history survives the current standard.
