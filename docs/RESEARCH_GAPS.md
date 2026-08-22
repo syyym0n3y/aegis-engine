@@ -171,5 +171,13 @@ Every candidate now dies at a nameable, *different* stage — which is more info
 5. **Fee boundary / execution-dependent** — US-afternoon window: 0.6-1.6x its fee depending on fills (D-445).
 6. **Beaten by the benchmark** — on-chain: positive in isolation, negative against buy-and-hold (D-439).
 
-**The pattern: signal is abundant and accessibility is not.** Six distinct mechanisms, each of which converts a real
+7. **Pseudo-replication** — an IC/trade t-stat over name-days is not a portfolio t-stat: IC t 27.37 vs portfolio t 1.32
+   (D-451); rip-short's sign FLIPS between the two views (D-452).
+8. **Beaten by its own benchmark, at scale** — bbfade: raw t 56.11, −1.250% vs buy-and-hold at t −14.27 (D-453).
+
+**The pattern: signal is abundant and accessibility is not.** Eight distinct mechanisms, each of which converts a real
 statistical effect into an untradable one. Nothing found so far fails because the effect is absent.
+
+**And the laws generalise.** Applied to an independent back catalogue they refuted all three previously-"verified" edges,
+each by a different law (breadth / pseudo-replication / benchmark). They were not tuned to those cases — they were derived
+from unrelated failures in new research and then found real errors that had survived months of review.

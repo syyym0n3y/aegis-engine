@@ -1,5 +1,34 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 — THE AUDIT: all three claimed "verified" edges REFUTED, each by a different new law
+
+The prior record listed a **"verified tradeable set = 3"**. All three are now refuted, and — this is the point — **each
+fell to a different one of the laws derived from this session's new research**:
+
+| claimed edge | prior status | refuted by | what happened |
+|---|---|---|---|
+| **crypto momentum** | "verified tradeable" | **BREADTH LAW** | 94.2%/yr on 14 names was concentration; at 162-name breadth SR 1.13 -> 0.34, and the rank-IC sign FLIPS negative (t −8.74) |
+| **rip-short** | "verified, p=1e-7" | **PSEUDO-REPLICATION** | trade t 2.04-4.66 REPRODUCES; portfolio t −1.60 to −0.57. With its own 1R stop, trade t collapses to 0.23-0.54 |
+| **bbfade** | "the ONE survivor of 24 setups" | **BENCHMARK** | raw t 56.11, but **−1.250% vs buy-and-hold at t −14.27**; holding the same names returned +2.436% vs the rule's +1.186% |
+
+The laws were derived from failures in NEW research this session, then applied to an independent back catalogue, and each
+one immediately found something that had survived months of prior review. **That is the strongest available evidence they
+do real work rather than merely being restrictive.**
+
+**AEGIS NOW HOLDS ZERO CLAIMED EDGES.** Not one strategy in the program's history survives the current standard.
+
+**What Aegis does hold, and it is not nothing:**
+- **Six enforced laws**, each with a machine guard verified RED by exit code, running daily: COVERAGE (+staleness),
+  LIQUIDITY, EFFECT-SIZE, BREADTH, EXECUTION, plus the PSEUDO-REPLICATION and BENCHMARK rules in doctrine.
+- **A three-legged carry watch** (basis / funding / variance), DORMANT, reporting daily against cash with the tail printed
+  beside every premium — the three premia are real, were competed away in lockstep, and will be caught if they return.
+- **An option-skew collector** accumulating the series Deribit does not publish.
+- **~2.5M data points** across equities, perps, options, on-chain and cross-venue, on owned infrastructure.
+- **A failure-mode ladder**: eight distinct mechanisms by which a real statistical effect becomes untradable. Nothing
+  tested has failed because the effect was absent.
+
+**$0 at risk. Nothing armed. Nothing promoted.**
+
 ## 2026-08-22 (continued) — the equity cross-section is CLOSED, and the back catalogue is under audit
 
 **D-447/448 US-AFTERNOON WINDOW — strongest candidate the program has produced, and DEAD on execution.** It survives all
