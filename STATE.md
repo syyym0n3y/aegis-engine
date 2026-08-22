@@ -1,5 +1,31 @@
 # STATE — Aegis (live state)
 
+## 2026-08-22 (continued) — the equity cross-section is CLOSED, and the back catalogue is under audit
+
+**D-447/448 US-AFTERNOON WINDOW — strongest candidate the program has produced, and DEAD on execution.** It survives all
+three nulls: rank **#1 of 22** possible 2-hour windows, **3.61 sd** above a typical one, drift-neutral excess **7.83bp at
+t 10.92 with 14/14 symbols**, positive in 3 of 4 eras. It failed at taker (0.87x) and cleared at maker (2.17x) — so the
+verdict rested entirely on a maker assumption. Measured on 5m bars that assumption is FALSE, unanimously on 4/4 symbols:
+fill rate 91-92%, **return on FILLED days −1.85 to −2.80bp**, while **+68 to +144bp lives in the ~9% of days that never
+fill**. -> **THE EXECUTION LAW** + guard (verified RED/PASS/exempt; a negation flaw was caught by its own self-test).
+
+**D-450 EQUITY CROSS-SECTION CLOSED.** Applying the best model (GBM) AND best construction (conviction) to the liquid
+tercile — ranking INSIDE the tradable universe, not slicing it out afterwards — collapses the non-linear edge from
+**t 2.13 to t 1.02 (NULL)**; every construction lands at or below zero net of cost. This sharpens D-424: **not only the
+return but the SIGNAL lives in the illiquid names.**
+
+**D-451 CRYPTO NON-LINEAR at breadth — method CONFIRMED, portfolio NOT.** 328 survivorship-free contracts, 163 names/day.
+delta IC +0.0144 at **paired t 8.12 — clears the deflated ceiling of 5.34**, confirming D-419 in a second asset class.
+Momentum alone is NEGATIVE at breadth (t −8.74), independently confirming the D-443 kill. **But the portfolio is SR 0.61 at
+t 1.32, maxDD −50%.** An IC t of **27.37** corresponds to a portfolio t of **1.32** -> **THE PSEUDO-REPLICATION RULE**:
+name-day ICs are not portfolio evidence, and where they disagree the portfolio number decides.
+
+**AUDIT OF THE BACK CATALOGUE (D-452, in flight).** The prior record claims a "verified tradeable set" of three:
+rip-short, bbfade, crypto momentum. **Crypto momentum is already refuted** (D-443 concentration artifact; D-451 shows the
+sign flips at breadth). The other two were validated with TRADE-level p-values (`p=1e-7`) before the pseudo-replication
+rule existed — and rip-short fires on overbought names in downtrends, which cluster on the same days. Re-running it locally
+with a portfolio t-stat, a $10M/day floor, 10bp costs and a cash benchmark.
+
 ## 2026-08-22 — REST-OF-HUNT: on-chain NULL, skew UNTESTED, and one signal still standing pending survivorship
 
 **D-438/439 BITCOIN ON-CHAIN FUNDAMENTALS — 0 of 12 beat buy-and-hold.** 966,943 points / 7 series from blockchain.info,
