@@ -8879,3 +8879,45 @@ lands at or below zero net of cost.
 
 **This closes the equity cross-section completely.** There is no combination of model, construction or regime filter in
 this program's toolkit that produces a tradable equity cross-sectional edge.
+
+## D-451 — CRYPTO NON-LINEAR at proper breadth: the method CONFIRMS, the portfolio does NOT — and the gap is itself the finding
+
+The three ingredients combined for the first time: the best MODEL (GBM, D-419), the most capacity-rich market (perps), and
+adequate BREADTH (the survivorship-free universe, 328 contracts, mean 163 names/day — above the D-446 floor and 10x the 14
+names that produced the false 94%/yr in D-441). 350,907 panel rows, 2,116 usable days, walk-forward 2022-2026.
+
+| model | OOS rank IC | t(IC) |
+|---|---|---|
+| GBM (non-linear) | 0.0966 | 27.37 |
+| linear composite | 0.0822 | 20.52 |
+| momentum 30d alone | **−0.0395** | **−8.74** |
+| **GBM − linear** | **+0.0144** | **paired t 8.12** |
+
+**Two things this settles and one it exposes.**
+
+**1. Non-linearity is confirmed in a second, independent market.** delta IC +0.0144 at paired t 8.12 — this CLEARS the
+program's deflated ceiling of t~5.34 (D-363/364), which D-419's equity result (t 2.13) did not. Tree models extract signal
+a linear rank-IC structurally cannot see. That is now established twice, on different data, in different asset classes.
+
+**2. Cross-sectional momentum in crypto is NEGATIVE at proper breadth** (IC −0.0395, t −8.74). D-443 killed the 94%/yr as a
+concentration artifact; this shows the sign itself flips once breadth is adequate. The prior record's "verified tradeable
+set" included crypto momentum — that entry is wrong.
+
+**3. THE GAP — and it is the most transferable thing here.** The IC t-stat is **27.37**. The actual PORTFOLIO t-stat is:
+
+| book (net of 9bp turnover-charged fees) | %/yr | SR | **t** | maxDD |
+|---|---|---|---|---|
+| GBM equal-weight | 20.0% | 0.61 | **1.32** | −50% |
+| GBM conviction-weighted | 40.5% | 0.59 | **1.27** | −63% |
+
+**An IC t-stat of 27 corresponds to a portfolio t-stat of 1.3.** The IC treats every name-day as an independent
+observation (1,693 days x 163 names), which is pseudo-replication: the names move together, so the effective sample is the
+number of DAYS, not name-days. The portfolio t-stat is the honest one, and it is 20x smaller.
+
+**VERDICT: method CONFIRMED, strategy NOT promoted.** SR 0.59-0.61 at t 1.27-1.32 with a −50% to −63% drawdown does not
+approach the deflated bar. The economics are ordinary; only the method finding survives.
+
+**Doctrine added — THE PSEUDO-REPLICATION RULE:** a rank-IC t-stat computed over name-days is NOT a portfolio t-stat and
+must never be reported as evidence of tradability. Report the portfolio t-stat (n = number of rebalances) beside it. This
+program has quoted IC t-stats throughout — including earlier in this session — and where the two disagree, **the portfolio
+number decides.**
