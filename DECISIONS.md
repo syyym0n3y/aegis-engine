@@ -9320,3 +9320,36 @@ by hand, in a file I had just edited by hand. **Hand-auditing finds instances; a
 It also validates the specific design choice that made the guard usable: reading only the LATEST run. An earlier version
 scanned whole log tails and flagged already-fixed defects, which would have buried this real one in noise from the three
 I had already repaired.
+
+## D-465 — THE SYNTHESIS: the cooldown's value is INVERSELY proportional to how diversified you already are
+
+The last question the program can usefully ask of its own recommendation. Two established facts had never been put
+together: (a) D-405's honest bottom line, strengthened by its own audit (D-455), is that **diversified passive** is the best
+risk-adjusted book available here; (b) D-461/462/463 validated a **post-loss cooldown** as a reliable drawdown reducer on
+88-93% of 328 individual instruments. Does the validated mechanism improve the recommended book?
+Parameters chosen on TRAIN only and frozen (D-456), 190 instruments across 7 classes, 6,988 days.
+
+| book | FULL SR | ann | maxDD | worst day | **OOS SR** | OOS ann | **OOS maxDD** | OOS worst |
+|---|---|---|---|---|---|---|---|---|
+| diversified PASSIVE | 1.01 | 13.2% | −36.1% | −6.7% | **1.15** | 15.7% | **−23.3%** | −6.7% |
+| + COOLDOWN −12%/30d | 0.84 | 9.9% | −35.3% | −5.6% | 1.02 | 11.8% | −22.7% | −5.6% |
+
+**It costs 3.9pp/yr and 0.14 of Sharpe to buy 0.6pp of drawdown.** A clearly bad trade — and the reason is in one number:
+**the book's worst day is −6.7%.** The tail the cooldown exists to remove has already been removed by diversification.
+
+**THE GENERAL PRINCIPLE, which is the useful output here:** the cooldown was worth an enormous amount on single instruments
+(LUNAUSDT −99.3% -> −13.7%; maxDD improved on 93% of 328 perps) precisely BECAUSE single instruments carry −94% to −100%
+drawdowns. Applied to a book whose drawdown is already −23%, there is almost nothing left to take out, and the rule
+continues to charge full price for it. **The value of a drawdown control is inversely proportional to how diversified the
+position already is** — and it is charged whether or not there is anything left to protect.
+
+This restates D-401's central lesson with an independent mechanism and independent data: **diversification does the risk
+management at zero return cost; an overlay on top pays a second time for protection already owned.** D-401 reached that
+through a 200MA trend filter on a multi-asset book; this reaches it through a post-loss cooldown validated on 328 crypto
+perps. Two different mechanisms, same conclusion.
+
+**HONEST DISCREPANCY, stated rather than buried:** this passive book shows OOS Sharpe 1.15 where D-405 reported 0.57. The
+constructions are not identical — this one spans 6,988 days (1998-2026) against D-405's 4,450, and averages within class
+before averaging across classes. **I have not reproduced D-405's number and do not claim to.** The comparison that matters
+here is internal — passive versus passive-plus-cooldown within one construction — and that comparison is valid regardless
+of how it lines up with D-405's absolute level.
