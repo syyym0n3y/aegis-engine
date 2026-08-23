@@ -50,6 +50,35 @@ for(const cur of ["BTC","ETH"]){
   if(atmN&&atmF) rows.push({symbol:cur,venue:"deribit",interval:"term",ts:today,open_interest:atmF.iv-atmN.iv});
   console.log(`  ${cur}  spot ${spot.toFixed(0)}  ${near}d tenor: ATM IV ${atmN?.iv.toFixed(1)}  skew(90%P - 110%C) ${put&&call?(put.iv-call.iv).toFixed(2):"n/a"}  term(${farT??"-"}d - ${near}d) ${atmN&&atmF?(atmF.iv-atmN.iv).toFixed(2):"n/a"}`);
 }
+// ---- OKX second-venue leg (D-480): TRUE 25-delta skew from per-strike greeks, not a moneyness proxy ----
+for(const uly of ["BTC-USD","ETH-USD"]){
+  const j=await fetch(`https://www.okx.com/api/v5/public/opt-summary?uly=${uly}`).then(r=>r.json()).catch(()=>null) as
+    {data?:{instId:string;deltaBS:string;askVol:string;bidVol:string;markVol?:string}[]}|null;
+  const L=j?.data;
+  if(!Array.isArray(L)||!L.length){console.error(`  okx ${uly}: unavailable — recording NOTHING`);continue;}
+  type O={days:number;call:boolean;delta:number;iv:number};
+  const opts:O[]=[];
+  for(const o of L){
+    const m=/-(\d{6})-\d+-([CP])$/.exec(o.instId); if(!m)continue;
+    const exp=Date.UTC(2000+ +m[1].slice(0,2),+m[1].slice(2,4)-1,+m[1].slice(4,6),8);
+    const days=(exp-Date.now())/86400000; if(days<5||days>60)continue;
+    const iv=parseFloat(o.markVol??"")||((parseFloat(o.askVol)||0)+(parseFloat(o.bidVol)||0))/2;
+    const delta=parseFloat(o.deltaBS);
+    if(!(iv>0.01)||iv>5||!Number.isFinite(delta))continue;
+    opts.push({days,call:m[2]==="C",delta,iv:iv*100});
+  }
+  if(opts.length<20){console.error(`  okx ${uly}: only ${opts.length} usable`);continue;}
+  const tenors=[...new Set(opts.map(o=>Math.round(o.days)))].sort((a,b)=>Math.abs(a-30)-Math.abs(b-30));
+  const near=opts.filter(o=>Math.round(o.days)===tenors[0]);
+  const put25=near.filter(o=>!o.call).sort((a,b)=>Math.abs(a.delta+0.25)-Math.abs(b.delta+0.25))[0];
+  const call25=near.filter(o=>o.call).sort((a,b)=>Math.abs(a.delta-0.25)-Math.abs(b.delta-0.25))[0];
+  const atm=near.sort((a,b)=>Math.abs(Math.abs(a.delta)-0.5)-Math.abs(Math.abs(b.delta)-0.5))[0];
+  const sym=uly.split("-")[0];
+  if(put25&&call25) rows.push({symbol:sym,venue:"okx",interval:"skew25d",ts:today,open_interest:put25.iv-call25.iv});
+  if(atm) rows.push({symbol:sym,venue:"okx",interval:"atm_iv_near",ts:today,open_interest:atm.iv});
+  console.log(`  okx ${sym}  ${tenors[0]}d: ATM ${atm?.iv.toFixed(1)}  TRUE-25Δ skew ${put25&&call25?(put25.iv-call25.iv).toFixed(2):"-"}`);
+}
+
 if(!rows.length){console.error("!! nothing collected");Deno.exit(1);}
 const res=await fetch(`${OWNED}/trd_perp_oi?on_conflict=symbol,venue,interval,ts`,{method:"POST",
   headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)});
@@ -58,3 +87,4 @@ if(!res.ok){console.error(`!! write ${res.status}: ${(await res.text()).slice(0,
 const back=await fetch(`${OWNED}/trd_perp_oi?venue=eq.deribit&interval=eq.skew25&symbol=eq.BTC&select=ts`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
 const dayCount=Array.isArray(back)?new Set((back as {ts:number}[]).map(r=>r.ts)).size:0;
 console.log(`==> collected ${rows.length} points; skew series now ${dayCount} distinct day(s) deep. Testable at ~250.`);
+
