@@ -1,5 +1,13 @@
 # STATE — Aegis (live state)
 
+## 2026-08-23 (LATE) — 891 specs, 0 survivors; ownership axis fully verdicted; first-ever "survivors" were same-bar phantoms (D-498)
+New families since the 799 board: N-PORT ownership NULL (D-495), insider sells properly-powered NULL (D-496), 13F
+ownership NULL + recurring sub-significance crowding tilt (D-499), announcement premium NULL (D-500), classic deciles
+(NI 2.58 / AC 2.31 ++++; D/P dead; low-vol long-short absent) (D-492), intl momentum ++++ in 4/5 geographies with EM WML
+t 5.30 and the Japan null reproducing (D-491), vol-timing PHANTOM killed by lag-1 (D-498, execution-guard SAME-BAR RULE
+green on 187 stamped rows). Data plane now owns: N-PORT (1.42M cusip-months), 13F (1.0M cusip-periods), Form345 sells
+(881k symbol-days), earnings calendar (142.7k), intl+classic French panels, VX-curve/skew/US-options daily collectors.
+
 ## 2026-08-23 — post-correction leaderboard: 799 specs, 0 survivors; the complex holds at t 2.6-3.46
 
 Dividend fix + true-PIT fundamentals re-runs complete (validated by two independent executions producing identical

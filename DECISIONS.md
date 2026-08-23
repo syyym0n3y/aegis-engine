@@ -9853,3 +9853,10 @@ institutions' inflows weakly PRECEDE underperformance, the same crowding-directi
 significant). 4 breadth-change specs UNTESTED (insufficient joined rows — stated, not narrated as null). Public
 45-day-stale ownership snapshots do not price. Lineage: own13f-signals (killed).
 ## D-500 (2026-08-23) — announcement premium: NULL on the modern span (t 0.32, 113 months, 362 announcers/mo). Frazzini–Lamont's premium is post-publication-decayed like the rest. Lineage: annprem (killed).
+
+## D-498 CLOSURE (2026-08-23) — lag-1 re-runs landed: every vol-timing rule is NEGATIVE at tradable execution; guard green; 891/0
+At lag-1, term9d risk-off costs −11.0/−12.7%/yr (t −3.56 both) and every SKEW/VVIX/term gate is ≤0 excess — the entire
+vol-complex timing family is not merely null but actively harmful after honest execution (exit after the drop, miss the
+rebound). Best surviving timing spec anywhere: BTC cooldown t 1.58. Execution guard: ALL 187 timing rows carry
+exec=lag1, GREEN by exit code. Ledger: **891 specs, 0 survivors** — the honest count, restored by re-measurement,
+not by deletion.
