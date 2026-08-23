@@ -62,7 +62,7 @@
 - **FINRA ATS/OTC off-exchange weekly**: UNBLOCKED via api.finra.org (CDN 403 stands); ~2022→ boundary measured; PASS 22 armed (D-505).
 - **EDGAR full-text events**: 8-K Item 4.02 ingested 2004→ (PASS 23 armed, D-506). Other item codes (5.02 CEO departures etc.) — NEWLY IDENTIFIED, OPEN.
 - **Binance futures sentiment**: UNBLOCKED; ~30d depth measured; daily collector running since 2026-08-23.
-- **Held-but-never-swept**: `trd_insider` (278k Form-4 events) never entered the factory; `ftd_stress` entered as ONE spec whose per-month coverage was never verified; seasonality/weekly-frequency/overnight families absent from the sweep.
+- **Held-but-never-swept — CLOSED 2026-08-23**: `trd_insider` superseded by the Form 345 structured sets (both sides verdicted NULL, D-490/496); `ftd_stress` was in fact swept broadly (30 specs, 98 months, 989 names, best t 1.48 solo / 2.39 paired, liquid tercile 0.11) and its input coverage is now VERIFIED complete (trd_ftd: 99 continuous months 2018-01→2026-07, 39,316 symbols — no holes); seasonality (D-503, 21 specs all negative vs holding), overnight (D-503, fact confirmed / SUB-FEE), weekly COT (all three cohort systems, D-501/507/509) all swept.
 
 ## TIER A — free, allowlisted, acquired 2026-08-22
 | dataset | source | span | why it matters | status |
