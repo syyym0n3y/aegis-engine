@@ -7,7 +7,9 @@ const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=D
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"uso",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application/json",Authorization:`Bearer ${t}`,apikey:t};})();
 const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
-const UNDER=["_SPX","SPY","QQQ","IWM","TLT","GLD"];   // index + the liquid ETF complex
+// D-487b: widened — every daily snapshot is a forward series that costs one request; single names give idiosyncratic
+// skew/IV, the index complex gives the market surface.
+const UNDER=["_SPX","SPY","QQQ","IWM","TLT","GLD","HYG","EEM","XLE","XLF","AAPL","MSFT","NVDA","AMZN","META","GOOGL","TSLA","AMD","JPM","XOM"];
 const today=Math.floor(Date.now()/86400000)*86400;
 type Opt={exp:string;days:number;strike:number;call:boolean;iv:number;oi:number};
 const rows:{symbol:string;venue:string;interval:string;ts:number;open_interest:number}[]=[];
