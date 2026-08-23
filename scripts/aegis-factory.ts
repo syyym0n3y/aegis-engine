@@ -201,7 +201,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"||PASS0==="hestonsadka"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -1486,6 +1486,112 @@ if(PASS==="all"||PASS==="xasset"){
     }
   }
   await log(`  PASS 26 (xasset) done`);
+}
+
+
+// ================= PASS 28 — WEEKLY CROSS-SECTION (D-515: the frequency absent from every sweep) =================
+// Lehmann weekly reversal + 4-week momentum on the LIQUID universe, disjoint 1-week holds, full 10bp round trip
+// charged EVERY week (reversal turnover is near-total — the fee model is the hypothesis being tested).
+if(PASS==="all"||PASS==="weekly"){
+  const metaW:{symbol:string}[]=[];
+  for(let off=0;;off+=1000){const p=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);if(!Array.isArray(p)||!p.length)break;metaW.push(...p);if(p.length<1000)break;}
+  type WRow={wk:string;sym:string;fwd:number;rev:number;mom:number;dv:number};
+  const wpanel:WRow[]=[];
+  for(let i=0;i<metaW.length;i+=30){
+    const part=metaW.slice(i,i+30).map(m=>`"${m.symbol}"`).join(",");
+    const rows=await fetch(`${OWNED}/trd_bars_deep?symbol=in.(${encodeURIComponent(part)})&select=symbol,bars`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
+    if(!Array.isArray(rows))continue;
+    for(const r of rows){
+      const b=r.bars; if(!b||b.length<400)continue;
+      // weekly grid: last bar of each ISO week
+      const widx:number[]=[]; let lastW="";
+      for(let k=0;k<b.length;k++){const d=new Date(b[k][0]*1000);const wk=`${d.getUTCFullYear()}-${String(Math.floor((+d-+new Date(Date.UTC(d.getUTCFullYear(),0,1)))/(7*86400000))).padStart(2,"0")}`;
+        if(wk!==lastW){if(k>0)widx.push(k-1);lastW=wk;}}
+      widx.push(b.length-1);
+      const c=b.map(x=>x[4]),v=b.map(x=>x[5]);
+      for(let j=5;j<widx.length-1;j++){
+        const k=widx[j],kn=widx[j+1],px=c[k]; if(!(px>1))continue;
+        let dv=0,cn=0; for(let q=Math.max(0,k-21);q<k;q++)if(c[q]>0&&v[q]>0){dv+=c[q]*v[q];cn++;}
+        if(!cn||(dv/=cn)<DV_MIN)continue;
+        const fwd=c[kn]/px-1; if(!Number.isFinite(fwd)||Math.abs(fwd)>2)continue;
+        const p1=c[widx[j-1]],p4=c[widx[j-4]];
+        if(!(p1>0)||!(p4>0))continue;
+        wpanel.push({wk:new Date(b[k][0]*1000).toISOString().slice(0,10),sym:r.symbol,fwd,rev:px/p1-1,mom:p1/p4-1,dv});
+      }
+    }
+  }
+  await log(`  weekly: ${wpanel.length.toLocaleString()} symbol-weeks`);
+  const byW=new Map<string,WRow[]>(); for(const r of wpanel)(byW.get(r.wk)??byW.set(r.wk,[]).get(r.wk)!).push(r);
+  const weeks=[...byW.keys()].sort();
+  for(const [sig,dir] of [["rev",-1],["mom",1]] as [("rev"|"mom"),number][]) for(const univ of ["all","liq"]) for(const k of [5,10]){
+    const key=`weekly|${sig}|${univ}|k${k}`;
+    const rets:number[]=[];
+    for(const wk of weeks){
+      let g=byW.get(wk)!;
+      if(univ==="liq"){const ds=[...g].map(r=>r.dv).sort((a,b)=>a-b);const cut=ds[Math.floor(ds.length*2/3)];g=g.filter(r=>r.dv>=cut);}
+      if(g.length<50)continue;
+      const vals=g.map(r=>dir*(sig==="rev"?r.rev:r.mom));
+      const ord=[...g.keys()].sort((a,b)=>vals[b]-vals[a]);
+      const kk=Math.max(5,Math.floor(g.length/k));
+      const long=ord.slice(0,kk),short=ord.slice(-kk);
+      const lr=mean(long.map(i2=>g[i2].fwd)),sr=mean(short.map(i2=>g[i2].fwd));
+      rets.push(lr-sr-2*FEE_EQ/1e4);                       // full flip both legs weekly, stated
+    }
+    if(rets.length<200){await record(key,"weekly",{sig,univ,k},"equity_weekly",null,ceil);done++;continue;}
+    const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a2,b2));});
+    const g2:Gate={n_names:Math.round(mean([...byW.values()].map(g3=>g3.length))),n_periods:rets.length,gross_ann:(m+2*FEE_EQ/1e4)*52,net_ann:m*52,
+      sharpe:(m/sd)*Math.sqrt(52),t,dd:dd*100,ruined,
+      g_breadth:true, g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m>0, g_liquid:univ==="liq",
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"weekly",{sig,univ,k},"equity_weekly",g2,ceil); done++;
+    await log(`    weekly ${sig} ${univ} k${k}: n=${rets.length}wk net ${(m*52*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 28 (weekly) done`);
+}
+
+// ================= PASS 29 — HESTON-SADKA SAME-MONTH SEASONALITY (D-515b: documented, panel-ready, unswept) =================
+// Signal at month M (predicting M+1): mean of the stock's returns in the SAME calendar month over the past 5 years
+// (fwd of rows M-12k, all fully historical). Cross-sectional evalXsec, both universes.
+if(PASS==="all"||PASS==="hestonsadka"){
+  const mret=new Map<string,number>();                      // `${sym}|${mo}` -> fwd (return over month AFTER mo)
+  for(const r of eqPanel)mret.set(`${r.sym}|${r.mo}`,r.fwd);
+  const minusMo=(mo:string,k:number)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()-k);return d.toISOString().slice(0,7);};
+  for(const hold of [1]) for(const k of [5,10]) for(const univ of ["all","liqtop"]){
+    const key=`hestonsadka|samemonth5y|${univ}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      if(univ==="liqtop"&&!(r.dv>0))continue;
+      const past:number[]=[];
+      for(let y=1;y<=5;y++){const v=mret.get(`${r.sym}|${minusMo(r.mo,12*y)}`);if(v!==undefined)past.push(v);}
+      if(past.length<3)continue;
+      rows.push({mo:r.mo,fwd:r.fwd,v:mean(past)});
+    }
+    // liquid filter inside evalXsec universe convention: reuse dv tercile by pre-filtering
+    let use=rows;
+    if(univ==="liqtop"){
+      const byMoL=new Map<string,{mo:string;fwd:number;v:number;dv:number}[]>();
+      for(const r of eqPanel){/* rebuild with dv for tercile cut */}
+      // simpler: recompute with dv-aware pass
+      const rows2:{mo:string;fwd:number;v:number}[]=[];
+      const byMo2=new Map<string,{r:typeof eqPanel[0];v:number}[]>();
+      for(const r of eqPanel){
+        const past:number[]=[];
+        for(let y=1;y<=5;y++){const v=mret.get(`${r.sym}|${minusMo(r.mo,12*y)}`);if(v!==undefined)past.push(v);}
+        if(past.length<3)continue;
+        (byMo2.get(r.mo)??byMo2.set(r.mo,[]).get(r.mo)!).push({r,v:mean(past)});
+      }
+      for(const [mo,g] of byMo2){
+        const ds=g.map(x=>x.r.dv).sort((a,b)=>a-b);const cut=ds[Math.floor(ds.length*2/3)];
+        for(const x of g)if(x.r.dv>=cut)rows2.push({mo,fwd:x.r.fwd,v:x.v});
+      }
+      use=rows2;
+    }
+    const g=evalXsec(use,FEE_EQ,k,12/hold,hold);
+    await record(key,"hestonsadka",{univ,k},"equity_all",g,ceil); done++;
+  }
+  await log(`  PASS 29 (hestonsadka) done`);
 }
 
 // ================= PASS 27 — EQ PANEL EXPORT for the non-linear harness (D-513) =================
