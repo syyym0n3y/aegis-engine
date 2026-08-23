@@ -9905,3 +9905,4 @@ t −2.54/−2.20, fades ~0. Three cohort systems (legacy 1986→, commodity dis
 conclusion: weekly-published positioning carries no tradable signal and mild harm. Dark-pool (D-505): level ~0,
 share-change t −1.6/−1.8 sub-significance on 53 months, h3 UNTESTED — series accrues. Lineage: tff-cohorts,
 darkpool-share (killed).
+## D-510 (2026-08-23) — cross-asset lead-lag: all 12 specs negative (t −2.0 to −3.9, ---- eras). Copper/gold, crude, and duration gates all forfeit more drift than they save. Seventh timing family with the identical shape: drift dominates gates. Lineage: xasset-leadlag (killed).

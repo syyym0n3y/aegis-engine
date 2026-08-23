@@ -1431,6 +1431,64 @@ if(PASS==="all"||PASS==="tff"){
   await log(`  PASS 25 (tff) done`);
 }
 
+// ================= PASS 26 — CROSS-ASSET LEAD-LAG (D-510: copper/gold, crude, duration as equity leads) =================
+// Folklore never tested here: risk-on gauges (copper/gold ratio momentum, crude momentum) and duration momentum
+// (inverted) as SPY/QQQ timing inputs. Lag-1 by construction (signal from closes through i-1 sets position i->i+1),
+// judged vs buy-and-hold like every timing spec, 10bp per switch.
+if(PASS==="all"||PASS==="xasset"){
+  const load26=async(sym:string)=>{
+    const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    const m=new Map<string,number>();
+    for(const b of (rb[0]?.bars||[])) if(b[4]>0) m.set(new Date(b[0]*1000).toISOString().slice(0,10),b[4]);
+    return m;};
+  const hg=await load26("HG=F"), gc=await load26("GC=F"), cl=await load26("CL=F"), tlt=await load26("TLT");
+  const SIGS26:[string,(d:string,look:number,hist:(m:Map<string,number>,d:string,look:number)=>number|null)=>number|null][]=[
+    ["cu_au",(d,look,mom)=>{const a=mom(hg,d,look),b=mom(gc,d,look);return a===null||b===null?null:(a-b>0?1:0);}],
+    ["crude",(d,look,mom)=>{const v=mom(cl,d,look);return v===null?null:(v>0?1:0);}],
+    ["duration_inv",(d,look,mom)=>{const v=mom(tlt,d,look);return v===null?null:(v>0?0:1);}],
+  ];
+  for(const inst of ["SPY","QQQ"]){
+    const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${inst}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    const bars=(rb[0]?.bars||[]).filter(b=>b[4]>0);
+    const dates=bars.map(b=>new Date(b[0]*1000).toISOString().slice(0,10));
+    // trailing momentum on a date map, via the target instrument's own calendar
+    const idxOf=new Map(dates.map((d,i)=>[d,i]));
+    const mom=(m:Map<string,number>,d:string,look:number):number|null=>{
+      const i=idxOf.get(d); if(i===undefined||i<look)return null;
+      const now=m.get(d), then=m.get(dates[i-look]);
+      return now===undefined||then===undefined?null:now/then-1;};
+    for(const [signame,rule] of SIGS26) for(const look of [21,63]){
+      const key=`xasset|${inst}|${signame}|l${look}`;
+      const net:number[]=[],bh:number[]=[]; let prev=1,sw=0;
+      for(let i=1;i<bars.length-1;i++){
+        const w0=rule(dates[i-1],look,mom);                     // signal from yesterday's closes
+        if(w0===null)continue;
+        const r2=bars[i+1][4]/bars[i][4]-1;
+        net.push(w0*r2-(w0!==prev?10/1e4:0)); bh.push(r2); if(w0!==prev){sw++;prev=w0;}
+      }
+      if(net.length<2500){await record(key,"xasset",{inst,signame,look,exec:"lag1"},"single",null,ceil);done++;continue;}
+      const ex=net.map((x,i2)=>x-bh[i2]);
+      const moA=new Map<string,number>();
+      let j=0;
+      for(let i=1;i<bars.length-1&&j<ex.length;i++){
+        const w0=rule(dates[i-1],look,mom); if(w0===null)continue;
+        moA.set(dates[i].slice(0,7),(moA.get(dates[i].slice(0,7))||0)+ex[j]); j++;
+      }
+      const mos=[...moA.entries()].sort().map(x=>x[1]);
+      const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
+      let cum=1,pk=1,dd=0,ruined=false;for(const x of net){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+      const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+        g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+      await record(key,"xasset",{inst,signame,look,exec:"lag1",switches:sw},"single",g,ceil); done++;
+      if(Math.abs(t)>1.3) await log(`    xasset ${inst} ${signame} l${look}: n=${mos.length}mo excess ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+    }
+  }
+  await log(`  PASS 26 (xasset) done`);
+}
+
+
 
 // ================= PASS 23 — NON-RELIANCE EVENTS (D-506: 8-K Item 4.02 accounting red flag, 2004->) =================
 // Event study via the annprem structure: names filing a 4.02 in the trailing month vs the rest of the panel.
