@@ -50,7 +50,14 @@ let total=0;
 for(const [file,prefix] of [["49_Industry_Portfolios_CSV.zip","ind49"],["100_Portfolios_10x10_CSV.zip","szbm100"],
   ["25_Portfolios_5x5_CSV.zip","szbm25"],["Portfolios_Formed_on_OP_CSV.zip","op10"],
   ["Portfolios_Formed_on_INV_CSV.zip","inv10"],["10_Portfolios_Prior_12_2_CSV.zip","mom10"],
-  ["10_Portfolios_Prior_1_0_CSV.zip","strev10"],["10_Portfolios_Prior_60_13_CSV.zip","ltrev10"]] as [string,string][]){
+  ["10_Portfolios_Prior_1_0_CSV.zip","strev10"],["10_Portfolios_Prior_60_13_CSV.zip","ltrev10"],
+  // D-491: the INTERNATIONAL library — momentum/value out of sample BY GEOGRAPHY (developed ex-US 1990->, regions, EM)
+  ["Developed_ex_US_6_Portfolios_ME_Prior_12_2_CSV.zip","dxmom6"],["Europe_6_Portfolios_ME_Prior_12_2_CSV.zip","eumom6"],
+  ["Japan_6_Portfolios_ME_Prior_12_2_CSV.zip","jpmom6"],["Asia_Pacific_ex_Japan_6_Portfolios_ME_Prior_12_2_CSV.zip","apmom6"],
+  ["Developed_ex_US_6_Portfolios_ME_BE-ME_CSV.zip","dxval6"],["Emerging_MOM_Factor_CSV.zip","emmom"],
+  ["Emerging_5_Factors_CSV.zip","emff5"],["Developed_ex_US_3_Factors_CSV.zip","dxff3"],
+  ["Developed_ex_US_Mom_Factor_CSV.zip","dxwml"]] as [string,string][]){
+  if(Deno.env.get("ONLY")&&!Deno.env.get("ONLY")!.split(",").includes(prefix))continue;
   const rows=await parsePanel(file,prefix);
   console.log(`  ${file}: ${rows.length.toLocaleString()} obs, ${new Set(rows.map(r=>r.factor)).size} series, ${rows[0]?.month} .. ${rows[rows.length-1]?.month}`);
   for(let i=0;i<rows.length;i+=3000){

@@ -200,6 +200,7 @@ await log("==> AEGIS FACTORY — building panels");
 const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
+// intl (PASS 12) reads only trd_ff_factors — no panel needed
 if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
@@ -694,6 +695,58 @@ if(PASS==="all"||PASS==="form345"){
   }
   await log(`  PASS 11 (form345) done: ${SIGS11.length*4} specs`);
 }
+
+// ================= PASS 12 — INTERNATIONAL FACTOR PREMIA (D-491: momentum/value OUT OF SAMPLE BY GEOGRAPHY) =================
+// The top of the grand board is US momentum (t 4.84 century deciles, 4.03 ind49, 3.58 factor-mom). The cheapest honest
+// falsification left is GEOGRAPHY: French's international library, 1990->2026 (~430 independent months), regions built
+// from ~20 developed + EM markets. Same long-short construction as PASS 5b; drag 10bp/month (intl implementation is
+// costlier, stated); breadth-exempt by class (each leg a diversified regional portfolio).
+if(PASS==="all"||PASS==="intl"){
+  const ffI=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
+    for(let off=0;;off+=10000){
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.dxmom6:*,factor.like.eumom6:*,factor.like.jpmom6:*,factor.like.apmom6:*,factor.like.dxval6:*,factor.like.dxwml:*,factor.like.emmom:*,factor.like.dxff3:*,factor.like.emff5:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
+    return out;})();
+  const byI=new Map<string,Map<string,number>>();
+  for(const r of ffI)(byI.get(r.factor)??byI.set(r.factor,new Map()).get(r.factor)!).set(r.month,+r.ret);
+  await log(`  intl: ${ffI.length.toLocaleString()} obs, ${byI.size} series`);
+  const DRAG12=0.0010;
+  // [key-suffix, label, long legs, short legs] — legs averaged, long minus short; single-factor rows have no short leg
+  const SPECS12:[string,string,string[],string[]][]=[
+    ["dxmom","developed ex-US momentum 12-2",["dxmom6:SMALL_HiPRIOR","dxmom6:BIG_HiPRIOR"],["dxmom6:SMALL_LoPRIOR","dxmom6:BIG_LoPRIOR"]],
+    ["eumom","Europe momentum 12-2",["eumom6:SMALL_HiPRIOR","eumom6:BIG_HiPRIOR"],["eumom6:SMALL_LoPRIOR","eumom6:BIG_LoPRIOR"]],
+    ["jpmom","Japan momentum 12-2",["jpmom6:SMALL_HiPRIOR","jpmom6:BIG_HiPRIOR"],["jpmom6:SMALL_LoPRIOR","jpmom6:BIG_LoPRIOR"]],
+    ["apmom","Asia-Pacific ex-Japan momentum 12-2",["apmom6:SMALL_HiPRIOR","apmom6:BIG_HiPRIOR"],["apmom6:SMALL_LoPRIOR","apmom6:BIG_LoPRIOR"]],
+    ["dxval","developed ex-US value HML",["dxval6:SMALL_HiBM","dxval6:BIG_HiBM"],["dxval6:SMALL_LoBM","dxval6:BIG_LoBM"]],
+    ["dxwml","developed ex-US WML (French factor)",["dxwml:WML"],[]],
+    ["emmom","emerging markets WML (French factor)",["emmom:WML"],[]],
+    ["dxhml","developed ex-US HML (French factor)",["dxff3:HML"],[]],
+    ["emhml","emerging HML",["emff5:HML"],[]],
+    ["emrmw","emerging RMW (profitability)",["emff5:RMW"],[]],
+    ["emcma","emerging CMA (investment)",["emff5:CMA"],[]],
+  ];
+  for(const [suf,label,longs,shorts] of SPECS12){
+    const key=`intl|${suf}|h1`;
+    const Ls=longs.map(n=>byI.get(n)), Ss=shorts.map(n=>byI.get(n));
+    if(Ls.some(x=>!x)||Ss.some(x=>!x)){await record(key,"intl",{suf,label},"intl_panels",null,ceil);done++;continue;}
+    const months3=[...Ls[0]!.keys()].filter(m=>Ls.every(x=>x!.has(m))&&Ss.every(x=>x!.has(m))).sort();
+    const rets=months3.map(m=>{
+      const l=Ls.reduce((a,x)=>a+x!.get(m)!,0)/Ls.length;
+      const sh=Ss.length?Ss.reduce((a,x)=>a+x!.get(m)!,0)/Ss.length:0;
+      return l-sh-DRAG12;});
+    if(rets.length<120){await record(key,"intl",{suf,label},"intl_panels",null,ceil);done++;continue;}
+    const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
+    const g:Gate={n_names:1,n_periods:rets.length,gross_ann:(m+DRAG12)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:true, g_effect:Math.abs(m)>=DRAG12, g_benchmark:m>0, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"intl",{suf,label},"intl_panels",g,ceil); done++;
+    await log(`    ${label.padEnd(42)} n=${rets.length}  net ${(m*12*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 12 (intl) done: ${SPECS12.length} specs`);
+}
+
 
 
 // ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================

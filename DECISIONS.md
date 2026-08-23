@@ -9791,3 +9791,19 @@ cleanest new number of the sweep, still below ceiling. GRAND LEADERBOARD after e
 0 survivors**; top of book: century decile momentum t 4.84, ind49 momentum t 4.03, ST-reversal t 4.02, factor
 momentum t 3.58, mom×gross-prof t 3.46 @15.6%/yr. The falsification engine's terminal state (D-070) continues to
 hold: nothing clears the gates, and that is the engine working. Lineage: pead-real-surprises, factor-momentum.
+
+## D-490 (2026-08-23) — Form 345 structured sets ingested: the SELLS side exists at last, 2006→2026
+All 82 DERA insider quarters: 880,977 (symbol, filing-date) buy/sell aggregates, 18,351 symbols, open-market P/S codes
+only. Replaces the buys-only crawl as source of record. Factory PASS 11 (5 signals × h × k: sell-, buy-, net-intensity
+per dollar-volume, buy-share ratio) armed behind the N-PORT chain. Migration 0076; `scripts/ingest-form345.sh`.
+
+## D-491 (2026-08-23) — MOMENTUM SURVIVES GEOGRAPHY: EM WML t 5.30 — 0.04 below the ceiling; Japan null reproduces
+The cheapest honest falsification of the board-topping US momentum numbers was geography. French international library
+ingested (18,062 obs, 1990→2026): momentum long-short is positive with era-consistency ++++ in **four of five regions**
+— EM WML t **5.30** (9.3%/yr net of 10bp/mo), Europe t 4.27, Asia-Pacific ex-Japan t 3.78, developed ex-US t 3.58 —
+and **Japan t 0.12**, reproducing the literature's one known exception in our own pipeline. EM value HML t 4.15 also
+++++. Every number is below the 5.337 deflation ceiling and none is promotable alone; but this is the strongest
+confirmation pattern the program has produced: the same premium measured independently in geographies our mining never
+touched, with the known null landing where it should. Interpretation bound by ANALYSIS_CONTRACT: cross-geography
+consistency raises the posterior on the momentum family; it does not clear any gate. EM drag likely understated at
+10bp/mo — stated. Lineage: intl-momentum-geography (monitoring).
