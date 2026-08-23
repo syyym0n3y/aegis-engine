@@ -18,8 +18,9 @@ const v9=new Map(v9r.map(x=>[iso(x.ts),+x.open_interest]));
 const vixB=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.%5EVIX&select=bars`,{headers:hdr}).then(x=>x.json()) as {bars:number[][]}[];
 const vix=new Map<string,number>((vixB[0]?.bars||[]).map(b=>[iso(b[0]),b[4]]));
 // trial counter: 8 variants examined
-await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
+{const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
   body:JSON.stringify({run_key:`voltiming-adversarial-${Date.now()}`,n_trials:8,note:"D-498 survivor verification variants"})}).catch(()=>null);
+ if(!tw||!tw.ok)console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
 for(const inst of ["SPY","QQQ"]){
   const r=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${inst}&select=bars`,{headers:hdr}).then(x=>x.json()) as {bars:number[][]}[];
   const bars=(r[0]?.bars||[]).filter(b=>b[4]>0);

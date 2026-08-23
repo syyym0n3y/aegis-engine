@@ -50,7 +50,10 @@ trend.sort((a, b) => Math.abs(b.trend12) - Math.abs(a.trend12));
 
 // ---- SATELLITE: equity quality-value tilt (current top/bottom) ----
 const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
-for (let off = 0; ; off += 1000) { const p = await fetch(`${OWNED}/trd_fundamentals?select=ticker,concept,effective_date,value&order=ticker&offset=${off}&limit=1000`, { headers: hdr }).then((r) => r.json()); if (!Array.isArray(p) || !p.length) break; for (const r of p as { ticker: string; concept: string; effective_date: string; value: number }[]) { const m = fund.get(r.ticker) ?? fund.set(r.ticker, {}).get(r.ticker)!; (m[r.concept] ||= []).push({ e: new Date(r.effective_date).getTime(), v: +r.value }); } if (p.length < 1000) break; }
+// D-512: 1000-row pages over 4.1M rows = 4,100 requests; one dropped connection killed the agent (stderr 2026-08-23).
+// 50k pages + 3-try retry — the owned REST has no row cap and a transient close must not kill the run.
+const fetchRetry=async(url:string)=>{for(let a=0;a<3;a++){try{const r=await fetch(url,{headers:hdr});if(r.ok)return await r.json();}catch(_e){/*retry*/}await new Promise(res=>setTimeout(res,2000*(a+1)));}return null;};
+for (let off = 0; ; off += 50000) { const p = await fetchRetry(`${OWNED}/trd_fundamentals?select=ticker,concept,effective_date,value&order=ticker&offset=${off}&limit=50000`); if (!Array.isArray(p) || !p.length) break; for (const r of p as { ticker: string; concept: string; effective_date: string; value: number }[]) { const m = fund.get(r.ticker) ?? fund.set(r.ticker, {}).get(r.ticker)!; (m[r.concept] ||= []).push({ e: new Date(r.effective_date).getTime(), v: +r.value }); } if (p.length < 50000) break; }
 for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
 const esyms: string[] = [];
 for (let off = 0; ; off += 1000) { const p = await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`, { headers: hdr }).then((r) => r.json()); if (!Array.isArray(p) || !p.length) break; for (const r of p as { symbol: string }[]) esyms.push(r.symbol); if (p.length < 1000) break; }

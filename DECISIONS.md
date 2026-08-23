@@ -9911,3 +9911,26 @@ darkpool-share (killed).
 4.02 non-reliance: underpowered NULL (t −0.04, 8 flagged/month). 4.01 auditor change: drift **−13.8%/yr at t −2.08**
 (140 months, ~10 flagged/month, ++--) — the literature's direction at real magnitude, in a class whose event breadth
 can never clear a deflated gate. Recorded honestly as DIRECTIONAL-BUT-UNDERPOWERED. Lineage: accounting-red-flags.
+
+## D-511 (2026-08-23) — FX intraday verdict: no exploitable hourly structure; the intraday-FX family closes at birth
+319,584 Dukascopy hourly bars (4 majors, 2016→2026, m1-aggregated, format validated). All three rules decisively
+negative at 1bp/change: asian-range London breakout −6.3%/yr (t −5.50), h1 momentum −39.7%/yr (t −23.5), h1 reversal
+−26.6%/yr (t −17.0) — BOTH directions lose, i.e. pure churn bleed; eras ---- everywhere. Chain hygiene note: the finale
+wrapper hit the pgrep SELF-MATCH trap in a new form (its own until-loop text matched `[i]ngest-dukascopy`) — killed and
+run direct; runbook already covers the class.
+
+## D-512 (2026-08-23) — THE FINAL BOARD: 977 specs, 27 families, 0 survivors — the terminal state, exhaustively earned
+| rank | spec | t | net/yr | n |
+|---|---|---|---|---|
+| 1 | small-cap ST-reversal (century) | 11.80 | 22.8% | 1,204mo — REFUSED by Liquidity Law (BIG version t 1.30) |
+| 2 | EM momentum WML | 5.32 | 9.3% | 438mo — 0.02 below ceiling |
+| 3 | US momentum deciles (century) | 4.86 | 13.4% | 1,192mo |
+| 4 | small-cap momentum | 4.65 | 9.9% | 1,193mo |
+| 5–12 | Europe/AP momentum, EM HML, ST-rev, ind49 mom, factor-mom, dev-ex-US WML | 3.6–4.3 | 6–9% | 400–1,200mo |
+Deflation ceiling 5.337 (N=1,531,007 counted trials). Guards: coverage/liquidity/effect-size/breadth/execution/selection
+GREEN; agent-output RED caught a REAL crash (positioning died on a dropped connection over 4,100 tiny pages — retry +
+50k pages shipped, re-running); plumbing RED caught two silent trial-counter writes in MY OWN new scripts — the exact
+class that caused the counter fiction — both fixed at source, now GREEN. The machine polices its operator.
+The program's founding prediction (D-070) holds at 977 specs: nothing tradable-at-size clears an honest deflated gate;
+what survives everywhere is the momentum family (5 geographies, a century, factor-space) — always at t 2.8–5.3,
+always below what 1.53M trials demand.

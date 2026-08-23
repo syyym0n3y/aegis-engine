@@ -1,5 +1,7 @@
 # STATE — Aegis (live state)
 
+## 2026-08-23 (FINAL) — 977 specs, 27 families, 0 survivors — see D-512 for the closing board
+
 ## 2026-08-23 (LATE) — 891 specs, 0 survivors; ownership axis fully verdicted; first-ever "survivors" were same-bar phantoms (D-498)
 New families since the 799 board: N-PORT ownership NULL (D-495), insider sells properly-powered NULL (D-496), 13F
 ownership NULL + recurring sub-significance crowding tilt (D-499), announcement premium NULL (D-500), classic deciles
