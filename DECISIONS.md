@@ -9950,3 +9950,11 @@ negative in ALL four eras, 72 flagged names/month** — pre-registered sign, rea
 5.34 ceiling → killed like every sub-ceiling number before it. It is a legitimate FORWARD-BOOK candidate; registration
 deliberately not taken unilaterally (adding leads raises the forward ceiling √(2 ln N) for the existing 8 — an
 operator-level tradeoff, recorded not decided). Board: **981 specs / 0 survivors.**
+
+## D-515 (2026-08-23) — weekly + same-month: the last two named-unswept frequencies closed
+**Weekly reversal — the most instructive kill since D-498:** same-close numbers looked strong (liq 14.8%/yr t 2.62
+++++, net of 20bp/wk). The proactive lag-1 test shows ~40% was same-close artifact: the effect ATTENUATES (not flips —
+the structure is real, unlike the VIX phantom) to **t 1.67 at 9.0%/yr in the tradable liquid form** (++-+), below every
+threshold, before borrow and impact. Weekly momentum is strongly negative (reversal owns the horizon). **Heston-Sadka
+same-month: NULL** (pooled 0.90, liquid 0.15). Board: **1,005 specs / 0 survivors.** Lineage: weekly-crosssection,
+heston-sadka (killed).

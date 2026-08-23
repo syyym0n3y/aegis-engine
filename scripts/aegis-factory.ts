@@ -1495,7 +1495,7 @@ if(PASS==="all"||PASS==="xasset"){
 if(PASS==="all"||PASS==="weekly"){
   const metaW:{symbol:string}[]=[];
   for(let off=0;;off+=1000){const p=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);if(!Array.isArray(p)||!p.length)break;metaW.push(...p);if(p.length<1000)break;}
-  type WRow={wk:string;sym:string;fwd:number;rev:number;mom:number;dv:number};
+  type WRow={wk:string;sym:string;fwd:number;fwdL1:number;rev:number;mom:number;dv:number};
   const wpanel:WRow[]=[];
   for(let i=0;i<metaW.length;i+=30){
     const part=metaW.slice(i,i+30).map(m=>`"${m.symbol}"`).join(",");
@@ -1514,17 +1514,20 @@ if(PASS==="all"||PASS==="weekly"){
         let dv=0,cn=0; for(let q=Math.max(0,k-21);q<k;q++)if(c[q]>0&&v[q]>0){dv+=c[q]*v[q];cn++;}
         if(!cn||(dv/=cn)<DV_MIN)continue;
         const fwd=c[kn]/px-1; if(!Number.isFinite(fwd)||Math.abs(fwd)>2)continue;
+        // D-498 SAME-BAR check, applied proactively: lag-1 fwd enters at the NEXT day's close after the signal close.
+        const ke=Math.min(k+1,b.length-1);
+        const fwdL1=(c[ke]>0&&kn>ke)?c[kn]/c[ke]-1:NaN;
         const p1=c[widx[j-1]],p4=c[widx[j-4]];
         if(!(p1>0)||!(p4>0))continue;
-        wpanel.push({wk:new Date(b[k][0]*1000).toISOString().slice(0,10),sym:r.symbol,fwd,rev:px/p1-1,mom:p1/p4-1,dv});
+        wpanel.push({wk:new Date(b[k][0]*1000).toISOString().slice(0,10),sym:r.symbol,fwd,fwdL1,rev:px/p1-1,mom:p1/p4-1,dv});
       }
     }
   }
   await log(`  weekly: ${wpanel.length.toLocaleString()} symbol-weeks`);
   const byW=new Map<string,WRow[]>(); for(const r of wpanel)(byW.get(r.wk)??byW.set(r.wk,[]).get(r.wk)!).push(r);
   const weeks=[...byW.keys()].sort();
-  for(const [sig,dir] of [["rev",-1],["mom",1]] as [("rev"|"mom"),number][]) for(const univ of ["all","liq"]) for(const k of [5,10]){
-    const key=`weekly|${sig}|${univ}|k${k}`;
+  for(const [sig,dir] of [["rev",-1],["mom",1]] as [("rev"|"mom"),number][]) for(const univ of ["all","liq"]) for(const k of [5,10]) for(const lag of [0,1]){
+    const key=`weekly|${sig}|${univ}|k${k}${lag?"|lag1":""}`;
     const rets:number[]=[];
     for(const wk of weeks){
       let g=byW.get(wk)!;
@@ -1534,10 +1537,13 @@ if(PASS==="all"||PASS==="weekly"){
       const ord=[...g.keys()].sort((a,b)=>vals[b]-vals[a]);
       const kk=Math.max(5,Math.floor(g.length/k));
       const long=ord.slice(0,kk),short=ord.slice(-kk);
-      const lr=mean(long.map(i2=>g[i2].fwd)),sr=mean(short.map(i2=>g[i2].fwd));
+      const pick=(i2:number)=>lag?g[i2].fwdL1:g[i2].fwd;
+      const lgood=long.filter(i2=>Number.isFinite(pick(i2))),sgood=short.filter(i2=>Number.isFinite(pick(i2)));
+      if(lgood.length<3||sgood.length<3)continue;
+      const lr=mean(lgood.map(pick)),sr=mean(sgood.map(pick));
       rets.push(lr-sr-2*FEE_EQ/1e4);                       // full flip both legs weekly, stated
     }
-    if(rets.length<200){await record(key,"weekly",{sig,univ,k},"equity_weekly",null,ceil);done++;continue;}
+    if(rets.length<200){await record(key,"weekly",{sig,univ,k,exec:lag?"lag1":"same-close"},"equity_weekly",null,ceil);done++;continue;}
     const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
     let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a2,b2));});
@@ -1545,8 +1551,8 @@ if(PASS==="all"||PASS==="weekly"){
       sharpe:(m/sd)*Math.sqrt(52),t,dd:dd*100,ruined,
       g_breadth:true, g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m>0, g_liquid:univ==="liq",
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-    await record(key,"weekly",{sig,univ,k},"equity_weekly",g2,ceil); done++;
-    await log(`    weekly ${sig} ${univ} k${k}: n=${rets.length}wk net ${(m*52*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+    await record(key,"weekly",{sig,univ,k,exec:lag?"lag1":"same-close"},"equity_weekly",g2,ceil); done++;
+    await log(`    weekly ${sig} ${univ} k${k}${lag?" LAG1":""}: n=${rets.length}wk net ${(m*52*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 28 (weekly) done`);
 }
