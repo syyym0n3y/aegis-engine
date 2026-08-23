@@ -521,6 +521,51 @@ if(PASS==="all"||PASS==="french"){
   }
   await log(`  PASS 5 (french) done`);
 }
+
+// ================= PASS 5b — THE CLASSIC DECILE PREMIA at century power (D-472b) =================
+// French's pre-sorted characteristic deciles: momentum (1927->), short/long-term reversal, operating profitability,
+// investment. The natural spec per panel is the extreme-decile long-short with the LITERATURE'S pre-registered side.
+// ~760-1,190 INDEPENDENT months each — maximum honest power available anywhere. Implementation drag 5bp/month (factor-
+// ETF-scale, stated); breadth-exempt by class (each leg is a diversified portfolio), benchmarked as self-financing L/S.
+if(PASS==="all"||PASS==="frenchdec"){
+  const ff2=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
+    for(let off=0;;off+=10000){
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.mom10:*,factor.like.strev10:*,factor.like.ltrev10:*,factor.like.op10:*,factor.like.inv10:*,factor.like.szbm25:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
+    return out;})();
+  const byS=new Map<string,Map<string,number>>();
+  for(const r of ff2)(byS.get(r.factor)??byS.set(r.factor,new Map()).get(r.factor)!).set(r.month,+r.ret);
+  await log(`  frenchdec: ${ff2.length.toLocaleString()} obs, ${byS.size} series`);
+  const pick=(prefix:string,side:"Lo"|"Hi")=>{
+    const c=[...byS.keys()].filter(k=>k.startsWith(prefix+":")&&k.split(":")[1].startsWith(side));
+    return c.length===1?byS.get(c[0])!:null;};
+  // [panel, LONG side per the literature, label]
+  const SPECS:[string,"Lo"|"Hi",string][]=[
+    ["mom10","Hi","momentum 12-2 winners-losers"],
+    ["strev10","Lo","short-term reversal (long past losers)"],
+    ["ltrev10","Lo","long-term reversal (long 5y losers)"],
+    ["op10","Hi","operating profitability"],
+    ["inv10","Lo","investment (long conservative)"],
+  ];
+  const DRAG=0.0005;                                   // 5bp/month implementation drag, stated
+  for(const [prefix,side,label] of SPECS){
+    const L=pick(prefix,side), Sh=pick(prefix,side==="Hi"?"Lo":"Hi");
+    const key=`frenchdec|${prefix}|${side}long|h1`;
+    if(!L||!Sh){await record(key,"frenchdec",{prefix,side,label},"decile_panels",null,ceil);done++;continue;}
+    const months2=[...L.keys()].filter(m=>Sh.has(m)).sort();
+    const rets=months2.map(m=>L.get(m)!-Sh.get(m)!-DRAG);
+    if(rets.length<120){await record(key,"frenchdec",{prefix,side,label},"decile_panels",null,ceil);done++;continue;}
+    const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
+    const g:Gate={n_names:1,n_periods:rets.length,gross_ann:(m+DRAG)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:true /* each leg a diversified portfolio */, g_effect:Math.abs(m)>=DRAG, g_benchmark:m>0, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"frenchdec",{prefix,side,label},"decile_panels",g,ceil); done++;
+    await log(`    ${label.padEnd(40)} n=${rets.length}  net ${(m*12*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 5b (frenchdec) done`);
+}
 if(trialRows.length){await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);trialRows=[];}
 const {N:N2,ceil:c2}=await ceiling();
 await log(`\n==> XSEC_EQ pass done: ${done} specs, ${written} ledger rows. Ceiling ${ceil.toFixed(3)} -> ${c2.toFixed(3)} (N=${N2.toLocaleString()})`);

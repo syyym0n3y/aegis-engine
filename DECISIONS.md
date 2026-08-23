@@ -9679,3 +9679,26 @@ applied prospectively — the tradable slice of insider buying carries ~no infor
 deliberately: D-424 established that a result living below the floor is a statement about names that cannot absorb size.
 
 Ceiling 5.337 → N=1,530,776. Survivors: 0. Short-side family (PASS 7) chained behind the FINRA ingests.
+
+## D-477 — THE CLASSIC PREMIA AT MAXIMUM HONEST POWER: momentum t 4.84 across a century — and still under the bar
+
+French's pre-sorted extreme-decile long-shorts, the literature's own pre-registered sides, 5bp/month implementation drag,
+~1,150-1,200 INDEPENDENT months each — the most statistical power available anywhere on earth for these questions:
+
+| premium | n (indep. months) | net %/yr | t | eras |
+|---|---|---|---|---|
+| **momentum 12-2 (winners−losers)** | **1,192** | **+13.4** | **4.84** | **++++** |
+| short-term reversal (long past losers) | 1,203 | +8.6 | 4.04 | +++− |
+| long-term reversal (long 5y losers) | 1,144 | +4.5 | 2.00 | +++− |
+| operating profitability / investment | — | — | UNTESTED | pick() ambiguity: those files carry multiple Lo_*/Hi_* column sets; recorded, fixable |
+
+**Momentum at t 4.84, positive in every quarter-century era, is the strongest honest number in the program's history —
+and it does not clear the 5.337 ceiling.** This sharpens D-364's "momentum fails deflation" to its cleanest form: even a
+full century of the most documented premium in finance, at maximal independent-sample power, sits half a t below what
+this program's own 1.53M-trial search history demands. The gap between "true premium" and "provable against our mining"
+is now measured at its floor: ~0.5t at n=1,192.
+
+**Ledger survivors: still 0.** The two-sided reading stands: these premia are almost certainly real (the world's
+literature + our own maximal-power replication agree); what cannot be claimed is that WE distinguished them from our own
+search breadth. The forward book remains the only trial-free path — and momentum's ++++ era line is exactly why the
+recommendation stays "own the diversified market" rather than "own nothing."
