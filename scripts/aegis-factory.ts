@@ -200,7 +200,7 @@ await log("==> AEGIS FACTORY — building panels");
 const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -590,6 +590,112 @@ if(PASS==="all"||PASS==="factmom"){
   }
   await log(`  PASS 9 (factmom) done`);
 }
+
+// ================= PASS 10 — N-PORT FUND OWNERSHIP (D-488: monthly 13F-complement; breadth/flow/crowding) =================
+// trd_nport_ownership: per-(cusip,report_date) aggregates of every registered fund's holdings, effective_date =
+// report_date + 60d (public-dissemination rule). Bridged to symbols via trd_cusip_map (FTD-derived). Signals are
+// point-in-time: at each panel month-end only reports with effective_date <= that date are visible.
+if(PASS==="all"||PASS==="nport"){
+  const cus2sym=new Map<string,string>();
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_cusip_map?select=cusip,symbol&order=cusip&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.ok?r.json():Promise.reject(r.status)).catch(e=>{console.log(`WRITE-FAILED cusip_map read ${e}`);return[];});
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {cusip:string;symbol:string}[]) cus2sym.set(r.cusip,r.symbol);
+    if(p2.length<50000)break;
+  }
+  const own=new Map<string,{eff:string;np:number;sh:number;val:number}[]>();
+  let nOwn=0;
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_nport_ownership?select=cusip,effective_date,n_positions,shares,value_usd&order=cusip,effective_date&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.ok?r.json():Promise.reject(r.status)).catch(e=>{console.log(`WRITE-FAILED nport read ${e}`);return[];});
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {cusip:string;effective_date:string;n_positions:number;shares:number;value_usd:number}[]){
+      const sym=cus2sym.get(r.cusip); if(!sym)continue;
+      (own.get(sym)??own.set(sym,[]).get(sym)!).push({eff:r.effective_date,np:+r.n_positions,sh:+r.shares,val:+r.value_usd});nOwn++;}
+    if(p2.length<50000)break;
+  }
+  for(const a of own.values()) a.sort((x,y)=>x.eff<y.eff?-1:1);
+  await log(`  nport: ${nOwn.toLocaleString()} symbol-months mapped, ${own.size} symbols`);
+  const at=(sym:string,endD:string)=>{ // latest report visible at endD
+    const a=own.get(sym); if(!a)return null;
+    let lo=0,hi=a.length-1,best=-1;
+    while(lo<=hi){const m=(lo+hi)>>1;if(a[m].eff<=endD){best=m;lo=m+1;}else hi=m-1;}
+    return best<0?null:a[best];
+  };
+  const minus=(d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10);};
+  const moEnd10=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const SIGS10=["own_brd_chg3","own_brd_chg1","own_flow3","own_crowd","own_val_chg3"] as const;
+  for(const sig of SIGS10) for(const hold of [1,3]) for(const k of [5,10]){
+    const key=`nport|${sig}|h${hold}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      const end=moEnd10(r.mo), cur=at(r.sym,end);
+      if(!cur||cur.eff<minus(end,190))continue;              // stale ownership (>~6mo old) is no signal
+      let v:number|null=null;
+      if(sig==="own_crowd"){ v=(r.dv&&r.dv>0)?cur.val/(r.dv*21):null; } // fund $ held per month of dollar-volume
+      else{
+        const lag=(sig==="own_brd_chg1")?35:100;
+        const prev=at(r.sym,minus(end,lag));
+        if(!prev||prev.eff===cur.eff)continue;
+        if(sig==="own_brd_chg3"||sig==="own_brd_chg1") v=prev.np>=5?(cur.np-prev.np)/prev.np:null;
+        else if(sig==="own_flow3") v=prev.sh>0?(cur.sh-prev.sh)/prev.sh:null;
+        else v=prev.val>0?(cur.val-prev.val)/prev.val:null;
+      }
+      if(v===null||!isFinite(v))continue;
+      rows.push({mo:r.mo,fwd:r.fwd,v});
+    }
+    const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
+    await record(key,"nport",{sig,hold,k},"equity_all",g,ceil); done++;
+  }
+  await log(`  PASS 10 (nport) done: ${SIGS10.length*4} specs`);
+}
+
+// ================= PASS 11 — FORM 345 FULL LEDGER (D-490: the SELLS side, 2006->2026, open-list item closed) =================
+// trd_form345: per-(symbol, filing-date) open-market buy/sell aggregates from the DERA structured sets — replaces the
+// buys-only crawl. effective = filing date (public on EDGAR same day). Literature prior: buys informative, sells mostly
+// diversification noise; direction left to the gates.
+if(PASS==="all"||PASS==="form345"){
+  const f345=new Map<string,{d:string;b:number;s:number;nb:number;ns:number}[]>();
+  let nF=0;
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_form345?select=symbol,filed,buy_usd,sell_usd,n_buy,n_sell&order=symbol,filed&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.ok?r.json():Promise.reject(r.status)).catch(e=>{console.log(`WRITE-FAILED form345 read ${e}`);return[];});
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {symbol:string;filed:string;buy_usd:number;sell_usd:number;n_buy:number;n_sell:number}[])
+      {(f345.get(r.symbol)??f345.set(r.symbol,[]).get(r.symbol)!).push({d:r.filed,b:+r.buy_usd,s:+r.sell_usd,nb:+r.n_buy,ns:+r.n_sell});nF++;}
+    if(p2.length<50000)break;
+  }
+  await log(`  form345: ${nF.toLocaleString()} symbol-days, ${f345.size} symbols`);
+  const trail345=(sym:string,endD:string,days:number)=>{
+    const a=f345.get(sym); if(!a)return null;
+    const startD=(()=>{const x=new Date(endD+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10);})();
+    let lo=0,hi=a.length-1,st=a.length;
+    while(lo<=hi){const m=(lo+hi)>>1;if(a[m].d>=startD){st=m;hi=m-1;}else lo=m+1;}
+    let b=0,s=0,nb=0,ns=0;
+    for(let i2=st;i2<a.length&&a[i2].d<=endD;i2++){b+=a[i2].b;s+=a[i2].s;nb+=a[i2].nb;ns+=a[i2].ns;}
+    return {b,s,nb,ns};
+  };
+  const moEnd11=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const SIGS11=["f345_sell3m","f345_net3m","f345_ratio3m","f345_buy3m","f345_sell6m"] as const;
+  for(const sig of SIGS11) for(const hold of [1,3]) for(const k of [5,10]){
+    const key=`form345|${sig}|h${hold}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      const t=trail345(r.sym,moEnd11(r.mo),sig==="f345_sell6m"?182:91);
+      if(!t)continue;
+      let v:number|null=null;
+      if(sig==="f345_sell3m"||sig==="f345_sell6m"){ v=t.s>0&&r.dv?t.s/r.dv:null; }
+      else if(sig==="f345_buy3m"){ v=t.b>0&&r.dv?t.b/r.dv:null; }
+      else if(sig==="f345_net3m"){ v=(t.b>0||t.s>0)&&r.dv?(t.b-t.s)/r.dv:null; }
+      else { v=(t.b+t.s)>0?t.b/(t.b+t.s):null; }               // buy share of insider activity
+      if(v===null||!isFinite(v))continue;
+      rows.push({mo:r.mo,fwd:r.fwd,v});
+    }
+    const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
+    await record(key,"form345",{sig,hold,k},"equity_all",g,ceil); done++;
+  }
+  await log(`  PASS 11 (form345) done: ${SIGS11.length*4} specs`);
+}
+
+
 // ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================
 // The one venue where a portfolio-t can clear a 5.3 ceiling honestly: ~1,200 INDEPENDENT months. Signals are the
 // documented classics, applied cross-sectionally ACROSS portfolios (industry momentum, grid momentum/reversal). These
