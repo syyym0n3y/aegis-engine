@@ -1062,6 +1062,86 @@ if(PASS==="all"||PASS==="auction"){
   await log(`  PASS 17 (auction) done: 4 specs`);
 }
 
+// ================= PASS 18 — CALENDAR SEASONALITY (D-503: TOM / Halloween / September; never swept here) =================
+// The rule input is the DATE — known ex-ante, so no execution lag applies (exec:"calendar"). Judged like the timing
+// class: excess vs buy-and-hold of the same instrument, 10bp per switch, single-instrument breadth exemption.
+if(PASS==="all"||PASS==="seasonal"){
+  const INST18=["^GSPC","SPY","QQQ","TLT","GLD","GC=F","CL=F"];
+  const iso18=(ts:number)=>new Date(ts*1000).toISOString().slice(0,10);
+  type SRule={name:string;hold:(d:Date,isLast:boolean,dayN:number)=>boolean};
+  const SRULES:SRule[]=[
+    {name:"tom",hold:(_d,isLast,dayN)=>isLast||dayN<=3},           // last trading day + first 3
+    {name:"nov_apr",hold:(d)=>{const m=d.getUTCMonth()+1;return m>=11||m<=4;}},
+    {name:"ex_september",hold:(d)=>d.getUTCMonth()+1!==9},
+  ];
+  for(const inst of INST18){
+    const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(inst)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    const bars=(rb[0]?.bars||[]).filter(b=>b[4]>0); if(bars.length<2500)continue;
+    for(const rule of SRULES){
+      const key=`seasonal|${inst}|${rule.name}`;
+      const ex:number[]=[]; const exD:string[]=[]; let prevW=1,sw=0;
+      for(let i=0;i<bars.length-1;i++){
+        const d=new Date(bars[i][0]*1000);
+        const dNext=new Date(bars[i+1][0]*1000);
+        const isLast=dNext.getUTCMonth()!==d.getUTCMonth();
+        // trading-day-of-month for date i
+        let dayN=0; for(let q=i;q>=0;q--){const dq=new Date(bars[q][0]*1000);if(dq.getUTCMonth()===d.getUTCMonth()&&dq.getUTCFullYear()===d.getUTCFullYear())dayN++;else break;}
+        const w=rule.hold(d,isLast,dayN)?1:0;
+        const r2=bars[i+1][4]/bars[i][4]-1;
+        const fee=(w!==prevW)?10/1e4:0; if(w!==prevW){sw++;prevW=w;}
+        ex.push(w*r2-fee-r2); exD.push(iso18(bars[i][0]));
+      }
+      const moA=new Map<string,number>();
+      for(let q=0;q<ex.length;q++) moA.set(exD[q].slice(0,7),(moA.get(exD[q].slice(0,7))||0)+ex[q]);
+      const mos=[...moA.entries()].sort().map(x=>x[1]);
+      if(mos.length<180){await record(key,"seasonal",{inst,rule:rule.name,exec:"calendar"},"single",null,ceil);done++;continue;}
+      const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
+      let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+      const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+        g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+      await record(key,"seasonal",{inst,rule:rule.name,exec:"calendar",switches:sw},"single",g,ceil); done++;
+      if(Math.abs(t)>1.5) await log(`    seasonal ${inst} ${rule.name}: n=${mos.length}mo excess ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+    }
+  }
+  await log(`  PASS 18 (seasonal) done`);
+}
+
+// ================= PASS 19 — OVERNIGHT vs INTRADAY (D-503b: the decomposition, costed honestly) =================
+// "All of the equity premium is overnight" is a decomposition FACT in the literature; as a STRATEGY it pays two spreads
+// a day. Both legs recorded with the 20bp/day round trip inside net — the pre-registered expectation is SUB-FEE, and
+// the gross decomposition is stated in the log for the record.
+if(PASS==="all"||PASS==="overnight"){
+  const iso19=(ts:number)=>new Date(ts*1000).toISOString().slice(0,10);
+  for(const inst of ["SPY","QQQ","^GSPC","GLD","TLT"]){
+    const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(inst)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    const bars=(rb[0]?.bars||[]).filter(b=>b[4]>0&&b[1]>0); if(bars.length<2500)continue;
+    for(const leg of ["overnight","intraday"]){
+      const key=`overnight|${inst}|${leg}`;
+      const moG=new Map<string,number>(), moN=new Map<string,number>();
+      for(let i=0;i<bars.length-1;i++){
+        const gRet=leg==="overnight"?bars[i+1][1]/bars[i][4]-1:bars[i+1][4]/bars[i+1][1]-1;
+        const mo=iso19(bars[i][0]).slice(0,7);
+        moG.set(mo,(moG.get(mo)||0)+gRet); moN.set(mo,(moN.get(mo)||0)+gRet-20/1e4);
+      }
+      const mosG=[...moG.entries()].sort().map(x=>x[1]), mosN=[...moN.entries()].sort().map(x=>x[1]);
+      if(mosN.length<180){await record(key,"overnight",{inst,leg},"single",null,ceil);done++;continue;}
+      const mG=mean(mosG);
+      const m=mean(mosN),sd=sdv(mosN)||1e-9,t=m/(sd/Math.sqrt(mosN.length));
+      let cum=1,pk=1,dd=0,ruined=false;for(const x of mosN){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+      const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mosN.length/4),b2=Math.floor((e+1)*mosN.length/4);return mean(mosN.slice(a2,b2));});
+      const g:Gate={n_names:1,n_periods:mosN.length,gross_ann:mG*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+        g_breadth:true, g_effect:m>0, g_benchmark:m>0, g_liquid:true,
+        g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+      await record(key,"overnight",{inst,leg},"single",g,ceil); done++;
+      await log(`    overnight ${inst} ${leg}: gross ${(mG*12*100).toFixed(1)}%/yr  NET(20bp/d) ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)}`);
+    }
+  }
+  await log(`  PASS 19 (overnight) done`);
+}
+
+
 
 
 

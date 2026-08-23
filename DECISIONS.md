@@ -9876,3 +9876,11 @@ depth — collector wired into the daily runner (6 symbols × top-trader L/S, gl
 seeded). **FRED**: endpoint allowlisted but `FRED_API_KEY` is absent — operator signs up at fred.stlouisfed.org
 (free) and adds the key to infra/.env; until then FRED is BLOCKED-ON-KEY, not tested. **efts.sec.gov** allowlisted
 (EDGAR full-text search — a research tool, no backtest dataset; available on demand).
+
+## D-503 (2026-08-23) — seasonality and overnight: the last two never-swept in-house families, both verdicted
+**Seasonality (21 specs):** every calendar rule (turn-of-month, Halloween, ex-September) LOSES to buy-and-hold on all
+7 instruments — TOM costs 7.9–14.2%/yr of drift (eras ---- almost uniformly, 680 months on ^GSPC). Calendar exits
+forfeit more premium than the window returns. **Overnight (10 specs):** the stylized fact CONFIRMS on real ETF opens
+(SPY overnight 10.1%/yr vs intraday 1.9; QQQ 14.1 vs −0.2; GLD 11.1 vs 0.8) and is SUB-FEE by two orders of magnitude
+as a strategy (−36 to −50%/yr at 20bp/day). ^GSPC's inverse split is a stale-synthetic-open artifact — stated, ETF opens
+decide. Ledger: 932 specs, 0 survivors. Lineage: seasonality, overnight-decomposition (killed).
