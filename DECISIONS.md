@@ -9958,3 +9958,10 @@ the structure is real, unlike the VIX phantom) to **t 1.67 at 9.0%/yr in the tra
 threshold, before borrow and impact. Weekly momentum is strongly negative (reversal owns the horizon). **Heston-Sadka
 same-month: NULL** (pooled 0.90, liquid 0.15). Board: **1,001 specs / 0 survivors** (DB-counted). Lineage: weekly-crosssection,
 heston-sadka (killed).
+
+## D-516 (2026-08-23/24) — delisting notices: −42.6%/yr at t −3.98, every era negative — and none of it collectable
+12,523 Item 3.01 events: the strongest event drift the program has measured, on ~9 distressed microcaps a month whose
+short borrow is scarce-to-impossible and priced at 50–300%/yr where it exists. The drift is real; it is mostly the
+borrow fee. Below ceiling regardless. The red-flag event family is now complete at five tables: 4.02 null, 4.01
+directional-thin, 2.05 prereg-miss, 5.02r best-powered directional (t −3.47), 3.01 strongest-but-untradable.
+Lineage: delisting-notices (killed).
