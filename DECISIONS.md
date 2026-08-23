@@ -9898,3 +9898,10 @@ premium (BIG-cap version: t 1.30). The Liquidity Law demonstrated on 100 years o
 api.finra.org serves weeklySummary openly; boundary measured at ~2022-01 (2021 and earlier: 204). Per-symbol ATS
 (dark-pool) and OTC (internalizer) weekly share volume, point-in-time via FINRA's own initialPublishedDate (+2-4wk).
 Migration 0081; `scripts/ingest-ats.py`; PASS 22 armed (share-of-volume level + 3m change). Span ~4.7y — stated.
+
+## D-509 CLOSURE (2026-08-23) — TFF NULL; the entire CFTC positioning axis is closed
+PASS 25 (10 markets, 182 months): following leveraged money t −1.87/−2.06 (---- eras), following asset managers
+t −2.54/−2.20, fades ~0. Three cohort systems (legacy 1986→, commodity disagg 2006→, financial TFF 2010→), one
+conclusion: weekly-published positioning carries no tradable signal and mild harm. Dark-pool (D-505): level ~0,
+share-change t −1.6/−1.8 sub-significance on 53 months, h3 UNTESTED — series accrues. Lineage: tff-cohorts,
+darkpool-share (killed).
