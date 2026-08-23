@@ -9721,3 +9721,17 @@ calendar = the real PEAD enabler, Deribit funding as a third venue, OKX options,
 breadth, FINRA ORF/ATS, French remainder, Dukascopy tick, Yahoo global, N-PORT), and never-swept factory families
 (seasonality, weekly, overnight/intraday, regime-conditioned leads, triples, bivariate sorts) — is now a permanent FULL
 ACCOUNTING section in `DATA_FRONTIER.md`. Nothing on it is claimed complete; everything carries a status.
+
+## D-484 — D-391 RE-EARNED: the short side is a properly-powered NULL
+
+The verdict D-391 issued on 26 settlements is now re-issued on the real inputs (D-475): **3,904,106 short-interest
+settlements (2017-12→2026-07) + 19,173,126 daily short-volume rows (2018-09→2026-08)**, on total-return bars, breadth
+~1,300 names per rebalance, pre-registered negative directions.
+
+Best spec: short-interest CHANGE (short the risers) — t **1.56**, +6.1%/yr net, nowhere near any bar. Volume-ratio specs
+0.5x weaker; two mildly negative. The internal hierarchy is coherent (changes > levels > flow ratios) and everything is
+noise-level. **NULL, coverage adequate — for the first time, this verdict is evidence about the MARKET.**
+
+Process note, stated: a second (redundant) shortside run executed concurrently with the clean chain's first pass — an
+artifact of my earlier chain-kill missing its target. Same spec_keys, same clean data, idempotent upserts, trial counter
+deduped by run_key; harmless but sloppy, and the chain hygiene lesson is already in the runbook.
