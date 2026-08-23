@@ -9735,3 +9735,11 @@ noise-level. **NULL, coverage adequate — for the first time, this verdict is e
 Process note, stated: a second (redundant) shortside run executed concurrently with the clean chain's first pass — an
 artifact of my earlier chain-kill missing its target. Same spec_keys, same clean data, idempotent upserts, trial counter
 deduped by run_key; harmless but sloppy, and the chain hygiene lesson is already in the runbook.
+
+## D-482c — my merge guard RETAINED LOOK-AHEAD, caught by the AAPL sanity check
+
+The "tighten-only" rule (update only if the true filed date is EARLIER than the +75d guess) was optimizing the wrong
+direction: wherever the true filing came LATER than +75 days, it kept the guess — i.e. claimed knowledge before the
+actual filing. Caught immediately by the per-row lag check (37/75/75 pattern). Re-merged with truth replacing the guess
+in BOTH directions; the guess now survives only where companyfacts has no record. Look-ahead removal makes results more
+conservative, which is the direction corrections here are allowed to move.
