@@ -56,10 +56,12 @@
 - **efts.sec.gov**: allowlisted; research tool, used on demand.
 
 ## KNOWN-UNEXPLORED (open list — NOT claimed complete)
-- **Dukascopy tick data** (FX + indices + commodities, allowlisted): "deferred" in v1 of this file was a euphemism for skipped. Opens the intraday-equities/overnight-decomposition family. OPEN.
+- **Dukascopy**: UNBLOCKED 2026-08-23 (browser UA + 503 backoff). m1→hourly plane ingested for 4 FX majors 2016→ (PASS 21). Remaining: tick-level granularity, index/commodity CFD hourly — OPEN (extension, not blocked).
 - **Yahoo global breadth**: universe held is 4,184 US equities + thin non-equity; Yahoo serves global equities, sovereign yields, full FX crosses, wider commodities. OPEN.
-- **SEC N-PORT** fund holdings (free XML, name-keyed). OPEN.
-- **Binance futures sentiment** (`/futures/data/*`: long-short ratios, taker ratios, OI history) — blocked by the allowlist's VERB list, not the host. Operator one-liner extends it.
+- **SEC N-PORT**: DONE 2026-08-23 — structured sets ingested (1.42M cusip-months), verdict NULL (D-495).
+- **FINRA ATS/OTC off-exchange weekly**: UNBLOCKED via api.finra.org (CDN 403 stands); ~2022→ boundary measured; PASS 22 armed (D-505).
+- **EDGAR full-text events**: 8-K Item 4.02 ingested 2004→ (PASS 23 armed, D-506). Other item codes (5.02 CEO departures etc.) — NEWLY IDENTIFIED, OPEN.
+- **Binance futures sentiment**: UNBLOCKED; ~30d depth measured; daily collector running since 2026-08-23.
 - **Held-but-never-swept**: `trd_insider` (278k Form-4 events) never entered the factory; `ftd_stress` entered as ONE spec whose per-month coverage was never verified; seasonality/weekly-frequency/overnight families absent from the sweep.
 
 ## TIER A — free, allowlisted, acquired 2026-08-22

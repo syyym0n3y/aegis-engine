@@ -64,7 +64,7 @@ for(const [file,prefix] of [["49_Industry_Portfolios_CSV.zip","ind49"],["100_Por
   ["Portfolios_Formed_on_NI_CSV.zip","ni10"],["Portfolios_Formed_on_VAR_CSV.zip","var10"],
   ["Portfolios_Formed_on_RESVAR_CSV.zip","resvar10"],["Portfolios_Formed_on_BETA_CSV.zip","beta10"],
   // D-504b: size x momentum / size x ST-reversal bivariates — does momentum survive inside the LARGE-cap quintile?
-  ["25_Portfolios_ME_Prior_12_2_CSV.zip","szmom25"],["25_Portfolios_ME_Prior_1_0_CSV.zip","szstrev25"]] as [string,string][]){
+  ["Developed_ex_US_5_Factors_CSV.zip","dxff5"],["25_Portfolios_ME_Prior_12_2_CSV.zip","szmom25"],["25_Portfolios_ME_Prior_1_0_CSV.zip","szstrev25"]] as [string,string][]){
   if(Deno.env.get("ONLY")&&!Deno.env.get("ONLY")!.split(",").includes(prefix))continue;
   const rows=await parsePanel(file,prefix);
   console.log(`  ${file}: ${rows.length.toLocaleString()} obs, ${new Set(rows.map(r=>r.factor)).size} series, ${rows[0]?.month} .. ${rows[rows.length-1]?.month}`);

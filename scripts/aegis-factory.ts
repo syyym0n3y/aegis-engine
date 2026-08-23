@@ -701,7 +701,7 @@ if(PASS==="all"||PASS==="form345"){
 if(PASS==="all"||PASS==="intl"){
   const ffI=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
     for(let off=0;;off+=10000){
-      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.dxmom6:*,factor.like.eumom6:*,factor.like.jpmom6:*,factor.like.apmom6:*,factor.like.dxval6:*,factor.like.dxwml:*,factor.like.emmom:*,factor.like.dxff3:*,factor.like.emff5:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.dxmom6:*,factor.like.eumom6:*,factor.like.jpmom6:*,factor.like.apmom6:*,factor.like.dxval6:*,factor.like.dxwml:*,factor.like.emmom:*,factor.like.dxff3:*,factor.like.emff5:*,factor.like.dxff5:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
       if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
     return out;})();
   const byI=new Map<string,Map<string,number>>();
@@ -720,6 +720,8 @@ if(PASS==="all"||PASS==="intl"){
     ["dxhml","developed ex-US HML (French factor)",["dxff3:HML"],[]],
     ["emhml","emerging HML",["emff5:HML"],[]],
     ["emrmw","emerging RMW (profitability)",["emff5:RMW"],[]],
+    ["dxrmw","developed ex-US RMW (profitability)",["dxff5:RMW"],[]],
+    ["dxcma","developed ex-US CMA (investment)",["dxff5:CMA"],[]],
     ["emcma","emerging CMA (investment)",["emff5:CMA"],[]],
   ];
   for(const [suf,label,longs,shorts] of SPECS12){
