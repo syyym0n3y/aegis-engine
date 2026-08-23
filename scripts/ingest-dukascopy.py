@@ -10,6 +10,9 @@ def _conn():
     if CONN[0] is None: CONN[0]=http.client.HTTPSConnection("datafeed.dukascopy.com",timeout=30)
     return CONN[0]
 PAIRS={"EURUSD":1e-5,"GBPUSD":1e-5,"USDJPY":1e-3,"AUDUSD":1e-5}
+import os
+if os.environ.get("PAIRS"):  # e.g. PAIRS="XAUUSD:1e-3,USA500IDXUSD:1e-3"
+    PAIRS={p.split(":")[0]:float(p.split(":")[1]) for p in os.environ["PAIRS"].split(",")}
 START=dt.date(2016,1,1); END=dt.date(2026,8,22)
 UA={"User-Agent":"Mozilla/5.0"}
 def fetch(path):
