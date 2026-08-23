@@ -200,7 +200,7 @@ await log("==> AEGIS FACTORY — building panels");
 const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -367,6 +367,54 @@ if(PASS==="all"||PASS==="pairs"){
   await log(`  PASS 4 (pairs) done: ${pd} specs`);
 }
 
+
+// ================= PASS 6 — INSIDER BUYING (D-476: 272,958 open-market Form-4 BUYS, held since D-373, never swept) =================
+// HONEST SCOPE: the backfill stored BUYS ONLY (sells filtered at source — recorded as an open item in DATA_FRONTIER).
+// So this family is buy-intensity, the side with the documented positive direction. Value is normalized by the name's own
+// average dollar volume (both held per panel row) — an intensity measure that needs no market-cap join.
+if(PASS==="all"||PASS==="insider"){
+  const ins=new Map<string,{d:string;v:number;off:boolean}[]>();
+  let nIns=0;
+  for(let off=0;;off+=10000){
+    const p2=await fetch(`${OWNED}/trd_insider?ticker=neq.--&value_usd=gt.0&select=ticker,disclosed_date,value_usd,is_officer&order=disclosed_date&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {ticker:string;disclosed_date:string;value_usd:number;is_officer:boolean}[]){
+      (ins.get(r.ticker)??ins.set(r.ticker,[]).get(r.ticker)!).push({d:r.disclosed_date,v:+r.value_usd,off:!!r.is_officer});nIns++;}
+    if(p2.length<10000)break;
+  }
+  await log(`  insider: ${nIns.toLocaleString()} buy events, ${ins.size} tickers`);
+  const trail=(t:string,endD:string,days:number,offOnly:boolean)=>{
+    const a=ins.get(t); if(!a)return {v:0,n:0};
+    const startD=(()=>{const x=new Date(endD+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10);})();
+    let v=0,n=0;
+    // events are date-sorted; linear scan bounded by binary-searching the start
+    let lo=0,hi=a.length-1,st=a.length;
+    while(lo<=hi){const m=(lo+hi)>>1;if(a[m].d>=startD){st=m;hi=m-1;}else lo=m+1;}
+    for(let i2=st;i2<a.length&&a[i2].d<=endD;i2++){if(offOnly&&!a[i2].off)continue;v+=a[i2].v;n++;}
+    return {v,n};
+  };
+  // month-end date per panel row = last day of its mo (approximation: signals use disclosed_date <= month end — point-in-time)
+  const moEnd=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const SIGS6=["ins1m","ins3m","ins6m","ins_cnt3m","ins_off3m"] as const;
+  for(const sig of SIGS6) for(const hold of [1,3]) for(const k of [5,10]){
+    const key=`insider|${sig}|h${hold}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      const end=moEnd(r.mo);
+      let v:number;
+      if(sig==="ins1m")v=trail(r.sym,end,30,false).v/(r.dv||1);
+      else if(sig==="ins3m")v=trail(r.sym,end,91,false).v/(r.dv||1);
+      else if(sig==="ins6m")v=trail(r.sym,end,182,false).v/(r.dv||1);
+      else if(sig==="ins_cnt3m")v=trail(r.sym,end,91,false).n;
+      else v=trail(r.sym,end,91,true).v/(r.dv||1);
+      if(!(v>0))continue;                                     // signal defined only where buying occurred
+      rows.push({mo:r.mo,fwd:r.fwd,v});
+    }
+    const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
+    await record(key,"insider",{sig,hold,k},"equity_liquid",g,ceil); done++;
+  }
+  await log(`  PASS 6 (insider) done: ${SIGS6.length*4} specs`);
+}
 // ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================
 // The one venue where a portfolio-t can clear a 5.3 ceiling honestly: ~1,200 INDEPENDENT months. Signals are the
 // documented classics, applied cross-sectionally ACROSS portfolios (industry momentum, grid momentum/reversal). These
