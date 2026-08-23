@@ -9867,3 +9867,12 @@ codes; two parser traps fixed: `Annual.TXT` case pre-2015 and a space-before-com
 e.g. wheat 001601→001602, S&P 138741→13874A). PASS 16: 26-market time-series book, publication-lagged +6 days, 10bp
 switches, 320 months. Every rule NEGATIVE (best |t| 1.39). Neither following hedgers nor fading speculators has been
 worth anything net of costs this quarter-century. Migration 0078; `scripts/ingest-cot.sh`. Lineage: cot-positioning.
+
+## D-502 (2026-08-23) — Tier-B unlocks #2-4: Treasury auctions NULL; Binance sentiment collector started; FRED awaits key
+**Treasury auctions** (fiscaldata, 1979→): 11,090 auctions ingested (migration 0079); PASS 17 tested 10Y/30Y
+bid-to-cover z as a TLT duration overlay, lag-1, both directions — best |t| 0.50 over 290 months. NULL: auction demand
+surprises do not time duration at monthly granularity. **Binance futures sentiment** (`/futures/data/*`): measured ~30d
+depth — collector wired into the daily runner (6 symbols × top-trader L/S, global accounts L/S, taker ratio; 540 rows
+seeded). **FRED**: endpoint allowlisted but `FRED_API_KEY` is absent — operator signs up at fred.stlouisfed.org
+(free) and adds the key to infra/.env; until then FRED is BLOCKED-ON-KEY, not tested. **efts.sec.gov** allowlisted
+(EDGAR full-text search — a research tool, no backtest dataset; available on demand).

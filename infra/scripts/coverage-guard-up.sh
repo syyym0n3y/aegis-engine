@@ -67,5 +67,7 @@ while true; do
   deno run --allow-net --allow-env ../scripts/collect-us-options.ts || true
   # VX CURVE COLLECTOR (D-487): settlement endpoint serves only ~current-year, so the curve accrues from 2026-08-23.
   deno run --allow-net --allow-env ../scripts/collect-vx-curve.ts || true
+  # BINANCE SENTIMENT COLLECTOR (D-502b): API serves ~30d only — the series accrues from 2026-08-23.
+  deno run --allow-net --allow-env ../scripts/collect-binance-sentiment.ts || true
   sleep 86400
 done

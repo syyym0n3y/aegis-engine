@@ -1014,6 +1014,55 @@ if(PASS==="all"||PASS==="cot"){
   await log(`  PASS 16 (cot) done: ${SIGS16.length*2} specs`);
 }
 
+// ================= PASS 17 — TREASURY AUCTION DEMAND (D-502: bid-to-cover as duration timing; 1979-> auctions) =================
+// Auction results publish ~13:00 ET on auction day; execution waits for the NEXT daily close (lag-1 by construction).
+// Signal: 10Y/30Y bid-to-cover z vs the trailing 10 same-term auctions. Overlay on TLT (2002->), long/short, held to
+// the next auction. Self-financing L/S judged on its own mean; single-instrument class, benchmark-vs-flat stated.
+if(PASS==="all"||PASS==="auction"){
+  const au=await fetch(`${OWNED}/trd_auctions?security_term=in.(10-Year,30-Year)&bid_to_cover=not.is.null&select=auction_date,security_term,bid_to_cover&order=auction_date&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {auction_date:string;security_term:string;bid_to_cover:number}[];
+  await log(`  auction: ${au.length} 10Y/30Y auctions with bid-to-cover`);
+  const byTerm=new Map<string,{d:string;b:number}[]>();
+  for(const r of au)(byTerm.get(r.security_term)??byTerm.set(r.security_term,[]).get(r.security_term)!).push({d:r.auction_date,b:+r.bid_to_cover});
+  const events:{d:string;z:number}[]=[];
+  for(const a of byTerm.values()){
+    for(let i=10;i<a.length;i++){
+      const w=a.slice(i-10,i).map(x=>x.b);
+      const mu=mean(w),sd2=sdv(w)||1e-9;
+      events.push({d:a[i].d,z:(a[i].b-mu)/sd2});
+    }
+  }
+  events.sort((x,y)=>x.d<y.d?-1:1);
+  const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.TLT&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+  const bars=(rb[0]?.bars||[]).filter(b=>b[4]>0);
+  const iso17=(ts:number)=>new Date(ts*1000).toISOString().slice(0,10);
+  for(const dir of ["follow","fade"]) for(const th of [0.5,1.0]){
+    const key=`auction|btc_${dir}|z${th}`;
+    const daily:{d:string;r:number}[]=[]; let ei=-1,w=0,prevW=0,swc=0;
+    for(let i=0;i<bars.length-1;i++){
+      const d=iso17(bars[i][0]);
+      while(ei+1<events.length&&events[ei+1].d<d)              // auction strictly before today's close -> lag-1
+        {ei++; const z=events[ei].z; const raw=z>th?1:z<-th?-1:0; w=dir==="follow"?raw:-raw;}
+      const r2=bars[i+1][4]/bars[i][4]-1;
+      const fee=(w!==prevW)?10/1e4:0; if(w!==prevW){swc++;prevW=w;}
+      daily.push({d:iso17(bars[i][0]),r:w*r2-fee});
+    }
+    const moA=new Map<string,number>();
+    for(const x of daily) moA.set(x.d.slice(0,7),(moA.get(x.d.slice(0,7))||0)+x.r);
+    const mos=[...moA.entries()].sort().map(x=>x[1]);
+    if(mos.length<120){await record(key,"auction",{dir,th,exec:"lag1"},"single",null,ceil);done++;continue;}
+    const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+    const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"auction",{dir,th,exec:"lag1",switches:swc},"single",g,ceil); done++;
+    await log(`    auction ${dir} z${th}: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} sw=${swc} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 17 (auction) done: 4 specs`);
+}
+
+
 
 
 

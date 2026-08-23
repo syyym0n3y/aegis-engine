@@ -48,9 +48,12 @@
 - Seasonality (calendar) family · weekly-frequency variants · overnight-vs-intraday decomposition (needs tick/intraday) ·
   vol-regime-conditioned versions of the leads · triple interactions on the payout complex · French bivariate sorts.
 
-### TIER-B (operator one-liners, restated)
-- CFTC COT (`^https?://(www\.)?cftc\.gov/`) · FRED key + `api.stlouisfed.org` · Binance `futures/data` verbs (long-short
-  ratios, taker ratios, OI hist) · treasury.gov · efts.sec.gov (EDGAR full-text search).
+### TIER-B (UNLOCKED 2026-08-23 — operator added the allowlist lines)
+- **CFTC COT**: 40y ingested (287,779 weekly reports), PASS 16 verdict NULL (D-501). DONE.
+- **Treasury auctions**: 1979→ ingested (11,090), PASS 17 verdict NULL (D-502). DONE.
+- **Binance futures sentiment**: ~30d depth measured — daily collector running since 2026-08-23. ACCRUING.
+- **FRED**: allowlisted, BLOCKED-ON-KEY — operator signs up (free) and adds FRED_API_KEY to infra/.env.
+- **efts.sec.gov**: allowlisted; research tool, used on demand.
 
 ## KNOWN-UNEXPLORED (open list — NOT claimed complete)
 - **Dukascopy tick data** (FX + indices + commodities, allowlisted): "deferred" in v1 of this file was a euphemism for skipped. Opens the intraday-equities/overnight-decomposition family. OPEN.
