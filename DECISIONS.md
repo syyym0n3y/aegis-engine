@@ -9666,3 +9666,16 @@ list.
 KNOWN", the list stays open, and the MISSED section is retained as evidence of the failure mode. Queued next: the
 short-side factory family the new data enables, the insider family from held data, French breadth, and re-earning
 D-391's verdict on real inputs.
+
+## D-476 — INSIDER FAMILY swept at last (held 278k events since D-373): tradable version ≈ ZERO
+
+20 specs over 272,958 open-market Form-4 buys (buys-only scope stated — sells were filtered at the original backfill,
+now an open item). Best: `ins3m` t **0.64**, breadth 154, +2.7%/yr net. `ins1m` t 0.30. Officer-only variants **UNTESTED**
+(sub-30 names/month after the liquidity floor — recorded, not hidden).
+
+**The framing that makes this a finding rather than a shrug:** the documented insider-buying premium concentrates in
+small/illiquid names; the $10M/day floor removes precisely where the literature finds it. This is the LIQUIDITY LAW
+applied prospectively — the tradable slice of insider buying carries ~no information. The un-floored version was NOT run,
+deliberately: D-424 established that a result living below the floor is a statement about names that cannot absorb size.
+
+Ceiling 5.337 → N=1,530,776. Survivors: 0. Short-side family (PASS 7) chained behind the FINRA ingests.
