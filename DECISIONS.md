@@ -9943,3 +9943,10 @@ As a book: ALL-universe 4.3%/yr (t 0.89, maxDD −80%); **LIQUID tercile 0.4%/yr
 third time. The contrast IS the finding: the same machinery that extracts real non-linear structure from crypto
 microstructure features finds none in monthly equity fundamentals beyond what a ridge regression sees. Lineage:
 equity-nonlinear (killed). Trials +6.
+
+## D-514 CLOSURE (2026-08-23) — resignations: the best event result of the hunt, below ceiling, forward-candidate recorded
+35,417 executive-resignation 8-Ks (full-text refined): filers underperform **−4.9%/yr at t −3.47 over 262 months,
+negative in ALL four eras, 72 flagged names/month** — pre-registered sign, real breadth, 22 years. Still below the
+5.34 ceiling → killed like every sub-ceiling number before it. It is a legitimate FORWARD-BOOK candidate; registration
+deliberately not taken unilaterally (adding leads raises the forward ceiling √(2 ln N) for the existing 8 — an
+operator-level tradeoff, recorded not decided). Board: **981 specs / 0 survivors.**
