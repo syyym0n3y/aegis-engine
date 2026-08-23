@@ -51,6 +51,10 @@ while true; do
   if ! deno run --allow-read --allow-env ../scripts/plumbing-guard.ts; then
     echo "$(date -u +%FT%TZ) PLUMBING GUARD RED — a new instance of a known defect class entered the codebase"
   fi
+  # FORWARD SCORER (D-474): scores registered factory leads on completed post-registration months. Exits in ~1s unless a
+  # new month needs scoring (~monthly work on a daily cadence). Prints FORWARD STATUS every run so the accrual is visible
+  # in this log; WRITE-FAILED markers here page via the agent-output guard. Selftest-verified end-to-end before wiring.
+  deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env ../scripts/factory-forward-score.ts || echo "$(date -u +%FT%TZ) FORWARD SCORER FAILED"
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true
