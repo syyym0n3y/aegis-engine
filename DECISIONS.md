@@ -9935,3 +9935,11 @@ The program's founding prediction (D-070) holds at 977 specs: nothing tradable-a
 what survives everywhere is the momentum family (5 geographies, a century, factor-space) — always at t 2.8–5.3,
 always below what 1.53M trials demand.
 ## D-511b (2026-08-23) — 2.05 restructuring: PREREG MISS with opposite sign (+10.7%/yr t 2.03 ++++ for filers). Not claimable — a sign-flip vs pre-registration re-scored as a win is the selection trap. Recorded as curiosity; board final at **979 specs / 0 survivors**.
+
+## D-513 (2026-08-23) — EQUITY GBM: non-linearity adds NOTHING on monthly equities; the ML question is answered by contrast
+The crypto-proven harness (D-451: paired t 8.12) on the factory's own 265,148-row, 22-feature panel, walk-forward
+2002→2026 (247 OOS months, breadth 794): GBM IC 0.0209 (t 3.24) vs linear 0.0153 — **paired t 1.05, adds nothing.**
+As a book: ALL-universe 4.3%/yr (t 0.89, maxDD −80%); **LIQUID tercile 0.4%/yr (t 0.08)** — the Liquidity Law shape a
+third time. The contrast IS the finding: the same machinery that extracts real non-linear structure from crypto
+microstructure features finds none in monthly equity fundamentals beyond what a ridge regression sees. Lineage:
+equity-nonlinear (killed). Trials +6.
