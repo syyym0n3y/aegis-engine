@@ -747,6 +747,70 @@ if(PASS==="all"||PASS==="intl"){
   await log(`  PASS 12 (intl) done: ${SPECS12.length} specs`);
 }
 
+// ================= PASS 13 — VOL-COMPLEX TIMING (D-493: SKEW/VVIX/term-structure as SPY/QQQ risk gates) =================
+// The CBOE index history (SKEW 1990->, VVIX 2007->, VIX9D/VIX3M ~2009-11->) has never been TESTED here as a timing
+// input. Pre-registered direction: stress (high SKEW/VVIX z, inverted term structure) -> risk-off. Judged exactly like
+// PASS 3: daily excess vs buy-and-hold, 10bp per switch, breadth-exempt single-instrument class.
+if(PASS==="all"||PASS==="voltiming"){
+  const iso=(ts:number)=>new Date(ts*1000).toISOString().slice(0,10);
+  const volIdx=new Map<string,Map<string,number>>();
+  for(const nm of ["SKEW","VVIX","VIX9D","VIX3M"]){
+    const r=await fetch(`${OWNED}/trd_perp_oi?venue=eq.cboe&interval=eq.index_close&symbol=eq.${nm}&select=ts,open_interest&order=ts&limit=100000`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {ts:number;open_interest:number}[];
+    volIdx.set(nm,new Map(r.map(x=>[iso(x.ts),+x.open_interest])));
+  }
+  const vixBars=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.%5EVIX&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+  const vix=new Map<string,number>((vixBars[0]?.bars||[]).map(b=>[iso(b[0]),b[4]]));
+  await log(`  voltiming: SKEW ${volIdx.get("SKEW")!.size}d VVIX ${volIdx.get("VVIX")!.size}d VIX9D ${volIdx.get("VIX9D")!.size}d VIX3M ${volIdx.get("VIX3M")!.size}d VIX ${vix.size}d`);
+  type VRule={name:string;need:string[];off:(d:string,z:(nm:string,d:string)=>number|null)=>boolean|null};
+  const zbuf=new Map<string,{ds:string[];vs:number[]}>();
+  for(const [nm,mp] of volIdx){const ds=[...mp.keys()].sort();zbuf.set(nm,{ds,vs:ds.map(d=>mp.get(d)!)});}
+  const zof=(nm:string,d:string):number|null=>{
+    const b=zbuf.get(nm)!; let lo=0,hi=b.ds.length-1,ix=-1;
+    while(lo<=hi){const m=(lo+hi)>>1;if(b.ds[m]<=d){ix=m;lo=m+1;}else hi=m-1;}
+    if(ix<252)return null;
+    const w=b.vs.slice(ix-252,ix); const mu=w.reduce((a,x)=>a+x,0)/252;
+    const sd2=Math.sqrt(w.reduce((a,x)=>a+(x-mu)*(x-mu),0)/252)||1e-9;
+    return (b.vs[ix]-mu)/sd2;};
+  const lvl=(nm:string,d:string):number|null=>volIdx.get(nm)!.get(d)??null;
+  const VRULES:VRule[]=[];
+  for(const th of [1.5,2.0]){
+    VRULES.push({name:`skew_z${th}`,need:["SKEW"],off:(d,z)=>{const v=z("SKEW",d);return v===null?null:v>th;}});
+    VRULES.push({name:`vvix_z${th}`,need:["VVIX"],off:(d,z)=>{const v=z("VVIX",d);return v===null?null:v>th;}});
+  }
+  for(const th of [1.0,1.05]){
+    VRULES.push({name:`term9d_${th}`,need:["VIX9D"],off:(d)=>{const a=lvl("VIX9D",d),b=vix.get(d);return a==null||b==null?null:a/b>th;}});
+    VRULES.push({name:`term3m_${th}`,need:["VIX3M"],off:(d)=>{const a=lvl("VIX3M",d),b=vix.get(d);return a==null||b==null?null:b/a>th;}});
+  }
+  for(const inst of ["SPY","QQQ"]){
+    const r=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${inst}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    const bars=(r[0]?.bars||[]).filter(b=>b[4]>0);
+    for(const rule of VRULES){
+      const key=`voltiming|${inst}|${rule.name}`;
+      const net:number[]=[],bh:number[]=[]; let prev=1,sw=0;
+      for(let i=0;i<bars.length-1;i++){
+        const d=iso(bars[i][0]); const off=rule.off(d,zof);
+        if(off===null)continue;                                  // indicator not yet defined that day
+        const w=off?0:1; const r2=bars[i+1][4]/bars[i][4]-1;
+        net.push(w*r2-(w!==prev?10/1e4:0)); bh.push(r2); if(w!==prev){sw++;prev=w;}
+      }
+      if(net.length<500){await record(key,"voltiming",{inst,rule:rule.name},"single",null,ceil);done++;continue;}
+      const ex=net.map((x,i)=>x-bh[i]);
+      const m=mean(ex),sd=sdv(ex)||1e-9,t=m/(sd/Math.sqrt(ex.length));
+      let cum=1,pk=1,dd=0,ruined=false;for(const x of net){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+      const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*ex.length/4),b2=Math.floor((e+1)*ex.length/4);return mean(ex.slice(a,b2));});
+      const gate:Gate={n_names:1,n_periods:ex.length,gross_ann:mean(net)*252+ (sw/(ex.length/252))*10/1e4,net_ann:mean(net)*252,
+        sharpe:(mean(net)/(sdv(net)||1e-9))*Math.sqrt(252),t,dd:dd*100,ruined,
+        g_breadth:true, g_effect:Math.abs(m)*252>=(sw/(ex.length/252))*10/1e4,
+        g_benchmark:m>0 /* must beat buy-and-hold */, g_liquid:true,
+        g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+      await record(key,"voltiming",{inst,rule:rule.name,switches:sw},"single",gate,ceil); done++;
+      await log(`    ${inst} ${rule.name.padEnd(12)} n=${ex.length}  excess ${(m*252*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  sw=${sw}`);
+    }
+  }
+  await log(`  PASS 13 (voltiming) done: ${2*VRULES.length} specs`);
+}
+
+
 
 
 // ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================
@@ -802,7 +866,7 @@ if(PASS==="all"||PASS==="french"){
 if(PASS==="all"||PASS==="frenchdec"){
   const ff2=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
     for(let off=0;;off+=10000){
-      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.mom10:*,factor.like.strev10:*,factor.like.ltrev10:*,factor.like.op10:*,factor.like.inv10:*,factor.like.szbm25:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.mom10:*,factor.like.strev10:*,factor.like.ltrev10:*,factor.like.op10:*,factor.like.inv10:*,factor.like.szbm25:*,factor.like.ep10:*,factor.like.cfp10:*,factor.like.dp10:*,factor.like.ac10:*,factor.like.ni10:*,factor.like.var10:*,factor.like.resvar10:*,factor.like.beta10:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
       if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
     return out;})();
   const byS=new Map<string,Map<string,number>>();
@@ -823,6 +887,15 @@ if(PASS==="all"||PASS==="frenchdec"){
     ["ltrev10","Lo","long-term reversal (long 5y losers)"],
     ["op10","Hi","operating profitability"],
     ["inv10","Lo","investment (long conservative)"],
+    // D-492: the remaining classic characteristic deciles, literature side pre-registered
+    ["ep10","Hi","earnings/price (long cheap)"],
+    ["cfp10","Hi","cashflow/price (long cheap)"],
+    ["dp10","Hi","dividend/price (long high yield)"],
+    ["ac10","Lo","accruals (long low accruals; Sloan 1996)"],
+    ["ni10","Lo","net share issuance (long low issuance)"],
+    ["var10","Lo","variance (long low vol; Ang et al)"],
+    ["resvar10","Lo","residual variance (long low idio vol)"],
+    ["beta10","Lo","beta (long low beta; naive BAB, not beta-neutral)"],
   ];
   const DRAG=0.0005;                                   // 5bp/month implementation drag, stated
   for(const [prefix,side,label] of SPECS){

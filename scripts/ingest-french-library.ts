@@ -56,7 +56,13 @@ for(const [file,prefix] of [["49_Industry_Portfolios_CSV.zip","ind49"],["100_Por
   ["Japan_6_Portfolios_ME_Prior_12_2_CSV.zip","jpmom6"],["Asia_Pacific_ex_Japan_6_Portfolios_ME_Prior_12_2_CSV.zip","apmom6"],
   ["Developed_ex_US_6_Portfolios_ME_BE-ME_CSV.zip","dxval6"],["Emerging_MOM_Factor_CSV.zip","emmom"],
   ["Emerging_5_Factors_CSV.zip","emff5"],["Developed_ex_US_3_Factors_CSV.zip","dxff3"],
-  ["Developed_ex_US_Mom_Factor_CSV.zip","dxwml"]] as [string,string][]){
+  ["Developed_ex_US_Mom_Factor_CSV.zip","dxwml"],
+  // D-492: the remaining CLASSIC characteristic deciles — E/P, CF/P, D/P (value variants, 1951->), accruals, net share
+  // issuance, variance, residual variance, beta (the low-vol/low-beta complex). Century-to-70yr power, pre-sorted.
+  ["Portfolios_Formed_on_E-P_CSV.zip","ep10"],["Portfolios_Formed_on_CF-P_CSV.zip","cfp10"],
+  ["Portfolios_Formed_on_D-P_CSV.zip","dp10"],["Portfolios_Formed_on_AC_CSV.zip","ac10"],
+  ["Portfolios_Formed_on_NI_CSV.zip","ni10"],["Portfolios_Formed_on_VAR_CSV.zip","var10"],
+  ["Portfolios_Formed_on_RESVAR_CSV.zip","resvar10"],["Portfolios_Formed_on_BETA_CSV.zip","beta10"]] as [string,string][]){
   if(Deno.env.get("ONLY")&&!Deno.env.get("ONLY")!.split(",").includes(prefix))continue;
   const rows=await parsePanel(file,prefix);
   console.log(`  ${file}: ${rows.length.toLocaleString()} obs, ${new Set(rows.map(r=>r.factor)).size} series, ${rows[0]?.month} .. ${rows[rows.length-1]?.month}`);
