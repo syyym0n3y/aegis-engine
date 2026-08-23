@@ -200,7 +200,7 @@ await log("==> AEGIS FACTORY — building panels");
 const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -476,6 +476,43 @@ if(PASS==="all"||PASS==="shortside"){
     await record(key,"shortside",{sig,dir,hold,k},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 7 (shortside) done`);
+}
+
+// ================= PASS 8 — PEAD ON REAL SURPRISES (D-479: the input D-393 never had) =================
+// D-393's PEAD null used no actual surprise data. trd_earnings now carries per-event actual EPS, consensus, and
+// % surprise (Nasdaq, 2017->). Signal for month M: the % surprise of the most recent report inside the trailing 45 days,
+// pre-registered direction POSITIVE (post-earnings-announcement DRIFT). Variant gated to n_ests>=3 (a surprise against
+// one estimate is noise). Sign-flipped variants are NOT run — this is a documented one-direction hypothesis.
+if(PASS==="all"||PASS==="pead"){
+  const ev=new Map<string,{d:string;s:number;ne:number}[]>();
+  let nE=0;
+  for(let off=0;;off+=10000){
+    const p2=await fetch(`${OWNED}/trd_earnings?surprise_pct=not.is.null&select=symbol,report_date,surprise_pct,n_ests&order=report_date&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {symbol:string;report_date:string;surprise_pct:number;n_ests:number|null}[]){
+      (ev.get(r.symbol)??ev.set(r.symbol,[]).get(r.symbol)!).push({d:r.report_date,s:+r.surprise_pct,ne:r.n_ests??0});nE++;}
+    if(p2.length<10000)break;
+  }
+  await log(`  pead: ${nE.toLocaleString()} surprise events, ${ev.size} symbols`);
+  const moEnd=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  for(const minEst of [0,3]) for(const hold of [1,3]) for(const k of [5,10]){
+    const key=`pead|sue45|est${minEst}|h${hold}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      if(r.mo<"2017-03")continue;
+      const end=moEnd(r.mo), a=ev.get(r.sym); if(!a)continue;
+      const startD=(()=>{const x=new Date(end+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-45);return x.toISOString().slice(0,10);})();
+      let lo=0,hi=a.length-1,b=-1;
+      while(lo<=hi){const m=(lo+hi)>>1;if(a[m].d<=end){b=m;lo=m+1;}else hi=m-1;}
+      if(b<0||a[b].d<startD)continue;
+      if(minEst>0&&a[b].ne<minEst)continue;
+      const sp=a[b].s; if(!Number.isFinite(sp)||Math.abs(sp)>500)continue;
+      rows.push({mo:r.mo,fwd:r.fwd,v:sp});
+    }
+    const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
+    await record(key,"pead",{minEst,hold,k},"equity_liquid",g,ceil); done++;
+  }
+  await log(`  PASS 8 (pead) done`);
 }
 // ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================
 // The one venue where a portfolio-t can clear a 5.3 ceiling honestly: ~1,200 INDEPENDENT months. Signals are the
