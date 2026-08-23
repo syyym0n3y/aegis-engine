@@ -9934,3 +9934,4 @@ class that caused the counter fiction — both fixed at source, now GREEN. The m
 The program's founding prediction (D-070) holds at 977 specs: nothing tradable-at-size clears an honest deflated gate;
 what survives everywhere is the momentum family (5 geographies, a century, factor-space) — always at t 2.8–5.3,
 always below what 1.53M trials demand.
+## D-511b (2026-08-23) — 2.05 restructuring: PREREG MISS with opposite sign (+10.7%/yr t 2.03 ++++ for filers). Not claimable — a sign-flip vs pre-registration re-scored as a win is the selection trap. Recorded as curiosity; board final at **979 specs / 0 survivors**.
