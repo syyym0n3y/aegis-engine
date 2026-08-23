@@ -9906,3 +9906,8 @@ conclusion: weekly-published positioning carries no tradable signal and mild har
 share-change t −1.6/−1.8 sub-significance on 53 months, h3 UNTESTED — series accrues. Lineage: tff-cohorts,
 darkpool-share (killed).
 ## D-510 (2026-08-23) — cross-asset lead-lag: all 12 specs negative (t −2.0 to −3.9, ---- eras). Copper/gold, crude, and duration gates all forfeit more drift than they save. Seventh timing family with the identical shape: drift dominates gates. Lineage: xasset-leadlag (killed).
+
+## D-508 CLOSURE (2026-08-23) — accounting red flags: directional but structurally thin
+4.02 non-reliance: underpowered NULL (t −0.04, 8 flagged/month). 4.01 auditor change: drift **−13.8%/yr at t −2.08**
+(140 months, ~10 flagged/month, ++--) — the literature's direction at real magnitude, in a class whose event breadth
+can never clear a deflated gate. Recorded honestly as DIRECTIONAL-BUT-UNDERPOWERED. Lineage: accounting-red-flags.

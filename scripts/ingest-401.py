@@ -15,7 +15,7 @@ while d<=dt.date(2026,8,1):
     frm=0
     while True:
         q=urllib.parse.urlencode({"q":'"Item 4.01"',"forms":"8-K","dateRange":"custom",
-                                  "startdt":d.isoformat(),"enddt":end.isoformat(),"from":frm})
+                                  "startdt":d.isoformat(),"enddt":end.isoformat(),"from":frm,"size":100})
         j=get(f"https://efts.sec.gov/LATEST/search-index?{q}")
         if not j: print(f"{d}: FETCH-FAILED",flush=True); break
         hits=j.get("hits",{}).get("hits",[])
@@ -29,8 +29,9 @@ while d<=dt.date(2026,8,1):
                 if tick and len(tick)<=6:
                     rows.append((h["_id"].split(":")[0]+":"+tick, tick, s["file_date"]))
                 break
-        if len(hits)<10: break
-        frm+=10; time.sleep(0.3)
+        if len(hits)<100: break
+        frm+=100; time.sleep(0.3)
+    if d.month==1: print(f"  ..{d.year}: {len(rows):,} rows so far",flush=True)
     time.sleep(0.35)
     d=(end+dt.timedelta(days=1))
 seen=set(); uniq=[r for r in rows if not (r[0] in seen or seen.add(r[0]))]
