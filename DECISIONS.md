@@ -9852,3 +9852,4 @@ all 187 live rows (4 marked SURVIVOR) before the re-run. The survivor count retu
 institutions' inflows weakly PRECEDE underperformance, the same crowding-direction tilt N-PORT showed, never
 significant). 4 breadth-change specs UNTESTED (insufficient joined rows — stated, not narrated as null). Public
 45-day-stale ownership snapshots do not price. Lineage: own13f-signals (killed).
+## D-500 (2026-08-23) — announcement premium: NULL on the modern span (t 0.32, 113 months, 362 announcers/mo). Frazzini–Lamont's premium is post-publication-decayed like the rest. Lineage: annprem (killed).
