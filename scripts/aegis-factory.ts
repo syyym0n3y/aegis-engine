@@ -1366,18 +1366,19 @@ if(PASS==="all"||PASS==="cotdisagg"){
 // Event study via the annprem structure: names filing a 4.02 in the trailing month vs the rest of the panel.
 // Pre-registered literature direction: NEGATIVE forward drift for filers. Filed date = public date (EDGAR same-day).
 if(PASS==="all"||PASS==="nonreliance"){
+ for(const [tbl,tag] of [["trd_events_402","402"],["trd_events_401","401"]] as [string,string][]){
   const ev4=new Map<string,string[]>(); let nE4=0;
   for(let off=0;;off+=10000){
-    const p2=await fetch(`${OWNED}/trd_events_402?select=symbol,filed&order=filed&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    const p2=await fetch(`${OWNED}/${tbl}?select=symbol,filed&order=filed&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
     if(!Array.isArray(p2)||!p2.length)break;
     for(const r of p2 as {symbol:string;filed:string}[]){(ev4.get(r.symbol)??ev4.set(r.symbol,[]).get(r.symbol)!).push(r.filed);nE4++;}
     if(p2.length<10000)break;
   }
-  await log(`  nonreliance: ${nE4.toLocaleString()} 4.02 events, ${ev4.size} symbols`);
+  await log(`  nonreliance[${tag}]: ${nE4.toLocaleString()} events, ${ev4.size} symbols`);
   const moEnd23=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
   const minus23=(d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10);};
   for(const look of [35,95]){
-    const key=`nonreliance|look${look}|h1`;
+    const key=`nonreliance|${tag}|look${look}|h1`;
     const byMo=new Map<string,{flag:number[];rest:number[]}>();
     for(const r of eqPanel){
       const end=moEnd23(r.mo), a=ev4.get(r.sym);
@@ -1401,8 +1402,9 @@ if(PASS==="all"||PASS==="nonreliance"){
       g_breadth:false /* few filers per month by nature — event class, count stated */,
       g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m<0 /* pre-registered NEGATIVE drift for filers */, g_liquid:true,
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)).length>=3, eras:q4};
-    await record(key,"nonreliance",{look},"equity_all",g,ceil); done++;
-    await log(`    nonreliance look${look}: n=${diffs.length}mo avg-flagged ${Math.round(sumF/Math.max(1,nmo))} drift ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+    await record(key,"nonreliance",{tag,look},"equity_all",g,ceil); done++;
+    await log(`    nonreliance[${tag}] look${look}: n=${diffs.length}mo avg-flagged ${Math.round(sumF/Math.max(1,nmo))} drift ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
   }
   await log(`  PASS 23 (nonreliance) done`);
 }
