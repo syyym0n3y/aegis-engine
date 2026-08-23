@@ -537,8 +537,13 @@ if(PASS==="all"||PASS==="frenchdec"){
   for(const r of ff2)(byS.get(r.factor)??byS.set(r.factor,new Map()).get(r.factor)!).set(r.month,+r.ret);
   await log(`  frenchdec: ${ff2.length.toLocaleString()} obs, ${byS.size} series`);
   const pick=(prefix:string,side:"Lo"|"Hi")=>{
+    // op/inv files carry MULTIPLE column sets (quintiles AND deciles): "Lo_20"... and "Lo_10"... The first version
+    // required exactly one match and recorded both premia UNTESTED. Fix: prefer the DECILE set (_10) explicitly, fall
+    // back to a unique match; ambiguity that survives is still recorded UNTESTED rather than guessed.
     const c=[...byS.keys()].filter(k=>k.startsWith(prefix+":")&&k.split(":")[1].startsWith(side));
-    return c.length===1?byS.get(c[0])!:null;};
+    if(c.length===1)return byS.get(c[0])!;
+    const dec=c.filter(k=>/_10$/.test(k));
+    return dec.length===1?byS.get(dec[0])!:null;};
   // [panel, LONG side per the literature, label]
   const SPECS:[string,"Lo"|"Hi",string][]=[
     ["mom10","Hi","momentum 12-2 winners-losers"],
