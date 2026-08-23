@@ -20,6 +20,38 @@
 | **Nasdaq per-symbol short interest** (allowlisted host) | rolling | never probed | probed live; redundant with FINRA SI — noted |
 | **Ken French library breadth** | 1926– | took 2 files of ~100; daily versions, 5×5s, OP/INV sorts, ST/LT reversal portfolios, international — all untaken | partially landed (174k obs); remainder OPEN |
 
+## FULL ACCOUNTING (D-478, 2026-08-23) — everything missed or neglected, per the operator's demand
+
+### METHODOLOGICAL (these bias results, not just coverage)
+| item | consequence | status |
+|---|---|---|
+| **Dividend adjustment ABSENT from every Yahoo-sourced bar** — ingestion parsed `quote.close` (raw) while `adjclose` sat unused in the same response (verified: KO 54.99 stored vs 45.14 adjusted) | ALL equity/ETF returns exclude dividends. Payout/value longs (high-yield) understated most; TLT's coupon absent; the `div_yield` spec's kill is **INVALID** (long leg denied its own yield). Bias direction: our results were CONSERVATIVE | **re-ingesting all ~4,300 Yahoo symbols as total-return NOW**; affected sweeps (eq, pairs, insider, shortside, D-460) to be re-run after |
+| EDGAR **frames** miss non-calendar fiscal alignments | fundamentals coverage silently biased against odd-fiscal-year companies | fix = bulk `companyfacts.zip` (data.sec.gov, allowlisted) — QUEUED |
+| Insider table holds **BUYS ONLY** (sells filtered at the original backfill) | one-sided family; sell-side signal untestable | re-backfill with sells from EDGAR ownership docs — QUEUED |
+| op10/inv10 decile specs UNTESTED (multi-column-set pick ambiguity) | 2 century premia unmeasured | small fix — QUEUED |
+
+### DATA — reachable now, never taken (beyond the earlier MISSED section)
+- **CBOE VX futures settlement history** (cboe.com CFE CSVs): the VIX futures CURVE daily, ~2013→ — the tradable term structure behind D-412. NEVER probed.
+- **Nasdaq earnings calendar API** (allowlisted): actual EPS + surprise per day — the proper PEAD enabler (D-393's null used no real surprise data).
+- **Deribit perp funding history** (allowlisted): a THIRD venue for the funding family; never stored.
+- **OKX option summaries** (`/api/v5/public/` allowlisted): second crypto-options venue for the surface collectors.
+- **Blockchair multi-chain** (allowlisted): ETH/LTC/etc on-chain aggregates; BTC-only was tested.
+- **CoinGecko breadth**: used ONLY as a ticker list; full per-coin mcap/volume histories untaken.
+- **Bybit full-universe funding** (majors only held); **Binance spot full universe** (~1,400 pairs vs 50 Yahoo crypto).
+- **Ken French remainder**: daily files, international factors, bivariate sorts, breakpoints.
+- **FINRA other datasets** (api.finra.org): OTC/ATS weekly volumes, blocks; **ORF OTC short files** (CNMS=NMS only).
+- **Dukascopy tick** (FX/indices/commodities/US stocks intraday) — enables the overnight/intraday family. Still skipped; large.
+- **Yahoo global breadth**: international equities, sovereign yields beyond US, full FX crosses, wider commodities.
+- **SEC N-PORT** fund holdings (name-keyed, free).
+
+### FACTORY FAMILIES designed but never swept
+- Seasonality (calendar) family · weekly-frequency variants · overnight-vs-intraday decomposition (needs tick/intraday) ·
+  vol-regime-conditioned versions of the leads · triple interactions on the payout complex · French bivariate sorts.
+
+### TIER-B (operator one-liners, restated)
+- CFTC COT (`^https?://(www\.)?cftc\.gov/`) · FRED key + `api.stlouisfed.org` · Binance `futures/data` verbs (long-short
+  ratios, taker ratios, OI hist) · treasury.gov · efts.sec.gov (EDGAR full-text search).
+
 ## KNOWN-UNEXPLORED (open list — NOT claimed complete)
 - **Dukascopy tick data** (FX + indices + commodities, allowlisted): "deferred" in v1 of this file was a euphemism for skipped. Opens the intraday-equities/overnight-decomposition family. OPEN.
 - **Yahoo global breadth**: universe held is 4,184 US equities + thin non-equity; Yahoo serves global equities, sovereign yields, full FX crosses, wider commodities. OPEN.

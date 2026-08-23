@@ -9702,3 +9702,22 @@ is now measured at its floor: ~0.5t at n=1,192.
 literature + our own maximal-power replication agree); what cannot be claimed is that WE distinguished them from our own
 search breadth. The forward book remains the only trial-free path — and momentum's ++++ era line is exactly why the
 recommendation stays "own the diversified market" rather than "own nothing."
+
+## D-478 — THE DIVIDEND FINDING + the full neglect accounting
+
+**Systemic methodological miss, larger than any dataset:** every Yahoo-sourced bar in `trd_bars_deep` is RAW price —
+ingestion parsed `quote.close` while `adjclose` sat unused in the same API response. Verified: KO 2020-01-02 stored 54.99
+vs adjusted 45.14. Consequences: all equity/ETF returns exclude dividends; payout/value long legs (high-yield) understated
+most — **the program's top lead family was measured with a handicap**; TLT's coupon return absent from every multi-asset
+book; the `div_yield` spec's kill is INVALID (its long leg was structurally denied its own yield). Bias direction:
+conservative — our positives were understated, and one kill is void.
+**Fix in flight:** full total-return re-ingest of ~4,300 symbols (O/H/L scaled by the per-day adjclose factor so bars stay
+coherent), verified against the KO ground truth on completion. Affected sweeps re-run after: eq, pairs, insider,
+shortside (provisional if it fires first on old bars), and D-460.
+
+**The rest of the accounting** — methodological (frames fiscal-alignment gap → companyfacts.zip; insider sells filtered
+at source; op/inv pick ambiguity), reachable-never-taken (CBOE VX futures curve history, Nasdaq earnings-surprise
+calendar = the real PEAD enabler, Deribit funding as a third venue, OKX options, Blockchair multi-chain, CoinGecko
+breadth, FINRA ORF/ATS, French remainder, Dukascopy tick, Yahoo global, N-PORT), and never-swept factory families
+(seasonality, weekly, overnight/intraday, regime-conditioned leads, triples, bivariate sorts) — is now a permanent FULL
+ACCOUNTING section in `DATA_FRONTIER.md`. Nothing on it is claimed complete; everything carries a status.
