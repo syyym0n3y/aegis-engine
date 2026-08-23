@@ -201,7 +201,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -1140,6 +1140,154 @@ if(PASS==="all"||PASS==="overnight"){
   }
   await log(`  PASS 19 (overnight) done`);
 }
+
+// ================= PASS 20 — SIZE x MOMENTUM BIVARIATES (D-504b: does momentum live where SIZE can go?) =================
+// The Liquidity Law asks it of every cross-sectional result; here it is asked of the program's strongest premium at
+// century power: momentum (and ST-reversal) INSIDE the large-cap quintile vs inside small caps. 1927->2026.
+if(PASS==="all"||PASS==="szbivar"){
+  const ffB=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
+    for(let off=0;;off+=10000){
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.szmom25:*,factor.like.szstrev25:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
+    return out;})();
+  const byB=new Map<string,Map<string,number>>();
+  for(const r of ffB)(byB.get(r.factor)??byB.set(r.factor,new Map()).get(r.factor)!).set(r.month,+r.ret);
+  await log(`  szbivar: ${ffB.length.toLocaleString()} obs, ${byB.size} series`);
+  const DRAG20=0.0005;
+  const SPECS20:[string,string,string,string][]=[
+    ["bigmom","BIG-cap momentum (winners-losers, ME5)","szmom25:BIG_HiPRIOR","szmom25:BIG_LoPRIOR"],
+    ["smallmom","SMALL-cap momentum (ME1)","szmom25:SMALL_HiPRIOR","szmom25:SMALL_LoPRIOR"],
+    ["bigstrev","BIG-cap ST-reversal (long losers, ME5)","szstrev25:BIG_LoPRIOR","szstrev25:BIG_HiPRIOR"],
+    ["smallstrev","SMALL-cap ST-reversal (ME1)","szstrev25:SMALL_LoPRIOR","szstrev25:SMALL_HiPRIOR"],
+  ];
+  for(const [suf,label,ln,sn] of SPECS20){
+    const key=`szbivar|${suf}|h1`;
+    const L=byB.get(ln),Sh=byB.get(sn);
+    if(!L||!Sh){await record(key,"szbivar",{suf,label},"decile_panels",null,ceil);done++;continue;}
+    const months=[...L.keys()].filter(m=>Sh.has(m)).sort();
+    const rets=months.map(m=>L.get(m)!-Sh.get(m)!-DRAG20);
+    if(rets.length<240){await record(key,"szbivar",{suf,label},"decile_panels",null,ceil);done++;continue;}
+    const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a2,b2));});
+    const g:Gate={n_names:1,n_periods:rets.length,gross_ann:(m+DRAG20)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:true, g_effect:Math.abs(m)>=DRAG20, g_benchmark:m>0, g_liquid:suf.startsWith("big"),
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"szbivar",{suf,label},"decile_panels",g,ceil); done++;
+    await log(`    ${label.padEnd(44)} n=${rets.length}  net ${(m*12*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 20 (szbivar) done`);
+}
+
+// ================= PASS 21 — FX INTRADAY (D-504: Dukascopy hourly, 4 majors 2016->; sessions + h1 momentum) =================
+// Rules: (a) asian_break — sign of the 00:00->07:00 UTC move held 07:00->16:00 (London session); (b) h1_mom / h1_rev —
+// previous hour's sign held (or faded) for one hour. Fees 1bp per position change (majors, tight spread). Portfolio
+// equal-weight across pairs; monthly-aggregated t. Signals use only completed bars (lag structure explicit).
+if(PASS==="all"||PASS==="fxintraday"){
+  const PAIRS21=["EURUSD","GBPUSD","USDJPY","AUDUSD"];
+  const series21=new Map<string,{ts:number;o:number;c:number}[]>();
+  for(const p of PAIRS21){
+    const rows:{ts:number;o:number;c:number}[]=[];
+    for(let off=0;;off+=50000){
+      const p2=await fetch(`${OWNED}/trd_fx_hourly?symbol=eq.${p}&select=ts,o,c&order=ts&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break;
+      for(const r of p2 as {ts:number;o:number;c:number}[]) rows.push({ts:+r.ts,o:+r.o,c:+r.c});
+      if(p2.length<50000)break;
+    }
+    series21.set(p,rows);
+  }
+  await log(`  fxintraday: ${[...series21.values()].reduce((a,x)=>a+x.length,0).toLocaleString()} hourly bars, ${PAIRS21.length} pairs`);
+  const RULES21=["asian_break","h1_mom","h1_rev"] as const;
+  for(const rule of RULES21){
+    const key=`fxintraday|${rule}`;
+    const moA=new Map<string,{r:number;n:number}>();
+    for(const p of PAIRS21){
+      const a=series21.get(p)!; if(a.length<5000)continue;
+      let prevW=0;
+      for(let i=1;i<a.length;i++){
+        const d=new Date(a[i].ts*1000); const hr=d.getUTCHours();
+        let w=0;
+        if(rule==="asian_break"){
+          if(hr>=7&&hr<16){
+            // find the 00:00 open of this UTC day and the 07:00 open (bar preceding position start)
+            let o0=NaN,o7=NaN;
+            for(let q=i;q>=0&&q>i-20;q--){const h2=new Date(a[q].ts*1000);if(h2.getUTCDate()!==d.getUTCDate())break;
+              if(h2.getUTCHours()===0)o0=a[q].o; if(h2.getUTCHours()===7)o7=a[q].o;}
+            if(isFinite(o0)&&isFinite(o7)&&o7!==o0)w=Math.sign(o7-o0);
+          }
+        } else {
+          const rPrev=a[i-1].c/a[i-1].o-1;
+          w=rule==="h1_mom"?Math.sign(rPrev):-Math.sign(rPrev);
+        }
+        const r2=a[i].c/a[i].o-1;
+        const fee=(w!==prevW)?1/1e4:0; prevW=w;
+        const mo=d.toISOString().slice(0,7);
+        const cur=moA.get(mo)??moA.set(mo,{r:0,n:0}).get(mo)!;
+        cur.r+=(w*r2-fee)/PAIRS21.length; cur.n++;
+      }
+    }
+    const mos=[...moA.entries()].sort().filter(x=>x[1].n>200).map(x=>x[1].r);
+    if(mos.length<60){await record(key,"fxintraday",{rule,exec:"completed-bars"},"fx_majors",null,ceil);done++;continue;}
+    const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+    const g:Gate={n_names:PAIRS21.length,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:true /* 4-pair TS-portfolio class, count stated */, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"fxintraday",{rule,exec:"completed-bars"},"fx_majors",g,ceil); done++;
+    await log(`    fxintraday ${rule}: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 21 (fxintraday) done`);
+}
+
+// ================= PASS 22 — DARK-POOL SHARE (D-505: FINRA ATS/OTC weekly, 2022->, published +2-4wk) =================
+// Signal: off-exchange (ATS / OTC internalizer) share of total volume, and its 3-month change. Point-in-time via
+// FINRA's own initialPublishedDate. Short span (~4.7y) stated.
+if(PASS==="all"||PASS==="darkpool"){
+  const ats=new Map<string,{wk:string;pub:string;atsSh:number;otcSh:number}[]>();
+  {const tmp=new Map<string,Map<string,{pub:string;a:number;o:number}>>();
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_ats_weekly?select=symbol,week_start,type,published,shares&order=symbol,week_start&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {symbol:string;week_start:string;type:string;published:string;shares:number}[]){
+      const m2=tmp.get(r.symbol)??tmp.set(r.symbol,new Map()).get(r.symbol)!;
+      const e=m2.get(r.week_start)??m2.set(r.week_start,{pub:r.published,a:0,o:0}).get(r.week_start)!;
+      if(r.published>e.pub)e.pub=r.published;
+      if(r.type==="ATS_W_SMBL")e.a+=+r.shares; else e.o+=+r.shares;
+    }
+    if(p2.length<50000)break;
+  }
+  for(const [sym,m2] of tmp) ats.set(sym,[...m2.entries()].map(([wk,e])=>({wk,pub:e.pub,atsSh:e.a,otcSh:e.o})).sort((x,y)=>x.wk<y.wk?-1:1));}
+  await log(`  darkpool: ${[...ats.values()].reduce((a,x)=>a+x.length,0).toLocaleString()} symbol-weeks, ${ats.size} symbols`);
+  const moEnd22=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const SIGS22=["dp_share","dp_share_chg"] as const;
+  for(const sig of SIGS22) for(const hold of [1,3]) for(const k of [5,10]){
+    const key=`darkpool|${sig}|h${hold}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      const a=ats.get(r.sym); if(!a)continue;
+      const end=moEnd22(r.mo);
+      const vis=a.filter(x=>x.pub<=end);
+      if(vis.length<8)continue;
+      const recent=vis.slice(-4), prior=vis.slice(-13,-4);
+      const shTot=(x:{atsSh:number;otcSh:number})=>x.atsSh+x.otcSh;
+      const rAvg=mean(recent.map(shTot));
+      if(!(r.dv>0)||!(rAvg>0))continue;
+      // dv is monthly DOLLAR volume; off-exchange shares are SHARE counts — the ratio is share-scale-free only through
+      // the CHANGE spec; the LEVEL spec uses shares/dollar-vol as a proxy ordering (stated, rank-based eval).
+      let v:number|null=null;
+      if(sig==="dp_share") v=rAvg/r.dv;
+      else{const pAvg=mean(prior.map(shTot)); v=pAvg>0?rAvg/pAvg-1:null;}
+      if(v===null||!isFinite(v))continue;
+      rows.push({mo:r.mo,fwd:r.fwd,v});
+    }
+    const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
+    await record(key,"darkpool",{sig,hold,k},"equity_all",g,ceil); done++;
+  }
+  await log(`  PASS 22 (darkpool) done: ${SIGS22.length*4} specs`);
+}
+
+
 
 
 

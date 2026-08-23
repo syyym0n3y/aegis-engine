@@ -9884,3 +9884,17 @@ forfeit more premium than the window returns. **Overnight (10 specs):** the styl
 (SPY overnight 10.1%/yr vs intraday 1.9; QQQ 14.1 vs −0.2; GLD 11.1 vs 0.8) and is SUB-FEE by two orders of magnitude
 as a strategy (−36 to −50%/yr at 20bp/day). ^GSPC's inverse split is a stale-synthetic-open artifact — stated, ETF opens
 decide. Ledger: 932 specs, 0 survivors. Lineage: seasonality, overnight-decomposition (killed).
+
+## D-504 (2026-08-23) — Dukascopy unblocked (browser-UA + retry); FX hourly plane building; size-bivariates verdicted
+The "Dukascopy deferred" euphemism is dead: datafeed answers with a browser UA and 503-backoff. m1 BID candles
+(24-byte LZMA records, format decoded and validated against EURUSD 1.10366 on 2024-01-02) aggregate to hourly bars for
+4 majors 2016→ (migration 0080; `scripts/ingest-dukascopy.py`; PASS 21 armed: asian-range London breakout, h1
+momentum/reversal, 1bp/change). **D-504b size×momentum (century):** BIG-cap momentum t 2.81 vs SMALL 4.65 — the pooled
+decile number is real but size-diluted; **small-cap ST-reversal t 11.80 (22.8%/yr, ++++ eras) is the largest t the
+program has ever computed and the machine correctly refused it** — g_liquid false, capacity-bound liquidity-provision
+premium (BIG-cap version: t 1.30). The Liquidity Law demonstrated on 100 years of data.
+
+## D-505 (2026-08-23) — FINRA off-exchange volume unblocked via the API route (CDN 403 stands); ATS ingest running
+api.finra.org serves weeklySummary openly; boundary measured at ~2022-01 (2021 and earlier: 204). Per-symbol ATS
+(dark-pool) and OTC (internalizer) weekly share volume, point-in-time via FINRA's own initialPublishedDate (+2-4wk).
+Migration 0081; `scripts/ingest-ats.py`; PASS 22 armed (share-of-volume level + 3m change). Span ~4.7y — stated.
