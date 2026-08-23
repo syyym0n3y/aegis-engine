@@ -1,6 +1,6 @@
 # STATE — Aegis (live state)
 
-## 2026-08-23 — post-correction leaderboard: 787 specs, 0 survivors; the complex holds at t 2.6-3.46
+## 2026-08-23 — post-correction leaderboard: 799 specs, 0 survivors; the complex holds at t 2.6-3.46
 
 Dividend fix + true-PIT fundamentals re-runs complete (validated by two independent executions producing identical
 results). Top: mom×gross_prof t 3.46 @ 15.6%/yr; value B/M UP to 3.18; buyback band 2.6-3.44; div_yield kill re-earned
