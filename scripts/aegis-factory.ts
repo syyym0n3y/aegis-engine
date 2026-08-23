@@ -1362,6 +1362,76 @@ if(PASS==="all"||PASS==="cotdisagg"){
   await log(`  PASS 24 (cotdisagg) done`);
 }
 
+// ================= PASS 25 — TFF FINANCIAL-FUTURES COHORTS (D-509: dealers / asset managers / leveraged money) =================
+// The financial-side split: leveraged funds (fast money) and asset managers (real money) on FX, equity-index and
+// duration futures, 2010->2026. Same publication lag and book structure as PASS 16/24.
+if(PASS==="all"||PASS==="tff"){
+  type TffRow={report_date:string;oi:number;am_l:number;am_s:number;lm_l:number;lm_s:number};
+  const MAP25:[string,number,string][]=[
+    ["EURUSD=X",1,"099741"],["GBPUSD=X",1,"096742"],["AUDUSD=X",1,"232741"],["NZDUSD=X",1,"112741"],
+    ["JPY=X",-1,"097741"],["CAD=X",-1,"090741"],["CHF=X",-1,"092741"],["MXN=X",-1,"095741"],
+    ["^GSPC",1,"13874A"],["TLT",1,"020601"],
+  ];
+  const iso25=(ts:number)=>new Date(ts*1000).toISOString().slice(0,10);
+  const plus25=(d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()+days);return x.toISOString().slice(0,10);};
+  const tff=new Map<string,{d:string;am:number;lm:number}[]>();
+  for(const [sym,_sg,code] of MAP25){
+    const rows2=await fetch(`${OWNED}/trd_cot_tff?market_code=eq.${code}&select=report_date,oi,am_l,am_s,lm_l,lm_s&order=report_date&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as TffRow[];
+    tff.set(sym,rows2.filter(r=>r.oi>0).map(r=>({d:r.report_date,am:(r.am_l-r.am_s)/r.oi,lm:(r.lm_l-r.lm_s)/r.oi})));
+  }
+  await log(`  tff: ${[...tff.values()].reduce((a,x)=>a+x.length,0).toLocaleString()} weekly reports, ${MAP25.length} markets`);
+  const pct25=(a:{d:string;am:number;lm:number}[],i:number,f:(x:{am:number;lm:number})=>number)=>{
+    if(i<52)return null; const lo=Math.max(0,i-156); const v=f(a[i]); let c=0,n=0;
+    for(let q=lo;q<i;q++){n++;if(f(a[q])<=v)c++;} return n<52?null:c/n;};
+  const SIGS25:[string,(ap:number,lp:number,thH:number,thL:number)=>number][]=[
+    ["follow_levmoney",(_ap,lp,thH,thL)=>lp>=thH?1:lp<=thL?-1:0],
+    ["fade_levmoney",(_ap,lp,thH,thL)=>lp<=thL?1:lp>=thH?-1:0],
+    ["follow_assetmgr",(ap,_lp,thH,thL)=>ap>=thH?1:ap<=thL?-1:0],
+  ];
+  for(const [signame,rule] of SIGS25) for(const [thH,thL] of [[0.8,0.2],[0.9,0.1]] as [number,number][]){
+    const key=`tff|${signame}|${thH}`;
+    const daily=new Map<string,{r:number;n:number}>(); let nMkt=0;
+    for(const [sym,sg] of MAP25.map(m=>[m[0],m[1]] as [string,number])){
+      const a=tff.get(sym)!; if(!a||a.length<60)continue;
+      const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+      const bars=(rb[0]?.bars||[]).filter(b=>b[4]>0); if(bars.length<500)continue;
+      nMkt++;
+      const marks:{from:string;w:number}[]=[];
+      for(let i=0;i<a.length;i++){
+        const ap=pct25(a,i,x=>x.am), lp=pct25(a,i,x=>x.lm);
+        if(ap===null||lp===null)continue;
+        marks.push({from:plus25(a[i].d,6),w:rule(ap,lp,thH,thL)});
+      }
+      if(marks.length<50)continue;
+      let mi=-1,prevW=0;
+      for(let i=0;i<bars.length-1;i++){
+        const d=iso25(bars[i][0]);
+        while(mi+1<marks.length&&marks[mi+1].from<=d)mi++;
+        if(mi<0)continue;
+        const w=marks[mi].w*sg;
+        const r2=bars[i+1][4]/bars[i][4]-1;
+        const fee=(w!==prevW)?10/1e4:0; prevW=w;
+        const cur=daily.get(d)??daily.set(d,{r:0,n:0}).get(d)!;
+        cur.r+=w*r2-fee; cur.n++;
+      }
+    }
+    const moAgg=new Map<string,number>();
+    for(const [d,v] of daily){ if(v.n<3)continue; moAgg.set(d.slice(0,7),(moAgg.get(d.slice(0,7))||0)+v.r/v.n); }
+    const mos=[...moAgg.entries()].sort().map(x=>x[1]);
+    if(mos.length<100){await record(key,"tff",{signame,thH,exec:"pub_lag6d"},"futures_cot",null,ceil);done++;continue;}
+    const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+    const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:nMkt>=8, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"tff",{signame,thH,exec:"pub_lag6d",markets:nMkt},"futures_cot",g,ceil); done++;
+    await log(`    tff ${signame} th${thH}: mkts=${nMkt} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 25 (tff) done`);
+}
+
+
 // ================= PASS 23 — NON-RELIANCE EVENTS (D-506: 8-K Item 4.02 accounting red flag, 2004->) =================
 // Event study via the annprem structure: names filing a 4.02 in the trailing month vs the rest of the panel.
 // Pre-registered literature direction: NEGATIVE forward drift for filers. Filed date = public date (EDGAR same-day).
