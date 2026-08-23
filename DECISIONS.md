@@ -9743,3 +9743,27 @@ direction: wherever the true filing came LATER than +75 days, it kept the guess 
 actual filing. Caught immediately by the per-row lag check (37/75/75 pattern). Re-merged with truth replacing the guess
 in BOTH directions; the guess now survives only where companyfacts has no record. Look-ahead removal makes results more
 conservative, which is the direction corrections here are allowed to move.
+
+## D-486 — THE POST-CORRECTION LEADERBOARD (dividends restored + true filing dates): 787 specs, 0 survivors
+
+The eq/pairs/insider re-runs on total-return bars with true-PIT fundamentals — run TWICE by accident (a zombie chain
+survived its kill), which became validation: two independent full executions produced the identical leaderboard.
+
+| spec | breadth | t before → after | net %/yr |
+|---|---|---|---|
+| **mom12_1 × gross_prof** | 410 | 3.15 → **3.46** | **15.6** |
+| buyback l1/h3 | 440 | 3.25 → 3.44 | 8.9 |
+| buyback l0/h3 | 446 | 3.75 → 3.41 | 8.5 |
+| **value B/M** | 704 | 2.94 → **3.18** | 10.8 |
+| the payout/quality band | 200-700 | 2.6-3.0 | 6-12 |
+
+**The corrections behaved exactly as physics said they should:** value and momentum×profitability rose (dividends restored
+to their long legs); the prior single peak (buyback h3 at 3.75) fell to 3.41 — that extra 0.3t was bias-plus-noise. The
+family now sits in a tighter, more credible 2.6-3.46 band. Composition unchanged: ONE payout/quality/value complex.
+
+**The voided div_yield kill re-earned validly:** with its long leg finally paid its own dividends it moves from noise to
+t 1.79 (shareholder-yield pairs 2.31) — real movement, predicted direction, still far from any bar. Kill stands.
+
+Ledger: **787 specs, 0 survivors**, ceiling 5.337 at N=1,530,8xx. Forward book untouched (registered pre-corrections,
+scores only live months — which will themselves be total-return now). Remaining armed: PEAD (behind earnings), factor
+momentum (behind PEAD).

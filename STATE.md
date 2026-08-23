@@ -1,5 +1,13 @@
 # STATE — Aegis (live state)
 
+## 2026-08-23 — post-correction leaderboard: 787 specs, 0 survivors; the complex holds at t 2.6-3.46
+
+Dividend fix + true-PIT fundamentals re-runs complete (validated by two independent executions producing identical
+results). Top: mom×gross_prof t 3.46 @ 15.6%/yr; value B/M UP to 3.18; buyback band 2.6-3.44; div_yield kill re-earned
+validly at t 1.79. Short side re-earned as properly-powered NULL (D-484, 23M rows). Century: momentum t 4.84 remains the
+honest ceiling-approach record. Armed: PEAD on real surprises (earnings ~50k events ingesting), factor momentum (9
+century factor series). Forward book: 8 leads accruing, untouched by corrections.
+
 ## 2026-08-22 (SWEEP COMPLETE) — 738 specs, 0 survivors, 0 untested; 8 leads registered for trial-free forward confirmation
 
 **D-471/473 THE FACTORY VERDICT** (ceiling 5.337 at N=1,530,750; every spec one trial; the sweep's first catch was its own
