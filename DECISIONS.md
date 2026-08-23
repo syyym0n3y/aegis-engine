@@ -9807,3 +9807,15 @@ confirmation pattern the program has produced: the same premium measured indepen
 touched, with the known null landing where it should. Interpretation bound by ANALYSIS_CONTRACT: cross-geography
 consistency raises the posterior on the momentum family; it does not clear any gate. EM drag likely understated at
 10bp/mo — stated. Lineage: intl-momentum-geography (monitoring).
+
+## D-494 (2026-08-23) — 13F structured sets: institutional ownership 2013q2→present ingested
+53 quarterly zips (~400MB each), INFOTABLE aggregated per (cusip, period): n_mgrs / shares / value_usd. Amendments
+deduped (latest-filed 13F-HR per CIK+period), put/call rows excluded, pre-2023 $thousands normalized to dollars,
+effective_date = last contributing filing. STATED CAVEAT: shared-discretion hierarchy positions can be double-reported,
+so LEVELS overstate; CHANGES are the robust signals. Migration 0077; `scripts/ingest-13f.sh`; factory PASS 14 armed.
+
+## D-495 (2026-08-23) — N-PORT ownership verdict: NULL on available span (structurally short)
+20 specs on 596,886 mapped symbol-months (14,719 symbols): best t +1.64, worst −2.04, no coherent sign structure.
+Breadth adequate (745–1,390 names/rebalance); the binding limit is N-PORT's existence only since 2019-09 (26–81 monthly
+periods). Weak negative tilt on 3-month breadth-change (crowding-consistent), sub-significance. The series accrues
+monthly and the re-test is ~free later. Lineage: nport-ownership (killed).

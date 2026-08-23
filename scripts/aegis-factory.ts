@@ -201,7 +201,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -809,6 +809,64 @@ if(PASS==="all"||PASS==="voltiming"){
   }
   await log(`  PASS 13 (voltiming) done: ${2*VRULES.length} specs`);
 }
+
+// ================= PASS 14 — 13F INSTITUTIONAL OWNERSHIP (D-494: the hedge-fund complement to N-PORT, 2013->) =================
+// trd_13f_ownership: per-(cusip, quarter) aggregates over deduped latest-filed 13F-HRs, put/call rows excluded,
+// pre-2023 $thousands normalized. KNOWN CAVEAT (stated): shared-discretion positions can be reported by more than one
+// manager in a hierarchy, so LEVELS overstate; CHANGES are the robust signal and levels are tested with that caveat.
+// effective_date = last contributing filing (a backtest reads the aggregate only when complete).
+if(PASS==="all"||PASS==="own13f"){
+  const cus2sym14=new Map<string,string>();
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_cusip_map?select=cusip,symbol&order=cusip&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.ok?r.json():Promise.reject(r.status)).catch(e=>{console.log(`WRITE-FAILED cusip_map read ${e}`);return[];});
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {cusip:string;symbol:string}[]) cus2sym14.set(r.cusip,r.symbol);
+    if(p2.length<50000)break;
+  }
+  const own13=new Map<string,{eff:string;nm:number;sh:number;val:number}[]>();
+  let n13=0;
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_13f_ownership?select=cusip,effective_date,n_mgrs,shares,value_usd&order=cusip,report_date&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.ok?r.json():Promise.reject(r.status)).catch(e=>{console.log(`WRITE-FAILED 13f read ${e}`);return[];});
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {cusip:string;effective_date:string;n_mgrs:number;shares:number;value_usd:number}[]){
+      const sym=cus2sym14.get(r.cusip); if(!sym)continue;
+      (own13.get(sym)??own13.set(sym,[]).get(sym)!).push({eff:r.effective_date,nm:+r.n_mgrs,sh:+r.shares,val:+r.value_usd});n13++;}
+    if(p2.length<50000)break;
+  }
+  for(const a of own13.values()) a.sort((x,y)=>x.eff<y.eff?-1:1);
+  await log(`  own13f: ${n13.toLocaleString()} symbol-quarters mapped, ${own13.size} symbols`);
+  const at13=(sym:string,endD:string)=>{
+    const a=own13.get(sym); if(!a)return null;
+    let lo=0,hi=a.length-1,best=-1;
+    while(lo<=hi){const m=(lo+hi)>>1;if(a[m].eff<=endD){best=m;lo=m+1;}else hi=m-1;}
+    return best<0?null:{cur:a[best],prev:best>0?a[best-1]:null};
+  };
+  const minus14=(d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10);};
+  const moEnd14=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const SIGS14=["i13_brd_chg","i13_sh_chg","i13_crowd","i13_val_chg"] as const;
+  for(const sig of SIGS14) for(const hold of [1,3]) for(const k of [5,10]){
+    const key=`own13f|${sig}|h${hold}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      const end=moEnd14(r.mo), hit=at13(r.sym,end);
+      if(!hit||hit.cur.eff<minus14(end,200))continue;          // stale (>~2 quarters) is no signal
+      let v:number|null=null;
+      if(sig==="i13_crowd"){ v=(r.dv&&r.dv>0)?hit.cur.val/(r.dv*63):null; }
+      else{
+        const p=hit.prev; if(!p)continue;
+        if(sig==="i13_brd_chg") v=p.nm>=5?(hit.cur.nm-p.nm)/p.nm:null;
+        else if(sig==="i13_sh_chg") v=p.sh>0?(hit.cur.sh-p.sh)/p.sh:null;
+        else v=p.val>0?(hit.cur.val-p.val)/p.val:null;
+      }
+      if(v===null||!isFinite(v))continue;
+      rows.push({mo:r.mo,fwd:r.fwd,v});
+    }
+    const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
+    await record(key,"own13f",{sig,hold,k},"equity_all",g,ceil); done++;
+  }
+  await log(`  PASS 14 (own13f) done: ${SIGS14.length*4} specs`);
+}
+
 
 
 
