@@ -9828,3 +9828,21 @@ measurement. Lineage: form345-sells (killed).
 ## D-497 (2026-08-23) — PASS 15: earnings announcement premium (Frazzini–Lamont), predicted-calendar, armed
 Long predicted-announcers (last visible report + ~91d lands next month) vs the rest, equal-weight, 2×fee on the
 announcer book. Point-in-time by construction. Chained behind the 13F verdict.
+
+## D-498 (2026-08-23) — THE FIRST "SURVIVORS" WERE PHANTOMS: same-bar execution, and the law that now prevents it
+PASS 13 produced the first 4 specs ever to clear all six gates: VIX9D/VIX>1 risk-off on SPY/QQQ, t 5.53–5.81,
++18–22%/yr excess over buy-and-hold. Pre-registered adversarial checks killed them in one pass:
+
+| | lag-0 (as recorded) | lag-1 (tradable) |
+|---|---|---|
+| SPY excess | +19.5%/yr, t 5.62 | **−11.4%/yr, t −4.10** |
+| QQQ excess | +22.2%/yr, t 5.53 | **−12.8%/yr, t −4.20** |
+| years positive | — | 2 of 16 |
+
+The signal day IS the crash day: VIX9D inverts at the close of the day the market falls, and the backtest "exited" at
+that same close. One day of lag does not attenuate the edge — it REVERSES it (you exit after the drop and miss the
+rebound). This is the daily-bar twin of the maker-fill fallacy (D-445/447): both quote a return conditional on
+information that arrives with the outcome. PASS 3 (all 209 timing specs) shared the flaw; both passes re-run with
+lag-1 as a structural floor (`sig[i-1]` applied to return i→i+1) and every timing row now carries `exec:"lag1"`.
+ENFORCED: `scripts/execution-guard.ts` SAME-BAR RULE — RED on any timing-family row without the stamp; verified RED on
+all 187 live rows (4 marked SURVIVOR) before the re-run. The survivor count returns to 0 the honest way.

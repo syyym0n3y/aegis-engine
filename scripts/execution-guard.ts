@@ -50,6 +50,24 @@ for(const r of subjects){
   console.log(`  ${ok?"PASS":"RED "} ${r.id.padEnd(18)} ${(r.name||"").slice(0,34).padEnd(36)} ${ok?"fill-conditional return stated":"MAKER ASSUMED, no fill-conditional return"}`);
 }
 if(checked===0) console.log(`  (no promoted result depends on passive execution — nothing to certify)`);
-console.log(`\n  ${red===0?`ALL ${checked} MAKER-DEPENDENT ROW(S) STATE A FILL-CONDITIONAL RETURN.`
-  :`${red} ROW(S) RED — a maker fee is a hypothesis about fills, not a cost. Measure the return conditional on filling.`}`);
-if(red>0) Deno.exit(1);
+
+// ---- SAME-BAR EXECUTION rule (D-498) ----
+// A close-derived timing signal executed at that same close is the daily-bar twin of the maker-fill fallacy: the first
+// 4 factory "survivors" (voltiming term9d, t 5.5-5.8, +19%/yr) SIGN-FLIPPED to -11%/yr (t -4.1) with one day of lag —
+// the signal day WAS the crash day. Every timing-family ledger row must therefore carry params.exec = "lag1".
+console.log(`\n==> SAME-BAR RULE — is every timing-family spec evaluated with lagged execution?`);
+const frows=await fetch(`${OWNED}/trd_factory?family=in.(timing,voltiming)&select=spec_key,spec,survivor`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {spec_key:string;spec:Record<string,unknown>|null;survivor:boolean}[];
+if(!Array.isArray(frows)){console.error("!! could not read trd_factory — RED.");Deno.exit(1);}
+let sbRed=0;
+for(const r of frows){
+  if((r.spec as {exec?:string}|null)?.exec!=="lag1"){
+    sbRed++;
+    if(sbRed<=6) console.log(`  RED  ${r.spec_key.padEnd(40)} evaluated without lag-1 execution${r.survivor?"  (AND MARKED SURVIVOR)":""}`);
+  }
+}
+if(sbRed>6) console.log(`  ... and ${sbRed-6} more`);
+console.log(`  ${sbRed===0?`ALL ${frows.length} TIMING ROW(S) CARRY exec=lag1.`:`${sbRed}/${frows.length} timing row(s) RED — same-bar execution is a phantom, re-run with lag-1.`}`);
+
+console.log(`\n  ${red===0&&sbRed===0?`EXECUTION GUARD GREEN.`
+  :`${red+sbRed} ROW(S) RED — a maker fee is a hypothesis about fills; a same-close execution is a hypothesis about time travel.`}`);
+if(red>0||sbRed>0) Deno.exit(1);

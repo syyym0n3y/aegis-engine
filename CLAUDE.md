@@ -172,6 +172,13 @@ fill-conditional return, and correctly EXEMPT for taker-costed results — a neg
 self-test, where "no passive assumption" tripped a naive keyword match).
 
 
+## THE EXECUTION LAW — SAME-BAR COROLLARY (2026-08-23, D-498)
+**A close-derived signal may not act at that same close.** The first 4 specs ever to clear all six gates (VIX9D/VIX
+inversion risk-off, t 5.5–5.8, +19%/yr) SIGN-FLIPPED to −11%/yr (t −4.1, negative 14/16 years) under ONE DAY of
+execution lag — the signal day was the crash day. Lag-1 execution is the structural floor for every bar-close timing
+rule; enforced by the execution guard's SAME-BAR RULE (`exec:"lag1"` stamp required on every timing-family ledger row,
+verified RED on 187 unstamped rows including the 4 false survivors).
+
 ## THE SELECTION LAW (2026-08-22) — binds every result that CHOOSES among components
 **Choosing which components to keep using the full sample, and then reporting an out-of-sample number on that choice, is
 not out of sample. The choice must be made on train only, frozen, and applied forward.**

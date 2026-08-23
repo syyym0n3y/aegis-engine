@@ -307,18 +307,15 @@ if(PASS==="all"||PASS==="timing"){
   for(const tr of [-0.05,-0.08,-0.12]) for(const cd of [5,10,20]) rules.push({name:`cooldown_${Math.abs(tr*100)}_${cd}`,pos:(c,i,h)=>{for(let q=Math.max(0,h.length-cd);q<h.length;q++)if(h[q]<tr)return 0;return 1;}});
   for(const [inst,c] of series) for(const rule of rules){
     const key=`timing|${inst}|${rule.name}`;
-    const strat:number[]=[],bh:number[]=[],hist:number[]=[]; let prev=0,switches=0;
-    for(let i=401;i<c.length-1;i++){
-      const w=rule.pos(c,i,hist);
-      const r=c[i+1]/c[i]-1; hist.push(r);
-      if(w!==prev){switches++;prev=w;}
-      strat.push(w*r-(w!==prev?0:0)-(switches&&w!==prev?0:0)); bh.push(r);
+    // D-498 SAME-BAR EXECUTION FIX: a close-derived signal may not act on that same close. Signals are precomputed
+    // (sig[i] uses closes through i and returns through i-1->i), then the position for return i->i+1 is sig[i-1].
+    const sig:number[]=[]; {const histR:number[]=[];
+      for(let i=0;i<c.length-1;i++){ sig[i]=i>=401?rule.pos(c,i,histR):0; histR.push(c[i+1]/c[i]-1); }}
+    const bh:number[]=[]; let sw=0,prev2=0; const net:number[]=[];
+    for(let i=402;i<c.length-1;i++){
+      const w=sig[i-1]; const r=c[i+1]/c[i]-1;
+      net.push(w*r-(w!==prev2?10/1e4:0)); bh.push(r); if(w!==prev2){sw++;prev2=w;}
     }
-    // fee: 10bp per switch, charged on the switch day
-    let sw=0,prev2=0; const net:number[]=[];
-    {let hist2:number[]=[];
-     for(let i=401;i<c.length-1;i++){const w=rule.pos(c,i,hist2);const r=c[i+1]/c[i]-1;hist2.push(r);
-       net.push(w*r-(w!==prev2?10/1e4:0)); if(w!==prev2){sw++;prev2=w;}}}
     if(net.length<500){await record(key,"timing",{inst,rule:rule.name},"single",null,ceil);done++;continue;}
     const ex=net.map((x,i)=>x-bh[i]);
     const m=mean(ex),sd=sdv(ex)||1e-9,t=m/(sd/Math.sqrt(ex.length));
@@ -330,7 +327,7 @@ if(PASS==="all"||PASS==="timing"){
       g_effect:Math.abs(m)*252>=(sw/ (ex.length/252))*10/1e4,
       g_benchmark:m>0 /* must BEAT buy-and-hold (D-439) */,
       g_liquid:true,g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
-    await record(key,"timing",{inst,rule:rule.name,switches:sw},"single",gate,ceil); done++;
+    await record(key,"timing",{inst,rule:rule.name,switches:sw,exec:"lag1"},"single",gate,ceil); done++;
   }
   await log(`  PASS 3 (timing) done: ${series.size*rules.length} specs`);
 }
@@ -786,11 +783,14 @@ if(PASS==="all"||PASS==="voltiming"){
     const bars=(r[0]?.bars||[]).filter(b=>b[4]>0);
     for(const rule of VRULES){
       const key=`voltiming|${inst}|${rule.name}`;
-      const net:number[]=[],bh:number[]=[]; let prev=1,sw=0;
+      // D-498 SAME-BAR EXECUTION FIX: the signal read at close i-1 sets the position for return i->i+1.
+      const net:number[]=[],bh:number[]=[]; let prev=1,sw=0,wPend:number|null=null;
       for(let i=0;i<bars.length-1;i++){
+        const w=wPend;                                           // yesterday's signal
         const d=iso(bars[i][0]); const off=rule.off(d,zof);
-        if(off===null)continue;                                  // indicator not yet defined that day
-        const w=off?0:1; const r2=bars[i+1][4]/bars[i][4]-1;
+        if(off!==null) wPend=off?0:1;                            // today's signal, for tomorrow
+        if(w===null)continue;                                    // no signal yet
+        const r2=bars[i+1][4]/bars[i][4]-1;
         net.push(w*r2-(w!==prev?10/1e4:0)); bh.push(r2); if(w!==prev){sw++;prev=w;}
       }
       if(net.length<500){await record(key,"voltiming",{inst,rule:rule.name},"single",null,ceil);done++;continue;}
@@ -803,7 +803,7 @@ if(PASS==="all"||PASS==="voltiming"){
         g_breadth:true, g_effect:Math.abs(m)*252>=(sw/(ex.length/252))*10/1e4,
         g_benchmark:m>0 /* must beat buy-and-hold */, g_liquid:true,
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-      await record(key,"voltiming",{inst,rule:rule.name,switches:sw},"single",gate,ceil); done++;
+      await record(key,"voltiming",{inst,rule:rule.name,switches:sw,exec:"lag1"},"single",gate,ceil); done++;
       await log(`    ${inst} ${rule.name.padEnd(12)} n=${ex.length}  excess ${(m*252*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  sw=${sw}`);
     }
   }
