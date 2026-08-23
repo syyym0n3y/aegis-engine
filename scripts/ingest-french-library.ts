@@ -47,7 +47,10 @@ async function parsePanel(file:string,prefix:string):Promise<Row[]>{
   return rows;
 }
 let total=0;
-for(const [file,prefix] of [["49_Industry_Portfolios_CSV.zip","ind49"],["100_Portfolios_10x10_CSV.zip","szbm100"]] as [string,string][]){
+for(const [file,prefix] of [["49_Industry_Portfolios_CSV.zip","ind49"],["100_Portfolios_10x10_CSV.zip","szbm100"],
+  ["25_Portfolios_5x5_CSV.zip","szbm25"],["Portfolios_Formed_on_OP_CSV.zip","op10"],
+  ["Portfolios_Formed_on_INV_CSV.zip","inv10"],["10_Portfolios_Prior_12_2_CSV.zip","mom10"],
+  ["10_Portfolios_Prior_1_0_CSV.zip","strev10"],["10_Portfolios_Prior_60_13_CSV.zip","ltrev10"]] as [string,string][]){
   const rows=await parsePanel(file,prefix);
   console.log(`  ${file}: ${rows.length.toLocaleString()} obs, ${new Set(rows.map(r=>r.factor)).size} series, ${rows[0]?.month} .. ${rows[rows.length-1]?.month}`);
   for(let i=0;i<rows.length;i+=3000){
@@ -57,7 +60,9 @@ for(const [file,prefix] of [["49_Industry_Portfolios_CSV.zip","ind49"],["100_Por
   }
   total+=rows.length; await sleep(500);
 }
-const back=await fetch(`${OWNED}/trd_ff_factors?select=factor&or=(factor.like.ind49:*,factor.like.szbm100:*)&limit=1`,{headers:{...hdr,Prefer:"count=exact"}});
+// VERIFIER BUG (caught by its own false alarm): the landing count filtered only the ORIGINAL two prefixes, so adding
+// panels made a successful load report "writes did NOT land". The verifier must grow with what it verifies.
+const back=await fetch(`${OWNED}/trd_ff_factors?select=factor&factor=like.*:*&limit=1`,{headers:{...hdr,Prefer:"count=exact"}});
 const cnt=+((back.headers.get("content-range")||"").split("/")[1]||0);
 console.log(`==> ${total.toLocaleString()} obs sent; DB re-read confirms ${cnt.toLocaleString()} panel rows`);
 if(cnt<total*0.95){console.error("!! writes did NOT land");Deno.exit(1);}
