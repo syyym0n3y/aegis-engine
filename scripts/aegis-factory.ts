@@ -201,7 +201,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -1286,6 +1286,126 @@ if(PASS==="all"||PASS==="darkpool"){
   }
   await log(`  PASS 22 (darkpool) done: ${SIGS22.length*4} specs`);
 }
+
+// ================= PASS 24 — DISAGGREGATED COT (D-507: producer vs managed-money, the cohort split) =================
+// Same 26-market book and publication lag as PASS 16, but with the informed-cohort split the legacy report pools:
+// producers/merchants (hedgers proper) and managed money (CTAs/trend). 2006->2026 weekly.
+if(PASS==="all"||PASS==="cotdisagg"){
+  type DgRow={report_date:string;oi:number;pm_l:number;pm_s:number;mm_l:number;mm_s:number};
+  const MAP24:[string,number,string[]][]=[
+    ["CL=F",1,["067651"]],["NG=F",1,["023651"]],["GC=F",1,["088691"]],["SI=F",1,["084691"]],
+    ["HG=F",1,["085692"]],["PL=F",1,["076651"]],["PA=F",1,["075651"]],
+    ["ZC=F",1,["002602"]],["ZW=F",1,["001602"]],["ZS=F",1,["005602"]],
+    ["KC=F",1,["083731"]],["SB=F",1,["080732"]],["CC=F",1,["073732"]],["CT=F",1,["033661"]],
+    ["LE=F",1,["057642"]],["HE=F",1,["054642"]],
+    ["EURUSD=X",1,["099741"]],["GBPUSD=X",1,["096742"]],["AUDUSD=X",1,["232741"]],["NZDUSD=X",1,["112741"]],
+    ["JPY=X",-1,["097741"]],["CAD=X",-1,["090741"]],["CHF=X",-1,["092741"]],["MXN=X",-1,["095741"]],
+  ];
+  const iso24=(ts:number)=>new Date(ts*1000).toISOString().slice(0,10);
+  const plus24=(d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()+days);return x.toISOString().slice(0,10);};
+  const dg=new Map<string,{d:string;pm:number;mm:number}[]>();
+  for(const [sym,_sg,codes] of MAP24){
+    const rows2=await fetch(`${OWNED}/trd_cot_disagg?market_code=eq.${codes[0]}&select=report_date,oi,pm_l,pm_s,mm_l,mm_s&order=report_date&limit=3000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as DgRow[];
+    dg.set(sym,rows2.filter(r=>r.oi>0).map(r=>({d:r.report_date,pm:(r.pm_l-r.pm_s)/r.oi,mm:(r.mm_l-r.mm_s)/r.oi})));
+  }
+  await log(`  cotdisagg: ${[...dg.values()].reduce((a,x)=>a+x.length,0).toLocaleString()} weekly reports, ${MAP24.length} markets`);
+  const pct24=(a:{d:string;pm:number;mm:number}[],i:number,f:(x:{pm:number;mm:number})=>number)=>{
+    if(i<52)return null; const lo=Math.max(0,i-156); const v=f(a[i]); let c=0,n=0;
+    for(let q=lo;q<i;q++){n++;if(f(a[q])<=v)c++;} return n<52?null:c/n;};
+  const SIGS24:[string,(pp:number,mp:number,thH:number,thL:number)=>number][]=[
+    ["follow_producer",(pp,_mp,thH,thL)=>pp>=thH?1:pp<=thL?-1:0],
+    ["fade_mmoney",(_pp,mp,thH,thL)=>mp<=thL?1:mp>=thH?-1:0],
+    ["follow_mmoney",(_pp,mp,thH,thL)=>mp>=thH?1:mp<=thL?-1:0],
+  ];
+  for(const [signame,rule] of SIGS24) for(const [thH,thL] of [[0.8,0.2],[0.9,0.1]] as [number,number][]){
+    const key=`cotdisagg|${signame}|${thH}`;
+    const daily=new Map<string,{r:number;n:number}>(); let nMkt=0;
+    for(const [sym,sg] of MAP24.map(m=>[m[0],m[1]] as [string,number])){
+      const a=dg.get(sym)!; if(!a||a.length<60)continue;
+      const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+      const bars=(rb[0]?.bars||[]).filter(b=>b[4]>0); if(bars.length<500)continue;
+      nMkt++;
+      const marks:{from:string;w:number}[]=[];
+      for(let i=0;i<a.length;i++){
+        const pp=pct24(a,i,x=>x.pm), mp=pct24(a,i,x=>x.mm);
+        if(pp===null||mp===null)continue;
+        marks.push({from:plus24(a[i].d,6),w:rule(pp,mp,thH,thL)});
+      }
+      if(marks.length<50)continue;
+      let mi=-1,prevW=0;
+      for(let i=0;i<bars.length-1;i++){
+        const d=iso24(bars[i][0]);
+        while(mi+1<marks.length&&marks[mi+1].from<=d)mi++;
+        if(mi<0)continue;
+        const w=marks[mi].w*sg;
+        const r2=bars[i+1][4]/bars[i][4]-1;
+        const fee=(w!==prevW)?10/1e4:0; prevW=w;
+        const cur=daily.get(d)??daily.set(d,{r:0,n:0}).get(d)!;
+        cur.r+=w*r2-fee; cur.n++;
+      }
+    }
+    const moAgg=new Map<string,number>();
+    for(const [d,v] of daily){ if(v.n<5)continue; moAgg.set(d.slice(0,7),(moAgg.get(d.slice(0,7))||0)+v.r/v.n); }
+    const mos=[...moAgg.entries()].sort().map(x=>x[1]);
+    if(mos.length<120){await record(key,"cotdisagg",{signame,thH,exec:"pub_lag6d"},"futures_cot",null,ceil);done++;continue;}
+    const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+    const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:nMkt>=20, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"cotdisagg",{signame,thH,exec:"pub_lag6d",markets:nMkt},"futures_cot",g,ceil); done++;
+    await log(`    cotdisagg ${signame} th${thH}: mkts=${nMkt} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 24 (cotdisagg) done`);
+}
+
+// ================= PASS 23 — NON-RELIANCE EVENTS (D-506: 8-K Item 4.02 accounting red flag, 2004->) =================
+// Event study via the annprem structure: names filing a 4.02 in the trailing month vs the rest of the panel.
+// Pre-registered literature direction: NEGATIVE forward drift for filers. Filed date = public date (EDGAR same-day).
+if(PASS==="all"||PASS==="nonreliance"){
+  const ev4=new Map<string,string[]>(); let nE4=0;
+  for(let off=0;;off+=10000){
+    const p2=await fetch(`${OWNED}/trd_events_402?select=symbol,filed&order=filed&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {symbol:string;filed:string}[]){(ev4.get(r.symbol)??ev4.set(r.symbol,[]).get(r.symbol)!).push(r.filed);nE4++;}
+    if(p2.length<10000)break;
+  }
+  await log(`  nonreliance: ${nE4.toLocaleString()} 4.02 events, ${ev4.size} symbols`);
+  const moEnd23=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const minus23=(d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10);};
+  for(const look of [35,95]){
+    const key=`nonreliance|look${look}|h1`;
+    const byMo=new Map<string,{flag:number[];rest:number[]}>();
+    for(const r of eqPanel){
+      const end=moEnd23(r.mo), a=ev4.get(r.sym);
+      const flagged=a?a.some(d=>d<=end&&d>=minus23(end,look)):false;
+      const b=byMo.get(r.mo)??byMo.set(r.mo,{flag:[],rest:[]}).get(r.mo)!;
+      (flagged?b.flag:b.rest).push(r.fwd);
+    }
+    const diffs:number[]=[]; let sumF=0,nmo=0;
+    for(const mo of [...byMo.keys()].sort()){
+      const b=byMo.get(mo)!;
+      if(b.flag.length<5||b.rest.length<100)continue;
+      diffs.push(mean(b.flag)-mean(b.rest)-2*FEE_EQ/1e4);
+      sumF+=b.flag.length; nmo++;
+    }
+    if(diffs.length<60){await record(key,"nonreliance",{look},"equity_all",null,ceil);done++;continue;}
+    const m=mean(diffs),sd=sdv(diffs)||1e-9,t=m/(sd/Math.sqrt(diffs.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of diffs){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*diffs.length/4),b2=Math.floor((e+1)*diffs.length/4);return mean(diffs.slice(a2,b2));});
+    const g:Gate={n_names:Math.round(sumF/Math.max(1,nmo)),n_periods:diffs.length,gross_ann:(m+2*FEE_EQ/1e4)*12,net_ann:m*12,
+      sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:false /* few filers per month by nature — event class, count stated */,
+      g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m<0 /* pre-registered NEGATIVE drift for filers */, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)).length>=3, eras:q4};
+    await record(key,"nonreliance",{look},"equity_all",g,ceil); done++;
+    await log(`    nonreliance look${look}: n=${diffs.length}mo avg-flagged ${Math.round(sumF/Math.max(1,nmo))} drift ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 23 (nonreliance) done`);
+}
+
+
 
 
 
