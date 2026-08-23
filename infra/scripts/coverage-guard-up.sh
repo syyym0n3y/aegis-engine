@@ -65,5 +65,7 @@ while true; do
   # US OPTIONS SURFACE (D-469): CBOE free delayed chains — ATM IV / skew / term / P/C-OI for SPX+majors. Same start-the-
   # clock rationale as the Deribit collector; no free US chain history exists either.
   deno run --allow-net --allow-env ../scripts/collect-us-options.ts || true
+  # VX CURVE COLLECTOR (D-487): settlement endpoint serves only ~current-year, so the curve accrues from 2026-08-23.
+  deno run --allow-net --allow-env ../scripts/collect-vx-curve.ts || true
   sleep 86400
 done

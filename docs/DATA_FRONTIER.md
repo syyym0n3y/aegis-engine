@@ -31,12 +31,12 @@
 | op10/inv10 decile specs UNTESTED (multi-column-set pick ambiguity) | 2 century premia unmeasured | small fix — QUEUED |
 
 ### DATA — reachable now, never taken (beyond the earlier MISSED section)
-- **CBOE VX futures settlement history** (cboe.com CFE CSVs): the VIX futures CURVE daily, ~2013→ — the tradable term structure behind D-412. NEVER probed.
+- **CBOE VX futures curve**: settlement endpoint FOUND (settlement/csv?dt=) but serves only ~current-year (measured: 2026-01 partial, 2025 empty). **Daily collector running since 2026-08-23**; deep history remains OPEN.
 - **Nasdaq earnings calendar API** (allowlisted): actual EPS + surprise per day — the proper PEAD enabler (D-393's null used no real surprise data).
 - **Deribit perp funding history** (allowlisted): a THIRD venue for the funding family; never stored.
 - **OKX option summaries** (`/api/v5/public/` allowlisted): second crypto-options venue for the surface collectors.
 - **Blockchair multi-chain** (allowlisted): ETH/LTC/etc on-chain aggregates; BTC-only was tested.
-- **CoinGecko breadth**: used ONLY as a ticker list; full per-coin mcap/volume histories untaken.
+- **CoinGecko breadth**: free tier now caps market_chart at 365 days (measured; days=max returns empty). 1y-only histories = low value; OPEN pending a source with depth.
 - **Bybit full-universe funding** (majors only held); **Binance spot full universe** (~1,400 pairs vs 50 Yahoo crypto).
 - **Ken French remainder**: daily files, international factors, bivariate sorts, breakpoints.
 - **FINRA other datasets** (api.finra.org): OTC/ATS weekly volumes, blocks; **ORF OTC short files** (CNMS=NMS only).
