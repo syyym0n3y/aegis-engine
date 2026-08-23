@@ -9956,5 +9956,5 @@ operator-level tradeoff, recorded not decided). Board: **981 specs / 0 survivors
 ++++, net of 20bp/wk). The proactive lag-1 test shows ~40% was same-close artifact: the effect ATTENUATES (not flips —
 the structure is real, unlike the VIX phantom) to **t 1.67 at 9.0%/yr in the tradable liquid form** (++-+), below every
 threshold, before borrow and impact. Weekly momentum is strongly negative (reversal owns the horizon). **Heston-Sadka
-same-month: NULL** (pooled 0.90, liquid 0.15). Board: **1,005 specs / 0 survivors.** Lineage: weekly-crosssection,
+same-month: NULL** (pooled 0.90, liquid 0.15). Board: **1,001 specs / 0 survivors** (DB-counted). Lineage: weekly-crosssection,
 heston-sadka (killed).
