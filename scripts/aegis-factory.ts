@@ -514,6 +514,82 @@ if(PASS==="all"||PASS==="pead"){
   }
   await log(`  PASS 8 (pead) done`);
 }
+
+// ================= PASS 9 — FACTOR MOMENTUM (D-485: momentum ACROSS the factor library; Ehsani-Linnainmaa) =================
+// A documented, distinct family never tested here: rank the FACTORS by their own trailing 12-1 return, hold the winners
+// short the losers. Factor set constructed from held century panels: the five decile spreads (mom, st-rev, lt-rev, op,
+// inv — literature sides) + SMB/HML-like spreads from the 10x10 grid + four 5x5 corner spreads. ~11 factor series,
+// ~1,100 independent months. 5bp/month drag as elsewhere in the century family; breadth-exempt by class (portfolios).
+if(PASS==="all"||PASS==="factmom"){
+  const ff3=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
+    for(let off=0;;off+=10000){
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.mom10:*,factor.like.strev10:*,factor.like.ltrev10:*,factor.like.op10:*,factor.like.inv10:*,factor.like.szbm100:*)&select=month,factor,ret&order=month&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
+    return out;})();
+  const byS2=new Map<string,Map<string,number>>();
+  for(const r of ff3)(byS2.get(r.factor)??byS2.set(r.factor,new Map()).get(r.factor)!).set(r.month,+r.ret);
+  const get=(name:string)=>byS2.get(name);
+  const one=(pref:string,side:string)=>{const c=[...byS2.keys()].filter(k=>k.startsWith(pref+":")&&k.split(":")[1].startsWith(side)&&(/_10$/.test(k)||!/_20$/.test(k)));return c.length?byS2.get(c.sort()[0])!:null;};
+  const spread=(a:Map<string,number>|null,b:Map<string,number>|null)=>{if(!a||!b)return null;
+    const m=new Map<string,number>(); for(const [mo,v] of a){const w=b.get(mo); if(w!=null)m.set(mo,v-w);} return m;};
+  // grid helpers: szbm100 names like ME1_BM1 .. ME10_BM10 (small->big, low->high BM)
+  const grid=(me:number[],bm:number[])=>{const out=new Map<string,number>();const keys=[...byS2.keys()].filter(k=>k.startsWith("szbm100:"));
+    const sel=keys.filter(k=>{const m=/ME(\d+)_?BM?(\d+)|SMALL|BIG|LoBM|HiBM/i.exec(k.split(":")[1]);return false;}); void sel;
+    // name format from French: e.g. "SMALL_LoBM","ME1_BM2",... robust approach: parse ME i and BM j numerically where possible
+    const parsed=keys.map(k=>{const n=k.split(":")[1];
+      let i=0,j=0;
+      const m1=/^ME(\d+)_BM(\d+)$/.exec(n); if(m1){i=+m1[1];j=+m1[2];}
+      else if(/^SMALL_LoBM$/i.test(n)){i=1;j=1;} else if(/^SMALL_HiBM$/i.test(n)){i=1;j=10;}
+      else if(/^BIG_LoBM$/i.test(n)){i=10;j=1;} else if(/^BIG_HiBM$/i.test(n)){i=10;j=10;}
+      return {k,i,j};}).filter(x=>x.i>0);
+    const pick2=parsed.filter(x=>me.includes(x.i)&&bm.includes(x.j)).map(x=>byS2.get(x.k)!);
+    if(!pick2.length)return null;
+    const months3=[...pick2[0].keys()];
+    for(const mo of months3){let s2=0,n2=0;for(const m2 of pick2){const v=m2.get(mo);if(v!=null){s2+=v;n2++;}}
+      if(n2===pick2.length)out.set(mo,s2/n2);}
+    return out;};
+  const FACTORS:[string,Map<string,number>|null][]=[
+    ["MOM",spread(one("mom10","Hi"),one("mom10","Lo"))],
+    ["STREV",spread(one("strev10","Lo"),one("strev10","Hi"))],
+    ["LTREV",spread(one("ltrev10","Lo"),one("ltrev10","Hi"))],
+    ["OP",spread(one("op10","Hi"),one("op10","Lo"))],
+    ["INV",spread(one("inv10","Lo"),one("inv10","Hi"))],
+    ["SMB",spread(grid([1,2,3],[1,2,3,4,5,6,7,8,9,10]),grid([8,9,10],[1,2,3,4,5,6,7,8,9,10]))],
+    ["HML",spread(grid([1,2,3,4,5,6,7,8,9,10],[8,9,10]),grid([1,2,3,4,5,6,7,8,9,10],[1,2,3]))],
+    ["SV_CORNER",spread(grid([1,2],[9,10]),grid([1,2],[1,2]))],
+    ["BG_CORNER",spread(grid([9,10],[9,10]),grid([9,10],[1,2]))],
+  ];
+  const live=FACTORS.filter(([,m])=>m&&m.size>600) as [string,Map<string,number>][];
+  await log(`  factmom: ${live.length} factor series constructed (${live.map(([n])=>n).join(",")})`);
+  const allMo=[...new Set(live.flatMap(([,m])=>[...m.keys()]))].sort();
+  for(const K of [2,3]) for(const form of [12,6]){
+    const key=`factmom|f${live.length}|form${form}|top${K}|h1`;
+    const rets:number[]=[];
+    for(let i=form+1;i<allMo.length;i++){
+      const scored:{n:string;mom:number;nxt:number}[]=[];
+      for(const [n,m] of live){
+        let acc=1,ok=true;
+        for(let q=i-form;q<i;q++){const v=m.get(allMo[q]); if(v==null){ok=false;break;} acc*=1+v;}
+        const nxt=m.get(allMo[i]); if(!ok||nxt==null)continue;
+        scored.push({n,mom:acc,nxt});
+      }
+      if(scored.length<6)continue;
+      scored.sort((a,b)=>b.mom-a.mom);
+      const top=scored.slice(0,K), bot=scored.slice(-K);
+      rets.push(mean(top.map(x=>x.nxt))-mean(bot.map(x=>x.nxt))-0.0005);
+    }
+    if(rets.length<300){await record(key,"factmom",{K,form},"factor_library",null,ceil);done++;continue;}
+    const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
+    const g:Gate={n_names:live.length,n_periods:rets.length,gross_ann:(m+0.0005)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:true,g_effect:Math.abs(m)>=0.0005,g_benchmark:m>0,g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
+    await record(key,"factmom",{K,form,factors:live.map(([n])=>n)},"factor_library",g,ceil);done++;
+    await log(`    factmom form${form} top${K}: n=${rets.length} net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 9 (factmom) done`);
+}
 // ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================
 // The one venue where a portfolio-t can clear a 5.3 ceiling honestly: ~1,200 INDEPENDENT months. Signals are the
 // documented classics, applied cross-sectionally ACROSS portfolios (industry momentum, grid momentum/reversal). These
