@@ -201,7 +201,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -866,6 +866,64 @@ if(PASS==="all"||PASS==="own13f"){
   }
   await log(`  PASS 14 (own13f) done: ${SIGS14.length*4} specs`);
 }
+
+// ================= PASS 15 — EARNINGS ANNOUNCEMENT PREMIUM (D-497: Frazzini-Lamont; calendar known ex-ante) =================
+// Documented anomaly never tested here: stocks earn more in months with a scheduled earnings announcement. The signal is
+// point-in-time by construction — the PREDICTED next announcement (last visible report + ~91d) uses only past dates.
+// Portfolio: long predicted-announcers next month vs the rest of the panel, equal-weight, monthly rebalance at one
+// round-trip fee on the announcer book.
+if(PASS==="all"||PASS==="annprem"){
+  const ann=new Map<string,string[]>();
+  let nA=0;
+  for(let off=0;;off+=10000){
+    const p2=await fetch(`${OWNED}/trd_earnings?select=symbol,report_date&order=report_date&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {symbol:string;report_date:string}[]){(ann.get(r.symbol)??ann.set(r.symbol,[]).get(r.symbol)!).push(r.report_date);nA++;}
+    if(p2.length<10000)break;
+  }
+  await log(`  annprem: ${nA.toLocaleString()} announcement dates, ${ann.size} symbols`);
+  const moEnd15=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const nextMo=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);return d.toISOString().slice(0,7);};
+  const byMo=new Map<string,{flag:number[];rest:number[]}>();
+  for(const r of eqPanel){
+    const a=ann.get(r.sym); const end=moEnd15(r.mo);
+    if(!a)continue;
+    // last announcement visible at month end (dates sorted)
+    let lo=0,hi=a.length-1,best=-1;
+    while(lo<=hi){const m=(lo+hi)>>1;if(a[m]<=end){best=m;lo=m+1;}else hi=m-1;}
+    if(best<0)continue;
+    const last=a[best];
+    const ageDays=(Date.parse(end)-Date.parse(last))/86400000;
+    if(ageDays>200)continue;                                     // no live cadence
+    const pred=new Date(Date.parse(last)+91*86400000).toISOString().slice(0,7);
+    const flagged=pred===nextMo(r.mo)?1:0;
+    const b=byMo.get(r.mo)??byMo.set(r.mo,{flag:[],rest:[]}).get(r.mo)!;
+    (flagged?b.flag:b.rest).push(r.fwd);
+  }
+  const months15=[...byMo.keys()].sort();
+  const diffs:number[]=[]; let sumFlag=0,nmo=0;
+  for(const mo of months15){
+    const b=byMo.get(mo)!;
+    if(b.flag.length<20||b.rest.length<50)continue;              // need real breadth both sides
+    diffs.push(mean(b.flag)-mean(b.rest)-2*FEE_EQ/1e4);          // full turnover of the announcer book monthly
+    sumFlag+=b.flag.length; nmo++;
+  }
+  const key=`annprem|pred91|h1`;
+  if(diffs.length<60){await record(key,"annprem",{},"equity_all",null,ceil);done++;}
+  else{
+    const m=mean(diffs),sd=sdv(diffs)||1e-9,t=m/(sd/Math.sqrt(diffs.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of diffs){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*diffs.length/4),b2=Math.floor((e+1)*diffs.length/4);return mean(diffs.slice(a,b2));});
+    const g:Gate={n_names:Math.round(sumFlag/Math.max(1,nmo)),n_periods:diffs.length,gross_ann:(m+2*FEE_EQ/1e4)*12,net_ann:m*12,
+      sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:Math.round(sumFlag/Math.max(1,nmo))>=50, g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m>0, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"annprem",{},"equity_all",g,ceil); done++;
+    await log(`    annprem pred91: n=${diffs.length}mo  avg announcers ${Math.round(sumFlag/Math.max(1,nmo))}  net ${(m*12*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 15 (annprem) done`);
+}
+
 
 
 

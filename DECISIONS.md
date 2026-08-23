@@ -9819,3 +9819,12 @@ so LEVELS overstate; CHANGES are the robust signals. Migration 0077; `scripts/in
 Breadth adequate (745–1,390 names/rebalance); the binding limit is N-PORT's existence only since 2019-09 (26–81 monthly
 periods). Weak negative tilt on 3-month breadth-change (crowding-consistent), sub-significance. The series accrues
 monthly and the re-test is ~free later. Lineage: nport-ownership (killed).
+
+## D-496 (2026-08-23) — Insider SELLS verdict: properly-powered NULL over 20.5 years — open-list item closed with a measurement
+PASS 11 on the full Form 3/4/5 ledger (880,977 symbol-days, 247 monthly periods, 525–635 names/rebalance): best |t| 1.18
+(6m sell intensity), buys t 0.32, net t −0.43. Sells are diversification noise — the literature prior is now OUR
+measurement. Lineage: form345-sells (killed).
+
+## D-497 (2026-08-23) — PASS 15: earnings announcement premium (Frazzini–Lamont), predicted-calendar, armed
+Long predicted-announcers (last visible report + ~91d lands next month) vs the rest, equal-weight, 2×fee on the
+announcer book. Point-in-time by construction. Chained behind the 13F verdict.
