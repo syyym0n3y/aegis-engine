@@ -60,7 +60,8 @@
 - **Yahoo global breadth**: universe held is 4,184 US equities + thin non-equity; Yahoo serves global equities, sovereign yields, full FX crosses, wider commodities. OPEN.
 - **SEC N-PORT**: DONE 2026-08-23 — structured sets ingested (1.42M cusip-months), verdict NULL (D-495).
 - **FINRA ATS/OTC off-exchange weekly**: UNBLOCKED via api.finra.org (CDN 403 stands); ~2022→ boundary measured; PASS 22 armed (D-505).
-- **EDGAR full-text events**: 8-K Item 4.02 ingested 2004→ (PASS 23 armed, D-506). Other item codes (5.02 CEO departures etc.) — NEWLY IDENTIFIED, OPEN.
+- **EDGAR full-text events**: 4.02 non-reliance (underpowered null), 4.01 auditor change (directional −13.8%/yr t −2.08, thin), 2.05 restructuring (prereg MISS, +10.7%/yr t 2.03 opposite sign), 5.02+resignation (crawling 2026-08-23). Other codes remain OPEN.
+- **FINRA TRACE fixed income** (corporatesAndAgenciesCapped, corporateMarketSentiment): API exists but 401s without credentials — free registration at developer.finra.org, an OPERATOR one-liner. treasuryWeeklyAggregates 204s on the public tier.
 - **Binance futures sentiment**: UNBLOCKED; ~30d depth measured; daily collector running since 2026-08-23.
 - **Held-but-never-swept — CLOSED 2026-08-23**: `trd_insider` superseded by the Form 345 structured sets (both sides verdicted NULL, D-490/496); `ftd_stress` was in fact swept broadly (30 specs, 98 months, 989 names, best t 1.48 solo / 2.39 paired, liquid tercile 0.11) and its input coverage is now VERIFIED complete (trd_ftd: 99 continuous months 2018-01→2026-07, 39,316 symbols — no holes); seasonality (D-503, 21 specs all negative vs holding), overnight (D-503, fact confirmed / SUB-FEE), weekly COT (all three cohort systems, D-501/507/509) all swept.
 

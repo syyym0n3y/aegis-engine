@@ -194,14 +194,14 @@ async function record(spec_key:string,family:string,spec:unknown,universe:string
   if(!r||!r.ok)await log(`WRITE-FAILED trd_factory ${r?r.status:"net"} ${spec_key}`);
   else written++;
 }
-// ---------- main ----------
+// ---------- main (PASS 27 gbmexport appended after passes) ----------
 const t0=Date.now();
 await log("==> AEGIS FACTORY — building panels");
 const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -1488,13 +1488,26 @@ if(PASS==="all"||PASS==="xasset"){
   await log(`  PASS 26 (xasset) done`);
 }
 
+// ================= PASS 27 — EQ PANEL EXPORT for the non-linear harness (D-513) =================
+// Dumps the factory's own panel (single source of truth) so equity-nonlinear.ts trains on EXACTLY the audited features.
+if(PASS==="gbmexport"){
+  const cols=SIGNALS;
+  const out:string[]=[`mo\tsym\tfwd\tdv\t${cols.join("\t")}`];
+  for(const r of eqPanel){
+    out.push(`${r.mo}\t${r.sym}\t${r.fwd}\t${r.dv}\t${cols.map(c2=>{const v=(r.sig as Record<string,number|null>)[c2];return v==null?"":String(v);}).join("\t")}`);
+  }
+  await Deno.writeTextFile("/Users/ona/aegis-data/eqpanel.tsv",out.join("\n"));
+  await log(`  gbmexport: ${eqPanel.length.toLocaleString()} rows x ${cols.length} features -> /Users/ona/aegis-data/eqpanel.tsv`);
+}
+
+
 
 
 // ================= PASS 23 — NON-RELIANCE EVENTS (D-506: 8-K Item 4.02 accounting red flag, 2004->) =================
 // Event study via the annprem structure: names filing a 4.02 in the trailing month vs the rest of the panel.
 // Pre-registered literature direction: NEGATIVE forward drift for filers. Filed date = public date (EDGAR same-day).
 if(PASS==="all"||PASS==="nonreliance"){
- for(const [tbl,tag] of [["trd_events_402","402"],["trd_events_401","401"],["trd_events_205","205"]] as [string,string][]){
+ for(const [tbl,tag] of [["trd_events_402","402"],["trd_events_401","401"],["trd_events_205","205"],["trd_events_502r","502r"]] as [string,string][]){
   const ev4=new Map<string,string[]>(); let nE4=0;
   for(let off=0;;off+=10000){
     const p2=await fetch(`${OWNED}/${tbl}?select=symbol,filed&order=filed&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
