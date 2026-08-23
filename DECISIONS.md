@@ -9767,3 +9767,27 @@ t 1.79 (shareholder-yield pairs 2.31) — real movement, predicted direction, st
 Ledger: **787 specs, 0 survivors**, ceiling 5.337 at N=1,530,8xx. Forward book untouched (registered pre-corrections,
 scores only live months — which will themselves be total-return now). Remaining armed: PEAD (behind earnings), factor
 momentum (behind PEAD).
+
+## D-487 (2026-08-23) — VX curve: endpoint found, history measured shallow, collector started
+The CBOE settlement CSV endpoint (`/us/futures/market_statistics/settlement/csv?dt=`) serves the full VX curve but only
+~the current year (measured: 2026-07 → 14 lines, 2026-01 → 5, 2025-08 and earlier → 0). Deep history remains OPEN.
+Response: `scripts/collect-vx-curve.ts` snapshots F1/F2/slope daily into `trd_perp_oi` (venue=cboe) from 2026-08-23 —
+first print F1 17.50 / F2 19.15 / slope +1.65. US options collector widened 6→20 underlyings (D-487b). Also measured:
+CoinGecko free tier now caps market_chart at 365d; OKX funding stays ~96d — both recorded in DATA_FRONTIER.
+
+## D-488 (2026-08-23) — N-PORT: monthly fund ownership ingest (the 13F complement, at monthly frequency)
+SEC DERA N-PORT structured sets confirmed real (440MB/quarter). `scripts/ingest-nport.sh` aggregates
+FUND_REPORTED_HOLDING (equity/NS rows, validated dominant: 146,639 EC rows in the first 400k, 99.8% NS) to
+per-(cusip,report_date) {n_positions, shares, value_usd} across 2019q4–2026q2; `effective_date = report_date + 60d`
+(the N-PORT public-dissemination rule — the date the report was legally knowable). CUSIP→symbol bridge
+(`trd_cusip_map`) rebuilt from sparse FTD files, which carry both columns. Migration 0075. Signal family to test
+when landed: ownership-breadth change / fund-flow crowding at monthly frequency.
+
+## D-489 (2026-08-23) — PEAD on real surprises + factor momentum: both NULL-BELOW-CEILING; grand board 799/0
+Earnings ingest completed (142,695 events, 2,405 days, DB-confirmed). PEAD on real consensus surprises: best
+t 2.83 (sue45 h1 k5, 553 names, 113 months, net 10.8%/yr) — properly powered, positive, and far below the 5.34
+ceiling. Factor momentum (9 self-built series, 801 months): form12 top3 t 3.58 net 7.7%/yr, ++++ every era — the
+cleanest new number of the sweep, still below ceiling. GRAND LEADERBOARD after every correction: **799 specs,
+0 survivors**; top of book: century decile momentum t 4.84, ind49 momentum t 4.03, ST-reversal t 4.02, factor
+momentum t 3.58, mom×gross-prof t 3.46 @15.6%/yr. The falsification engine's terminal state (D-070) continues to
+hold: nothing clears the gates, and that is the engine working. Lineage: pead-real-surprises, factor-momentum.
