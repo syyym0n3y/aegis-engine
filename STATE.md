@@ -14,6 +14,10 @@ liquid-tercile-surviving, all gates green EXCEPT deflation. Real by any fresh-re
 forward ceiling ~2.04 (N=8), decided by ~24-36 months of live data. That is the honest path from t 3.5 to promotable, and
 the only one.
 
+**Forward scorer WIRED (2026-08-23):** daily agent scores completed post-registration months (fast-exit ~0.24s otherwise),
+prints FORWARD STATUS in coverage.log; selftest exercised the full path (8 leads dry-scored, breadth 656-842) before
+wiring. First real score lands when 2026-09 completes.
+
 **Content gate status:** data frontier complete (Tier A landed: +1.8M EDGAR rows/24 concepts, 10.8M FTD rows, 498-perp SF
 universe, century panels 174k obs, 2 live options-surface collectors); sweep complete at 738 specs. The video's story is
 either forward confirmation in time, or proven-absence-at-breadth now — both are true content.
