@@ -200,7 +200,7 @@ await log("==> AEGIS FACTORY — building panels");
 const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -414,6 +414,68 @@ if(PASS==="all"||PASS==="insider"){
     await record(key,"insider",{sig,hold,k},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 6 (insider) done: ${SIGS6.length*4} specs`);
+}
+
+// ================= PASS 7 — THE SHORT SIDE, ON REAL INPUTS (D-475: re-earning D-391's verdict) =================
+// D-391 ruled short interest "underpowered, 26 settlements" without fetching the free inputs. These are the real ones:
+// FINRA daily short-sale volume (short_vol/total_vol per symbol per day, 2018-09->) and semi-monthly consolidated short
+// interest (level + days-to-cover). Pre-registered directions from the literature: HIGH short-interest / days-to-cover
+// -> NEGATIVE forward returns (shorts are informed); daily short-volume RATIO spikes -> contested, tested both as level
+// and as change with the sign left to the gates (a sign-free spec costs a trial like any other, and era-consistency
+// plus benchmark decide it — the deflation gate keeps this honest).
+if(PASS==="all"||PASS==="shortside"){
+  const sv=new Map<string,{d:string;r:number}[]>();          // short-volume ratio series per symbol
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_short_volume?select=symbol,d,short_vol,total_vol&order=d&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {symbol:string;d:string;short_vol:number;total_vol:number}[]){
+      if(!(r.total_vol>0))continue;
+      (sv.get(r.symbol)??sv.set(r.symbol,[]).get(r.symbol)!).push({d:r.d,r:r.short_vol/r.total_vol});}
+    if(p2.length<50000)break;
+  }
+  const si=new Map<string,{d:string;qty:number;dtc:number|null}[]>();
+  for(let off=0;;off+=50000){
+    const p2=await fetch(`${OWNED}/trd_short_interest?select=symbol,settlement,short_qty,days_cover&order=settlement&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2)||!p2.length)break;
+    for(const r of p2 as {symbol:string;settlement:string;short_qty:number;days_cover:number|null}[])
+      (si.get(r.symbol)??si.set(r.symbol,[]).get(r.symbol)!).push({d:r.settlement,qty:+r.short_qty,dtc:r.days_cover!=null?+r.days_cover:null});
+    if(p2.length<50000)break;
+  }
+  await log(`  short-side: ${sv.size} symbols daily ratio, ${si.size} symbols short interest`);
+  const moEnd=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
+  const lastBefore=<T extends {d:string}>(a:T[]|undefined,end:string):T|null=>{
+    if(!a?.length)return null; let lo=0,hi=a.length-1,b=-1;
+    while(lo<=hi){const m=(lo+hi)>>1;if(a[m].d<=end){b=m;lo=m+1;}else hi=m-1;} return b<0?null:a[b];};
+  const SIGS7=["svr_1m","svr_chg","si_dtc","si_chg"] as const;
+  for(const sig of SIGS7) for(const dir of [1,-1]) for(const hold of [1,3]) for(const k of [5,10]){
+    if((sig==="si_dtc"||sig==="si_chg")&&dir===1)continue;    // pre-registered NEGATIVE direction only for SI levels/changes
+    const key=`shortside|${sig}|${dir>0?"pos":"neg"}|h${hold}|k${k}`;
+    const rows:{mo:string;fwd:number;v:number}[]=[];
+    for(const r of eqPanel){
+      const end=moEnd(r.mo); if(end<"2018-10-31")continue;    // coverage begins with the data
+      let v:number|null=null;
+      if(sig==="svr_1m"||sig==="svr_chg"){
+        const a=sv.get(r.sym); if(!a)continue;
+        // trailing 21-obs mean ending at month end
+        let lo=0,hi=a.length-1,b=-1;
+        while(lo<=hi){const m=(lo+hi)>>1;if(a[m].d<=end){b=m;lo=m+1;}else hi=m-1;}
+        if(b<20)continue;
+        const cur=a.slice(b-20,b+1).reduce((s2,x)=>s2+x.r,0)/21;
+        if(sig==="svr_1m")v=cur;
+        else{ if(b<62)continue; const prev=a.slice(b-62,b-41).reduce((s2,x)=>s2+x.r,0)/21; v=cur-prev; }
+      }else{
+        const a=si.get(r.sym); const c=lastBefore(a,end); if(!c)continue;
+        if(sig==="si_dtc"){ if(c.dtc==null)continue; v=c.dtc; }
+        else{ const prev=lastBefore(a,(()=>{const x=new Date(end+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-35);return x.toISOString().slice(0,10);})());
+          if(!prev||!(prev.qty>0))continue; v=c.qty/prev.qty-1; }
+      }
+      if(v==null||!Number.isFinite(v))continue;
+      rows.push({mo:r.mo,fwd:r.fwd,v:dir*v});
+    }
+    const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
+    await record(key,"shortside",{sig,dir,hold,k},"equity_liquid",g,ceil); done++;
+  }
+  await log(`  PASS 7 (shortside) done`);
 }
 // ================= PASS 5 — CENTURY PANELS (Ken French: 49 industries, 100 size x B/M; 1926-2026) =================
 // The one venue where a portfolio-t can clear a 5.3 ceiling honestly: ~1,200 INDEPENDENT months. Signals are the
