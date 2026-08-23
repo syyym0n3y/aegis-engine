@@ -9860,3 +9860,10 @@ vol-complex timing family is not merely null but actively harmful after honest e
 rebound). Best surviving timing spec anywhere: BTC cooldown t 1.58. Execution guard: ALL 187 timing rows carry
 exec=lag1, GREEN by exit code. Ledger: **891 specs, 0 survivors** — the honest count, restored by re-measurement,
 not by deletion.
+
+## D-501 (2026-08-23) — Tier-B unlock #1, CFTC COT: 40 years ingested, verdict NULL
+Operator added the Tier-B allowlist lines. COT legacy files 1986→2026 ingested (287,779 weekly reports, 948 market
+codes; two parser traps fixed: `Annual.TXT` case pre-2015 and a space-before-comma field shift; code aliases handled,
+e.g. wheat 001601→001602, S&P 138741→13874A). PASS 16: 26-market time-series book, publication-lagged +6 days, 10bp
+switches, 320 months. Every rule NEGATIVE (best |t| 1.39). Neither following hedgers nor fading speculators has been
+worth anything net of costs this quarter-century. Migration 0078; `scripts/ingest-cot.sh`. Lineage: cot-positioning.

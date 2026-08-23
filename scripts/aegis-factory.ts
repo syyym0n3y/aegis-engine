@@ -924,6 +924,97 @@ if(PASS==="all"||PASS==="annprem"){
   await log(`  PASS 15 (annprem) done`);
 }
 
+// ================= PASS 16 — CFTC COT POSITIONING (D-501: the only multi-decade positioning dataset; Tier-B unlock) =================
+// 287,779 weekly reports 1986->2026. Tuesday positions publish Friday; execution here waits for the first close
+// >= report_date + 6 calendar days (Monday), so every position uses only published data — the same-bar law honored by
+// construction. Time-series book across ~24 futures markets (commodities + CME FX + equity index + bonds), equal-weight;
+// the claim is a PORTFOLIO-of-TS-strategies claim (like factmom), with the market count stated, not a cross-sectional one.
+// Panel span is the price-data intersection (Yahoo futures mostly 2000->); COT reaches 1986 but is only used where prices exist.
+if(PASS==="all"||PASS==="cot"){
+  type CotRow={report_date:string;oi:number;ncl:number;ncs:number;cl:number;cs:number};
+  const MAP:[string,string,number,string[]][]=[ // [yahooSym, label, signVsUSD, codes (primary first, aliases for older eras)]
+    ["CL=F","wti",1,["067651"]],["NG=F","natgas",1,["023651"]],["GC=F","gold",1,["088691"]],["SI=F","silver",1,["084691"]],
+    ["HG=F","copper",1,["085692"]],["PL=F","platinum",1,["076651"]],["PA=F","palladium",1,["075651"]],
+    ["ZC=F","corn",1,["002602","002601"]],["ZW=F","wheat",1,["001602","001601"]],["ZS=F","soybeans",1,["005602","005601"]],
+    ["KC=F","coffee",1,["083731"]],["SB=F","sugar",1,["080732"]],["CC=F","cocoa",1,["073732"]],["CT=F","cotton",1,["033661"]],
+    ["LE=F","cattle",1,["057642"]],["HE=F","hogs",1,["054642"]],
+    ["EURUSD=X","eur",1,["099741"]],["GBPUSD=X","gbp",1,["096742"]],["AUDUSD=X","aud",1,["232741"]],["NZDUSD=X","nzd",1,["112741"]],
+    ["JPY=X","jpy",-1,["097741"]],["CAD=X","cad",-1,["090741"]],["CHF=X","chf",-1,["092741"]],["MXN=X","mxn",-1,["095741"]],
+    ["^GSPC","spx",1,["13874A","138741"]],["TLT","ust30y",1,["020601"]],
+  ];
+  const iso16=(ts:number)=>new Date(ts*1000).toISOString().slice(0,10);
+  const plus=(d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()+days);return x.toISOString().slice(0,10);};
+  // load COT per instrument (aliases merged, primary wins on overlap)
+  const cot=new Map<string,{d:string;comm:number;spec:number}[]>();
+  for(const [sym,label,_sg,codes] of MAP){
+    const seen=new Map<string,{d:string;comm:number;spec:number}>();
+    for(let ci=codes.length-1;ci>=0;ci--){                      // aliases first, primary overwrites
+      const rows2=await fetch(`${OWNED}/trd_cot?market_code=eq.${codes[ci]}&select=report_date,oi,ncl,ncs,cl,cs&order=report_date&limit=3000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as CotRow[];
+      for(const r of rows2){ if(!(r.oi>0))continue;
+        seen.set(r.report_date,{d:r.report_date,comm:(r.cl-r.cs)/r.oi,spec:(r.ncl-r.ncs)/r.oi}); }
+    }
+    cot.set(sym,[...seen.values()].sort((a,b)=>a.d<b.d?-1:1));
+  }
+  await log(`  cot: ${MAP.length} markets, ${[...cot.values()].reduce((a,x)=>a+x.length,0).toLocaleString()} weekly reports mapped`);
+  // percentile of latest value within trailing 156 weekly reports
+  const pct=(a:{d:string;comm:number;spec:number}[],i:number,f:(x:{comm:number;spec:number})=>number)=>{
+    if(i<52)return null; const lo=Math.max(0,i-156); const v=f(a[i]); let c=0,n=0;
+    for(let q=lo;q<i;q++){n++;if(f(a[q])<=v)c++;} return n<52?null:c/n;};
+  const SIGS16:[string,(cp:number,sp:number,thH:number,thL:number)=>number][]=[
+    ["follow_comm",(cp,_sp,thH,thL)=>cp>=thH?1:cp<=thL?-1:0],
+    ["fade_spec",(_cp,sp,thH,thL)=>sp<=thL?1:sp>=thH?-1:0],
+    ["follow_spec",(_cp,sp,thH,thL)=>sp>=thH?1:sp<=thL?-1:0],
+  ];
+  for(const [signame,rule] of SIGS16) for(const [thH,thL] of [[0.8,0.2],[0.9,0.1]] as [number,number][]){
+    const key=`cot|${signame}|${thH}`;
+    // daily book return across markets
+    const daily=new Map<string,{r:number;n:number}>();
+    let nMktUsed=0;
+    for(const [sym,_label,sg] of MAP){
+      const a=cot.get(sym)!; if(a.length<60)continue;
+      const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+      const bars=(rb[0]?.bars||[]).filter(b=>b[4]>0); if(bars.length<500)continue;
+      nMktUsed++;
+      // weekly signal timeline -> daily position via "tradable from" dates
+      const marks:{from:string;w:number}[]=[];
+      for(let i=0;i<a.length;i++){
+        const cp=pct(a,i,x=>x.comm), sp=pct(a,i,x=>x.spec);
+        if(cp===null||sp===null)continue;
+        marks.push({from:plus(a[i].d,6),w:rule(cp,sp,thH,thL)});
+      }
+      if(marks.length<50)continue;
+      let mi=-1,prevW=0;
+      for(let i=0;i<bars.length-1;i++){
+        const d=iso16(bars[i][0]);
+        while(mi+1<marks.length&&marks[mi+1].from<=d)mi++;
+        if(mi<0)continue;
+        const w=marks[mi].w*sg;
+        const r2=bars[i+1][4]/bars[i][4]-1;
+        const fee=(w!==prevW)?10/1e4:0; prevW=w;
+        const cur=daily.get(d)??daily.set(d,{r:0,n:0}).get(d)!;
+        cur.r+=w*r2*sg*sg-fee; cur.n++;    // sg applied to return direction via w*sg already; r2 is the yahoo series return
+      }
+    }
+    // NOTE the sign: for USD-inverted FX (JPY=X etc.) w*sg flips the position so the book is long the FOREIGN currency
+    // future when the rule says +1; the return series itself stays as quoted.
+    const moAgg=new Map<string,number>();
+    for(const [d,v] of daily){ if(v.n<5)continue; moAgg.set(d.slice(0,7),(moAgg.get(d.slice(0,7))||0)+v.r/v.n); }
+    const mos=[...moAgg.entries()].sort().map(x=>x[1]);
+    if(mos.length<120){await record(key,"cot",{signame,thH,exec:"pub_lag6d"},"futures_cot",null,ceil);done++;continue;}
+    const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+    const g:Gate={n_names:nMktUsed,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:nMktUsed>=20 /* TS-portfolio class; market count stated */, g_effect:true /* fees inside net */,
+      g_benchmark:m>0 /* self-financing L/S book */, g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"cot",{signame,thH,exec:"pub_lag6d",markets:nMktUsed},"futures_cot",g,ceil); done++;
+    await log(`    cot ${signame} th${thH}: mkts=${nMktUsed} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 16 (cot) done: ${SIGS16.length*2} specs`);
+}
+
+
 
 
 
