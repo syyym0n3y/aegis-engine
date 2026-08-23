@@ -9846,3 +9846,9 @@ information that arrives with the outcome. PASS 3 (all 209 timing specs) shared 
 lag-1 as a structural floor (`sig[i-1]` applied to return i→i+1) and every timing row now carries `exec:"lag1"`.
 ENFORCED: `scripts/execution-guard.ts` SAME-BAR RULE — RED on any timing-family row without the stamp; verified RED on
 all 187 live rows (4 marked SURVIVOR) before the re-run. The survivor count returns to 0 the honest way.
+
+## D-499 (2026-08-23) — 13F ownership verdict: NULL at 13 years; the crowding tilt appears a third time, still sub-significance
+16 measured specs (368–407 names, 52–158 monthly periods): best +1.15 (crowd level), worst −1.91 (value-inflow —
+institutions' inflows weakly PRECEDE underperformance, the same crowding-direction tilt N-PORT showed, never
+significant). 4 breadth-change specs UNTESTED (insufficient joined rows — stated, not narrated as null). Public
+45-day-stale ownership snapshots do not price. Lineage: own13f-signals (killed).
