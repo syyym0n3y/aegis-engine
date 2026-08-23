@@ -1494,7 +1494,7 @@ if(PASS==="all"||PASS==="xasset"){
 // Event study via the annprem structure: names filing a 4.02 in the trailing month vs the rest of the panel.
 // Pre-registered literature direction: NEGATIVE forward drift for filers. Filed date = public date (EDGAR same-day).
 if(PASS==="all"||PASS==="nonreliance"){
- for(const [tbl,tag] of [["trd_events_402","402"],["trd_events_401","401"]] as [string,string][]){
+ for(const [tbl,tag] of [["trd_events_402","402"],["trd_events_401","401"],["trd_events_205","205"]] as [string,string][]){
   const ev4=new Map<string,string[]>(); let nE4=0;
   for(let off=0;;off+=10000){
     const p2=await fetch(`${OWNED}/${tbl}?select=symbol,filed&order=filed&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
