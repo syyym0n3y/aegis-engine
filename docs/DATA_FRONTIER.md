@@ -14,7 +14,7 @@
 ## MISSED — free, allowlisted, available ALL ALONG, only acquired after the operator pushed (2026-08-23)
 | dataset | span | how it was neglected | status |
 |---|---|---|---|
-| **FINRA daily short-sale volume** (per symbol, every trading day) | ~2011–2026 | D-391 ruled short interest "underpowered, 26 settlements" **without fetching this** — my own Coverage Law, violated by me | **ingesting (~3,900 files)** |
+| **FINRA daily short-sale volume** (per symbol, every trading day) | ~2011–2026 | D-391 ruled short interest "underpowered, 26 settlements" **without fetching this** — my own Coverage Law, violated by me | **ingesting from the MEASURED CDN boundary 2018-09** (2011–2018 vintages 403 at this path — pre-2018 archive location is an OPEN item, stated not chased) |
 | **FINRA consolidated short interest API** (per symbol, semi-monthly, days-to-cover) | ≥2020– | same neglect | **ingesting** |
 | **CBOE index histories**: SKEW (1990–!), VVIX, VIX9D/3M/6M, VXN, RVX, GVZ, OVX, VXAPL | 1990–2026 | I built a *collector* for live chains and never took the published decades of history one directory over | **LANDED: 48,127 rows verified** |
 | **Nasdaq per-symbol short interest** (allowlisted host) | rolling | never probed | probed live; redundant with FINRA SI — noted |
