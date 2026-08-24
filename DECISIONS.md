@@ -10069,3 +10069,23 @@ re-backfilled (5,872 rows). Honest costs recorded, not hidden: single-name beta 
 — more parameters, collinear factors — so the engagement gate (stability ≥0.4) now excludes those names by its own
 rule, which is the gate working; and force-leg instruments are labelled **ANCHOR** (mean R² 0.97 vs 0.455 for MODELLED)
 so a trivial self-explanation can never be mistaken for understanding by any downstream consumer.
+
+## D-527 (2026-08-24) — I ATTACKED THE PAPER BOOK: alpha survives the force model, but the HEADLINE DOES NOT SURVIVE THE ERA TEST
+Pre-registered attack on the program's own newest favourite: regress the book on the 9 measured forces. **Alpha holds —
+5.67%/yr t 3.94 (6-force, 270mo) and 5.60%/yr t 3.56 (9-force, 230mo), R² only 18–28%, and the force betas are small
+and NEGATIVE (MKT −0.12/−0.21, SIZE −0.23, STYLE −0.12).** The book is mildly SHORT the forces, so "independent premia"
+is not a disguise for style beta. That claim survives.
+**But the era decomposition is the finding that matters, and it cuts against my own headline:**
+
+| window | %/yr | SR | t | win% |
+|---|---|---|---|---|
+| full 1963–2026 (managed) | 9.4 | 0.89 | 7.03 | 62 |
+| **2006–2026 (managed)** | **6.2** | **0.62** | 2.83 | 58 |
+| **2016–2026 (managed)** | **4.9** | **0.46** | 1.48 | 56 |
+
+Decade pattern of the unmanaged book: 6.3 / 10.9 / 6.1 / 6.3 / 7.3 / **3.5** / 5.1 %/yr — the 2010s were the weak
+decade. **Consequence, stated before any paper data exists: the honest forward expectation for the paper rung is the
+modern-era number (managed ≈5–6%/yr, SR ≈0.46–0.62), NOT the 8.9%/yr SR 0.90 full-sample headline I reported when
+arming it.** Ledger rows annotated so the expectation cannot be quietly reset later. If paper delivers ~4–5%/yr that is
+IN LINE, not failure; if it delivers ~9% that is above modern-era expectation and should invite suspicion, not
+celebration.
