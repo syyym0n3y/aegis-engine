@@ -48,6 +48,10 @@ while true; do
   # PLUMBING GUARD (D-467): static lint over the repo's own TypeScript — the defect classes that silently distorted
   # recorded numbers (arbitrary truncation, swallowed writes, frozen deflation ceilings). Ratcheted: RED only on NEW
   # violations beyond the committed baseline, so the legacy backlog burns down without ever growing.
+  # UNIVERSE GUARD (D-535): a Sharpe that doubles across defensible universe definitions is a choice, not a measurement.
+  if ! deno run --allow-net --allow-env ../scripts/universe-guard.ts; then
+    echo "$(date -u +%FT%TZ) UNIVERSE GUARD RED — a promoted cross-sectional claim does not state its universe sensitivity"
+  fi
   if ! deno run --allow-read --allow-env ../scripts/plumbing-guard.ts; then
     echo "$(date -u +%FT%TZ) PLUMBING GUARD RED — a new instance of a known defect class entered the codebase"
   fi

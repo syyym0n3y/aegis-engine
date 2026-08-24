@@ -10200,3 +10200,26 @@ needs. **It promotes nothing:** t 2.05 remains far below the 5.34 ceiling, the d
 and the D-532 estimate instability is untouched by this test. Next step (running): re-specify the universe as a
 FIXED-N liquid set (top 60/100 by dollar volume), which is stable across data refreshes *by construction* and is also
 the only universe an operator could actually trade — attacking the instability at its root rather than reporting around it.
+
+## D-535 (2026-08-24) — THE UNIVERSE LAW: the degree of freedom none of the eight laws policed
+Fixed-N was supposed to kill the crypto estimate instability. It did not — it exposed something larger. The same idea,
+across five defensible universe definitions:
+
+| universe | %/yr | SR | t |
+|---|---|---|---|
+| all 328 contracts (D-451) | 20.0 | 0.61 | 1.32 |
+| all 498 contracts (D-532) | 35.9 | 1.11 | 2.40 |
+| liquid tercile of 498 (D-534) | 53.1 | 0.95 | 2.05 |
+| fixed top-100 by dvol | 50.2 | 0.99 | 2.12 |
+| fixed top-60 by dvol | 80.9 | 1.30 | 2.79 |
+
+**2.1× spread in Sharpe, 4.0× in return — and every existing law was satisfied throughout.** Trials counted, liquidity
+decomposed (and inverted, D-534), breadth adequate, execution lagged, selection train-only. The choice that moved the
+number most was the one nothing measured: *who is in the universe*. Quoting the top-60 number would have been picking
+a specification, not reporting a measurement.
+**Enacted as the ninth law** with `scripts/universe-guard.ts`, wired into the daily runner: every promoted
+cross-sectional claim must state its universe sensitivity. Verified RED on a synthetic unstated row **and on nine live
+rows including my own newest claims**, PASS only after honest statements were added (measured where measured, and
+"NOT MEASURED" recorded as a gap where it wasn't), exempt for single-instrument families, exit-code-checked both ways.
+**Crypto candidate status: direction identified (non-linearity adds, liquidity-robust — genuinely new here), magnitude
+NOT identified. Promoted to nothing.** Five universe variants counted as trials.

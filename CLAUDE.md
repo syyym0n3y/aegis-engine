@@ -179,6 +179,22 @@ execution lag — the signal day was the crash day. Lag-1 execution is the struc
 rule; enforced by the execution guard's SAME-BAR RULE (`exec:"lag1"` stamp required on every timing-family ledger row,
 verified RED on 187 unstamped rows including the 4 false survivors).
 
+## THE UNIVERSE LAW (2026-08-24, D-535) — binds every cross-sectional result
+**Who is IN the universe is a researcher degree of freedom, and it moves the answer more than most of the choices the
+other laws police. Report the range of the headline metric across defensible universe definitions; a result whose
+Sharpe doubles across them is NOT IDENTIFIED, whatever its t-stat.**
+Origin: the crypto GBM book — the program's best placeable candidate and its first liquidity-ROBUST signal — printed
+20.0 / 35.9 / 50.2 / 53.1 / 80.9 %/yr (SR 0.61 / 1.11 / 0.99 / 0.95 / 1.30) across five defensible definitions of the
+same idea: all-328 contracts, all-498, liquid tercile, fixed top-60 by dollar volume, fixed top-100. A **2.1x spread in
+Sharpe and 4.0x in return**, with no principled criterion selecting among them — and every other law satisfied the
+whole time (trials counted, liquidity decomposed, breadth adequate, execution lagged, selection train-only). Fixed-N
+was adopted to KILL this instability and did not: top-60 gives 1.30, top-100 gives 0.99.
+Rules: (1) every promoted cross-sectional claim states its universe sensitivity, measured or explicitly not measured;
+(2) a spread beyond ~1.5x in the headline metric is recorded as NOT-IDENTIFIED, never as an edge; (3) each universe
+variant costs a trial like any other specification; (4) enforced by `scripts/universe-guard.ts` (verified RED on a
+synthetic unstated row and on 9 live rows including the author's own newest claims, PASS after honest statements,
+exempt for single-instrument families, exit-code-checked both directions).
+
 ## THE SELECTION LAW (2026-08-22) — binds every result that CHOOSES among components
 **Choosing which components to keep using the full sample, and then reporting an out-of-sample number on that choice, is
 not out of sample. The choice must be made on train only, frozen, and applied forward.**
