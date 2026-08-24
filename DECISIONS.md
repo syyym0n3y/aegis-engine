@@ -9997,3 +9997,11 @@ defects: VRP stream key mismatch (silently inert overlay) and NON-UNIQUE paginat
 fixed with order=month,factor; the subtler sibling of the truncation lint). **Spec frozen; forward clock running from
 2026-08-24.** Lineage: combined-book-p1 (monitoring). Next: P2 conditional policies, P3 causal attribution, and the
 operator's own trade history as a dataset (needs their broker export).
+
+## D-519 (2026-08-24) — P2: VOL MANAGEMENT ADDS — paired t 4.13, the adaptivity thesis measured
+One pre-registered conditioner (Moreira–Muir, published 2017 on other data), single-shot on the frozen P1 book:
+**managed 8.9%/yr, SR 0.90, maxDD −17% vs unmanaged 6.5%/yr, SR 0.78, −25% — paired t 4.13.** Return, Sharpe and
+drawdown all improve at once. This is the program's cleanest evidence that ADAPTIVITY (the operator's thesis) is real
+value: not a new anomaly, but a policy layer on breadth. cap=2/lookback=6 defaults stated as dof. P1+P2 share one
+forward clock from 2026-08-24. Lineage: volmanaged-book-p2 (monitoring). Open: P3 causal attribution; operator trade
+history (their export needed); regime-conditioners beyond vol (each costs pre-registration).

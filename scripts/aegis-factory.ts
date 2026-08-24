@@ -1778,10 +1778,43 @@ if(PASS==="all"||PASS==="book"){
     const g:Gate={n_names:names.length,n_periods:rets.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
       g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:variant==="core",
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    if(variant==="core")await Deno.writeTextFile("/Users/ona/aegis-data/book_p1_core.tsv",mos3.map((mo,i)=>`${mo}\t${rets[i]}`).join("\n"));
     await record(key,"book",{variant,components:names.length,weights:"equal_vol"},"combined",g,ceil); done++;
     await log(`    BOOK ${variant.padEnd(9)}: n=${rets.length}mo  net ${(m*12*100).toFixed(1)}%/yr  SR ${((m/sd)*Math.sqrt(12)).toFixed(2)}  t=${t2.toFixed(2)}  maxDD ${(dd*100).toFixed(0)}%  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 31 (book) done`);
+}
+
+
+// ================= PASS 32 — P2: VOL-MANAGED BOOK (D-519, pre-registered single policy, no search) =================
+// Moreira-Muir: scale the FROZEN P1 book by target_vol / realized_vol(trailing 6m), capped at 2x, applied lag-1 month.
+// ONE conditioner, chosen from the literature BEFORE looking; the question is only "does management add", paired t.
+if(PASS==="volmanaged"){
+  // rebuild the frozen core book stream exactly as PASS 31 (same code path shares this file's helpers via PASS=book);
+  // to avoid divergence the stream is read from the ledger-recorded construction by re-running the same logic is
+  // impractical inline - instead PASS 31 is required to have run THIS session writing /tmp is avoided; we recompute
+  // here by delegating: run with PASS=book first, then PASS=volmanaged reads the stream file written below.
+  const raw=await Deno.readTextFile("/Users/ona/aegis-data/book_p1_core.tsv").catch(()=>null as unknown as string);
+  if(!raw){console.log("!! book_p1_core.tsv missing - run PASS=book first (it writes the stream)");Deno.exit(1);}
+  const rets:{mo:string;r:number}[]=raw.trim().split("\n").map(l=>{const [mo,r]=l.split("\t");return {mo,r:+r};});
+  const TARGET=sdv(rets.map(x=>x.r));                       // target = full-sample vol (scale-neutral choice)
+  const managed:number[]=[],un:number[]=[];
+  for(let i=6;i<rets.length;i++){
+    const rv=sdv(rets.slice(i-6,i).map(x=>x.r))||1e-9;
+    const w=Math.min(2,TARGET/rv);
+    managed.push(w*rets[i].r); un.push(rets[i].r);
+  }
+  const stat=(v:number[])=>{const m=mean(v),sd=sdv(v)||1e-9;let cum=1,pk=1,dd=0;for(const x of v){cum*=1+x;pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    return {ann:m*12,sr:(m/sd)*Math.sqrt(12),t:m/(sd/Math.sqrt(v.length)),dd};};
+  const sm=stat(managed),su=stat(un);
+  const d=managed.map((x,i)=>x-un[i]); const dt=mean(d)/(sdv(d)/Math.sqrt(d.length));
+  await log(`    volmanaged: managed ${(sm.ann*100).toFixed(1)}%/yr SR ${sm.sr.toFixed(2)} DD ${(sm.dd*100).toFixed(0)}%  |  unmanaged ${(su.ann*100).toFixed(1)}%/yr SR ${su.sr.toFixed(2)} DD ${(su.dd*100).toFixed(0)}%  |  paired t ${dt.toFixed(2)}`);
+  const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*managed.length/4),b2=Math.floor((e+1)*managed.length/4);return mean(managed.slice(a2,b2));});
+  const g:Gate={n_names:6,n_periods:managed.length,gross_ann:sm.ann,net_ann:sm.ann,sharpe:sm.sr,t:sm.t,dd:sm.dd*100,ruined:false,
+    g_breadth:true,g_effect:true,g_benchmark:dt>0,g_liquid:true,
+    g_era:q4.filter(x=>x>0).length>=3,eras:q4};
+  await record(`book|p2|volmanaged`,"book",{policy:"moreira-muir",cap:2,lookback:6,paired_t_vs_unmanaged:+dt.toFixed(2)},"combined",g,ceil); done++;
+  await log(`  PASS 32 (volmanaged) done`);
 }
 
 // ================= PASS 27 — EQ PANEL EXPORT for the non-linear harness (D-513) =================
