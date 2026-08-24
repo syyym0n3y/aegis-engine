@@ -10501,3 +10501,26 @@ Confirmed in passing: `vol30` and `maxret` genuinely are near-duplicates (+0.936
 that earlier claim survives its own audit. The check ships as `scripts/check-feature-correlation.ts`.
 This is the discipline the program exists for, applied to its own narration: an explanation offered in one message,
 tested in the next, and retracted when the data disagreed.
+
+## D-551 (2026-08-24) — signal-level ≠ portfolio-level: the funding verdict reverses, and a hidden assumption breaks
+Chasing the open question from D-550 (why did funding hurt?) produced a bigger finding: **the two books are essentially
+uncorrelated (r −0.046), and blending them at the PORTFOLIO level helps enormously.**
+
+| funding weight | %/yr | SR | maxDD |
+|---|---|---|---|
+| 0% (lit5 alone) | 76.0 | 1.41 | −54% |
+| 25% | 69.0 | 1.65 | −43% |
+| 40% | 64.8 | **1.73** | −39% |
+| **50% (non-optimised)** | **62.0** | **1.70** | **−36%** |
+| 75% | 55.1 | 1.36 | −33% |
+| 100% (funding alone) | 48.1 | 0.93 | −47% |
+
+**So funding does not harm — averaging signals harms.** Adding funding as a sixth *rank* (lit6) gave SR 1.04; holding
+a funding *book* alongside the lit5 book gives **SR 1.70 with drawdown cut from −54% to −36%**. Averaging ranks changes
+which names clear the quintile threshold, so a weakly-informative signal displaces strongly-selected names; holding
+both books preserves each selection and collects the diversification.
+**The implicit assumption that these are the same thing has been present throughout this program** — the equity book
+(D-518) combines at the signal level too. The blend curve is smooth with a broad interior maximum, not a spike, so the
+gain is diversification rather than peak-picking, and the honest non-optimised report is the 50/50 point.
+My D-549 headline ("funding harms the book") is corrected: it was an artifact of my combination method.
+Still below the 5.34 ceiling. Promoted to nothing.
