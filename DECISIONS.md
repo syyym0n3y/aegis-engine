@@ -10027,3 +10027,11 @@ refresh added): recomputes the frozen stream, applies the point-in-time vol weig
 each completed month once, $100k paper equity — **marks begin at 2026-08; months before arming are never marked
 (no hindsight), verified on first run** ("no new complete month to mark"). PAPER→MICRO gate: ≥30 independent OOS
 months, DSR>0 at 95% penalized, PBO<0.5, realized maxDD<6%, net positive. Migration 0090.
+
+## D-522 (2026-08-24) — attribution era-record backfill + the residual-follow forward registration
+**Backfill:** the attribution engine gains monthly snapshots across the full daily history (each using only data
+through its own date) — a decade-scale record of per-instrument explanation and stability available NOW, enabling
+gated-strategy research and regime study without waiting years for accrual. **Residual-follow:** the mirror of the
+D-520 prereg miss is registered FORWARD-ONLY (evaluated exclusively on attribution rows after 2026-08-24, first read
+at ≥6 months) — the honest mechanism for pursuing a post-hoc observation without laundering in-sample sight of it.
+Lineage: residual-follow-forward (monitoring).

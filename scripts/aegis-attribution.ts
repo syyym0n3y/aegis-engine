@@ -32,15 +32,22 @@ function ols(X:number[][],y:number[]){
     for(let r2=0;r2<p;r2++)if(r2!==c){const fq=M[r2][c];for(let k=c;k<=p;k++)M[r2][k]-=fq*M[c][k];}}
   return M.map(r=>r[p]);
 }
+// BACKFILL=1 (D-522): write month-end snapshots across the whole daily history so the engine has an ERA RECORD of
+// explanation/stability now, instead of accruing one over years. Each snapshot uses only data through its own date.
+const BACKFILL=Deno.env.get("BACKFILL")==="1";
 const asof=days[days.length-1];
 const out:Record<string,unknown>[]=[];
-console.log(`==> CAUSAL ATTRIBUTION — ${UNIVERSE.length} instruments, forces: ${FORCES.map(f=>f[0]).join(" ")}, asof ${asof}`);
+// snapshot dates: last trading day of each month (backfill) or just today
+const snapIdx:number[]=[];
+if(BACKFILL){for(let i=300;i<days.length-1;i++){if(days[i].slice(0,7)!==days[i+1].slice(0,7))snapIdx.push(i);}snapIdx.push(days.length-1);}
+else snapIdx.push(days.length-1);
+console.log(`==> CAUSAL ATTRIBUTION — ${UNIVERSE.length} instruments, forces: ${FORCES.map(f=>f[0]).join(" ")}, ${BACKFILL?`BACKFILL ${snapIdx.length} month-ends`:`asof ${asof}`}`);
 console.log(`    ${"symbol".padEnd(10)}${"adjR2".padEnd(8)}${"stab".padEnd(7)}${"top forces (beta)".padEnd(46)}resid_today`);
 for(const sym of UNIVERSE){
   const pm=await load(sym); if(pm.size<400)continue;
-  // rolling window = last 250 common days
+ for(const END of snapIdx){
   const rows:{x:number[];y:number}[]=[];
-  for(let i=days.length-250;i<days.length;i++){
+  for(let i=END-250;i<=END;i++){
     if(i<1)continue;
     const a=pm.get(days[i]),b=pm.get(days[i-1]); if(a===undefined||b===undefined)continue;
     const x=FORCES.map(([n])=>fret(n,i));
@@ -65,10 +72,13 @@ for(const sym of UNIVERSE){
   const last=rows[rows.length-1];
   const resid=last.y-last.x.reduce((s,v,i2)=>s+v*w[i2],0);
   const betas:Record<string,number>={}; FORCES.forEach(([n],i2)=>betas[n]=+w[i2+1].toFixed(4));
-  const top=Object.entries(betas).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,3).map(([n,v])=>`${n}:${v.toFixed(2)}`).join(" ");
-  console.log(`    ${sym.padEnd(10)}${adj.toFixed(2).padEnd(8)}${stab.toFixed(2).padEnd(7)}${top.padEnd(46)}${(resid*100).toFixed(2)}%`);
-  out.push({symbol:sym,asof,r2:+r2.toFixed(4),adj_r2:+adj.toFixed(4),residual:+resid.toFixed(6),n:rows.length,
+  if(END===days.length-1){
+    const top=Object.entries(betas).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,3).map(([n,v])=>`${n}:${v.toFixed(2)}`).join(" ");
+    console.log(`    ${sym.padEnd(10)}${adj.toFixed(2).padEnd(8)}${stab.toFixed(2).padEnd(7)}${top.padEnd(46)}${(resid*100).toFixed(2)}%`);
+  }
+  out.push({symbol:sym,asof:days[END],r2:+r2.toFixed(4),adj_r2:+adj.toFixed(4),residual:+resid.toFixed(6),n:rows.length,
     betas,era_stability:+stab.toFixed(3),n_factors:FORCES.length,cluster:null});
+ }
 }
 const wres=await fetch(`${OWNED}/trd_attribution?on_conflict=symbol,asof`,{method:"POST",
   headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(out)}).catch(()=>null);
