@@ -10536,3 +10536,26 @@ quintiles — and that is where the fix is being applied.
 mechanisms asserted in narration without checking. The rate itself is the lesson: explanations are cheap to generate
 and only worth something once verified, and a program that reports its own retraction rate is more trustworthy than
 one that quietly stops making claims.
+
+## D-553 (2026-08-24) — SIGN ERROR: my best result of the session was built on an unregistered flip
+Running the 5-book blend produced a funding number inconsistent with what I had published, which forced an audit.
+**The `FEATURE=fund7` book ranks LONG-HIGH-funding** — the opposite of the sign I pre-registered and then labelled it
+with. Convention verified independently against `vol30`, whose −77.8%/yr under the same convention matches the
+literature's long-LOW-volatility prior.
+
+| claim | as reported | corrected |
+|---|---|---|
+| funding alone, "pre-registered sign" | **+48.1%/yr** | **−48.1%/yr** (registered sign LOSES) |
+| lit5 + funding 50/50 | **SR 1.70, DD −36%** | **SR 0.37** with the registered sign |
+
+**Three of my own claims fall:** (1) funding carry "confirmed with the pre-registered sign" — false, the theoretically
+motivated direction loses; (2) "funding harms the composite because of the combination method" — the lit6 degradation
+is simply the correct-sign leg dragging, no artifact needed; (3) the SR 1.70 / −36% headline — demoted, it rested on
+an unregistered sign flip.
+**What survives:** the methodological distinction between signal-level and portfolio-level combination, confirmed
+independently by the 5-book test where no sign was flipped (blend SR 1.34 at −35% drawdown vs signal-averaging's 1.41
+at −54%; identical Calmar). Per the D-511b precedent — set when 2.05 restructuring came back with the opposite sign —
+**a post-hoc sign flip is not claimable.** The profitable funding direction would need fresh pre-registration and
+forward confirmation to mean anything.
+This is the fourth self-correction today (D-550, D-552, D-553, plus the D-547 integrity defects). The frozen candidate
+reverts to **lit5 alone: SR 1.41, universe-averaged 0.99, promoted to nothing.**
