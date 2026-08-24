@@ -69,5 +69,7 @@ while true; do
   deno run --allow-net --allow-env ../scripts/collect-vx-curve.ts || true
   # BINANCE SENTIMENT COLLECTOR (D-502b): API serves ~30d only — the series accrues from 2026-08-23.
   deno run --allow-net --allow-env ../scripts/collect-binance-sentiment.ts || true
+  # CAUSAL ATTRIBUTION ENGINE (D-520 P3): daily force decomposition + measured ignorance per instrument.
+  deno run --allow-net --allow-env ../scripts/aegis-attribution.ts > ../data/attribution.log 2> ../data/attribution.err || true
   sleep 86400
 done
