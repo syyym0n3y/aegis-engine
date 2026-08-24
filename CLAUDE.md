@@ -179,6 +179,22 @@ execution lag — the signal day was the crash day. Lag-1 execution is the struc
 rule; enforced by the execution guard's SAME-BAR RULE (`exec:"lag1"` stamp required on every timing-family ledger row,
 verified RED on 187 unstamped rows including the 4 false survivors).
 
+## THE SIGN LAW (2026-08-24, D-553/554) — binds every directional claim
+**A direction asserted is not a direction checked. Any result invoking a pre-registered, expected or literature sign
+must state whether the measurement MATCHED or MISSED it — and a post-hoc flip is never claimable.**
+Origin: the funding book was run LONG-high-funding, reported under the label of the pre-registered SHORT-high
+direction, and the resulting "+48.1%/yr / blended SR 1.70, drawdown -36%" stood as the session's best result until an
+unrelated test produced an inconsistent number. Every other law was green throughout: coverage had been expanded 20x
+first (25 -> 512 symbols), the portfolio-t decided, execution was lagged, the universe swept, trials counted. What
+failed was that a DIRECTION was narrated and never verified against what the code did. Corrected: the pre-registered
+direction LOSES (-48.1%/yr); the profitable direction is an unregistered flip and is not claimable (D-511b precedent).
+Rules: (1) every row invoking a directional prior states MATCHED or MISSED; (2) a flip discovered after the fact
+requires fresh pre-registration and forward confirmation before it means anything; (3) enforced by
+`scripts/sign-guard.ts` (verified RED on a synthetic prior-without-outcome and on 5 live rows including the author's
+own, PASS after honest outcomes were stated, exempt where no prior is claimed, exit-code-checked both directions).
+NOTE ON THE ONE SPEC THAT PASSED CLEANLY: lit5's five literature signs ALL matched in the liquid core (D-542), which
+is now a verified statement rather than an assumed one.
+
 ## THE UNIVERSE LAW (2026-08-24, D-535) — binds every cross-sectional result
 **Who is IN the universe is a researcher degree of freedom, and it moves the answer more than most of the choices the
 other laws police. Report the range of the headline metric across defensible universe definitions; a result whose

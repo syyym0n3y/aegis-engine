@@ -10559,3 +10559,22 @@ at −54%; identical Calmar). Per the D-511b precedent — set when 2.05 restruc
 forward confirmation to mean anything.
 This is the fourth self-correction today (D-550, D-552, D-553, plus the D-547 integrity defects). The frozen candidate
 reverts to **lit5 alone: SR 1.41, universe-averaged 0.99, promoted to nothing.**
+
+## D-554 (2026-08-24) — THE SIGN LAW: today's most expensive error becomes the tenth guard
+D-553's sign error survived because every existing law was satisfied while a *direction* went unverified. Enacted as
+`scripts/sign-guard.ts`: any lineage row invoking a pre-registered/expected/literature sign must state whether the
+measurement MATCHED or MISSED. Verified RED on a synthetic prior-without-outcome **and on five live rows including my
+own**, PASS only after honest outcomes were written, exempt where no prior is claimed, exit-code-checked both ways,
+and wired into the daily runner as the tenth guard.
+Stating those outcomes produced a useful audit in itself:
+- **delisting notices** — direction MATCHED (killed on borrow, not on direction);
+- **executive resignations** — MATCHED (−4.9%/yr, every era negative);
+- **accounting red flags** — MIXED (4.01 matched, 4.02 underpowered, 2.05 a prereg miss);
+- **ETF-native book** — largely MISSED: only credit carry and momentum landed on their literature side, while value,
+  quality, size and low-vol all went AGAINST theirs. Its negative result is a **directional failure of the priors**,
+  not merely a cost problem — a materially different reading from the one I gave in D-531;
+- **lit5 crypto** — **ALL FIVE signs MATCHED** (verified individually in D-542). It is the one specification in the
+  program whose every directional prior held, and that is now checked rather than assumed.
+The guard's pattern was widened once after it flagged rows that *did* state their outcome in plural phrasing; the
+selftest was re-run to confirm it still catches the true negative, so this was fixing a false positive, not loosening
+a gate.
