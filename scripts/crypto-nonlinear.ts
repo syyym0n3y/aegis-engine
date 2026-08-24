@@ -13,9 +13,24 @@ const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`
 const mean=(a:number[])=>a.reduce((s,x)=>s+x,0)/a.length;
 const sdv=(a:number[])=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/Math.max(1,a.length-1));};
 const FEE_BP=Number(Deno.env.get("PERP_FEE_RT_BP")||9);
-const FEAT=["mom30","mom7","rev1","vol30","maxret","dvol","hi60","flow","relvol","trades"];
+const FEAT=["mom30","mom7","rev1","vol30","maxret","dvol","hi60","flow","relvol","trades","fund7"];
 type Row={d:string;sym:string;x:number[];y:number;yraw:number};
 const panel:Row[]=[];
+// funding history for the whole universe (D-549), keyed symbol -> sorted [ts, rate]
+const fundMap=new Map<string,{ts:number;r:number}[]>();
+{let off=0;for(;;){
+  const p=await fetch(`${OWNED}/trd_perp_oi?venue=eq.binance&interval=eq.funding&select=symbol,ts,open_interest&order=symbol,ts&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+  if(!Array.isArray(p)||!p.length)break;
+  for(const r of p as {symbol:string;ts:number;open_interest:number}[])
+    (fundMap.get(r.symbol)??fundMap.set(r.symbol,[]).get(r.symbol)!).push({ts:+r.ts,r:+r.open_interest});
+  if(p.length<50000)break; off+=50000;}
+console.log(`    funding loaded: ${fundMap.size} symbols, ${[...fundMap.values()].reduce((a,x)=>a+x.length,0).toLocaleString()} records`);}
+const fund7=(sym:string,tsEnd:number)=>{                       // mean funding over the trailing 7 days, known at tsEnd
+  const a=fundMap.get(sym); if(!a)return null;
+  const lo=tsEnd-7*86400; let s2=0,n2=0;
+  let i=a.length-1; while(i>=0&&a[i].ts>tsEnd)i--;
+  for(;i>=0&&a[i].ts>=lo;i--){s2+=a[i].r;n2++;}
+  return n2>=10?s2/n2:null;};
 const TF=Deno.env.get("TF")||"1dSF";
 const meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
 console.log(`==> CRYPTO NON-LINEAR [${TF}] — ${meta.length} contracts${TF==="1dSF"?" (survivorship-free, incl. delisted)":" (SURVIVORSHIP-BIASED: listed only)"}`);
@@ -44,7 +59,8 @@ for(let i=0;i<meta.length;i+=25){
       const entry=b[k+LAG][4], exit=b[k+1+LAG][4];
       if(!(entry>0)||!(exit>0))continue;
       const y=exit/entry-1;
-      const x=[c/cP30-1,c/cP7-1,c/cP1-1,sdv(rets),Math.max(...rets),Math.log(dv),c/hi,flow,relvol,Math.log(1+trades)];
+      const fr=fund7(r.symbol,b[k][0]);
+      const x=[c/cP30-1,c/cP7-1,c/cP1-1,sdv(rets),Math.max(...rets),Math.log(dv),c/hi,flow,relvol,Math.log(1+trades),fr??0];
       if(!x.every(Number.isFinite)||!Number.isFinite(y)||Math.abs(y)>2)continue;
       panel.push({d:new Date(b[k][0]*1000).toISOString().slice(0,10),sym:r.symbol,x,y,yraw:y});
     }
@@ -174,7 +190,8 @@ for(const Y of years.filter(y=>y>=START)){
       const fi=FEATNAME?FEAT.indexOf(FEATNAME):-1;
       const LIT3:[string,number][]=[["hi60",1],["vol30",-1],["maxret",-1]];
       const LIT5:[string,number][]=[...LIT3,["mom7",1],["flow",1]];
-      const litSet=SET==="lit3"?LIT3:SET==="lit5"?LIT5:null;
+      const LIT6:[string,number][]=[...LIT5,["fund7",-1]];      // PRE-REGISTERED: short crowded longs (high funding)
+      const litSet=SET==="lit3"?LIT3:SET==="lit5"?LIT5:SET==="lit6"?LIT6:null;
       const predL=litSet
         ? g.map(r=>litSet.reduce((s2,[nm,sg])=>{const j=FEAT.indexOf(nm);return j>=0?s2+sg*r.x[j]:s2;},0)/litSet.length)
         : (fi>=0?g.map(r=>r.x[fi]):g.map(r=>lin(r.x)));

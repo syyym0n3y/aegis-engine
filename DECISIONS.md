@@ -10460,3 +10460,23 @@ all-contracts number: the illiquid mass overwhelms the liquid core.
 **Caveat that matters more than the finding:** both illiquid books run **maxDD −95%** — near ruin — consistent with the
 inversion being driven by short-squeeze TAILS (shorting a coin that multiplies) rather than a smooth premium. Read it
 as a warning about shorting illiquid alts, not as a tradable mirror strategy. Two additional trials counted.
+
+## D-549 (2026-08-24) — funding: real alone, harmful in combination; and D-415 closed honestly
+Coverage first: funding history expanded from **25 to 512 symbols (2.24M records)** before any test, so the verdict is
+about the market rather than about our data.
+
+| spec | %/yr | SR | t |
+|---|---|---|---|
+| **funding alone** (short crowded longs) | 48.1 | 0.93 | **2.01** |
+| lit5 top-50 (no funding) | 76.0 | **1.41** | 3.04 |
+| lit6 top-50 (funding added) | 58.3 | 1.04 | 2.25 |
+| lit5 top-100 | 38.8 | 0.89 | 1.91 |
+| lit6 top-100 | 25.4 | 0.58 | 1.24 |
+
+**Funding carry is real standalone** — correctly signed, t 2.01, below ceiling. **And it makes the book worse
+everywhere**: funding correlates with the momentum and flow legs already present (crowded longs *are* recent winners
+with positive order flow), so an equal-weight sixth leg double-counts a shared component and destroys diversification.
+That is a direct negative result for the instinct to keep adding signals — more inputs subtracted value here.
+**D-415 closed honestly:** that retracted claim reported funding-crowding IC 0.1404 at **t 38.35** from pooling 180
+heterogeneous perps. Measured properly — adequate coverage, liquid core, portfolio-t — the residual effect is
+**t 2.01**. The retraction was right, and something real remained underneath it. Three trials counted.
