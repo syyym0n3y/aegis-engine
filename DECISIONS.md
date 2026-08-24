@@ -10392,3 +10392,15 @@ other candidate here. Counterweights, stated: per-year t is only 1.1–2.6 (the 
 rather than celebrate — it is equally consistent with a favourable recent regime that will reverse.
 Also fixed: the book-stream log line printed a stale filename (the file path had been changed but not the message) —
 printed output must be true, per the agent-output guard's own principle.
+
+## D-545 (2026-08-24) — a law I chose NOT to amend, recorded because the temptation was real
+The lit5 book fails the Universe Law's identification test on a 2.2× spread. But D-541 showed the spread is a SMOOTH
+MONOTONIC dilution gradient, not erratic instability — economically it says "the effect lives in the liquid core and
+weakens as you add illiquid names," which is a coherent finding rather than noise. There is a genuine argument that
+the law should distinguish an ordered gradient from erratic variation, and that argument would let my own best
+candidate through.
+**I am not making that amendment.** Gate thresholds in this program are decision-locked precisely so that a motivated
+operator — including me, mid-hunt, with a result I like — cannot loosen them to force a promotion. Any change requires
+a new `trd_gate_thresholds` row naming a DECISIONS entry, made deliberately and not in the middle of evaluating the
+candidate that benefits. The candidate stays NOT IDENTIFIED and the honest headline stays the universe-averaged
+SR ≈ 0.99. Recorded here so the reasoning is auditable rather than invisible.
