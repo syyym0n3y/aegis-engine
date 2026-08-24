@@ -10290,3 +10290,23 @@ paired t 8.12, D-532 t 9.35, D-538 t 4.28) was measured on the same bar as the s
 the GBM's advantage over a plain linear composite lives entirely in the bar we cannot trade. The complexity was
 justified by an execution assumption, not by the market — so the correct specification is the simpler model at LAG=1,
 and the head-to-head is running now. Trial counted.
+
+## D-540 (2026-08-24) — ALL LAWS AT ONCE: the crypto candidate is NOT IDENTIFIED, and today's optimistic readings are corrected
+Every law applied simultaneously — linear model (D-539: GBM adds nothing at tradable lag), lag-1 execution (D-498),
+5-day hold (D-538 capacity), universe averaging (D-535):
+
+| universe | %/yr | SR | t |
+|---|---|---|---|
+| all contracts | 1.3 | **0.04** | 0.08 |
+| fixed top-100 | 15.8 | 0.33 | 0.70 |
+| fixed top-60 | 59.0 | 1.00 | 2.14 |
+| **FROZEN AVERAGE** | **25.4** | **0.57** | **1.23** |
+
+**Universe spread 26×** (vs 2.1× under the GBM at same-bar execution). Stripping same-bar execution and model
+complexity did not merely attenuate the edge — it revealed that the effect is concentrated almost entirely in the
+sixty most-liquid contracts and is *absent* across the full universe. The honest frozen number, SR 0.57 / t 1.23,
+clears nothing.
+**Corrections to today's own reporting** (the earlier lineage rows are annotated as superseded): "SR 1.11–1.30",
+"53.1%/yr liquid tercile", "capacity $100–250M", and "non-linearity adds" were all measured at LAG-0 and/or with the
+GBM. At tradable execution with a parsimonious model they do not hold. The top-60 slice (SR 1.00, t 2.14) survives as
+a HYPOTHESIS for forward testing — not a measurement, and not a strategy.
