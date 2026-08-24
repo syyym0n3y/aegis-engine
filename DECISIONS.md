@@ -9970,5 +9970,5 @@ Lineage: delisting-notices (killed).
 CFD plane (319,392 hourly bars: SPX/NDX/gold/brent 2016→2026). Even at ~3bp/day, every session leg LOSES to holding
 24h: off-session −9.8 to −14.0%/yr excess (t −1.8 to −3.5), cash-session −18 to −24%/yr (t −2.9 to −7.6), eras ----
 everywhere. The split itself confirms D-503 (off-hours carry the drift) — but no leg beats the whole. Eighth
-consecutive timing-class family with the drift-dominates-gates shape. Board: 1,019 specs / 0 survivors.
+consecutive timing-class family with the drift-dominates-gates shape. Board: 1,011 specs / 0 survivors (DB-counted).
 Lineage: index-sessions (killed).
