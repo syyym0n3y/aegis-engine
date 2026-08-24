@@ -11,7 +11,7 @@ async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
 const DIR=Deno.env.get("AGENT_LOG_DIR")||new URL("../infra/data/",import.meta.url).pathname;
 const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
-const AGENTS=["autopilot","coverage","cryptofwd","daily","discovery","positioning"];
+const AGENTS=["autopilot","coverage","cryptofwd","daily","discovery","positioning","attribution","paper-book"];
 const MAX_STALE_H=Number(Deno.env.get("AGENT_MAX_STALE_H")||30);   // daily agents; a 24h loop plus slack
 
 // the program's real deflation ceiling, from the live trial counter or the documented figure
