@@ -1817,6 +1817,100 @@ if(PASS==="volmanaged"){
   await log(`  PASS 32 (volmanaged) done`);
 }
 
+
+// ================= PASS 33 — P3 STRATEGY: ENGAGEMENT-GATED RESIDUAL REVERSION (D-520b) =================
+// ONE pre-registered rule: fade yesterday's FORCE-RESIDUAL (attribution engine's honest leftover), lag-1 execution,
+// ONLY on instruments whose rolling model passes the pre-registered gate (0.15<=adjR2<=0.95, stability>=0.4 — forces
+// must explain enough to define a residual, and the model must be stable enough to trust). Anchors (assets that ARE
+// a force) excluded a priori. Fees: 10bp equities, 1bp FX, 2bp futures per change. Monthly-aggregated portfolio t.
+if(PASS==="residual"){
+  const FORCES33:[string,string][]=[["MKT","^GSPC"],["RATES","TLT"],["USD","EURUSD=X"],["OIL","CL=F"],["GOLD","GC=F"],["VOL","^VIX"]];
+  const load33=async(sym:string)=>{
+    const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+    const m=new Map<string,number>();
+    for(const b of (rb[0]?.bars||[])) if(b[4]>0) m.set(new Date(b[0]*1000).toISOString().slice(0,10),b[4]);
+    return m;};
+  const fmaps=new Map<string,Map<string,number>>();
+  for(const [n,sy] of FORCES33)fmaps.set(n,await load33(sy));
+  const days=[...fmaps.get("MKT")!.keys()].sort();
+  const fret=(n:string,i:number)=>{const m=fmaps.get(n)!;const a=m.get(days[i]),b=m.get(days[i-1]);
+    if(a===undefined||b===undefined)return null;
+    return n==="USD"?-(a/b-1):n==="VOL"?(a-b)/100:a/b-1;};
+  const ols33=(X:number[][],y:number[])=>{
+    const p=X[0].length,A=Array.from({length:p},()=>new Array(p).fill(0)),bv=new Array(p).fill(0);
+    for(let i=0;i<X.length;i++){for(let a=0;a<p;a++){bv[a]+=X[i][a]*y[i];for(let b2=0;b2<p;b2++)A[a][b2]+=X[i][a]*X[i][b2];}}
+    for(let a=0;a<p;a++)A[a][a]+=1e-8*X.length;
+    const M=A.map((r,i)=>[...r,bv[i]]);
+    for(let c=0;c<p;c++){let pv=c;for(let r2=c;r2<p;r2++)if(Math.abs(M[r2][c])>Math.abs(M[pv][c]))pv=r2;[M[c],M[pv]]=[M[pv],M[c]];
+      const dd=M[c][c]||1e-12;for(let k=c;k<=p;k++)M[c][k]/=dd;
+      for(let r2=0;r2<p;r2++)if(r2!==c){const fq=M[r2][c];for(let k=c;k<=p;k++)M[r2][k]-=fq*M[c][k];}}
+    return M.map(r=>r[p]);};
+  const UNIV33:[string,number][]=[["QQQ",10],["IWM",10],["DIA",10],["GLD",10],["AAPL",10],["MSFT",10],["NVDA",10],["AMZN",10],["META",10],["GOOGL",10],["TSLA",10],["JPM",10],["XOM",10],["AMD",10],
+    ["GBPUSD=X",1],["JPY=X",1],["AUDUSD=X",1],["HG=F",2],["SI=F",2],["ZW=F",2],["NG=F",2],["KC=F",2],["BTC-USD",5]];
+  const moPnL=new Map<string,{r:number;n:number}>(); let engaged=0,skipped=0;
+  for(const [sym,feeBp] of UNIV33){
+    const pm=await load33(sym); if(pm.size<600)continue;
+    // walk in ~21-day blocks: fit on trailing 250d, apply next block
+    let prevW=0;
+    for(let start=280;start<days.length-22;start+=21){
+      const rows:{x:number[];y:number}[]=[];
+      for(let i=start-250;i<start;i++){
+        if(i<1)continue;
+        const a=pm.get(days[i]),b=pm.get(days[i-1]); if(a===undefined||b===undefined)continue;
+        const x=FORCES33.map(([n])=>fret(n,i)); if(x.some(v=>v===null))continue;
+        const y=a/b-1; if(!Number.isFinite(y)||Math.abs(y)>0.5)continue;
+        rows.push({x:[1,...(x as number[])],y});
+      }
+      if(rows.length<150){skipped++;continue;}
+      const w=ols33(rows.map(r=>r.x),rows.map(r=>r.y));
+      const yhat=rows.map(r=>r.x.reduce((s3,v,i2)=>s3+v*w[i2],0));
+      const ybar=mean(rows.map(r=>r.y));
+      const ssr=rows.reduce((s3,r,i2)=>s3+(r.y-yhat[i2])**2,0), sst=rows.reduce((s3,r)=>s3+(r.y-ybar)**2,0);
+      const adj=1-(1-(1-ssr/Math.max(1e-12,sst)))*0-(ssr/Math.max(1e-12,sst))*(rows.length-1)/(rows.length-7); // adjR2
+      const adjR2=1-(ssr/Math.max(1e-12,sst))*(rows.length-1)/(rows.length-7);
+      const half=Math.floor(rows.length/2);
+      const w1=ols33(rows.slice(0,half).map(r=>r.x),rows.slice(0,half).map(r=>r.y));
+      const w2=ols33(rows.slice(half).map(r=>r.x),rows.slice(half).map(r=>r.y));
+      const b1=w1.slice(1),b2v=w2.slice(1); const m1=mean(b1),m2=mean(b2v);
+      let nu=0,d1=0,d2=0;for(let i2=0;i2<b1.length;i2++){nu+=(b1[i2]-m1)*(b2v[i2]-m2);d1+=(b1[i2]-m1)**2;d2+=(b2v[i2]-m2)**2;}
+      const stab=d1&&d2?nu/Math.sqrt(d1*d2):0;
+      const gateOK=adjR2>=0.15&&adjR2<=0.95&&stab>=0.4;
+      if(!gateOK){skipped++;prevW=0;continue;}
+      engaged++;
+      // apply block: residual at close i known at i; position for i+1->i+2 (lag-1)
+      for(let i=start;i<Math.min(start+21,days.length-2);i++){
+        const a=pm.get(days[i]),b=pm.get(days[i-1]); if(a===undefined||b===undefined)continue;
+        const x=FORCES33.map(([n])=>fret(n,i)); if(x.some(v=>v===null))continue;
+        const y=a/b-1; if(!Number.isFinite(y))continue;
+        const resid=y-[1,...(x as number[])].reduce((s3,v,i2)=>s3+v*w[i2],0);
+        const pos=-Math.sign(resid);
+        const a2=pm.get(days[i+1]),b2=pm.get(days[i+2]??days[i+1]);
+        if(a2===undefined||b2===undefined)continue;
+        const r2=b2/a2-1;
+        const fee=(pos!==prevW)?feeBp/1e4:0; prevW=pos;
+        const mo=days[i+1].slice(0,7);
+        const cur=moPnL.get(mo)??moPnL.set(mo,{r:0,n:0}).get(mo)!;
+        cur.r+=pos*r2-fee; cur.n++;
+      }
+    }
+  }
+  const mos=[...moPnL.entries()].sort().filter(x=>x[1].n>50).map(x=>x[1].r/x[1].n*21);   // avg per-name daily pnl x 21 = monthly book
+  await log(`  residual: engaged ${engaged} instrument-blocks, gate-skipped ${skipped}`);
+  if(mos.length<60){await record("book|p3|residual_fade","book",{rule:"fade-1d-residual",gate:"adjR2 0.15-0.95, stab>=0.4",exec:"lag1"},"combined",null,ceil);done++;}
+  else{
+    const m=mean(mos),sd=sdv(mos)||1e-9,t2=m/(sd/Math.sqrt(mos.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+    const wins=mos.filter(x=>x>0).length;
+    const g:Gate={n_names:UNIV33.length,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
+      g_breadth:true,g_effect:m>0,g_benchmark:m>0,g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
+    await record("book|p3|residual_fade","book",{rule:"fade-1d-residual",gate:"adjR2 0.15-0.95, stab>=0.4",exec:"lag1",monthly_win_rate:+(wins/mos.length).toFixed(3)},"combined",g,ceil); done++;
+    await log(`    P3 residual-fade: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t2.toFixed(2)} monthly-win ${(100*wins/mos.length).toFixed(0)}% eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 33 (residual) done`);
+}
+
 // ================= PASS 27 — EQ PANEL EXPORT for the non-linear harness (D-513) =================
 // Dumps the factory's own panel (single source of truth) so equity-nonlinear.ts trains on EXACTLY the audited features.
 if(PASS==="gbmexport"){

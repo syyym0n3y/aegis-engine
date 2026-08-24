@@ -10005,3 +10005,14 @@ drawdown all improve at once. This is the program's cleanest evidence that ADAPT
 value: not a new anomaly, but a policy layer on breadth. cap=2/lookback=6 defaults stated as dof. P1+P2 share one
 forward clock from 2026-08-24. Lineage: volmanaged-book-p2 (monitoring). Open: P3 causal attribution; operator trade
 history (their export needed); regime-conditioners beyond vol (each costs pre-registration).
+
+## D-520 (2026-08-24) — P3 DELIVERED: the attribution engine is live; its first strategy died honestly; win rate is measured, not promised
+**Engine (live, daily):** per-instrument force decomposition (MKT/RATES/USD/OIL/GOLD/VOL) with adj-R², era stability,
+and the day's unexplained residual — measured explanation AND measured ignorance (wheat/natgas/coffee at R² 0.02–0.07
+are marked DO-NOT-ENGAGE-VIA-FORCES; BTC carried +6.3% unexplained today). History accrues via the daily runner;
+migration 0089 makes attribution a time series. **First gated strategy:** residual-fade (pre-registered reversion,
+point-in-time gate) — PREREG MISS at −6.9%/yr, t −2.97: residuals continue, and daily flipping at retail fees crushes.
+The flipped sign is noted, NOT claimed. **The honest win-rate answer** (measured on the frozen book): P2 managed —
+62% of months, 81% of rolling years, **96.8% of rolling 3-year windows** positive. High win rate is an aggregation
+property of breadth + risk management, not a per-trade promise. Lineage: attribution-engine (monitoring),
+residual-fade-p3 (killed).
