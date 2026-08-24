@@ -10524,3 +10524,15 @@ both books preserves each selection and collects the diversification.
 gain is diversification rather than peak-picking, and the honest non-optimised report is the 50/50 point.
 My D-549 headline ("funding harms the book") is corrected: it was an artifact of my combination method.
 Still below the 5.34 ceiling. Promoted to nothing.
+
+## D-552 (2026-08-24) — retraction: the equity book was never broken
+In D-551 I wrote that the signal-vs-portfolio defect "has been present throughout this program — the equity book
+(D-518) combines at the signal level too." **That is false.** Reading the PASS 31 combination block: every component
+is a stream of long-short RETURNS, and the book is an equal-vol weighted average *of those returns*. The equity book
+has been blending at the portfolio level since it was built and requires no change.
+The signal-level defect exists only in the crypto lit5 construction, which averages feature *ranks* before selecting
+quintiles — and that is where the fix is being applied.
+**Second retraction in three decisions** (D-550: the duplication mechanism; D-552: this one). Both were plausible
+mechanisms asserted in narration without checking. The rate itself is the lesson: explanations are cheap to generate
+and only worth something once verified, and a program that reports its own retraction rate is more trustworthy than
+one that quietly stops making claims.
