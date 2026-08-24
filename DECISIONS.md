@@ -10578,3 +10578,24 @@ Stating those outcomes produced a useful audit in itself:
 The guard's pattern was widened once after it flagged rows that *did* state their outcome in plural phrasing; the
 selftest was re-run to confirm it still catches the true negative, so this was fixing a false positive, not loosening
 a gate.
+
+## D-555 (2026-08-24) — wrapper vs factor: both weak, and the wrapper costs ~80% of what remains
+Testing whether D-554's directional failure was the factors or their vehicles, over the identical window:
+
+| factor | academic decile L/S | ETF tilt vs SPY |
+|---|---|---|
+| momentum | +9.4%/yr (t 1.16) | **+1.5%/yr** (t 0.61) |
+| quality | +5.4%/yr (t 1.10) | −0.5%/yr |
+| size | +2.6%/yr (t 0.63) | −3.0%/yr |
+| value | −7.2%/yr (t −1.47) | −0.3%/yr |
+| low-vol | −4.0%/yr | −3.4%/yr (t −1.69) |
+
+**Nothing is significant on either side** (no |t| above 1.7), so the era was genuinely weak for factors — *and* the
+wrapper attenuates what little exists by roughly 80% (momentum 9.4% → 1.5%; quality 5.4% → −0.5%). Two independent
+problems stack: a weak era and a lossy vehicle.
+The consequence is **structural, not era-specific**: even if the academic premia return to historical strength, a
+long-only-tilt-minus-SPY vehicle delivers a fraction of them. That is a stronger statement than D-531's "the ETF book
+loses money" — it says the vehicle class itself is the constraint, which is why the placeable-equity problem stayed
+unsolved all session.
+**Underpowered by construction** — thirteen years cannot cleanly separate "weak era" from "lossy wrapper," and that
+limit is the finding's main caveat rather than a footnote.
