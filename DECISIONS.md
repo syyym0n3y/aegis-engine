@@ -10480,3 +10480,24 @@ That is a direct negative result for the instinct to keep adding signals — mor
 **D-415 closed honestly:** that retracted claim reported funding-crowding IC 0.1404 at **t 38.35** from pooling 180
 heterogeneous perps. Measured properly — adequate coverage, liquid core, portfolio-t — the residual effect is
 **t 2.01**. The retraction was right, and something real remained underneath it. Three trials counted.
+
+## D-550 (2026-08-24) — I tested my own explanation and it was wrong
+In D-549 I reported that funding helps alone but harms the composite, and I explained it: "funding correlates with the
+momentum and flow legs already present — crowded longs *are* recent winners with positive order flow." That was a
+causal claim I had not measured. Measuring it across 2,056 cross-sections:
+
+| funding vs | r | | true duplicates, for scale | r |
+|---|---|---|---|---|
+| maxret | −0.206 | | **vol30 \| maxret** | **+0.936** |
+| vol30 | −0.202 | | dvol \| trades | +0.767 |
+| flow | **−0.182** | | mom30 \| maxret | +0.475 |
+| mom30 | **−0.170** | | mom30 \| mom7 | +0.426 |
+
+**Every funding correlation is weak and most are NEGATIVE — the wrong sign for the story I told.** The duplication
+explanation is refuted. The empirical result of D-549 is unchanged (funding helps standalone, harms the equal-weight
+composite); what collapses is my account of why, and **I am not replacing it with a second unverified story** — the
+mechanism is now an open question, recorded as such.
+Confirmed in passing: `vol30` and `maxret` genuinely are near-duplicates (+0.936), exactly as flagged in D-542, so
+that earlier claim survives its own audit. The check ships as `scripts/check-feature-correlation.ts`.
+This is the discipline the program exists for, applied to its own narration: an explanation offered in one message,
+tested in the next, and retracted when the data disagreed.
