@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run --allow-read
 // crypto-final-spec.ts (D-540) — THE FROZEN CANDIDATE, every choice made by a LAW rather than by performance.
-//   model    = LINEAR composite      <- D-539: at tradable lag the GBM adds t 1.76 (null). Parsimony wins ties; fewer
+//   signals  = lit5 (five literature-sided anomalies; D-543) — stamped into the stream filenames
+//   model    = NONE fitted (equal-weight ranks)      <- D-539: at tradable lag the GBM adds t 1.76 (null). Parsimony wins ties; fewer
 //                                       researcher degrees of freedom (no depth/lr/n_trees) is itself robustness.
 //   execution= LAG 1 bar             <- D-498 same-bar corollary: a close-derived signal may not act on that close.
 //   hold     = 5 days                <- D-537/538 CAPACITY: ~$100M vs ~$5M at daily turnover, with Sharpe FLAT across
@@ -14,9 +15,10 @@ const read=async(f:string,col:number)=>{try{const t=await Deno.readTextFile(f);
   return t.trim().split("\n").map(l=>{const p=l.split("\t");return +p[col];}).filter(Number.isFinite);}catch{return null;}};
 const LIN=5;                                                      // column index of linHold in the dump
 const vs:[string,number[]|null][]=[
-  ["all-contracts", await read("/Users/ona/aegis-data/crypto_books_1dSF_top0_lag1_hold5.tsv",LIN)],
-  ["fixed-top-100", await read("/Users/ona/aegis-data/crypto_books_1dSF_top100_lag1_hold5.tsv",LIN)],
-  ["fixed-top-60",  await read("/Users/ona/aegis-data/crypto_books_1dSF_top60_lag1_hold5.tsv",LIN)],
+  ["all-contracts", await read("/Users/ona/aegis-data/crypto_books_1dSF_lit5_top0_lag1_hold5.tsv",LIN)],
+  ["fixed-top-100", await read("/Users/ona/aegis-data/crypto_books_1dSF_lit5_top100_lag1_hold5.tsv",LIN)],
+  ["fixed-top-50",  await read("/Users/ona/aegis-data/crypto_books_1dSF_lit5_top50_lag1_hold5.tsv",LIN)],
+  ["fixed-top-60",  await read("/Users/ona/aegis-data/crypto_books_1dSF_lit5_top60_lag1_hold5.tsv",LIN)],
 ];
 const ok=vs.filter(([,v])=>v&&v.length>500) as [string,number[]][];
 if(ok.length<2){console.log(`!! need at least 2 universe streams; have ${ok.length}`);Deno.exit(1);}
@@ -32,5 +34,7 @@ const srs=ok.map(([n,v])=>stat(v.slice(-L),n));
 const avg=Array.from({length:L},(_,i)=>mean(ok.map(([,v])=>v.slice(-L)[i])));
 console.log(`    ${"-".repeat(84)}`);
 const srA=stat(avg,"FROZEN (averaged)");
-console.log(`\n    universe sensitivity: SR ${Math.min(...srs).toFixed(2)}-${Math.max(...srs).toFixed(2)} (${(Math.max(...srs)/Math.max(1e-9,Math.min(...srs))).toFixed(2)}x) across ${ok.length} definitions; averaged ${srA.toFixed(2)}`);
+const lo=Math.min(...srs),hi=Math.max(...srs);
+console.log(`\n    universe sensitivity: SR ${lo.toFixed(2)} to ${hi.toFixed(2)} across ${ok.length} definitions; averaged ${srA.toFixed(2)}`);
+console.log(`    ${lo<=0?"a ratio is MEANINGLESS here (one universe is negative) — the range crosses zero, which is the strongest possible NOT-IDENTIFIED":`spread ${(hi/lo).toFixed(2)}x -> ${hi/lo>1.5?"NOT IDENTIFIED":"identified"} under the Universe Law`}`);
 console.log(`    deflation ceiling 5.34 — this is BELOW it. Frozen 2026-08-24; promoted to nothing; forward clock is the test.`);

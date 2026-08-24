@@ -10418,3 +10418,25 @@ overwrote the frozen Binance stream** that `crypto-final-spec.ts` reads — the 
 plumbing guard exists for, in a file rather than a database. Venue is now in the filename, the reader was repointed,
 and all Binance streams have been regenerated from scratch. Had this gone unnoticed, the next frozen-spec run would
 have reported Bybit numbers under a Binance label.
+
+## D-547 (2026-08-24) — three integrity defects in my own tooling, and the restated frozen numbers
+The Bybit overwrite prompted an audit of specification provenance. Three defects, all mine, all fixed:
+1. **Silent overwrite** — the stream dump path omitted the venue, so a Bybit run destroyed the frozen Binance stream.
+2. **Ambiguous provenance** — the path also omitted the feature set, so `crypto-final-spec.ts` was consuming **lit5**
+   streams while its own header declared a plain linear composite. The spec could not say what produced its numbers.
+3. **Nonsense statistic** — the universe-sensitivity ratio printed **1,296,422,029×** when one Sharpe was negative:
+   a divide-by-near-zero rendered to two decimal places, i.e. false precision on a meaningless quantity.
+Venue and feature set are now stamped into every stream filename; the ratio is suppressed when the range crosses zero
+and replaced with the honest statement. **Restated frozen candidate** (lit5, lag-1, 5-day hold, correctly labelled):
+
+| universe | %/yr | SR | t |
+|---|---|---|---|
+| all contracts | −7.4 | **−0.20** | −0.44 |
+| top-100 | 38.8 | 0.89 | 1.91 |
+| top-60 | 65.3 | 1.30 | 2.79 |
+| top-50 | 76.0 | 1.41 | 3.04 |
+| **AVERAGED** | **43.2** | **0.99** | **2.13** |
+
+The universe range **crosses zero** — the strongest possible NOT-IDENTIFIED reading, stronger than any ratio.
+None of these three defects was a market finding; all three were ways my own machinery could have reported something
+untrue while every guard stayed green.
