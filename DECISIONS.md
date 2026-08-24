@@ -10089,3 +10089,21 @@ modern-era number (managed ≈5–6%/yr, SR ≈0.46–0.62), NOT the 8.9%/yr SR 
 arming it.** Ledger rows annotated so the expectation cannot be quietly reset later. If paper delivers ~4–5%/yr that is
 IN LINE, not failure; if it delivers ~9% that is above modern-era expectation and should invite suspicion, not
 celebration.
+
+## D-527b (2026-08-24) — per-component decay: the international leg is the only one still standing, and I am NOT re-picking on it
+Descriptive era decomposition of the six frozen components (full / 2006+ / 2016+ annualised, with t):
+
+| component | full | 2006+ | 2016+ |
+|---|---|---|---|
+| dxwml (developed ex-US momentum) | 7.0% (t 3.59) | 6.2% (t 2.61) | **5.9% (t 2.08)** |
+| dxhml (developed ex-US value) | 3.7 (2.76) | 2.1 (1.23) | 4.4 (1.51) |
+| ni (net issuance) | 3.9 (2.63) | 2.5 (0.84) | 4.4 (0.96) |
+| ind49mom (industry momentum) | 9.5 (4.11) | 7.6 (1.55) | 5.3 (0.93) |
+| bigmom (US big-cap momentum) | 6.6 (2.82) | 3.9 (0.74) | **1.8 (0.23)** |
+| factmom (factor momentum) | 7.6 (5.27) | 2.6 (0.93) | **−0.0 (−0.00)** |
+
+US big-cap momentum and factor momentum are effectively DEAD in the last decade; the international momentum leg is the
+only component whose modern-era t still exceeds 2. **Explicit refusal: the book is NOT re-specified on these numbers.**
+Re-picking components on the window you then report is precisely the Selection Law trap (D-455), which this program has
+already been burned by once. Any re-specification must be pre-registered and judged on FORWARD data only. Recorded as
+`scripts/check-component-decay.ts` so the operator can re-run it themselves.

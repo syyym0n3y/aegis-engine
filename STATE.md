@@ -1,5 +1,12 @@
 # STATE — Aegis (live state)
 
+## 2026-08-24 (LATE) — EXPECTATION CORRECTED DOWN (D-527): paper rung must be judged on modern-era numbers
+Self-attack results: book alpha SURVIVES the 9-force model (t 3.56-3.94, force betas negative — not style beta in
+disguise), but performance DECAYED: managed full-sample 9.4%/yr SR 0.89 vs **2016-2026 4.9%/yr SR 0.46**. Per-component
+(D-527b): only developed-ex-US momentum still has modern t>2; US big-cap momentum (t 0.23) and factor momentum (t -0.00)
+are dead in the last decade. NOT re-picked (Selection Law). Forward expectation for paper: ~5%/yr, SR ~0.5.
+Also: 9-FORCE causal model adopted (D-526, adj-R2 +0.05 paired t 4.24, residual PC1 18.1%->8.3%).
+
 ## 2026-08-24 — PAPER RUNG ARMED (D-521): book-p2-volmanaged marks monthly from 2026-08, $100k paper, kill-switch honored
 P1 combined book frozen (D-518: SR 0.78, 63y, ++++), P2 vol-managed (D-519: SR 0.90, paired t 4.13, win rates 62%/81%/97%
 by month/year/3y), P3 attribution engine live daily (D-520). First paper mark lands when the French panels publish 2026-08.
