@@ -135,5 +135,5 @@ for(const [k,v] of Object.entries(books)){ if(v.length<36)continue;
 console.log(`\n    Deflated ceiling: t ~ 5.34 at N~1.53M. The promotable number is the LIQUID book's, per the Liquidity Law.`);
 // trials: 3 models x 2 universes examined
 {const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
-  body:JSON.stringify({run_key:`equity-nonlinear-D513`,n_trials:6,note:"D-513 GBM equity panel walk-forward"})}).catch(()=>null);
+  body:JSON.stringify({family:"adhoc",run_key:`equity-nonlinear-D513`})}).catch(()=>null);
  if(!tw||!tw.ok)console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}

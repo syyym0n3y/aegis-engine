@@ -10035,3 +10035,11 @@ gated-strategy research and regime study without waiting years for accrual. **Re
 D-520 prereg miss is registered FORWARD-ONLY (evaluated exclusively on attribution rows after 2026-08-24, first read
 at ≥6 months) — the honest mechanism for pursuing a post-hoc observation without laundering in-sample sight of it.
 Lineage: residual-follow-forward (monitoring).
+
+## D-523 (2026-08-24) — R²-collapse → forward vol: NULL at available power; ad-hoc trial writes repaired and backfilled
+Pre-registered single test on the new 22-year attribution era-record: explanation-collapse (adj-R² ≥0.25 below its
+trailing-12m mean) does NOT predict next-month vol (ratio 1.047 vs 1.045, t 0.02) — though only 45 collapse events
+exist at this definition, so the verdict is null-at-available-power, not a strong exclusion. De-risk trigger candidacy:
+not earned. HYGIENE: the ad-hoc trial-counter writes (D-498 adversarial ×8, D-513 GBM ×6, D-523 ×1) had been silently
+failing on a schema mismatch — caught by the WRITE-FAILED instrumentation, fixed to the real schema, and the missed
+events backfilled. The ceiling now counts them.
