@@ -9965,3 +9965,10 @@ short borrow is scarce-to-impossible and priced at 50–300%/yr where it exists.
 borrow fee. Below ceiling regardless. The red-flag event family is now complete at five tables: 4.02 null, 4.01
 directional-thin, 2.05 prereg-miss, 5.02r best-powered directional (t −3.47), 3.01 strongest-but-untradable.
 Lineage: delisting-notices (killed).
+
+## D-517 (2026-08-24) — session decomposition at CFD costs: the overnight premium is a fact, not a strategy, at ANY cost
+CFD plane (319,392 hourly bars: SPX/NDX/gold/brent 2016→2026). Even at ~3bp/day, every session leg LOSES to holding
+24h: off-session −9.8 to −14.0%/yr excess (t −1.8 to −3.5), cash-session −18 to −24%/yr (t −2.9 to −7.6), eras ----
+everywhere. The split itself confirms D-503 (off-hours carry the drift) — but no leg beats the whole. Eighth
+consecutive timing-class family with the drift-dominates-gates shape. Board: 1,019 specs / 0 survivors.
+Lineage: index-sessions (killed).

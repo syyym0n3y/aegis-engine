@@ -1600,6 +1600,54 @@ if(PASS==="all"||PASS==="hestonsadka"){
   await log(`  PASS 29 (hestonsadka) done`);
 }
 
+
+// ================= PASS 30 — INDEX/COMMODITY SESSION DECOMPOSITION at CFD costs (D-517) =================
+// The overnight premium (D-503: SPY 10.1%/yr of total, SUB-FEE at ETF 20bp/day) re-tested where round trips cost
+// ~1.5bp: CFD hourly for SPX/NDX/gold/brent. Sessions are clock-known (no signal lag). Cash session approximated as
+// 14:00-20:00 UTC bars (stated); off-session = the rest. Both legs charged 2 changes/day x 1.5bp; judged vs 24h hold.
+if(PASS==="all"||PASS==="sessions"){
+  const iso30=(ts:number)=>new Date(ts*1000).toISOString();
+  for(const inst of ["USA500IDXUSD","USATECHIDXUSD","XAUUSD","BRENTCMDUSD"]){
+    const rows:{ts:number;o:number;c:number}[]=[];
+    for(let off=0;;off+=50000){
+      const p2=await fetch(`${OWNED}/trd_fx_hourly?symbol=eq.${inst}&select=ts,o,c&order=ts&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break;
+      for(const r of p2 as {ts:number;o:number;c:number}[]) rows.push({ts:+r.ts,o:+r.o,c:+r.c});
+      if(p2.length<50000)break;
+    }
+    if(rows.length<20000)continue;
+    for(const leg of ["cash","off"]){
+      const key=`sessions|${inst}|${leg}`;
+      const moEx=new Map<string,number>();
+      let dayLeg=0,dayAll=0,curDay="",legBars=0;
+      const flush=(d:string)=>{ if(!d)return;
+        const fee=2*1.5/1e4;
+        const ex=(dayLeg-fee)-dayAll;                       // leg net minus 24h hold
+        const mo=d.slice(0,7); moEx.set(mo,(moEx.get(mo)||0)+ex); };
+      for(const b of rows){
+        const t=iso30(b.ts); const d=t.slice(0,10); const h=+t.slice(11,13);
+        if(d!==curDay){flush(curDay);curDay=d;dayLeg=0;dayAll=0;legBars=0;}
+        const r2=b.c/b.o-1;
+        dayAll+=r2;
+        const inCash=h>=14&&h<20;
+        if((leg==="cash")===inCash){dayLeg+=r2;legBars++;}
+      }
+      flush(curDay);
+      const mos=[...moEx.entries()].sort().map(x=>x[1]);
+      if(mos.length<60){await record(key,"sessions",{inst,leg,exec:"calendar"},"single",null,ceil);done++;continue;}
+      const m=mean(mos),sd=sdv(mos)||1e-9,t2=m/(sd/Math.sqrt(mos.length));
+      let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+      const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
+      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
+        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+        g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+      await record(key,"sessions",{inst,leg,exec:"calendar"},"single",g,ceil); done++;
+      await log(`    sessions ${inst.padEnd(14)} ${leg.padEnd(5)}: n=${mos.length}mo excess-vs-24h ${(m*12*100).toFixed(1)}%/yr t=${t2.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+    }
+  }
+  await log(`  PASS 30 (sessions) done`);
+}
+
 // ================= PASS 27 — EQ PANEL EXPORT for the non-linear harness (D-513) =================
 // Dumps the factory's own panel (single source of truth) so equity-nonlinear.ts trains on EXACTLY the audited features.
 if(PASS==="gbmexport"){
