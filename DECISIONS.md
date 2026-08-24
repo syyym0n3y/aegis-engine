@@ -9984,3 +9984,16 @@ gate). P1 component criteria, stated BEFORE assembly: portfolio |t| >= 2.5 on it
 (long side or feasible borrow). Combination = equal-vol weights, no optimization (optimization = selection leak).
 STATED LIMIT: components are known-good in-sample; the combination's own t is descriptive; the forward clock is the
 only honest confirmation and starts at assembly.
+
+## D-518 CLOSURE (2026-08-24) — THE COMBINED BOOK: the portfolio question, answered and frozen
+Components (mechanical filter, no discretion): big-cap momentum, developed ex-US WML, developed ex-US HML, net
+issuance, ind49 industry momentum, factor momentum — equal-vol, no optimization. **63 years, 756 months: 6.6%/yr net,
+SR 0.78, t 6.21, maxDD −25%, positive every era. With gross-VRP overlay: 5.0%/yr, SR 0.80, maxDD −18%.**
+HONEST FRAME (pre-registered in D-518): the t is descriptive — components were selected on their in-sample records, so
+this is NOT a deflation-gate clearance and is not recorded as an edge discovery. It IS the operator's thesis surviving
+honest assembly: no single rule clears alone, but breadth of small consistent premia + diversification (momentum block
+0.45–0.65 corr, HML negative, NI orthogonal) compounds at SR ~0.8 in liquid, implementable form. Two build-caught
+defects: VRP stream key mismatch (silently inert overlay) and NON-UNIQUE pagination ordering (run-to-run row drift —
+fixed with order=month,factor; the subtler sibling of the truncation lint). **Spec frozen; forward clock running from
+2026-08-24.** Lineage: combined-book-p1 (monitoring). Next: P2 conditional policies, P3 causal attribution, and the
+operator's own trade history as a dataset (needs their broker export).

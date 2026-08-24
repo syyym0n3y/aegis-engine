@@ -1648,6 +1648,142 @@ if(PASS==="all"||PASS==="sessions"){
   await log(`  PASS 30 (sessions) done`);
 }
 
+
+// ================= PASS 31 — THE COMBINED BOOK (D-518 P1: many small consistent premia, held together) =================
+// Components passed the PRE-REGISTERED filter (D-518) mechanically: |t|>=2.5, era>=3/4, replicated across >=2
+// geographies/datasets or >=50y, implementable at stated cost. Weights: equal-vol (1/sigma, full-sample sigma - a
+// stated mild leak; no optimization). VRP is reported as a labeled GROSS add-on, never inside the headline.
+// STATED LIMIT: components are known-good in-sample; the combined t is descriptive; the forward clock is the test.
+if(PASS==="all"||PASS==="book"){
+  const ffB2=await (async()=>{const out:{month:string;factor:string;ret:number}[]=[];
+    for(let off=0;;off+=10000){
+      const p2=await fetch(`${OWNED}/trd_ff_factors?or=(factor.like.szmom25:*,factor.like.dxwml:*,factor.like.dxff3:*,factor.like.ni10:*,factor.like.ind49:*,factor.like.mom10:*,factor.like.strev10:*,factor.like.ltrev10:*,factor.like.op10:*,factor.like.inv10:*,factor.like.szbm100:*)&select=month,factor,ret&order=month,factor&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+      if(!Array.isArray(p2)||!p2.length)break; out.push(...p2); if(p2.length<10000)break;}
+    return out;})();
+  const byF=new Map<string,Map<string,number>>();
+  for(const r of ffB2)(byF.get(r.factor)??byF.set(r.factor,new Map()).get(r.factor)!).set(String(r.month).slice(0,7),+r.ret);
+  const get=(f:string)=>byF.get(f);
+  const streams=new Map<string,Map<string,number>>();
+  // 1. bigmom: BIG_Hi - BIG_Lo (szmom25), 5bp drag
+  {const L=get("szmom25:BIG_HiPRIOR"),S2=get("szmom25:BIG_LoPRIOR");
+   if(L&&S2){const m=new Map<string,number>();for(const [mo,v] of L)if(S2.has(mo))m.set(mo,v-S2.get(mo)!-0.0005);streams.set("bigmom",m);}}
+  // 2. dxwml: developed ex-US WML, 10bp drag
+  {const W=get("dxwml:WML"); if(W){const m=new Map<string,number>();for(const [mo,v] of W)m.set(mo,v-0.0010);streams.set("dxwml",m);}}
+  // 3. dxhml: developed ex-US HML, 10bp drag
+  {const H=get("dxff3:HML"); if(H){const m=new Map<string,number>();for(const [mo,v] of H)m.set(mo,v-0.0010);streams.set("dxhml",m);}}
+  // 4. ni10: low-minus-high net issuance deciles, 5bp
+  {const ks=[...byF.keys()].filter(k=>k.startsWith("ni10:"));
+   const lo=ks.filter(k=>/:Lo/.test(k)&&/_10$/.test(k))[0]??ks.filter(k=>/:Lo/.test(k))[0];
+   const hi=ks.filter(k=>/:Hi/.test(k)&&/_10$/.test(k))[0]??ks.filter(k=>/:Hi/.test(k))[0];
+   const L=lo?get(lo):null,S2=hi?get(hi):null;
+   if(L&&S2){const m=new Map<string,number>();for(const [mo,v] of L)if(S2.has(mo))m.set(mo,v-S2.get(mo)!-0.0005);streams.set("ni",m);}}
+  // 5. ind49 momentum (the recorded spec: rank 49 industries by trailing 12m, long top5/short bottom5, 3mo disjoint hold), 5bp per rebalance
+  {const ks=[...byF.keys()].filter(k=>k.startsWith("ind49:"));
+   const months=[...(ks.length?get(ks[0])!.keys():[])].sort();
+   const m=new Map<string,number>();
+   for(let i=12;i<months.length-2;i+=3){
+     const mo=months[i];
+     const scored=ks.map(k=>{const s3=get(k)!;let cum=1,ok=true;
+       for(let q=i-12;q<i;q++){const v=s3.get(months[q]);if(v===undefined){ok=false;break;}cum*=1+v;}
+       return {k,sc:ok?cum:NaN};}).filter(x=>Number.isFinite(x.sc));
+     if(scored.length<40)continue;
+     scored.sort((a,b)=>b.sc-a.sc);
+     const long=scored.slice(0,5).map(x=>x.k),short=scored.slice(-5).map(x=>x.k);
+     for(let h2=0;h2<3&&i+h2<months.length-1;h2++){
+       const mo2=months[i+h2];
+       const lr=mean(long.map(k=>get(k)!.get(mo2)??0)),sr=mean(short.map(k=>get(k)!.get(mo2)??0));
+       m.set(mo2,lr-sr-(h2===0?0.0005:0));
+     }
+   }
+   streams.set("ind49mom",m);}
+  // 6. factmom form12 top3 over the 9 self-built factor series (PASS 9 construction), 5bp
+  {const F9:[string,string,string][]=[["mom10","Hi","Lo"],["strev10","Lo","Hi"],["ltrev10","Lo","Hi"],["op10","Hi","Lo"],["inv10","Lo","Hi"]];
+   const fseries=new Map<string,Map<string,number>>();
+   const pick2=(pre:string,side:string)=>{const c2=[...byF.keys()].filter(k=>k.startsWith(pre+":")&&k.split(":")[1].startsWith(side));
+     const dec=c2.filter(k=>/_10$/.test(k)); return (dec.length===1?get(dec[0]):c2.length===1?get(c2[0]):null);};
+   for(const [pre,ls,ss] of F9){const L=pick2(pre,ls),S2=pick2(pre,ss);
+     if(L&&S2){const m=new Map<string,number>();for(const [mo,v] of L)if(S2.has(mo))m.set(mo,v-S2.get(mo)!);fseries.set(pre,m);}}
+   // SMB/HML from szbm100 corners is heavy; the recorded spec used 9 series - with 5 canonical premia this is the
+   // form12 top3-of-5 variant, stated as such (a stream reconstruction, not a new search).
+   const names=[...fseries.keys()];
+   const months=[...(fseries.get(names[0])?.keys()??[])].sort();
+   const m=new Map<string,number>();
+   for(let i=12;i<months.length-1;i++){
+     const scored=names.map(n=>{const s3=fseries.get(n)!;let cum=1,ok=true;
+       for(let q=i-12;q<i;q++){const v=s3.get(months[q]);if(v===undefined){ok=false;break;}cum*=1+v;}
+       return {n,sc:ok?cum:NaN};}).filter(x=>Number.isFinite(x.sc));
+     if(scored.length<4)continue;
+     scored.sort((a,b)=>b.sc-a.sc);
+     const top=scored.slice(0,3).map(x=>x.n);
+     const mo2=months[i];
+     m.set(mo2,mean(top.map(n=>fseries.get(n)!.get(mo2)??0))-0.0005);
+   }
+   streams.set("factmom",m);}
+  // VRP gross add-on: short 1m variance proxy = (VIX_prev/100)^2/12 - RV_m^2, from ^VIX + ^GSPC daily
+  {const vb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.%5EVIX&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+   const gb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.%5EGSPC&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
+   const vix2=new Map<string,number>(),spx=new Map<string,number>();
+   for(const b of (vb[0]?.bars||[]))if(b[4]>0)vix2.set(new Date(b[0]*1000).toISOString().slice(0,10),b[4]);
+   for(const b of (gb[0]?.bars||[]))if(b[4]>0)spx.set(new Date(b[0]*1000).toISOString().slice(0,10),b[4]);
+   const days=[...spx.keys()].sort();
+   const byMoR=new Map<string,number[]>(); const vixEnd=new Map<string,number>();
+   for(let i=1;i<days.length;i++){const mo=days[i].slice(0,7);
+     (byMoR.get(mo)??byMoR.set(mo,[]).get(mo)!).push(spx.get(days[i])!/spx.get(days[i-1])!-1);
+     const v=vix2.get(days[i]); if(v)vixEnd.set(mo,v);}
+   const mos2=[...byMoR.keys()].sort(); const m=new Map<string,number>();
+   for(let i=1;i<mos2.length;i++){
+     const iv=vixEnd.get(mos2[i-1]); const rets=byMoR.get(mos2[i])!;
+     if(!iv||rets.length<15)continue;
+     const rv2=rets.reduce((s3,x)=>s3+x*x,0)*(252/rets.length)/12;   // annualized var / 12 = monthly var
+     m.set(mos2[i],((iv/100)**2)/12-rv2);                            // GROSS short-varswap P&L per unit notional
+   }
+   await log(`  vrp_gross stream: ${m.size} months`);
+   streams.set("vrp_gross",m);}
+  // ---- combine ----
+  const core=["bigmom","dxwml","dxhml","ni","ind49mom","factmom"];
+  const vols=new Map<string,number>();
+  for(const n of core){const v=[...(streams.get(n)?.values()??[])];if(v.length>120)vols.set(n,sdv(v));}
+  const active=[...vols.keys()];
+  await log(`  book: components ${active.join(", ")} (+vrp_gross labeled)`);
+  // correlation matrix
+  for(let a=0;a<active.length;a++)for(let b2=a+1;b2<active.length;b2++){
+    const A=streams.get(active[a])!,B=streams.get(active[b2])!;
+    const common=[...A.keys()].filter(mo=>B.has(mo));
+    if(common.length<60)continue;
+    const av=common.map(mo=>A.get(mo)!),bv=common.map(mo=>B.get(mo)!);
+    const ma=mean(av),mb=mean(bv);
+    const cov=mean(common.map((_,i)=>(av[i]-ma)*(bv[i]-mb)));
+    await log(`    corr ${active[a]} x ${active[b2]}: ${(cov/((sdv(av)||1e-9)*(sdv(bv)||1e-9))).toFixed(2)} (n=${common.length})`);
+  }
+  for(const variant of ["core","core+vrp"] as const){
+    const names=variant==="core"?active:[...active,"vrp_gross"];
+    const w=new Map<string,number>();
+    for(const n of names){const v=[...(streams.get(n)?.values()??[])];const sg=sdv(v)||1e-9;w.set(n,1/sg);}
+    const wsum=[...w.values()].reduce((s3,x)=>s3+x,0); for(const [k2,v] of w)w.set(k2,v/wsum);
+    await log(`    weights[${variant}]: ${[...w.entries()].map(([k2,v])=>`${k2}=${v.toFixed(3)}`).join(" ")}`);
+    // book return per month = sum w_i * r_i over components with data that month, renormalized to available weight
+    const allMo=new Set<string>(); for(const n of names)for(const mo of streams.get(n)!.keys())allMo.add(mo);
+    const mos3=[...allMo].sort().filter(mo=>names.filter(n=>streams.get(n)!.has(mo)).length>=3);
+    const rets=mos3.map(mo=>{
+      let num=0,den=0;
+      for(const n of names){const v=streams.get(n)!.get(mo);if(v!==undefined){num+=w.get(n)!*v;den+=w.get(n)!;}}
+      return num/den;});
+    const key=`book|p1|${variant}`;
+    {const vm=streams.get("vrp_gross")!; const sub=mos3.filter(mo=>vm.has(mo));
+     const subR=sub.map(mo=>rets[mos3.indexOf(mo)]);
+     await log(`    [dbg ${variant}] vrp-months n=${sub.length} meanR=${subR.length?(mean(subR)*12*100).toFixed(2):"-"}%/yr`);}
+    const m=mean(rets),sd=sdv(rets)||1e-9,t2=m/(sd/Math.sqrt(rets.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a2,b2));});
+    const g:Gate={n_names:names.length,n_periods:rets.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
+      g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:variant==="core",
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
+    await record(key,"book",{variant,components:names.length,weights:"equal_vol"},"combined",g,ceil); done++;
+    await log(`    BOOK ${variant.padEnd(9)}: n=${rets.length}mo  net ${(m*12*100).toFixed(1)}%/yr  SR ${((m/sd)*Math.sqrt(12)).toFixed(2)}  t=${t2.toFixed(2)}  maxDD ${(dd*100).toFixed(0)}%  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 31 (book) done`);
+}
+
 // ================= PASS 27 — EQ PANEL EXPORT for the non-linear harness (D-513) =================
 // Dumps the factory's own panel (single source of truth) so equity-nonlinear.ts trains on EXACTLY the audited features.
 if(PASS==="gbmexport"){
