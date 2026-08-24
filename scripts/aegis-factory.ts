@@ -201,7 +201,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"||PASS0==="hestonsadka"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"||PASS0==="hestonsadka"||PASS0==="eqconc"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;
@@ -1911,6 +1911,60 @@ if(PASS==="residual"){
   await log(`  PASS 33 (residual) done`);
 }
 
+
+// ================= PASS 34 — CONCENTRATED PLACEABLE EQUITY BOOK (D-556) =================
+// D-555 showed the constraint is structural: a long-only ETF tilt captures ~20% of a decile long-short. But there is a
+// third vehicle never tested here — a CONCENTRATED book of liquid single stocks, which an operator CAN place (liquid
+// US large-caps are shortable at ordinary margin, unlike a decile of microcaps and unlike an ETF wrapper).
+// Signals are the equity analogues of the crypto lit5 set, literature-sided: 52-week-high proximity (+), low
+// volatility (-vol12), momentum (+mom12_1). Rebalanced monthly, N long / N short from the most liquid names,
+// 10bp round trip per side per rebalance, lag-1 by panel construction (signals use data through month end, return is
+// the following month).
+if(PASS==="all"||PASS==="eqconc"){
+  const SIGSET:[string,number][]=[["hi52",1],["vol12",-1],["mom12_1",1]];
+  // index once: eqPanel.find() inside the per-month rank loop would be O(months x names x panel) and take hours
+  const sigIdx=new Map<string,Record<string,number|null>>();
+  for(const r of eqPanel)sigIdx.set(`${r.mo}|${r.sym}`,r.sig as Record<string,number|null>);
+  for(const LIQN of [100,200,400]) for(const K of [10,20]){
+    const key=`eqconc|lit3|liq${LIQN}|k${K}`;
+    const byMo=new Map<string,{sym:string;fwd:number;dv:number;score:number}[]>();
+    for(const r of eqPanel){
+      const vals=SIGSET.map(([n])=>(r.sig as Record<string,number|null>)[n]);
+      if(vals.some(v=>v==null||!Number.isFinite(v as number)))continue;
+      (byMo.get(r.mo)??byMo.set(r.mo,[]).get(r.mo)!).push({sym:r.sym,fwd:r.fwd,dv:r.dv,score:0});
+    }
+    const rets:number[]=[]; let avgN=0,nMo=0;
+    for(const [mo,g0] of [...byMo.entries()].sort()){
+      if(g0.length<LIQN)continue;
+      const g=[...g0].sort((a,b)=>b.dv-a.dv).slice(0,LIQN);     // the LIQN most liquid names that month
+      // rank each signal within this liquid set, then equal-weight the literature-signed ranks
+      const ranks=SIGSET.map(([n,sg])=>{
+        const vals=g.map(x=>sigIdx.get(`${mo}|${x.sym}`)?.[n] as number);
+        const ord=[...g.keys()].sort((a,b)=>vals[a]-vals[b]);
+        const rk=new Array(g.length).fill(0);
+        ord.forEach((gi,i)=>{rk[gi]=sg*(i/(g.length-1)-0.5);});
+        return rk;});
+      g.forEach((x,i)=>{x.score=mean(ranks.map(rk=>rk[i]));});
+      const ord=[...g.keys()].sort((a,b)=>g[b].score-g[a].score);
+      if(ord.length<2*K)continue;
+      const L=ord.slice(0,K),S=ord.slice(-K);
+      const r2=mean(L.map(i=>g[i].fwd))-mean(S.map(i=>g[i].fwd))-2*FEE_EQ/1e4;
+      rets.push(r2); avgN+=2*K; nMo++;
+    }
+    if(rets.length<120){await record(key,"eqconc",{LIQN,K},"equity_concentrated",null,ceil);done++;continue;}
+    const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
+    let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
+    const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
+    const g2:Gate={n_names:Math.round(avgN/Math.max(1,nMo)),n_periods:rets.length,gross_ann:(m+2*FEE_EQ/1e4)*12,net_ann:m*12,
+      sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      g_breadth:2*K>=20,g_effect:Math.abs(m)>=2*FEE_EQ/1e4,g_benchmark:m>0,g_liquid:true,
+      g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
+    await record(key,"eqconc",{LIQN,K,signals:"hi52+,vol12-,mom12_1+"},"equity_concentrated",g2,ceil); done++;
+    await log(`    eqconc liq${LIQN} ${K}L/${K}S: n=${rets.length}mo net ${(m*12*100).toFixed(1)}%/yr SR ${((m/sd)*Math.sqrt(12)).toFixed(2)} t ${t.toFixed(2)} maxDD ${(dd*100).toFixed(0)}% eras ${q4.map(x=>x>0?"+":"-").join("")}`);
+  }
+  await log(`  PASS 34 (eqconc) done`);
+}
+
 // ================= PASS 27 — EQ PANEL EXPORT for the non-linear harness (D-513) =================
 // Dumps the factory's own panel (single source of truth) so equity-nonlinear.ts trains on EXACTLY the audited features.
 if(PASS==="gbmexport"){
@@ -2088,7 +2142,8 @@ if(PASS==="all"||PASS==="frenchdec"){
   }
   await log(`  PASS 5b (frenchdec) done`);
 }
-if(trialRows.length){const tw=await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);  // 409 = run_key already counted (idempotent), not a defecttrialRows=[];}
+if(trialRows.length){const tw=await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);
+  trialRows=[];}   // 409 = run_key already counted (idempotent), not a defect
 const {N:N2,ceil:c2}=await ceiling();
 await log(`\n==> XSEC_EQ pass done: ${done} specs, ${written} ledger rows. Ceiling ${ceil.toFixed(3)} -> ${c2.toFixed(3)} (N=${N2.toLocaleString()})`);
 const surv=await fetch(`${OWNED}/trd_factory?survivor=eq.true&select=spec_key,portfolio_t,net_ann,n_names&order=portfolio_t.desc&limit=10`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);

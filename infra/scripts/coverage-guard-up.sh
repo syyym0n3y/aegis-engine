@@ -48,6 +48,11 @@ while true; do
   # PLUMBING GUARD (D-467): static lint over the repo's own TypeScript — the defect classes that silently distorted
   # recorded numbers (arbitrary truncation, swallowed writes, frozen deflation ceilings). Ratcheted: RED only on NEW
   # violations beyond the committed baseline, so the legacy backlog burns down without ever growing.
+  # SURVIVOR GUARD (D-557): the survivor flag is a generated column over six gates; it cannot see in-sample component
+  # selection. A flagged survivor whose own lineage calls its statistic descriptive is a false positive, not a promotion.
+  if ! deno run --allow-net --allow-env ../scripts/survivor-guard.ts; then
+    echo "$(date -u +%FT%TZ) SURVIVOR GUARD RED — a flagged survivor is contradicted by its own lineage"
+  fi
   # SIGN GUARD (D-554): a direction asserted and never checked is how the D-553 sign error survived to become the
   # session's headline result. Any claimed directional prior must state whether it MATCHED or MISSED.
   if ! deno run --allow-net --allow-env ../scripts/sign-guard.ts; then
