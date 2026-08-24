@@ -12,6 +12,14 @@ const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`
 const DIR=Deno.env.get("AGENT_LOG_DIR")||new URL("../infra/data/",import.meta.url).pathname;
 const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
 const AGENTS=["autopilot","coverage","cryptofwd","daily","discovery","positioning","attribution","paper-book"];
+// A newly-WIRED agent has not necessarily run yet: its missing log is not evidence of a defect until the daily runner
+// has had a full cycle to produce one. Grace is explicit, stated, and SELF-EXPIRING — after it, missing = RED like any
+// wedged agent. (Extending AGENTS without this made the guard permanently RED, i.e. unsatisfiable — caught before it
+// could mask a real finding.)
+const ARMED_AT: Record<string,string> = {"attribution":"2026-08-24","paper-book":"2026-08-24"};
+const GRACE_H=36;
+const inGrace=(a:string)=>{const d=ARMED_AT[a];if(!d)return false;
+  return (Date.now()-Date.parse(d+"T00:00:00Z"))/3600000 < GRACE_H;};
 const MAX_STALE_H=Number(Deno.env.get("AGENT_MAX_STALE_H")||30);   // daily agents; a 24h loop plus slack
 
 // the program's real deflation ceiling, from the live trial counter or the documented figure
@@ -53,7 +61,11 @@ for(const a of AGENTS){
     // so everything after the LAST banner is the current run. Without this the guard can never go green after a fix,
     // which is worse than useless: a guard that cannot be satisfied gets ignored.
     const parts=raw.split(/^==> /m);
-    text=parts.length>1?parts[parts.length-1]:raw.slice(-20000); }catch{ push({agent:a,what:"log file missing"}); continue; }
+    text=parts.length>1?parts[parts.length-1]:raw.slice(-20000); }catch{
+    if(inGrace(a)){console.log(`  PASS ${a.padEnd(13)} ${"".padEnd(9)}wired ${ARMED_AT[a]}, no log yet (grace ${GRACE_H}h — expires into RED)`);continue;}
+    push({agent:a,what:"log file missing"});
+    console.log(`  RED  ${a.padEnd(13)} ${"".padEnd(9)}log file missing`);
+    continue; }
   try{ errB=(await Deno.stat(`${DIR}${a}.err`)).size; }catch{ /* no err file is fine */ }
   check(a,text,ageH,errB);
   const mine=bad.filter(b=>b.agent===a);

@@ -10043,3 +10043,11 @@ exist at this definition, so the verdict is null-at-available-power, not a stron
 not earned. HYGIENE: the ad-hoc trial-counter writes (D-498 adversarial ×8, D-513 GBM ×6, D-523 ×1) had been silently
 failing on a schema mismatch — caught by the WRITE-FAILED instrumentation, fixed to the real schema, and the missed
 events backfilled. The ceiling now counts them.
+
+## D-524 (2026-08-24) — guard extension caught its own defect: unsatisfiable-guard anti-pattern, fixed with a self-expiring grace
+Adding the two new agents (attribution, paper-book) to the agent-output guard made it permanently RED — their logs do
+not exist until the daily runner's first cycle produces them, and missing-log was unconditional RED. That is the exact
+"can never go green" anti-pattern the guard's own comment warns about (a guard that cannot be satisfied gets ignored,
+which is worse than no guard). Fixed with an explicit, stated, SELF-EXPIRING grace: `ARMED_AT` + 36h, after which a
+missing log is RED like any wedged agent. Verified BOTH directions by exit code: within grace → 0 with an explicit
+"expires into RED" note; simulated expired arm date → 1. The live gate is honest again and still detects wedging.
