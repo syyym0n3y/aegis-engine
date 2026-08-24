@@ -10310,3 +10310,26 @@ clears nothing.
 "53.1%/yr liquid tercile", "capacity $100–250M", and "non-linearity adds" were all measured at LAG-0 and/or with the
 GBM. At tradable execution with a parsimonious model they do not hold. The top-60 slice (SR 1.00, t 2.14) survives as
 a HYPOTHESIS for forward testing — not a measurement, and not a strategy.
+
+## D-541 (2026-08-24) — the gradient test: the crypto effect is REAL and CONCENTRATED, which reframes D-540
+D-540's 26× universe spread had two explanations. A genuine effect concentrated in liquid names must decay *smoothly*
+as the universe dilutes; a lucky slice would look erratic. Sweeping universe size with everything else held constant
+(linear, lag-1, 5-day hold):
+
+| universe | %/yr | SR | t |
+|---|---|---|---|
+| top-40 | 65.3 | 0.95 | 2.04 |
+| top-50 | 69.9 | **1.09** | 2.35 |
+| top-60 | 59.0 | 1.00 | 2.14 |
+| top-80 | 34.3 | 0.65 | 1.40 |
+| top-120 | 16.8 | 0.38 | 0.82 |
+| top-200 | −1.5 | −0.04 | −0.09 |
+
+**Perfectly ordered decay, no spike.** This is the signature of a real phenomenon in the ~40–60 most-traded perps,
+progressively diluted by illiquid names — the opposite of the usual edge-lives-in-junk pattern, and consistent with the
+liquidity inversion of D-534. It reframes D-540 honestly: the 26× spread came from averaging in universes nobody would
+trade (all-500, top-200), not from randomness.
+**It does not promote anything.** t 2.04–2.35 is far below the 5.34 ceiling; the span is 4.6 years; and picking the
+liquid-core universe *after* seeing this gradient would be textbook selection. The liquid-core version is therefore
+registered FORWARD only. Six sizes counted as trials. (top-30 returned nothing — an artifact of the ≥40-names-per-day
+filter, recorded as such rather than as a finding.)
