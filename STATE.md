@@ -1,5 +1,9 @@
 # STATE — Aegis (live state)
 
+## 2026-08-24 — PAPER RUNG ARMED (D-521): book-p2-volmanaged marks monthly from 2026-08, $100k paper, kill-switch honored
+P1 combined book frozen (D-518: SR 0.78, 63y, ++++), P2 vol-managed (D-519: SR 0.90, paired t 4.13, win rates 62%/81%/97%
+by month/year/3y), P3 attribution engine live daily (D-520). First paper mark lands when the French panels publish 2026-08.
+
 ## 2026-08-23 (FINAL) — 977 specs, 27 families, 0 survivors — see D-512 for the closing board
 
 ## 2026-08-23 (LATE) — 891 specs, 0 survivors; ownership axis fully verdicted; first-ever "survivors" were same-bar phantoms (D-498)

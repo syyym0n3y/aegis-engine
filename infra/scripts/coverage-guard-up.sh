@@ -71,5 +71,8 @@ while true; do
   deno run --allow-net --allow-env ../scripts/collect-binance-sentiment.ts || true
   # CAUSAL ATTRIBUTION ENGINE (D-520 P3): daily force decomposition + measured ignorance per instrument.
   deno run --allow-net --allow-env ../scripts/aegis-attribution.ts > ../data/attribution.log 2> ../data/attribution.err || true
+  # PAPER RUNG (D-521): monthly French panel refresh (idempotent) + mark the frozen P2 book. $0 at risk, kill-switch honored.
+  ONLY=szmom25,dxwml,dxff3,ni10,ind49,mom10,strev10,ltrev10,op10,inv10 deno run --allow-net --allow-env ../scripts/ingest-french-library.ts > ../data/french-refresh.log 2>&1 || true
+  deno run --allow-net --allow-env ../scripts/paper-book.ts > ../data/paper-book.log 2> ../data/paper-book.err || true
   sleep 86400
 done

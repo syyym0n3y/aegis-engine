@@ -10016,3 +10016,14 @@ The flipped sign is noted, NOT claimed. **The honest win-rate answer** (measured
 62% of months, 81% of rolling years, **96.8% of rolling 3-year windows** positive. High win rate is an aggregation
 property of breadth + risk management, not a per-trade promise. Lineage: attribution-engine (monitoring),
 residual-fade-p3 (killed).
+
+## D-521 (2026-08-24) — PAPER RUNG ARMED: book-p2-volmanaged, $0 at risk, no hindsight, kill-switch honored
+Operator directive. Stage-0→1 gate documented as satisfied on LADDER.md's own terms (overfit candidates correctly
+rejected — the D-498 phantom survivors and D-515 same-close attenuation are the receipts; decomposition kills live via
+the attribution engine; trial counter / point-in-time / pessimistic costs machine-enforced under 8 green guards).
+Armed: spec row (trd_strategy_specs: frozen components + Moreira–Muir overlay) + PAPER rung row (trd_ladder_state) +
+kill-switch account 'paper' seeded 'armed'. Executor `scripts/paper-book.ts` (daily via runner, monthly French panel
+refresh added): recomputes the frozen stream, applies the point-in-time vol weight (0 if kill-switch tripped), marks
+each completed month once, $100k paper equity — **marks begin at 2026-08; months before arming are never marked
+(no hindsight), verified on first run** ("no new complete month to mark"). PAPER→MICRO gate: ≥30 independent OOS
+months, DSR>0 at 95% penalized, PBO<0.5, realized maxDD<6%, net positive. Migration 0090.
