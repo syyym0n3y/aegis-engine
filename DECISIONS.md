@@ -10273,3 +10273,20 @@ capacity was a design choice — daily re-ranking — not a property of the sign
 grid: highest Sharpe of the four, −44% drawdown, and roughly $100M before modelled impact eats the edge.
 Still below the 5.34 ceiling, still forward-unproven, magnitude still universe-sensitive — but this is the difference
 between a $2M curiosity and something that could carry institutional size. Four hold variants counted as trials.
+
+## D-539 (2026-08-24) — the crypto book passes the same-bar test; the MACHINE LEARNING does not
+The book's signal is computed at close k and, as measured throughout, its return was taken from close k — the exact
+same-bar structure that turned four apparent survivors into phantoms in D-498. Tested at LAG=1 (position taken one bar
+after the signal):
+
+| | LAG=0 (as reported) | LAG=1 (tradable) |
+|---|---|---|
+| 5-day-hold book | 66.1%/yr, SR 1.23, t 2.65 | **61.3%/yr, SR 1.07, t 2.31** |
+| GBM vs linear composite | paired t **4.28** | paired t **1.76 (null)** |
+
+**The book survives** — it attenuates ~13% rather than sign-flipping, so unlike D-498 this is a real effect at tradable
+execution. **The non-linearity does not.** Every "NON-LINEARITY ADDS" headline in this program's crypto work (D-451
+paired t 8.12, D-532 t 9.35, D-538 t 4.28) was measured on the same bar as the signal. One bar later it is t 1.76:
+the GBM's advantage over a plain linear composite lives entirely in the bar we cannot trade. The complexity was
+justified by an execution assumption, not by the market — so the correct specification is the simpler model at LAG=1,
+and the head-to-head is running now. Trial counted.

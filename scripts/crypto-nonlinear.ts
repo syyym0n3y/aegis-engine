@@ -38,7 +38,11 @@ for(let i=0;i<meta.length;i+=25){
       const v7=mean(b.slice(k-7,k).map(x=>x[5])), v30=mean(b.slice(k-30,k).map(x=>x[5]));
       const relvol=(v7>0&&v30>0)?Math.log(v7/v30):0;
       const trades=mean(b.slice(k-7,k).map(x=>x[8]).filter(Number.isFinite));
-      const y=b[k+1][4]/c-1;
+      const LAG=Number(Deno.env.get("LAG")||0);
+      if(k+1+LAG>=b.length)continue;
+      const entry=b[k+LAG][4], exit=b[k+1+LAG][4];
+      if(!(entry>0)||!(exit>0))continue;
+      const y=exit/entry-1;
       const x=[c/cP30-1,c/cP7-1,c/cP1-1,sdv(rets),Math.max(...rets),Math.log(dv),c/hi,flow,relvol,Math.log(1+trades)];
       if(!x.every(Number.isFinite)||!Number.isFinite(y)||Math.abs(y)>2)continue;
       panel.push({d:new Date(b[k][0]*1000).toISOString().slice(0,10),sym:r.symbol,x,y,yraw:y});
@@ -117,8 +121,9 @@ const res:Record<string,number[]>={gbm:[],lin:[],mom:[]};
 // D-534: the Liquidity Law asked of this program's best PLACEABLE candidate. dvol is feature index 5 (log dollar
 // volume) — rank-normalised per day, so the top tercile is >= +1/6 in the [-0.5,+0.5] rank space.
 const HOLD=Number(Deno.env.get("HOLD")||1);
-const cohorts:{w:Map<string,number>;left:number}[]=[];          // live cohorts, each expiring after HOLD days
-const books:Record<string,number[]>={gbmEq:[],gbmConv:[],gbmLiq:[],gbmIlliq:[],gbmHold:[]};
+const cohorts:{w:Map<string,number>;left:number}[]=[];
+const cohortsL:{w:Map<string,number>;left:number}[]=[];          // live cohorts, each expiring after HOLD days
+const books:Record<string,number[]>={gbmEq:[],gbmConv:[],gbmLiq:[],gbmIlliq:[],gbmHold:[],linHold:[]};
 let prevW:Record<string,Map<string,number>>={gbmEq:new Map(),gbmConv:new Map(),gbmLiq:new Map(),gbmIlliq:new Map()};
 for(const Y of years.filter(y=>y>=START)){
   const tr=clean.filter(([d])=>+d.slice(0,4)<Y).flatMap(([,g])=>g);
@@ -160,6 +165,18 @@ for(const Y of years.filter(y=>y>=START)){
       for(const c of cohorts){for(const [sym,w] of c.w){ret+=w*(rmap.get(sym)??0)/cohorts.length;gross+=Math.abs(w)/cohorts.length;}}
       const turnoverFrac=1/Math.max(1,cohorts.length);            // fraction of book replaced today
       books.gbmHold.push(ret*(2/Math.max(1e-9,gross))-turnoverFrac*FEE_BP/1e4);
+      // same construction driven by the LINEAR composite
+      const predL=g.map(r=>lin(r.x));
+      const ordL=[...g.keys()].sort((a,b)=>predL[b]-predL[a]);
+      const wL=new Map<string,number>();
+      for(const i of ordL.slice(0,kH))wL.set(g[i].sym,1/(2*kH));
+      for(const i of ordL.slice(-kH))wL.set(g[i].sym,-1/(2*kH));
+      cohortsL.push({w:wL,left:HOLD});
+      for(const c of cohortsL)c.left--;
+      while(cohortsL.length&&cohortsL[0].left<=0)cohortsL.shift();
+      let retL=0,grossL=0;
+      for(const c of cohortsL){for(const [sym,w] of c.w){retL+=w*(rmap.get(sym)??0)/cohortsL.length;grossL+=Math.abs(w)/cohortsL.length;}}
+      books.linHold.push(retL*(2/Math.max(1e-9,grossL))-(1/Math.max(1,cohortsL.length))*FEE_BP/1e4);
     }
     for(const kk of Object.keys(books)){
       if(!W[kk])continue;                                          // gbmHold is computed separately (D-538)
@@ -181,7 +198,7 @@ console.log(`\n    ${"book (net of fees)".padEnd(22)}${"%/yr".padEnd(10)}${"SR".
 for(const [k,v] of Object.entries(books)){ if(v.length<300)continue;
   const m=mean(v),sd=sdv(v)||1e-9; let cum=1,peak=1,dd=0;
   for(const x of v){cum*=1+x;peak=Math.max(peak,cum);dd=Math.min(dd,cum/peak-1);}
-  console.log(`    ${({gbmEq:"GBM equal-weight",gbmConv:"GBM conviction-wt",gbmLiq:"GBM LIQUID tercile",gbmIlliq:"GBM ILLIQUID tercile",gbmHold:`GBM ${HOLD}d-HOLD (turnover/${HOLD})`}[k]!).padEnd(22)}${((m*365*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(365)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
+  console.log(`    ${({gbmEq:"GBM equal-weight",gbmConv:"GBM conviction-wt",gbmLiq:"GBM LIQUID tercile",gbmIlliq:"GBM ILLIQUID tercile",gbmHold:`GBM ${HOLD}d-HOLD`,linHold:`LINEAR ${HOLD}d-HOLD`}[k]!).padEnd(22)}${((m*365*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(365)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
 console.log(`\n    Deflated ceiling (D-363/364, ~1.53M trials): t ~ 5.34. Anything below that is not evidence.`);
 // D-532: dump the daily book streams so the pre-registered vol-management overlay can be applied without retraining.
 await Deno.writeTextFile(`/Users/ona/aegis-data/crypto_gbm_books_top${TOPN}.tsv`,
