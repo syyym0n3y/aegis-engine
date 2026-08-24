@@ -10440,3 +10440,23 @@ and replaced with the honest statement. **Restated frozen candidate** (lit5, lag
 The universe range **crosses zero** — the strongest possible NOT-IDENTIFIED reading, stronger than any ratio.
 None of these three defects was a market finding; all three were ways my own machinery could have reported something
 untrue while every guard stayed green.
+
+## D-548 (2026-08-24) — liquidity is a CONDITIONING VARIABLE: the anomalies invert in illiquid perps
+The all-contracts book was negative (SR −0.20), not flat — so the anomalies had to be reversing, not fading. Running
+the identical lit5 rules on the BOTTOM of the liquidity distribution:
+
+| universe | %/yr | SR | t | maxDD |
+|---|---|---|---|---|
+| top-50 (most liquid) | +76.0 | +1.41 | +3.04 | −54% |
+| **bottom-50 (least liquid)** | **−51.7** | **−1.26** | **−2.72** | **−95%** |
+| top-100 | +38.8 | +0.89 | +1.91 | −57% |
+| **bottom-100** | **−48.6** | **−1.32** | **−2.84** | **−95%** |
+
+**Two opposite effects, comparable in magnitude.** In the most-traded perps the published anomalies hold — calm names
+near their highs win. In the least-traded ones they **invert**: wild, lottery-like, far-from-high names win. That is
+what retail lottery-demand predicts where speculative flow dominates and arbitrage is absent, and it gives the
+liquid-core specification an *economic* motivation rather than a data-mined one. It also fully explains the negative
+all-contracts number: the illiquid mass overwhelms the liquid core.
+**Caveat that matters more than the finding:** both illiquid books run **maxDD −95%** — near ruin — consistent with the
+inversion being driven by short-squeeze TAILS (shorting a coin that multiplies) rather than a smooth premium. Read it
+as a warning about shorting illiquid alts, not as a tradable mirror strategy. Two additional trials counted.

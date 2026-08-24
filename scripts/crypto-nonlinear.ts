@@ -60,8 +60,9 @@ for(const [,g] of byD){ if(g.length<40){g.length=0;continue;}
 // happen to hold". A FIXED-N liquid universe is stable across data refreshes by construction, and it is also the only
 // universe an operator can actually trade. TOPN=0 keeps the old all-names behaviour for comparison.
 const TOPN=Number(Deno.env.get("TOPN")||0);
+const INVERT=Deno.env.get("INVERT")==="1";
 if(TOPN>0){for(const [,g] of byD){ if(g.length<=TOPN)continue;
-  g.sort((a,b)=>b.x[5]-a.x[5]); g.length=TOPN;                  // feature 5 = log dvol (rank-normalised, higher = more liquid)
+  g.sort((a,b)=>INVERT?a.x[5]-b.x[5]:b.x[5]-a.x[5]); g.length=TOPN;                  // feature 5 = log dvol (rank-normalised, higher = more liquid)
   for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]);o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
   const oy=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); oy.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});
 }}
