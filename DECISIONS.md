@@ -10355,3 +10355,20 @@ Two deductions that cut against my own construction: **(1)** the full composite 
 **alone** (SR 1.04), so the ten-feature machinery is unjustified complexity stacked on the already-unjustified GBM;
 **(2)** `vol30` and `maxret` are near-duplicates — both proxy "wildness" — so this is closer to *two* effects than
 three. Individual t 2.0–2.4 remains far below the 5.34 ceiling. Promoted to nothing.
+
+## D-543 (2026-08-24) — the PARAMETER-FREE book: best evidence yet, still not identified
+Using only published equity anomalies with their published signs — nothing fitted to our data at all:
+
+| set | top-50 | top-80 | top-120 |
+|---|---|---|---|
+| lit3 (52w-high, low-vol, anti-lottery) | SR 1.03, t 2.23 | 0.69 | 0.38 |
+| **lit5** (+ short-horizon momentum, + order flow) | **SR 1.41, t 3.04** | 0.92 | 0.64 |
+
+**t 3.04 is the highest any crypto specification has reached here, and it contains ZERO estimated parameters** — no
+GBM, no regression, no training. The signals and signs are external (George–Hwang, Ang et al, Bali–Cakici–Whitelaw,
+Jegadeesh–Titman, order-flow imbalance), so there is nothing in-sample to overfit. That is a stronger robustness
+argument than a t-stat, and it is why this spec is the program's best-evidenced candidate.
+**It is still not promotable, on three counts stated plainly:** t 3.04 < 5.34 ceiling; the 2.2× universe spread
+(SR 0.64–1.41) fails the Universe Law's identification test, so the honest headline is the **universe-averaged
+SR ≈ 0.99**, not the top-50 figure; and lit5-beating-lit3 was *not* pre-registered, making that comparison post-hoc.
+Six specifications counted as trials. Forward-registered; promoted to nothing.

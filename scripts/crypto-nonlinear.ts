@@ -167,8 +167,14 @@ for(const Y of years.filter(y=>y>=START)){
       books.gbmHold.push(ret*(2/Math.max(1e-9,gross))-turnoverFrac*FEE_BP/1e4);
       // same construction driven by the LINEAR composite, or by ONE feature when FEATURE is set (D-542)
       const FEATNAME=Deno.env.get("FEATURE")||"";
+      const SET=Deno.env.get("FEATSET")||"";
       const fi=FEATNAME?FEAT.indexOf(FEATNAME):-1;
-      const predL=fi>=0?g.map(r=>r.x[fi]):g.map(r=>lin(r.x));
+      const LIT3:[string,number][]=[["hi60",1],["vol30",-1],["maxret",-1]];
+      const LIT5:[string,number][]=[...LIT3,["mom7",1],["flow",1]];
+      const litSet=SET==="lit3"?LIT3:SET==="lit5"?LIT5:null;
+      const predL=litSet
+        ? g.map(r=>litSet.reduce((s2,[nm,sg])=>{const j=FEAT.indexOf(nm);return j>=0?s2+sg*r.x[j]:s2;},0)/litSet.length)
+        : (fi>=0?g.map(r=>r.x[fi]):g.map(r=>lin(r.x)));
       const ordL=[...g.keys()].sort((a,b)=>predL[b]-predL[a]);
       const wL=new Map<string,number>();
       for(const i of ordL.slice(0,kH))wL.set(g[i].sym,1/(2*kH));
