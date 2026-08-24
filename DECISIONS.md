@@ -10256,3 +10256,20 @@ square-root impact on an asset that volatile costs ~22bp round trip even at triv
 direct answer to the "scale enormously" ambition: this one does not, in this form.
 **The dominant lever is TURNOVER — a design choice never varied.** The book re-ranks daily; halving turnover roughly
 halves impact and multiplies capacity. Testing hold-period variants next (each a declared trial).
+
+## D-538 (2026-08-24) — TURNOVER WAS THE CONSTRAINT, NOT THE SIGNAL: capacity ×20–50 at flat Sharpe
+D-537 found the book dying between $1M and $5M. The suspected lever was turnover — the book re-ranks daily. Tested
+with overlapping cohorts (1/HOLD of the book rolls each day, so it stays fully invested):
+
+| hold | %/yr | SR | maxDD | edge dies at |
+|---|---|---|---|---|
+| 1 day | 75.0 | 1.20 | −51% | **~$5M** |
+| 3 days | 68.0 | 1.19 | −48% | ~$40M |
+| 5 days | 66.1 | **1.23** | −44% | **~$100M** |
+| 10 days | 58.0 | 1.18 | **−40%** | **~$250M** |
+
+**Sharpe is flat (1.18–1.23) and drawdown IMPROVES as holds lengthen, while capacity multiplies 20–50×.** The tiny
+capacity was a design choice — daily re-ranking — not a property of the signal. A 5-day hold is the sweet spot on this
+grid: highest Sharpe of the four, −44% drawdown, and roughly $100M before modelled impact eats the edge.
+Still below the 5.34 ceiling, still forward-unproven, magnitude still universe-sensitive — but this is the difference
+between a $2M curiosity and something that could carry institutional size. Four hold variants counted as trials.

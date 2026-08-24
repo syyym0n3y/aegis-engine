@@ -47,15 +47,17 @@ for(const d of sample){
 }
 const avgDvol=mean(medDvol), avgSig=mean(medSig);
 console.log(`    typical traded name: $${(avgDvol/1e6).toFixed(1)}M/day volume, ${(avgSig*100).toFixed(2)}% daily vol  (${2*K} names held, gross ${GROSS}x)`);
-const GROSS_EDGE_BPS_DAY = 80.9/100/365*1e4;             // top-60 book: 80.9%/yr net of 9bp -> ~22bp/day net
-console.log(`    measured book: 80.9%/yr net at zero size = ${GROSS_EDGE_BPS_DAY.toFixed(1)}bp/day net of the 9bp round trip`);
+const HOLD=Number(Deno.env.get("HOLD")||1);
+const EDGE_PCT=Number(Deno.env.get("EDGE_PCT")||80.9);          // measured net %/yr for THIS hold period
+const GROSS_EDGE_BPS_DAY = EDGE_PCT/100/365*1e4;
+console.log(`    measured book: ${EDGE_PCT}%/yr net at zero size = ${GROSS_EDGE_BPS_DAY.toFixed(1)}bp/day  |  HOLD=${HOLD}d -> only 1/${HOLD} of the book trades each day`);
 console.log(`\n    ${"AUM".padEnd(12)}${"$/name".padEnd(12)}${"participation".padEnd(15)}${"impact bp/day".padEnd(15)}${"net bp/day".padEnd(12)}net %/yr`);
 const rows:[number,number][]=[];
 for(const aum of [1e5,1e6,5e6,1e7,2.5e7,5e7,1e8,2.5e8,5e8,1e9]){
   const perName=aum*GROSS/(2*K);                         // notional per position
   const part=perName/avgDvol;                            // fraction of that name's daily volume, one side
   const impactBp=1.0*(avgSig*1e4)*Math.sqrt(part);       // square-root law, C=1
-  const roundTripImpact=2*impactBp;                      // in and out each day (full turnover)
+  const roundTripImpact=2*impactBp/HOLD;                // D-538: with a HOLD-day hold only 1/HOLD of the book turns over daily
   const net=GROSS_EDGE_BPS_DAY-roundTripImpact;
   rows.push([aum,net]);
   console.log(`    ${("$"+(aum/1e6).toFixed(1)+"M").padEnd(12)}${("$"+(perName/1e6).toFixed(2)+"M").padEnd(12)}${(part*100).toFixed(2).padStart(6)}%${"".padEnd(8)}${roundTripImpact.toFixed(1).padStart(6)}${"".padEnd(9)}${net.toFixed(1).padStart(6)}${"".padEnd(6)}${(net/1e4*365*100).toFixed(1)}%`);
