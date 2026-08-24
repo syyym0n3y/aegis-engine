@@ -165,8 +165,10 @@ for(const Y of years.filter(y=>y>=START)){
       for(const c of cohorts){for(const [sym,w] of c.w){ret+=w*(rmap.get(sym)??0)/cohorts.length;gross+=Math.abs(w)/cohorts.length;}}
       const turnoverFrac=1/Math.max(1,cohorts.length);            // fraction of book replaced today
       books.gbmHold.push(ret*(2/Math.max(1e-9,gross))-turnoverFrac*FEE_BP/1e4);
-      // same construction driven by the LINEAR composite
-      const predL=g.map(r=>lin(r.x));
+      // same construction driven by the LINEAR composite, or by ONE feature when FEATURE is set (D-542)
+      const FEATNAME=Deno.env.get("FEATURE")||"";
+      const fi=FEATNAME?FEAT.indexOf(FEATNAME):-1;
+      const predL=fi>=0?g.map(r=>r.x[fi]):g.map(r=>lin(r.x));
       const ordL=[...g.keys()].sort((a,b)=>predL[b]-predL[a]);
       const wL=new Map<string,number>();
       for(const i of ordL.slice(0,kH))wL.set(g[i].sym,1/(2*kH));

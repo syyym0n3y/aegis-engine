@@ -10333,3 +10333,25 @@ trade (all-500, top-200), not from randomness.
 liquid-core universe *after* seeing this gradient would be textbook selection. The liquid-core version is therefore
 registered FORWARD only. Six sizes counted as trials. (top-30 returned nothing — an artifact of the ≥40-names-per-day
 filter, recorded as such rather than as a finding.)
+
+## D-542 (2026-08-24) — WHAT THE CRYPTO EDGE IS: three known behavioural anomalies, replicated out of asset class
+Decomposing the liquid-core composite into single-feature books (top-50, lag-1, 5-day hold, ten declared trials):
+
+| feature | %/yr | SR | t | reading |
+|---|---|---|---|---|
+| hi60 (proximity to 60d high) | +64.4 | 1.04 | 2.25 | **52-week-high / anchoring effect** |
+| vol30 | −77.8 | −1.12 | −2.42 | **low-volatility anomaly** (long low-vol, short high-vol) |
+| maxret | −59.1 | −0.93 | −2.00 | **lottery / MAX effect** (short the lottery names) |
+| flow | +23.1 | 0.47 | 1.01 | aggressor imbalance |
+| mom7 | +21.6 | 0.39 | 0.85 | short-horizon momentum |
+| trades | −25.9 | −0.51 | −1.11 | trade-count |
+| mom30, rev1, dvol, relvol | ~0 | ~0 | — | nothing |
+
+**Every strong component is a documented equity anomaly appearing in crypto perps with the SAME SIGN.** That is
+out-of-asset-class replication of mechanisms with known behavioural explanations (anchoring, leverage constraints,
+lottery preference) — evidence of a different and better kind than a t-stat, and the same species of confirmation the
+international-momentum geography test provided (D-491).
+Two deductions that cut against my own construction: **(1)** the full composite (SR 1.09) is barely above `hi60`
+**alone** (SR 1.04), so the ten-feature machinery is unjustified complexity stacked on the already-unjustified GBM;
+**(2)** `vol30` and `maxret` are near-duplicates — both proxy "wildness" — so this is closer to *two* effects than
+three. Individual t 2.0–2.4 remains far below the 5.34 ceiling. Promoted to nothing.
