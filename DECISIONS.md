@@ -10161,3 +10161,25 @@ long-shorts over thousands of names with assumed borrow — which the operator c
 CAN place have LOST money for eleven years. The gap between "real signal" and "placeable strategy" is not a slippage
 footnote; it is the difference between +5%/yr and −2%/yr. The ETF-native book is recorded as REFUTED and promoted to
 nothing. The paper rung continues as a test of the SIGNAL only, with its D-530 amendment attached.
+
+## D-532 (2026-08-24) — placeable-first inversion: crypto is the best remaining candidate, and two honest caveats
+After the implementability wall (D-530/531) the method inverts: start from what CAN be placed. Perps short natively,
+need no borrow, and the majors clear hundreds of millions per hour. Re-run on the current survivorship-free universe
+(498 contracts, 473k panel rows, breadth 220): **GBM equal-weight 35.9%/yr, SR 1.11, t 2.40, maxDD −35%** (conviction
+69.8%/yr, SR 0.94, maxDD −77%); non-linearity re-confirmed at paired t 9.35.
+**Caveat 1 — the vol overlay does NOT generalise.** The same pre-registered Moreira–Muir policy that added paired
+t 4.13 on the equity book gives **−0.56 / −0.79** here. It is asset-class-specific; adopting it globally on the equity
+evidence would have been an overreach, and this is the test that caught it.
+**Caveat 2 — the estimate is unstable.** D-451 measured this same spec at 20.0%/yr SR 0.61 t 1.32 on a 328-contract
+snapshot; the universe refresh to 498 contracts moves it to 35.9%/yr SR 1.11. A spec whose Sharpe nearly doubles on a
+data refresh is not ready for promotion regardless of its level — resolving that instability is the prerequisite, not
+the t-stat. Still below the 5.34 ceiling either way. Recorded as monitoring, promoted to nothing.
+
+## D-533 (2026-08-24) — the operator's own trading: analyzer built and self-tested, waiting only on an export
+The highest-value dataset this program has never seen is the operator's own discretionary record. `scripts/analyze-my-trades.ts`
+is built and verified on a synthetic export: auto-detects MT4/MT5, IBKR, cTrader, TradingView and generic CSV columns;
+reports total/mean/median P&L, win rate, payoff, **trade-level t AND daily-portfolio t** (pseudo-replication law — the
+daily t decides), worst peak-to-trough, outlier dependence (does the top 5% of trades carry the whole record?), and
+breakdowns by instrument, side and entry hour. With ≥60 trading days it extends to regressing daily P&L on the nine
+measured forces to separate SKILL from BETA. Runs locally, uploads nothing.
+**Operator action:** export the history and run `deno run --allow-read --allow-net --allow-env scripts/analyze-my-trades.ts <file.csv>`.
