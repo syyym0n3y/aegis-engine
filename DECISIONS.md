@@ -10132,3 +10132,18 @@ HYGIENE (three defects in my own instrumentation, all caught and fixed this pass
 power note (fixed to actual usable counts); HTTP 409 on an idempotent trial-counter write reported as WRITE-FAILED —
 a guard-crying-wolf class, now treated as "already counted"; and my own bulk edit commented out closing braces in
 seven scripts (caught by `deno check`, all repaired, both guards re-verified GREEN).
+
+## D-530 (2026-08-24) — THE PAPER BOOK IS NOT TRADABLE AS SPECIFIED (found by attacking my own arming decision)
+The frozen book is built from Ken French research portfolios: extreme-decile long-shorts across thousands of names with
+borrow assumed and a 5–10bp/month drag. Pre-registered test of whether it can be expressed in liquid ETFs (13 tradable
+long-short legs, weights fitted on 2013–2019 and FROZEN, evaluated on untouched 2020–2026):
+
+| | R² | book | replica | tracking error |
+|---|---|---|---|---|
+| train 2013-08..2019-12 | 50.8% | 1.87%/yr | 1.87%/yr | 3.6%/yr |
+| **test 2020-01..2026-06** | **20.5%** | **5.09%/yr** | **0.68%/yr** | **8.0%/yr** |
+
+The ETF replica captures **13%** of the book. Verdict: **NOT IMPLEMENTABLE AS SPECIFIED.** The paper rung therefore
+tests the SIGNAL, not a placeable portfolio — and saying otherwise would have been the "built ≠ wired ≠ done" failure in
+its most expensive form (marching a research artifact toward real money). The ladder row is annotated in the database,
+and **PAPER→MICRO now additionally requires an implementable expression with its own forward record.**
