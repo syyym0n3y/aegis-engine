@@ -10240,3 +10240,19 @@ The averaged book **beats three of the four variants** (SR 1.20 vs 1.11 / 0.99 /
 partly independent, so averaging diversifies rather than merely compromising. It is deliberately not the best variant;
 it is the number quotable without an unjustifiable choice. **Frozen and forward-registered; promoted to nothing** —
 still below the 5.34 ceiling, −41% drawdown, 4.6-year span, in-sample number descriptive only.
+
+## D-537 (2026-08-24) — CAPACITY: the crypto book dies at a few million dollars, and the reason is turnover not liquidity
+| AUM | $/name | participation | impact bp/day | net %/yr |
+|---|---|---|---|---|
+| $1M | $0.08M | 0.00% | 10.7 | **+41.8%** |
+| $5M | $0.42M | 0.02% | 23.9 | **−6.4%** |
+| $10M | $0.83M | 0.05% | 33.8 | −42.6% |
+| $100M | $8.33M | 0.47% | 107.0 | −309.7% |
+
+The edge crosses zero between **$1M and $5M**. The binding constraint is *not* participation — at $5M the book touches
+0.02% of a typical name's $1.77bn daily volume. It is that crypto perps run at **7.79% daily volatility**, and
+square-root impact on an asset that volatile costs ~22bp round trip even at trivial participation — which is the entire
+22bp/day edge. So the strategy is real and liquidity-robust (D-534) yet **small-capacity as specified**, which is a
+direct answer to the "scale enormously" ambition: this one does not, in this form.
+**The dominant lever is TURNOVER — a design choice never varied.** The book re-ranks daily; halving turnover roughly
+halves impact and multiplies capacity. Testing hold-period variants next (each a declared trial).
