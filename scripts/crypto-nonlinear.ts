@@ -16,11 +16,12 @@ const FEE_BP=Number(Deno.env.get("PERP_FEE_RT_BP")||9);
 const FEAT=["mom30","mom7","rev1","vol30","maxret","dvol","hi60","flow","relvol","trades"];
 type Row={d:string;sym:string;x:number[];y:number;yraw:number};
 const panel:Row[]=[];
-const meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
-console.log(`==> CRYPTO NON-LINEAR — ${meta.length} contracts (survivorship-free, incl. delisted)`);
+const TF=Deno.env.get("TF")||"1dSF";
+const meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
+console.log(`==> CRYPTO NON-LINEAR [${TF}] — ${meta.length} contracts${TF==="1dSF"?" (survivorship-free, incl. delisted)":" (SURVIVORSHIP-BIASED: listed only)"}`);
 for(let i=0;i<meta.length;i+=25){
   const part=meta.slice(i,i+25).map(m=>`"${m.symbol}"`).join(",");
-  const rows=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&symbol=in.(${encodeURIComponent(part)})&select=symbol,bars`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
+  const rows=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&symbol=in.(${encodeURIComponent(part)})&select=symbol,bars`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
   if(!Array.isArray(rows))continue;
   for(const r of rows){
     const b=r.bars; if(!b||b.length<120)continue;
