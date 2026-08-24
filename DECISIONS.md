@@ -10147,3 +10147,17 @@ The ETF replica captures **13%** of the book. Verdict: **NOT IMPLEMENTABLE AS SP
 tests the SIGNAL, not a placeable portfolio — and saying otherwise would have been the "built ≠ wired ≠ done" failure in
 its most expensive form (marching a research artifact toward real money). The ladder row is annotated in the database,
 and **PAPER→MICRO now additionally requires an implementable expression with its own forward record.**
+
+## D-531 (2026-08-24) — THE PLACEABLE VERSION LOSES MONEY: the honest bottom line on the whole book programme
+D-530 showed the research book cannot be reproduced with liquid ETFs. So I specified the placeable analogue in its own
+right — six pre-registered, literature-sided, liquid, shortable legs (MTUM/VLUE/QUAL/USMV vs SPY, HYG−IEF, IWM−SPY),
+equal-vol on an expanding **point-in-time** window, 10bp/month round trip:
+
+**−1.97%/yr, SR −0.70, t −2.31, maxDD −25%, win rate 44%, every era negative** (133 months).
+Per leg: momentum +0.2%, credit carry +1.5%, value −1.5%, quality −1.6%, size −4.2%, low-vol −4.6%.
+
+**Synthesis, stated plainly:** the premia that survive the force model and 63 years of history live in decile
+long-shorts over thousands of names with assumed borrow — which the operator cannot place — and the instruments they
+CAN place have LOST money for eleven years. The gap between "real signal" and "placeable strategy" is not a slippage
+footnote; it is the difference between +5%/yr and −2%/yr. The ETF-native book is recorded as REFUTED and promoted to
+nothing. The paper rung continues as a test of the SIGNAL only, with its D-530 amendment attached.

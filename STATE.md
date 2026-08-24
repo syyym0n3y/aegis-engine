@@ -1,5 +1,12 @@
 # STATE — Aegis (live state)
 
+## 2026-08-24 (LATEST) — THE IMPLEMENTABILITY WALL (D-530/531): research signal is real, the placeable version is NOT
+The book's alpha survives the 9-force model (D-527) but CANNOT be expressed in liquid ETFs (D-530: OOS R2 20.5%,
+replica captures 13%). The placeable analogue built from factor ETFs LOSES money: -1.97%/yr, SR -0.70, t -2.31, all
+eras negative over 133 months (D-531). Bottom line: no tradable money-making book exists here today. The paper rung
+continues as a SIGNAL test with the D-530 amendment appended to its ladder row; PAPER->MICRO now requires an
+implementable expression.
+
 ## 2026-08-24 (LATE) — EXPECTATION CORRECTED DOWN (D-527): paper rung must be judged on modern-era numbers
 Self-attack results: book alpha SURVIVES the 9-force model (t 3.56-3.94, force betas negative — not style beta in
 disguise), but performance DECAYED: managed full-sample 9.4%/yr SR 0.89 vs **2016-2026 4.9%/yr SR 0.46**. Per-component
