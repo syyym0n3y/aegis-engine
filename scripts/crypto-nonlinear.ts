@@ -167,6 +167,6 @@ for(const [k,v] of Object.entries(books)){ if(v.length<300)continue;
   console.log(`    ${({gbmEq:"GBM equal-weight",gbmConv:"GBM conviction-wt",gbmLiq:"GBM LIQUID tercile",gbmIlliq:"GBM ILLIQUID tercile"}[k]!).padEnd(22)}${((m*365*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(365)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
 console.log(`\n    Deflated ceiling (D-363/364, ~1.53M trials): t ~ 5.34. Anything below that is not evidence.`);
 // D-532: dump the daily book streams so the pre-registered vol-management overlay can be applied without retraining.
-await Deno.writeTextFile("/Users/ona/aegis-data/crypto_gbm_books.tsv",
-  books.gbmEq.map((v,i)=>`${i}\t${v}\t${books.gbmConv[i]??""}`).join("\n"));
-console.log(`    book streams -> /Users/ona/aegis-data/crypto_gbm_books.tsv (${books.gbmEq.length} days)`);
+await Deno.writeTextFile(`/Users/ona/aegis-data/crypto_gbm_books_top${TOPN}.tsv`,
+  books.gbmEq.map((v,i)=>`${i}\t${v}\t${books.gbmConv[i]??""}\t${books.gbmLiq[i]??""}`).join("\n"));
+console.log(`    book streams -> crypto_gbm_books_top${TOPN}.tsv (${books.gbmEq.length} days)`);

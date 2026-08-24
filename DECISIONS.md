@@ -10223,3 +10223,20 @@ rows including my own newest claims**, PASS only after honest statements were ad
 "NOT MEASURED" recorded as a gap where it wasn't), exempt for single-instrument families, exit-code-checked both ways.
 **Crypto candidate status: direction identified (non-linearity adds, liquidity-robust — genuinely new here), magnitude
 NOT identified. Promoted to nothing.** Five universe variants counted as trials.
+
+## D-536 (2026-08-24) — the Universe Law's constructive answer: average, don't choose
+If no criterion selects among defensible universes, choosing one is a decision dressed as a measurement. The standard
+response to unidentified specification is MODEL AVERAGING — hold every defensible variant at equal weight:
+
+| universe | %/yr | SR | t | maxDD | daily win |
+|---|---|---|---|---|---|
+| all contracts | 35.9 | 1.11 | 2.40 | −35% | 53% |
+| liquid tercile | 53.1 | 0.95 | 2.05 | −50% | 56% |
+| fixed top-100 | 50.2 | 0.99 | 2.12 | −62% | 55% |
+| fixed top-60 | 80.9 | 1.30 | 2.79 | −48% | 56% |
+| **UNIVERSE-AVERAGED** | **55.0** | **1.20** | **2.58** | **−41%** | **55%** |
+
+The averaged book **beats three of the four variants** (SR 1.20 vs 1.11 / 0.99 / 0.95) — universe-choice errors are
+partly independent, so averaging diversifies rather than merely compromising. It is deliberately not the best variant;
+it is the number quotable without an unjustifiable choice. **Frozen and forward-registered; promoted to nothing** —
+still below the 5.34 ceiling, −41% drawdown, 4.6-year span, in-sample number descriptive only.
