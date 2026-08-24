@@ -10107,3 +10107,15 @@ only component whose modern-era t still exceeds 2. **Explicit refusal: the book 
 Re-picking components on the window you then report is precisely the Selection Law trap (D-455), which this program has
 already been burned by once. Any re-specification must be pre-registered and judged on FORWARD data only. Recorded as
 `scripts/check-component-decay.ts` so the operator can re-run it themselves.
+
+## D-528 (2026-08-24) — selectivity tested the honest way: adds nothing, and IN-SAMPLE STRENGTH WAS ANTI-PREDICTIVE
+Asked with Selection-Law discipline (pick on train ≤2015-12, weights train-only, evaluate on 2016-2026 which the pick
+never saw). Two declared variants, both trial-counted:
+- **(a) keep t≥2:** every one of the six passed at end-2015 (train t 2.33–6.20) → selective *is* blanket, delta 0.00.
+- **(b) keep top-3 by train t:** 3.3%/yr SR 0.32 vs blanket 3.7%/yr SR 0.47 — **−0.33%/yr, mildly harmful.**
+
+The finding under the finding: **the strongest component in train was the deadest in test.** factmom led the training
+window at t 6.20 and delivered exactly **0.0%/yr** afterwards; ind49mom (train t 4.01) fell to t 0.93; the modest
+dxwml (train t 2.98) is the only one still alive (test t 2.08). Nothing in the training window identified which
+premia would die — which is the whole argument for forward proof over in-sample rank, now demonstrated on this
+program's own book rather than borrowed from the literature. The frozen six stand unchanged; blanket beats clever.

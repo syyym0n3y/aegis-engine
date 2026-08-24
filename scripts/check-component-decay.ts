@@ -52,3 +52,54 @@ for(const [n,m] of streams){
 }
 console.log(`\n    REFUSAL, stated: components are NOT re-picked on these modern-era numbers. Re-selecting on the same window`);
 console.log(`    you then report is the SELECTION LAW trap (D-455). Any re-spec must be pre-registered and judged FORWARD.`);
+
+// ============ D-528: THE SELECTION-LAW-COMPLIANT TEST OF SELECTIVITY ============
+// PRE-REGISTERED: pick components using ONLY data through 2015-12 (keep those with train t >= 2), freeze that choice,
+// and evaluate on 2016-01..2026 which the pick never saw. Compare against the BLANKET book (all six) on the same
+// window. If selective > blanket, selectivity adds. D-455's precedent (the trend overlay) says it probably does not.
+const TRAIN_END="2015-12", TEST_FROM="2016-01";
+const names=[...streams.keys()];
+const trainT=new Map<string,number>();
+for(const n of names){
+  const v=[...streams.get(n)!.entries()].filter(([mo])=>mo<=TRAIN_END).map(([,x])=>x);
+  if(v.length<120){trainT.set(n,NaN);continue;}
+  const mu=mean(v),sd=sdv(v)||1e-9; trainT.set(n,mu/(sd/Math.sqrt(v.length)));
+}
+const kept=names.filter(n=>Number.isFinite(trainT.get(n)!)&&trainT.get(n)!>=2);
+console.log(`\n==> D-528 SELECTIVITY, TRAIN-ONLY PICK (train <= ${TRAIN_END}, test from ${TEST_FROM})`);
+console.log(`    train t: ${names.map(n=>`${n} ${trainT.get(n)!.toFixed(2)}`).join("  |  ")}`);
+console.log(`    kept by the train-only rule (t>=2): ${kept.length?kept.join(", "):"NONE"}`);
+const bookOf=(ns:string[])=>{
+  const w=new Map<string,number>();
+  for(const n of ns){const v=[...streams.get(n)!.entries()].filter(([mo])=>mo<=TRAIN_END).map(([,x])=>x);
+    w.set(n,1/(sdv(v)||1e-9));}                                   // weights ALSO train-only (no test-window info)
+  const ws=[...w.values()].reduce((s,x)=>s+x,0); for(const [k,v] of w)w.set(k,v/ws);
+  const all=new Set<string>(); for(const n of ns)for(const mo of streams.get(n)!.keys())if(mo>=TEST_FROM)all.add(mo);
+  const mos=[...all].sort().filter(mo=>ns.filter(n=>streams.get(n)!.has(mo)).length>=Math.min(2,ns.length));
+  return mos.map(mo=>{let num=0,den=0;
+    for(const n of ns){const v=streams.get(n)!.get(mo);if(v!==undefined){num+=w.get(n)!*v;den+=w.get(n)!;}}
+    return num/den;});};
+const stat=(v:number[],label:string)=>{
+  if(v.length<24){console.log(`    ${label}: too few test months (${v.length})`);return null;}
+  const mu=mean(v),sd=sdv(v)||1e-9;
+  console.log(`    ${label.padEnd(26)} n=${v.length}mo  ${(mu*12*100).toFixed(1)}%/yr  SR ${((mu/sd)*Math.sqrt(12)).toFixed(2)}  t ${(mu/(sd/Math.sqrt(v.length))).toFixed(2)}`);
+  return v;};
+const bBlank=stat(bookOf(names),"BLANKET (all 6)");
+const bSel=kept.length?stat(bookOf(kept),`SELECTIVE (${kept.length} kept)`):null;
+// SECOND DECLARED VARIANT (trial counted): keep only the TOP-3 by train t. Different question — "does backing the
+// strongest components help?" — and the honest answer matters because factmom was the STRONGEST in train (t 6.20).
+const top3=[...names].filter(n=>Number.isFinite(trainT.get(n)!)).sort((a,b)=>trainT.get(b)!-trainT.get(a)!).slice(0,3);
+console.log(`    top-3 by TRAIN t (declared variant): ${top3.join(", ")}`);
+const bTop=stat(bookOf(top3),"TOP-3 by train strength");
+if(bBlank&&bTop){
+  const n=Math.min(bBlank.length,bTop.length);
+  const d=bTop.slice(-n).map((x,i)=>x-bBlank.slice(-n)[i]);
+  const dt=mean(d)/((sdv(d)||1e-9)/Math.sqrt(d.length));
+  console.log(`    top3 - blanket: ${(mean(d)*12*100).toFixed(2)}%/yr, paired t ${dt.toFixed(2)}  ->  ${dt>2?"backing the strongest ADDS":dt<-2?"backing the strongest HURTS — in-sample strength is anti-predictive":"null"}`);
+}
+if(bBlank&&bSel){
+  const n=Math.min(bBlank.length,bSel.length);
+  const d=bSel.slice(-n).map((x,i)=>x-bBlank.slice(-n)[i]);
+  const dt=mean(d)/((sdv(d)||1e-9)/Math.sqrt(d.length));
+  console.log(`    selective - blanket: ${(mean(d)*12*100).toFixed(2)}%/yr, paired t ${dt.toFixed(2)}  ->  ${dt>2?"SELECTIVITY ADDS (train-only pick, honest OOS)":dt<-2?"SELECTIVITY HURTS":"NULL: selectivity adds nothing (D-455 precedent repeats)"}`);
+}
