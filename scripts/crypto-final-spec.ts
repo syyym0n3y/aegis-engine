@@ -14,9 +14,9 @@ const read=async(f:string,col:number)=>{try{const t=await Deno.readTextFile(f);
   return t.trim().split("\n").map(l=>{const p=l.split("\t");return +p[col];}).filter(Number.isFinite);}catch{return null;}};
 const LIN=5;                                                      // column index of linHold in the dump
 const vs:[string,number[]|null][]=[
-  ["all-contracts", await read("/Users/ona/aegis-data/crypto_books_top0_lag1_hold5.tsv",LIN)],
-  ["fixed-top-100", await read("/Users/ona/aegis-data/crypto_books_top100_lag1_hold5.tsv",LIN)],
-  ["fixed-top-60",  await read("/Users/ona/aegis-data/crypto_books_top60_lag1_hold5.tsv",LIN)],
+  ["all-contracts", await read("/Users/ona/aegis-data/crypto_books_1dSF_top0_lag1_hold5.tsv",LIN)],
+  ["fixed-top-100", await read("/Users/ona/aegis-data/crypto_books_1dSF_top100_lag1_hold5.tsv",LIN)],
+  ["fixed-top-60",  await read("/Users/ona/aegis-data/crypto_books_1dSF_top60_lag1_hold5.tsv",LIN)],
 ];
 const ok=vs.filter(([,v])=>v&&v.length>500) as [string,number[]][];
 if(ok.length<2){console.log(`!! need at least 2 universe streams; have ${ok.length}`);Deno.exit(1);}

@@ -10404,3 +10404,17 @@ operator — including me, mid-hunt, with a result I like — cannot loosen them
 a new `trd_gate_thresholds` row naming a DECISIONS entry, made deliberately and not in the middle of evaluating the
 candidate that benefits. The candidate stays NOT IDENTIFIED and the honest headline stays the universe-averaged
 SR ≈ 0.99. Recorded here so the reasoning is auditable rather than invisible.
+
+## D-546 (2026-08-24) — Bybit cross-exchange test: the RANKING replicates, the BOOK cannot yet be judged — plus a defect I caused
+483 Bybit linear perps ingested; identical lit5 rules, no code adapted beyond the venue pointer.
+**What replicated:** the linear composite's OOS rank IC is **0.0798 at t 5.69** on Bybit, momentum-alone is negative
+(−0.0286) exactly as on Binance, and the GBM again adds nothing (paired t 0.07) — three independent structural
+confirmations on a venue never used to develop anything.
+**What did NOT:** a book-level verdict. Bybit's public klines reach back only ~1,000 days, so the yearly walk-forward
+leaves **234 OOS days (2026 only)** — under the 300-day floor. And the universe is survivorship-biased (listed
+contracts only), which per D-443 flatters crypto cross-sections. So this is **encouraging, not confirmation**.
+**DEFECT, self-caused and self-found:** the book-stream dump path omitted the venue, so the Bybit run **silently
+overwrote the frozen Binance stream** that `crypto-final-spec.ts` reads — the exact silent-data-corruption class the
+plumbing guard exists for, in a file rather than a database. Venue is now in the filename, the reader was repointed,
+and all Binance streams have been regenerated from scratch. Had this gone unnoticed, the next frozen-spec run would
+have reported Bybit numbers under a Binance label.
