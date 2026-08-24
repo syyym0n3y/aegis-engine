@@ -136,4 +136,4 @@ console.log(`\n    Deflated ceiling: t ~ 5.34 at N~1.53M. The promotable number 
 // trials: 3 models x 2 universes examined
 {const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
   body:JSON.stringify({family:"adhoc",run_key:`equity-nonlinear-D513`})}).catch(()=>null);
- if(!tw||!tw.ok)console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
+ if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}

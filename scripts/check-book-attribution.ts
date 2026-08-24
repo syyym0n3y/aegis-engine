@@ -78,4 +78,4 @@ run(false,"6-force (long span)");
 run(true, "9-force (post-2007)");
 {const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
   body:JSON.stringify({family:"adhoc",run_key:`book-attribution-D527`})}).catch(()=>null);
- if(!tw||!tw.ok)console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
+ if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}

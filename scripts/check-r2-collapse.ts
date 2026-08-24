@@ -51,4 +51,4 @@ console.log(`    next-month vol ratio (vs own trailing-12m): collapse ${mc.toFix
 console.log(`    verdict: ${t>2?"COLLAPSE PREDICTS ELEVATED RISK - de-risk trigger candidate (own registration required before book entry)":t<-2?"collapse predicts LOWER vol (prereg miss)":"no reliable link (null)"}`);
 {const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
   body:JSON.stringify({family:"adhoc",run_key:`r2-collapse-D523`})}).catch(()=>null);
- if(!tw||!tw.ok)console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
+ if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}

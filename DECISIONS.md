@@ -10119,3 +10119,16 @@ window at t 6.20 and delivered exactly **0.0%/yr** afterwards; ind49mom (train t
 dxwml (train t 2.98) is the only one still alive (test t 2.08). Nothing in the training window identified which
 premia would die — which is the whole argument for forward proof over in-sample rank, now demonstrated on this
 program's own book rather than borrowed from the literature. The frozen six stand unchanged; blanket beats clever.
+
+## D-529 (2026-08-24) — can factor timing work at all? Weak 3-year persistence, below ceiling, contradicted at the pick level
+17 premia (13 US decile pairs + four international), **non-overlapping** windows only: k=3y mean rank-IC **+0.154,
+t 2.22** over 19 transitions; k=5y +0.096, t 1.27 over 11. So there is a mild tendency for winning premia to keep
+winning at a 3-year horizon — far below the 5.34 ceiling, and **in direct tension with D-528**, where the strongest
+train component delivered exactly 0.0%/yr out of sample. Both results are true simultaneously: a weak pooled tilt whose
+variance is so large that any individual pick is unreliable. **Not actionable — the frozen book stays equal-weight.**
+Power stated honestly: n is the number of non-overlapping transitions; overlapping windows would inflate n ~60× and
+the t with it, which the pseudo-replication law forbids.
+HYGIENE (three defects in my own instrumentation, all caught and fixed this pass): a wrong window-count printed in the
+power note (fixed to actual usable counts); HTTP 409 on an idempotent trial-counter write reported as WRITE-FAILED —
+a guard-crying-wolf class, now treated as "already counted"; and my own bulk edit commented out closing braces in
+seven scripts (caught by `deno check`, all repaired, both guards re-verified GREEN).

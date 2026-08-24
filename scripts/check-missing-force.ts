@@ -100,4 +100,4 @@ for(const [nm,sy] of CAND){
 }
 {const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
   body:JSON.stringify({family:"adhoc",run_key:`missing-force-D525`})}).catch(()=>null);
- if(!tw||!tw.ok)console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
+ if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}

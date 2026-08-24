@@ -86,4 +86,4 @@ console.log(`    residual PC1 share: 6-force ${(p6*100).toFixed(1)}% -> 9-force 
 console.log(`\n    VERDICT: ${t>2&&p9<p6?"UPGRADE CONFIRMED — adopt the 9-force model (both predictions held)":t>2?"partial: adj-R2 improved but PC1 did not fall":"PREDICTION FAILED — 6-force model was adequate; PC1 structure was not a missing force"}`);
 {const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
   body:JSON.stringify({family:"adhoc",run_key:`force-upgrade-D526`})}).catch(()=>null);
- if(!tw||!tw.ok)console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
+ if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
