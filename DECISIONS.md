@@ -10051,3 +10051,21 @@ not exist until the daily runner's first cycle produces them, and missing-log wa
 which is worse than no guard). Fixed with an explicit, stated, SELF-EXPIRING grace: `ARMED_AT` + 36h, after which a
 missing log is RED like any wedged agent. Verified BOTH directions by exit code: within grace → 0 with an explicit
 "expires into RED" note; simulated expired arm date → 1. The live gate is honest again and still detects wedging.
+
+## D-525 (2026-08-24) — residual PC1 diagnostic: below threshold, but it found a named axis AND a coverage gap
+Pre-registered: PC1 ≥25% of pooled residual variance ⇒ unmodeled common force (independence null ~4.3%). Result 17.2%
+— no discovery claimed. But the loadings named the axis (QQQ +0.45 vs DIA −0.38 / JPM −0.32, −0.24 with small-caps),
+and the naming step returned **zero overlap for CREDIT: HYG/LQD were not in the universe at all** — "credit is not a
+missing force" would have been a statement about our data, not markets (Coverage Law, caught by the test itself).
+Acted on immediately: `scripts/ingest-force-instruments.ts` landed 22 instruments (credit HYG/LQD/IEF/JNK, style
+IWF/IWD/MTUM/QUAL/USMV/VLUE, intl EEM/EFA/VGK/EWJ, 8 sector ETFs).
+
+## D-526 (2026-08-24) — THE 9-FORCE MODEL: both pre-registered predictions held; adopted
+Prediction (stated before running): adding CREDIT (HYG−IEF), STYLE (IWF−IWD), SIZE (IWM−SPY) raises mean adj-R² with
+paired t>2 AND lowers residual PC1. Result: **mean adj-R² 0.380 → 0.430, paired t 4.24; residual PC1 18.1% → 8.3%**
+(independence null 4.5%). STYLE dominates the improvement (QQQ +0.62, NVDA +1.54, JPM −1.14 — the growth/value axis the
+diagnostic named); CREDIT loads on gold, oil and BTC. **Adopted:** live engine upgraded, 22-year era-record
+re-backfilled (5,872 rows). Honest costs recorded, not hidden: single-name beta STABILITY fell (NVDA −0.06, AMZN −0.13)
+— more parameters, collinear factors — so the engagement gate (stability ≥0.4) now excludes those names by its own
+rule, which is the gate working; and force-leg instruments are labelled **ANCHOR** (mean R² 0.97 vs 0.455 for MODELLED)
+so a trivial self-explanation can never be mistaken for understanding by any downstream consumer.

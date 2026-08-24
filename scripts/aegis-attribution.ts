@@ -14,14 +14,26 @@ const load=async(sym:string)=>{
   const m=new Map<string,number>();
   for(const b of (rb[0]?.bars||[])) if(b[4]>0) m.set(new Date(b[0]*1000).toISOString().slice(0,10),b[4]);
   return m;};
-const FORCES:[string,string][]=[["MKT","^GSPC"],["RATES","TLT"],["USD","EURUSD=X"],["OIL","CL=F"],["GOLD","GC=F"],["VOL","^VIX"]];
+// D-526: 9 forces. The original 6 left an unmodeled common component (residual PC1 18.1%, 4x the independence null)
+// whose loadings named a growth-vs-financials axis; CREDIT could not even be tested because HYG/LQD were absent from
+// the universe. Adding CREDIT (HYG-IEF), STYLE (IWF-IWD) and SIZE (IWM-SPY) raised mean adj-R2 0.380 -> 0.430
+// (paired t 4.24) and collapsed residual PC1 to 8.3%. Both predictions were pre-registered before the test.
+const FORCES:[string,string][]=[["MKT","^GSPC"],["RATES","TLT"],["USD","EURUSD=X"],["OIL","CL=F"],["GOLD","GC=F"],["VOL","^VIX"],
+  ["CREDIT","HYG"],["STYLE","IWF"],["SIZE","IWM"]];
+const LEGS:Record<string,string>={CREDIT:"IEF",STYLE:"IWD",SIZE:"SPY"};   // spread forces: long minus short leg
 const fmaps=new Map<string,Map<string,number>>();
 for(const [n,s] of FORCES)fmaps.set(n,await load(s));
+for(const s of Object.values(LEGS))fmaps.set("LEG_"+s,await load(s));
 const UNIVERSE=["SPY","QQQ","IWM","DIA","TLT","GLD","AAPL","MSFT","NVDA","AMZN","META","GOOGL","TSLA","JPM","XOM","AMD","EURUSD=X","GBPUSD=X","JPY=X","AUDUSD=X","CL=F","GC=F","HG=F","SI=F","ZW=F","NG=F","KC=F","BTC-USD"];
 const days=[...fmaps.get("MKT")!.keys()].sort();
 const fret=(n:string,i:number)=>{const m=fmaps.get(n)!;const a=m.get(days[i]),b=m.get(days[i-1]);
   if(a===undefined||b===undefined)return null;
-  return n==="USD"?-(a/b-1):n==="VOL"?(a-b)/100:a/b-1;};       // USD = inverse EURUSD; VOL = VIX point change /100
+  const own=n==="USD"?-(a/b-1):n==="VOL"?(a-b)/100:a/b-1;      // USD = inverse EURUSD; VOL = VIX point change /100
+  const leg=LEGS[n];
+  if(!leg)return own;
+  const lm=fmaps.get("LEG_"+leg)!;const la=lm.get(days[i]),lb=lm.get(days[i-1]);
+  if(la===undefined||lb===undefined)return null;
+  return own-(la/lb-1);};                                      // spread force: HYG-IEF, IWF-IWD, IWM-SPY
 function ols(X:number[][],y:number[]){
   const p=X[0].length,A=Array.from({length:p},()=>new Array(p).fill(0)),bv=new Array(p).fill(0);
   for(let i=0;i<X.length;i++){for(let a=0;a<p;a++){bv[a]+=X[i][a]*y[i];for(let b2=0;b2<p;b2++)A[a][b2]+=X[i][a]*X[i][b2];}}
@@ -76,8 +88,12 @@ for(const sym of UNIVERSE){
     const top=Object.entries(betas).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,3).map(([n,v])=>`${n}:${v.toFixed(2)}`).join(" ");
     console.log(`    ${sym.padEnd(10)}${adj.toFixed(2).padEnd(8)}${stab.toFixed(2).padEnd(7)}${top.padEnd(46)}${(resid*100).toFixed(2)}%`);
   }
+  // ANCHOR LABEL (D-526): an instrument that IS a force leg trivially explains itself (IWM inside SIZE, TLT inside
+  // RATES, SPY~MKT, GLD~GOLD, EURUSD inside USD). Their R2 ~1.00 is a sanity check, NOT understanding — labelled so no
+  // downstream gate can mistake it for signal.
+  const ANCHORS=new Set(["SPY","TLT","IWM","GLD","EURUSD=X","CL=F","GC=F","HYG","IEF","IWF","IWD"]);
   out.push({symbol:sym,asof:days[END],r2:+r2.toFixed(4),adj_r2:+adj.toFixed(4),residual:+resid.toFixed(6),n:rows.length,
-    betas,era_stability:+stab.toFixed(3),n_factors:FORCES.length,cluster:null});
+    betas,era_stability:+stab.toFixed(3),n_factors:FORCES.length,cluster:ANCHORS.has(sym)?"ANCHOR":"MODELLED"});
  }
 }
 const wres=await fetch(`${OWNED}/trd_attribution?on_conflict=symbol,asof`,{method:"POST",
