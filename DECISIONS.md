@@ -9972,3 +9972,15 @@ CFD plane (319,392 hourly bars: SPX/NDX/gold/brent 2016→2026). Even at ~3bp/da
 everywhere. The split itself confirms D-503 (off-hours carry the drift) — but no leg beats the whole. Eighth
 consecutive timing-class family with the drift-dominates-gates shape. Board: 1,011 specs / 0 survivors (DB-counted).
 Lineage: index-sessions (killed).
+
+## D-518 (2026-08-24) — OPERATOR REDIRECT: the machine answered "does any single rule survive" and narrated it as "can we profit" — those are different questions
+The 1,011/0 board is honest about what it tested: single, static, unconditional rules against a 1.53M-trial gate.
+Three classes were never tested and are now the program: (P1) THE COMBINED BOOK — many small consistent premia held
+together (the operator's $10-50 x 10,000-instances math IS portfolio breadth math; components pre-registered by
+mechanical criteria below, no cherry-pick); (P2) CONDITIONAL/ADAPTIVE policies — regime-gated engagement, trials
+counted honestly; (P3) the original causal-attribution north star (per-instrument force decomposition + engagement
+gate). P1 component criteria, stated BEFORE assembly: portfolio |t| >= 2.5 on its full sample AND era-consistency
+>= 3 of 4 AND replicated on >= 2 independent datasets/geographies (or >= 50 years) AND implementable at stated cost
+(long side or feasible borrow). Combination = equal-vol weights, no optimization (optimization = selection leak).
+STATED LIMIT: components are known-good in-sample; the combination's own t is descriptive; the forward clock is the
+only honest confirmation and starts at assembly.
