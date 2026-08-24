@@ -10183,3 +10183,20 @@ daily t decides), worst peak-to-trough, outlier dependence (does the top 5% of t
 breakdowns by instrument, side and entry hour. With ≥60 trading days it extends to regressing daily P&L on the nine
 measured forces to separate SKILL from BETA. Runs locally, uploads nothing.
 **Operator action:** export the history and run `deno run --allow-read --allow-net --allow-env scripts/analyze-my-trades.ts <file.csv>`.
+
+## D-534 (2026-08-24) — the Liquidity Law INVERTS on crypto: the profit is where size can go
+Every cross-sectional result this program has produced collapsed in the liquid tercile — D-419 (price/volume),
+D-423 (fundamentals), D-513 (equity GBM: 4.3%/yr pooled → 0.4%/yr liquid). The crypto GBM book does the opposite:
+
+| slice | %/yr | SR | t | maxDD |
+|---|---|---|---|---|
+| **LIQUID tercile** | **53.1** | **0.95** | **2.05** | −50% |
+| pooled equal-weight | 35.9 | 1.11 | 2.40 | −35% |
+| **ILLIQUID tercile** | **−0.2** | **−0.00** | **−0.01** | −63% |
+
+The illiquid third earns *literally nothing*, and restricting to liquid names *raises* the return. That is the first
+liquidity-robust cross-sectional signal in the program's history, and it is exactly the property a placeable strategy
+needs. **It promotes nothing:** t 2.05 remains far below the 5.34 ceiling, the drawdown is −50%, the span is 4.6 years,
+and the D-532 estimate instability is untouched by this test. Next step (running): re-specify the universe as a
+FIXED-N liquid set (top 60/100 by dollar volume), which is stable across data refreshes *by construction* and is also
+the only universe an operator could actually trade — attacking the instability at its root rather than reporting around it.

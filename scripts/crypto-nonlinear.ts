@@ -51,6 +51,15 @@ for(const [,g] of byD){ if(g.length<40){g.length=0;continue;}
   for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]); o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
   const oy=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); oy.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});
 }
+// D-535 INSTABILITY FIX: the D-451 (328 contracts) vs D-532 (498) gap came from the universe being "whatever we
+// happen to hold". A FIXED-N liquid universe is stable across data refreshes by construction, and it is also the only
+// universe an operator can actually trade. TOPN=0 keeps the old all-names behaviour for comparison.
+const TOPN=Number(Deno.env.get("TOPN")||0);
+if(TOPN>0){for(const [,g] of byD){ if(g.length<=TOPN)continue;
+  g.sort((a,b)=>b.x[5]-a.x[5]); g.length=TOPN;                  // feature 5 = log dvol (rank-normalised, higher = more liquid)
+  for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]);o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
+  const oy=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); oy.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});
+}}
 const clean=[...byD.entries()].filter(([,g])=>g.length>=40).sort((a,b)=>a[0]<b[0]?-1:1);
 console.log(`    usable days (>=40 names): ${clean.length}, mean breadth ${mean(clean.map(([,g])=>g.length)).toFixed(0)} names`);
 if(clean.length<400){console.error("!! too few usable days — UNTESTED, not null");Deno.exit(1);}
@@ -105,8 +114,10 @@ const years=[...new Set(clean.map(([d])=>+d.slice(0,4)))].sort((a,b)=>a-b);
 const START=years[0]+2;
 console.log(`    walk-forward: train <= Y-1, predict Y, for Y = ${START}..${years.at(-1)}\n`);
 const res:Record<string,number[]>={gbm:[],lin:[],mom:[]};
-const books:Record<string,number[]>={gbmEq:[],gbmConv:[]};
-let prevW:Record<string,Map<string,number>>={gbmEq:new Map(),gbmConv:new Map()};
+// D-534: the Liquidity Law asked of this program's best PLACEABLE candidate. dvol is feature index 5 (log dollar
+// volume) — rank-normalised per day, so the top tercile is >= +1/6 in the [-0.5,+0.5] rank space.
+const books:Record<string,number[]>={gbmEq:[],gbmConv:[],gbmLiq:[],gbmIlliq:[]};
+let prevW:Record<string,Map<string,number>>={gbmEq:new Map(),gbmConv:new Map(),gbmLiq:new Map(),gbmIlliq:new Map()};
 for(const Y of years.filter(y=>y>=START)){
   const tr=clean.filter(([d])=>+d.slice(0,4)<Y).flatMap(([,g])=>g);
   const te=clean.filter(([d])=>+d.slice(0,4)===Y);
@@ -125,6 +136,14 @@ for(const Y of years.filter(y=>y>=START)){
     W.gbmEq=mk([...ord.slice(0,k).map(i=>[g[i].sym,1] as [string,number]),...ord.slice(-k).map(i=>[g[i].sym,-1] as [string,number])]);
     const pm=mean(pred),ps=sdv(pred)||1e-9;
     W.gbmConv=mk(ord.filter(i=>Math.abs(pred[i]-pm)/ps>1).map(i=>[g[i].sym,(pred[i]-pm)/ps] as [string,number]));
+    const DV=5;                                                  // feature 5 = log dvol, rank-normalised to [-0.5,0.5]
+    const liqIdx=[...g.keys()].filter(i=>g[i].x[DV]>=1/6), illIdx=[...g.keys()].filter(i=>g[i].x[DV]<=-1/6);
+    for(const [bk,idxs] of [["gbmLiq",liqIdx],["gbmIlliq",illIdx]] as [string,number[]][]){
+      if(idxs.length<12){W[bk]=new Map();continue;}
+      const o2=[...idxs].sort((a,b)=>pred[b]-pred[a]);
+      const k2=Math.max(3,Math.floor(idxs.length/5));
+      W[bk]=mk([...o2.slice(0,k2).map(i=>[g[i].sym,1] as [string,number]),...o2.slice(-k2).map(i=>[g[i].sym,-1] as [string,number])]);
+    }
     const rmap=new Map(g.map(r=>[r.sym,r.yraw]));
     for(const kk of Object.keys(books)){
       let ret=0; for(const [sym,w] of W[kk]) ret+=w*(rmap.get(sym)??0);
@@ -145,7 +164,7 @@ console.log(`\n    ${"book (net of fees)".padEnd(22)}${"%/yr".padEnd(10)}${"SR".
 for(const [k,v] of Object.entries(books)){ if(v.length<300)continue;
   const m=mean(v),sd=sdv(v)||1e-9; let cum=1,peak=1,dd=0;
   for(const x of v){cum*=1+x;peak=Math.max(peak,cum);dd=Math.min(dd,cum/peak-1);}
-  console.log(`    ${({gbmEq:"GBM equal-weight",gbmConv:"GBM conviction-wt"}[k]!).padEnd(22)}${((m*365*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(365)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
+  console.log(`    ${({gbmEq:"GBM equal-weight",gbmConv:"GBM conviction-wt",gbmLiq:"GBM LIQUID tercile",gbmIlliq:"GBM ILLIQUID tercile"}[k]!).padEnd(22)}${((m*365*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(365)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
 console.log(`\n    Deflated ceiling (D-363/364, ~1.53M trials): t ~ 5.34. Anything below that is not evidence.`);
 // D-532: dump the daily book streams so the pre-registered vol-management overlay can be applied without retraining.
 await Deno.writeTextFile("/Users/ona/aegis-data/crypto_gbm_books.tsv",
