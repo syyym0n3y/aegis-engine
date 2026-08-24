@@ -10372,3 +10372,23 @@ argument than a t-stat, and it is why this spec is the program's best-evidenced 
 (SR 0.64–1.41) fails the Universe Law's identification test, so the honest headline is the **universe-averaged
 SR ≈ 0.99**, not the top-50 figure; and lit5-beating-lit3 was *not* pre-registered, making that comparison post-hoc.
 Six specifications counted as trials. Forward-registered; promoted to nothing.
+
+## D-544 (2026-08-24) — era stability: the "2022 bear-market artifact" explanation is refuted, and inverted
+The three core signals (low-vol, anti-lottery, 52-week-high) would all have worked in the 2022 crash, making
+regime-artifact the most plausible alternative explanation for the whole result. Year by year:
+
+| year | %/yr | SR | win% |
+|---|---|---|---|
+| 2022 (crash) | +53.2 | 1.10 | 55 |
+| **2023 (recovery)** | **−16.9** | **−0.42** | 46 |
+| 2024 | +61.7 | 1.17 | 52 |
+| 2025 | +160.2 | 2.58 | 61 |
+| 2026 (partial, 232d) | +147.9 | 2.22 | 58 |
+
+**The crash year is one of the weaker positive years; the single losing year was the recovery; and the effect is
+strongest in the two most recent periods** — the opposite of the post-publication decay that has killed nearly every
+other candidate here. Counterweights, stated: per-year t is only 1.1–2.6 (the pooled 3.04 comes from aggregation),
+2026 is partial, one full year was negative, and strength concentrated in the newest data is something to watch
+rather than celebrate — it is equally consistent with a favourable recent regime that will reverse.
+Also fixed: the book-stream log line printed a stale filename (the file path had been changed but not the message) —
+printed output must be true, per the agent-output guard's own principle.

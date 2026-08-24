@@ -124,13 +124,14 @@ const HOLD=Number(Deno.env.get("HOLD")||1);
 const cohorts:{w:Map<string,number>;left:number}[]=[];
 const cohortsL:{w:Map<string,number>;left:number}[]=[];          // live cohorts, each expiring after HOLD days
 const books:Record<string,number[]>={gbmEq:[],gbmConv:[],gbmLiq:[],gbmIlliq:[],gbmHold:[],linHold:[]};
+const bookDates:string[]=[];
 let prevW:Record<string,Map<string,number>>={gbmEq:new Map(),gbmConv:new Map(),gbmLiq:new Map(),gbmIlliq:new Map()};
 for(const Y of years.filter(y=>y>=START)){
   const tr=clean.filter(([d])=>+d.slice(0,4)<Y).flatMap(([,g])=>g);
   const te=clean.filter(([d])=>+d.slice(0,4)===Y);
   if(tr.length<3000||!te.length)continue;
   const gbm=fitGBM(tr), lin=fitOLS(tr.map(r=>r.x),tr.map(r=>r.y));
-  for(const [,g] of te){
+  for(const [DAYDATE,g] of te){
     const yy=g.map(r=>r.y);
     res.gbm.push(spear(g.map(r=>gbm(r.x)),yy));
     res.lin.push(spear(g.map(r=>lin(r.x)),yy));
@@ -185,6 +186,7 @@ for(const Y of years.filter(y=>y>=START)){
       let retL=0,grossL=0;
       for(const c of cohortsL){for(const [sym,w] of c.w){retL+=w*(rmap.get(sym)??0)/cohortsL.length;grossL+=Math.abs(w)/cohortsL.length;}}
       books.linHold.push(retL*(2/Math.max(1e-9,grossL))-(1/Math.max(1,cohortsL.length))*FEE_BP/1e4);
+      bookDates.push(DAYDATE);
     }
     for(const kk of Object.keys(books)){
       if(!W[kk])continue;                                          // gbmHold is computed separately (D-538)
@@ -210,5 +212,5 @@ for(const [k,v] of Object.entries(books)){ if(v.length<300)continue;
 console.log(`\n    Deflated ceiling (D-363/364, ~1.53M trials): t ~ 5.34. Anything below that is not evidence.`);
 // D-532: dump the daily book streams so the pre-registered vol-management overlay can be applied without retraining.
 await Deno.writeTextFile(`/Users/ona/aegis-data/crypto_books_top${TOPN}_lag${Number(Deno.env.get("LAG")||0)}_hold${HOLD}.tsv`,
-  books.gbmEq.map((v,i)=>`${i}\t${v}\t${books.gbmConv[i]??""}\t${books.gbmLiq[i]??""}\t${books.gbmHold[i]??""}\t${books.linHold[i]??""}`).join("\n"));
-console.log(`    book streams -> crypto_gbm_books_top${TOPN}.tsv (${books.gbmEq.length} days)`);
+  books.gbmEq.map((v,i)=>`${bookDates[i]??i}\t${v}\t${books.gbmConv[i]??""}\t${books.gbmLiq[i]??""}\t${books.gbmHold[i]??""}\t${books.linHold[i]??""}`).join("\n"));
+console.log(`    book streams -> crypto_books_top${TOPN}_lag${Number(Deno.env.get("LAG")||0)}_hold${HOLD}.tsv (${books.gbmEq.length} days)`);
