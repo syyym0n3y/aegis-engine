@@ -10700,3 +10700,21 @@ barely moves when its known bias is partially repaired is a result that did not 
 **Honest limit:** recovery is partial — perps delisted from *both* spot and futures cannot be found this way, so the
 true historical cohort exceeds 19. And the code's own printed label has been corrected from "survivorship-free" to
 "partially survivorship-corrected", because printed output must not assert what the data does not support.
+
+## D-563 (2026-08-25) — the crypto book is not beta (R² under 1%)
+The equity book faced this attack in D-527; the crypto candidate never had. Daily book returns regressed on crypto
+market, BTC, ETH and an alt-premium factor over 1,693 days:
+
+| model | R² | alpha | t(alpha) |
+|---|---|---|---|
+| market | 0.1% | 73.1%/yr | 2.92 |
+| BTC | 0.0% | 73.0%/yr | 2.91 |
+| market+BTC+ETH | 0.5% | 75.5%/yr | 3.02 |
+| +alt premium | 0.5% | 75.5%/yr | 3.02 |
+
+**Crypto direction explains essentially nothing** (R² under 1%, betas: market 0.02–0.04, BTC −0.008 to −0.13). The
+"it's just long crypto" explanation is refuted, and it is markedly cleaner on this axis than the equity book, whose
+factor R² was 18–28%. Practical consequence: it would *diversify* against a crypto holding rather than duplicate it.
+**Honest limit:** because beta explains nothing, alpha simply equals the raw return and its t equals the raw t — this
+test **removes an alternative explanation rather than adding independent evidence**. t 2.91–3.02 is still below every
+ceiling.
