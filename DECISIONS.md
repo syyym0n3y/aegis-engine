@@ -11468,3 +11468,30 @@ the reason the EFFECT-SIZE LAW exists.
 **Cost of finding out: 56 trials and one script.** Contrast with the 734,400-trial sweep that answered a narrower
 question — at N=2.27M the ceiling now rises faster than a sweep can find anything, so the efficient move is few
 well-motivated pre-registered tests, not more spraying.
+
+## D-600 (2026-08-25) — the risk gate does NOT earn its keep uniformly, and the failure is informative
+The doctrine says the risk gate is the only component with near-certain positive expected value. Measured on the 8
+FX/metal/index/energy instruments, 10.6 years, trailing-window vol targeting with induced turnover charged:
+
+| | BH Sharpe | VT Sharpe | BH uw(d) | VT uw(d) | BH maxDD | VT maxDD |
+|---|---|---|---|---|---|---|
+| EURUSD | 0.14 | 0.09 | 2665 | 2665 | −24 | −29 |
+| GBPUSD | 0.00 | −0.00 | 3181 | 2614 | −31 | −31 |
+| USDJPY | 0.38 | 0.35 | 1925 | 1928 | −18 | −27 |
+| AUDUSD | 0.09 | −0.05 | 2682 | 2682 | −32 | −36 |
+| XAUUSD | 0.99 | 1.14 | 1038 | 1039 | −29 | **−16** |
+| S&P | 0.91 | 1.00 | 639 | 649 | −36 | **−16** |
+| Nasdaq | 1.02 | 1.20 | 647 | 512 | −37 | **−17** |
+| Brent | 0.51 | 0.47 | 1392 | 1308 | −81 | **−22** |
+
+**PASS on 1 of 8** against a pre-registered bar of 6. On all four FX majors vol targeting is **negative** — coherent,
+since these have near-zero drift and low Sharpe, so scaling by vol buys turnover cost with no drift to protect.
+
+**Where it works, it does something narrower than advertised.** It roughly **halves drawdown depth** on risk assets
+while leaving **time underwater essentially unchanged** (S&P 639→649d, gold 1038→1039d). That is the
+depth-versus-duration distinction of D-565/566 — and it is exactly why the pre-registered rule required *both*
+clauses. Under any conventional Sharpe-and-drawdown test this would have read as a clear win.
+
+**The asset-class split is POST-HOC and is not claimable.** Noticing afterwards that it works on 4 risk assets and
+fails on 4 FX pairs is subset selection (D-511b/D-553 precedent). It needs fresh pre-registration on held-out
+instruments before it means anything.
