@@ -10984,3 +10984,25 @@ The pure multiple-comparison arithmetic is milder — four instrument-space asse
 ~0.8% by chance, so the comparison alone does not explain crypto away. But the programme now holds **a positive result
 without an explanation for why that venue and not the others**, which is a materially weaker position than it held
 this morning, and I would rather say so than let the earlier framing stand.
+
+## D-578 (2026-08-25) — breadth refuted: the crypto result is distinctive to the ASSET CLASS
+The obvious confound to D-577: crypto ran 50 names, the null asset classes 15–26. Matching them exactly:
+
+| universe | %/yr | SR | t |
+|---|---|---|---|
+| crypto top-16 | 92.0 | **1.17** | 2.81 |
+| crypto top-26 | 75.6 | **1.09** | 2.62 |
+| crypto top-50 (reference) | 66.8 | 1.18 | 2.84 |
+| commodities (16) | +0.3 | 0.02 | 0.12 |
+| EM FX (15) | +0.3 | 0.05 | 0.22 |
+
+**Crypto works at the exact sizes where the others are empty**, with identical signals, construction, costs and
+instrument-space measurement. So the difference is the **asset class itself** — not method, not breadth, not
+measurement space. That restores the result's distinctiveness while leaving D-577's problem intact: it is distinctive
+and still **unexplained**, arbitrage-thinness having been refuted.
+**Next testable mechanism:** cross-sectional **dispersion**. Crypto runs 3–8× the volatility of these asset classes,
+and every signal in the set (low-vol, anti-lottery, momentum) is dispersion-dependent — a ranking signal needs spread
+between names to have anything to rank.
+Two process notes: the engine **refused to report a null** when its 40-name floor made the small-universe tests
+impossible, printing "UNTESTED, not null" — the Coverage Law working against its author. And the floor is now an
+explicit parameter, with a stale "≥40 names" label in the output corrected, since printed output must be true.

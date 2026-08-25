@@ -82,8 +82,9 @@ if(TOPN>0){for(const [,g] of byD){ if(g.length<=TOPN)continue;
   for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]);o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
   const oy=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); oy.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});
 }}
-const clean=[...byD.entries()].filter(([,g])=>g.length>=40).sort((a,b)=>a[0]<b[0]?-1:1);
-console.log(`    usable days (>=40 names): ${clean.length}, mean breadth ${mean(clean.map(([,g])=>g.length)).toFixed(0)} names`);
+const MINNAMES=Number(Deno.env.get("MINNAMES")||40);
+const clean=[...byD.entries()].filter(([,g])=>g.length>=MINNAMES).sort((a,b)=>a[0]<b[0]?-1:1);
+console.log(`    usable days (>=${MINNAMES} names): ${clean.length}, mean breadth ${mean(clean.map(([,g])=>g.length)).toFixed(0)} names`);
 if(clean.length<400){console.error("!! too few usable days — UNTESTED, not null");Deno.exit(1);}
 // --- models (histogram GBM + ridge, same as D-419) ---
 type Node={leaf?:number;f?:number;bin?:number;l?:Node;r?:Node};
