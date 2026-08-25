@@ -10949,3 +10949,20 @@ measured and failed."
 **The deeper consequence is a workflow inversion:** start from what can be placed and measure the edge there, rather
 than finding an edge and hoping a vehicle exists. Had this law been in force this morning, most of today's work would
 have been differently ordered — and several reported headlines would never have been reported.
+
+## D-576 (2026-08-25) — instrument-first works as a method: ETF cross-section is empty, answered in one step
+First test run under the D-575 inversion — measure in the instrument, not in research space:
+
+| concentration | %/yr | SR | t | maxDD | underwater |
+|---|---|---|---|---|---|
+| 3L/3S | −2.4 | −0.28 | −1.42 | −60% | 17.5y |
+| 5L/5S | −1.1 | −0.17 | −0.85 | −39% | 17.5y |
+| 8L/8S | −0.7 | −0.14 | −0.71 | −29% | 17.5y |
+
+**No edge across 26 liquid shortable ETFs over 317 months** — and the method proved itself: every previous equity
+attempt measured in research space and then burned additional cycles discovering the conversion failed. Here the
+instrument *was* the measurement, so the negative arrived in **one step with nothing wasted on a vehicle hunt.**
+**The contrast is the finding:** the identical literature family is *positive* in crypto perps (t 2.90 liquid core) and
+*negative* across liquid ETFs (t −0.85). That is consistent with everything else this programme has measured — these
+behavioural effects live in less-efficient, retail-dominated venues and are absent where institutional arbitrage is
+dense. Which also explains why every equity vehicle failed while the crypto one survived furthest.
