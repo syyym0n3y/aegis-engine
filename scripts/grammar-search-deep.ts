@@ -26,6 +26,23 @@
 // needs |t| beyond ~5.5. That is the point of the gate, not a disappointment.
 import { type Bar, enumerate, runComponentTrades, specKey } from "../supabase/functions/_shared/trd-grammar.ts";
 import { deflatedSharpe, kurtosis, mean, sampleStd, skewness } from "../supabase/functions/_shared/trd-stats.ts";
+import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+
+// D-598: declare every knob. This prints what ACTUALLY took effect and refuses to run on a near-miss variable name.
+// Both failures it prevents happened today: a run launched without PERP_FEE_RT_BP=0 whose output I then labelled
+// "gross", and a self-test that silently did nothing because the script read SELFTEST while I set GUARD_SELFTEST.
+declareKnobs("grammar-search-deep", [
+  { name: "SRC", def: "perp", note: "perp | fx" },
+  { name: "TF", def: "1hSF" },
+  { name: "NSYM", def: "8" },
+  { name: "PERP_FEE_RT_BP", def: "9", note: "round-trip bp; 0 = GROSS" },
+  { name: "MAXSPECS", def: "0", note: "0 = whole grammar" },
+  { name: "MIN_TRADES", def: "30" },
+  { name: "STOPMODE", def: "" },
+  { name: "SIDESPLIT", def: "" },
+  { name: "DRIFTADJ", def: "" },
+  { name: "TRIAL_BASE", def: "1531193" },
+]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -83,7 +100,7 @@ if (SRC === "fx") {
     if (bars.length >= 2000) markets.push([m.symbol, bars]);
   }
 }
-if (!markets.length) { console.error("!! no symbol had >=2000 usable bars. RED."); Deno.exit(1); }
+assertNonEmpty("markets with >=2000 usable bars", markets);
 
 let specs = enumerate();
 // D-589: stratify by stop GEOMETRY. Cost in R scales as fee/stop-width, so if the gross effect is constant in R the
@@ -92,6 +109,7 @@ let specs = enumerate();
 const STOPMODE_FILTER = Deno.env.get("STOPMODE") || "";
 if (STOPMODE_FILTER) specs = specs.filter((x) => (x.stopMode ?? "swing") === STOPMODE_FILTER);
 if (MAXSPECS > 0) specs = specs.slice(0, MAXSPECS);
+assertNonEmpty("specs after STOPMODE/MAXSPECS filtering", specs);   // D-598: a filter matching nothing is UNTESTED
 
 const totalPlanned = specs.length * markets.length;
 console.log(`==> GRAMMAR SEARCH (deep) — ${specs.length.toLocaleString()} composed strategies x ${markets.length} symbols = ${totalPlanned.toLocaleString()} trials`);

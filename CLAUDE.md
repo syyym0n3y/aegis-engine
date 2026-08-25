@@ -295,3 +295,38 @@ trial count, a "validated/verified edge" claim while the ledger promotes nothing
 **Two flaws in that guard were caught by building it:** it first scanned whole log tails and so flagged defects that had
 already been FIXED (a guard that cannot go green after a fix gets ignored — worse than useless), and it repeated one
 problem once per matching line. Both corrected: latest-run-only, deduped.
+
+## THE MECHANISM LAW (2026-08-25, D-597) — the gate that sat one step too late
+**A causal claim is only admissible if its kill condition was written before the data existed. Every research row
+either cites a pre-registration in `trd_prereg`, or marks itself DESCRIPTIVE ONLY.**
+Origin: seven mechanism stories were proposed for one set of measurements in a single session — arbitrage-thinness,
+dispersion, leverage crowding, listing age, a liquidity band, a stop-width rescue, and a refutation of the beta
+explanation. All seven died. Six died to controls, which is the system working. The seventh, **D-590, was a false WIN
+reported to the operator**: "shorts pay more than longs, therefore not beta", resting on a POOLED comparison in which
+one stop geometry carried **64.3%** of the trades. One decomposition reversed it. It was found by chance while
+re-reading my own output.
+None of the other fourteen guards could have caught it: **every one inspects a conclusion already in the ledger, and
+this failure happened one step earlier — in the move from a number to a story about the number.**
+Rules: (1) a mechanism claim cites `PREREG: <id>`, or is marked DESCRIPTIVE ONLY — description is always allowed,
+the unregistered *story* is what is forbidden; (2) `trd_prereg` is append-only with an immutability trigger, and an
+outcome once recorded cannot be rewritten, so **a retraction can never be softened into a win** (verified by
+attempting all four attacks); (3) any row reporting a POOLED statistic must state its disaggregation — the D-590
+shape; (4) enforced by `scripts/mechanism-guard.ts`, verified RED on the literal D-590 sentence, PASS on a
+registered claim and on a descriptive one, exit-code-checked both directions.
+
+## THE PRECONDITION LAW (2026-08-25, D-598) — 9 of 10 self-inflicted defects were one bug
+**Assert that the run did what you asked before reading what it produced.**
+Origin: every self-inflicted failure of the session was classified. Ten defects; **nine share one structure and not
+one is a reasoning error** — a stale `.tsv` read after a run wrote nothing; columns labelled "gross" that were net
+because a fee variable was never passed; a `SYMBOLS` filter matching 0 of 31 names; a self-test that silently did
+nothing because the script read `SELFTEST` while `GUARD_SELFTEST` was set; five guards exiting 0 with the database
+unreachable; a guard certifying "ALL 0 PROMOTED ROWS"; a regex splitting one book into twenty fake families; a
+blanket UPDATE contaminating a pre-registered forward row. **Zero were arithmetic. Zero were misread markets.**
+The resulting rework was **41% of commits**. Reviewing harder does not fix this class; asserting does.
+Rules: (1) every analysis script calls `declareKnobs()`, which prints the EFFECTIVE configuration and **refuses to
+run** when a set variable is a near-miss of a declared one (catching both the mistyped name and the
+prefix variant — `GUARD_SELFTEST` vs `SELFTEST` is edit-distance 6, so containment is checked too); (2) a filter that
+matches nothing yields **UNTESTED**, never a null — `assertNonEmpty()`; (3) a file must have been written by *this*
+run — `assertFresh()`; (4) a mutation states how many rows it expects to touch — `assertTouched()`; (5) all five
+verified by breaking their inputs, and retrofitted into `crypto-nonlinear.ts` and `grammar-search-deep.ts`, the two
+scripts that produced most of the rework.

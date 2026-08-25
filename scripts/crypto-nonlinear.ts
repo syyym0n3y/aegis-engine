@@ -10,6 +10,31 @@
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"cn",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
+import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+// D-598: declare every knob so the effective configuration is PRINTED and a near-miss variable name refuses to run.
+// This script produced three of today's ten self-inflicted defects — a SYMBOLS filter that matched 0 of 31 names, a
+// stale dump read as a result, and an AGEBAND comparison whose confound was only caught by a later control.
+declareKnobs("crypto-nonlinear", [
+  { name: "TF" },
+  { name: "TOPN" },
+  { name: "MINNAMES" },
+  { name: "MINNAMES_LIQ" },
+  { name: "HOLD" },
+  { name: "LAG" },
+  { name: "FEATSET" },
+  { name: "FEATURE" },
+  { name: "FULLSPAN" },
+  { name: "QWIDTH" },
+  { name: "INVERT" },
+  { name: "LIQBAND" },
+  { name: "AGEBAND" },
+  { name: "SYMBOLS" },
+  { name: "FROM" },
+  { name: "UNTIL" },
+  { name: "NULLTEST" },
+  { name: "EXHAUST" },
+  { name: "PERP_FEE_RT_BP" }
+]);
 const mean=(a:number[])=>a.reduce((s,x)=>s+x,0)/a.length;
 const sdv=(a:number[])=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/Math.max(1,a.length-1));};
 const FEE_BP=Number(Deno.env.get("PERP_FEE_RT_BP")||9);
@@ -35,7 +60,7 @@ const fund7=(sym:string,tsEnd:number)=>{                       // mean funding o
 const TF=Deno.env.get("TF")||"1dSF";
 let meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
 const ONLY=(Deno.env.get("SYMBOLS")||"").split(",").map(x=>x.trim()).filter(Boolean);
-if(ONLY.length){meta=meta.filter(m=>ONLY.includes(m.symbol));console.log(`    SYMBOL-MATCHED: restricted to ${meta.length} of ${ONLY.length} requested names`);}
+if(ONLY.length){meta=meta.filter(m=>ONLY.includes(m.symbol));console.log(`    SYMBOL-MATCHED: restricted to ${meta.length} of ${ONLY.length} requested names`);assertNonEmpty("SYMBOLS filter matches",meta);}
 const AGEBAND=Deno.env.get("AGEBAND")||"";
 if(AGEBAND){
   const firsts:{symbol:string;first:number}[]=[];
