@@ -10966,3 +10966,21 @@ instrument *was* the measurement, so the negative arrived in **one step with not
 *negative* across liquid ETFs (t −0.85). That is consistent with everything else this programme has measured — these
 behavioural effects live in less-efficient, retail-dominated venues and are absent where institutional arbitrage is
 dense. Which also explains why every equity vehicle failed while the crypto one survived furthest.
+
+## D-577 (2026-08-25) — I refuted my own strategic conclusion within an hour of offering it
+Last message I proposed "hunt where the arbitrageurs aren't" as the session's durable takeaway, on the strength of one
+contrast (crypto positive, ETFs negative). Testing it on the two other placeable, arbitrage-thin spaces we hold:
+
+| space | 3L/3S | 5L/5S | underwater |
+|---|---|---|---|
+| commodity futures (16, 295mo) | +0.3%/yr, t 0.12 | −0.4%/yr, t −0.21 | 20–25 years |
+| EM FX (15, 240mo) | +0.3%/yr, t 0.22 | −0.1%/yr, t −0.11 | 17–19 years |
+
+**Four clean nulls. Arbitrage-thinness cannot be the mechanism** — commodities and EM FX are both far less
+institutionally screened than the ETF complex, and both are empty.
+**Why this matters beyond the criterion:** mechanism was the main reason to believe the crypto result was not luck.
+A behavioural story with a reason to persist is worth more than a t-statistic; losing the story weakens the case.
+The pure multiple-comparison arithmetic is milder — four instrument-space asset classes tested, one at t 2.90, is
+~0.8% by chance, so the comparison alone does not explain crypto away. But the programme now holds **a positive result
+without an explanation for why that venue and not the others**, which is a materially weaker position than it held
+this morning, and I would rather say so than let the earlier framing stand.

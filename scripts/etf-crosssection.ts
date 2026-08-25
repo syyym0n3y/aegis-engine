@@ -12,7 +12,15 @@ async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
 const mean=(a:number[])=>a.reduce((s,x)=>s+x,0)/Math.max(1,a.length);
 const sdv=(a:number[])=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/Math.max(1,a.length-1));};
-const UNIV=["SPY","QQQ","IWM","DIA","EEM","EFA","VGK","EWJ","XLF","XLK","XLE","XLU","XLP","XLI","XLV","XLY","TLT","IEF","HYG","LQD","JNK","GLD","MTUM","VLUE","QUAL","USMV"];
+// D-577: universe is now a parameter. The criterion from D-576 is "hunt where arbitrage capital is thin", and the two
+// placeable, arbitrage-sparse spaces this programme holds are COMMODITY FUTURES and EM FX — both directly tradable
+// (futures/CFDs), both far less institutionally screened than the ETF complex.
+const UNIVERSES:Record<string,string[]>={
+  etf:["SPY","QQQ","IWM","DIA","EEM","EFA","VGK","EWJ","XLF","XLK","XLE","XLU","XLP","XLI","XLV","XLY","TLT","IEF","HYG","LQD","JNK","GLD","MTUM","VLUE","QUAL","USMV"],
+  commod:["CL=F","NG=F","GC=F","SI=F","HG=F","PL=F","PA=F","ZC=F","ZW=F","ZS=F","KC=F","SB=F","CC=F","CT=F","LE=F","HE=F"],
+  emfx:["USDBRL=X","USDMXN=X","USDZAR=X","USDTRY=X","USDINR=X","USDKRW=X","USDCNY=X","MXN=X","AUDUSD=X","NZDUSD=X","GBPUSD=X","EURUSD=X","JPY=X","CAD=X","CHF=X"],
+};
+const UNIV=UNIVERSES[Deno.env.get("UNIVERSE")||"etf"];
 const FEE_BP=Number(Deno.env.get("ETF_FEE_RT_BP")||10);
 const K=Number(Deno.env.get("K")||5);
 const load=async(sym:string)=>{
@@ -23,9 +31,10 @@ const load=async(sym:string)=>{
 const px=new Map<string,Map<string,number>>();
 for(const s of UNIV)px.set(s,await load(s));
 const have=UNIV.filter(s=>(px.get(s)?.size??0)>500);
-console.log(`==> ETF CROSS-SECTION (D-576) — INSTRUMENT SPACE, ${have.length} liquid shortable ETFs, ${K} long / ${K} short, ${FEE_BP}bp round trip`);
+console.log(`==> ${(Deno.env.get("UNIVERSE")||"etf").toUpperCase()} CROSS-SECTION — INSTRUMENT SPACE, ${have.length} instruments, ${K} long / ${K} short, ${FEE_BP}bp round trip`);
 // monthly grid from SPY's calendar
-const spyDays=[...px.get("SPY")!.keys()].sort();
+const anchor=have[0];
+const spyDays=[...px.get(anchor)!.keys()].sort();
 const monthEnd:string[]=[];
 for(let i=0;i<spyDays.length-1;i++) if(spyDays[i].slice(0,7)!==spyDays[i+1].slice(0,7)) monthEnd.push(spyDays[i]);
 monthEnd.push(spyDays[spyDays.length-1]);
