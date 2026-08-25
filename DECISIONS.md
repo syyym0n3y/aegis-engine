@@ -11409,3 +11409,38 @@ alone would give. The grammar is not merely failing to beat costs; at this trial
 chance would*.
 
 The 34.3% OOS-positive rate reproduces D-588's 33.7% at **115× the trial count**.
+
+## D-596 (2026-08-25) — accounting for the self-assessment against the live record
+The self-assessment was checked against the database rather than accepted. **Four of its claims are wrong or stale,
+and one limit it called unquantifiable has now been quantified.**
+
+**Corrections:**
+| claim | verified state |
+|---|---|
+| "twelve guards" | **15** guard files, 14 wired into the daily runner |
+| "three retractions today" | **five**, plus four guard defects: listing age (D-583), liquidity band (D-587), stop-width rescue (D-589), **my own beta refutation** (D-590), non-retracement (D-593) |
+| "1000+ specifications" | board 1,021 specs; **live trial count 2,266,819** |
+| "higher-frequency crypto: 1h data for 25 symbols only — I can acquire" | **already held: 94 symbols, 1,926,324 hourly bars** |
+| "a decade of attribution snapshots" | **22 years** — 6,846 rows, 264 dates, 2004-09-30 → 2026-08-21 |
+
+**An omission that mattered.** The gap table lists no non-crypto intraday data, but `trd_fx_hourly` holds **639,168
+bars across 8 instruments over 10.6 years** (FX majors, gold, S&P, Nasdaq, Brent). That dataset produced today's
+strongest result (D-594) — the generalisation that turned a crypto-specific null into a statement about the grammar.
+It was sitting unused while the gap table said the coverage did not exist.
+
+**The limit that is no longer unquantifiable.** The assessment said: *"there's a point where my continued searching is
+net-negative, and I can't precisely locate it."* D-595 locates it. With trial-Sharpe dispersion 0.606 at
+N = 2,266,819, the expected maximum per-trade Sharpe **under the null** is **3.047**. That is the number any future
+search must beat to mean anything, and it rises with every trial spent. The cost of searching is now a computed
+quantity, not a worry.
+
+**One limit narrower than stated.** *"I cannot observe execution — every fill is modeled."* True that these are
+bar-level reconstructions, not broker fills. But D-592 **measured** fill-conditional returns across five resting
+depths and falsified the maker assumption from data (filled 0.78–7.21bp, unfilled 49.67–120.84bp, monotone). The
+honest boundary is narrower: adverse selection is measurable from OHLC; queue position, partial fills and real
+slippage are not.
+
+**One limit fully confirmed.** *"I generate plausible mechanisms faster than I verify them."* Today: seven mechanism
+stories proposed, seven dead — and D-590 was worse than a failure, it was a false *win* reported to the operator and
+retracted only after decomposing my own pooled number. The countermeasure that worked was pre-registering decision
+rules before each run; every retraction from D-587 onward was automatic rather than negotiated.
