@@ -26,7 +26,7 @@ async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promi
 
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
 const MIN_BREADTH=Number(Deno.env.get("MIN_XSEC_BREADTH")||50);
-const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
+const SELFTEST=(Deno.env.get("SELFTEST")||Deno.env.get("GUARD_SELFTEST"))==="1";   // D-586: accept BOTH names — the split (6 guards one, 5 the other) produced a silent no-op self-test that I nearly reported as a verification
 // families whose results are inherently cross-sectional; a single-instrument or carry strategy has no breadth to state.
 const XSEC=/(factor|cross|xsec|equity|crypto-factor)/i;
 

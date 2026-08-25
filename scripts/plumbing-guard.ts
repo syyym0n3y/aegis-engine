@@ -8,7 +8,7 @@
 //   - a hardcoded trial count -> a deflation bar quietly set 1,530x too low, in TWO agents (D-457/464).
 // Hand-fixing found instances; this keeps the CLASSES dead. Each rule can be waived per-line with `// plumbing-ok: <why>`
 // so audited exceptions are visible and reasoned, never silent.
-const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
+const SELFTEST=(Deno.env.get("SELFTEST")||Deno.env.get("GUARD_SELFTEST"))==="1";   // D-586: accept BOTH names — the split (6 guards one, 5 the other) produced a silent no-op self-test that I nearly reported as a verification
 // Roots resolved from THIS FILE's location, not the process cwd — invoked from infra/ by the daily runner, relative
 // paths scanned NOTHING and the guard passed vacuously ("0 sites vs baseline 155"). A guard that cannot see its subject
 // is worse than no guard: it certifies. Caught on its first in-agent run.

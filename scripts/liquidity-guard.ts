@@ -27,7 +27,7 @@ async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promi
 
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
 const FLOOR=Number(Deno.env.get("LIQ_SR_FLOOR")||0.30);   // liquid-tercile net Sharpe a promotable strategy must clear
-const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
+const SELFTEST=(Deno.env.get("SELFTEST")||Deno.env.get("GUARD_SELFTEST"))==="1";   // D-586: accept BOTH names — the split (6 guards one, 5 the other) produced a silent no-op self-test that I nearly reported as a verification
 
 console.log("==> LIQUIDITY GUARD — is every promoted strategy's edge present in the LIQUID tercile?");
 const rows=await mustFetch(`${OWNED}/trd_lineage?select=id,name,family,status,key_metric,verdict`,hdr,"trd ledger") as
@@ -73,7 +73,10 @@ console.log(`\n  ${red===0?`ALL ${checked} PROMOTED ROW(S) CARRY A LIQUID-TERCIL
 // so the enforceable unit is the FAMILY: if a family quotes a Sharpe, its capacity question must be answered by at
 // least one row in it. That is the substantive requirement and it is clearable by doing the work once.
 const QUOTES_SR=/(sharpe|[^a-z]sr[^a-z])\s*:?\s*-?\d/i;
-const ANSWERS_CAP=/(liq[:\s_-]*high|liquid tercile|illiquid tercile|capacity-bound|liq:LOW)/i;
+// D-586: a family can answer its capacity question in tercile language OR by measuring the instrument directly
+// (single-instrument strategies have no cross-section to decompose, and factor-stream books answer via a replica
+// test). Requires >=20 characters of content so the phrase is a statement, not a label pasted to go green.
+const ANSWERS_CAP=/(liq[:\s_-]*high|liquid tercile|illiquid tercile|capacity-bound|liq:LOW|capacity answer\s*\(?[^)]*\)?\s*:\s*\S[^|]{19,})/i;
 const REPORTED=new Set(["monitoring","watched","measured",...PROMOTED]);
 const fam=new Map<string,{quotes:string[];answered:boolean}>();
 for(const r of rows){

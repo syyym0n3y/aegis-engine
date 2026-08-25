@@ -26,7 +26,7 @@ async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promi
 }
 
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
-const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
+const SELFTEST=(Deno.env.get("SELFTEST")||Deno.env.get("GUARD_SELFTEST"))==="1";   // D-586: accept BOTH names — the split (6 guards one, 5 the other) produced a silent no-op self-test that I nearly reported as a verification
 // A result only needs this certificate if it LEANS on passive execution. Taker-costed results are exempt.
 // NEGATION HANDLING (a flaw caught by the guard's own self-test): a naive keyword match flagged a taker-costed row RED
 // because its text read "no passive assumption" — the match fired on the negation. Keyword matching cannot distinguish

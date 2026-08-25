@@ -26,7 +26,7 @@ async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promi
 
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
 const MIN_X=Number(Deno.env.get("MIN_FEE_MULTIPLE")||1.0);
-const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
+const SELFTEST=(Deno.env.get("SELFTEST")||Deno.env.get("GUARD_SELFTEST"))==="1";   // D-586: accept BOTH names — the split (6 guards one, 5 the other) produced a silent no-op self-test that I nearly reported as a verification
 
 console.log("==> EFFECT-SIZE GUARD — is every promoted strategy's edge LARGER than the cost of acting on it?");
 const rows=await mustFetch(`${OWNED}/trd_lineage?select=id,name,status,key_metric,verdict`,hdr,"trd ledger") as

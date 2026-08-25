@@ -25,7 +25,7 @@ async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promi
 }
 
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
-const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
+const SELFTEST=(Deno.env.get("SELFTEST")||Deno.env.get("GUARD_SELFTEST"))==="1";   // D-586: accept BOTH names — the split (6 guards one, 5 the other) produced a silent no-op self-test that I nearly reported as a verification
 // Does this result involve CHOOSING among components? Those are the ones that can leak selection.
 // NEGATION HANDLING: the same flaw the execution guard's self-test exposed. A fixture reading "nothing chosen" tripped the
 // naive match on the word "chosen". Negated forms are stripped before deciding relevance, so a result that explicitly

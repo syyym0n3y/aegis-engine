@@ -85,6 +85,11 @@ for(let i=0;i<meta.length;i+=25){
   }
 }
 console.log(`    panel rows: ${panel.length.toLocaleString()}  features: ${FEAT.length}`);
+// D-586: a run that built NO panel must die here rather than fall through to the dump step, where it would leave the
+// PREVIOUS run's .tsv in place — which then reads as this run's result. That is how a mistyped SYMBOLS filter
+// ("restricted to 0 of 31 requested names") nearly got recorded as a measured 5.6-year underwater stretch. Same
+// defect class as D-546/547, where an unstamped dump path let one venue's file silently stand in for another's.
+if(panel.length===0){console.error("!! EMPTY PANEL — no rows survived the filters (check SYMBOLS/TF/AGEBAND). Refusing to run: a stale dump from a previous run would otherwise be read as this run's result.");Deno.exit(1);}
 const byD=new Map<string,Row[]>(); for(const p of panel)(byD.get(p.d)??byD.set(p.d,[]).get(p.d)!).push(p);
 for(const [,g] of byD){ if(g.length<MINNAMES_N){g.length=0;continue;}
   for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]); o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
