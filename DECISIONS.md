@@ -11385,3 +11385,27 @@ was where it would appear. Identical search, 8 instruments across FX/metals/equi
 have cleared several times over — net persistence is 39.7%, still below a coin flip. It is not that the effect was
 real and merely priced out; at a tenth of the price it still does not persist. Zero survivors past the 5.34 ceiling
 at every cost level.
+
+## D-595 (2026-08-25) — the full 734,400-trial sweep: zero survivors, and the search underperformed its own null
+The entire 91,800-spec grammar over 8 crypto perps, 26,280 hourly bars each, honest per-trade costs, deflation
+ceiling moving with the trials spent.
+
+| | |
+|---|---|
+| trials | **734,400** (318,075 too thin to evaluate) |
+| train-positive | 151,172 (20.6%) |
+| also OOS-positive | 51,922 — **34.3%** of train-positive, below coin-flip |
+| trial-Sharpe | mean −0.034, sd 0.606 |
+| live trial count | N = 2,266,819 → ceiling **5.410** |
+| best OOS t | 5.92 (`sweep\|ema20\|with\|sl3\|rr0.5\|ny\|atr12`, **n=40**) |
+| **survivors** | **0** |
+
+The top t *does* exceed the ceiling — which is precisely why deflation is a second gate. That spec has 40 trades, a
+7.77% median stop and rr0.5: many small wins, rare large losses, the classic small-sample shape. Deflation rejects it.
+
+**The decisive number.** With trial-Sharpe dispersion 0.606 across 2.27M trials, a purely random search would be
+expected to produce a best per-trade Sharpe of **3.047**. The real search found **0.937** — **0.31×** what chance
+alone would give. The grammar is not merely failing to beat costs; at this trial count it is producing *less than
+chance would*.
+
+The 34.3% OOS-positive rate reproduces D-588's 33.7% at **115× the trial count**.
