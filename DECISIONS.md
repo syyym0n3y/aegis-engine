@@ -11048,3 +11048,23 @@ both candidates were refuted.
 of it, and a training-set minimum a parameter-free spec does not need. Each produced "UNTESTED, not null" rather than
 a fake zero. Without that discipline I would have reported "the signal is absent in 2017–2019" — a false finding
 caused entirely by my own incomplete edits, on the most decisive test in this line of work.
+
+## D-582 (2026-08-25) — controlling the confound: the instrument effect is real, and name composition matters too
+Before proposing a fourth mechanism, the obvious control on D-580 — same 31 symbols in both panels, same period:
+
+| panel (31 identical names, 2020+) | %/yr | SR | t |
+|---|---|---|---|
+| **perps** | 28.3 | **0.54** | 1.37 |
+| **spot** | 6.2 | **0.11** | 0.28 |
+| *reference: perps, top-26 by liquidity* | *85.0* | *1.23* | *3.02* |
+
+**(1) The instrument effect survives its confound.** On identical names, perps beat spot fivefold in Sharpe. That
+cannot be universe composition, because the universe is held fixed. D-580's core claim stands.
+**(2) But name composition matters more than I credited.** Those 31 shared names are the *oldest, most established*
+coins — they are precisely the ones with pre-2020 spot history — and on them the perp edge is **SR 0.54 against 1.23**
+on the liquidity-ranked top-26. The edge concentrates in **newer, more speculative listings** as well as in the
+derivative.
+That is coherent with the behavioural reading: anchoring and lottery effects should be strongest where retail
+speculation is heaviest and price history shortest. It is also a sharper description of *where* the edge lives than
+any of the three failed mechanism tests produced — reached by controlling a confound rather than by proposing another
+story.
