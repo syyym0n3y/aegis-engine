@@ -10599,3 +10599,26 @@ loses money" — it says the vehicle class itself is the constraint, which is wh
 unsolved all session.
 **Underpowered by construction** — thirteen years cannot cleanly separate "weak era" from "lossy wrapper," and that
 limit is the finding's main caveat rather than a footnote.
+
+## D-558 (2026-08-25) — the deflation ceiling is INVALID for combined books, and the book fails the correct bar
+Testing how much of the equity book's t 6.21 is selection inflation: 400 random 6-component books from the same
+13-premium pool, identical equal-vol construction.
+
+| random 6-premia books | t |
+|---|---|
+| median | 3.05 |
+| 90th pct | 5.73 |
+| **95th pct** | **6.63** |
+| 99th pct | 7.47 |
+| **actual book** | **6.21** (beaten by 7.0% of random draws) |
+
+**Two findings, the first structural.** Combining six equal-vol premia raises t *mechanically* — averaging
+imperfectly-correlated positive-mean series cuts variance faster than it cuts mean — so the null t for a six-component
+book has its 95th percentile at **6.63, above the 5.34 single-spec ceiling**. **The deflation ceiling is therefore not
+valid for combined or portfolio specs**, and applying it to them lets routine combinations masquerade as discoveries.
+That is a design flaw in the gate, not a property of the market.
+**Second: against the correct bar the book fails.** t 6.21 sits near the 93rd percentile of random selections and does
+not clear 6.63. The two false survivors of D-557 are confirmed false on independent grounds — not just because their
+components were selected in-sample, but because the bar itself was mis-specified.
+CAVEAT: the pool is not neutral — every candidate is a published survivor of a century of research — so this null is
+already generous to the book.
