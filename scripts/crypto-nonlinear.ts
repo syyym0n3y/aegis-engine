@@ -229,6 +229,50 @@ for(const [k,v] of Object.entries(books)){ if(v.length<300)continue;
   for(const x of v){cum*=1+x;peak=Math.max(peak,cum);dd=Math.min(dd,cum/peak-1);}
   console.log(`    ${({gbmEq:"GBM equal-weight",gbmConv:"GBM conviction-wt",gbmLiq:"GBM LIQUID tercile",gbmIlliq:"GBM ILLIQUID tercile",gbmHold:`GBM ${HOLD}d-HOLD`,linHold:`LINEAR ${HOLD}d-HOLD`}[k]!).padEnd(22)}${((m*365*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(365)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
 console.log(`\n    Deflated ceiling (D-363/364, ~1.53M trials): t ~ 5.34. Anything below that is not evidence.`);
+if(Deno.env.get("EXHAUST")==="1"){
+  const LITSIGNED:[string,number][]=[["hi60",1],["vol30",-1],["maxret",-1],["mom7",1],["flow",1],["mom30",1],["rev1",-1]];
+  const HOLDE=HOLD;
+  const evalSet2=(set:[string,number][])=>{
+    const coh:{w:Map<string,number>;left:number}[]=[]; const out:number[]=[];
+    for(const [,g] of clean){
+      const pred=g.map(r=>set.reduce((s2,[nm,sg])=>{const j=FEAT.indexOf(nm);return j>=0?s2+sg*r.x[j]:s2;},0)/set.length);
+      const ord=[...g.keys()].sort((a,b)=>pred[b]-pred[a]);
+      const kk=Math.max(3,Math.floor(g.length/5));
+      const w=new Map<string,number>();
+      for(const i of ord.slice(0,kk))w.set(g[i].sym,1/(2*kk));
+      for(const i of ord.slice(-kk))w.set(g[i].sym,-(1/(2*kk)));
+      coh.push({w,left:HOLDE});
+      for(const c of coh)c.left--;
+      while(coh.length&&coh[0].left<=0)coh.shift();
+      const rmap=new Map(g.map(r=>[r.sym,r.yraw]));
+      let ret=0,gr=0;
+      for(const c of coh){for(const [sym,ww] of c.w){ret+=ww*(rmap.get(sym)??0)/coh.length;gr+=Math.abs(ww)/coh.length;}}
+      out.push(ret*(2/Math.max(1e-9,gr))-(1/Math.max(1,coh.length))*FEE_BP/1e4);
+    }
+    if(out.length<300)return null;
+    const m=mean(out),s3=sdv(out)||1e-9;
+    return {t:m/(s3/Math.sqrt(out.length)),ann:m*365*100,sr:(m/s3)*Math.sqrt(365)};};
+  const combos:[string,number][][]=[];
+  const idx=[0,1,2,3,4,5,6];
+  for(let a=0;a<7;a++)for(let b=a+1;b<7;b++)for(let c=b+1;c<7;c++)for(let d=c+1;d<7;d++)for(let e=d+1;e<7;e++)
+    combos.push([idx[a],idx[b],idx[c],idx[d],idx[e]].map(i=>LITSIGNED[i]));
+  const res:{names:string;t:number;ann:number;sr:number}[]=[];
+  for(const set of combos){
+    const r=evalSet2(set);
+    if(r)res.push({names:set.map(x=>x[0]).join("+"),t:r.t,ann:r.ann,sr:r.sr});
+  }
+  res.sort((a,b)=>b.t-a.t);
+  console.log(`\n==> EXHAUSTIVE LITERATURE SUBSETS (D-560): all ${res.length} five-subsets of the 7 literature-signed features`);
+  console.log(`    ${"rank".padEnd(6)}${"subset".padEnd(44)}${"%/yr".padEnd(9)}${"SR".padEnd(7)}t`);
+  res.forEach((r,i)=>{
+    const isLit5=r.names.split("+").sort().join("+")===["hi60","vol30","maxret","mom7","flow"].sort().join("+");
+    if(i<5||i>=res.length-3||isLit5)
+      console.log(`    ${String(i+1).padEnd(6)}${(r.names+(isLit5?"  <== lit5":"")).padEnd(44)}${r.ann.toFixed(1).padEnd(9)}${r.sr.toFixed(2).padEnd(7)}${r.t.toFixed(2)}`);
+  });
+  const lit5r=res.findIndex(r=>r.names.split("+").sort().join("+")===["hi60","vol30","maxret","mom7","flow"].sort().join("+"));
+  console.log(`\n    lit5 ranks ${lit5r+1} of ${res.length}. median subset t ${res[Math.floor(res.length/2)].t.toFixed(2)}, worst ${res[res.length-1].t.toFixed(2)}`);
+  console.log(`    -> ${lit5r===0?"lit5 is the BEST subset — which means my choice, not the literature, is doing the work":lit5r<res.length*0.25?"lit5 is in the top quartile: my selection helped, so part of its t is selection":"lit5 is UNREMARKABLE among literature subsets — the effect belongs to the literature set as a whole, not to my choice"}`);
+}
 if(Deno.env.get("NULLTEST")==="1"){
   // deterministic LCG so the null is repeatable
   let sd2=20260825; const rnd=()=>{sd2=(sd2*1103515245+12345)&0x7fffffff;return sd2/0x7fffffff;};

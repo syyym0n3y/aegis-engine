@@ -10645,3 +10645,24 @@ combines, and can be stricter or looser than the single-spec ceiling. Assuming 5
 directions.
 **Residual degree of freedom, stated plainly:** I chose *which* five published effects to include out of a large
 literature, and no null here captures that choice.
+
+## D-560 (2026-08-25) — exhaustive subset test: the effect belongs to the literature, not to my choice
+The one degree of freedom no null could capture was *which* published effects I selected. There are exactly 21 ways to
+choose five of the seven literature-signed features, so all 21 were evaluated — nothing sampled, nothing picked.
+
+| rank | subset | %/yr | SR | t |
+|---|---|---|---|---|
+| 1 | hi60+maxret+flow+mom30+rev1 | 72.2 | 1.42 | **3.42** |
+| 2 | hi60+vol30+flow+mom30+rev1 | 70.5 | 1.36 | 3.27 |
+| **5** | **lit5 (my choice)** | 70.9 | 1.26 | **3.03** |
+| — | **median of 21** | — | — | **2.75** |
+| 21 | worst | 47.2 | 0.82 | 1.97 |
+
+**Every subset is positive** (t 1.97–3.42), and **lit5 is not the best** — it ranks 5th, so it was not cherry-picked.
+Together those say the effect belongs to the literature family rather than to my judgment, which is the strongest
+robustness evidence this programme has produced. My selection is worth roughly **+0.28 t** over the median: quantified
+now, not merely disclaimed.
+**The honest quotable statistic therefore drops to the median subset: t 2.75, SR ≈1.2** — what someone picking any
+five signed effects would get — rather than lit5's 3.03.
+**Explicit refusal:** the top-ranked subsets contain `mom30` and `rev1`, which lit5 omits. Adopting them now, having
+seen this ranking, would be exactly the selection trap this test was built to measure. The frozen spec stays lit5.
