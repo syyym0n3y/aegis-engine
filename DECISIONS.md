@@ -11518,3 +11518,18 @@ own verdict, with the required n stated.
 
 Sensible byproduct: the corrected leverage effects show meme coins with the **inverse** asymmetry to equities
 (DOGE +0.54, PEPE +0.55 vs S&P −0.14) — vol rises with price, not against it.
+
+## D-602 (2026-08-25) — powering up the D-601 test resolves it: the effect is absent, not merely undetected
+D-601 ended underpowered with a stated requirement of ~26 instruments. Rerun at **n=53**:
+
+| | n=18 | n=53 |
+|---|---|---|
+| rank IC(leverage, VT benefit) | −0.183 | **−0.100** |
+| partial IC (drift removed) | −0.377 | **−0.095** |
+| IC(BH Sharpe, benefit) | 0.026 | −0.006 |
+
+**The −0.377 was noise.** It collapses to −0.095 once the cross-section is adequate. Refusing to claim it at n=18 was
+correct, and stating the required n made the resolution a single cheap rerun rather than an open question.
+
+Both candidate explanations for where vol targeting helps are now **closed**: not the leverage effect, and not drift.
+What drives it remains unknown — but that is now a measured unknown rather than an untested one.
