@@ -10741,3 +10741,22 @@ happened to exclude 2021 — the weakest year. The honest full-span figure is **
 signals should behave — in manias, lottery names win. Six of seven years positive.
 The practical implication for the running forward clock: measured performance will depend materially on which regime
 it passes through, and a weak first year would be consistent with the strategy rather than evidence against it.
+
+## D-565 (2026-08-25) — the binding constraint is HOLDABILITY: 42 months underwater
+| | |
+|---|---|
+| worst drawdown | **−65%**, from 2021-04-23 to 2024-10-16 |
+| duration underwater | **~42 months** |
+| per-year maxDD | −28% to −56%, every single year |
+| vol-targeting overlay | paired t **−0.28** — does not help (maxDD −67%) |
+
+**This is the most disqualifying fact about the candidate, and it appears in no t-statistic.** An operator holding it
+would have spent three and a half years below the prior peak while the long-run Sharpe read 1.18. Almost nobody holds
+through that — not individually, not institutionally.
+Vol targeting does not rescue it, confirming D-532: the Moreira–Muir policy that added paired t 4.13 to the equity
+book does **not** generalise to crypto.
+**Two consequences that change how the candidate should be read:** (1) any deployment must be sized so that −65% is
+survivable, which caps position size far below the capacity limit computed in D-538 — capacity was never the binding
+constraint, tolerance is; (2) **the forward clock may spend years in drawdown without that being evidence against the
+strategy**, which makes the forward test a much weaker decision tool than its duration implies. A strategy whose
+failure and success look identical for three years is one you cannot evaluate quickly, however good it is.
