@@ -11026,3 +11026,25 @@ refuted as a necessary condition.
 **Standing position: the crypto result is distinctive (D-578) and unexplained (D-577, D-579).** Two candidate
 mechanisms proposed and both failed to survive testing. That is the honest state, and it is a weaker position than
 having no mechanism proposed at all would suggest — because it means the obvious explanations have been checked.
+
+## D-580 (2026-08-25) — the edge is in the DERIVATIVE, not the underlying
+Testing whether the crypto result is luck, using data never touched by any search here — Binance spot back to 2017:
+
+| test | %/yr | SR | t | days |
+|---|---|---|---|---|
+| **spot 2017–2019 (untouched)** | 50.9 | 0.75 | 0.89 | 511 |
+| spot 2020+ (control) | 13.9 | **0.22** | 0.57 | 2,427 |
+| **perps 2020+ (matched breadth)** | 85.0 | **1.23** | 3.02 | 2,216 |
+
+**(1) The untouched window is directionally supportive but inconclusive** — right sign, Sharpe 0.75, but t 0.89 on
+511 days of a 19-name cross-section. It neither confirms nor refutes, and reading it as vindication would be reading
+noise as evidence.
+**(2) The perp/spot split is the real finding.** Identical signals, identical period, matched breadth: **perps 1.23,
+spot 0.22.** The effect is largely specific to **perpetual futures**, not to crypto prices. That narrows the mechanism
+question from the vague "crypto is inefficient" to something concrete and checkable — **leverage, funding and
+liquidation dynamics that exist in the derivative and not in the underlying.** First real progress on mechanism since
+both candidates were refuted.
+**Process note:** this test was blocked THREE times by mechanical gates — a name-count floor, a second hardcoded copy
+of it, and a training-set minimum a parameter-free spec does not need. Each produced "UNTESTED, not null" rather than
+a fake zero. Without that discipline I would have reported "the signal is absent in 2017–2019" — a false finding
+caused entirely by my own incomplete edits, on the most decisive test in this line of work.

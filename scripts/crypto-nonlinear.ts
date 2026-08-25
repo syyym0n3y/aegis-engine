@@ -14,6 +14,7 @@ const mean=(a:number[])=>a.reduce((s,x)=>s+x,0)/a.length;
 const sdv=(a:number[])=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/Math.max(1,a.length-1));};
 const FEE_BP=Number(Deno.env.get("PERP_FEE_RT_BP")||9);
 const FEAT=["mom30","mom7","rev1","vol30","maxret","dvol","hi60","flow","relvol","trades","fund7"];
+const MINNAMES_N=Number(Deno.env.get("MINNAMES")||40);   // used by BOTH the normalisation gate and the clean filter
 type Row={d:string;sym:string;x:number[];y:number;yraw:number};
 const panel:Row[]=[];
 // funding history for the whole universe (D-549), keyed symbol -> sorted [ts, rate]
@@ -68,7 +69,7 @@ for(let i=0;i<meta.length;i+=25){
 }
 console.log(`    panel rows: ${panel.length.toLocaleString()}  features: ${FEAT.length}`);
 const byD=new Map<string,Row[]>(); for(const p of panel)(byD.get(p.d)??byD.set(p.d,[]).get(p.d)!).push(p);
-for(const [,g] of byD){ if(g.length<40){g.length=0;continue;}
+for(const [,g] of byD){ if(g.length<MINNAMES_N){g.length=0;continue;}
   for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]); o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
   const oy=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); oy.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});
 }
@@ -82,8 +83,10 @@ if(TOPN>0){for(const [,g] of byD){ if(g.length<=TOPN)continue;
   for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]);o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
   const oy=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); oy.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});
 }}
-const MINNAMES=Number(Deno.env.get("MINNAMES")||40);
-const clean=[...byD.entries()].filter(([,g])=>g.length>=MINNAMES).sort((a,b)=>a[0]<b[0]?-1:1);
+const MINNAMES=MINNAMES_N;
+const FROM=Deno.env.get("FROM")||"", UNTIL=Deno.env.get("UNTIL")||"";
+const clean=[...byD.entries()].filter(([d,g])=>g.length>=MINNAMES&&(!FROM||d>=FROM)&&(!UNTIL||d<UNTIL)).sort((a,b)=>a[0]<b[0]?-1:1);
+if(FROM||UNTIL)console.log(`    WINDOW: ${FROM||"start"} .. ${UNTIL||"end"}`);
 console.log(`    usable days (>=${MINNAMES} names): ${clean.length}, mean breadth ${mean(clean.map(([,g])=>g.length)).toFixed(0)} names`);
 if(clean.length<400){console.error("!! too few usable days — UNTESTED, not null");Deno.exit(1);}
 // --- models (histogram GBM + ridge, same as D-419) ---
@@ -150,7 +153,8 @@ if(FULLSPAN)console.log(`    FULLSPAN: parameter-free spec, evaluating ALL ${cle
 for(const Y of (FULLSPAN?[years[0]]:years.filter(y=>y>=START))){
   const tr=FULLSPAN?clean.slice(0,Math.max(1,Math.floor(clean.length*0.1))).flatMap(([,g])=>g):clean.filter(([d])=>+d.slice(0,4)<Y).flatMap(([,g])=>g);
   const te=FULLSPAN?clean:clean.filter(([d])=>+d.slice(0,4)===Y);
-  if(tr.length<3000||!te.length)continue;
+  const NEEDS_TRAINING=!Deno.env.get("FEATSET")&&!Deno.env.get("FEATURE");
+  if((NEEDS_TRAINING&&tr.length<3000)||!te.length)continue;   // lit/single-feature specs fit nothing — no training floor
   const gbm=fitGBM(tr), lin=fitOLS(tr.map(r=>r.x),tr.map(r=>r.y));   // unused when FEATSET is set; kept for the IC lines
   for(const [DAYDATE,g] of te){
     const yy=g.map(r=>r.y);
