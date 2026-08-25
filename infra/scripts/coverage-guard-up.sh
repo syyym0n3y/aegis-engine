@@ -102,5 +102,9 @@ while true; do
   # PAPER RUNG (D-521): monthly French panel refresh (idempotent) + mark the frozen P2 book. $0 at risk, kill-switch honored.
   ONLY=szmom25,dxwml,dxff3,ni10,ind49,mom10,strev10,ltrev10,op10,inv10 deno run --allow-net --allow-env ../scripts/ingest-french-library.ts > ../data/french-refresh.log 2>&1 || true
   deno run --allow-net --allow-env ../scripts/paper-book.ts > ../data/paper-book.log 2> ../data/paper-book.err || true
+  # D-586: print the cycle summary LAST so the state of the whole suite is the final thing in the log, rather than
+  # six RED lines buried mid-file with no reader. This is the line a human actually reads.
+  ../scripts/guard-status.sh || true
   sleep 86400
 done
+
