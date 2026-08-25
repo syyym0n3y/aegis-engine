@@ -48,6 +48,11 @@ while true; do
   # PLUMBING GUARD (D-467): static lint over the repo's own TypeScript — the defect classes that silently distorted
   # recorded numbers (arbitrary truncation, swallowed writes, frozen deflation ceilings). Ratcheted: RED only on NEW
   # violations beyond the committed baseline, so the legacy backlog burns down without ever growing.
+  # HOLDABILITY GUARD (D-566): depth without duration hides what actually ends deployments. The crypto candidate
+  # survived ten statistical attacks and was disqualified by 42 months underwater — a fact no other gate measured.
+  if ! deno run --allow-net --allow-env ../scripts/holdability-guard.ts; then
+    echo "$(date -u +%FT%TZ) HOLDABILITY GUARD RED — a live book claims a return without stating its time underwater"
+  fi
   # SURVIVOR GUARD (D-557): the survivor flag is a generated column over six gates; it cannot see in-sample component
   # selection. A flagged survivor whose own lineage calls its statistic descriptive is a false positive, not a promotion.
   if ! deno run --allow-net --allow-env ../scripts/survivor-guard.ts; then

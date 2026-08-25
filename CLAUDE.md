@@ -179,6 +179,23 @@ execution lag — the signal day was the crash day. Lag-1 execution is the struc
 rule; enforced by the execution guard's SAME-BAR RULE (`exec:"lag1"` stamp required on every timing-family ledger row,
 verified RED on 187 unstamped rows including the 4 false survivors).
 
+## THE HOLDABILITY LAW (2026-08-25, D-565/566) — binds every deployable claim
+**Depth is not the risk; DURATION is. Every live book must state its longest TIME UNDERWATER, not just its maximum
+drawdown — a -65% drawdown recovered in three months is a different instrument from one that lasts three and a half
+years, and the second is what actually ends deployments.**
+Origin: the crypto candidate survived ten statistical attacks — execution lag, punitive fees, era decomposition,
+liquidity inversion, cross-venue replication, its own construction-specific null, exhaustive subset enumeration,
+survivorship repair, factor attribution, full-span extension — and was then disqualified by a fact no gate measured:
+**1,363 days (3.7 years) underwater**, with every individual year carrying its own -28% to -56% drawdown. Vol
+targeting does not rescue it (paired t -0.28), unlike on equities where the same policy cuts time-underwater from
+5.8 years to 2.8. Two consequences: capacity was never the binding constraint (tolerance is), and a forward clock can
+spend years in drawdown without that being evidence against the strategy — which makes forward testing a far weaker
+decision tool than its duration suggests.
+Rules: (1) every live book/ml row stating SR or %/yr also states its time underwater; (2) scope is deployment
+candidates, not research measurements of factors — stated explicitly so the scoping is auditable; (3) enforced by
+`scripts/holdability-guard.ts` (verified RED on a depth-only synthetic row and on 24 live rows, PASS after measured
+durations were stamped, exempt where no return is claimed, exit-code-checked both directions).
+
 ## THE SIGN LAW (2026-08-24, D-553/554) — binds every directional claim
 **A direction asserted is not a direction checked. Any result invoking a pre-registered, expected or literature sign
 must state whether the measurement MATCHED or MISSED it — and a post-hoc flip is never claimable.**

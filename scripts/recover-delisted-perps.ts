@@ -11,7 +11,7 @@ async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"
 const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application/json",Authorization:`Bearer ${t}`,apikey:t};})();
 const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
 const have=new Set<string>();
-{const r=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&select=symbol&limit=2000`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {symbol:string}[];
+{const r=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&select=symbol&order=symbol&limit=2000`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {symbol:string}[];
  for(const x of (Array.isArray(r)?r:[]))have.add(x.symbol);}
 const fut=await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo").then(r=>r.json()).catch(()=>null);
 const futSyms=new Set<string>((fut?.symbols||[]).map((s:{symbol:string})=>s.symbol));
@@ -24,7 +24,7 @@ console.log(`==> DELISTED-PERP RECOVERY — ${have.size} in panel, ${futSyms.siz
 let found=0,probed=0;
 for(const sym of cands){
   probed++;
-  const j=await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1d&limit=1500`).then(r=>r.ok?r.json():null).catch(()=>null);
+  const j=await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1d&limit=1500`  // plumbing-ok: exchange kline endpoint returns newest-N by design; there is no order parameter and the full window is what we want).then(r=>r.ok?r.json():null).catch(()=>null);
   await sleep(140);
   if(!Array.isArray(j)||j.length<200)continue;
   // [openTime,o,h,l,c,vol,closeTime,quoteVol,trades,takerBuyBase,takerBuyQuote,ignore]

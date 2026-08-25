@@ -10760,3 +10760,26 @@ survivable, which caps position size far below the capacity limit computed in D-
 constraint, tolerance is; (2) **the forward clock may spend years in drawdown without that being evidence against the
 strategy**, which makes the forward test a much weaker decision tool than its duration implies. A strategy whose
 failure and success look identical for three years is one you cannot evaluate quickly, however good it is.
+
+## D-566 (2026-08-25) — THE HOLDABILITY LAW (twelfth guard), and a guard-maintenance audit
+Eleven guards, all about statistical validity, none about whether a human can hold the thing. Enacted
+`scripts/holdability-guard.ts`: every live book/ml row claiming SR or %/yr must state its longest time underwater.
+Verified RED on a depth-only synthetic and on 24 live rows, green only after measured durations were stamped, scoped
+explicitly to deployment candidates rather than factor measurements, wired into the daily runner.
+**Comparative holdability, measured:**
+
+| book | maxDD | longest underwater |
+|---|---|---|
+| equity P1 | −25% | **69 months (5.8y)**, 2008-11→2014-09 |
+| equity, vol-managed | −19% | **34 months (2.8y)** |
+| crypto lit5 | **−65%** | 1,363 days (3.7y) |
+
+Vol targeting cuts equity time-underwater almost in half; on crypto it does nothing (paired t −0.28). The overlay's
+value is asset-class-specific in *holdability* as well as in return.
+**Guard-maintenance audit (five reds, all legitimate, none a false alarm):** new lineage rows lacking universe and
+holdability statements (stamped with measured values); a sign prior without an outcome (stated); the two known false
+survivors (the guard now REDs only *unacknowledged* contradictions — an annotated one is handled, not hidden, which
+avoids the unsatisfiable-guard anti-pattern of D-524); **a real truncation defect in my own new script** (`limit=2000`
+with no `order=`, so which rows returned was an accident of layout — fixed); and two agent logs missing because the
+daily runner had been executing a script I edited four times *while it ran*, corrupting bash's file position. The
+runner was restarted cleanly on the current script.

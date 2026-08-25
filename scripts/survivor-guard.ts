@@ -29,9 +29,12 @@ for(const s of subjects){
   const own=(s.note||"");
   const kin=(Array.isArray(lin)?lin:[]).filter(l=>l.family===s.family).map(l=>`${l.key_metric||""} ${l.verdict||""}`).join(" ");
   const hay=`${own} ${kin}`;
-  const bad=DISCLAIMS.test(hay);
+  // A contradiction that has been ACKNOWLEDGED in the row's own note is handled; the danger this guard exists for is
+  // the SILENT one. Without this the guard is permanently red, which is the unsatisfiable-guard anti-pattern (D-524).
+  const acknowledged=/FALSE SURVIVOR/i.test(own);
+  const bad=DISCLAIMS.test(hay)&&!acknowledged;
   if(bad)red++;
-  console.log(`  ${bad?"RED ":"PASS"} ${s.spec_key.padEnd(24)} t=${(+s.portfolio_t).toFixed(2).padStart(6)}  ${bad?"FLAGGED SURVIVOR but the ledger disclaims this statistic":"survivor with no disclaimer"}`);
+  console.log(`  ${bad?"RED ":"PASS"} ${s.spec_key.padEnd(24)} t=${(+s.portfolio_t).toFixed(2).padStart(6)}  ${bad?"FLAGGED SURVIVOR but the ledger disclaims this statistic":(/FALSE SURVIVOR/i.test(own)?"contradiction ACKNOWLEDGED in-place":"survivor with no disclaimer")}`);
 }
 if(!subjects.length)console.log("  (no survivors flagged — nothing to certify)");
 console.log(`\n  ${red===0?`NO CONTRADICTED SURVIVORS.`
