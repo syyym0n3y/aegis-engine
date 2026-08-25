@@ -11202,3 +11202,24 @@ used the wrong name, got silence, and nearly recorded it as a pass. All 13 now a
 **Two things recorded rather than smoothed over:** `crypto-spot-oos` re-runs at SR 0.69 against the SR 0.75 on file
 (same 511 days, ~8% lower — most likely the D-580 `MINNAMES` semantics change), and D-461's SVXY series is fetched
 live from Yahoo and persisted nowhere, so it is reproducible only by re-running the script, not auditable from the DB.
+
+## D-587 (2026-08-25) — the liquidity "band" refuted by its own pre-registered rule
+Before running the sweep I wrote the decision rule down: a band requires an **interior peak with decline on both
+sides**, stable across era halves; anything else retracts it.
+
+| universe | top-20 | top-30 | top-40 | top-50 | top-60 | top-80 | top-120 | top-200 | top-350 |
+|---|---|---|---|---|---|---|---|---|---|
+| Sharpe | 1.23 | 1.34 | 1.29 | 1.31 | **1.37** | 1.14 | 0.84 | 0.61 | 0.31 |
+
+**No interior peak.** A plateau from 20–60 (spread 0.14 — indistinguishable at t≈3.2), then monotone decline. D-585
+predicted a fall on *both* sides of top-50; the low side does not fall. The era-split test is moot — there is no band
+whose stability could be tested.
+
+The honest shape is **dilution with universe size**, not a band. And it does not rescue the magnitude: a **4.4×**
+Sharpe spread (0.31→1.37) across nine defensible universes *reconfirms* D-535's NOT-IDENTIFIED verdict rather than
+resolving it. The apparent top-60 optimum sits within noise of top-30.
+
+**Fifth interpretation proposed and lost this session** — arbitrage-thinness, dispersion, leverage crowding, listing
+age, and now the liquidity band. Worth stating plainly: the measurements have held up under every control applied to
+them; my explanations of *why* have not survived one. The pre-registered rule is what made this retraction automatic
+instead of negotiable.
