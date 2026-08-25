@@ -144,11 +144,13 @@ const cohortsL:{w:Map<string,number>;left:number}[]=[];          // live cohorts
 const books:Record<string,number[]>={gbmEq:[],gbmConv:[],gbmLiq:[],gbmIlliq:[],gbmHold:[],linHold:[]};
 const bookDates:string[]=[];
 let prevW:Record<string,Map<string,number>>={gbmEq:new Map(),gbmConv:new Map(),gbmLiq:new Map(),gbmIlliq:new Map()};
-for(const Y of years.filter(y=>y>=START)){
-  const tr=clean.filter(([d])=>+d.slice(0,4)<Y).flatMap(([,g])=>g);
-  const te=clean.filter(([d])=>+d.slice(0,4)===Y);
+const FULLSPAN=Deno.env.get("FULLSPAN")==="1"&&!!Deno.env.get("FEATSET");
+if(FULLSPAN)console.log(`    FULLSPAN: parameter-free spec, evaluating ALL ${clean.length} usable days (no training window needed)`);
+for(const Y of (FULLSPAN?[years[0]]:years.filter(y=>y>=START))){
+  const tr=FULLSPAN?clean.slice(0,Math.max(1,Math.floor(clean.length*0.1))).flatMap(([,g])=>g):clean.filter(([d])=>+d.slice(0,4)<Y).flatMap(([,g])=>g);
+  const te=FULLSPAN?clean:clean.filter(([d])=>+d.slice(0,4)===Y);
   if(tr.length<3000||!te.length)continue;
-  const gbm=fitGBM(tr), lin=fitOLS(tr.map(r=>r.x),tr.map(r=>r.y));
+  const gbm=fitGBM(tr), lin=fitOLS(tr.map(r=>r.x),tr.map(r=>r.y));   // unused when FEATSET is set; kept for the IC lines
   for(const [DAYDATE,g] of te){
     const yy=g.map(r=>r.y);
     res.gbm.push(spear(g.map(r=>gbm(r.x)),yy));

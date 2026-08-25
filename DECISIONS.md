@@ -10718,3 +10718,26 @@ factor R² was 18–28%. Practical consequence: it would *diversify* against a c
 **Honest limit:** because beta explains nothing, alpha simply equals the raw return and its t equals the raw t — this
 test **removes an alternative explanation rather than adding independent evidence**. t 2.91–3.02 is still below every
 ceiling.
+
+## D-564 (2026-08-25) — full span: adding the discarded years LOWERS the number to SR 1.18
+lit5 fits nothing, so the two-year training window inherited from the GBM path was pure waste. Evaluating all 2,120
+usable days (+25% data):
+
+| year | %/yr | SR | win% |
+|---|---|---|---|
+| 2020 (62d) | +188.8 | 2.05 | 55 |
+| **2021 (bull)** | **+20.2** | **0.33** | 52 |
+| 2022 (bear) | +56.1 | 1.15 | 54 |
+| **2023 (recovery)** | **−29.3** | **−0.76** | 47 |
+| 2024 | +57.7 | 1.09 | 54 |
+| 2025 | +157.1 | 2.51 | 61 |
+| 2026 (partial) | +147.9 | 2.22 | 58 |
+| **FULL SPAN** | **66.8** | **1.18 (t 2.84)** | maxDD −65% |
+
+**Adding data weakened it, which is the entire reason to add it.** The SR 1.35 headline came from a window that
+happened to exclude 2021 — the weakest year. The honest full-span figure is **SR 1.18, t 2.84, drawdown −65%**.
+**A coherent regime dependency emerges:** weak in strong bull markets (2021, SR 0.33), negative in recovery (2023,
+−0.76), strong in bear and normal conditions (2022, 2024–2026). That is exactly how low-volatility and anti-lottery
+signals should behave — in manias, lottery names win. Six of seven years positive.
+The practical implication for the running forward clock: measured performance will depend materially on which regime
+it passes through, and a weak first year would be consistent with the strategy rather than evidence against it.
