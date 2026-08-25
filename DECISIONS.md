@@ -10927,3 +10927,25 @@ skew is steep, which **flatters the seller** — so the true placeable figure is
 **Pattern now established across four vehicle classes:** equity decile books (unplaceable), ETF wrappers (−80% of
 signal), concentrated stock books (dead), crypto variance (instrument mismatch). Measured premia repeatedly fail to
 survive the instruments actually available.
+
+## D-575 (2026-08-25) — THE INSTRUMENT LAW (14th guard): the pattern behind four failures
+Four implementability failures, four distinct mechanisms, every one discovered *after* a statistical claim had been
+made and reported:
+
+| | research-space claim | placeable reality |
+|---|---|---|
+| D-530 | equity decile long-shorts, real alpha | unplaceable — thousands of names, borrow assumed |
+| D-555 | factor premia | ETF wrappers deliver ~20% |
+| D-556 | same premia, concentrated | placeable and **dead** (t 0.35, −93% DD) |
+| D-574 | crypto variance premium t 3.76 | **t 1.18 naked, 0.42 hedged** |
+
+The common structure never varies: **the edge and the vehicle turn out not to be the same object, and the gap is found
+last instead of first.** Notably, costs were rarely the culprit — Deribit spreads measured a harmless 3.3% of premium
+and the strategy still failed, because a straddle is a poor variance proxy in a gapping asset.
+Enacted as `scripts/instrument-guard.ts` and wired into the daily runner: every live return claim must state whether it
+was measured in the **placeable instrument** or in a **research proxy**, and a proxy claim must carry a *measured*
+conversion. All 29 live claims are now stamped with the honest answer — most of them "research proxy, conversion
+measured and failed."
+**The deeper consequence is a workflow inversion:** start from what can be placed and measure the edge there, rather
+than finding an edge and hoping a vehicle exists. Had this law been in force this morning, most of today's work would
+have been differently ordered — and several reported headlines would never have been reported.

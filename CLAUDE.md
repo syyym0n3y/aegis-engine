@@ -179,6 +179,25 @@ execution lag — the signal day was the crash day. Lag-1 execution is the struc
 rule; enforced by the execution guard's SAME-BAR RULE (`exec:"lag1"` stamp required on every timing-family ledger row,
 verified RED on 187 unstamped rows including the 4 false survivors).
 
+## THE INSTRUMENT LAW (2026-08-25, D-575) — the programme's most reliable failure predictor
+**A premium must be measured in the instrument that would HOLD it. Measuring in research space and assuming the
+conversion has failed 4 times out of 4, each by a different mechanism, and each time only after a statistical claim had
+already been made and reported.**
+| # | research-space claim | what the placeable instrument delivered |
+|---|---|---|
+| D-530 | equity decile long-shorts, real alpha | cannot be placed at all — thousands of names, borrow assumed |
+| D-555 | factor premia | ETF wrappers capture ~20% (a long-only tilt is not a long-short) |
+| D-556 | same premia, concentrated | placeable and DEAD: t 0.35, -93% drawdowns |
+| D-574 | crypto variance premium t 3.76 | t 1.18 naked / 0.42 delta-hedged straddle |
+The common structure is always the same: the edge and the vehicle turn out not to be the same object, and the gap is
+discovered last instead of first. Note that costs were rarely the culprit — D-573 measured Deribit spreads at a
+harmless 3.3% of premium and the strategy still failed, because a straddle is a poor variance proxy in a gapping asset.
+Rules: (1) every live return claim states whether it was measured in the PLACEABLE INSTRUMENT or in a RESEARCH PROXY;
+(2) a proxy claim must carry a MEASURED conversion, never an assumed one; (3) research-space measurement is still
+allowed and useful — what is forbidden is reporting it as if it were tradable; (4) the workflow inverts where possible:
+start from what can be placed and measure the edge THERE; (5) enforced by `scripts/instrument-guard.ts` (RED on a
+research-space claim with no stated conversion, verified by selftest and on 22 live rows, exit-code-checked).
+
 ## THE PRE-COMMITMENT LAW (2026-08-25, D-571) — binds every forward clock
 **A forward test without a written promote/kill rule is not a test — it is an option to rationalise later. Every
 forward-registered spec carries numeric, two-sided conditions written BEFORE its data exists, in an append-only table

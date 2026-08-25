@@ -48,6 +48,11 @@ while true; do
   # PLUMBING GUARD (D-467): static lint over the repo's own TypeScript — the defect classes that silently distorted
   # recorded numbers (arbitrary truncation, swallowed writes, frozen deflation ceilings). Ratcheted: RED only on NEW
   # violations beyond the committed baseline, so the legacy backlog burns down without ever growing.
+  # INSTRUMENT GUARD (D-575): 4 of 4 unstated research->instrument conversions destroyed the edge. Every live return
+  # claim must say which space it was measured in.
+  if ! deno run --allow-net --allow-env ../scripts/instrument-guard.ts; then
+    echo "$(date -u +%FT%TZ) INSTRUMENT GUARD RED — a return is claimed without stating its measurement space"
+  fi
   # FORWARD-RULES GUARD (D-571): every forward clock must carry promote/kill conditions written before its data exists.
   if ! deno run --allow-net --allow-env ../scripts/forward-rules-guard.ts; then
     echo "$(date -u +%FT%TZ) FORWARD-RULES GUARD RED — a forward clock lacks a two-sided decision rule"
