@@ -10862,3 +10862,24 @@ this session's own corrections rather than its headlines:
 Each rule also states **what is NOT evidence against**: a weak first year is expected for strategies that historically
 spent years underwater. Without that clause, the first bad quarter would invite exactly the rationalisation this law
 exists to prevent — in either direction.
+
+## D-572 (2026-08-25) — the variance risk premium PARTIALLY replicates in crypto
+Worth a trial despite my own inflation warning: VRP is the only premium this programme has confirmed (equities, t 12.6)
+and the only one with a mechanism explaining persistence — it is crash-risk compensation, not an inefficiency that
+arbitrage removes. Testing a confirmed mechanism in a second asset class is replication, not a new search.
+DVOL implied variance vs subsequent realised, non-overlapping 30-day windows, sign pre-registered:
+
+| | mean premium | t | positive | ann. equivalent |
+|---|---|---|---|---|
+| **BTC** | 89 var-pts | **3.76** | **51/65 (78%)** | ~10.8%/yr |
+| ETH | 50 var-pts | 1.11 | 37/65 (57%) | ~6.1%/yr |
+
+**BTC clears with the pre-registered sign; ETH points the same way but is insignificant** — and 1-of-2 is materially
+weaker than 2-of-2 would have been.
+**The tail is the point, and it behaves exactly as theory demands:** worst window −637 var-points (April 2021) —
+**7.2× the mean, erasing seven months of accumulated premium** — with a 5th percentile of −210. That is why this is a
+*risk premium* rather than an anomaly, and why the 78% win rate is a property of the payoff shape rather than evidence
+of safety. A strategy that wins 78% of months and loses seven months' income in one is precisely the profile that
+destroys operators who size it by hit rate.
+Below the 5.34 ceiling. **Not yet implementability-tested:** selling crypto variance needs Deribit options, whose
+spreads and margin are unmeasured here — the same wall that killed the equity book applies until proven otherwise.
