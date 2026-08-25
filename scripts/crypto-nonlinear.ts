@@ -229,6 +229,51 @@ for(const [k,v] of Object.entries(books)){ if(v.length<300)continue;
   for(const x of v){cum*=1+x;peak=Math.max(peak,cum);dd=Math.min(dd,cum/peak-1);}
   console.log(`    ${({gbmEq:"GBM equal-weight",gbmConv:"GBM conviction-wt",gbmLiq:"GBM LIQUID tercile",gbmIlliq:"GBM ILLIQUID tercile",gbmHold:`GBM ${HOLD}d-HOLD`,linHold:`LINEAR ${HOLD}d-HOLD`}[k]!).padEnd(22)}${((m*365*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(365)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
 console.log(`\n    Deflated ceiling (D-363/364, ~1.53M trials): t ~ 5.34. Anything below that is not evidence.`);
+if(Deno.env.get("NULLTEST")==="1"){
+  // deterministic LCG so the null is repeatable
+  let sd2=20260825; const rnd=()=>{sd2=(sd2*1103515245+12345)&0x7fffffff;return sd2/0x7fffffff;};
+  const HOLDN=HOLD;
+  const evalSet=(set:[string,number][])=>{
+    const coh:{w:Map<string,number>;left:number}[]=[]; const out:number[]=[];
+    for(const [,g] of clean){
+      const pred=g.map(r=>set.reduce((s2,[nm,sg])=>{const j=FEAT.indexOf(nm);return j>=0?s2+sg*r.x[j]:s2;},0)/set.length);
+      const ord=[...g.keys()].sort((a,b)=>pred[b]-pred[a]);
+      const kk=Math.max(3,Math.floor(g.length/5));
+      const w=new Map<string,number>();
+      for(const i of ord.slice(0,kk))w.set(g[i].sym,1/(2*kk));
+      for(const i of ord.slice(-kk))w.set(g[i].sym,-(1/(2*kk)));
+      coh.push({w,left:HOLDN});
+      for(const c of coh)c.left--;
+      while(coh.length&&coh[0].left<=0)coh.shift();
+      const rmap=new Map(g.map(r=>[r.sym,r.yraw]));
+      let ret=0,gr=0;
+      for(const c of coh){for(const [sym,ww] of c.w){ret+=ww*(rmap.get(sym)??0)/coh.length;gr+=Math.abs(ww)/coh.length;}}
+      out.push(ret*(2/Math.max(1e-9,gr))-(1/Math.max(1,coh.length))*FEE_BP/1e4);
+    }
+    if(out.length<300)return null;
+    const m=mean(out),s3=sdv(out)||1e-9;
+    return m/(s3/Math.sqrt(out.length));};
+  const ts:number[]=[];
+  for(let trial=0;trial<300;trial++){
+    const pool=[...FEAT];
+    const set:[string,number][]=[];
+    while(set.length<5&&pool.length){
+      const nm=pool.splice(Math.floor(rnd()*pool.length),1)[0];
+      set.push([nm,rnd()<0.5?1:-1]);
+    }
+    const t=evalSet(set); if(t!==null&&Number.isFinite(t))ts.push(t);
+  }
+  ts.sort((a,b)=>a-b);
+  const q=(p:number)=>ts[Math.min(ts.length-1,Math.floor(p*ts.length))];
+  console.log(`\n==> NULL DISTRIBUTION (D-559): ${ts.length} RANDOM 5-feature signed books, identical construction`);
+  console.log(`    median |t| ${q(0.5).toFixed(2)}   90th ${q(0.9).toFixed(2)}   95th ${q(0.95).toFixed(2)}   99th ${q(0.99).toFixed(2)}   max ${ts[ts.length-1].toFixed(2)}`);
+  const abs=ts.map(Math.abs).sort((a,b)=>a-b);
+  const qa=(p:number)=>abs[Math.min(abs.length-1,Math.floor(p*abs.length))];
+  console.log(`    two-sided |t|: median ${qa(0.5).toFixed(2)}  95th ${qa(0.95).toFixed(2)}  99th ${qa(0.99).toFixed(2)}`);
+  const LIT5T=3.04;
+  const beat=abs.filter(x=>x>=LIT5T).length;
+  console.log(`    lit5 scored t ${LIT5T}; ${beat} of ${abs.length} random signed books reached that in absolute value (${(100*beat/abs.length).toFixed(1)}%)`);
+}
 // D-532: dump the daily book streams so the pre-registered vol-management overlay can be applied without retraining.
 await Deno.writeTextFile(`/Users/ona/aegis-data/crypto_books_${TF}_${Deno.env.get("FEATSET")||Deno.env.get("FEATURE")||"linear"}_top${TOPN}_lag${Number(Deno.env.get("LAG")||0)}_hold${HOLD}.tsv`,
   books.gbmEq.map((v,i)=>`${bookDates[i]??i}\t${v}\t${books.gbmConv[i]??""}\t${books.gbmLiq[i]??""}\t${books.gbmHold[i]??""}\t${books.linHold[i]??""}`).join("\n"));

@@ -10622,3 +10622,26 @@ not clear 6.63. The two false survivors of D-557 are confirmed false on independ
 components were selected in-sample, but because the bar itself was mis-specified.
 CAVEAT: the pool is not neutral — every candidate is a published survivor of a century of research — so this null is
 already generous to the book.
+
+## D-559 (2026-08-25) — the crypto book passes its own null; and combination bars are construction-dependent
+Same scrutiny that killed the equity book, applied to lit5: 300 random 5-feature books with random signs, identical
+everything else.
+
+| null (300 random books) | signed t | two-sided \|t\| |
+|---|---|---|
+| median | −0.16 | 1.28 |
+| 95th pct | **2.37** | 3.37 |
+| 99th pct | **3.02** | 4.28 |
+| **lit5 actual** | **3.04** | reached by 7.3% |
+
+**Against the signed null — the defensible comparison, because lit5's signs were fixed a priori from published
+literature and all five were verified to MATCH (D-554) — t 3.04 sits at roughly the 99th percentile.** Against the
+two-sided null it is borderline at 7.3%. The gap between those two readings is precisely the value of having
+pre-registered the signs instead of fitting them.
+**Structural finding the programme had missed:** signal-averaging does *not* mechanically inflate t the way
+portfolio-averaging does. The signal-averaged null's 95th percentile is **2.37 — below** the 5.34 single-spec ceiling,
+while the portfolio-averaged equity null was **6.63 — above** it. So a combined spec's correct bar depends on HOW it
+combines, and can be stricter or looser than the single-spec ceiling. Assuming 5.34 for everything was wrong in both
+directions.
+**Residual degree of freedom, stated plainly:** I chose *which* five published effects to include out of a large
+literature, and no null here captures that choice.
