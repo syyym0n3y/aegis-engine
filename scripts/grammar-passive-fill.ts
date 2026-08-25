@@ -67,7 +67,8 @@ function sweepSignals(bars: Bar[], look = 20): { i: number; side: "long" | "shor
 
 let fillN = 0, noFillN = 0, takerN = 0;
 let fillSum = 0, noFillSum = 0, takerSum = 0;
-const fillRs: number[] = [], noFillRs: number[] = [];
+const fillRs: number[] = [], noFillRs: number[] = [], achRs: number[] = [];
+let achN = 0, achSum = 0;
 
 for (const m of meta) {
   const rows = await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1hSF&symbol=eq.${m.symbol}&select=bars`, { headers: hdr })
@@ -88,6 +89,10 @@ for (const m of meta) {
     const filled = s.side === "long" ? next.low <= limit : next.high >= limit;
     const r = dir * (exit / limit - 1);
     if (filled) { fillN++; fillSum += r; fillRs.push(r); } else { noFillN++; noFillSum += r; noFillRs.push(r); }
+    // D-593 ACHIEVABLE VARIANT: non-retracement is observable by this bar's CLOSE, so acting on it is implementable
+    // — unlike the counterfactual above, which is measured from a limit price that was never transacted. Entering at
+    // the close means first paying the runaway that caused the miss.
+    if (!filled) { const ra = dir * (exit / next.close - 1); achN++; achSum += ra; achRs.push(ra); }
   }
 }
 
@@ -100,5 +105,6 @@ console.log(`    signals ${takerN.toLocaleString()}   fill rate ${(100 * fillN /
 console.log(`    TAKER  (enter next open, always fills) : ${bp(takerSum / Math.max(1, takerN))}  n=${takerN.toLocaleString()}`);
 console.log(`    PASSIVE, FILLED                        : ${bp(fillSum / Math.max(1, fillN))}  n=${fillN.toLocaleString()}  t=${fillRs.length > 30 ? tstat(fillRs).toFixed(2) : "n/a"}`);
 console.log(`    PASSIVE, NOT FILLED (counterfactual)   : ${bp(noFillSum / Math.max(1, noFillN))}  n=${noFillN.toLocaleString()}  t=${noFillRs.length > 30 ? tstat(noFillRs).toFixed(2) : "n/a"}`);
+console.log(`    ACHIEVABLE (not filled -> enter at that bar's CLOSE): ${bp(achSum / Math.max(1, achN))}  n=${achN.toLocaleString()}  t=${achRs.length > 30 ? tstat(achRs).toFixed(2) : "n/a"}  [vs 9bp taker cost]`);
 console.log(`\n    The D-447 signature is FILLED << NOT-FILLED: you are filled when the market comes back to you,`);
 console.log(`    which is exactly when the move is not happening. If that holds here, the maker rescue is dead.`);

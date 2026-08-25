@@ -11343,3 +11343,25 @@ they are the measure of the selection effect. Even the most favourable filled ca
 **First attempt invalid, recorded not discarded:** resting the limit *at* the close gave a 99.7% fill rate — a market
 order wearing a limit order's name — which hit the pre-registered "fill rate near 100% ⇒ the test says nothing"
 branch. Rebuilt with a real price offset rather than reinterpreted.
+
+## D-593 (2026-08-25) — t = 72.24, worth nothing: the non-retracement return is an untransacted price
+D-592's unfilled set earned 49.67–120.84bp. Non-retracement is observable at the bar close, so acting on it is
+implementable. **Pre-registered before running:** this fails, because the reason the order missed is that price ran
+away, and entering at the close means paying that runaway first.
+
+| limit offset | counterfactual (from limit) | **achievable** (from close) |
+|---|---|---|
+| 5bp | +49.67bp (t 10.45) | **−9.03bp** (t −1.95) |
+| 25bp | +66.96bp (t 28.62) | **−0.47bp** (t −0.21) |
+| 50bp | +82.41bp (t 44.08) | **−0.77bp** (t −0.43) |
+| 100bp | +120.84bp (t 72.24) | **−0.99bp** (t −0.63) |
+
+The counterfactual *rises* monotonically with resting depth; the achievable is slightly **negative** at every depth.
+
+**The sharpest illustration this programme has produced of a t-stat meaning nothing:** t 72.24 on 12,686
+observations, and the tradable version of the identical signals is −0.99bp at t −0.63. The whole quantity was the gap
+between a resting price and where the market went — definitionally unavailable to whoever did not get filled there.
+
+THE INSTRUMENT LAW at the level of a single entry price: the edge and the vehicle were not the same object, and the
+difference was 100% of the number. Sits alongside D-426 (rank IC on 20/20 instruments at 0.02–0.14× the fee) as the
+two clearest cases of overwhelming significance with zero tradability.
