@@ -10783,3 +10783,22 @@ avoids the unsatisfiable-guard anti-pattern of D-524); **a real truncation defec
 with no `order=`, so which rows returned was an accident of layout — fixed); and two agent logs missing because the
 daily runner had been executing a script I edited four times *while it ran*, corrupting bash's file position. The
 runner was restarted cleanly on the current script.
+
+## D-567 (2026-08-25) — holdability cannot be fixed by construction: the pain is systematic, not idiosyncratic
+Attacking the binding constraint directly — wider baskets carry less name-level risk, so they should cut the drawdown:
+
+| basket width | %/yr | SR | maxDD | underwater |
+|---|---|---|---|---|
+| 1/10 (~10 names/side) | 54.0 | 0.91 | −65% | 3.7y |
+| 1/5 (~20 names) | 41.8 | 0.90 | −63% | 3.5y |
+| 1/3 (~33 names) | 21.0 | 0.57 | −64% | 4.1y |
+| 1/2 (~50 names) | 15.3 | 0.54 | −57% | 4.1y |
+
+**Refuted, and informatively.** Widening barely moves depth (−57% to −65%) or duration (3.5–4.1 years) while
+**halving the Sharpe** (0.91 → 0.54). The drawdown is therefore **not diversifiable name-level noise** — it is
+systematic exposure to the signal being wrong for long stretches, exactly matching the D-564 regime pattern (weak in
+bulls, negative in recovery).
+**Two consequences.** (1) **Holdability cannot be engineered away.** The candidate stays undeployable for a single
+operator absent a regime overlay, and the one published overlay available (vol targeting) already failed at paired
+t −0.28. (2) The Sharpe *degrading* as baskets widen is independent evidence that the effect lives in the extreme
+ranks — a genuine cross-sectional signal rather than a broad drift.

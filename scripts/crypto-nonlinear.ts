@@ -177,7 +177,8 @@ for(const Y of (FULLSPAN?[years[0]]:years.filter(y=>y>=START))){
     {
       for(const c of cohorts)c.left--;
       while(cohorts.length&&cohorts[0].left<=0)cohorts.shift();
-      const kH=Math.max(3,Math.floor(g.length/5));
+      const QW=Number(Deno.env.get("QWIDTH")||5);   // D-567: 5=quintiles (default), 3=terciles, 2=halves
+      const kH=Math.max(3,Math.floor(g.length/QW));
       const newW=new Map<string,number>();
       for(const i of ord.slice(0,kH))newW.set(g[i].sym,1/(2*kH));
       for(const i of ord.slice(-kH))newW.set(g[i].sym,-1/(2*kH));
