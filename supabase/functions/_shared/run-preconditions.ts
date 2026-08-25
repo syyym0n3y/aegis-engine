@@ -36,6 +36,8 @@ const AMBIENT = new Set([
   "OWNED_REST", "JWT_SECRET", "REST_PORT", "DB_PORT", "POSTGRES_PASSWORD", "SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY", "DENO_DIR", "NO_COLOR", "COLIMA_HOME", "DOCKER_HOST",
 ]);
+// Host-injected families that are never script knobs.
+const AMBIENT_PREFIX = ["CLAUDE_", "ANTHROPIC_", "AWS_", "GIT_", "SSH_", "XPC_", "LC_", "HOMEBREW_"];
 
 export interface Knob { name: string; def?: string; note?: string }
 
@@ -58,13 +60,20 @@ export function declareKnobs(script: string, knobs: Knob[]): Record<string, stri
   const suspects: string[] = [];
   for (const [name] of Object.entries(Deno.env.toObject())) {
     if (declared.has(name) || AMBIENT.has(name) || name.startsWith("npm_") || name.startsWith("__")) continue;
+    if (AMBIENT_PREFIX.some((p) => name.startsWith(p))) continue;
     for (const d of declared) {
       const N = name.toUpperCase(), D = d.toUpperCase();
       // Two shapes, both seen in real defects. EDIT DISTANCE catches a mistyped name (SELFTST). CONTAINMENT catches
       // the prefix/suffix variant, which is what actually happened: GUARD_SELFTEST was set while the script read
       // SELFTEST — edit distance 6, so a distance test alone would have missed the very bug this exists to prevent.
       const near = lev(N, D) > 0 && lev(N, D) <= 3;
-      const contains = N !== D && (N.includes(D) || D.includes(N)) && Math.min(N.length, D.length) >= 4;
+      // Containment must be a PLAUSIBLE VARIANT, not any string that happens to embed the knob name. GUARD_SELFTEST
+      // vs SELFTEST differs by 6 characters and is a real typo shape; CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH vs
+      // REFRESH differs by 31 and is an ambient variable that merely shares a word. Without this bound the guard
+      // false-positives on the host environment and refuses correct runs — which is precisely how a guard stops
+      // being believed. Found by this guard blocking its own author's ingest.
+      const contains = N !== D && (N.includes(D) || D.includes(N))
+        && Math.min(N.length, D.length) >= 4 && Math.abs(N.length - D.length) <= 8;
       if (near || contains) { suspects.push(`${name} (set, but this script reads ${d} — did nothing)`); break; }
     }
   }
