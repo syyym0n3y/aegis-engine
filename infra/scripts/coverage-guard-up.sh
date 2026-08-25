@@ -48,6 +48,10 @@ while true; do
   # PLUMBING GUARD (D-467): static lint over the repo's own TypeScript — the defect classes that silently distorted
   # recorded numbers (arbitrary truncation, swallowed writes, frozen deflation ceilings). Ratcheted: RED only on NEW
   # violations beyond the committed baseline, so the legacy backlog burns down without ever growing.
+  # FORWARD-RULES GUARD (D-571): every forward clock must carry promote/kill conditions written before its data exists.
+  if ! deno run --allow-net --allow-env ../scripts/forward-rules-guard.ts; then
+    echo "$(date -u +%FT%TZ) FORWARD-RULES GUARD RED — a forward clock lacks a two-sided decision rule"
+  fi
   # HOLDABILITY GUARD (D-566): depth without duration hides what actually ends deployments. The crypto candidate
   # survived ten statistical attacks and was disqualified by 42 months underwater — a fact no other gate measured.
   if ! deno run --allow-net --allow-env ../scripts/holdability-guard.ts; then

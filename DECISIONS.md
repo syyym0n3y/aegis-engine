@@ -10844,3 +10844,21 @@ holdability constraint have now failed.** The daily book's 3.7-year underwater p
 diversification or by frequency. Anything that solves it would need signals genuinely native to the short horizon —
 microstructure, funding-cycle mechanics, queue position — which is a new search with its own multiple-testing cost and
 no head start from anything found here.
+
+## D-571 (2026-08-25) — THE PRE-COMMITMENT LAW (13th guard): what would change my mind, written before the data
+Four forward clocks were running with **no stated decision rule** — which leaves whoever reads the results, including
+a future session of me, free to decide afterwards what they meant. No statistical gate catches that, because it
+happens in the narration rather than the arithmetic.
+`trd_forward_rules` now holds numeric, two-sided promote/kill/inconclusive conditions for all four, in an append-only
+table whose immutability trigger was **verified by attempting an edit** (it raised). The rules deliberately encode
+this session's own corrections rather than its headlines:
+- **paper book** — judged against modern-era Sharpe **0.40** (D-527), not the 0.90 full-sample figure; and against the
+  combined-book null of **6.63** (D-558), not the 5.34 single-spec ceiling; plus an implementable expression is
+  required (D-530 amendment).
+- **crypto lit5** — judged at Sharpe **0.60**, roughly half the full-span 1.18, because subset choice was worth
+  +0.28 t (D-560) and the full span already lowered the honest number (D-564).
+- **residual-follow** — inadmissible in-sample by construction; needs portfolio-t ≥ 2.0 over ≥126 forward days.
+- **the 8 payout leads** — forward ceiling √(2 ln 8) = 2.04, immutable registration line.
+Each rule also states **what is NOT evidence against**: a weak first year is expected for strategies that historically
+spent years underwater. Without that clause, the first bad quarter would invite exactly the rationalisation this law
+exists to prevent — in either direction.

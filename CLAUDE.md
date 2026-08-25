@@ -179,6 +179,22 @@ execution lag — the signal day was the crash day. Lag-1 execution is the struc
 rule; enforced by the execution guard's SAME-BAR RULE (`exec:"lag1"` stamp required on every timing-family ledger row,
 verified RED on 187 unstamped rows including the 4 false survivors).
 
+## THE PRE-COMMITMENT LAW (2026-08-25, D-571) — binds every forward clock
+**A forward test without a written promote/kill rule is not a test — it is an option to rationalise later. Every
+forward-registered spec carries numeric, two-sided conditions written BEFORE its data exists, in an append-only table
+the author cannot edit when the results arrive.**
+Origin: four forward clocks were started (paper book, crypto lit5, residual-follow, the 8 payout leads) with no stated
+decision rule. No statistical gate can catch this failure because it happens in the NARRATION — the numbers arrive and
+whoever reads them, including a future session of me, gets to decide afterwards what they meant. Registered in
+`trd_forward_rules` with an immutability trigger (UPDATE/DELETE raise, verified by attempting one).
+The rules deliberately encode this session's own corrections: the paper book is judged against the modern-era Sharpe
+0.40 (D-527) not the 0.90 full-sample headline, and against the COMBINED-book null of 6.63 (D-558) not the 5.34
+single-spec ceiling; crypto lit5 is judged at 0.60 because subset choice was worth +0.28 t (D-560) and the full span
+lowered the honest number (D-564). Each rule also states what is NOT evidence against — a weak first year is expected
+for strategies that spent years underwater historically (D-566).
+Enforced by `scripts/forward-rules-guard.ts` (RED on a vague or one-sided rule, verified by selftest; PASS on numeric
+two-sided rules; wired into the daily runner).
+
 ## THE HOLDABILITY LAW (2026-08-25, D-565/566) — binds every deployable claim
 **Depth is not the risk; DURATION is. Every live book must state its longest TIME UNDERWATER, not just its maximum
 drawdown — a -65% drawdown recovered in three months is a different instrument from one that lasts three and a half
