@@ -11068,3 +11068,22 @@ That is coherent with the behavioural reading: anchoring and lottery effects sho
 speculation is heaviest and price history shortest. It is also a sharper description of *where* the edge lives than
 any of the three failed mechanism tests produced — reached by controlling a confound rather than by proposing another
 story.
+
+## D-583 (2026-08-25) — listing age refuted: the effect was 100% period confound
+| | uncontrolled | period-controlled (2024-01-18+) |
+|---|---|---|
+| old names (253) | SR 0.95, t 2.34 | **SR 1.21**, t 1.94 |
+| young names (254) | SR 1.21, t 1.80 | **SR 1.21**, t 1.80 |
+
+**Identical once period is held fixed.** Newly listed names can only be observed in 2024–2026 — the book's strongest
+window (2025 alone ran SR 2.51) — so "young is better" and "recent was better" were indistinguishable until the
+control was run.
+**My D-582 interpretation is withdrawn.** The edge does not concentrate in newer listings.
+**What survives is narrower and different:** the 31 largest, most institutionally traded majors underperform the
+broader universe (SR 0.54 vs 1.23 over the same period). That is a **size/efficiency gradient**, not an age one — the
+effect thins where the most capital and attention concentrate, which is at least consistent with every other
+liquidity-related result here.
+**Fourth interpretation proposed and lost today.** The pattern is worth naming: my readings of *why* keep failing
+controls, while the underlying *measurements* keep holding. Arbitrage-thinness, dispersion, leverage crowding, and now
+listing age — four explanations, four failures — against measurements (perp>spot on identical names, liquid-core
+concentration, era dependence) that have survived every control applied to them.

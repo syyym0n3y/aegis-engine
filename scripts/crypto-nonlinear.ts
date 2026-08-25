@@ -36,6 +36,21 @@ const TF=Deno.env.get("TF")||"1dSF";
 let meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
 const ONLY=(Deno.env.get("SYMBOLS")||"").split(",").map(x=>x.trim()).filter(Boolean);
 if(ONLY.length){meta=meta.filter(m=>ONLY.includes(m.symbol));console.log(`    SYMBOL-MATCHED: restricted to ${meta.length} of ${ONLY.length} requested names`);}
+const AGEBAND=Deno.env.get("AGEBAND")||"";
+if(AGEBAND){
+  const firsts:{symbol:string;first:number}[]=[];
+  for(let i=0;i<meta.length;i+=25){
+    const part=meta.slice(i,i+25).map(m=>`"${m.symbol}"`).join(",");
+    const rr=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&symbol=in.(${encodeURIComponent(part)})&select=symbol,bars`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
+    for(const r of rr) if(r.bars?.length) firsts.push({symbol:r.symbol,first:r.bars[0][0]});
+  }
+  firsts.sort((a,b)=>a.first-b.first);
+  const half=Math.floor(firsts.length/2);
+  const keep=new Set((AGEBAND==="old"?firsts.slice(0,half):firsts.slice(half)).map(x=>x.symbol));
+  meta=meta.filter(m=>keep.has(m.symbol));
+  const dates=firsts.filter(f=>keep.has(f.symbol));
+  console.log(`    AGEBAND=${AGEBAND}: ${meta.length} names, first listings ${new Date(dates[0].first*1000).toISOString().slice(0,10)} .. ${new Date(dates[dates.length-1].first*1000).toISOString().slice(0,10)}`);
+}
 console.log(`==> CRYPTO NON-LINEAR [${TF}] — ${meta.length} contracts${TF==="1dSF"?` (partially survivorship-corrected: ${meta.length} contracts, delisted cohort recovered to 19 — NOT survivorship-free, see D-561/562)`:" (SURVIVORSHIP-BIASED: listed only)"}`);
 for(let i=0;i<meta.length;i+=25){
   const part=meta.slice(i,i+25).map(m=>`"${m.symbol}"`).join(",");
