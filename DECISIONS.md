@@ -10905,3 +10905,25 @@ single month) would arrive as a large straddle loss against posted margin, and f
 with no analogue in the backtest. Converting the premium into placeable P&L requires historical option chains, which
 Deribit's public API does not serve in bulk; the honest substitute is Black–Scholes priced off DVOL — **a model, not
 data** — and it will be labelled as such.
+
+## D-574 (2026-08-25) — the crypto VRP does not survive into placeable form: the wall moves to the INSTRUMENT
+Costs were cleared in D-573 (3.3% of premium). Modelling the actual position — Black–Scholes priced at DVOL, 65
+non-overlapping months, both variants, **a model not data**:
+
+| variant | %/yr | SR | t | worst month | maxDD |
+|---|---|---|---|---|---|
+| variance-notional premium (D-572) | ~10.8 | — | **3.76** | — | — |
+| naked short straddle | 19.0 | 0.51 | **1.18** | −22.0% | −39% |
+| delta-hedged daily | 12.3 | 0.18 | **0.42** | **−47.3%** | **−76%** |
+
+**A fourth implementability failure, with a new mechanism.** The cost was never the problem — the problem is that
+**a straddle is a poor proxy for a variance swap in a violently gapping asset.** Naked, the P&L is dominated by the
+terminal move, so it is a directional bet with a premium attached. Delta-hedged — the version that is *supposed* to
+isolate variance — is **worse** (t 0.42, drawdown −76%), because discretely hedging short gamma in a trending, gapping
+market means systematically buying high and selling low. The continuous-hedging assumption underpinning variance
+replication simply does not hold at daily frequency in crypto.
+**Model caveat that cuts against the result, not for it:** BS priced at DVOL slightly *overstates* ATM implied vol when
+skew is steep, which **flatters the seller** — so the true placeable figure is likely weaker than modelled here.
+**Pattern now established across four vehicle classes:** equity decile books (unplaceable), ETF wrappers (−80% of
+signal), concentrated stock books (dead), crypto variance (instrument mismatch). Measured premia repeatedly fail to
+survive the instruments actually available.
