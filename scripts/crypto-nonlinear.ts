@@ -159,6 +159,8 @@ console.log(`    walk-forward: train <= Y-1, predict Y, for Y = ${START}..${year
 const res:Record<string,number[]>={gbm:[],lin:[],mom:[]};
 // D-534: the Liquidity Law asked of this program's best PLACEABLE candidate. dvol is feature index 5 (log dollar
 // volume) — rank-normalised per day, so the top tercile is >= +1/6 in the [-0.5,+0.5] rank space.
+const LIQBAND=(Deno.env.get("LIQBAND")||"").toLowerCase();   // D-584: "liq" | "illiq" | ""
+const MINNAMES_LIQ=Number(Deno.env.get("MINNAMES_LIQ")||12);  // rank floor inside a tercile
 const HOLD=Number(Deno.env.get("HOLD")||1);
 const cohorts:{w:Map<string,number>;left:number}[]=[];
 const cohortsL:{w:Map<string,number>;left:number}[]=[];          // live cohorts, each expiring after HOLD days
@@ -173,7 +175,13 @@ for(const Y of (FULLSPAN?[years[0]]:years.filter(y=>y>=START))){
   const NEEDS_TRAINING=!Deno.env.get("FEATSET")&&!Deno.env.get("FEATURE");
   if((NEEDS_TRAINING&&tr.length<3000)||!te.length)continue;   // lit/single-feature specs fit nothing — no training floor
   const gbm=fitGBM(tr), lin=fitOLS(tr.map(r=>r.x),tr.map(r=>r.y));   // unused when FEATSET is set; kept for the IC lines
-  for(const [DAYDATE,g] of te){
+  for(const [DAYDATE,g0] of te){
+    // D-584: THE LIQUIDITY LAW, applied to the path this book actually REPORTS. The gbmLiq/gbmIlliq books
+    // above decompose only the GBM path; the headline number is linHold, which has never been decomposed.
+    // LIQBAND=liq|illiq re-runs the identical book INSIDE one dollar-volume tercile (feature 5 = log dvol,
+    // rank-normalised per day to [-0.5,+0.5], so the terciles are >= +1/6 and <= -1/6).
+    const g=LIQBAND==="liq"?g0.filter(r=>r.x[5]>=1/6):LIQBAND==="illiq"?g0.filter(r=>r.x[5]<=-1/6):g0;
+    if(LIQBAND&&g.length<MINNAMES_LIQ)continue;   // a tercile too thin to rank is UNTESTED, not zero
     const yy=g.map(r=>r.y);
     res.gbm.push(spear(g.map(r=>gbm(r.x)),yy));
     res.lin.push(spear(g.map(r=>lin(r.x)),yy));

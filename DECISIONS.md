@@ -11087,3 +11087,42 @@ liquidity-related result here.
 controls, while the underlying *measurements* keep holding. Arbitrage-thinness, dispersion, leverage crowding, and now
 listing age — four explanations, four failures — against measurements (perp>spot on identical names, liquid-core
 concentration, era dependence) that have survived every control applied to them.
+
+## D-584 (2026-08-25) — five guards certified green having read nothing; and the liquidity guard policed an empty set
+Two defects in the enforcement layer itself, found by testing the guards rather than trusting them.
+
+**(a) FAIL-OPEN.** Run against a dead database with a valid key, `effect-size`, `breadth`, `execution`, `selection`
+and `liquidity` all exited **0**, and `execution` printed **"EXECUTION GUARD GREEN"** having checked nothing. The
+mechanism was `.catch(()=>[])`, which turns an unreachable DB into an empty array — sailing straight through the
+`if(!Array.isArray(rows))` line that existed to catch exactly this. Replaced with `mustFetch()`, which exits 1 on
+connection failure, non-200, bad JSON, or a non-array body. **Verified both directions:** RED on a dead DB, still
+green on the live one.
+This is the *guards-must-inspect-running-code* lesson one level down: the guards inspect the ledger, and nothing was
+inspecting the guards.
+
+**(b) SCOPE.** The LIQUIDITY LAW's rule (1) binds every **reported** number; the guard enforced only the **promoted**
+clause — and nothing in this program has ever been promoted. It had therefore certified `ALL 0 PROMOTED ROW(S)` for
+its entire life while **28 monitoring rows quoted a Sharpe with no capacity answer**. Now enforced per **family** over
+the reporting states: answer the capacity question once, rather than restate it on 28 diagnostic rows (an unclearable
+red gets ignored — the failure mode that let the agent-output defects run nine cycles). First attempt parsed the
+family out of the id and split one book into 20 fake families; corrected to use the ledger's `family` column.
+Currently RED on 2 real families: `book` and `equity-volatility`.
+
+## D-585 (2026-08-25) — the LIQUIDITY LAW inverts on crypto perps
+| lit5, lag-1, 5d hold, 2,120 days, 222 names/day | %/yr | Sharpe | t | maxDD |
+|---|---|---|---|---|
+| pooled (all names) | 2.0 | 0.05 | 0.12 | −77% |
+| **liquid tercile** | 52.1 | **+0.93** | 2.23 | −59% |
+| **illiquid tercile** | −64.9 | **−1.43** | −3.45 | −99% |
+
+The edge lives in the **liquid** third; the illiquid third is strongly **negative**; pooled they cancel to nothing.
+**This is the opposite of the pattern that produced the law.** D-419 (367 months) and D-423 (103 months) both found
+the return concentrated in the illiquid tail with ~nothing above the liquidity floor. Here the tradable third is the
+one that works — which also explains why this book was always specified as a top-N liquid universe: the all-names
+version is dead at SR 0.05 *because* the illiquid third drags it there.
+Added `LIQBAND` to the **reported** `linHold` path — the pre-existing liq/illiq books decomposed only the GBM path,
+never the number actually being quoted.
+**Two cautions, kept explicit:** SR 0.93 at t 2.23 is far below the deflated ceiling and is **not** a survivor — this
+clears a *capacity* question only; and "liquid tercile" here is the top third of 507 crypto perps by dollar volume,
+not liquid in the equity sense, while the uniform 9bp fee understates illiquid-name costs so −1.43 is if anything
+flattering.

@@ -11,13 +11,26 @@
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"lg",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application/json",Authorization:`Bearer ${t}`,apikey:t};})();
+async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promise<any[]>{
+  // D-584: a guard that cannot READ the ledger has verified NOTHING and must never certify.
+  // The old `.catch(()=>[])` turned an unreachable database into an empty array, which then sailed
+  // through `Array.isArray` and printed GREEN over zero rows. Fail CLOSED instead.
+  let r:Response; try{ r=await fetch(url,{headers:hdr}); }
+  catch(e){ console.error(`!! cannot reach ${what}: ${e instanceof Error?e.message:e} — verified nothing. RED.`); Deno.exit(1); }
+  if(!r.ok){ console.error(`!! ${what} returned HTTP ${r.status} — verified nothing. RED.`); Deno.exit(1); }
+  let j:unknown; try{ j=await r.json(); }
+  catch(e){ console.error(`!! ${what} gave unparseable JSON: ${e instanceof Error?e.message:e} — RED.`); Deno.exit(1); }
+  if(!Array.isArray(j)){ console.error(`!! ${what} did not return rows — RED.`); Deno.exit(1); }
+  return j as any[];
+}
+
 
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
 const FLOOR=Number(Deno.env.get("LIQ_SR_FLOOR")||0.30);   // liquid-tercile net Sharpe a promotable strategy must clear
 const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
 
 console.log("==> LIQUIDITY GUARD — is every promoted strategy's edge present in the LIQUID tercile?");
-const rows=await fetch(`${OWNED}/trd_lineage?select=id,name,status,key_metric,verdict`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as
+const rows=await mustFetch(`${OWNED}/trd_lineage?select=id,name,family,status,key_metric,verdict`,hdr,"trd ledger") as
   {id:string;name:string;status:string;key_metric:string|null;verdict:string|null}[];
 if(!Array.isArray(rows)){console.error("!! could not read trd_lineage — cannot certify. Treating as RED.");Deno.exit(1);}
 
@@ -52,4 +65,31 @@ for(const r of subjects){
 if(checked===0) console.log(`  (no rows in a promoted state — nothing is at risk, so nothing to certify)`);
 console.log(`\n  ${red===0?`ALL ${checked} PROMOTED ROW(S) CARRY A LIQUID-TERCILE EDGE.`
   :`${red} PROMOTED ROW(S) RED — edge not demonstrated in the liquid tercile. Capacity-bound is NOT promotable.`}`);
-if(red>0) Deno.exit(1);
+
+// ---- D-584 SCOPE FIX: the law says REPORTED, the guard only policed PROMOTED ----
+// Nothing in this program has ever been promoted, so the check above certified zero rows for its whole life while
+// 28 rows quoted a Sharpe with no capacity answer anywhere. Rule (1) of the LIQUIDITY LAW binds any reported
+// strategy number. Demanding all 28 diagnostic rows restate the decomposition would be noise that never clears —
+// so the enforceable unit is the FAMILY: if a family quotes a Sharpe, its capacity question must be answered by at
+// least one row in it. That is the substantive requirement and it is clearable by doing the work once.
+const QUOTES_SR=/(sharpe|[^a-z]sr[^a-z])\s*:?\s*-?\d/i;
+const ANSWERS_CAP=/(liq[:\s_-]*high|liquid tercile|illiquid tercile|capacity-bound|liq:LOW)/i;
+const REPORTED=new Set(["monitoring","watched","measured",...PROMOTED]);
+const fam=new Map<string,{quotes:string[];answered:boolean}>();
+for(const r of rows){
+  if(!REPORTED.has((r.status||"").toLowerCase()))continue;
+  const hay=`${r.key_metric||""} ${r.verdict||""}`;
+  const f=((r as {family?:string}).family||r.id).toLowerCase();   // the ledger's OWN family column, not a guess parsed from the id
+  const e=fam.get(f)??fam.set(f,{quotes:[],answered:false}).get(f)!;
+  if(QUOTES_SR.test(hay))e.quotes.push(r.id);
+  if(ANSWERS_CAP.test(hay))e.answered=true;
+}
+const unanswered=[...fam.entries()].filter(([,v])=>v.quotes.length>0&&!v.answered);
+console.log(`\n  -- family-level capacity coverage (rule 1: no REPORTED number without its decomposition) --`);
+for(const [f,v] of unanswered)
+  console.log(`  RED  family "${f}" quotes a Sharpe on ${v.quotes.length} row(s) — e.g. ${v.quotes[0]} — and NO row in it answers capacity`);
+console.log(`  ${unanswered.length===0
+  ?`every reporting family (${fam.size}) has answered its capacity question.`
+  :`${unanswered.length} family(ies) report a Sharpe with no capacity answer anywhere.`}`);
+
+if(red>0||unanswered.length>0) Deno.exit(1);

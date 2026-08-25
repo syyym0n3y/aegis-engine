@@ -12,6 +12,19 @@
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"eg",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
+async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promise<any[]>{
+  // D-584: a guard that cannot READ the ledger has verified NOTHING and must never certify.
+  // The old `.catch(()=>[])` turned an unreachable database into an empty array, which then sailed
+  // through `Array.isArray` and printed GREEN over zero rows. Fail CLOSED instead.
+  let r:Response; try{ r=await fetch(url,{headers:hdr}); }
+  catch(e){ console.error(`!! cannot reach ${what}: ${e instanceof Error?e.message:e} — verified nothing. RED.`); Deno.exit(1); }
+  if(!r.ok){ console.error(`!! ${what} returned HTTP ${r.status} — verified nothing. RED.`); Deno.exit(1); }
+  let j:unknown; try{ j=await r.json(); }
+  catch(e){ console.error(`!! ${what} gave unparseable JSON: ${e instanceof Error?e.message:e} — RED.`); Deno.exit(1); }
+  if(!Array.isArray(j)){ console.error(`!! ${what} did not return rows — RED.`); Deno.exit(1); }
+  return j as any[];
+}
+
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
 const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
 // A result only needs this certificate if it LEANS on passive execution. Taker-costed results are exempt.
@@ -25,7 +38,7 @@ const TAKER_ONLY=/taker/i;
 const HAS=/(conditional on fill|filled[- ]days|fill[- ]conditional|adverse selection measured)/i;
 
 console.log("==> EXECUTION GUARD — does every maker-dependent result state its return CONDITIONAL ON FILLING?");
-const rows=await fetch(`${OWNED}/trd_lineage?select=id,name,status,key_metric,verdict`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as
+const rows=await mustFetch(`${OWNED}/trd_lineage?select=id,name,status,key_metric,verdict`,hdr,"trd ledger") as
   {id:string;name:string;status:string;key_metric:string|null;verdict:string|null}[];
 if(!Array.isArray(rows)){console.error("!! could not read trd_lineage — RED.");Deno.exit(1);}
 const subjects=[...rows,...(SELFTEST?[
@@ -56,7 +69,7 @@ if(checked===0) console.log(`  (no promoted result depends on passive execution 
 // 4 factory "survivors" (voltiming term9d, t 5.5-5.8, +19%/yr) SIGN-FLIPPED to -11%/yr (t -4.1) with one day of lag —
 // the signal day WAS the crash day. Every timing-family ledger row must therefore carry params.exec = "lag1".
 console.log(`\n==> SAME-BAR RULE — is every timing-family spec evaluated with lagged execution?`);
-const frows=await fetch(`${OWNED}/trd_factory?family=in.(timing,voltiming)&select=spec_key,spec,survivor`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {spec_key:string;spec:Record<string,unknown>|null;survivor:boolean}[];
+const frows=await mustFetch(`${OWNED}/trd_factory?family=in.(timing,voltiming)&select=spec_key,spec,survivor`,hdr,"trd ledger") as {spec_key:string;spec:Record<string,unknown>|null;survivor:boolean}[];
 if(!Array.isArray(frows)){console.error("!! could not read trd_factory — RED.");Deno.exit(1);}
 let sbRed=0;
 for(const r of frows){

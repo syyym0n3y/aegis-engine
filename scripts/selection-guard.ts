@@ -11,6 +11,19 @@
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"sg2",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
+async function mustFetch(url:string,hdr:Record<string,string>,what:string):Promise<any[]>{
+  // D-584: a guard that cannot READ the ledger has verified NOTHING and must never certify.
+  // The old `.catch(()=>[])` turned an unreachable database into an empty array, which then sailed
+  // through `Array.isArray` and printed GREEN over zero rows. Fail CLOSED instead.
+  let r:Response; try{ r=await fetch(url,{headers:hdr}); }
+  catch(e){ console.error(`!! cannot reach ${what}: ${e instanceof Error?e.message:e} — verified nothing. RED.`); Deno.exit(1); }
+  if(!r.ok){ console.error(`!! ${what} returned HTTP ${r.status} — verified nothing. RED.`); Deno.exit(1); }
+  let j:unknown; try{ j=await r.json(); }
+  catch(e){ console.error(`!! ${what} gave unparseable JSON: ${e instanceof Error?e.message:e} — RED.`); Deno.exit(1); }
+  if(!Array.isArray(j)){ console.error(`!! ${what} did not return rows — RED.`); Deno.exit(1); }
+  return j as any[];
+}
+
 const PROMOTED=new Set(["promoted","paper","micro","small","live","armed"]);
 const SELFTEST=Deno.env.get("GUARD_SELFTEST")==="1";
 // Does this result involve CHOOSING among components? Those are the ones that can leak selection.
@@ -23,7 +36,7 @@ const PICKS=/(selective|only where|subset of|chosen|selected|best[- ]performing|
 const CLEAN=/(train[- ]only|selected on train|expanding window|walk[- ]forward selection|out[- ]of[- ]sample selection|frozen on train)/i;
 
 console.log("==> SELECTION GUARD — was every component choice made WITHOUT the evaluation window?");
-const rows=await fetch(`${OWNED}/trd_lineage?select=id,name,status,key_metric,verdict,test_method`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as
+const rows=await mustFetch(`${OWNED}/trd_lineage?select=id,name,status,key_metric,verdict,test_method`,hdr,"trd ledger") as
   {id:string;name:string;status:string;key_metric:string|null;verdict:string|null;test_method:string|null}[];
 if(!Array.isArray(rows)){console.error("!! could not read trd_lineage — RED.");Deno.exit(1);}
 const subjects=[...rows,...(SELFTEST?[
