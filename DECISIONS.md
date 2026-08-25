@@ -11365,3 +11365,23 @@ between a resting price and where the market went — definitionally unavailable
 THE INSTRUMENT LAW at the level of a single entry price: the edge and the vehicle were not the same object, and the
 difference was 100% of the number. Sits alongside D-426 (rank IC on 20/20 instruments at 0.02–0.14× the fee) as the
 two clearest cases of overwhelming significance with zero tradability.
+
+## D-594 (2026-08-25) — the null GENERALISES: same number, independent markets, a decade apart
+The D-588..593 results all came from crypto perps over 3 years. Cost enters as fee ÷ stop-width, and FX majors
+round-trip near 1bp against crypto's 9bp — so if a tradable version of this grammar existed anywhere in our data, FX
+was where it would appear. Identical search, 8 instruments across FX/metals/equity-indices/energy, **639,168 bars over
+10.6 years**:
+
+| | mean trial Sharpe | sd | train-positive | persistence |
+|---|---|---|---|---|
+| **crypto gross** (3y) | **−0.036** | 0.113 | 43.9% | 71.7% |
+| **FX gross** (10.6y) | **−0.036** | 0.114 | 46.0% | 66.3% |
+| FX net @1bp | −0.121 | 0.147 | 14.2% | 39.7% |
+| FX net @3bp | −0.248 | 0.196 | 3.7% | 25.2% |
+
+**Identical to three decimals on independent data.** That makes this a statement about the *grammar*, not about crypto.
+
+**And it closes the cost-bound hypothesis.** At 1bp — a tenth of the crypto fee, where D-591's sub-fee effect should
+have cleared several times over — net persistence is 39.7%, still below a coin flip. It is not that the effect was
+real and merely priced out; at a tenth of the price it still does not persist. Zero survivors past the 5.34 ceiling
+at every cost level.

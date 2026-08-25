@@ -45,23 +45,43 @@ const MAXSPECS = Number(Deno.env.get("MAXSPECS") || 0);               // 0 = the
 const MIN_TRADES = Number(Deno.env.get("MIN_TRADES") || 30);
 
 // ---- load bars from our own store ----
-const meta = await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=${NSYM}`, { headers: hdr })
-  .then((r) => r.json()).catch(() => []) as { symbol: string; n_bars: number }[];
-if (!Array.isArray(meta) || !meta.length) { console.error("!! no bars available — cannot search. RED."); Deno.exit(1); }
-
+// D-594: SRC selects the market family. "perp" is the crypto panel (3y, 9bp taker); "fx" is the Dukascopy
+// hourly set — FX majors, gold, S&P, Nasdaq, Brent — 639,168 bars over 10.6 YEARS at a fraction of the crypto cost.
+// The generalisation question the crypto result cannot answer on its own: is "no gross edge, sub-fee" a property of
+// this grammar, or a property of crypto perps at these horizons?
+const SRC = Deno.env.get("SRC") || "perp";
 const markets: [string, Bar[]][] = [];
-for (const m of meta) {
-  const rows = await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&symbol=eq.${m.symbol}&select=bars`, { headers: hdr })
-    .then((r) => r.json()).catch(() => []) as { bars: number[][] }[];
-  const raw = rows?.[0]?.bars; if (!raw?.length) continue;
-  // [ts,o,h,l,c,...] — same layout the crypto panel uses
-  const bars: Bar[] = [];
-  for (const b of raw) {
-    const [ts, o, h, l, c] = b;
-    if (![o, h, l, c].every((x) => Number.isFinite(x) && x > 0)) continue;
-    bars.push({ ts: new Date(ts * 1000).toISOString(), open: o, high: h, low: l, close: c });
+if (SRC === "fx") {
+  const syms = await fetch(`${OWNED}/trd_fx_hourly?select=symbol`, { headers: hdr }).then((r) => r.json()).catch(() => []) as { symbol: string }[];
+  const uniq = [...new Set((Array.isArray(syms) ? syms : []).map((x) => x.symbol))].slice(0, NSYM);
+  for (const sym of uniq) {
+    const bars: Bar[] = [];
+    for (let off = 0;; off += 50000) {
+      const rows = await fetch(`${OWNED}/trd_fx_hourly?symbol=eq.${sym}&select=ts,o,h,l,c&order=ts&offset=${off}&limit=50000`, { headers: hdr })
+        .then((r) => r.json()).catch(() => []) as { ts: number; o: number; h: number; l: number; c: number }[];
+      if (!Array.isArray(rows) || !rows.length) break;
+      for (const r of rows) if ([r.o, r.h, r.l, r.c].every((x) => Number.isFinite(x) && x > 0))
+        bars.push({ ts: new Date(r.ts * 1000).toISOString(), open: r.o, high: r.h, low: r.l, close: r.c });
+      if (rows.length < 50000) break;
+    }
+    if (bars.length >= 2000) markets.push([sym, bars]);
   }
-  if (bars.length >= 2000) markets.push([m.symbol, bars]);
+} else {
+  const meta = await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=${NSYM}`, { headers: hdr })
+    .then((r) => r.json()).catch(() => []) as { symbol: string; n_bars: number }[];
+  if (!Array.isArray(meta) || !meta.length) { console.error("!! no bars available — cannot search. RED."); Deno.exit(1); }
+  for (const m of meta) {
+    const rows = await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&symbol=eq.${m.symbol}&select=bars`, { headers: hdr })
+      .then((r) => r.json()).catch(() => []) as { bars: number[][] }[];
+    const raw = rows?.[0]?.bars; if (!raw?.length) continue;
+    const bars: Bar[] = [];
+    for (const b of raw) {
+      const [ts, o, h, l, c] = b;
+      if (![o, h, l, c].every((x) => Number.isFinite(x) && x > 0)) continue;
+      bars.push({ ts: new Date(ts * 1000).toISOString(), open: o, high: h, low: l, close: c });
+    }
+    if (bars.length >= 2000) markets.push([m.symbol, bars]);
+  }
 }
 if (!markets.length) { console.error("!! no symbol had >=2000 usable bars. RED."); Deno.exit(1); }
 
@@ -75,7 +95,7 @@ if (MAXSPECS > 0) specs = specs.slice(0, MAXSPECS);
 
 const totalPlanned = specs.length * markets.length;
 console.log(`==> GRAMMAR SEARCH (deep) — ${specs.length.toLocaleString()} composed strategies x ${markets.length} symbols = ${totalPlanned.toLocaleString()} trials`);
-console.log(`    data: tf=${TF}, ${markets.map(([s, b]) => `${s} ${b.length}`).join(", ")}`);
+console.log(`    data: src=${SRC} tf=${TF}, ${markets.map(([s, b]) => `${s} ${b.length}`).join(", ")}`);
 console.log(`    cost: ${FEE_BP}bp round trip converted PER TRADE via riskFrac (not a flat R assumption)`);
 console.log(`    gate: OOS net>0 AND deflated-Sharpe prob>0.95 AND |t| over the live ceiling; >=${MIN_TRADES} trades\n`);
 
