@@ -11257,3 +11257,34 @@ measured — so the retraction stands independent of the mislabel.
 multiplies the per-instance expectancy, and measured on real depth with honest per-trade costs that expectancy is
 negative. The effect that *is* there (0.07R gross) is smaller than the cost of acting on it at every stop geometry
 the grammar contains.
+
+## D-590 (2026-08-25) — I retract my own beta refutation: it was a pooling artifact
+Earlier in this session I reported that the grammar's out-of-sample persistence could not be market beta, because
+across 1.17M trades the **short** side gross-earned more than the long (0.0967 vs 0.0418). Decomposed by stop
+geometry, that comparison does not survive:
+
+| geometry | gross long | gross short |
+|---|---|---|
+| atr2 | +0.0168 | +0.0074 |
+| **swing** | +0.0686 | **+0.1018** |
+| atr6 | +0.0667 | −0.0232 |
+| atr12 | +0.0533 | −0.0760 |
+| wide100 | +0.0422 | +0.0187 |
+
+| | long | short | short/long |
+|---|---|---|---|
+| pooled | 0.0545 | 0.0662 | **1.21×** |
+| **ex-swing** | 0.0285 | 0.0021 | **0.07×** |
+
+`swing` carries **64.3% of all short trades** and is the only stratum where shorts earn strongly. Remove it and
+shorts earn ~nothing while longs earn 13× more. **Long is positive in 5/5 geometries; short in 3/5.** That is a long
+tilt in a market that tripled — the beta explanation I claimed to have killed.
+
+**This is the D-415 pooling-artifact class — the one that produced THE BREADTH LAW — committed by me, against my own
+result, one message after invoking a symmetry criterion I had pre-registered.** The criterion was right; I applied it
+to a pooled number without checking whether the pooling was doing the work. The lesson already written down for
+cross-sections applies identically to *sides* and *geometries*: disaggregate before concluding.
+
+**Practical verdict unchanged** (net expectancy negative, effect sub-fee at every geometry). **Interpretation
+reversed:** no demonstrated skill component — a long tilt, plus one geometry-specific anomaly in `swing` which has
+the *worst* net persistence of the five (22.7%).
