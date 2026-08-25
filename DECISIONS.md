@@ -11495,3 +11495,26 @@ clauses. Under any conventional Sharpe-and-drawdown test this would have read as
 **The asset-class split is POST-HOC and is not claimable.** Noticing afterwards that it works on 4 risk assets and
 fails on 4 FX pairs is subset selection (D-511b/D-553 precedent). It needs fresh pre-registration on held-out
 instruments before it means anything.
+
+## D-601 (2026-08-25) — the leverage effect does not explain where the risk gate works; and a bug caught by impossibility
+D-600 and D-566 produced two post-hoc splits. The leverage effect — does a negative return raise subsequent vol —
+could unify them with one parameter. Tested across 18 instruments including **10 held-out crypto perps** that formed
+no part of the observation generating the hypothesis.
+
+**A measurement bug was caught before any verdict, and impossibility is what caught it.** The first version
+correlated `r[i]` against `vol(..i-1) − vol(..i-2)` — a change driven by `r[i-1]`, one period misaligned. It read
+~0 on *every* instrument, including equity indices where the literature is unambiguous. That impossibility, not a
+code review, exposed it. Corrected, it reproduces the known pattern (S&P −0.14, Nasdaq −0.10, gold −0.07,
+EURUSD +0.07) and only then was trusted. Under the COVERAGE LAW the original result was **UNTESTED, not null**.
+
+**Result on the corrected measurement:**
+- rank IC(leverage, VT benefit) = **−0.183** against a pre-registered bar of −0.5 → fails
+- partial IC after removing BH Sharpe = **−0.377** — right sign, *strengthens* under the control, but t −1.63 at n=18
+- **~26 instruments** required for |t|≥2 at this IC; we have 18
+- the competing "vol targeting flatters high-drift assets" story is **flatly rejected**: IC(BH Sharpe, benefit) = 0.026
+
+**Both explanations fail.** What drives the variation in vol-targeting benefit remains unknown. Underpowered is its
+own verdict, with the required n stated.
+
+Sensible byproduct: the corrected leverage effects show meme coins with the **inverse** asymmetry to equities
+(DOGE +0.54, PEPE +0.55 vs S&P −0.14) — vol rises with price, not against it.
