@@ -11318,3 +11318,28 @@ inventing a reading for it; it is logged as untested.
 
 **Direction of travel across D-588→591:** every route to rescuing the grammar — better cost model, wider stops, side
 symmetry, drift removal — has terminated in the same place. The effect is real and it is below cost.
+
+## D-592 (2026-08-25) — the maker rescue is dead; the D-447 signature reproduces in its purest form
+D-591 left one escape route: the timing component is 0.60× the *taker* fee, but 2.7× the *maker* fee. THE EXECUTION
+LAW forbids asserting that without measuring the fill, so it was measured — 15,592 sweep signals, 6 symbols, a
+passive limit rested progressively deeper than the close:
+
+| limit offset | fill rate | FILLED | NOT FILLED |
+|---|---|---|---|
+| 5bp | 92.3% | 0.86bp (t 0.45) | 49.67bp (t 10.45) |
+| 15bp | 77.6% | 0.78bp (t 0.37) | 62.67bp (t 20.71) |
+| 25bp | 64.4% | 1.20bp (t 0.49) | 66.96bp (t 28.62) |
+| 50bp | 41.2% | 2.84bp (t 0.85) | 82.41bp (t 44.08) |
+| 100bp | 18.6% | 7.21bp (t 1.21) | 120.84bp (t 72.24) |
+
+**Perfectly monotone in both directions.** The deeper the order rests, the less often it fills and the more the
+unfilled set earns — while the filled set stays pinned near zero, every t below 1.25. You are filled precisely on the
+signals that do not move.
+
+The unfilled returns are **counterfactual** — computed from a price never transacted — so they are not an opportunity;
+they are the measure of the selection effect. Even the most favourable filled case (100bp deep, 7.21bp) is t 1.21 on
+18.6% of signals.
+
+**First attempt invalid, recorded not discarded:** resting the limit *at* the close gave a 99.7% fill rate — a market
+order wearing a limit order's name — which hit the pre-registered "fill rate near 100% ⇒ the test says nothing"
+branch. Rebuilt with a real price offset rather than reinterpreted.
