@@ -10823,3 +10823,24 @@ signals, because more bets on a negative edge is worse, not better. Time underwa
 **What this leaves:** the holdability constraint stands unsolved. Frequency was the structural lever and it fails for
 this signal family. Any future attempt needs signals native to the hourly horizon (microstructure, funding-cycle,
 order-flow), which is a new search with its own multiple-testing cost — not a re-use of these five.
+
+## D-570 (2026-08-25) — hourly-native reversal also fails: the frequency direction is definitively closed
+The D-569 failure looked like a horizon mismatch — the literature places momentum at 1–12 months and reversal
+intraday-to-weekly — so the hourly-native (reversal-sided) configuration was tested, with the honesty constraint
+written into the script beforehand: having already seen the momentum-sided book lose, any positive result would be
+indistinguishable in-sample from a post-hoc flip and would not be claimable.
+
+| regime | gross 24h | gross 48h | net 24h |
+|---|---|---|---|
+| momentum-sided (D-569) | −28.6%/yr | −28.7%/yr | −63.0%/yr |
+| **reversal-sided** | **−77.8%/yr** | **−79.6%/yr** | −112.1%/yr |
+
+**Both configurations lose gross, so the selection-trap concern is moot.** The two sets share three components —
+low-volatility, anti-lottery, order-flow — with identical signs, and those shared components are what bleed at hourly
+horizons. This is not a sign problem that any flip could fix; it is an **absence of exploitable structure in this
+feature family at this frequency**.
+**Consequence for the mission:** combined with D-567 (basket width refuted), **both structural attacks on the
+holdability constraint have now failed.** The daily book's 3.7-year underwater profile cannot be engineered away by
+diversification or by frequency. Anything that solves it would need signals genuinely native to the short horizon —
+microstructure, funding-cycle mechanics, queue position — which is a new search with its own multiple-testing cost and
+no head start from anything found here.

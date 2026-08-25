@@ -67,7 +67,11 @@ for(const t of hours){
 console.log(`    usable hours (>=40 names): ${clean.length.toLocaleString()}, mean breadth ${mean(clean.map(([,g])=>g.length)).toFixed(0)}`);
 if(clean.length<3000){console.log("!! too few usable hours — UNTESTED");Deno.exit(0);}
 // LIT5-hourly, signs pre-registered identically to the daily book
-const SET:[string,number][]=[["hi60h",1],["vol30h",-1],["maxret30h",-1],["mom7h",1],["flow7h",1]];
+const REGIME=Deno.env.get("REGIME")||"momentum";
+const SET:[string,number][]= REGIME==="reversal"
+  ? [["mom7h",-1],["hi60h",-1],["vol30h",-1],["maxret30h",-1],["flow7h",1]]   // short-horizon reversal regime
+  : [["hi60h",1],["vol30h",-1],["maxret30h",-1],["mom7h",1],["flow7h",1]];    // multi-week momentum regime (D-569)
+console.log(`    REGIME=${REGIME}  signs: ${SET.map(([n,s2])=>`${n}${s2>0?"+":"-"}`).join(" ")}`);
 const coh:{w:Map<string,number>;left:number}[]=[]; const out:number[]=[]; const ts:number[]=[];
 for(const [t,g] of clean){
   const pred=g.map(r=>SET.reduce((s,[nm,sg])=>{const j=FEAT.indexOf(nm as typeof FEAT[number]);return j>=0?s+sg*r.x[j]:s;},0)/SET.length);
