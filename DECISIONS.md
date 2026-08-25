@@ -10681,3 +10681,22 @@ essentially never delist, so the bias concentrates in the broad-universe variant
 measured as *negative* (all-contracts SR −0.20). The bias therefore works against the broad books rather than in
 favour of the promoted one. It remains a genuine limitation on any full-universe claim, and D-443 established that
 survivorship can flatter crypto cross-sections.
+
+## D-562 (2026-08-25) — the survivorship gap partially CLOSED, and the finding survives it
+Rather than caveat the D-561 limitation, it was attacked: Binance still serves klines for dead contracts, so every
+ever-listed spot USDT symbol absent from both our panel and the current futures listing was probed (278 candidates).
+**Nine delisted perps recovered** — EOS, RNDR, FRONT and others — taking the dead cohort from 10 to 19 and the panel
+from 498 to 507 contracts.
+**Re-running the frozen spec on the corrected panel, with the expectation stated beforehand:**
+
+| universe | before | after |
+|---|---|---|
+| top-50 | 76.0%/yr, SR 1.41, t 3.04 | **72.8%/yr, SR 1.35, t 2.90** |
+| top-100 | 38.8%, SR 0.89 | 39.4%, SR 0.90 |
+| all contracts | −7.4%, SR −0.20 | −7.5%, SR −0.21 |
+
+The prediction held: **top-50 degrades ~4% because majors rarely delist; broad universes unchanged.** A result that
+barely moves when its known bias is partially repaired is a result that did not depend on that bias.
+**Honest limit:** recovery is partial — perps delisted from *both* spot and futures cannot be found this way, so the
+true historical cohort exceeds 19. And the code's own printed label has been corrected from "survivorship-free" to
+"partially survivorship-corrected", because printed output must not assert what the data does not support.

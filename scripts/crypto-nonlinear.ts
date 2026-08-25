@@ -33,7 +33,7 @@ const fund7=(sym:string,tsEnd:number)=>{                       // mean funding o
   return n2>=10?s2/n2:null;};
 const TF=Deno.env.get("TF")||"1dSF";
 const meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
-console.log(`==> CRYPTO NON-LINEAR [${TF}] — ${meta.length} contracts${TF==="1dSF"?" (survivorship-free, incl. delisted)":" (SURVIVORSHIP-BIASED: listed only)"}`);
+console.log(`==> CRYPTO NON-LINEAR [${TF}] — ${meta.length} contracts${TF==="1dSF"?` (partially survivorship-corrected: ${meta.length} contracts, delisted cohort recovered to 19 — NOT survivorship-free, see D-561/562)`:" (SURVIVORSHIP-BIASED: listed only)"}`);
 for(let i=0;i<meta.length;i+=25){
   const part=meta.slice(i,i+25).map(m=>`"${m.symbol}"`).join(",");
   const rows=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&symbol=in.(${encodeURIComponent(part)})&select=symbol,bars`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;bars:number[][]}[];
