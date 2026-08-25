@@ -11006,3 +11006,23 @@ between names to have anything to rank.
 Two process notes: the engine **refused to report a null** when its 40-name floor made the small-universe tests
 impossible, printing "UNTESTED, not null" — the Coverage Law working against its author. And the floor is now an
 explicit parameter, with a stale "≥40 names" label in the output corrected, since printed output must be true.
+
+## D-579 (2026-08-25) — dispersion is not established as the mechanism; the crypto result stays unexplained
+| | evidence | verdict |
+|---|---|---|
+| across asset classes (n=4) | FX 2.8% → ETF 3.3% → commod 8.1% → **crypto 37.7%**, corr **0.98** with Sharpe | nearly uninformative |
+| within crypto (67 months) | corr(dispersion, book return) **−0.025**, t **−0.20** | **null** |
+
+**The 0.98 looks decisive and means very little.** With four points, any variable ordering the same way scores
+similarly — and crypto ranks highest on several confounded dimensions simultaneously: volatility, retail share, market
+age, 24/7 trading, absence of institutional mandates. Dispersion is one candidate among many that all point the same
+direction, which is exactly the situation where a high correlation carries no information.
+**The powered test is the within-class one, and it is null** (t −0.20), though the tercile split is directionally
+positive (26.7% vs 42.8%/yr equivalent).
+**A stated limit that keeps the hypothesis alive rather than buried:** even *low*-dispersion crypto months (12.5%)
+exceed the EM FX average (2.8%) fourfold, so a **threshold effect** — dispersion mattering up to a level and then
+saturating — is invisible to the within-crypto test by construction. Dispersion is neither supported as a driver nor
+refuted as a necessary condition.
+**Standing position: the crypto result is distinctive (D-578) and unexplained (D-577, D-579).** Two candidate
+mechanisms proposed and both failed to survive testing. That is the honest state, and it is a weaker position than
+having no mechanism proposed at all would suggest — because it means the obvious explanations have been checked.
