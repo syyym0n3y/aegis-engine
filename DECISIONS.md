@@ -11533,3 +11533,31 @@ correct, and stating the required n made the resolution a single cheap rerun rat
 
 Both candidate explanations for where vol targeting helps are now **closed**: not the leverage effect, and not drift.
 What drives it remains unknown — but that is now a measured unknown rather than an untested one.
+
+## D-603 (2026-08-25) — the live funding carry: passes as a snapshot, dies to its own selection test
+The three dormant watches measured BTC only. Funding is a 512-symbol cross-section, and delta-neutral harvest needs
+no forecast — the closest thing tested today to the operator's actual thesis.
+
+**A coverage defect was found and fixed first.** The initial run defined "placeable" as *"we ingested a spot series"* —
+33 symbols, all 2017–19 listings — when Binance lists **484** TRADING USDT pairs. That is the research programme
+narrating its own data gap as a market property. Corrected against `exchangeInfo`, the qualifying set went 6 → 37.
+Worth noting the correction made the result look *better*, and it was still wrong.
+
+**Then the selection test killed it:**
+
+| | |
+|---|---|
+| selected on trailing 90d (circular) | **6.54%/yr** |
+| same symbols, following 90d | **0.75%/yr** |
+| net of 0.28%/yr costs | **0.47%/yr** vs a 5% hurdle |
+
+An 88% collapse. Selecting on trailing funding and reporting trailing funding is circular by construction, and that
+circularity is exactly what produced the 37-symbol "pass".
+
+**Verified, not inferred:** 11 of the top 12 funding payers have **no Binance spot market at all** (SIREN 47.5%,
+HFT 47.2%). The premium genuinely sits where the neutral position cannot be constructed — the pre-registered
+competing explanation, confirmed against the exchange's own listing.
+
+**Two true things that are NOT claims:** funding rank persists (IC 0.366 across 300 placeable symbols), and the
+selected set beat a universe averaging **−4.97%/yr** by 5.7pp. A long-short funding book harvesting that spread is a
+*different, unregistered* strategy and needs its own pre-registration (D-511b/D-553 precedent).
