@@ -11140,3 +11140,16 @@ because it is mine.
 clears a *capacity* question only; and "liquid tercile" here is the top third of 507 crypto perps by dollar volume,
 not liquid in the equity sense, while the uniform 9bp fee understates illiquid-name costs so −1.43 is if anything
 flattering.
+
+### D-585 resolution — liquidity terciles are UNIVERSE-RELATIVE
+| | pooled | liquid third | illiquid third |
+|---|---|---|---|
+| top-50 universe (book as specified) | **SR 1.31** | 0.99 | **+0.50** |
+| all-507 universe | **SR 0.05** | 0.93 | **−1.43** |
+
+Neither run was wrong. "Illiquid third" is ranks ~34–50 of the liquid names in one and genuine junk in the other,
+which is why D-534's −0.00 sits between them. **The substantive finding:** the edge occupies a liquidity **band**
+near the top ~50 names rather than a monotonic gradient — narrowing to the liquid third of an already-liquid
+universe *reduces* Sharpe (1.31 → 0.99), and broadening to all names destroys it (0.05).
+THE UNIVERSE LAW and THE LIQUIDITY LAW interact: **a liquidity decomposition is not one number, and quoting one
+without its universe is as incomplete as quoting a Sharpe without its N.**
