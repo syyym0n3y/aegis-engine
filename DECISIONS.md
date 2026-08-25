@@ -10666,3 +10666,18 @@ now, not merely disclaimed.
 five signed effects would get — rather than lit5's 3.03.
 **Explicit refusal:** the top-ranked subsets contain `mom30` and `rev1`, which lit5 omits. Adopting them now, having
 seen this ranking, would be exactly the selection trap this test was built to measure. The frozen spec stays lit5.
+
+## D-561 (2026-08-25) — survivorship audit: "survivorship-free" was overstated
+Auditing the foundational panel rather than another strategy variant: of 498 contracts, **488 are still trading and
+only 10 are delisted** (LUNA, SRM, TOMO, HNT, BTS, ANT, AUDIO, GAL, DODO, MATIC). Binance's live exchangeInfo lists
+**527 TRADING** USDT perps — so the panel is essentially *current listings plus ten historical deaths*. A 2%
+five-year attrition rate is implausibly low for this venue.
+**The claim is corrected: partially survivorship-corrected, not survivorship-free.** Contracts delisted before the
+D-462 exchangeInfo seed are largely absent, because that seed could only capture what was listed at seed time plus
+what the panel already held. I have repeated "survivorship-free, including delisted" throughout the crypto work; that
+language was stronger than the data supports.
+**What it threatens and what it does not:** the frozen specification trades the top-50 by dollar volume, where majors
+essentially never delist, so the bias concentrates in the broad-universe variants — which are exactly the ones already
+measured as *negative* (all-contracts SR −0.20). The bias therefore works against the broad books rather than in
+favour of the promoted one. It remains a genuine limitation on any full-universe claim, and D-443 established that
+survivorship can flatter crypto cross-sections.
