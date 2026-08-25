@@ -11561,3 +11561,26 @@ competing explanation, confirmed against the exchange's own listing.
 **Two true things that are NOT claims:** funding rank persists (IC 0.366 across 300 placeable symbols), and the
 selected set beat a universe averaging **−4.97%/yr** by 5.7pp. A long-short funding book harvesting that spread is a
 *different, unregistered* strategy and needs its own pre-registration (D-511b/D-553 precedent).
+
+## D-604 (2026-08-25) — cross-venue funding: the mean says 10%/yr, the median says zero
+D-603 died because delta-neutral funding harvest needs a spot leg and the premium sits where no spot exists. Long a
+perp on one venue and short the same perp on another is neutral **by construction** — no spot, no borrow. Tested all
+14 venue × symbol pairs across Binance/Bybit/Deribit/OKX, with the out-of-sample clause written in advance this time.
+
+| pair | mean \|diff\| | median | OOS signed |
+|---|---|---|---|
+| binance vs bybit BTC | 9.57%/yr | **0.00** | 0.23 |
+| binance vs bybit ETH | 8.47%/yr | **0.00** | 0.00 |
+| bybit vs deribit BTC | 14.59%/yr | 4.02 | 0.40 |
+| bybit vs deribit ETH | 14.53%/yr | 5.73 | **2.67** |
+
+**Zero of 14 clear.** The diagnostic that decides it: median differential is *exactly* 0.00 on all five
+Binance-Bybit pairs while their means run 7–10%/yr. The venues quote identical funding most of the time and diverge
+only in spikes — and a funding spike is precisely the stressed moment when both legs are least likely to be
+simultaneously tradable. Building the mean-vs-median column in *before* running is what made this readable instead of
+a headline needing retraction.
+
+**Fairness note, stated rather than omitted:** the cost floor is only 0.46%/yr, so the best pair is **not** sub-fee.
+2.67%/yr on a delta-neutral position is real in relative terms. It fails the pre-registered 5% hurdle, rests on one
+symbol and one venue pair, and carries unmodelled cross-venue counterparty and margin-liquidation risk — so it is
+recorded as *below hurdle*, not as uneconomic.
