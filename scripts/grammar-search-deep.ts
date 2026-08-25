@@ -1,0 +1,146 @@
+#!/usr/bin/env -S deno run --allow-net --allow-env
+// grammar-search-deep.ts (D-588) — the component grammar run over OUR OWN data instead of a 60-day Yahoo window.
+//
+// WHY: scripts/trd-strategy-search.ts enumerates 91,800 composed strategies (34 chart-pattern triggers x EMA x trend
+// mode x stop lookback x RR x session x stop geometry) — the machine form of the operator's own method: read the
+// chart, take many small favourable positions across many markets. But it has only ever run on Yahoo 15m bars with
+// range=60d: roughly 2,500 bars per market on 4 markets. We hold 1,926,324 HOURLY perp bars across 94 symbols with
+// a median of 23,922 bars each (~3 years). Searching a huge grammar on a tiny sample is the false-edge factory the
+// deflation gate exists to catch; searching it on ~190x the data is the honest version of the same question.
+// An acquired dataset the research never touches is a RESEARCH failure, not a market finding (COVERAGE LAW).
+//
+// TWO METHOD FIXES over the original search, both of which make the test HARDER, not easier:
+//
+// 1. COST IS CONVERTED PER TRADE, NOT ASSUMED FLAT. The original charges a fixed 0.05R per side. But cost in R
+//    depends entirely on how wide the stop is: the runner already records riskFrac = |entry-stop|/entry, so a
+//    9bp round-trip perp fee costs 0.09R against a 1% stop and 0.45R against a 0.2% stop — 5x more. A flat R-cost
+//    therefore systematically FLATTERS tight-stop specs, and the grammar contains stop geometries (atr2, lookback 3)
+//    that are routinely tight. Here every trade is charged its own fee in R units. This is the EFFECT-SIZE LAW
+//    applied at the trade level: the number that matters is the edge measured in multiples of what it costs to act.
+//
+// 2. TRIALS ARE COUNTED HONESTLY AND THE CEILING MOVES WITH THEM. Every (spec, symbol) pair is one trial. The
+//    deflation ceiling sqrt(2*ln N) is computed from the REAL total, including this run's contribution, not from a
+//    hardcoded N (the defect that had aegis-autopilot surfacing momentum as "clearing" for nine cycles).
+//
+// PRE-REGISTERED EXPECTATION, stated before the run: almost nothing survives, and a survivor at this trial count
+// needs |t| beyond ~5.5. That is the point of the gate, not a disappointment.
+import { type Bar, enumerate, runComponentTrades, specKey } from "../supabase/functions/_shared/trd-grammar.ts";
+import { deflatedSharpe, kurtosis, mean, sampleStd, skewness } from "../supabase/functions/_shared/trd-stats.ts";
+
+const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
+const SECRET = Deno.env.get("JWT_SECRET")!;
+async function jwt() {
+  const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "gsd", exp: 4102444800 });
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`)));
+  return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
+}
+const hdr = await (async () => { const t = await jwt(); return { "Content-Type": "application/json", Authorization: `Bearer ${t}`, apikey: t }; })();
+
+const TF = Deno.env.get("TF") || "1hSF";
+const NSYM = Number(Deno.env.get("NSYM") || 8);
+const FEE_BP = Number(Deno.env.get("PERP_FEE_RT_BP") || 9);          // round-trip taker, in bp of notional
+const MAXSPECS = Number(Deno.env.get("MAXSPECS") || 0);               // 0 = the whole grammar
+const MIN_TRADES = Number(Deno.env.get("MIN_TRADES") || 30);
+
+// ---- load bars from our own store ----
+const meta = await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&select=symbol,n_bars&order=n_bars.desc&limit=${NSYM}`, { headers: hdr })
+  .then((r) => r.json()).catch(() => []) as { symbol: string; n_bars: number }[];
+if (!Array.isArray(meta) || !meta.length) { console.error("!! no bars available — cannot search. RED."); Deno.exit(1); }
+
+const markets: [string, Bar[]][] = [];
+for (const m of meta) {
+  const rows = await fetch(`${OWNED}/trd_bars_intraday?tf=eq.${TF}&symbol=eq.${m.symbol}&select=bars`, { headers: hdr })
+    .then((r) => r.json()).catch(() => []) as { bars: number[][] }[];
+  const raw = rows?.[0]?.bars; if (!raw?.length) continue;
+  // [ts,o,h,l,c,...] — same layout the crypto panel uses
+  const bars: Bar[] = [];
+  for (const b of raw) {
+    const [ts, o, h, l, c] = b;
+    if (![o, h, l, c].every((x) => Number.isFinite(x) && x > 0)) continue;
+    bars.push({ ts: new Date(ts * 1000).toISOString(), open: o, high: h, low: l, close: c });
+  }
+  if (bars.length >= 2000) markets.push([m.symbol, bars]);
+}
+if (!markets.length) { console.error("!! no symbol had >=2000 usable bars. RED."); Deno.exit(1); }
+
+let specs = enumerate();
+if (MAXSPECS > 0) specs = specs.slice(0, MAXSPECS);
+
+const totalPlanned = specs.length * markets.length;
+console.log(`==> GRAMMAR SEARCH (deep) — ${specs.length.toLocaleString()} composed strategies x ${markets.length} symbols = ${totalPlanned.toLocaleString()} trials`);
+console.log(`    data: tf=${TF}, ${markets.map(([s, b]) => `${s} ${b.length}`).join(", ")}`);
+console.log(`    cost: ${FEE_BP}bp round trip converted PER TRADE via riskFrac (not a flat R assumption)`);
+console.log(`    gate: OOS net>0 AND deflated-Sharpe prob>0.95 AND |t| over the live ceiling; >=${MIN_TRADES} trades\n`);
+
+// ---- honest cost conversion ----
+// The runner charges gross r minus 2*costRPerSide. We pass 0 and re-charge each trade with its OWN fee:
+//   fee_in_R = (FEE_BP/10000) / riskFrac      [riskFrac = |entry-stop|/entry]
+// so a tight stop pays proportionally more, which is what actually happens.
+const netR = (t: { r: number; riskFrac: number }): number =>
+  t.riskFrac > 0 ? t.r - (FEE_BP / 1e4) / t.riskFrac : t.r - 1;
+
+interface Row { sym: string; key: string; n: number; shTest: number; tTest: number; expTest: number; expTrain: number; medRiskFrac: number; skew: number; kurt: number }
+const rows: Row[] = [];
+// Deflation needs the VARIANCE OF TRIAL SHARPES across the search itself (Lopez de Prado): the wider the spread of
+// what the search produced, the higher the max a random search would have thrown up. Collecting it is the difference
+// between deflating by the real search and deflating by an assumed one. Convention (same as the original search): a
+// trial too thin to evaluate contributes 0, so the variance reflects every trial spent, not only the good ones.
+const allSharpes: number[] = [];
+let trials = 0, isPos = 0, oosPos = 0, thin = 0;
+
+for (const [sym, bars] of markets) {
+  const mid = Math.floor(bars.length * 0.6);
+  const train = bars.slice(0, mid), test = bars.slice(mid);
+  for (const s of specs) {
+    trials++;
+    const trTr = runComponentTrades(train, s, { costRPerSide: 0 }).map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
+    if (trTr.length < MIN_TRADES) { thin++; allSharpes.push(0); continue; }
+    const trainNet = trTr.map(netR);
+    const eTr = mean(trainNet);
+    allSharpes.push(eTr / (sampleStd(trainNet) || 1e-9));
+    if (eTr <= 0) continue;                                  // selection made on TRAIN ONLY (SELECTION LAW)
+    isPos++;
+    const teTr = runComponentTrades(test, s, { costRPerSide: 0 }).map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
+    if (teTr.length < MIN_TRADES) { thin++; continue; }
+    const testNet = teTr.map(netR);
+    const eTe = mean(testNet), sd = sampleStd(testNet) || 1e-9;
+    if (eTe <= 0) continue;
+    oosPos++;
+    const rf = teTr.map((t) => t.riskFrac).sort((a, b) => a - b);
+    rows.push({
+      sym, key: specKey(s), n: testNet.length, shTest: eTe / sd, tTest: eTe / (sd / Math.sqrt(testNet.length)),
+      expTest: eTe, expTrain: eTr, medRiskFrac: rf[Math.floor(rf.length / 2)] ?? 0,
+      skew: skewness(testNet), kurt: kurtosis(testNet),
+    });
+  }
+  console.log(`    ${sym.padEnd(12)} done — running totals: ${isPos.toLocaleString()} train-positive, ${oosPos.toLocaleString()} also OOS-positive`);
+}
+
+// ---- the ceiling moves with the trials we just spent ----
+const prev = await fetch(`${OWNED}/trd_trial_counter?select=id`, { headers: { ...hdr, Prefer: "count=exact", Range: "0-0" } })
+  .then((r) => Number(r.headers.get("content-range")?.split("/")[1] ?? 0)).catch(() => 0);
+const BASE = Number(Deno.env.get("TRIAL_BASE") || 1531193);
+const N = BASE + prev + trials;
+const CEIL = Math.sqrt(2 * Math.log(N));
+
+console.log(`\n    trials this run ${trials.toLocaleString()} | thin (<${MIN_TRADES} trades) ${thin.toLocaleString()} | train-positive ${isPos.toLocaleString()} | OOS-positive ${oosPos.toLocaleString()}`);
+console.log(`    live trial count N = ${N.toLocaleString()}  ->  noise ceiling sqrt(2 ln N) = ${CEIL.toFixed(3)}`);
+
+rows.sort((a, b) => b.tTest - a.tTest);
+console.log(`\n    top OOS by t (all costed per-trade, all train-selected):`);
+console.log(`    ${"symbol".padEnd(11)}${"t".padEnd(8)}${"SR/trade".padEnd(10)}${"E[R]".padEnd(9)}${"n".padEnd(7)}${"medStop%".padEnd(10)}spec`);
+for (const r of rows.slice(0, 12)) {
+  console.log(`    ${r.sym.padEnd(11)}${r.tTest.toFixed(2).padEnd(8)}${r.shTest.toFixed(3).padEnd(10)}${r.expTest.toFixed(4).padEnd(9)}${String(r.n).padEnd(7)}${(r.medRiskFrac * 100).toFixed(2).padEnd(10)}${r.key}`);
+}
+
+const mSh = mean(allSharpes), varSh = allSharpes.reduce((a, x) => a + (x - mSh) ** 2, 0) / Math.max(1, allSharpes.length - 1);
+console.log(`    trial-Sharpe dispersion across this search: mean ${mSh.toFixed(3)}, sd ${Math.sqrt(varSh).toFixed(3)} (n=${allSharpes.length.toLocaleString()})`);
+const survivors = rows.filter((r) => {
+  const p = deflatedSharpe(r.shTest, r.n, r.skew, r.kurt, N, varSh);
+  return r.tTest > CEIL && p > 0.95;
+});
+console.log(`\n    SURVIVORS past the live ceiling (${CEIL.toFixed(2)}) AND deflated-prob>0.95: ${survivors.length}`);
+for (const s of survivors) console.log(`      ${s.sym} ${s.key} t=${s.tTest.toFixed(2)} n=${s.n}`);
+if (!survivors.length) console.log(`      none — which is the expected and correct outcome at ${N.toLocaleString()} trials.`);
