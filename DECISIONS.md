@@ -10883,3 +10883,25 @@ of safety. A strategy that wins 78% of months and loses seven months' income in 
 destroys operators who size it by hit rate.
 Below the 5.34 ceiling. **Not yet implementability-tested:** selling crypto variance needs Deribit options, whose
 spreads and margin are unmeasured here — the same wall that killed the equity book applies until proven otherwise.
+
+## D-573 (2026-08-25) — the implementability wall does NOT appear for crypto VRP
+Every prior candidate died here: equity decile books unplaceable, ETF wrappers losing ~80% of the signal, concentrated
+stock books dead. Measuring the live Deribit BTC option book instead of assuming:
+
+| | |
+|---|---|
+| ATM 31-day straddle premium | $7,621 (9.47% of spot) |
+| round-trip spread | $201 = **2.6% of premium** |
+| exchange fees, both legs | $48 = 0.6% |
+| **total per monthly round trip** | **3.3% of premium** |
+| ATM liquidity | 4,574 BTC OI, **$32.7M/day** notional at that strike |
+
+**3.3% against a premium measured at ~10.8%/yr is a modest drag** — the first time a placeable vehicle has not
+destroyed the signal it was meant to carry.
+**What this does NOT show, stated strictly:** it measures the *cost of trading* the instrument, not the instrument's
+P&L. A short straddle is **not** a variance swap — it carries delta risk, path-dependent gamma losses, and
+margin/liquidation exposure that a variance-notional figure cannot capture. The D-572 tail (−637 variance points in a
+single month) would arrive as a large straddle loss against posted margin, and forced liquidation is a failure mode
+with no analogue in the backtest. Converting the premium into placeable P&L requires historical option chains, which
+Deribit's public API does not serve in bulk; the honest substitute is Black–Scholes priced off DVOL — **a model, not
+data** — and it will be labelled as such.
