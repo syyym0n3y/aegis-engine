@@ -11444,3 +11444,27 @@ slippage are not.
 stories proposed, seven dead — and D-590 was worse than a failure, it was a false *win* reported to the operator and
 retracted only after decomposing my own pooled number. The countermeasure that worked was pre-registering decision
 rules before each run; every retraction from D-587 onward was automatic rather than negotiated.
+
+## D-599 (2026-08-25) — hourly cross-asset lead-lag: 56 pairs, none within 4x of cost
+Pre-registered as `D-599-xasset-hourly` in the new immutable table before the data was touched. Closes a real
+coverage gap: `fxintraday` held **3 specs against 639,168 bars**, and `xasset` had only daily lags on SPY/QQQ.
+
+All 56 ordered pairs across EURUSD/GBPUSD/USDJPY/AUDUSD/gold/S&P/Nasdaq/Brent, ~78,700 shared hours each, 10.6 years,
+lag-1 by construction.
+
+| lead → follow | t | bp per 1sd | fee | ×cost |
+|---|---|---|---|---|
+| S&P → USDJPY | 3.46 | 0.043 | 1bp | **0.04×** |
+| USDJPY → Brent | 1.75 | 0.717 | 3bp | **0.24×** (largest effect anywhere) |
+
+**Zero qualify.** The best |t| is 25× below its cost and its sign is unstable (t 0.13 first half, 4.24 second). The
+largest effect in the entire cross-section is a quarter of its own trading cost. The stale-print control barely moves
+anything, so non-synchronous trading isn't the explanation either — there is nothing there.
+
+**The informative part is the gap between significance and magnitude.** Several pairs reach |t| 2–3.5 on 78,700
+observations, which reads as signal on a naive view, while no effect anywhere approaches its fee. The D-426 shape, and
+the reason the EFFECT-SIZE LAW exists.
+
+**Cost of finding out: 56 trials and one script.** Contrast with the 734,400-trial sweep that answered a narrower
+question — at N=2.27M the ceiling now rises faster than a sweep can find anything, so the efficient move is few
+well-motivated pre-registered tests, not more spraying.
