@@ -11223,3 +11223,37 @@ resolving it. The apparent top-60 optimum sits within noise of top-30.
 age, and now the liquidity band. Worth stating plainly: the measurements have held up under every control applied to
 them; my explanations of *why* have not survived one. The pre-registered rule is what made this retraction automatic
 instead of negotiable.
+
+## D-588/589 (2026-08-25) — the chart-pattern grammar on real depth: no gross edge, and stop width does not rescue it
+`scripts/grammar-search-deep.ts` runs the 34-trigger / 91,800-spec component grammar — the machine form of the
+operator's own method — over **our own 1.93M hourly perp bars** (26,280 bars/symbol, ~3 years) instead of the 60-day
+Yahoo window it had always used, with **per-trade cost conversion** (a flat R-cost flatters tight stops ~5×).
+
+**D-588, the cost control** — identical specs, 8 symbols, 6,400 trials, only cost differs:
+
+| | mean trial Sharpe | train-positive | of those, OOS-positive |
+|---|---|---|---|
+| gross (0bp) | −0.036 | 43.9% | **71.7%** |
+| net (9bp) | −0.166 | 10.5% | **33.7%** |
+
+There is **no gross edge to erode** — the average spec is flat before costs. Cost then does worse than shift the
+mean: it collapses persistence to *below a coin flip*, the signature of selecting noise.
+
+**The beta hypothesis, refuted.** I expected the 71.7% gross persistence to be market beta — BTC tripled over the
+window (26,018 → 79,243), so long-biased specs should win twice. Across 1.17M trades the **short** side gross-earned
+*more* (mean R 0.0967 vs 0.0418). Both sides pay gross, so it is not beta. A real, weak gross effect exists.
+
+**D-589, and the effect is sub-fee.** Pooled gross 0.0699R against a cost of 9bp ÷ stop-width: 0.23× at a 0.30% stop,
+0.93× at 1.20%, 1.55× at 2.00%. That predicted net viability rising with stop width. Stratified by the grammar's five
+stop geometries, **net persistence was 36.3 / 22.7 / 35.4 / 20.6 / 27.1%** — non-monotone, never near 50%, and the
+widest geometry *worse* than the tightest. **Retracted:** the fee-multiple table was an artifact of pooling across
+geometries, not a map of where the edge lives.
+
+**Recorded against myself:** the first stratification ran without `PERP_FEE_RT_BP=0` and I labelled its side columns
+`grossR` when they were net. Caught on read-back and corrected. The rule concerned net persistence — which is what was
+measured — so the retraction stands independent of the mislabel.
+
+**What this says about the many-small-trades thesis, at these instruments and costs:** multiplying instances
+multiplies the per-instance expectancy, and measured on real depth with honest per-trade costs that expectancy is
+negative. The effect that *is* there (0.07R gross) is smaller than the cost of acting on it at every stop geometry
+the grammar contains.

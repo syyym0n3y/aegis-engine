@@ -66,6 +66,11 @@ for (const m of meta) {
 if (!markets.length) { console.error("!! no symbol had >=2000 usable bars. RED."); Deno.exit(1); }
 
 let specs = enumerate();
+// D-589: stratify by stop GEOMETRY. Cost in R scales as fee/stop-width, so if the gross effect is constant in R the
+// wide geometries should be where net survives. The competing possibility — that gross R falls with stop width just
+// as fast as cost does — is exactly what this stratification measures rather than assumes.
+const STOPMODE_FILTER = Deno.env.get("STOPMODE") || "";
+if (STOPMODE_FILTER) specs = specs.filter((x) => (x.stopMode ?? "swing") === STOPMODE_FILTER);
 if (MAXSPECS > 0) specs = specs.slice(0, MAXSPECS);
 
 const totalPlanned = specs.length * markets.length;
@@ -78,6 +83,11 @@ console.log(`    gate: OOS net>0 AND deflated-Sharpe prob>0.95 AND |t| over the 
 // The runner charges gross r minus 2*costRPerSide. We pass 0 and re-charge each trade with its OWN fee:
 //   fee_in_R = (FEE_BP/10000) / riskFrac      [riskFrac = |entry-stop|/entry]
 // so a tight stop pays proportionally more, which is what actually happens.
+// D-588b: the gross persistence (71.7% of train-positive specs repeating OOS) is suspicious — crypto ROSE across both
+// halves, so a long-biased spec wins twice without any skill. SIDESPLIT reports the long/short composition of the
+// train-positive set: if persistence is beta, the winners will be overwhelmingly long and their short legs will not
+// persist. Testing the confound is cheaper than arguing about it.
+const SIDESPLIT = Deno.env.get("SIDESPLIT") === "1";
 const netR = (t: { r: number; riskFrac: number }): number =>
   t.riskFrac > 0 ? t.r - (FEE_BP / 1e4) / t.riskFrac : t.r - 1;
 
@@ -88,6 +98,7 @@ const rows: Row[] = [];
 // between deflating by the real search and deflating by an assumed one. Convention (same as the original search): a
 // trial too thin to evaluate contributes 0, so the variance reflects every trial spent, not only the good ones.
 const allSharpes: number[] = [];
+const sideAgg = { longN: 0, longSum: 0, shortN: 0, shortSum: 0 };
 let trials = 0, isPos = 0, oosPos = 0, thin = 0;
 
 for (const [sym, bars] of markets) {
@@ -95,14 +106,21 @@ for (const [sym, bars] of markets) {
   const train = bars.slice(0, mid), test = bars.slice(mid);
   for (const s of specs) {
     trials++;
-    const trTr = runComponentTrades(train, s, { costRPerSide: 0 }).map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
+    const trRaw = runComponentTrades(train, s, { costRPerSide: 0 });
+    const trTr = trRaw.map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
     if (trTr.length < MIN_TRADES) { thin++; allSharpes.push(0); continue; }
     const trainNet = trTr.map(netR);
     const eTr = mean(trainNet);
     allSharpes.push(eTr / (sampleStd(trainNet) || 1e-9));
     if (eTr <= 0) continue;                                  // selection made on TRAIN ONLY (SELECTION LAW)
     isPos++;
-    const teTr = runComponentTrades(test, s, { costRPerSide: 0 }).map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
+    const teRaw = runComponentTrades(test, s, { costRPerSide: 0 });
+    const teTr = teRaw.map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
+    if (SIDESPLIT) {
+      const lo = teRaw.filter((t) => t.side === "long"), sh = teRaw.filter((t) => t.side === "short");
+      if (lo.length >= 10) { sideAgg.longN += lo.length; sideAgg.longSum += lo.map((t) => netR({ r: t.r, riskFrac: t.riskFrac })).reduce((a, b) => a + b, 0); }
+      if (sh.length >= 10) { sideAgg.shortN += sh.length; sideAgg.shortSum += sh.map((t) => netR({ r: t.r, riskFrac: t.riskFrac })).reduce((a, b) => a + b, 0); }
+    }
     if (teTr.length < MIN_TRADES) { thin++; continue; }
     const testNet = teTr.map(netR);
     const eTe = mean(testNet), sd = sampleStd(testNet) || 1e-9;
@@ -128,6 +146,12 @@ const CEIL = Math.sqrt(2 * Math.log(N));
 console.log(`\n    trials this run ${trials.toLocaleString()} | thin (<${MIN_TRADES} trades) ${thin.toLocaleString()} | train-positive ${isPos.toLocaleString()} | OOS-positive ${oosPos.toLocaleString()}`);
 console.log(`    live trial count N = ${N.toLocaleString()}  ->  noise ceiling sqrt(2 ln N) = ${CEIL.toFixed(3)}`);
 
+if (SIDESPLIT) {
+  console.log(`\n    SIDE SPLIT of the train-selected set, out-of-sample:`);
+  console.log(`      LONG  trades ${sideAgg.longN.toLocaleString()}  mean R ${(sideAgg.longSum / Math.max(1, sideAgg.longN)).toFixed(4)}`);
+  console.log(`      SHORT trades ${sideAgg.shortN.toLocaleString()}  mean R ${(sideAgg.shortSum / Math.max(1, sideAgg.shortN)).toFixed(4)}`);
+  console.log(`      If persistence were skill both sides pay; if it is market beta only LONG pays.`);
+}
 rows.sort((a, b) => b.tTest - a.tTest);
 console.log(`\n    top OOS by t (all costed per-trade, all train-selected):`);
 console.log(`    ${"symbol".padEnd(11)}${"t".padEnd(8)}${"SR/trade".padEnd(10)}${"E[R]".padEnd(9)}${"n".padEnd(7)}${"medStop%".padEnd(10)}spec`);
