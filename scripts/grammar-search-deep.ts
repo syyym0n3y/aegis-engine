@@ -88,6 +88,12 @@ console.log(`    gate: OOS net>0 AND deflated-Sharpe prob>0.95 AND |t| over the 
 // train-positive set: if persistence is beta, the winners will be overwhelmingly long and their short legs will not
 // persist. Testing the confound is cheaper than arguing about it.
 const SIDESPLIT = Deno.env.get("SIDESPLIT") === "1";
+// D-591 THE BENCHMARK LAW, applied to this result. D-590 showed the grammar's gross persistence is a LONG TILT in a
+// market that tripled. The decisive test is not another decomposition — it is asking what the trades earned ABOVE
+// simply holding the same directional exposure for the same duration. For a trade entered at i and exited at j:
+//   benchmark_R = dir * (close_j/close_i - 1) / riskFrac      [riskFrac = risk/entry, so move_frac/riskFrac = R]
+// excess = trade_R - benchmark_R. If the effect is drift, excess collapses to ~0 or below.
+const DRIFTADJ = Deno.env.get("DRIFTADJ") === "1";
 const netR = (t: { r: number; riskFrac: number }): number =>
   t.riskFrac > 0 ? t.r - (FEE_BP / 1e4) / t.riskFrac : t.r - 1;
 
@@ -102,12 +108,20 @@ const sideAgg = { longN: 0, longSum: 0, shortN: 0, shortSum: 0 };
 let trials = 0, isPos = 0, oosPos = 0, thin = 0;
 
 for (const [sym, bars] of markets) {
+  const tsIdx = new Map<string, number>();
+  if (DRIFTADJ) bars.forEach((b, i) => tsIdx.set(b.ts, i));
+  const benchR = (t: { entryTs: string; exitIdx: number; side: "long" | "short"; riskFrac: number }, arr: Bar[], off: number): number => {
+    const ei = tsIdx.get(t.entryTs); if (ei === undefined || t.riskFrac <= 0) return 0;
+    const a = arr[ei - off]?.close, b = arr[t.exitIdx]?.close;
+    if (!(a > 0) || !(b > 0)) return 0;
+    return (t.side === "long" ? 1 : -1) * (b / a - 1) / t.riskFrac;
+  };
   const mid = Math.floor(bars.length * 0.6);
   const train = bars.slice(0, mid), test = bars.slice(mid);
   for (const s of specs) {
     trials++;
     const trRaw = runComponentTrades(train, s, { costRPerSide: 0 });
-    const trTr = trRaw.map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
+    const trTr = trRaw.map((t) => ({ r: DRIFTADJ ? t.r - benchR(t, train, 0) : t.r, riskFrac: t.riskFrac }));
     if (trTr.length < MIN_TRADES) { thin++; allSharpes.push(0); continue; }
     const trainNet = trTr.map(netR);
     const eTr = mean(trainNet);
@@ -115,11 +129,12 @@ for (const [sym, bars] of markets) {
     if (eTr <= 0) continue;                                  // selection made on TRAIN ONLY (SELECTION LAW)
     isPos++;
     const teRaw = runComponentTrades(test, s, { costRPerSide: 0 });
-    const teTr = teRaw.map((t) => ({ r: t.r, riskFrac: t.riskFrac }));
+    const teTr = teRaw.map((t) => ({ r: DRIFTADJ ? t.r - benchR(t, test, mid) : t.r, riskFrac: t.riskFrac }));
     if (SIDESPLIT) {
+      const adj = (t: typeof teRaw[number]) => DRIFTADJ ? t.r - benchR(t, test, mid) : t.r;
       const lo = teRaw.filter((t) => t.side === "long"), sh = teRaw.filter((t) => t.side === "short");
-      if (lo.length >= 10) { sideAgg.longN += lo.length; sideAgg.longSum += lo.map((t) => netR({ r: t.r, riskFrac: t.riskFrac })).reduce((a, b) => a + b, 0); }
-      if (sh.length >= 10) { sideAgg.shortN += sh.length; sideAgg.shortSum += sh.map((t) => netR({ r: t.r, riskFrac: t.riskFrac })).reduce((a, b) => a + b, 0); }
+      if (lo.length >= 10) { sideAgg.longN += lo.length; sideAgg.longSum += lo.map((t) => netR({ r: adj(t), riskFrac: t.riskFrac })).reduce((a, b) => a + b, 0); }
+      if (sh.length >= 10) { sideAgg.shortN += sh.length; sideAgg.shortSum += sh.map((t) => netR({ r: adj(t), riskFrac: t.riskFrac })).reduce((a, b) => a + b, 0); }
     }
     if (teTr.length < MIN_TRADES) { thin++; continue; }
     const testNet = teTr.map(netR);

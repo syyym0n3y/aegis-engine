@@ -11288,3 +11288,33 @@ cross-sections applies identically to *sides* and *geometries*: disaggregate bef
 **Practical verdict unchanged** (net expectancy negative, effect sub-fee at every geometry). **Interpretation
 reversed:** no demonstrated skill component — a long tilt, plus one geometry-specific anomaly in `swing` which has
 the *worst* net persistence of the five (22.7%).
+
+## D-591 (2026-08-25) — the grammar vs buy-and-hold: a real timing component, and it is SUB-FEE
+THE BENCHMARK LAW applied per trade: `benchmark_R = dir*(close_exit/close_entry − 1)/riskFrac`, `excess = r − benchmark_R`.
+Implementation **verified against hand-computed truth** on real bars (5/5 index mappings correct; a long stopped at
+−1R while the market rose 1.53R correctly scores −2.53R).
+
+**Drift-adjusted gross excess:** swing L +0.096 / S +0.106 · atr6 L −0.013 / S +0.014 · wide100 L −0.042 / S +0.133.
+
+Only `swing` cleared the pre-registered 0.02R bar on **both** sides — and subtracting the drift *increased* it, so it
+is not the long tilt. At zero cost it showed **77.6% OOS persistence**.
+
+**Then its own stop width predicted its death.** Swing's median stop is 0.54% of price → 0.167R round-trip fee against
+a ~0.10R excess = **0.60× the cost**. Charging it:
+
+| geometry | persist (gross, drift-adj) | persist (net, drift-adj) | trial SR | best t |
+|---|---|---|---|---|
+| swing | **77.6%** | **36.6%** | −0.135 | 1.27 |
+| atr6 | — | 26.6% | −0.077 | 2.01 |
+| wide100 | — | 29.2% | −0.074 | 3.00 |
+
+**Verdict: a genuine timing component exists in the chart-pattern grammar, and it is SUB-FEE.** This is the cleanest
+result of the sequence because the prediction was quantitative and made in advance — 0.60× the fee implies collapse,
+and 77.6% → 36.6% is that collapse. Real, measurable, survives the benchmark, smaller than the cost of acting on it.
+
+**Gap in my own rule, recorded not retrofitted:** I pre-registered conditions for both-sides, long-only, and collapse,
+but `wide100` returned **short-only** positive (+0.133 vs −0.042 long). I did not anticipate that case and am not
+inventing a reading for it; it is logged as untested.
+
+**Direction of travel across D-588→591:** every route to rescuing the grammar — better cost model, wider stops, side
+symmetry, drift removal — has terminated in the same place. The effect is real and it is below cost.
