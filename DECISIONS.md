@@ -10802,3 +10802,24 @@ bulls, negative in recovery).
 operator absent a regime overlay, and the one published overlay available (vol targeting) already failed at paired
 t −0.28. (2) The Sharpe *degrading* as baskets widen is independent evidence that the effect lives in the extreme
 ranks — a genuine cross-sectional signal rather than a broad drift.
+
+## D-569 (2026-08-25) — higher frequency: direction CLOSED, the effects are horizon-specific
+1.93M hourly bars across 94 liquid perps acquired to attack the binding constraint (D-565/567: recovery time scales
+with bet count). Same five literature signals, hourly lookbacks, lag-1 hour:
+
+| hold | bets/yr | fees/yr | net | GROSS (fees zeroed) |
+|---|---|---|---|---|
+| 8h | 1,095 | **98.5%** | −132.7%/yr, SR −2.22 | — |
+| 24h | 365 | **32.9%** | −63.0%/yr, SR −1.14 | **−28.6%/yr, SR −0.52** |
+| 48h | 183 | **16.4%** | −45.6%/yr, SR −0.88 | **−28.7%/yr, SR −0.55** |
+
+**The edge is negative GROSS — before a single basis point of fees.** So this is not an execution-cost problem that
+maker orders or a cheaper venue could fix: **the published effects do not operate at hourly frequency**, and plausibly
+invert there, since short-horizon reversal dominates that regime. Frequency cannot rescue holdability for these
+signals, because more bets on a negative edge is worse, not better. Time underwater stayed at 2.99 years at every hold
+— not a holdability profile, just a monotonic decline.
+**Correction:** the fee arithmetic was understated **tenfold** in an earlier script comment and in my report — it is
+32.9%/yr at a 24-hour hold, not 3.3%. The printed calculation was always right; the commentary was not.
+**What this leaves:** the holdability constraint stands unsolved. Frequency was the structural lever and it fails for
+this signal family. Any future attempt needs signals native to the hourly horizon (microstructure, funding-cycle,
+order-flow), which is a new search with its own multiple-testing cost — not a re-use of these five.
