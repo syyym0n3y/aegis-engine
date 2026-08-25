@@ -11120,8 +11120,22 @@ The edge lives in the **liquid** third; the illiquid third is strongly **negativ
 the return concentrated in the illiquid tail with ~nothing above the liquidity floor. Here the tradable third is the
 one that works — which also explains why this book was always specified as a top-N liquid universe: the all-names
 version is dead at SR 0.05 *because* the illiquid third drags it there.
-Added `LIQBAND` to the **reported** `linHold` path — the pre-existing liq/illiq books decomposed only the GBM path,
-never the number actually being quoted.
+**CORRECTION to this entry's original premise.** I wrote it claiming the crypto family had never had its liquidity
+decomposition run. That was **false** — D-534 recorded one (liquid SR 0.95, illiquid SR −0.00, pooled 1.11), which is
+exactly why the new family-level guard did *not* flag `ml`. The guard was right; I was wrong about the gap.
+What is genuinely new is the decomposition of the **reported `linHold` path** (the pre-existing liq/illiq books
+decomposed the GBM path). And it **partly contradicts** the recorded one:
+
+| tercile | D-534 recorded | D-585 re-measured |
+|---|---|---|
+| liquid | SR 0.95 | SR 0.93 ✓ replicates |
+| illiquid | SR −0.00 | **SR −1.43** ✗ |
+| pooled | SR 1.11 | **SR 0.05** ✗ |
+
+The liquid side replicates across two independent constructions. The illiquid and pooled sides do not, and the two
+runs are not the same measurement (different path, different universe definition). **Until that is explained neither
+illiquid number is citable** — recorded below as an open discrepancy, not resolved in favour of the newer number just
+because it is mine.
 **Two cautions, kept explicit:** SR 0.93 at t 2.23 is far below the deflated ceiling and is **not** a survivor — this
 clears a *capacity* question only; and "liquid tercile" here is the top third of 507 crypto perps by dollar volume,
 not liquid in the equity sense, while the uniform 9bp fee understates illiquid-name costs so −1.43 is if anything
