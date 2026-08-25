@@ -11153,3 +11153,52 @@ near the top ~50 names rather than a monotonic gradient — narrowing to the liq
 universe *reduces* Sharpe (1.31 → 0.99), and broadening to all names destroys it (0.05).
 THE UNIVERSE LAW and THE LIQUIDITY LAW interact: **a liquidity decomposition is not one number, and quoting one
 without its universe is as incomplete as quoting a Sharpe without its N.**
+
+## D-586 (2026-08-25) — the enforcement layer was broken in four ways at once
+Found by testing the guards instead of trusting them. Every item below was live while the board read "guards green".
+
+**1. Four guards had been RED since the 14:40 cycle and nothing surfaced it.** agent-output, holdability, universe
+and plumbing. The only record was six lines buried in a 1,125-line append-only log with no reader — the exact failure
+this program already wrote down once ("every one was visible in a log file that nothing was reading"), reproduced one
+level up, on the guards themselves. Fixed by `scripts/guard-status.sh`: last-cycle-only (so a fixed defect stops
+being reported), lists the offending rows, exits non-zero.
+
+**2. The paper rung had no scheduler.** `trd_paper_book` held **0 rows**, there was no `io.aegis.paper` job, and no
+log. The rung was "armed" only in the sense that the table and executor existed — it would never have marked a month
+even once the panel caught up. The executor's refusal to mark was itself *correct* (a forward test armed 2026-08-24
+has no complete month yet, and the panel only runs to 2026-06). Now on a daily launchd job with its own log, fired
+once to prove it runs.
+
+**3. Three guards carried detection defects — each found by its own self-test, not by review.**
+- *holdability* flagged `crypto-bybit-replication`, a row that explicitly records "BOOK VERDICT UNAVAILABLE" and
+  reports an IC. It was matching the inherited `UNIVERSE SENSITIVITY: … SR 0.64-1.41` boilerplate — i.e. a
+  cross-reference to *another* row's spec. Cross-references are now stripped before testing, and a fixture proves a
+  row that quotes one **and** makes its own claim is still caught.
+- *instrument* rejected the ledger's own canonical `MEASUREMENT SPACE:` stamp while accepting "placeable form".
+- *liquidity* did not recognise a capacity answer given in instrument terms rather than tercile terms.
+Both of the latter now require ≥12/≥20 characters of content after the label. The bare-label fixture initially
+**passed** because `key_metric` and `verdict` were concatenated, letting the verdict's trailing words pad the label;
+fields are now tested independently.
+
+**4. A self-test I reported as verification never ran.** Six guards read `GUARD_SELFTEST`, five read `SELFTEST`. I
+used the wrong name, got silence, and nearly recorded it as a pass. All 13 now accept either.
+
+**Two further defects caught in passing:**
+- A mistyped `SYMBOLS` filter produced "restricted to 0 of 31 requested names", and the run then read the *previous*
+  run's `.tsv` — I nearly recorded a fabricated 5.6-year/−99% measurement from a stale file (same class as D-546/547).
+  `crypto-nonlinear.ts` now **exits** on an empty panel; verified to fire on exactly that mistake.
+- My own family-wide capacity update contaminated a **pre-registered forward row** (`residual-follow-forward`, no
+  results yet) with a sibling row's numbers. Reverted — a forward-registered spec carries its registered rule and
+  nothing else.
+
+**Measurements taken to clear the reds honestly (not reworded around):**
+| row | measured |
+|---|---|
+| `perp-spot-namematched` | **2,057 days (5.6y) underwater, still underwater**, maxDD −52% |
+| `crypto-spot-oos` | 176 days underwater, maxDD −50% — short only because the window is 511 days |
+| `book` family capacity | ETF replica captures **13%** of the book (0.68%/yr vs 5.09%/yr, D-530) |
+| `D-461` capacity | SVXY median daily dollar volume **$67.0M** (501 sessions, $21.8M–$450.1M) |
+
+**Two things recorded rather than smoothed over:** `crypto-spot-oos` re-runs at SR 0.69 against the SR 0.75 on file
+(same 511 days, ~8% lower — most likely the D-580 `MINNAMES` semantics change), and D-461's SVXY series is fetched
+live from Yahoo and persisted nowhere, so it is reproducible only by re-running the script, not auditable from the DB.
