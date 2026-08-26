@@ -72,10 +72,10 @@ for (let i = 0; i < todo.length; i++) {
   }
   if (all.length < Number(K.MIN_BARS)) { thin++; }
   else {
-    // plumbing-ok: the response IS checked on the line below (`if (res && res.ok)`), the failure branch increments
-    // `failed` and logs the symbol and status, and the run additionally re-reads the table at the end to confirm the
-    // symbol count actually moved rather than trusting POST status. The guard's pattern matcher cannot see the check
-    // because the `.catch(() => null)` separates the fetch from its test.
+    // The response IS checked below (`if (res && res.ok)`): the failure branch increments `failed` and logs symbol +
+    // status, and the run re-reads the table at the end to confirm the symbol count actually moved rather than
+    // trusting POST status. The matcher cannot see it because `.catch(() => null)` separates fetch from test.
+    // plumbing-ok: audited — response checked on the following line and verified end-to-end by re-reading the table
     const res = await fetch(`${OWNED}/trd_bars_intraday`, {
       method: "POST",
       headers: { ...hdr, Prefer: "resolution=merge-duplicates,return=minimal" },
