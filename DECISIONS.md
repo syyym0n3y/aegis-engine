@@ -11779,3 +11779,28 @@ from a frozen snapshot — worse than a crash, because nothing looks wrong. `scr
 feeds against staleness budgets **matched to each source's publish interval** (a weekly dataset is not stale at three
 days; crying wolf trains everyone to ignore the alarm), plus scheduled-job registration and scorer liveness.
 All six feeds inside budget, three jobs registered, scorer marking. **16 guards green.**
+
+## D-614 (2026-08-26) — retail internalisation: the split the dark-pool specs discard, and it needs 21 years to resolve
+`trd_ats_weekly` holds 7.6M rows against 8 specs, and every one computes `shTot = atsSh + otcSh` — summing
+**institutional dark-pool blocks** and **retail wholesaler flow**, which discards exactly the information about who
+is trading. Their ratio had never been tested.
+
+| quintile (retail share) | 4w return |
+|---|---|
+| q0 lowest | 0.244% |
+| q1 | 0.756% |
+| q2 | 0.650% |
+| q3 | −0.214% |
+| **q4 highest** | **−0.611%** |
+
+**Not supported:** portfolio t 0.93 against a 2.0 bar, non-monotone. Book 5.92%/yr on 59 four-week rebalances,
+3,471 names mean breadth.
+
+**But this is underpowered, not a market null.** At this effect size, resolving it needs **273 periods ≈ 21 years**;
+the FINRA ATS series starts 2022-01 and accrues ~13 rebalances/yr. Stating the required n is the honest form of the
+answer — and it matches the earlier `darkpool-share` verdict on the same table ("span structurally short").
+
+**What survives as an observation, not a finding:** the two highest-retail quintiles are the *only* negative ones —
+the Barber-Odean direction — while the low end is flat rather than best. If anything is there it is a high-retail
+**tail** effect, not a monotone factor. A lead for re-test on a longer span. The 8 existing specs could not have seen
+it at all.
