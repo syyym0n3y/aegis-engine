@@ -11753,3 +11753,29 @@ threshold.**
 
 Also noted: `when_` is "not-supplied" on 142,269 of 142,695 rows, so pre- vs post-close timing is unknowable and
 entry was deferred to the second session — the conservative choice.
+
+## D-613 (2026-08-26) — the forward clocks were never scored, and nothing watched for data rot
+Two continuity gaps, both of which produce the *feeling* of discipline while leaving the failure in place.
+
+**1. Five forward clocks, no scorer.** D-571 built `trd_forward_rules` with an immutability trigger so a forward test
+could not be rationalised later. Five clocks run against it. **Nothing evaluated them** —
+`forward-rules-guard.ts` only checks a rule is two-sided and numeric. A rule that reaches its horizon unscored leaves
+the discretion exactly where it was.
+Built `trd_forward_marks` (append-only; immutability verified by attempting both UPDATE and DELETE) and
+`scripts/forward-scorer.ts`, which records a mark per clock per run and **goes RED when a clock matures with no
+verdict**. It deliberately does *not* invent verdicts — a generic guess would reintroduce the discretion the
+pre-registration removed. It tracks the clock and refuses to let maturity lapse.
+
+| clock | elapsed / horizon |
+|---|---|
+| fwd-hedging-pressure-flip | 0 / 728d |
+| fwd-book-p2-paper | 2 / 900d |
+| fwd-crypto-lit5 | 2 / 365d |
+| fwd-residual-follow | 2 / 183d |
+| fwd-payout-8 | 4 / 365d |
+
+**2. Silent data rot.** A stopped ingest leaves the last good rows in place, so every query keeps answering plausibly
+from a frozen snapshot — worse than a crash, because nothing looks wrong. `scripts/continuity-guard.ts` checks six
+feeds against staleness budgets **matched to each source's publish interval** (a weekly dataset is not stale at three
+days; crying wolf trains everyone to ignore the alarm), plus scheduled-job registration and scorer liveness.
+All six feeds inside budget, three jobs registered, scorer marking. **16 guards green.**

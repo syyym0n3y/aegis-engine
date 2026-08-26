@@ -330,3 +330,25 @@ matches nothing yields **UNTESTED**, never a null — `assertNonEmpty()`; (3) a 
 run — `assertFresh()`; (4) a mutation states how many rows it expects to touch — `assertTouched()`; (5) all five
 verified by breaking their inputs, and retrofitted into `crypto-nonlinear.ts` and `grammar-search-deep.ts`, the two
 scripts that produced most of the rework.
+
+## CONTINUITY: THE SYSTEM MUST OUTLIVE THE SESSION (2026-08-26, D-613)
+**A registered forward rule that is never SCORED, and a dataset that silently stops arriving, both produce the
+feeling of discipline while leaving everything they were built to prevent.**
+Origin: THE PRE-COMMITMENT LAW (D-571) built `trd_forward_rules` with an immutability trigger so a forward test
+could not be rationalised after the fact, and five clocks were registered against it — paper book, crypto lit5,
+residual-follow, the eight payout leads, the hedging-pressure flip. **Nothing scored them.** `forward-rules-guard.ts`
+verified a rule was two-sided and numeric; it never asked what the data had since done. A rule that reaches its
+horizon unscored leaves the discretion exactly where it was, because whoever reads the numbers years later still
+decides what they meant.
+The parallel failure is data: an ingest that stops leaves the last good rows in place, so every query keeps
+answering plausibly from a frozen snapshot. Months of research can be conducted against stale data with every
+number internally consistent and none of it current. This programme has already met the quiet version twice —
+a daily runner wedged mid-edit (D-566) and five guards certifying green while reading nothing (D-584).
+Rules: (1) every forward clock accumulates append-only MARKS in `trd_forward_marks` (immutable by trigger, verified
+by attempting UPDATE and DELETE); (2) a clock that MATURES without a verdict turns the scorer RED — maturity may
+never pass silently; (3) the scorer deliberately does NOT invent verdicts, because a generic guess is the discretion
+the pre-registration removed — it tracks the clock and refuses to let it lapse, a human or spec-specific script
+supplies the number; (4) every feed carries a staleness budget matched to how often the SOURCE publishes, since a
+weekly dataset is not stale at three days and crying wolf trains everyone to ignore the alarm; (5) enforced by
+`scripts/forward-scorer.ts` and `scripts/continuity-guard.ts`, both wired into the daily runner and
+`scripts/guard-status.sh` (16 guards).

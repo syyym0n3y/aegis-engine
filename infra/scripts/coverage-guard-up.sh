@@ -102,6 +102,17 @@ while true; do
   # PAPER RUNG (D-521): monthly French panel refresh (idempotent) + mark the frozen P2 book. $0 at risk, kill-switch honored.
   ONLY=szmom25,dxwml,dxff3,ni10,ind49,mom10,strev10,ltrev10,op10,inv10 deno run --allow-net --allow-env ../scripts/ingest-french-library.ts > ../data/french-refresh.log 2>&1 || true
   deno run --allow-net --allow-env ../scripts/paper-book.ts > ../data/paper-book.log 2> ../data/paper-book.err || true
+  # PRE-COMMITMENT LAW, second half (D-613): the rules table was never SCORED. A registered-but-unscored rule
+  # produces the feeling of discipline while leaving the discretion in place. This records an append-only mark per
+  # clock and goes RED when one MATURES without a verdict, so maturity cannot pass silently.
+  if ! deno run --allow-net --allow-env --allow-read --allow-run ../scripts/forward-scorer.ts; then
+    echo "$(date -u +%FT%TZ) FORWARD SCORER RED — a pre-registered clock has matured with no verdict recorded"
+  fi
+  # CONTINUITY (D-613): a stopped ingest fails silently — old rows remain and every query still answers, from a
+  # frozen snapshot. This is the check that the whole board is still being fed.
+  if ! deno run --allow-net --allow-env --allow-read --allow-run ../scripts/continuity-guard.ts; then
+    echo "$(date -u +%FT%TZ) CONTINUITY GUARD RED — data has stopped arriving or a scheduled job is gone"
+  fi
   # MECHANISM LAW (D-597): the other guards inspect a CONCLUSION already in the ledger. D-590 failed one step
   # earlier — in the move from a pooled number to a story about it — and no gate existed there. A causal claim must
   # now cite a pre-registration whose kill condition predates the data, or mark itself DESCRIPTIVE ONLY.
