@@ -11679,3 +11679,26 @@ futures crowding.
 
 Breadth was ample (242 names over 293 rebalances), so this is a genuinely weak effect rather than an underpowered
 test — which is itself the resolution: a weak crypto effect and a strong futures effect require no contradiction.
+
+## D-610 (2026-08-26) — positioning is not momentum in disguise
+The strongest remaining confound on D-607/608: speculators chase price, so high positioning could simply mark recent
+winners. That would make the whole thing a rediscovery of momentum — and would neatly explain the inverted literature
+sign. Tested with a matched book on the **same markets, dates and construction**, differing only in the ranking
+variable.
+
+| universe | corr with trailing-return book | alpha | t(alpha) | raw |
+|---|---|---|---|---|
+| financial futures | **0.160** | −9.29%/yr | **−6.71** | −10.61%/yr |
+| commodity futures | **−0.118** | −13.72%/yr | **−4.12** | −13.47%/yr |
+
+**Confound rejected.** Correlations are near zero against a 0.8 disqualifier; alpha clears |t| 2.0 in both universes
+with the same sign as raw. Positioning retains 88% of its effect in financials and *more* than its raw effect in
+commodities.
+
+Worth noting the confound was real, not imaginary: the trailing-return book is itself −8.74%/yr at t −5.90 in
+financials, so momentum genuinely operates there — it just explains almost none of positioning.
+
+D-607/608 has now survived: cross-universe replication, within-class demeaning, drop-one, empirical sign-convention
+verification, and a momentum control. **Still unaddressed and stated plainly:** price legs are index/ETF/FX-spot
+proxies rather than the futures; CFTC data is not verified point-in-time and may carry revisions; and the tradable
+direction remains the unregistered flip, on a forward clock and not claimed.

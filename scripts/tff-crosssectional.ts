@@ -24,6 +24,8 @@ const K = declareKnobs("tff-crosssectional", [
   { name: "TILTDIAG", def: "1", note: "report the average net position per market" },
   { name: "DEMEAN_CLASS", def: "", note: "1 = demean the signal WITHIN asset class before ranking" },
   { name: "EXCLUDE", def: "", note: "comma-separated symbols to drop (D-608: CHF failed the empirical sign check)" },
+  { name: "RANKBY", def: "signal", note: "signal | revN — D-610: rank by trailing N-week return instead, to test the reversal confound" },
+  { name: "DUMP", def: "", note: "path to write per-period returns for the alpha regression" },
 ]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -120,6 +122,17 @@ for (let i = 0; i < dates.length - 1; i++) {
   // D-608 CONTROL. This cross-section mixes FX pairs, an equity index and a bond proxy. Ranking those against each
   // other by dealer positioning may encode nothing more than a persistent ASSET-CLASS TILT — always short equities,
   // always long FX — which is a tilt, not a positioning effect. Demeaning within class removes any such constant.
+  // D-610 REVERSAL CONTROL. Same markets, same dates, same construction — only the ranking variable changes. Ranking
+  // by NEGATIVE trailing return makes "long the top half" mean "long the recent losers", the standard reversal book.
+  const RB = K.RANKBY;
+  if (RB.startsWith("rev")) {
+    const nWk = Number(RB.slice(3)) || 4;
+    for (const c of cands) {
+      const back = plus(dates[Math.max(0, i - nWk)], Number(K.LAG_D));
+      const pb = pxAt(c.s, back), p0b = pxAt(c.s, d0);
+      c.sig = (pb && p0b) ? -(SIGN.get(c.s) ?? 1) * (p0b / pb - 1) : 0;
+    }
+  }
   if (K.DEMEAN_CLASS === "1") {
     const cls = (x: string) => x === "^GSPC" ? "eq" : x === "TLT" ? "rates" : "fx";
     const byC = new Map<string, number[]>();
@@ -140,6 +153,7 @@ for (let i = 0; i < dates.length - 1; i++) {
 }
 assertNonEmpty("weekly observations", perWk, 200);
 
+if (K.DUMP) await Deno.writeTextFile(K.DUMP, perWk.map((x) => `${x.d}\t${x.r}`).join("\n"));
 const rs = perWk.map((x) => x.r);
 const m = mean(rs), s2 = sd(rs) || 1e-12;
 const t = m / (s2 / Math.sqrt(rs.length));

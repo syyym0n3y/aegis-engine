@@ -21,6 +21,8 @@ const K = declareKnobs("cot-crosssectional", [
   { name: "LAG_D", def: "6", note: "days from report date to tradable" },
   { name: "COST_BP", def: "10", note: "round trip per rebalance leg" },
   { name: "VOLNORM", def: "1", note: "1 = volatility-normalise weights" },
+  { name: "RANKBY", def: "signal", note: "signal | revN — D-610 reversal control" },
+  { name: "DUMP", def: "", note: "path to write per-period returns" },
 ]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -104,6 +106,16 @@ for (let i = 0; i < dates.length - 1; i++) {
     cands.push({ s, sig: w.sig, ret: p1 / p0 - 1, vol });
   }
   if (cands.length < 8) continue;
+  // D-610 REVERSAL CONTROL — identical to the TFF version; only the ranking variable changes.
+  const RB = K.RANKBY;
+  if (RB.startsWith("rev")) {
+    const nWk = Number(RB.slice(3)) || 4;
+    for (const c of cands) {
+      const back = plus(dates[Math.max(0, i - nWk)], Number(K.LAG_D));
+      const pb = pxAt(c.s, back), p0b = pxAt(c.s, d0);
+      c.sig = (pb && p0b) ? -(p0b / pb - 1) : 0;
+    }
+  }
   cands.sort((a, b) => b.sig - a.sig);
   const half = Math.floor(cands.length / 2);
   const longs = cands.slice(0, half), shorts = cands.slice(-half);
@@ -116,6 +128,7 @@ for (let i = 0; i < dates.length - 1; i++) {
 }
 assertNonEmpty("weekly observations", perWk, 200);
 
+if (K.DUMP) await Deno.writeTextFile(K.DUMP, perWk.map((x) => `${x.d}\t${x.r}`).join("\n"));
 const rs = perWk.map((x) => x.r);
 const m = mean(rs), s2 = sd(rs) || 1e-12;
 const t = m / (s2 / Math.sqrt(rs.length));
