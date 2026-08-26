@@ -11631,3 +11631,29 @@ short exactly when speculators are net long, so both encode the same state.
 
 Most likely reading, and it was pre-registered as competing explanation (b): the effect is documented largely on
 pre-2010 samples, and this one is entirely post-financialisation.
+
+## D-608 (2026-08-26) — the inverted sign replicates in financial futures: the session's strongest result, and it is negative
+D-607 found the literature direction loses in commodities. A post-hoc flip is not claimable from the same data, so
+the question is whether the same NEGATIVE sign appears in a separate universe. Identical construction (derived from
+the commodity script, so provably the same code path) on `trd_cot_tff`, 839 weeks, 2010-2026.
+
+| variant | markets | net %/yr | Sharpe | t | halves |
+|---|---|---|---|---|---|
+| hp, raw | 10 | −12.47 | −2.31 | −9.26 | −6.65 / −6.45 |
+| mm, raw | 10 | −13.05 | −2.64 | −10.59 | −7.36 / −7.69 |
+| demeaned within class | 10 | −11.32 / −11.13 | −2.24 / −2.08 | −9.00 / −8.34 | agree |
+| demeaned, CHF dropped | 9 | −11.02 / −10.61 | −2.02 / −1.88 | −8.11 / −7.57 | agree |
+
+Both pre-registered competing explanations — commodity-specific, and *the dealer role is not the producer role* —
+are **rejected**. No single market flips the sign in either universe; no market is held constantly (max |avg net| 0.49).
+
+**A sign-convention defect was found by checking rather than reasoning.** I verified empirically that speculators
+going net long a foreign-currency future coincides with that currency strengthening. Six of seven FX markets
+confirmed; **CHF came back +0.053 against a required negative** — plausibly the 2011–15 SNB euro peg making CHF
+policy-driven rather than positioning-driven. Dropping it changes little, but keeping a market whose sign cannot be
+verified is exactly the D-553 error.
+
+**What is not claimed.** The profitable direction is an unregistered post-hoc flip. It is registered **forward**
+(`fwd-hedging-pressure-flip`) with numeric two-sided rules requiring t ≥ 2.0 over 104 weeks in *both* universes
+independently — so future data decides it, not a future narration. Also stated: the price legs are index/ETF/FX-spot
+proxies rather than the actual futures, so roll yield and carry are unmodelled.
