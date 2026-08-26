@@ -27,6 +27,7 @@ const K = declareKnobs("ftd-persistence", [
   { name: "FROM_D", def: "", note: "D-618: restrict to publication dates >= this, for era stability" },
   { name: "UNTIL_D", def: "", note: "D-618: restrict to publication dates < this" },
   { name: "MIN_PERIODS", def: "20", note: "lowered only for deliberately short era windows" },
+  { name: "SIGCOMP", def: "both", note: "D-621: both = runLen x failRatio | persist = runLen only | surprise = failRatio only" },
 ]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -128,7 +129,10 @@ for (const [mkey, group] of [...byM.entries()].sort()) {
     if (!Number.isFinite(r) || Math.abs(r) > 3) continue;
     let dv = 0, k = 0;
     for (let j = i0 - 40; j < i0; j++) if (p.v[j] > 0) { dv += p.c[j] * p.v[j]; k++; }
-    cands.push({ sig: e.runLen * e.failRatio, ret: r, dvol: k ? dv / k : 0 });
+    // D-621: decompose the composite. runLen is raw persistence; failRatio is how anomalous the fail is versus the
+    // name's OWN 60-day baseline. The liquidity result (stronger in liquid names) fits the second better than the first.
+    const sigv = K.SIGCOMP === "persist" ? e.runLen : K.SIGCOMP === "surprise" ? e.failRatio : e.runLen * e.failRatio;
+    cands.push({ sig: sigv, ret: r, dvol: k ? dv / k : 0 });
   }
   if (cands.length < MINN) continue;
   let pool = cands;

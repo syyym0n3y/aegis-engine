@@ -11965,3 +11965,27 @@ histories. Stopping at that number would have "refuted" the conservative reading
 
 Honest statement: survivorship is a real limitation whose direction is near-neutral — not grounds for treating the
 measured effect as understated.
+
+## D-621 (2026-08-26) — the signal was never persistence: a degenerate variable, found by a test that could not run
+Set out to decompose `runLen × failRatio` into persistence versus surprise. The two arms returned **byte-identical**
+results (−12.71%/yr, t −6.08), which is impossible unless one component is constant.
+
+**The bug:** `run = 1` resets immediately after each push, so `run >= PERSIST` fires exactly when `run == PERSIST`.
+`runLen` is therefore always exactly 5 — verified empirically, distinct values `[5]`. It cannot rank anything.
+
+**Consequences.** The composite ranks identically to `failRatio` alone. The `persist` arm ranks every event equally,
+so its −26.07%/yr at t −5.24 is an arbitrary slicing and is **meaningless**. The pre-registered comparison has no
+verdict.
+
+**What this corrects.** Every result from D-615 through D-620 ranked on **failRatio** — how anomalous today's fails
+are versus the name's own trailing 60-day median — not on persistence. The "persistence" framing in the name, the
+hypothesis, and the Reg SHO motivation was wrong from the start.
+
+**The measurements are unaffected.** All eight controls ran on the same failRatio ranking; their verdicts stand.
+What changes is the interpretation: this is a **surprise** signal, not a duration signal.
+
+**And it resolves a tension I had been carrying unflagged since D-615b.** An effect stronger in LIQUID names
+contradicts a borrow-constraint story — constraints bind hardest in small illiquid names. It fits a surprise story
+exactly: a fail is informative precisely where the name normally settles cleanly. The Reg SHO close-out mechanism
+that motivated this entire line is **not** what is being measured. Persistence survives only as an event filter, and
+D-619 already showed varying it barely moves anything.
