@@ -12114,3 +12114,33 @@ failing — at borrow costs the backtest models as zero. THE INSTRUMENT LAW, hit
 
 Ten attacks established the effect is **real**. This one establishes it is far less **reachable** than every prior
 number implied.
+
+## W1-R1 (2026-08-27) — Week 1 reproduction #1: crypto-liquid-core partially reproduces
+Random draw for Week 1 Task 2. Reproduced with the row's own configuration (linear model, lag-1, 5d hold,
+walk-forward OOS).
+
+| universe | recorded | reproduced | drift |
+|---|---|---|---|
+| top-40 | 0.95 | 0.87 | −8% |
+| top-50 | **1.09** (peak) | 1.04 | −5% |
+| top-60 | 1.00 | **1.08** (peak) | +8% |
+| top-80 | 0.65 | 0.70 | +8% |
+| top-120 | 0.38 | **0.49** | **+29%** |
+
+**Two distinct problems.**
+
+*The numbers drift.* The OOS sample reproduces **exactly** (1,693 days), so this is not a window mismatch. Yet
+Sharpes move −8% to +29% and the peak shifts from top-50 to top-60. Likely cause: universe composition changed since
+D-541 (delisted-perp recovery and later ingests altered which contracts land in each TOPN bucket) — which is exactly
+why a universe-ranked claim is fragile to data refreshes.
+
+*The label was wrong from the start.* The row says **"SMOOTH MONOTONIC DECAY"**, but 0.95 → 1.09 → 1.00 → 0.65 → 0.38
+rises then falls. So does the reproduction. The shape is hump-shaped; "monotonic" overstated the regularity.
+
+**Survives:** Sharpe degrades as the universe widens beyond ~60 names — both runs agree.
+**Does not:** the specific values, the peak location, and the word *monotonic*. Numbers demoted to **indicative**,
+not reproducible.
+
+**A note on comparability found in passing:** this row and D-587 both read as "crypto book, universe swept, Sharpe by
+TOPN" but use different constructions — fitted walk-forward here, parameter-free full-span there. Nothing in the
+ledger flagged that. Two results wearing the same label measured different things.
