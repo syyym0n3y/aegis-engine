@@ -11607,3 +11607,27 @@ so the sample was doing the work.
 **Verdict: NOT IDENTIFIED (UNIVERSE LAW), not a clean refutation.** The *sign* of the perp-vs-spot gap is a function
 of universe construction. Recorded in advance and still binding: spot is long-only for an unlevered retail account,
 so no version of this gap was ever a tradable claim.
+
+## D-607 (2026-08-26) — hedging pressure cross-sectionally: fails the gate, and points the wrong way
+`trd_cot_disagg` held **183,951 weekly rows over 20 years against 6 tested specs**, and all 18 COT specs on the board
+were per-market *timing* overlays carrying complex beta. The literature's actual construction — rank markets against
+each other, dollar-neutral — had never been run. 16 markets, halves not quintiles (avoiding the D-443 3-vs-3 shape),
+vol-normalised, 6-day publication lag, 1,037 weeks.
+
+| signal | net %/yr | Sharpe | portfolio t | halves |
+|---|---|---|---|---|
+| hedging pressure | **−13.48** | −0.93 | **−4.16** | −2.63 / −3.24 |
+| managed money (mirror) | −13.47 | −0.90 | −4.02 | −2.44 / −3.22 |
+
+**Three separate findings.** (1) The gate is not met — |t| 4.16 is under the 5.41 ceiling, so neither direction
+clears. (2) **SIGN OUTCOME: MISSED.** Long-high-hedging-pressure is the direction the literature says should be
+*compensated* for taking the other side of hedgers, and it loses, with halves agreeing. The profitable direction is an
+unregistered flip and is **not claimable** — D-553 is the precedent where exactly that shortcut produced a false
+headline. (3) The pre-registered breadth objection is **rejected**: no single market flips the sign in the drop-one
+test, so this is a consistent 16-market effect pointing backwards, not a few idiosyncratic bets.
+
+The two variants landing at −13.48 and −13.47 is a consistency check passing, not a coincidence — producers are net
+short exactly when speculators are net long, so both encode the same state.
+
+Most likely reading, and it was pre-registered as competing explanation (b): the effect is documented largely on
+pre-2010 samples, and this one is entirely post-financialisation.
