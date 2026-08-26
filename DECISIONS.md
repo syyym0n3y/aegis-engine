@@ -11941,3 +11941,27 @@ effect is broader than the rule that motivated looking.)
 **This reveals the mechanism shape.** A one-time repricing at publication would leave cumulative drift flat beyond
 the event. Linear accumulation over three months is **slow diffusion** — information incorporated gradually. That is
 what a borrow-constraint story predicts, and what a mechanical close-out story does not.
+
+## D-620 (2026-08-26) — survivorship measured, and it corrects what I asserted
+In D-616 I stated the exclusion of delisted names "biases against this finding" — persistently-failing stocks that go
+to zero would be the worst performers, so removing them understates the effect. That was an assertion. Measured:
+
+**The universe is survivorship-biased:** 4,340 of 4,348 price series are still live at 2026-06; only 8 stop early.
+(Also: `first_date`/`last_date` are NULL on all 4,348 rows, so any logic reading them silently gets NULL.)
+
+**But the direction of the bias is near-neutral, not conservative:**
+
+| set | symbols | median fail rate | p90 |
+|---|---|---|---|
+| PRICED (used in tests) | 4,066 | 0.336 | 0.565 |
+| UNPRICED (mostly delisted) | 25,710 | 0.322 | **0.629** |
+
+Normalised by each symbol's own observed span, medians are nearly identical. Only the p90 tail of excluded names
+fails more persistently — a modest conservative tilt confined to the extreme.
+
+**A confound that would have produced the wrong answer:** the *unnormalised* comparison points the opposite way
+entirely (priced names show 571 median fail-days vs 101), purely because priced names are large-caps with longer
+histories. Stopping at that number would have "refuted" the conservative reading just as wrongly as asserting it.
+
+Honest statement: survivorship is a real limitation whose direction is near-neutral — not grounds for treating the
+measured effect as understated.
