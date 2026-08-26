@@ -11725,3 +11725,31 @@ post-financialisation decay named as competing explanation (b) back in D-607, no
 **Stated in advance:** if the last 84 weeks represent forward conditions, the registered forward clock
 `fwd-hedging-pressure-flip` will **FAIL** its promote rule. Writing that prediction down now, rather than explaining
 it after the data arrives, is the whole purpose of having registered the rule.
+
+## D-612 (2026-08-26) — PEAD by analyst coverage: not supported, and an event-level t inflated 4x
+Hong-Lim-Stein predicts drift concentrates where fewer analysts look. `n_ests` is populated on 111,388 records and had
+never been used as a conditioning variable — 9 specs against 142,695 earnings rows.
+
+| tercile | drift | t(event) | **t(portfolio)** |
+|---|---|---|---|
+| LOW coverage | 0.446% | 3.97 | **3.03** |
+| MID | 0.536% | 5.39 | 0.89 |
+| HIGH | 0.375% | 4.72 | 0.92 |
+| **all events** | 0.453% | **8.00** | **2.01** |
+
+**Not supported.** The rule required a significant spread **and** monotone ordering. Monotonicity fails under either
+statistic (MID sits below HIGH at portfolio level), so the prediction fails even though LOW does lead.
+
+**The finding worth carrying forward is the pseudo-replication factor.** PEAD overall is t(event) **8.00** and
+t(portfolio) **2.01** on identical data — a **4× inflation** from treating 74,666 overlapping 20-session holds,
+clustered in earnings season and sharing the market factor, as independent draws. Any event study on this board
+quoting an event-level t is overstating by roughly that factor.
+
+**An ambiguity in my own pre-registration, recorded rather than exploited:** it said "|t| ≥ 2.0" without specifying
+event or portfolio level — and the two differ by 4×. The event spread gives t 0.51, the paired-monthly gives t 2.09.
+That is exactly the discretion pre-registration exists to remove. Both were computed and both reported, and the
+monotonicity clause decides regardless. **Future pre-registrations must name the statistic level, not just the
+threshold.**
+
+Also noted: `when_` is "not-supplied" on 142,269 of 142,695 rows, so pre- vs post-close timing is unknowable and
+entry was deferred to the second session — the conservative choice.
