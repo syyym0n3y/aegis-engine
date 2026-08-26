@@ -12093,3 +12093,24 @@ substitution silently is precisely how a kill condition gets evaded.
 
 **Consequence:** the short-side surprise pattern stands on **two** quantities and cannot be extended to a third at
 the available cadence. D-624's generality claim is bounded by data availability, not by evidence.
+
+## D-627 (2026-08-27) — the Benchmark Law shrinks the whole line: the short leg loses money standalone
+Every headline on this line is a dollar-neutral SPREAD. A spread says nothing about whether either leg is viable.
+
+| | |
+|---|---|
+| universe mean | +0.318% / 20 sessions |
+| **high-surprise bucket raw** | **+0.100%** — it rises |
+| negative in | **43/99 periods (43%)** |
+| excess vs universe | −0.218%, t −3.12 (≈ −2.75%/yr) |
+| low-surprise bucket | +0.533% |
+
+**Relative only.** The short leg loses money standalone; the −11.10%/yr headline needs the long leg to fund it, and
+the genuine excess is roughly **a quarter** of the reported figure.
+
+**The implementation problem is pointed.** A signal built on settlement failures selects, almost by construction,
+names that are hard to borrow. The short leg must be established in exactly the securities where delivery is already
+failing — at borrow costs the backtest models as zero. THE INSTRUMENT LAW, hit for the fifth time in this programme.
+
+Ten attacks established the effect is **real**. This one establishes it is far less **reachable** than every prior
+number implied.
