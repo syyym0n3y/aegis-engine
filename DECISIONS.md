@@ -11833,3 +11833,34 @@ ordering is non-monotone, so even the shape doesn't match a clean persistence ef
 
 Recorded as a gap rather than omitted: the **liquidity decomposition was not measured** — fails concentrate in small
 caps, so this may be the liquidity tercile pattern again, and the control costs a full 10.8M-row reload.
+
+## D-616 (2026-08-26) — settlement failures are NOT short interest: the two are uncorrelated and point opposite ways
+D-615 read persistent fails as a borrow-constraint story. That assumes fails carry information beyond how heavily a
+name is shorted — and a heavily shorted name mechanically produces more failures, so my prior was that the two books
+would correlate substantially. Matched control: identical events, dates, holds and costs, only the ranking variable
+swapped.
+
+| book | mean | t |
+|---|---|---|
+| FTD persistence | −12.71%/yr | **−6.08** |
+| short interest (matched) | **+9.24%/yr** | +2.09 |
+| correlation | **0.114** | |
+| **alpha** | **−13.21%/yr** | **−6.36** |
+
+**Distinct, decisively.** Correlation 0.114 against a 0.8 disqualifier, opposite signs, and the alpha *exceeds* the
+raw effect. This separates two things routinely conflated: the **size** of a short position and the **inability to
+locate stock**. Only the second predicts here.
+
+**State of the evidence.** |t| 6.08 clears the 5.41 ceiling. The effect *strengthens* in liquid names and becomes
+perfectly monotone there — rejecting the size-proxy explanation that has killed most cross-sectional results on this
+board. It is independent of short interest.
+
+**What still prevents a claim, and it is not a technicality:** the pre-registered direction was POSITIVE (close-out
+buying) and it **lost**. The profitable version is an unregistered post-hoc flip — the exact shortcut that produced
+this session's false headline at D-553. Registered forward as `fwd-ftd-persistence-short`, with a **liquidity
+inversion** written in as a decisive kill, since the whole in-sample case rests on the effect being stronger where
+size can go.
+
+**Unresolved and stated:** the 30-day publication lag is an assumption about SEC availability, not a measured fact —
+if true availability is longer, the result weakens. Conversely, `trd_bars_deep` may exclude delisted names, which
+would remove the worst outcomes of persistently-failing stocks and bias *against* this finding.
