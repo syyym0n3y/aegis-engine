@@ -11657,3 +11657,25 @@ verified is exactly the D-553 error.
 (`fwd-hedging-pressure-flip`) with numeric two-sided rules requiring t ≥ 2.0 over 104 weeks in *both* universes
 independently — so future data decides it, not a future narration. Also stated: the price legs are index/ETF/FX-spot
 proxies rather than the actual futures, so roll yield and carry are unmodelled.
+
+## D-609 (2026-08-26) — resolving a contradiction between two of our own findings
+D-553/554 said crowded crypto longs OUTPERFORM (+48.1%/yr). D-607/608 said crowded futures longs UNDERPERFORM
+(t −4 to −10). Same concept, opposite signs — either an error in one, or a real market fact. Tested by holding the
+**construction identical** and swapping only the market.
+
+| construction | result |
+|---|---|
+| crypto, directional book (D-553) | +48.1%/yr |
+| **crypto, futures construction** | **−17.55%/yr, t −0.94**, halves −1.01 / −0.37 |
+| commodity futures (D-607) | t −4.16 |
+| financial futures (D-608) | t −7.6 to −10.6 |
+
+**Pre-registered verdict: INCONCLUSIVE** (|t| 0.94 < 2.0), recorded as unresolved rather than forced into a reading.
+
+**But the market-difference claim is unsupported.** Holding construction fixed, crypto does not come out positive —
+the point estimate is negative with both halves negative, leaning *with* the futures sign. The consequence: the
++48.1%/yr is **construction-specific** and must not be cited as evidence that crypto crowding behaves oppositely to
+futures crowding.
+
+Breadth was ample (242 names over 293 rebalances), so this is a genuinely weak effect rather than an underpowered
+test — which is itself the resolution: a weak crypto effect and a strong futures effect require no contradiction.
