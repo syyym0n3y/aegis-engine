@@ -11584,3 +11584,26 @@ a headline needing retraction.
 2.67%/yr on a delta-neutral position is real in relative terms. It fails the pre-registered 5% hurdle, rests on one
 symbol and one venue pair, and carries unmodelled cross-venue counterparty and margin-liquidation risk — so it is
 recorded as *below hurdle*, not as uneconomic.
+
+## D-605/606 (2026-08-26) — spot coverage closed, and it immediately reversed the strongest surviving crypto claim
+**D-605:** ingested every TRADING USDT spot pair from the exchange listing. **33 → 400 symbols**, 95,233 → 385,621
+bars, 0 failures, write verified by re-reading. Name-matched perp↔spot pairs **31 → 311**.
+(~19% of listed pairs return under 200 bars — the spot universe skews to recent listings, so historical spot
+cross-sections are thinner than the 484 headline implies.)
+
+**D-606:** the first use of that data retracts D-582, which had been the strongest surviving claim in the crypto
+line — that the effect is specific to perpetual futures rather than the underlying assets.
+
+| universe | perp | spot | gap |
+|---|---|---|---|
+| 31 names (original) | 0.54 | 0.11 | perp **+0.43** |
+| 311 names (pre-registered breadth) | 0.32 | 0.50 | spot **+0.18** |
+| top-50 liquid (breadth-matched) | 1.34 | 1.10 | perp **+0.24** |
+
+At the pre-registered ≥150-name breadth the gap **reverses**. The original 31 were exactly the old large-caps we
+happened to hold spot for — and D-582 itself recorded that the majors are the *weakest* part of the perp universe,
+so the sample was doing the work.
+
+**Verdict: NOT IDENTIFIED (UNIVERSE LAW), not a clean refutation.** The *sign* of the perp-vs-spot gap is a function
+of universe construction. Recorded in advance and still binding: spot is long-only for an unlevered retail account,
+so no version of this gap was ever a tradable claim.
