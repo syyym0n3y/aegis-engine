@@ -11910,3 +11910,34 @@ monotone decay and I predicted the forward clock would fail. Here the forward cl
 **Unchanged and still binding:** the pre-registered direction LOST, so the profitable version is a post-hoc flip
 under the SIGN LAW. The recent-era t of −4.88 is **below** the 5.41 ceiling even though the full-sample −6.08 clears
 it. And the ceiling-clearing depends on the 30-day lag assumption (D-617).
+
+## D-619 (2026-08-26) — specification sweep: neither hand-picked parameter is load-bearing, and the shape is slow diffusion
+Two parameters were mine by choice: the persistence threshold (5 consecutive fail days) and the hold horizon
+(20 sessions). Both swept.
+
+**Persistence threshold — effect size invariant:**
+
+| threshold | book | t | events |
+|---|---|---|---|
+| ≥3d | −12.25%/yr | −7.72 | 889,830 |
+| ≥5d | −12.71%/yr | −6.08 | 376,597 |
+| ≥8d | −12.22%/yr | −5.25 | 174,370 |
+| ≥12d | −17.19%/yr | −4.63 | 88,309 |
+
+Magnitude is flat across 3/5/8 and strengthens at 12; the declining t tracks the collapsing event count, not a
+weakening effect. A fitted parameter spikes at its chosen value and collapses either side — this does the opposite.
+(5 had a regulatory basis: Reg SHO keys on 5 consecutive settlement days. Invariance across other cuts means the
+effect is broader than the rule that motivated looking.)
+
+**Hold horizon — cumulative drift accumulates ~linearly:**
+
+| hold | book | t | cumulative drift/event |
+|---|---|---|---|
+| 10d | −7.98%/yr | −6.40 | −0.32% |
+| 20d | −12.71%/yr | −6.08 | −1.01% |
+| 40d | −15.26%/yr | −5.89 | −2.42% |
+| 60d | −14.82%/yr | −4.72 | −3.53% |
+
+**This reveals the mechanism shape.** A one-time repricing at publication would leave cumulative drift flat beyond
+the event. Linear accumulation over three months is **slow diffusion** — information incorporated gradually. That is
+what a borrow-constraint story predicts, and what a mechanical close-out story does not.
