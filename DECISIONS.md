@@ -11989,3 +11989,24 @@ contradicts a borrow-constraint story — constraints bind hardest in small illi
 exactly: a fail is informative precisely where the name normally settles cleanly. The Reg SHO close-out mechanism
 that motivated this entire line is **not** what is being measured. Persistence survives only as an event filter, and
 D-619 already showed varying it barely moves anything.
+
+## D-622 (2026-08-26) — the persistence filter is unnecessary too: what the finding actually is
+| filter | book | t | events | breadth |
+|---|---|---|---|---|
+| **≥1d (none)** | **−9.69%/yr** | **−7.84** | 2,388,308 | 11,602 |
+| ≥2d | −11.10%/yr | **−8.84** | 1,952,049 | 9,574 |
+| ≥5d | −12.71%/yr | −6.08 | 376,597 | 1,847 |
+
+With no filter at all the effect keeps **76%** of its magnitude (bar: 70%) at *higher* significance and **6× the
+breadth**. Both pre-registered alternatives fail: the filter is not selecting a special population, and this is not a
+small-denominator artifact — that would show as inflated magnitude on degraded breadth, the opposite of what occurred.
+
+**What the finding actually is, after D-621 and D-622:** *a stock whose settlement failures spike relative to its own
+trailing 60-day median subsequently underperforms* — 2.4M events, 11,602 names, t −7.84.
+
+No Reg SHO mechanism. No persistence requirement. No close-out story. Those were my framing across six rounds, and
+the data never supported any of them. Filtering on persistence *concentrates* the effect — a useful practical note —
+but is not what generates it.
+
+**Unchanged:** the pre-registered direction lost, so the profitable version is a post-hoc flip under the SIGN LAW.
+Nothing here is claimable; the forward clock remains the only route to a verdict.
