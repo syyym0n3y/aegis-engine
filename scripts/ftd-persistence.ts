@@ -28,6 +28,8 @@ const K = declareKnobs("ftd-persistence", [
   { name: "UNTIL_D", def: "", note: "D-618: restrict to publication dates < this" },
   { name: "MIN_PERIODS", def: "20", note: "lowered only for deliberately short era windows" },
   { name: "SIGCOMP", def: "both", note: "D-621: both = runLen x failRatio | persist = runLen only | surprise = failRatio only" },
+  { name: "VOLCTRL", def: "", note: "D-623: 1 = rank by VOLUME spike vs own 60d median instead of fails (matched control)" },
+  { name: "DUMP", def: "", note: "path to write per-period returns" },
 ]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -131,7 +133,18 @@ for (const [mkey, group] of [...byM.entries()].sort()) {
     for (let j = i0 - 40; j < i0; j++) if (p.v[j] > 0) { dv += p.c[j] * p.v[j]; k++; }
     // D-621: decompose the composite. runLen is raw persistence; failRatio is how anomalous the fail is versus the
     // name's OWN 60-day baseline. The liquidity result (stronger in liquid names) fits the second better than the first.
-    const sigv = K.SIGCOMP === "persist" ? e.runLen : K.SIGCOMP === "surprise" ? e.failRatio : e.runLen * e.failRatio;
+    let sigv = K.SIGCOMP === "persist" ? e.runLen : K.SIGCOMP === "surprise" ? e.failRatio : e.runLen * e.failRatio;
+    if (K.VOLCTRL === "1") {
+      // D-623 MATCHED CONTROL: identical events, dates, holds and costs — rank on today's VOLUME relative to the
+      // name's own trailing 60-session median, the exact analogue of failRatio computed on volume instead of fails.
+      const vw: number[] = [];
+      for (let j = Math.max(0, i0 - 60); j < i0; j++) if (p.v[j] > 0) vw.push(p.v[j]);
+      if (vw.length < 20) continue;
+      vw.sort((a, b2) => a - b2);
+      const vmed = vw[Math.floor(vw.length / 2)];
+      const vnow = p.v[i0] > 0 ? p.v[i0] : vmed;
+      sigv = vmed > 0 ? vnow / vmed : 1;
+    }
     cands.push({ sig: sigv, ret: r, dvol: k ? dv / k : 0 });
   }
   if (cands.length < MINN) continue;
@@ -149,6 +162,10 @@ for (const [mkey, group] of [...byM.entries()].sort()) {
   breadth += pool.length; periods++;
 }
 assertNonEmpty("monthly periods", periodRets, Number(K.MIN_PERIODS));
+if (K.DUMP) {
+  const dk = [...byM.keys()].sort().filter((m2) => (!K.FROM_D || m2 >= K.FROM_D.slice(0, 7)) && (!K.UNTIL_D || m2 < K.UNTIL_D.slice(0, 7)));
+  await Deno.writeTextFile(K.DUMP, periodRets.map((r, i) => `${dk[i] ?? i}\t${r}`).join("\n"));
+}
 
 const m = mean(periodRets), s2 = sd(periodRets) || 1e-12;
 const tPort = m / (s2 / Math.sqrt(periodRets.length));

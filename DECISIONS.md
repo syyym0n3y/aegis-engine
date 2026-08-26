@@ -12010,3 +12010,24 @@ but is not what generates it.
 
 **Unchanged:** the pre-registered direction lost, so the profitable version is a post-hoc flip under the SIGN LAW.
 Nothing here is claimable; the forward clock remains the only route to a verdict.
+
+## D-623 (2026-08-26) — settlement fails are orthogonal to volume spikes
+The confound most likely to collapse the whole line: settlement failures are mechanically tied to trading volume, and
+volume spikes versus a name's own baseline are a documented attention proxy. If `failRatio` were a noisy version of
+that, D-615 onward would be a rediscovery of the volume-shock literature — measurable from price bars alone, without
+10.8M rows of SEC data.
+
+| book | mean | t | breadth |
+|---|---|---|---|
+| fails (surprise) | −11.10%/yr | **−8.84** | 9,574 |
+| **volume (matched)** | **+0.42%/yr** | **0.13** | 9,539 |
+| correlation | **0.023** | | |
+| **alpha** | **−11.10%/yr** | **−8.84** | |
+
+Beta is 0.009, so the alpha equals the raw effect to two decimals. **Rejected.**
+
+**Caveat stated rather than omitted:** a volume book at t 0.13 might mean the attention effect is absent in this
+sample, or that this particular volume measure is weak — not that volume is irrelevant generally. What the test
+establishes is the within-construction comparison: identical machinery reads fails at −8.84 and volume at 0.13.
+
+Nine attacks survived. The SIGN LAW still binds; nothing is claimable.
