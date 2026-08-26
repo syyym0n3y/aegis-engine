@@ -12075,3 +12075,21 @@ prove misallocated because the cheaper dataset dominated. Neither dataset is red
 **What it does not:** a combined book. Combination is a new specification that raises the deflation ceiling (D-558),
 and both components remain unclaimable regardless — the pre-registered direction LOST in each case, so the profitable
 version is a post-hoc flip under the SIGN LAW.
+
+## D-626 (2026-08-26) — short-interest surprise: UNTESTED, decided before the numbers
+Surprise-vs-own-baseline predicts underperformance for fails (t −8.84) and short volume (t −6.34) but not generic
+volume (t 0.13) — a short-side-specific structure. Short interest is the third short-side quantity held (3.9M rows,
+48,759 symbols), and D-616 tested it only as a *level*, where it pointed the opposite way (+9.24%/yr).
+
+**The sparsity check ran first, as the kill condition required, and it fails.** Short interest is reported **23.8
+times per symbol-year** (twice monthly). A 60-day baseline holds ~4 observations against a ~6 minimum.
+
+**No matched construction exists.** Matching on *time* gives 4 noisy observations. Matching on *observation count*
+(60, as the daily series use) requires a ~2.5-year window — an economically different signal, not the same one.
+
+**Verdict: UNTESTED, not null.** The data exists but cannot support the construction, so this is a statement about
+our data, not the market. Widening the window would be a *different* test needing its own registration — making that
+substitution silently is precisely how a kill condition gets evaded.
+
+**Consequence:** the short-side surprise pattern stands on **two** quantities and cannot be extended to a third at
+the available cadence. D-624's generality claim is bounded by data availability, not by evidence.
