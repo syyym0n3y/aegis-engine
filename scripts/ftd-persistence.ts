@@ -24,6 +24,9 @@ const K = declareKnobs("ftd-persistence", [
   { name: "BUCKETS", def: "4" },
   { name: "LIQUID_ONLY", def: "", note: "1 = liquid half, the confound control" },
   { name: "MIN_NAMES", def: "50", note: "per rebalance" },
+  { name: "FROM_D", def: "", note: "D-618: restrict to publication dates >= this, for era stability" },
+  { name: "UNTIL_D", def: "", note: "D-618: restrict to publication dates < this" },
+  { name: "MIN_PERIODS", def: "20", note: "lowered only for deliberately short era windows" },
 ]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -113,7 +116,9 @@ for (const e of evs) (byM.get(e.pubD.slice(0, 7)) ?? byM.set(e.pubD.slice(0, 7),
 const periodRets: number[] = [];
 const bucketRets: number[][] = Array.from({ length: NB }, () => []);
 let breadth = 0, periods = 0;
-for (const [, group] of [...byM.entries()].sort()) {
+for (const [mkey, group] of [...byM.entries()].sort()) {
+  if (K.FROM_D && mkey < K.FROM_D.slice(0, 7)) continue;
+  if (K.UNTIL_D && mkey >= K.UNTIL_D.slice(0, 7)) continue;
   const cands: { sig: number; ret: number; dvol: number }[] = [];
   for (const e of group) {
     const p = px.get(e.s); if (!p) continue;
@@ -139,7 +144,7 @@ for (const [, group] of [...byM.entries()].sort()) {
   periodRets.push(mean(pool.slice(-per).map((x) => x.ret)) - mean(pool.slice(0, per).map((x) => x.ret)) - 2 * COST);
   breadth += pool.length; periods++;
 }
-assertNonEmpty("monthly periods", periodRets, 20);
+assertNonEmpty("monthly periods", periodRets, Number(K.MIN_PERIODS));
 
 const m = mean(periodRets), s2 = sd(periodRets) || 1e-12;
 const tPort = m / (s2 / Math.sqrt(periodRets.length));

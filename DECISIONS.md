@@ -11889,3 +11889,24 @@ programme has repeatedly watched mechanism reasoning fail where measurement did 
 
 **Honest position: the effect is robust to the assumption; the claim that it clears the deflated ceiling is not.**
 Recorded against the forward rule so the promote test cannot later lean on the most favourable lag.
+
+## D-618 (2026-08-26) — era stability: the effect is strongest in the MOST RECENT period, and I called it wrong first
+| era | book | t | months |
+|---|---|---|---|
+| 2018–2020 | −8.15%/yr | −3.62 | 23 |
+| 2020–2022 | −13.58%/yr | −2.56 | 22 |
+| 2022–2024 | −4.62%/yr | −1.64 | 24 |
+| **2024–2026** | **−22.05%/yr** | **−4.88** | 30 |
+
+**An error of mine, recorded.** After three windows (−3.62, −2.56, −1.64) I stated the picture had turned and
+predicted this would follow D-608 into decay. The fourth window is the strongest in the sample. Extrapolating a trend
+from three points was premature, and the fourth broke it.
+
+**What the full picture shows:** the sign is negative in all four eras across 2018–2026; the effect **predates the
+meme-stock period**, so it is not a retail-attention artifact; it survives the post-meme normalisation; and it is
+**strongest in the most recent 30 months**. That is the opposite of D-608, where recency testing found genuine
+monotone decay and I predicted the forward clock would fail. Here the forward clock is worth its wait.
+
+**Unchanged and still binding:** the pre-registered direction LOST, so the profitable version is a post-hoc flip
+under the SIGN LAW. The recent-era t of −4.88 is **below** the 5.41 ceiling even though the full-sample −6.08 clears
+it. And the ceiling-clearing depends on the 30-day lag assumption (D-617).
