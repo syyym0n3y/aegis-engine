@@ -12197,3 +12197,28 @@ monthly including exchange fees.
 measures a state that no longer exists, and the correct test is whether its **ratio** survives, not its dollars.
 Rows of this kind should declare which numbers are structural and which are point-in-time. This one did not — read
 cold, it invites treating $7,621 as a constant.
+
+## W1 (2026-08-27) — Week 1 complete: close the record
+**Task 1 — coverage.** 50 live rows audited, 11 lacked coverage statements, all written from their own methods.
+Several exposed limits the rows had obscured: D-435's effective sample is **66 non-overlapping windows**, not 3,954
+points; D-461 is a **single instrument**; `vrp-implementability` is a **one-expiry snapshot**; D-463 measures
+*parameter rank stability*, not returns.
+
+**Task 2 — three random reproductions, three different failure modes.**
+
+| claim | verdict |
+|---|---|
+| `crypto-liquid-core` | **PARTIAL** — sample matches exactly (1,693 days) but Sharpes drift −8%/+29%, peak moves, and "MONOTONIC" was never accurate |
+| `force-upgrade-9f` | **EVIDENCE ABSENT** — claims a paired comparison; 6f/9f rows occupy disjoint eras with zero overlap. Independent re-run confirms direction, weaker (t 2.83 vs 4.24, 16/27 instruments) |
+| `vrp-implementability` | **STRUCTURALLY REPRODUCED** — spread 2.8% of premium vs 2.6%; dollars irreproducible by construction |
+
+**Task 3 — unattended operation.** Forced a full cycle: every guard executes including mechanism, continuity and
+forward-scorer; **zero RED**; status summary prints last. The 30-day clock starts from a verified baseline.
+
+**The common defect the reproductions exposed:** every guard inspects what a row *says*, never whether its evidence
+still exists or ever did.
+
+**Two fixes shipped.** Diagnostic force counts are now read-only — an `NFORCES=6` run overwrote a production date and
+was repaired only by the ordering of the next run. And derived scripts now carry a divergence warning, after
+`shortvol-surprise` silently lacked a diagnostic added to its parent and produced a run that looked complete while
+answering a different question.

@@ -1,5 +1,9 @@
 #!/usr/bin/env -S deno run --allow-net --allow-env
-// shortvol-surprise.ts (D-624) — the only MECHANICAL forced-flow event in any dataset we hold.
+// shortvol-surprise.ts (D-624)
+// MAINTENANCE NOTE: this file was DERIVED from ftd-persistence.ts. Derived scripts do not inherit later fixes to
+// their source — the D-627 absolute diagnostic was added to the parent and silently missing here, which produced a
+// run that looked complete and answered a different question than intended. Any fix to the parent must be checked
+// against this file. — the only MECHANICAL forced-flow event in any dataset we hold.
 //
 // Everything tested on this board is a statistical tendency: a signal that has historically preceded returns.
 // Reg SHO close-out is different in kind — once a security persists on the threshold list, brokers are REQUIRED to
@@ -179,6 +183,22 @@ console.log(`    ${HOLD}-session return by persistence bucket (b0 = least persis
 for (let q = 0; q < NB; q++) console.log(`      b${q}  ${(mean(bucketRets[q]) * 100).toFixed(3)}%`);
 const monotone = bucketRets.every((_, q) => q === 0 || mean(bucketRets[q]) >= mean(bucketRets[q - 1]));
 console.log(`    monotone INCREASING in persistence (the prediction): ${monotone ? "YES" : "NO"}`);
+// D-627 ABSOLUTE DIAGNOSTIC — THE BENCHMARK LAW. A long-short spread says nothing about whether either LEG is
+// viable alone. If every bucket earns a positive return, the short leg loses money standalone and the book requires
+// the long leg to fund it. Report the extreme bucket against the cross-sectional mean of the SAME periods.
+{
+  const universe = bucketRets[0].map((_, i) => mean(bucketRets.map((b2) => b2[i])));
+  const hi = bucketRets[NB - 1], lo = bucketRets[0];
+  const excessHi = hi.map((v, i) => v - universe[i]);
+  const negPeriods = hi.filter((v) => v < 0).length;
+  const tEx = mean(excessHi) / ((sd(excessHi) / Math.sqrt(excessHi.length)) || 1e-12);
+  console.log(`\n    ABSOLUTE DIAGNOSTIC (Benchmark Law):`);
+  console.log(`      universe mean (all buckets)      ${(mean(universe) * 100).toFixed(3)}% per ${HOLD} sessions`);
+  console.log(`      HIGH-surprise bucket raw         ${(mean(hi) * 100).toFixed(3)}%   negative in ${negPeriods}/${hi.length} periods (${(100 * negPeriods / hi.length).toFixed(0)}%)`);
+  console.log(`      HIGH-surprise EXCESS vs universe ${(mean(excessHi) * 100).toFixed(3)}%   t ${tEx.toFixed(2)}`);
+  console.log(`      LOW-surprise bucket raw          ${(mean(lo) * 100).toFixed(3)}%`);
+  console.log(`      => short leg standalone is ${mean(hi) > 0 ? "LOSS-MAKING (bucket rises); the book needs the long leg" : "profitable standalone"}`);
+}
 console.log(`\n    BOOK long-most-persistent: ${(m * 12 * 100).toFixed(2)}%/yr  PORTFOLIO t ${tPort.toFixed(2)}  [bar: t >= 2.0, POSITIVE]`);
 const supported = tPort >= 2.0 && monotone;
 console.log(`\n    ${supported ? "SUPPORTED — close-out pressure is still capturable at publication." :
