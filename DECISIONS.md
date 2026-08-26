@@ -12175,3 +12175,25 @@ directly comparable.
 **A defect fixed in passing.** Running `NFORCES=6` wrote 6-factor rows over a *production* date; only the ordering of
 the next run repaired it. Diagnostic force counts are now **read-only by default** — had the runs been reversed, a
 6-factor row would sit inside a 9-factor history with nothing to flag it.
+
+## W1-R3 (2026-08-27) — Week 1 reproduction #3: a snapshot claim, and why that is its own category
+`vrp-implementability` records a **live Deribit order-book snapshot**. Re-measured today:
+
+| field | recorded | today | drift |
+|---|---|---|---|
+| instruments | 966 | 960 | −0.6% |
+| nearest-expiry OI (BTC) | 132,300 | 135,912 | +2.7% |
+| ATM straddle premium | $7,621 | $7,086 | **−7.0%** |
+| premium % of spot | 9.47% | 8.82% | −6.9% |
+| round-trip spread | $201 | $201 | 0.0% |
+| **spread % of premium** | **2.6%** | **2.8%** | **+7.7%** |
+
+**Structurally reproduced; point-in-time values inherently irreproducible — and that distinction is the finding.**
+The dollar figures can never reproduce: it is a different book on a different day. What survives re-measurement is
+the *structural ratio* — spread at 2.8% of premium against 2.6% recorded, total round-trip cost 3.5% of premium
+monthly including exchange fees.
+
+**Why this is a separate category.** A snapshot claim is not unreproducible the way a drifting backtest is. It
+measures a state that no longer exists, and the correct test is whether its **ratio** survives, not its dollars.
+Rows of this kind should declare which numbers are structural and which are point-in-time. This one did not — read
+cold, it invites treating $7,621 as a constant.
