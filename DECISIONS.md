@@ -11804,3 +11804,32 @@ answer — and it matches the earlier `darkpool-share` verdict on the same table
 the Barber-Odean direction — while the low end is flat rather than best. If anything is there it is a high-retail
 **tail** effect, not a monotone factor. A lead for re-test on a longer span. The 8 existing specs could not have seen
 it at all.
+
+## D-615 (2026-08-26) — Reg SHO close-out: the mechanism is real, the edge is not
+Everything else on this board is a statistical tendency. Reg SHO is different in kind: brokers are **legally required**
+to buy in persistent fails after 13 settlement days. Compelled flow on a deadline was the best structural candidate
+available — and `trd_ftd` (10.8M rows, 39,316 symbols, 2018-2026) was only ever used as a *level* signal.
+
+Returns measured from **publication** (settle + 30d), never settle date. 376,597 events, 99 monthly periods,
+3,692 mean breadth.
+
+| bucket (persistence) | 20-session return |
+|---|---|
+| b0 least | +0.086% |
+| b1 | −0.264% |
+| b2 | −0.084% |
+| b3 most | −0.140% |
+
+**SIGN MISS.** Book long-most-persistent: −8.83%/yr, portfolio **t −4.97**, non-monotone.
+
+**My pre-registered expectation was wrong, informatively.** I named (a) publication timing as the likely killer —
+close-out completes before the data is public. That is *not* what happened: persistent fails do carry information at
+publication, but the sign is **negative**. Explanation (b) wins: a name whose fails persist is one where shorts
+cannot locate borrow, and they are constrained precisely because the short thesis is right.
+
+**Nothing is claimed, for three independent reasons:** the pre-registered direction loses (SIGN LAW — the profitable
+version is an unregistered flip); |t| 4.97 is **below the 5.41 ceiling**, so neither direction clears; and the
+ordering is non-monotone, so even the shape doesn't match a clean persistence effect.
+
+Recorded as a gap rather than omitted: the **liquidity decomposition was not measured** — fails concentrate in small
+caps, so this may be the liquidity tercile pattern again, and the control costs a full 10.8M-row reload.
