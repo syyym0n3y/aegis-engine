@@ -77,7 +77,7 @@ for (let i = 0; i < todo.length; i++) {
     // trusting POST status. The matcher cannot see it because `.catch(() => null)` separates fetch from test.
     // plumbing-ok: audited — response checked on the following line and verified end-to-end by re-reading the table
     const res = await fetch(`${OWNED}/trd_bars_intraday`, {
-      method: "POST",
+      method: "POST",   // plumbing-ok: audited — `if (res && res.ok)` below, plus an end-to-end re-read of the table
       headers: { ...hdr, Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify({ symbol: sym, tf: "1dSPOT", bars: all, n_bars: all.length }),
     }).catch(() => null);
