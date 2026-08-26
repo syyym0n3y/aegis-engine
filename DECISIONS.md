@@ -12053,3 +12053,25 @@ interchangeable one.
 **The necessary follow-up, stated rather than assumed:** whether the two books are *independent* is untested. If
 orthogonal they are additive and the underlying event has multiple observable faces. If correlated they are one
 signal — and the SEC fails data adds nothing over FINRA short volume, which is cheaper and six times broader.
+
+## D-625 (2026-08-26) — the two surprise books are independent, in both directions
+If short-volume surprise subsumed fails surprise, the SEC dataset (10.8M rows, 9,574 names) would be redundant
+against FINRA short volume (19.2M rows, 29,886 names) — cheaper, six times broader, daily. Tested both directions,
+because one-sided survival means subsumption, not independence.
+
+| | raw | alpha controlling for the other |
+|---|---|---|
+| fails surprise | −11.47%/yr, t −8.46 | **−11.85%/yr, t −8.75** |
+| short-volume surprise | −5.50%/yr, t −6.94 | **−5.77%/yr, t −7.29** |
+| correlation | **−0.041** | |
+
+Both alphas **exceed** their raw effects (betas −0.070 and −0.024, i.e. slightly negative). Neither explains any part
+of the other. They measure different underlying events that happen to share a sign.
+
+**This is the opposite of the risk I flagged in advance** — that the evening spent attacking SEC fails data would
+prove misallocated because the cheaper dataset dominated. Neither dataset is redundant.
+
+**What it licenses:** treating the two as additive rather than duplicative.
+**What it does not:** a combined book. Combination is a new specification that raises the deflation ceiling (D-558),
+and both components remain unclaimable regardless — the pre-registered direction LOST in each case, so the profitable
+version is a post-hoc flip under the SIGN LAW.
