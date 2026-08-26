@@ -11702,3 +11702,26 @@ D-607/608 has now survived: cross-universe replication, within-class demeaning, 
 verification, and a momentum control. **Still unaddressed and stated plainly:** price legs are index/ETF/FX-spot
 proxies rather than the futures; CFTC data is not verified point-in-time and may carry revisions; and the tradable
 direction remains the unregistered flip, on a forward clock and not claimed.
+
+## D-611 (2026-08-26) — point-in-time cleared, but the effect is decaying
+Two attacks on the last path by which D-607/608/610 could be an artifact.
+
+**1. Revisions — ruled out by direct measurement.** The ingest uses `ON CONFLICT DO NOTHING`, so stored rows are
+whatever the CFTC archive said at ingest time and could in principle carry revisions. Re-downloaded the 2015 and 2020
+annual archives and diffed against storage: **zero differences across 4,193 rows**. That bounds the revision rate
+under **0.024%** — a look-ahead present in fewer than 1 in 4,000 observations cannot produce t −7.6.
+
+**2. Recency — and this is the finding that matters.**
+
+| window | weeks | Sharpe | t | expected t if stable |
+|---|---|---|---|---|
+| full sample | 839 | −1.88 | −7.57 | — |
+| 2023+ | 189 | −1.50 | −2.86 | −3.59 |
+| **2025+** | 84 | **−0.72** | **−0.92** | −2.41 |
+
+The effect **decays**, and the most recent 84 weeks are not significant. This is consistent with the
+post-financialisation decay named as competing explanation (b) back in D-607, now measured rather than speculated.
+
+**Stated in advance:** if the last 84 weeks represent forward conditions, the registered forward clock
+`fwd-hedging-pressure-flip` will **FAIL** its promote rule. Writing that prediction down now, rather than explaining
+it after the data arrives, is the whole purpose of having registered the rule.

@@ -26,6 +26,8 @@ const K = declareKnobs("tff-crosssectional", [
   { name: "EXCLUDE", def: "", note: "comma-separated symbols to drop (D-608: CHF failed the empirical sign check)" },
   { name: "RANKBY", def: "signal", note: "signal | revN — D-610: rank by trailing N-week return instead, to test the reversal confound" },
   { name: "DUMP", def: "", note: "path to write per-period returns for the alpha regression" },
+  { name: "FROM_D", def: "", note: "D-611: restrict to report dates >= this, to test recent (least-revised) data" },
+  { name: "MIN_OBS", def: "200", note: "floor on weekly observations; lowered only for the deliberately short recent-window test" },
 ]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -99,7 +101,7 @@ console.log(`\n==> TFF CROSS-SECTIONAL (financial futures) — signal=${K.SIGNAL
 
 // Weekly rebalance: rank markets by signal, long the top HALF, short the bottom half (not quintiles — at 16-24
 // markets quintiles would be 3-5 per side, the D-443 shape).
-const dates = [...new Set(syms.flatMap((s) => cot.get(s)!.map((w) => w.d)))].sort();
+const dates = [...new Set(syms.flatMap((s) => cot.get(s)!.map((w) => w.d)))].sort().filter((d) => !K.FROM_D || d >= K.FROM_D);
 const pxAt = (s: string, d: string) => { const a = px.get(s)!; let lo = 0, hi = a.length - 1, best = -1;
   while (lo <= hi) { const m = (lo + hi) >> 1; if (a[m].d <= d) { best = m; lo = m + 1; } else hi = m - 1; } return best >= 0 ? a[best].c : null; };
 
@@ -151,7 +153,7 @@ for (let i = 0; i < dates.length - 1; i++) {
   for (const c of shorts) { const x = -(wt(c) / gs) * c.ret; r += x; (contrib.get(c.s) ?? contrib.set(c.s, []).get(c.s)!).push(x); (netPos.get(c.s) ?? netPos.set(c.s, []).get(c.s)!).push(-1); }
   perWk.push({ d: dates[i], r: r - 2 * Number(K.COST_BP) / 1e4, n: cands.length });
 }
-assertNonEmpty("weekly observations", perWk, 200);
+assertNonEmpty("weekly observations", perWk, Number(K.MIN_OBS));
 
 if (K.DUMP) await Deno.writeTextFile(K.DUMP, perWk.map((x) => `${x.d}\t${x.r}`).join("\n"));
 const rs = perWk.map((x) => x.r);
