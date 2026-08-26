@@ -12031,3 +12031,25 @@ sample, or that this particular volume measure is weak — not that volume is ir
 establishes is the within-construction comparison: identical machinery reads fails at −8.84 and volume at 0.13.
 
 Nine attacks survived. The SIGN LAW still binds; nothing is claimable.
+
+## D-624 (2026-08-26) — the surprise structure generalises: the third reframing of the same finding
+| book | mean | t | events | breadth |
+|---|---|---|---|---|
+| fails surprise | −11.10%/yr | −8.84 | 2.0M | 9,574 |
+| **short-volume surprise** | **−5.14%/yr** | **−6.34** | 5.8M | 29,886 |
+
+Bar for specificity was |t| < 3.0. Short-volume surprise came in at **6.34**, same sign. **Specificity retracted.**
+
+A quantity spiking against its own trailing baseline predicts underperformance whether that quantity is settlement
+fails or short-volume ratio. The line began as a Reg SHO close-out mechanism (D-615), lost that at D-621 when the
+ranking variable proved constant, lost the persistence filter at D-622, and now loses **settlement itself** as the
+defining feature.
+
+**What remains true and useful:** fails are roughly **twice as strong** as short volume on identical machinery
+(−11.10 vs −5.14), with a graded bucket ordering against short volume's nearly flat one (0.866/0.949/0.912/0.938 —
+the effect sits in the extremes). Fails are the better proxy for whatever the underlying event is, not an
+interchangeable one.
+
+**The necessary follow-up, stated rather than assumed:** whether the two books are *independent* is untested. If
+orthogonal they are additive and the underlying event has multiple observable faces. If correlated they are one
+signal — and the SEC fails data adds nothing over FINRA short volume, which is cheaper and six times broader.
