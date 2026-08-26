@@ -12144,3 +12144,34 @@ not reproducible.
 **A note on comparability found in passing:** this row and D-587 both read as "crypto book, universe swept, Sharpe by
 TOPN" but use different constructions — fitted walk-forward here, parameter-free full-span there. Nothing in the
 ledger flagged that. Two results wearing the same label measured different things.
+
+## W1-R2 (2026-08-27) — Week 1 reproduction #2: the stored evidence cannot support the stated method
+`force-upgrade-9f` claims a **"paired per-instrument comparison on identical days."** No such pairing exists:
+
+| set | rows | symbols | span |
+|---|---|---|---|
+| 6-factor | 974 | 25 | 2004-09 → **2008-01** |
+| 9-factor | 5,872 | 27 | **2008-02** → 2026-08 |
+| **overlap** | **0 dates** | | |
+
+HYG (the credit leg) post-dates the early sample, so the engine fell back to six forces before 2008. Any 6-vs-9
+contrast drawn from stored rows compares **pre-GFC against GFC-and-after** — an era difference wearing a model label.
+Whether D-526 computed matched pairs in memory or contrasted the stored sets **cannot be determined from the ledger**,
+and that ambiguity is the defect: a claim asserting paired evidence should leave paired evidence behind.
+
+**Independent re-run on genuinely matched data** (27 instruments, identical date, force count made selectable):
+
+| | recorded | reproduced |
+|---|---|---|
+| mean adj-R2 | 0.380 → 0.430 | 0.5037 → 0.5408 |
+| improvement | +0.050 | **+0.037** |
+| paired t | **4.24** | **2.83** |
+| improved on | — | **16/27 (59%)** |
+
+Direction confirmed, magnitude ~26% smaller, and the gain is driven by a subset rather than being general. My test is
+one date across instruments against a claimed full daily history, so lower power is expected and the t values are not
+directly comparable.
+
+**A defect fixed in passing.** Running `NFORCES=6` wrote 6-factor rows over a *production* date; only the ordering of
+the next run repaired it. Diagnostic force counts are now **read-only by default** — had the runs been reversed, a
+6-factor row would sit inside a 9-factor history with nothing to flag it.

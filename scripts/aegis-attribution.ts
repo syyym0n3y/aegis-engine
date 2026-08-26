@@ -18,8 +18,19 @@ const load=async(sym:string)=>{
 // whose loadings named a growth-vs-financials axis; CREDIT could not even be tested because HYG/LQD were absent from
 // the universe. Adding CREDIT (HYG-IEF), STYLE (IWF-IWD) and SIZE (IWM-SPY) raised mean adj-R2 0.380 -> 0.430
 // (paired t 4.24) and collapsed residual PC1 to 8.3%. Both predictions were pre-registered before the test.
-const FORCES:[string,string][]=[["MKT","^GSPC"],["RATES","TLT"],["USD","EURUSD=X"],["OIL","CL=F"],["GOLD","GC=F"],["VOL","^VIX"],
+// W1-R2 (2026-08-27): force count is selectable so the 6-vs-9 comparison can be run on IDENTICAL days. The stored
+// table cannot support that comparison — its 6f rows span 2004-2008 and its 9f rows 2008-2026 with ZERO overlap,
+// because HYG (the credit leg) did not exist before 2007. Any 6-vs-9 contrast drawn from stored rows compares ERAS,
+// not models.
+const ALL_FORCES:[string,string][]=[["MKT","^GSPC"],["RATES","TLT"],["USD","EURUSD=X"],["OIL","CL=F"],["GOLD","GC=F"],["VOL","^VIX"],
   ["CREDIT","HYG"],["STYLE","IWF"],["SIZE","IWM"]];
+const NFORCES=Number(Deno.env.get("NFORCES")||9);
+// W1-R2 SAFEGUARD: a non-production force count must NEVER write to the live series. Running NFORCES=6 wrote
+// 6-factor rows over a production date, and only the ordering of the next run repaired it — had the runs been
+// reversed, a 6-factor row would sit inside a 9-factor history with nothing to flag it. Diagnostic configurations
+// are now read-only by default.
+const NOWRITE=Deno.env.get("NOWRITE")==="1" || NFORCES!==9;
+const FORCES:[string,string][]=ALL_FORCES.slice(0,NFORCES);
 const LEGS:Record<string,string>={CREDIT:"IEF",STYLE:"IWD",SIZE:"SPY"};   // spread forces: long minus short leg
 const fmaps=new Map<string,Map<string,number>>();
 for(const [n,s] of FORCES)fmaps.set(n,await load(s));
@@ -47,6 +58,7 @@ function ols(X:number[][],y:number[]){
 // BACKFILL=1 (D-522): write month-end snapshots across the whole daily history so the engine has an ERA RECORD of
 // explanation/stability now, instead of accruing one over years. Each snapshot uses only data through its own date.
 const BACKFILL=Deno.env.get("BACKFILL")==="1";
+if(NOWRITE)console.log(`    [read-only: NFORCES=${NFORCES}${NFORCES!==9?" is diagnostic, writes suppressed":""}]`);
 const asof=days[days.length-1];
 const out:Record<string,unknown>[]=[];
 // snapshot dates: last trading day of each month (backfill) or just today
@@ -95,6 +107,13 @@ for(const sym of UNIVERSE){
   out.push({symbol:sym,asof:days[END],r2:+r2.toFixed(4),adj_r2:+adj.toFixed(4),residual:+resid.toFixed(6),n:rows.length,
     betas,era_stability:+stab.toFixed(3),n_factors:FORCES.length,cluster:ANCHORS.has(sym)?"ANCHOR":"MODELLED"});
  }
+}
+if(NOWRITE){
+  const ar=(out as Record<string,unknown>[]).map((r)=>Number(r.adj_r2)).filter(Number.isFinite);
+  const mr=ar.reduce((a,b)=>a+b,0)/Math.max(1,ar.length);
+  console.log(`==> READ-ONLY: ${out.length} rows computed for ${asof}, NOT written. mean adj-R2 ${mr.toFixed(4)}`);
+  for(const r of out as Record<string,unknown>[]) console.log(`    PAIRED\t${String(r.symbol)}\t${Number(r.adj_r2).toFixed(4)}`);
+  Deno.exit(0);
 }
 const wres=await fetch(`${OWNED}/trd_attribution?on_conflict=symbol,asof`,{method:"POST",
   headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(out)}).catch(()=>null);
