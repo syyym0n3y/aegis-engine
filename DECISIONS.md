@@ -11864,3 +11864,28 @@ size can go.
 **Unresolved and stated:** the 30-day publication lag is an assumption about SEC availability, not a measured fact —
 if true availability is longer, the result weakens. Conversely, `trd_bars_deep` may exclude delisted names, which
 would remove the worst outcomes of persistently-failing stocks and bias *against* this finding.
+
+## D-617 (2026-08-26) — publication-lag sensitivity: the effect survives the assumption, the ceiling-clearing does not
+The 30-day SEC publication lag was the last structural assumption holding up D-615/616. Swept it.
+
+| lag | book | t | clears 5.41? |
+|---|---|---|---|
+| **30d** | −12.71%/yr | **−6.08** | **yes** |
+| 45d | −10.81%/yr | −5.19 | no |
+| 60d | −8.72%/yr | −4.77 | no |
+| 90d | −6.07%/yr | −3.91 | no |
+
+**Two conclusions that pull opposite ways.**
+
+*The effect does not depend on the assumption.* It is present at every lag, decaying smoothly with a **~56-day
+half-life**. That rules out the artifact case being tested for — a result that lives at one arbitrary parameter value
+and dies on either side — and means no plausible publication schedule invalidates its existence. Smooth decay is what
+information going stale looks like.
+
+*The ceiling-clearing does depend on it.* Only 30d exceeds 5.41. My calendar reconstruction says 30d is the
+**maximum** plausible lag (first-half data publishes at month end, second-half mid-following-month), so 45d+ are
+pessimistic rather than realistic — but that is reasoning about a schedule, not a measurement of one, and this
+programme has repeatedly watched mechanism reasoning fail where measurement did not.
+
+**Honest position: the effect is robust to the assumption; the claim that it clears the deflated ceiling is not.**
+Recorded against the forward rule so the promote test cannot later lean on the most favourable lag.
