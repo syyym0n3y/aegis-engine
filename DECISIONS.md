@@ -12918,3 +12918,29 @@ THE INSTRUMENT LAW applies before any of this: `n_names=1` is a French research 
 family cannot be placed directly, D-555 measured ETF wrappers capturing ~20%, D-556 found concentrated books dead at
 t 0.35. A 23%/yr research-space number surviving to 5.37%/yr at 75bp would still face that conversion — **which
 nothing in this family ever has.**
+
+## D-666/667 (2026-08-27) — two factory gates: one absent, one ambiguous
+**D-666 — `g_liquid` was the literal value `true` at NINETEEN call sites.** 995 of 1,021 specs recorded a PASS on a
+gate nobody ran. Only book, szbivar and weekly ever produce a false — every other family is 100% true. For contrast
+the deflation gate passes 4 of 1,021, so the other gates do discriminate; this one was not a lenient gate, it was
+**not a gate**. THE LIQUIDITY LAW is enforced on the *ledger* by `liquidity-guard.ts`; nothing inspected the factory's
+own gate — the D-586 lesson recurring in the one place that produces the record.
+
+My first fix caught 14 of 19 by matching a single formatting variant — **the D-650 failure, committed within the hour
+of recording D-650 as a lesson.** All 19 now null. Final state: 13 measured true, 11 measured false, **997 NULL**,
+survivors unchanged at 2. Because `survivor` is generated and coalesces NULL to false, nothing can be promoted on a
+gate nobody ran — enforced by schema, not by memory.
+
+**D-667 — `g_benchmark` looked like the same defect and is not, and I nearly revoked both survivors on that.** It is
+`m>0` in the cross-sectional path. Before nulling it I checked what depended on it: the `book` family holds both
+survivors and has `g_benchmark` exactly equal to `net_ann>0`. Nulling would have taken the board **from 2 survivors
+to 0** — and would have been wrong, because **for a dollar-neutral long-short the benchmark IS zero**, so `m>0` is the
+correct test for that construction (D-637 established this for the crypto book). The 152 disagreements are entirely
+timing families, where the column genuinely compares against buy-and-hold.
+
+What the old gate *does* miss is narrower: the D-627 shape, where a spread is precisely estimated over a
+cross-section in which both legs are drift. `evalXsec` now also carries the universe mean and requires the top bucket
+to beat it at **t ≥ 2.0**. Exercised on PASS=french: **9 of 25 positive-return specs (36%) fail the new test.**
+
+Existing values retained — computed and defensible for their construction; the stricter test binds new specs. **The
+asymmetry is recorded rather than one standard quietly applied to old rows and another to new.**
