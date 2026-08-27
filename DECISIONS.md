@@ -12612,3 +12612,33 @@ existed; D-516 found delisting notices themselves uncollectable on borrow (−42
 even if it were tradable.
 
 Scope: 1,895 of 4,006 flagged CIKs — those cached by D-632's sampling. A subsample, stated as such.
+
+## D-648 (2026-08-27) — net share issuance: right sign, underpowered, and the bucket rises
+Auditing THE COVERAGE LAW's founding complaint ("five of hundreds of EDGAR concepts") showed **14 of 15 documented
+factor inputs are held**. The one absent was share issuance — and the data proved present all along under a `dei`
+tag nobody had queried. An unfetched dataset is a research failure; a fetched one nobody queries is the same failure
+in better disguise.
+
+| | |
+|---|---|
+| usable 4-quarter signals | 38,244 (8,375 corporate-action windows dropped) |
+| universe coverage | **69.6%** (3,006 priced of 4,321 signalled) |
+| rebalances / breadth | 39 / 515 |
+| quintiles q0→q4 | 3.859 / 3.823 / 3.136 / **4.408** / 2.651% — non-monotone |
+| universe mean | 3.494% |
+| high-issuance bucket raw | 2.236%, negative in only **15/39 (38%)** |
+| high-issuance excess | −1.258%, **t −1.61** |
+| **book** | 4.89%/yr, **portfolio t 1.24** |
+
+**NOT SUPPORTED, with the direction intact — the least useful of all outcomes, and it must not be dressed up.** High
+issuers do earn least, but t 1.24 clears nothing, the ordering breaks at q3, and gate 3 fails outright: the flagged
+bucket is negative in 38% of periods, so it does not *fall*, it rises more slowly than a universe returning 3.494%
+per quarter. **That is the D-627 shape appearing in a fresh factor on its first test**, and the pre-registered kill
+clause anticipated it.
+
+Post-publication decay (competing explanation (a)) is consistent with the outcome and **cannot be separated from
+simple lack of power** at 39 quarterly rebalances. The fundamentals panel begins 2010; a longer sample is not
+available to us.
+
+**What this also settles:** the COVERAGE LAW factor-input gap is now closed at **15 of 15** held *and tested*,
+rather than 14 held with one unexamined.
