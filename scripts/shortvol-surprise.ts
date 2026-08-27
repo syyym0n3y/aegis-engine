@@ -28,6 +28,7 @@ const K = declareKnobs("shortvol-surprise", [
   { name: "COST_BP", def: "25", note: "round trip; fails concentrate in small caps" },
   { name: "BUCKETS", def: "4" },
   { name: "LIQUID_ONLY", def: "", note: "1 = liquid half, the confound control" },
+  { name: "LIQ_HALF", def: "", note: "D-634: hi | lo — measure a liquidity half DIRECTLY. Without a counterpart the illiquid half was never measurable at all, and D-633 showed the two halves can carry OPPOSITE signs." },
   { name: "MIN_NAMES", def: "50", note: "per rebalance" },
   { name: "FROM_D", def: "", note: "D-618: restrict to publication dates >= this, for era stability" },
   { name: "UNTIL_D", def: "", note: "D-618: restrict to publication dates < this" },
@@ -166,9 +167,13 @@ for (const [mkey, group] of [...byM.entries()].sort()) {
   }
   if (cands.length < MINN) continue;
   let pool = cands;
-  if (K.LIQUID_ONLY === "1") {
+  // D-634: same one-sided-filter defect as D-633. LIQUID_ONLY kept the top half and offered no way to ask for the
+  // bottom, so the illiquid half of this signal had never been measured — only inferred. On the fails book that
+  // inference turned out to be wrong in SIGN.
+  const wantHalf = K.LIQ_HALF === "hi" || K.LIQ_HALF === "lo" ? K.LIQ_HALF : (K.LIQUID_ONLY === "1" ? "hi" : "");
+  if (wantHalf) {
     const med = [...pool.map((x) => x.dvol)].sort((a, b) => a - b)[Math.floor(pool.length / 2)];
-    pool = pool.filter((x) => x.dvol >= med);
+    pool = wantHalf === "hi" ? pool.filter((x) => x.dvol >= med) : pool.filter((x) => x.dvol < med);
     if (pool.length < MINN / 2) continue;
   }
   pool.sort((a, b) => a.sig - b.sig);
@@ -187,7 +192,7 @@ if (K.DUMP) {
 const m = mean(periodRets), s2 = sd(periodRets) || 1e-12;
 const tPort = m / (s2 / Math.sqrt(periodRets.length));
 console.log(`\n==> SHORT-VOLUME SURPRISE — measured from PUBLICATION (settle + ${LAG}d), not settle date`);
-console.log(`    ${evs.length.toLocaleString()} persistence events (run >= ${PERSIST} consecutive fail days), ${periodRets.length} monthly periods, mean breadth ${(breadth / periods).toFixed(0)}${K.LIQUID_ONLY === "1" ? ", LIQUID HALF" : ""}`);
+console.log(`    ${evs.length.toLocaleString()} persistence events (run >= ${PERSIST} consecutive fail days), ${periodRets.length} monthly periods, mean breadth ${(breadth / periods).toFixed(0)}${(K.LIQ_HALF === "hi" || K.LIQUID_ONLY === "1") ? ", LIQUID HALF" : K.LIQ_HALF === "lo" ? ", ILLIQUID HALF" : ""}`);
 console.log(`    ${HOLD}-session return by persistence bucket (b0 = least persistent -> b${NB - 1} = most):`);
 for (let q = 0; q < NB; q++) console.log(`      b${q}  ${(mean(bucketRets[q]) * 100).toFixed(3)}%`);
 const monotone = bucketRets.every((_, q) => q === 0 || mean(bucketRets[q]) >= mean(bucketRets[q - 1]));

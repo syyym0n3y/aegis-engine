@@ -24,6 +24,7 @@ const K = declareKnobs("ftd-persistence", [
   { name: "COST_BP", def: "25", note: "round trip; fails concentrate in small caps" },
   { name: "BUCKETS", def: "4" },
   { name: "LIQUID_ONLY", def: "", note: "1 = liquid half, the confound control" },
+  { name: "REVSYM", def: "", note: "D-634: reverse symbol load order — a determinism probe; results must not move" },
   { name: "LIQ_HALF", def: "", note: "D-633: hi | lo — measure a liquidity half DIRECTLY instead of inferring the other one by subtraction" },
   { name: "MIN_NAMES", def: "50", note: "per rebalance" },
   { name: "FROM_D", def: "", note: "D-618: restrict to publication dates >= this, for era stability" },
@@ -62,7 +63,7 @@ const ftd = new Map<string, { d: string; q: number }[]>();
 await bySymbol({
   rest: OWNED, headers: hdr, table: "trd_ftd",
   select: "symbol,settle_date,qty_fails",
-  symbols: [...priced], orderBy: "symbol,settle_date",
+  symbols: K.REVSYM === "1" ? [...priced].reverse() : [...priced], orderBy: "symbol,settle_date",
   onPage: (rows) => {
     for (const r of rows as unknown as { symbol: string; settle_date: string; qty_fails: number }[]) {
       const q = +r.qty_fails; if (!(q > 0)) continue;
