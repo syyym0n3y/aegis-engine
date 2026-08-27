@@ -12534,3 +12534,32 @@ that is always NULL is worse than an absent one, because it answers instead of e
 
 **Panel, measured correctly:** 4,340 of 4,348 live as of 2026-08; 8 dead total (**0.18% attrition**); zero ticker-
 recycling exposure (no FTD symbol has price history beginning after the events joined to it).
+
+## D-645 (2026-08-27) — equity survivorship is 27% of the universe, not 0.18%
+D-640 measured the price panel at 4,340 live of 4,348 — **0.18% attrition** — and I reported that as the
+survivorship picture. **Attrition measured within a panel cannot detect names that were never in it.** We hold an
+independent register of who delisted: 8-K Item 3.01 notices.
+
+| | |
+|---|---|
+| symbols with a 3.01 delisting notice | 3,085 |
+| present in the price panel | 1,493 |
+| **absent from the price panel** | **1,592 (51.6%)** |
+| of those, appearing in `trd_ftd` | **1,575** — they traded and had settlement activity |
+| **FTD-universe coverage** | **4,191 of 5,766 = 72.7%** |
+
+Missing across every era: 620 notices in 2018–2020, 410 in 2021–2023, 562 in 2024+.
+
+**Both figures are true and describe different things, and I reported the flattering one.** 8 names died inside the
+panel while 1,575 traded, failed, and delisted entirely outside it.
+
+**Direction of the bias — an inference, not a measurement, because it cannot be measured without the prices.** The
+fails signal predicts *underperformance*, and the absent names are those whose outcome was worst. High-fails names
+that subsequently delisted are missing from the flagged bucket, so its realised return is understated in badness and
+the measured excess of −0.132% at t −1.96 is probably a **floor, not a ceiling**. That is the opposite of the usual
+survivorship story. It does not rescue the finding — a floor still sits far below the 5.41 ceiling — but the honest
+phrasing is "at least this negative", not "this negative at most".
+
+**Why this is measurable at all:** the delisting register is an *event* record keyed to symbols, not a price panel,
+so it survives the delisting it records. Same structural property that made the going-concern hazard test possible
+(D-632), and the only route this programme has to bounding a gap it cannot fill.
