@@ -195,6 +195,7 @@ const HOLD=Number(Deno.env.get("HOLD")||1);
 const cohorts:{w:Map<string,number>;left:number}[]=[];
 const cohortsL:{w:Map<string,number>;left:number}[]=[];          // live cohorts, each expiring after HOLD days
 const books:Record<string,number[]>={gbmEq:[],gbmConv:[],gbmLiq:[],gbmIlliq:[],gbmHold:[],linHold:[]};
+const legLong:number[]=[],legShort:number[]=[];   // D-637
 const bookDates:string[]=[];
 let prevW:Record<string,Map<string,number>>={gbmEq:new Map(),gbmConv:new Map(),gbmLiq:new Map(),gbmIlliq:new Map()};
 const FULLSPAN=Deno.env.get("FULLSPAN")==="1"&&!!Deno.env.get("FEATSET");
@@ -265,9 +266,23 @@ for(const Y of (FULLSPAN?[years[0]]:years.filter(y=>y>=START))){
       cohortsL.push({w:wL,left:HOLD});
       for(const c of cohortsL)c.left--;
       while(cohortsL.length&&cohortsL[0].left<=0)cohortsL.shift();
-      let retL=0,grossL=0;
-      for(const c of cohortsL){for(const [sym,w] of c.w){retL+=w*(rmap.get(sym)??0)/cohortsL.length;grossL+=Math.abs(w)/cohortsL.length;}}
+      // D-637: LEG DECOMPOSITION. Line 210 has said since D-538 that "the headline number is linHold, which has
+      // never been decomposed", and it is the largest claim on this board. Note first what the benchmark law does
+      // and does not require here: wL puts +1/(2k) on the top cohort and -1/(2k) on the bottom, so the book is
+      // dollar-neutral BY CONSTRUCTION and universe drift cancels exactly. That is why this book does not have the
+      // D-627 defect, where a "spread" turned out to be two positive legs. What is still unknown, and is what the
+      // legs answer, is whether the SHORT side contributes anything or the whole result is a long-side tilt.
+      let retL=0,grossL=0,retLong=0,retShort=0,grossLong=0,grossShort=0;
+      for(const c of cohortsL){for(const [sym,w] of c.w){
+        const r=(rmap.get(sym)??0)/cohortsL.length;
+        retL+=w*r;grossL+=Math.abs(w)/cohortsL.length;
+        if(w>0){retLong+=w*r;grossLong+=w/cohortsL.length;}else{retShort+=w*r;grossShort+=(-w)/cohortsL.length;}
+      }}
       books.linHold.push(retL*(2/Math.max(1e-9,grossL))-(1/Math.max(1,cohortsL.length))*FEE_BP/1e4);
+      // Each leg scaled to unit gross so the two are directly comparable. Fees are charged to the book line only,
+      // not double-charged onto each leg.
+      legLong.push(retLong/Math.max(1e-9,grossLong));
+      legShort.push(retShort/Math.max(1e-9,grossShort));   // sign kept: a NEGATIVE value here means shorting PAID
       bookDates.push(DAYDATE);
     }
     for(const kk of Object.keys(books)){
@@ -382,6 +397,24 @@ if(Deno.env.get("NULLTEST")==="1"){
   console.log(`    lit5 scored t ${LIT5T}; ${beat} of ${abs.length} random signed books reached that in absolute value (${(100*beat/abs.length).toFixed(1)}%)`);
 }
 // D-532: dump the daily book streams so the pre-registered vol-management overlay can be applied without retraining.
-await Deno.writeTextFile(`/Users/ona/aegis-data/crypto_books_${TF}_${Deno.env.get("FEATSET")||Deno.env.get("FEATURE")||"linear"}_top${TOPN}_lag${Number(Deno.env.get("LAG")||0)}_hold${HOLD}.tsv`,
+// D-637 LEG REPORT. A dollar-neutral book nets the universe out by construction, so this is NOT the D-627 test —
+// it answers a different question the headline cannot: does the SHORT side contribute, or is the result a long tilt?
+if(legLong.length>30){
+  const uni=legLong.map((v,i)=>(v+legShort[i])/2);          // the two cohorts averaged = the traded universe's own drift
+  const st=(v:number[])=>{const m=mean(v),sd=sdv(v)||1e-9;return{yr:m*365*100,sr:(m/sd)*Math.sqrt(365),t:m/(sd/Math.sqrt(v.length))};};
+  const L=st(legLong),S=st(legShort),U=st(uni);
+  console.log(`\n    LEG DECOMPOSITION (D-637) — n=${legLong.length} days, gross-normalised, fees on the book line only:`);
+  console.log(`      LONG cohort        ${L.yr.toFixed(1).padStart(8)}%/yr  SR ${L.sr.toFixed(2).padStart(5)}  t ${L.t.toFixed(2).padStart(5)}`);
+  console.log(`      SHORT cohort (raw) ${S.yr.toFixed(1).padStart(8)}%/yr  SR ${S.sr.toFixed(2).padStart(5)}  t ${S.t.toFixed(2).padStart(5)}   (negative = shorting these PAID)`);
+  console.log(`      traded universe    ${U.yr.toFixed(1).padStart(8)}%/yr  (the drift a dollar-neutral book cancels by construction)`);
+  console.log(`      long excess vs universe  ${(L.yr-U.yr).toFixed(1).padStart(8)}%/yr   short excess ${(U.yr-S.yr).toFixed(1).padStart(8)}%/yr`);
+  const longShare=(L.yr-U.yr)/Math.max(1e-9,(L.yr-U.yr)+(U.yr-S.yr));
+  console.log(`      => ${(100*longShare).toFixed(0)}% of the spread comes from the LONG side, ${(100*(1-longShare)).toFixed(0)}% from the SHORT side`);
+}
+// NOWRITE=1 skips the dump. A previous run of this script overwrote production streams with a variant
+// configuration and the damage was undone only by luck of run ordering; a diagnostic re-run must not be able to
+// mutate the frozen candidate's data.
+if(Deno.env.get("NOWRITE")==="1"){console.log(`    NOWRITE=1 — dump skipped, production streams untouched.`);}
+else await Deno.writeTextFile(`/Users/ona/aegis-data/crypto_books_${TF}_${Deno.env.get("FEATSET")||Deno.env.get("FEATURE")||"linear"}_top${TOPN}_lag${Number(Deno.env.get("LAG")||0)}_hold${HOLD}.tsv`,
   books.gbmEq.map((v,i)=>`${bookDates[i]??i}\t${v}\t${books.gbmConv[i]??""}\t${books.gbmLiq[i]??""}\t${books.gbmHold[i]??""}\t${books.linHold[i]??""}`).join("\n"));
 console.log(`    book streams -> crypto_books_${TF}_${Deno.env.get("FEATSET")||Deno.env.get("FEATURE")||"linear"}_top${TOPN}_lag${Number(Deno.env.get("LAG")||0)}_hold${HOLD}.tsv (${books.gbmEq.length} days)`);
