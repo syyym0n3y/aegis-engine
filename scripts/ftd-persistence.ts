@@ -25,6 +25,7 @@ const K = declareKnobs("ftd-persistence", [
   { name: "COST_BP", def: "25", note: "round trip; fails concentrate in small caps" },
   { name: "BUCKETS", def: "4" },
   { name: "LIQUID_ONLY", def: "", note: "1 = liquid half, the confound control" },
+  { name: "DROP_LATE_PRICED", def: "", note: "D-643: 1 = drop symbols whose price history begins >90d after their first fail (probable ticker reuse; the surprise baseline would mix two companies)" },
   { name: "REVSYM", def: "", note: "D-634: reverse symbol load order — a determinism probe; results must not move" },
   { name: "LIQ_HALF", def: "", note: "D-633: hi | lo — measure a liquidity half DIRECTLY instead of inferring the other one by subtraction" },
   { name: "MIN_NAMES", def: "50", note: "per rebalance" },
@@ -76,6 +77,24 @@ await bySymbol({
 // `order=settle_date`. The persistence and surprise constructions both read each name's series in sequence, so an
 // unsorted array here would not error — it would quietly compute a different signal. Sorting is not optional.
 for (const arr of ftd.values()) arr.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
+// D-643: TICKER-REUSE CONTROL. 127 symbols (2.89% of joined FTD rows) have price history beginning a MEDIAN of
+// 1,186 days after the first fail we hold for them. Fails predating the price series are already dropped by the
+// i0<20 rule, so they cannot be mispriced. The residual hazard is subtler: failRatio is a spike measured against the
+// name's own trailing 60-day fails median, and that window runs continuously across a ticker change — so a NEW
+// company's spike can be scored against the OLD company's baseline. This knob removes those symbols entirely so the
+// effect can be measured with and without them.
+if (K.DROP_LATE_PRICED === "1") {
+  const before = ftd.size;
+  const bd2 = await fetch(`${OWNED}/trd_bars_deep?select=symbol,first_date`, { headers: hdr }).then((r) => r.json()).catch(() => []) as { symbol: string; first_date: string }[];
+  const fd = new Map((Array.isArray(bd2) ? bd2 : []).filter((x) => x.first_date).map((x) => [x.symbol, x.first_date] as [string, string]));
+  let dropped = 0;
+  for (const [sym, arr] of ftd) {
+    const f = fd.get(sym); if (!f || !arr.length) continue;
+    const gapDays = (Date.parse(f) - Date.parse(arr[0].d)) / 86400000;
+    if (gapDays > 90) { ftd.delete(sym); dropped++; }
+  }
+  console.log(`    DROP_LATE_PRICED=1 — removed ${dropped} of ${before} symbols whose price history starts >90d after their first fail`);
+}
 assertNonEmpty("symbols with fails and prices", [...ftd.keys()], 200);
 
 // Prices
