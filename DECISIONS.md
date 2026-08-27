@@ -12506,3 +12506,31 @@ market cap is not the selector, *Binance listing* is. The residual cohort is pre
 **The one route that would close it is blocked by policy, not by nature.** `data.binance.vision` publishes directory
 listings of every symbol that ever had futures data. It is not on the endpoint allowlist and I may not add it —
 logged as an operator-actionable gap, not as an impossibility.
+
+## D-640 (2026-08-27) — the equity claim survives the test the crypto one failed
+D-639 caught me asserting a source was unavailable without checking, and the assertion was false. The same claim was
+outstanding on equities: that delisted price history is paid-only. It had not been tested either.
+
+**Tested, with a live control:**
+
+| source | result |
+|---|---|
+| Yahoo | SIVB, FRC, TWTR, FTCH → *"No data found, symbol may be delisted"*; AAPL control works |
+| Stooq | allowlisted, but now gates **every** request — control included — behind a JavaScript proof-of-work bot challenge |
+
+So the equity claim holds: delisted US equity history is genuinely unavailable from our reachable free sources.
+Stooq is a **policy** dead end, not a technical one — completing its challenge would be bypassing bot detection,
+which is prohibited, so an allowlisted source is nonetheless unusable and that is recorded rather than worked around.
+
+**Two of my own queries returned false negatives before I caught them.** `trd_bars_deep.first_date` and `last_date`
+were **NULL on all 4,348 rows**, so *"symbols first listed after 2019: 0"* and *"history ends before 2026-06: 0"*
+were vacuous — NULL comparisons are never true. I nearly recorded a "frozen 2020 survivor cohort" conclusion from
+them. Recomputed against the bars: **29.2% of the panel listed after 2020**, and the hypothesis is dead.
+
+That is the second time today a query silently answered a different question than the one asked — the first compared
+epoch integers to a date string lexically and returned 4,348 of 4,348. The ingest function writes these columns
+correctly, so the live rows came from another load path. **Backfilled: 4,348 of 4,348 populated.** A named column
+that is always NULL is worse than an absent one, because it answers instead of erroring.
+
+**Panel, measured correctly:** 4,340 of 4,348 live as of 2026-08; 8 dead total (**0.18% attrition**); zero ticker-
+recycling exposure (no FTD symbol has price history beginning after the events joined to it).
