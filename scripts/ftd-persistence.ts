@@ -16,6 +16,7 @@
 // kind that has produced this programme's retractions.
 import { declareKnobs, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 import { bySymbol } from "../supabase/functions/_shared/paged-fetch.ts";
+import { stampDataVersion } from "../supabase/functions/_shared/data-version.ts";
 
 const K = declareKnobs("ftd-persistence", [
   { name: "PUB_LAG_D", def: "30", note: "calendar days from settle_date to public availability" },
@@ -212,3 +213,9 @@ const supported = tPort >= 2.0 && monotone;
 console.log(`\n    ${supported ? "SUPPORTED — close-out pressure is still capturable at publication." :
   tPort <= -2.0 ? "SIGN MISS — persistent fails predict UNDERPERFORMANCE (competing explanation b: shorts are right)." :
   `NOT SUPPORTED — portfolio |t| ${Math.abs(tPort).toFixed(2)}${monotone ? "" : ", not monotone"}. Consistent with (a): the forced buying completes before the data is public.`}`);
+
+// D-635: pin the number to the data it was computed on. D-622's -9.69%/yr does not reproduce (-9.56%/yr today) and
+// the cause cannot be established, because no recorded result stated its data version. Prices are not append-only —
+// vendors restate splits and adjusted closes retroactively — so "the same query" legitimately returns different
+// history over time. Without this stamp a reader who gets a different number cannot tell whose mistake it is.
+await stampDataVersion(OWNED, hdr, { trd_ftd: "settle_date", trd_bars_deep: "updated_at" });
