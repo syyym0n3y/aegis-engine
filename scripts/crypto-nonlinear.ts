@@ -125,8 +125,14 @@ for(const [,g] of byD){ if(g.length<MINNAMES_N){g.length=0;continue;}
 // universe an operator can actually trade. TOPN=0 keeps the old all-names behaviour for comparison.
 const TOPN=Number(Deno.env.get("TOPN")||0);
 const INVERT=Deno.env.get("INVERT")==="1";
+// D-638: record who is actually IN the traded universe, so the survivorship mitigation can be TESTED rather than
+// asserted. crypto-survivorship-audit argues the bias is tolerable because "the frozen specification trades the
+// top-50 by dollar volume, where majors essentially never delist". Binance's own exchangeInfo says 129 of 654 USDT
+// perps (19.7%) are in SETTLING right now, including MKRUSDT and FTMUSDT — names that were not minor.
+const universeMembers=new Map<string,number>();   // symbol -> days present in the traded universe
 if(TOPN>0){for(const [,g] of byD){ if(g.length<=TOPN)continue;
   g.sort((a,b)=>INVERT?a.x[5]-b.x[5]:b.x[5]-a.x[5]); g.length=TOPN;                  // feature 5 = log dvol (rank-normalised, higher = more liquid)
+  for(const r of g) universeMembers.set(r.sym,(universeMembers.get(r.sym)??0)+1);
   for(let f=0;f<FEAT.length;f++){const o=[...g.keys()].sort((a,b)=>g[a].x[f]-g[b].x[f]);o.forEach((gi,rk)=>{g[gi].x[f]=rk/(g.length-1)-0.5;});}
   const oy=[...g.keys()].sort((a,b)=>g[a].y-g[b].y); oy.forEach((gi,rk)=>{g[gi].y=rk/(g.length-1)-0.5;});
 }}
@@ -418,6 +424,22 @@ if(legLong.length>30){
   console.log(Number.isFinite(longShare)
     ? `      => ${(100*longShare).toFixed(0)}% of the spread comes from the LONG side, ${(100*(1-longShare)).toFixed(0)}% from the SHORT side`
     : `      => split UNDEFINED (the two excesses cancel); reported rather than printed as a spurious ratio`);
+}
+// D-638 SURVIVORSHIP REACH: does the delisting cohort touch the TRADED universe, or only the tail?
+if(universeMembers.size){
+  const settling=new Set((Deno.env.get("SETTLING_LIST")||"").split(",").map(x=>x.trim()).filter(Boolean));
+  const rows=[...universeMembers.entries()].sort((a,b)=>b[1]-a[1]);
+  const totDays=rows.reduce((s2,[,n])=>s2+n,0);
+  const hit=rows.filter(([sym])=>settling.has(sym));
+  const hitDays=hit.reduce((s2,[,n])=>s2+n,0);
+  console.log(`\n    SURVIVORSHIP REACH (D-638) — traded universe = top-${TOPN} by dollar volume:`);
+  console.log(`      distinct symbols that ever entered the traded universe: ${rows.length}`);
+  if(settling.size){
+    console.log(`      of those, now in SETTLING on the exchange: ${hit.length} (${(100*hit.length/rows.length).toFixed(1)}%)`);
+    console.log(`      share of traded universe-days held by now-settling names: ${(100*hitDays/Math.max(1,totDays)).toFixed(1)}%`);
+    console.log(`      worst offenders (symbol:days-in-universe): ${hit.slice(0,10).map(([s2,n])=>`${s2}:${n}`).join(" ")}`);
+    console.log(`      => the mitigation "majors essentially never delist" is ${hit.length===0?"SUPPORTED":"NOT SUPPORTED"} at TOPN=${TOPN}`);
+  } else console.log(`      SETTLING_LIST not supplied — reach UNTESTED, not zero.`);
 }
 // NOWRITE=1 skips the dump. A previous run of this script overwrote production streams with a variant
 // configuration and the damage was undone only by luck of run ordering; a diagnostic re-run must not be able to
