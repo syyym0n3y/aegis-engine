@@ -59,12 +59,22 @@ for (let off = 0;; off += 10000) {
   for (const r of rows) {
     const c = r.raw?.cik ? pad10(r.raw.cik) : null;
     if (!c) continue;
-    const prev = flaggedFirst.get(c);
-    if (!prev || r.disclosed_date < prev) flaggedFirst.set(c, r.disclosed_date);
+    // SYMMETRY WITH THE CONTROL, and both sides had the same defect. Keying on the firm's FIRST-EVER going-concern
+    // filing left-censors exactly as the control did: 1,129 of 4,006 filers (28.2%) get a 2012 reference date purely
+    // because that is when the window opens, not because 2012 is when their distress began. Fixing only the control
+    // would have compared a left-censored flagged set against an uncensored control — an asymmetry worse than the
+    // original artifact. Both sides are now one row per (CIK, year), so the comparison is exactly:
+    //   "a firm filing a GOING-CONCERN 10-K in year Y"  vs  "a firm filing an ORDINARY 10-K in year Y".
+    const key = `${c}|${r.disclosed_date.slice(0, 4)}`;
+    const prev = flaggedFirst.get(key);
+    if (!prev || r.disclosed_date < prev) flaggedFirst.set(key, r.disclosed_date);
   }
   if (rows.length < 10000) break;
 }
-assertNonEmpty("flagged CIKs", [...flaggedFirst.keys()], 500);
+assertNonEmpty("flagged filer-years", [...flaggedFirst.keys()], 500);
+// A firm flagged in ANY year is excluded from the control in EVERY year — otherwise the same company appears on
+// both sides of the comparison and the contrast is diluted by construction.
+const flaggedCiks = new Set([...flaggedFirst.keys()].map((k) => k.split("|")[0]));
 
 // ---- control: 10-K filers from the SAME years, never flagged ----
 const yearsNeeded = [...new Set([...flaggedFirst.values()].map((d) => d.slice(0, 4)))].sort();
@@ -89,9 +99,16 @@ for (const y of yearsNeeded) {
       const m = line.match(/^10-K\s+.{1,70}?\s+(\d{4,10})\s+(\d{4}-\d{2}-\d{2})\s/);
       if (!m) continue;
       const c = pad10(m[1]), d = m[2];
-      if (flaggedFirst.has(c)) continue;
-      const prev = controlFirst.get(c);
-      if (!prev || d < prev) controlFirst.set(c, d);
+      if (flaggedCiks.has(c)) continue;   // never let a flagged firm sit in the control, in ANY year
+      // ONE ROW PER (CIK, YEAR), NOT PER CIK. Keying on the firm's FIRST 10-K in the window is left-censoring: every
+      // company already filing in 2012 gets a 2012 reference date regardless of its actual age. Measured on the real
+      // index, that put 50.0% of control firms in 2012 and left later years populated almost entirely by NEWLY
+      // REGISTERED filers — a population with its own delisting hazard, which is a composition effect, not a control.
+      // The matched comparison is "a firm filing a 10-K in year Y" against "a firm filing a GOING-CONCERN 10-K in
+      // year Y", so the reference event must be an ordinary 10-K in that same year.
+      const key = `${c}|${d.slice(0, 4)}`;
+      const prev = controlFirst.get(key);
+      if (!prev || d < prev) controlFirst.set(key, d);
     }
   }
 }
@@ -114,14 +131,14 @@ const flagSel: [string, string][] = [], ctrlSel: [string, string][] = [];
 const totF = [...fy.values()].reduce((a, b) => a + b.length, 0);
 for (const [y, arr] of fy) {
   const share = NF > 0 ? Math.max(1, Math.round(NF * arr.length / totF)) : arr.length;
-  for (const c of pick(arr, share)) flagSel.push([c, flaggedFirst.get(c)!]);
+  for (const k of pick(arr, share)) flagSel.push([k.split("|")[0], flaggedFirst.get(k)!]);
   // match the control count per YEAR to the flagged count per year
   const cand = cy.get(y) ?? [];
   const cshare = Math.min(cand.length, Math.max(1, Math.round(NC * arr.length / totF)));
-  for (const c of pick(cand, cshare)) ctrlSel.push([c, controlFirst.get(c)!]);
+  for (const k of pick(cand, cshare)) ctrlSel.push([k.split("|")[0], controlFirst.get(k)!]);
 }
 console.log(`==> GOING-CONCERN -> DELISTING HAZARD — PREREG W4-gc-predicts-delisting`);
-console.log(`    flagged filers ${flaggedFirst.size.toLocaleString()} (sampling ${flagSel.length}) | control 10-K filers ${controlFirst.size.toLocaleString()} (sampling ${ctrlSel.length})`);
+console.log(`    flagged filer-years ${flaggedFirst.size.toLocaleString()} (sampling ${flagSel.length}) | control 10-K filers ${controlFirst.size.toLocaleString()} (sampling ${ctrlSel.length})`);
 console.log(`    horizon ${HORIZON}d | mechanical window excluded ${EXCL}d | year-matched\n`);
 
 // ---- submissions: every 8-K item 3.01 date per CIK ----

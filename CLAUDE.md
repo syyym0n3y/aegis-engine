@@ -206,6 +206,13 @@ Origin: four forward clocks were started (paper book, crypto lit5, residual-foll
 decision rule. No statistical gate can catch this failure because it happens in the NARRATION — the numbers arrive and
 whoever reads them, including a future session of me, gets to decide afterwards what they meant. Registered in
 `trd_forward_rules` with an immutability trigger (UPDATE/DELETE raise, verified by attempting one).
+**CORRECTED 2026-08-27 (D-631):** the companion `trd_prereg` trigger protected `claim`/`rule`/`kill_condition` and
+the outcome LABEL but **not `outcome_note`** — the field that carries the finding, the numbers and the reason. The
+label is one word; the note is the content. So "a retraction can never be softened into a win" was FALSE until
+migration 0097, and it was found by an attack that succeeded and destroyed real text. `outcome_note` is now
+APPEND-ONLY (existing text must remain a prefix), verified in four directions: overwrite RAISES, truncate RAISES,
+append SUCCEEDS, delete RAISES. The lesson is not about this table — it is that "is there a guard" is the wrong
+question, and "what exactly does it refuse, and has anyone made it refuse" is the right one.
 The rules deliberately encode this session's own corrections: the paper book is judged against the modern-era Sharpe
 0.40 (D-527) not the 0.90 full-sample headline, and against the COMBINED-book null of 6.63 (D-558) not the 5.34
 single-spec ceiling; crypto lit5 is judged at 0.60 because subset choice was worth +0.28 t (D-560) and the full span
