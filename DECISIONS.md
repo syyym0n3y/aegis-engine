@@ -12810,3 +12810,32 @@ reachable.**
 An arithmetic error was caught in the same breath: my first cost line doubled a round-trip fee that was already a
 round trip (6.30%/yr where 3.15% is correct). It changed no conclusion — every horizon was net-negative either way —
 **which is exactly why it would have survived a glance.**
+
+## D-661 (2026-08-27) — the largest t-statistic on this board is a COST ARTIFACT
+A law-coverage matrix over 46 live candidates showed BENCHMARK empty for every row and TURNOVER on three.
+`tff-sign-replication` was the one substantial live row untouched by this session — and it backs a **running forward
+clock**, so its cost model was worth reading before that clock accrues 104 weeks.
+
+`tff-crosssectional.ts` subtracts a flat `2 × COST_BP` from every **weekly** observation. Re-run at zero:
+
+| | %/yr | Sharpe | portfolio t |
+|---|---|---|---|
+| **GROSS** | **−2.07%** | −0.38 | **−1.54** (halves −1.40 / −0.74) |
+| reported | −12.47% | −2.31 | **−9.26** |
+
+Gap = 10.40%/yr = 52 × 20bp. Mean ratio **6.02**; t ratio **6.01**.
+
+**Subtracting a constant from every observation shifts the mean and leaves the variance untouched, so it manufactures
+significance.** t = mean/(sd/√n); charge a flat fee to a book that already loses and |t| grows in exact proportion to
+the fee. It grew 6.01× against a 6.02× mean shift — that identity is the proof, not an analogy. The −9.26 and −10.59
+figures are the largest |t| this programme has recorded, and they measure **the cost model, not the market**.
+
+**Both directions lose, which closes the question rather than reopening it.** The pre-registered long-high-hedging-
+pressure direction loses 2.07%/yr gross and is not distinguishable from zero. The flip D-607/608 identified as
+profitable earns +2.07%/yr gross against a 10.40%/yr modelled cost — **net −8.33%/yr**. The forward clock
+`fwd-hedging-pressure-flip` is testing a strategy that cannot pay under its own cost assumption, with 727 days left
+to run before saying so.
+
+**One honest qualification:** 20bp/week on liquid futures is high — 1–3bp round trip is nearer the mark — so the
+modelled cost is likely overstated and the true net sits between −2.07%/yr and −8.33%/yr. That changes which number
+is wrong, not the finding that the significance was manufactured.
