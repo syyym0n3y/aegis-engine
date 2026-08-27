@@ -27,6 +27,7 @@
 import { type Bar, enumerate, runComponentTrades, specKey } from "../supabase/functions/_shared/trd-grammar.ts";
 import { deflatedSharpe, kurtosis, mean, sampleStd, skewness } from "../supabase/functions/_shared/trd-stats.ts";
 import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { spendTrials } from "../supabase/functions/_shared/trial-ledger.ts";
 
 // D-598: declare every knob. This prints what ACTUALLY took effect and refuses to run on a near-miss variable name.
 // Both failures it prevents happened today: a run launched without PERP_FEE_RT_BP=0 whose output I then labelled
@@ -189,12 +190,25 @@ for (const [sym, bars] of markets) {
   console.log(`    ${sym.padEnd(12)} done — running totals: ${isPos.toLocaleString()} train-positive, ${oosPos.toLocaleString()} also OOS-positive`);
 }
 
-// ---- the ceiling moves with the trials we just spent ----
-const prev = await fetch(`${OWNED}/trd_trial_counter?select=id`, { headers: { ...hdr, Prefer: "count=exact", Range: "0-0" } })
-  .then((r) => Number(r.headers.get("content-range")?.split("/")[1] ?? 0)).catch(() => 0);
-const BASE = Number(Deno.env.get("TRIAL_BASE") || 1531193);
-const N = BASE + prev + trials;
-const CEIL = Math.sqrt(2 * Math.log(N));
+// ---- the ceiling moves with the trials we just spent, AND WE PAY FOR THEM ----
+// D-628: this block used to read the persistent counter, add `trials` in memory, and print a ceiling — without ever
+// writing those trials down. The 734,400-spec run reported an honest N = 2,266,819 (ceiling 5.410) while the counter
+// stayed at 1,531,401, so every LATER run computed 5.337 and believed it. Silent, cumulative, and always permissive.
+// spendTrials() records the spend before it returns a ceiling, so the bar can no longer be quoted without paying it.
+// The run key is the CONFIGURATION, not the wall clock: re-running the identical sweep re-spends the identical
+// trials, so it must not inflate the count, while any change of source, timeframe, fee, universe or grammar slice is
+// a genuinely new set of trials and pays again.
+const RUN_ID = `${SRC}|${TF}|n${markets.length}|fee${FEE_BP}|min${MIN_TRADES}|stop${STOPMODE_FILTER || "all"}|specs${specs.length}`;
+const spend = await spendTrials({
+  rest: OWNED,
+  headers: hdr,
+  family: "grammar-deep",
+  runId: RUN_ID,
+  spent: trials,
+});
+const N = spend.N;
+const CEIL = spend.ceiling;
+console.log(`    trial ledger: ${spend.written.toLocaleString()} row(s) recorded (${(trials - spend.written).toLocaleString()} already present from a prior identical run)`);
 
 console.log(`\n    trials this run ${trials.toLocaleString()} | thin (<${MIN_TRADES} trades) ${thin.toLocaleString()} | train-positive ${isPos.toLocaleString()} | OOS-positive ${oosPos.toLocaleString()}`);
 console.log(`    live trial count N = ${N.toLocaleString()}  ->  noise ceiling sqrt(2 ln N) = ${CEIL.toFixed(3)}`);

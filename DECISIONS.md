@@ -12271,3 +12271,35 @@ forward test: the pre-registration lends it authority it hasn't earned.
 **Found in passing:** `fwd-residual-follow` cannot accrue — the attribution engine stamps `asof` = last available
 *price* date (2026-08-21) while the clock registered 2026-08-24. Its effective start is later than its registered
 one, and without the scorer this would have read as a stalled engine for weeks.
+
+## D-628 (2026-08-27) — the unpaid deflation ceiling: a bar reported that nothing paid for
+Week 4's first task was adding up what the research has cost. The published trial count and the count the running
+agents actually computed were **different numbers**.
+
+| | N | ceiling |
+|---|---|---|
+| published in this ledger | 2,266,819 | **5.410** |
+| live `trd_trial_counter` | 1,531,401 | **5.337** |
+
+`scripts/grammar-search-deep.ts:193` READ the persistent counter, added its 734,400-trial spend **in memory**, printed
+an honest 5.410 — and exited without writing those trials anywhere. So that run was right and **every run after it was
+not**. Thirteen scripts read the counter; none wrote back.
+
+The error is silent, cumulative, and **always in the permissive direction**: each unpaid sweep lowers the bar for every
+future sweep. This is D-457 in a subtler form — there the N was hardcoded wrong and surfaced Ken French momentum as
+"clearing" for nine consecutive cycles; here the N is read correctly and then quietly not paid, which is harder to see.
+
+**Exposure: zero false clears.** The highest `best_psr_z` ever recorded is 3.73, far below either ceiling. But a
+control that only holds while nothing is close is not a control.
+
+**Fixed structurally.** `_shared/trial-ledger.ts` records the spend *before* returning a ceiling, and throws rather
+than degrading to a smaller N on a failed write — degrading would reproduce the exact defect. Counter backfilled:
+live N = 2,265,801, ceiling 5.4099. `scripts/trial-ledger-guard.ts` is the **18th guard**, wired into the daily runner.
+
+**Its first version was wrong, and its selftest now encodes that.** It matched the correct read-only pattern
+`N = 1_530_000 + trials` and flagged `factory-report.ts`, which spends nothing. A guard that REDs on correct code gets
+switched off — the agent-output guard hit the identical trap by flagging already-fixed defects — so "does not fire on
+the honest form" is now a tested requirement, not an assumption.
+
+**Found only because Week 4 required publishing what the research cost.** The discrepancy had been sitting in plain
+view in this file and nothing compared the two numbers.

@@ -54,6 +54,13 @@ while true; do
     echo "$(date -u +%FT%TZ) INSTRUMENT GUARD RED — a return is claimed without stating its measurement space"
   fi
   # FORWARD-RULES GUARD (D-571): every forward clock must carry promote/kill conditions written before its data exists.
+  # TRIAL LEDGER (D-628): grammar-search-deep spent 734,400 trials, read the counter, added its spend in memory, printed
+  # an honest ceiling of 5.410 — and never wrote those trials down. Every later run computed 5.337 and believed it. The
+  # error is silent, cumulative and ALWAYS PERMISSIVE. Nothing was falsely cleared (max psr_z ever is 3.73) but a control
+  # that only holds while nothing is close is not a control. This guard REDs on any ceiling nothing paid for.
+  if ! deno run --allow-net --allow-env --allow-read ../scripts/trial-ledger-guard.ts; then
+    echo "$(date -u +%FT%TZ) TRIAL LEDGER GUARD RED — a deflation ceiling was reported that no recorded trials paid for"
+  fi
   if ! deno run --allow-net --allow-env ../scripts/forward-rules-guard.ts; then
     echo "$(date -u +%FT%TZ) FORWARD-RULES GUARD RED — a forward clock lacks a two-sided decision rule"
   fi
