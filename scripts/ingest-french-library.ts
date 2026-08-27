@@ -55,6 +55,11 @@ for(const [file,prefix] of [["49_Industry_Portfolios_CSV.zip","ind49"],["100_Por
   ["Developed_ex_US_6_Portfolios_ME_Prior_12_2_CSV.zip","dxmom6"],["Europe_6_Portfolios_ME_Prior_12_2_CSV.zip","eumom6"],
   ["Japan_6_Portfolios_ME_Prior_12_2_CSV.zip","jpmom6"],["Asia_Pacific_ex_Japan_6_Portfolios_ME_Prior_12_2_CSV.zip","apmom6"],
   ["Developed_ex_US_6_Portfolios_ME_BE-ME_CSV.zip","dxval6"],["Emerging_MOM_Factor_CSV.zip","emmom"],
+  // D-653: EM was the ONLY region held as a bare factor with no portfolio file, and it is the region with the
+  // strongest result on this board (WML t 5.30). Its leg and size decomposition was therefore UNTESTABLE while
+  // every weaker region could be decomposed. The file exists upstream and always did; the name differs from the
+  // other regions ("Emerging_Markets_" rather than "Emerging_"), which is presumably why it was missed.
+  ["Emerging_Markets_6_Portfolios_ME_Prior_12_2_CSV.zip","emmom6"],
   ["Emerging_5_Factors_CSV.zip","emff5"],["Developed_ex_US_3_Factors_CSV.zip","dxff3"],
   ["Developed_ex_US_Mom_Factor_CSV.zip","dxwml"],
   // D-492: the remaining CLASSIC characteristic deciles — E/P, CF/P, D/P (value variants, 1951->), accruals, net share
