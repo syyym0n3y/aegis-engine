@@ -61,6 +61,12 @@ while true; do
   # BENCHMARK LAW (D-636): a spread is not a return until its universe is subtracted. D-630's t -7.37 decomposed to
   # an excess of t -0.46 on a flat cross-section. 69 pre-existing rows claim a return with no decomposition; the guard
   # binds new work and reports that backlog every run rather than amnestying it.
+  # TURNOVER LAW (D-656): a per-trade cost is not a cost model — the drag is TURNOVER x COST. D-654 is what the
+  # omission costs: EM momentum at +4.2%/yr and t 3.98, passing every structural gate, became -0.63%/yr once turnover
+  # was measured at 33.5% one-way monthly. 44 of 45 live return claims did not state it.
+  if ! deno run --allow-net --allow-env ../scripts/turnover-guard.ts; then
+    echo "$(date -u +%FT%TZ) TURNOVER GUARD RED — a rebalanced return was claimed without stating how often it trades"
+  fi
   if ! deno run --allow-net --allow-env ../scripts/benchmark-guard.ts; then
     echo "$(date -u +%FT%TZ) BENCHMARK GUARD RED — a spread was reported as a return without subtracting its universe"
   fi

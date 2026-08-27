@@ -437,3 +437,27 @@ Every guard already has this discipline — a green never made to go red is mean
 The control costs one line: count non-nulls, match a value known to exist, check a symbol known to be live.
 **Why it is not pedantry: this programme's output is largely null results, so a defect class that manufactures false
 zeros attacks the thing it produces most.**
+
+## THE TURNOVER LAW (2026-08-27, D-654/656) — a per-trade cost is not a cost model
+**The drag on a rebalanced strategy is TURNOVER × COST, not cost alone. A row quoting a round-trip fee without
+saying how OFTEN it trades has stated half its expenses — and the omitted half is the half that decides.**
+Origin: it killed the best candidate this programme has produced, on the day it was found. D-653 measured EM
+large-cap momentum at **+4.2%/yr over the market, t 3.98**, passing every structural gate that had killed its
+siblings — BIG/SMALL **0.90** against a 50% floor (developed markets: 0.31–0.47), a long-only leg needing no borrow
+and significant where the developed equivalent was t 1.85, positive in all four eras with no sign flip. D-654 then
+measured turnover at **33.5% one-way monthly**:
+| round trip | annual cost | net | implied t |
+|---|---|---|---|
+| 20bp | 1.61%/yr | +2.59%/yr | 2.45 |
+| **60bp** | 4.83%/yr | **−0.63%/yr** | **−0.60** |
+EM large-cap execution is not under 35bp, and 33.5% is a **lower bound** (measured on less volatile US large caps).
+**A 4.2%/yr edge that costs 4.8%/yr to harvest is not an edge; it is a description of a rebalancing schedule.**
+Why the existing laws miss it: THE EFFECT-SIZE LAW asks for return per 1sd against the round-trip cost — right for a
+per-trade signal, silent for a held portfolio. THE EXECUTION LAW asks whether a passive fill survives. **Both concern
+ONE trade; neither asks how many trades there are.**
+Rules: (1) every return from a rebalanced construction states its turnover; (2) drag = 2 × one-way turnover ×
+periods/yr × round-trip cost, reported beside the gross; (3) where turnover is unmeasured the row is UNTESTED ON
+COST, never "net"; (4) a cost stated in bp without a frequency is incomplete, not conservative; (5) enforced by
+`scripts/turnover-guard.ts` (4-way self-test verified: flags the D-654 shape, passes a compliant row, ignores rows
+claiming no return, exempts event studies where turnover is undefined), binding new work and reporting the **64-row**
+pre-existing backlog every run rather than amnestying it.
