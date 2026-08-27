@@ -12839,3 +12839,28 @@ to run before saying so.
 **One honest qualification:** 20bp/week on liquid futures is high — 1–3bp round trip is nearer the mark — so the
 modelled cost is likely overstated and the true net sits between −2.07%/yr and −8.33%/yr. That changes which number
 is wrong, not the finding that the significance was manufactured.
+
+## D-663 (2026-08-27) — the whole hedging-pressure family is a cost artifact
+D-661 found the TFF financials result cost-inflated; D-662 found the same on the fails book. `cot-crosssectional.ts`
+is TFF's commodity sibling and produced **D-607**, the row establishing "the pre-registered direction LOSES" with
+halves agreeing. It carries the identical flat-cost line.
+
+| book | gross | reported | mean ratio | t ratio |
+|---|---|---|---|---|
+| COT commodities (D-607) | −3.06%/yr, **t −0.95** (halves −0.34/−0.99) | −13.46%/yr, t −4.15 | 4.40 | **4.37** |
+| TFF financials (D-608) | −2.07%/yr, **t −1.54** (halves −1.40/−0.74) | −12.47%/yr, t −9.26 | 6.02 | **6.01** |
+| settlement fails | −3.56%/yr, **t −2.90** | −9.56%/yr, t −7.80 | 2.69 | **2.69** |
+
+**Three books, three identical signatures, and the family does not survive.** D-607 was robust enough that D-608 was
+commissioned to replicate its sign in a second asset class — and it did, at t −9.26. **The replication replicated the
+cost model, not the market:** both scripts charge a flat `2 × COST_BP` per weekly observation, so both inherit the
+same mean shift and the same manufactured t.
+
+**What this does and does not overturn.** The *sign* stands as a direction — the point estimate is negative in both
+asset classes. The *significance* does not. So "the pre-registered direction loses" becomes **"the pre-registered
+direction is not distinguishable from zero, with a negative point estimate."** The halves that agreed so
+convincingly agreed on noise.
+
+THE SIGN LAW is unaffected — its origin is the funding book (D-553/554), a separate result — and its rule that a
+post-hoc flip is unclaimable applies here with **more** force, since the flip is now known to be unprofitable both
+gross and net.
