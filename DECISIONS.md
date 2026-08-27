@@ -12412,3 +12412,30 @@ distribution *before* reading the result, I would have reported a clean SUPPORTE
 
 Not a tradability claim in either direction: D-516 already measured delisting notices at −42.6%/yr and found them
 uncollectable on borrow.
+
+## D-633 (2026-08-27) — the fails excess lives in the LIQUID half; D-627's borrow story is backwards
+D-627 closed with an implementation story: fails select hard-to-borrow names, so the short leg must be established
+exactly where delivery is already failing. **That story was never measured.** `ftd-persistence.ts` had a
+`LIQUID_ONLY` flag with no counterpart, so the illiquid half had only ever been *inferred* by subtraction.
+
+Added `LIQ_HALF=hi|lo` and ran the identical configuration three ways, same code, same session:
+
+| | LIQUID | ILLIQUID | POOLED |
+|---|---|---|---|
+| universe mean / 20d | +0.353% | **−0.136%** | +0.108% |
+| high bucket raw | +0.215% | −0.091% | +0.071% |
+| **excess vs universe** | **−0.138%, t −1.99** | **+0.045%, t +0.60** | −0.037%, t −0.65 |
+| spread book | −9.56%/yr, t −7.80 | −5.72%/yr, t −3.69 | −7.57%/yr, t −6.84 |
+
+**The illiquid half has the wrong sign.** Flagged illiquid names slightly *outperform* their own universe. The
+entire excess sits in the liquid half — so the implementation problem D-627 named is not the binding one, and a
+placeable version is more reachable than that entry implied.
+
+**Still a kill, for a different reason.** The liquid-half excess is ≈ −1.74%/yr at t −1.99 — marginal at
+conventional levels and nowhere near this programme's deflation ceiling of **5.41** at 2.27M trials. Better
+*situated* than believed; no more *promotable*.
+
+Two method points. The pooled t (−0.65) being weaker than either half is itself the finding: the halves have
+opposite signs and very different universe means, so averaging destroys the structure — the D-590 shape again. And
+D-627's caveat was a **story about a number**, plausible and unmeasured, which survived a day because nothing forced
+it to be tested.
