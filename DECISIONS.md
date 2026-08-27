@@ -12658,3 +12658,31 @@ half's — **t 0.29**. The precise verdict is CAPACITY-BOUND, not merely underpo
 (t −1.99) with the illiquid half carrying the *wrong sign*; share issuance sits in the **illiquid** half with the
 liquid half at zero. Two signals, opposite liquidity profiles, and in both cases **the pooled number described
 neither.**
+
+## D-649 (2026-08-27) — the multi-asset combined book is BELOW its passive benchmark, not level with it
+Working the 69-row benchmark backlog by family: 25 of 37 live rows are the crypto book, dollar-neutral by
+construction (D-637) and so drift-cancelling. The `book` family is different — `combined-book.ts` is a **long-only
+diversified multi-asset portfolio**, where drift does not cancel. Its script computes a passive comparison; its
+ledger row never carried one.
+
+| book | FULL SR / ann / maxDD | OOS SR / ann / maxDD |
+|---|---|---|
+| **diversified PASSIVE** | **0.88 / 10.6% / −25.7%** | **0.73 / 8.6% / −21.8%** |
+| + seasonal tilt | 0.90 / 10.9% / −24.0% | 0.74 / 8.8% / −22.1% |
+| + BLANKET trend | 0.36 / 2.4% / −19.9% | 0.04 / 0.2% / −11.2% |
+| + SELECTIVE trend | 0.62 / 3.9% / −22.4% | 0.50 / 2.8% / −11.8% |
+| **COMBINED** | **0.63 / 4.0% / −21.8%** | **0.51 / 2.9% / −11.9%** |
+
+**THE SELECTION LAW's origin (D-455) records that the selective overlay "collapsed exactly onto the passive book it
+was supposed to beat."** Measured now it does not collapse *onto* passive — it lands **below** it: OOS SR 0.51 vs
+0.73, 2.9%/yr vs 8.6%. Doing nothing beats every active layer by roughly 3× the return. **The distinction between
+"matches the benchmark" and "loses to the benchmark" is the difference between a null result and a value-destroying
+one, and only the first was recorded.**
+
+**What the active layers do buy, stated fairly:** drawdown. Combined −11.9% OOS vs passive −21.8%, and in the 2022
+bear −7.6% vs −18.0%. So the overlay is a **drawdown purchase costing ~5.7pp/yr of return** — defensible for some
+mandates, but not free.
+
+**This is not `combined-book-p1`.** That row is a different book from French long-short decile streams,
+dollar-neutral, already carrying its own severe qualification (ETF replica captures 13%; capacity ~0.7%/yr against a
+5–6%/yr headline). The shared family label "book" nearly produced a false alarm about the paper rung.
