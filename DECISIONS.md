@@ -12741,3 +12741,46 @@ leg is the one that costs borrow, and the long-only version an investor could ac
 comfortably significant to not significant. Invisible in the output, because both are plausible percentages.
 
 EM legs remain **UNTESTED**: our French holdings include the EM momentum factor but not the EM 6-portfolio file.
+
+## D-653/654/655 (2026-08-27) — the nearest miss, chased to the end
+**D-653 — EM momentum is not size-concentrated.** EM was the one region held as a bare factor with no portfolio
+file; the file existed upstream all along under a different naming convention (`Emerging_Markets_` not `Emerging_`).
+Ingested and decomposed:
+
+| | EM | dev ex-US | Europe | Asia-Pac |
+|---|---|---|---|---|
+| BIG spread | **9.9%/yr, t 4.71** | 5.3%, t 2.31 | 6.2%, t 2.40 | 4.8%, t 1.60 |
+| **BIG/SMALL** | **0.90** | 0.47 | 0.42 | 0.31 |
+| long-only vs market | **+4.2%/yr, t 3.98** | +2.0%, t 1.85 | — | — |
+
+Positive in all four eras, strongest in the 2020s. Recorded as `monitoring` with turnover named the binding unknown.
+
+**D-654 — turnover killed it, on the optimistic estimate.** Measured **33.5% one-way monthly** (67.1% round-trip) on
+451 rebalances:
+
+| round trip | annual cost | net excess | implied t |
+|---|---|---|---|
+| 20bp | 1.61%/yr | +2.59%/yr | 2.45 |
+| **60bp** | 4.83%/yr | **−0.63%/yr** | **−0.60** |
+
+EM large-cap execution is not under 35bp — wider spreads, higher impact, plus transaction taxes in several markets.
+And 33.5% is a **lower bound**: it was measured on less volatile US large caps, so true EM turnover is higher.
+**A 4.2%/yr edge that costs 4.8%/yr to harvest is a description of a rebalancing schedule.**
+
+**D-655 — US survives where EM died, and my own gate was too weak to call it a pass.** Same signal, cheapest
+execution market, 756 months:
+
+| | gross | net @20bp | implied t |
+|---|---|---|---|
+| full span | 3.01%/yr, t 2.67 | **+1.40%/yr** | **1.24** |
+| post-1990 | 2.07%/yr, t 1.40 | +0.46%/yr | 0.31 |
+
+All three pre-registered gates pass — and I am not calling it supported. **Gate 2 asked only that the net excess be
+POSITIVE, not significant.** A rule that passes on sign cannot fail on magnitude, and writing it that way was my
+error, not the data's. Competing explanation (b), decay, is supported: pre-1990 4.30%/yr at t 2.47 versus post-1990
+2.07%/yr at t 1.40.
+
+**The substantive finding is the contrast:** EM dies at −0.63%/yr net, US survives at +1.40%/yr on *identical*
+turnover, purely because US large-cap execution is about a third of EM's. **Momentum is reachable exactly where
+trading is cheapest and nowhere else** — a statement about market structure, not about momentum. Nothing approaches
+the 5.41 ceiling; the best net figure implies t 1.96 at an optimistic 10bp.
