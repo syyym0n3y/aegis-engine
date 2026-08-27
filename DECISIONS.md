@@ -12439,3 +12439,45 @@ Two method points. The pooled t (−0.65) being weaker than either half is itsel
 opposite signs and very different universe means, so averaging destroys the structure — the D-590 shape again. And
 D-627's caveat was a **story about a number**, plausible and unmeasured, which survived a day because nothing forced
 it to be tested.
+
+## D-637 (2026-08-27) — the frozen crypto candidate decomposed: 50/50, and it PASSES
+`crypto-nonlinear.ts:210` has carried the note *"the headline number is linHold, which has never been decomposed"*
+since D-538. It is the largest claim on this board. After the same test killed three findings today, it was run.
+
+| | |
+|---|---|
+| long cohort | +5.3%/yr (SR 0.09, **t 0.19**) |
+| bottom cohort | −75.7%/yr — shorting it earned +75.7 (**t 1.77**) |
+| traded-cohort drift | −35.2%/yr |
+| **long excess / short excess** | **+40.5%/yr / +40.5%/yr — exact 50/50** |
+| book after fees | 72.8%/yr, **t 2.90** |
+
+**The statistics run opposite to the fails book.** Neither leg is individually significant while the spread is
+t 2.90 — which is what a dollar-neutral book *should* look like: each leg carries the cohorts' −35.2%/yr drift as
+noise and differencing removes it. The fails book had the inverse pathology (spread t −7.37 over two drift legs).
+Weights are ±1/(2k) by construction, so this holds structurally, not luckily.
+
+**My reporting block had a sign bug**, corrected in the same breath: `legShort` holds the return *to shorting*, so
+averaging it with `legLong` produced a bogus universe, two identical excesses, and a share of **3.5e12%** from a
+division by ~zero. Raw legs right; every derived line wrong.
+
+## D-638 (2026-08-27) — "majors essentially never delist", measured against the exchange, and false
+`crypto-survivorship-audit` conceded the panel is not survivorship-free but argued the bias is bounded because the
+frozen spec trades the top-50, "where majors essentially never delist." That was asserted, never measured, and it
+was the sole reason the concern was treated as tolerable.
+
+**Exchange ground truth** (Binance `exchangeInfo`, free and allowlisted): 654 USDT perpetuals listed, **129 (19.7%)
+in SETTLING** — actively delisting — including MKRUSDT, FTMUSDT, WAVESUSDT, OMGUSDT. 117 of those are in our panel,
+against a recorded delisted cohort of **19**.
+
+**Traded-universe reach:** 369 symbols ever entered the top-50; **62 (16.8%) are now SETTLING**, holding 7.6% of
+traded universe-days. **FTMUSDT spent 1,351 of ~1,693 days inside the top-50.**
+
+**The inference must be stated precisely, because the obvious reading is wrong.** Those 62 contracts are *present*
+in our panel, so their returns are included and they are not the missing cohort. What the measurement establishes is
+a **rate**: if 16.8% of top-50 members are in wind-down at one snapshot, the genuinely absent pre-seed cohort will
+also have contained top-50 members. The bias reaches the **traded** universe, which is exactly what the audit denied.
+
+It does **not** quantify the return impact. The absent cohort cannot be measured from an endpoint that only lists
+what currently exists — the same wall hit on equities today, where the SEC map resolved 10.7% of delisted filers and
+`trd_bars_deep` holds 4 delisted names of 4,348.
