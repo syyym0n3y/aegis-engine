@@ -23,8 +23,11 @@ const log=(s:string)=>Deno.stdout.write(enc.encode(s+"\n"));
 
 // ---------- live deflation ceiling ----------
 async function ceiling(){
-  const r=await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`,{headers:{...hdr,Prefer:"count=exact"}}).catch(()=>null);
-  const live=r?+((r.headers.get("content-range")||"").split("/")[1]||0):0;
+  // D-650: third instance of the same fail-open ceiling fetch.
+  const r=await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`,{headers:{...hdr,Prefer:"count=exact"}})
+    .catch((e)=>{throw new Error(`aegis-factory: cannot read trd_trial_counter (${e instanceof Error?e.message:e}) — refusing to run on an unverified deflation ceiling`);});
+  if(!r.ok)throw new Error(`aegis-factory: trd_trial_counter HTTP ${r.status} — refusing to run on an unverified deflation ceiling`);
+  const live=+((r.headers.get("content-range")||"").split("/")[1]||0);
   return {N:1_530_000+live,ceil:Math.sqrt(2*Math.log(1_530_000+live))};
 }
 // ---------- fundamentals (point-in-time) ----------

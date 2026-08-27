@@ -64,7 +64,7 @@ const EXEMPT_TEXT = /single instrument|one instrument|timing rule|no cross-secti
 
 interface Row { id: string; family: string; status: string; key_metric: string; verdict: string; resolved_at: string | null }
 
-const rows = await mustFetch(`${OWNED}/trd_lineage?select=id,family,status,key_metric,verdict,resolved_at&limit=5000`, "trd_lineage") as unknown as Row[];
+const rows = await mustFetch(`${OWNED}/trd_lineage?select=id,family,status,key_metric,verdict,resolved_at&order=id&limit=5000`, "trd_lineage") as unknown as Row[];
 
 let red = 0, backlog = 0, exempt = 0, ok = 0;
 const redRows: string[] = [];

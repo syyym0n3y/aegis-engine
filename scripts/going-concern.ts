@@ -54,7 +54,7 @@ interface Ev { ticker: string; d: string }
 const evs: Ev[] = [];
 const cikNeed = new Map<string, string[]>();   // cik -> adsh list, for rows with no ticker in display_names
 for (let off = 0;; off += 10000) {
-  const rows = await fetch(`${OWNED}/trd_raw_filings?source=eq.edgar&filing_type=like.*${TAG}*&select=ticker,disclosed_date,raw&offset=${off}&limit=10000`, { headers: hdr })
+  const rows = await fetch(`${OWNED}/trd_raw_filings?source=eq.edgar&filing_type=like.*${TAG}*&select=ticker,disclosed_date,raw&order=source_id&offset=${off}&limit=10000`, { headers: hdr })
     .then((r) => r.ok ? r.json() : []).catch(() => []) as { ticker: string | null; disclosed_date: string; raw: { cik?: string } }[];
   if (!Array.isArray(rows) || !rows.length) break;
   for (const r of rows) {
@@ -70,7 +70,7 @@ assertNonEmpty("going-concern filings with a resolvable date", evs, 200);
 if (cikNeed.size) {
   const map = new Map<string, string>();
   for (let off = 0;; off += 50000) {
-    const rows = await fetch(`${OWNED}/trd_fundamentals?select=cik,ticker&offset=${off}&limit=50000`, { headers: hdr })
+    const rows = await fetch(`${OWNED}/trd_fundamentals?select=cik,ticker&order=cik&offset=${off}&limit=50000`, { headers: hdr })
       .then((r) => r.ok ? r.json() : []).catch(() => []) as { cik: string; ticker: string }[];
     if (!Array.isArray(rows) || !rows.length) break;
     for (const r of rows) if (r.ticker && r.cik) map.set(String(r.cik).replace(/^0+/, ""), r.ticker);
@@ -105,7 +105,7 @@ assertNonEmpty("priced flagged tickers", [...px.keys()], 50);
 // way to tell a falling bucket from a rising bucket in a faster-rising market.
 const uni = new Map<string, { d: string[]; c: number[] }>();
 {
-  const syms = await fetch(`${OWNED}/trd_bars_deep?select=symbol&limit=4000`, { headers: hdr })
+  const syms = await fetch(`${OWNED}/trd_bars_deep?select=symbol&order=symbol&limit=4000`, { headers: hdr })
     .then((r) => r.ok ? r.json() : []).catch(() => []) as { symbol: string }[];
   const all = [...new Set((Array.isArray(syms) ? syms : []).map((s) => s.symbol))];
   for (let i = 0; i < all.length; i += 40) {

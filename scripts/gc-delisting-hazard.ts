@@ -53,7 +53,7 @@ const days = (a: string, b: string) => (Date.parse(b) - Date.parse(a)) / 8640000
 // ---- flagged filers: earliest going-concern 10-K per CIK ----
 const flaggedFirst = new Map<string, string>();
 for (let off = 0;; off += 10000) {
-  const rows = await fetch(`${OWNED}/trd_raw_filings?source=eq.edgar&filing_type=like.*going-concern*&select=disclosed_date,raw&offset=${off}&limit=10000`, { headers: hdr })
+  const rows = await fetch(`${OWNED}/trd_raw_filings?source=eq.edgar&filing_type=like.*going-concern*&select=disclosed_date,raw&order=source_id&offset=${off}&limit=10000`, { headers: hdr })
     .then((r) => r.ok ? r.json() : []).catch(() => []) as { disclosed_date: string; raw: { cik?: string } }[];
   if (!Array.isArray(rows) || !rows.length) break;
   for (const r of rows) {

@@ -56,8 +56,13 @@ async function cycle(n: number) {
   // Reads the live counter when populated, else falls back to the documented figure rather than to a flattering default.
   // counter is an append-only event log — count rows, add the documented baseline (~1.53M, D-363/364). The previous read
   // queried a `trials` column that never existed (D-467).
-  const cntR = await fetch(`${REST}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
-  const liveN = cntR ? +((cntR.headers.get("content-range") || "").split("/")[1] || 0) : 0;
+  // D-650: same fail-open as aegis-discovery (D-642), missed when that one was fixed — the identical oversight the
+// D-621 comment in discovery records in the opposite direction. A failed counter read sent liveN to 0, N to the
+// 1.53M baseline and the ceiling to 5.337 regardless of the true 2,265,819, LOWERING the bar.
+  const cntR = await fetch(`${REST}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } })
+    .catch((e) => { throw new Error(`aegis-autopilot: cannot read trd_trial_counter (${e instanceof Error ? e.message : e}) — refusing to run on an unverified deflation ceiling`); });
+  if (!cntR.ok) throw new Error(`aegis-autopilot: trd_trial_counter HTTP ${cntR.status} — refusing to run on an unverified deflation ceiling`);
+  const liveN = +((cntR.headers.get("content-range") || "").split("/")[1] || 0);
   const N = 1_530_000 + liveN, ceil = Math.sqrt(2 * Math.log(N));
   const verdict: Record<string, number>[] = [];
   for (const [f, r] of byF) { if (f === "RF") continue; const d = dsr(r, N); if (d) verdict.push({ factor: f as unknown as number, psr_z: +d.psr_z.toFixed(2), sharpe: +d.sharpe.toFixed(2) } as unknown as Record<string, number>); }

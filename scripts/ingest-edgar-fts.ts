@@ -70,7 +70,7 @@ const seen = new Set<string>();
 for (let off = 0;; off += 10000) {
   // source is CHECK-constrained to house|senate|edgar, so the family lives in filing_type rather than in a new
   // source value — a check constraint is a schema change, and schema changes are operator-gated here.
-  const rows = await fetch(`${OWNED}/trd_raw_filings?source=eq.edgar&filing_type=like.*${TAG}*&select=source_id&offset=${off}&limit=10000`, { headers: hdr })
+  const rows = await fetch(`${OWNED}/trd_raw_filings?source=eq.edgar&filing_type=like.*${TAG}*&select=source_id&order=source_id&offset=${off}&limit=10000`, { headers: hdr })
     .then((r) => r.ok ? r.json() : []).catch(() => []) as { source_id: string }[];
   if (!Array.isArray(rows) || !rows.length) break;
   for (const r of rows) seen.add(r.source_id);

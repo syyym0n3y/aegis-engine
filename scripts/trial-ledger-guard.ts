@@ -108,7 +108,7 @@ if (offenders.length) {
 }
 
 // (2) ledger rows claiming more trials than were paid for
-const rows = await fetch(`${OWNED}/trd_lineage?select=id,key_metric,verdict&limit=5000`, { headers: hdr })
+const rows = await fetch(`${OWNED}/trd_lineage?select=id,key_metric,verdict&order=id&limit=5000`, { headers: hdr })
   .then((r) => r.ok ? r.json() : []).catch(() => []) as { id: string; key_metric: string; verdict: string }[];
 let claimChecked = 0;
 for (const r of Array.isArray(rows) ? rows : []) {

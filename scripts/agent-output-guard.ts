@@ -24,7 +24,12 @@ const MAX_STALE_H=Number(Deno.env.get("AGENT_MAX_STALE_H")||30);   // daily agen
 
 // the program's real deflation ceiling, from the live trial counter or the documented figure
 // counter is an append-only event log (D-467): live N = documented baseline + row count.
-const cntR=await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`,{headers:{...hdr,Prefer:"count=exact"}}).catch(()=>null);
+// D-650: THIS GUARD DETECTS WRONG CEILINGS AND DERIVED ITS OWN FROM A FAIL-OPEN FETCH. On a failed read the
+// count fell to 0, the reference ceiling to 5.337, and the guard would have PASSED every agent using the very
+// stale bar it exists to catch. A detector that degrades to the defect it detects is not a detector.
+const cntR=await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`,{headers:{...hdr,Prefer:"count=exact"}})
+  .catch((e)=>{console.error(`!! agent-output-guard: cannot read trd_trial_counter (${e instanceof Error?e.message:e}) — RED, refusing to certify against an unverified ceiling.`);Deno.exit(1);});
+if(!cntR.ok){console.error(`!! agent-output-guard: trd_trial_counter HTTP ${cntR.status} — RED.`);Deno.exit(1);}
 const TRIALS=1_530_000+(cntR?+((cntR.headers.get("content-range")||"").split("/")[1]||0):0);
 const CEIL=Math.sqrt(2*Math.log(TRIALS));
 // is anything actually promoted? if not, no agent may speak of "validated edges"

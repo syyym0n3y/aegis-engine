@@ -47,7 +47,14 @@ const gaps = await mustFetch(`${OWNED}/trd_gap_register?select=id,dataset,status
 const BACKING: Record<string, [string, string]> = {
   "yield-curve": ["trd_yield_curve?select=d&order=d.desc&limit=1", "d"],
   "fred-macro": ["trd_macro_series?select=d&order=d.desc&limit=1", "d"],
+  // D-650: added when the guard correctly REDded a gap I had marked filled without wiring it. Marking a gap closed
+  // and not making the closure checkable is the same failure as the gap itself — an assertion where a measurement
+  // belongs. The staleness budget here is generous because EDGAR full-text is a one-off historical crawl, not a feed.
+  "edgar-fulltext": ["trd_raw_filings?source=eq.edgar&filing_type=like.*going-concern*&select=disclosed_date&order=disclosed_date.desc&limit=1", "disclosed_date"],
 };
+// A status of "retracted" means the gap was investigated and found not to be one — distinct from "filled", which
+// means it was real and closed. binance-live-universe is the first: the 150 absent contracts turned out to be
+// younger than the panel's minimum-history threshold (D-646 corrected), so there was nothing to fill.
 
 let red = 0;
 console.log(`==> GAP REGISTER GUARD — ${gaps.length} gaps recorded`);
@@ -70,7 +77,7 @@ for (const g of gaps) {
 // describing the system.
 const KNOWN_SUBSTANTIAL = ["trd_yield_curve", "trd_macro_series"];
 const registered = new Set(gaps.map((g) => g.id));
-console.log(`\n  engine-actionable gaps still open: ${gaps.filter((g) => g.actionable_by === "engine" && g.status !== "filled").map((g) => g.id).join(", ") || "none"}`);
+console.log(`\n  engine-actionable gaps still open: ${gaps.filter((g) => g.actionable_by === "engine" && g.status !== "filled" && g.status !== "retracted").map((g) => g.id).join(", ") || "none"}`);
 console.log(`  operator-actionable: ${gaps.filter((g) => g.actionable_by === "operator").length}  |  structural (nobody): ${gaps.filter((g) => g.actionable_by === "nobody").length}`);
 console.log(`\n  ${red === 0 ? "REGISTER CONSISTENT — every filled gap has live backing data."
   : `${red} REGISTER FAILURE(S) — a gap marked filled is empty or stale, which licenses conclusions the data no longer supports.`}`);
