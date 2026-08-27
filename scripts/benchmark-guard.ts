@@ -88,6 +88,32 @@ if (backlog) {
 }
 for (const x of redRows) console.log(`  RED  ${x} — claims a return with no universe decomposition`);
 
+// D-673: THE COST-INFLATION COROLLARY, previously the only law in doctrine with no machine check.
+// A flat per-period cost shifts the mean and leaves the variance untouched, so charging a LOSING book manufactures
+// its significance. Measured three times in one session, each ratio identical to two decimals:
+//   TFF hedging pressure   gross t -1.54  reported t -9.26   mean ratio 6.02 / t ratio 6.01
+//   settlement fails book  gross t -2.90  reported t -7.80   mean ratio 2.69 / t ratio 2.69
+//   COT commodities        gross t -0.95  reported t -4.15   mean ratio 4.40 / t ratio 4.37
+// A row asserting that something SIGNIFICANTLY LOSES must therefore carry its gross figure, because the net one can
+// be manufactured at will by raising the assumed fee.
+{
+  const CLAIMS_SIG_LOSS = /(t\s*-[2-9]\d*(\.\d+)?)|(portfolio t\s*-[2-9])|(significantly (loses|negative))/i;
+  const HAS_GROSS = /gross t|GROSS \(|gross of|COST_BP=0|before cost|gross portfolio t|pre-cost/i;
+  let lossRed = 0, lossOk = 0, lossBacklog = 0;
+  for (const r of rows) {
+    const text = `${r.key_metric ?? ""} ${r.verdict ?? ""}`;
+    if (!CLAIMS_SIG_LOSS.test(text)) continue;
+    if (EXEMPT_FAMILY.test(r.family ?? "")) continue;
+    if (HAS_GROSS.test(text)) { lossOk++; continue; }
+    const when = (r.resolved_at ?? "").slice(0, 10);
+    if (when && when >= ADOPTED) { lossRed++; console.log(`  RED  ${r.id.padEnd(30)} claims a significant LOSS with no gross figure beside it`); }
+    else lossBacklog++;
+  }
+  console.log(`\n  COST-INFLATION COROLLARY: ${lossOk} row(s) state a gross figure beside a significant loss; ${lossBacklog} pre-adoption backlog; ${lossRed} post-adoption violation(s)`);
+  if (lossBacklog) console.log(`    Backlog reported, not amnestied — three of these were measured and ALL THREE were artifacts.`);
+  red += lossRed;
+}
+
 if (Deno.env.get("SELFTEST") === "1") {
   console.log(`\n  SELFTEST:`);
   const bad = "BOOK long-short: -9.56%/yr PORTFOLIO t -7.80";
