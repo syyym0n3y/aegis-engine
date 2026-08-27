@@ -68,7 +68,7 @@ const ftd = new Map<string, { d: string; q: number }[]>();
 await bySymbol({
   rest: OWNED, headers: hdr, table: "trd_short_volume",
   select: "symbol,d,short_vol,total_vol",
-  symbols: [...priced],
+  symbols: [...priced], orderBy: "symbol,d",
   onPage: (rows) => {
     for (const r of rows as unknown as { symbol: string; d: string; short_vol: number; total_vol: number }[]) {
       const tv = +r.total_vol, sv = +r.short_vol;

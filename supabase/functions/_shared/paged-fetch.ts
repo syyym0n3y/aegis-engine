@@ -56,7 +56,7 @@ async function get(url: string, headers: Record<string, string>): Promise<Record
  * plus a client-side `Set.has()` filter, and it uses the (symbol, d) index instead of a sequential scan.
  */
 export async function bySymbol(
-  opts: PageOpts & { symbols: string[]; symbolCol?: string; batch?: number },
+  opts: PageOpts & { symbols: string[]; symbolCol?: string; batch?: number; orderBy?: string },
 ): Promise<{ rows: number; pages: number }> {
   const col = opts.symbolCol ?? "symbol";
   const batch = opts.batch ?? 60;
@@ -67,10 +67,17 @@ export async function bySymbol(
     const part = uniq.slice(i, i + batch).map((s) => `"${s}"`).join(",");
     // Within a symbol batch the row count is bounded, but page it anyway so an unusually deep batch cannot silently
     // truncate at PostgREST's max-rows limit.
+    //
+    // THE ORDER CLAUSE IS LOAD-BEARING, NOT COSMETIC. Paging by offset with no ORDER BY is undefined behaviour:
+    // Postgres may return rows in a different sequence on each request, so a row can appear on two pages or on
+    // none. The corruption is silent and data-dependent — it would surface as a slightly wrong Sharpe, never as an
+    // error. Ordering by the batch column plus the range key makes the sequence total and the paging safe.
+    // (Batches stay small enough that these offsets are 1-3 pages deep, so this does not reintroduce D-629.)
+    const ord = opts.orderBy ? `&order=${opts.orderBy}` : `&order=${col}`;
     let off = 0;
     for (;;) {
       const url = `${opts.rest}/${opts.table}?${col}=in.(${encodeURIComponent(part)})&select=${opts.select}`
-        + `${opts.where ? `&${opts.where}` : ""}&offset=${off}&limit=${size}`;
+        + `${opts.where ? `&${opts.where}` : ""}${ord}&offset=${off}&limit=${size}`;
       const page = await get(url, opts.headers);
       if (!page.length) break;
       opts.onPage(page);

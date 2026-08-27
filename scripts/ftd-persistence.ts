@@ -15,6 +15,7 @@
 // settle + 30 days), never from the settle date, because measuring from settle would be a look-ahead of exactly the
 // kind that has produced this programme's retractions.
 import { declareKnobs, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
+import { bySymbol } from "../supabase/functions/_shared/paged-fetch.ts";
 
 const K = declareKnobs("ftd-persistence", [
   { name: "PUB_LAG_D", def: "30", note: "calendar days from settle_date to public availability" },
@@ -51,19 +52,27 @@ const bd = await fetch(`${OWNED}/trd_bars_deep?select=symbol`, { headers: hdr })
 const priced = new Set((Array.isArray(bd) ? bd : []).map((x) => x.symbol));
 assertNonEmpty("priced symbols", [...priced], 500);
 
-// FTD rows for priced symbols only.
+// FTD rows for priced symbols only — and D-629: it now actually ASKS for only those.
+// The previous loop said "for priced symbols only" in a comment while downloading all 10,787,134 rows across 39,316
+// symbols and discarding 77.8% of them client-side; only 2,392,499 belong to priced names. It also paged by OFFSET,
+// which is quadratic (0.22s at offset 0 rising to 1.91s at 15M on a comparable table). Server-side batching hits
+// trd_ftd_sym (symbol, settle_date) and removes the offset entirely.
 const ftd = new Map<string, { d: string; q: number }[]>();
-for (let off = 0;; off += 50000) {
-  const rows = await fetch(`${OWNED}/trd_ftd?select=symbol,settle_date,qty_fails&order=settle_date&offset=${off}&limit=50000`, { headers: hdr })
-    .then((r) => r.json()).catch(() => []) as { symbol: string; settle_date: string; qty_fails: number }[];
-  if (!Array.isArray(rows) || !rows.length) break;
-  for (const r of rows) {
-    if (!priced.has(r.symbol)) continue;
-    const q = +r.qty_fails; if (!(q > 0)) continue;
-    (ftd.get(r.symbol) ?? ftd.set(r.symbol, []).get(r.symbol)!).push({ d: r.settle_date, q });
-  }
-  if (rows.length < 50000) break;
-}
+await bySymbol({
+  rest: OWNED, headers: hdr, table: "trd_ftd",
+  select: "symbol,settle_date,qty_fails",
+  symbols: [...priced], orderBy: "symbol,settle_date",
+  onPage: (rows) => {
+    for (const r of rows as unknown as { symbol: string; settle_date: string; qty_fails: number }[]) {
+      const q = +r.qty_fails; if (!(q > 0)) continue;
+      (ftd.get(r.symbol) ?? ftd.set(r.symbol, []).get(r.symbol)!).push({ d: r.settle_date, q });
+    }
+  },
+});
+// Batches arrive per symbol, so date order must be established explicitly rather than inherited from a global
+// `order=settle_date`. The persistence and surprise constructions both read each name's series in sequence, so an
+// unsorted array here would not error — it would quietly compute a different signal. Sorting is not optional.
+for (const arr of ftd.values()) arr.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
 assertNonEmpty("symbols with fails and prices", [...ftd.keys()], 200);
 
 // Prices
