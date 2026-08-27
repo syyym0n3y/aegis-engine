@@ -12222,3 +12222,26 @@ still exists or ever did.
 was repaired only by the ordering of the next run. And derived scripts now carry a divergence warning, after
 `shortvol-surprise` silently lacked a diagnostic added to its parent and produced a run that looked complete while
 answering a different question.
+
+## W2-NOA (2026-08-27) — the last COVERAGE LAW gap closes with a properly-powered null
+| quintile (NOA) | 63-session return |
+|---|---|
+| q0 lowest | **4.606%** |
+| q1 | 3.672% |
+| q2 | 4.254% |
+| q3 | 3.646% |
+| q4 highest | 3.956% |
+
+62 rebalances, **mean breadth 576** (above the 500 floor). Book 1.32%/yr at **t 0.44**, non-monotone.
+
+**All four of the law's named gaps are now closed:** accruals (31 specs), gross profitability (31),
+cash-flow-to-price (`cfo_yield`), and NOA — the last, now tested and null. Because breadth exceeded the floor this is
+evidence about the **market**, not about our data, which is the distinction the law exists to enforce.
+
+**A coverage finding worth more than the null.** The strict five-line-item construction intersects to **405 filers**
+and would have made this UNTESTED. The algebraically identical form (`Equity + Debt − Cash`) needs fewer line items
+and gives **960 per quarter** — 2.4× coverage for the same quantity.
+
+So: **a coverage verdict is a property of the construction as much as of the data.** Declaring something untestable
+without checking whether an equivalent formulation clears the bar is its own kind of premature null. I nearly did
+exactly that.
