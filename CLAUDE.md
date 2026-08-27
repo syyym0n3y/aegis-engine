@@ -276,7 +276,14 @@ Measured independently on both asset classes on the same day:
 | | intended | present | missing |
 |---|---|---|---|
 | equity FTD universe | 5,766 | 4,191 | **1,575 (27.3%) — every one delisted** |
-| Binance live perps | 524 | 371 | **153 (29.2%)** |
+| Binance live perps | 524 | 371 | ~~153 (29.2%)~~ **RETRACTED — see below** |
+**THE CRYPTO ROW IS RETRACTED (D-646 corrected).** All 150 absent contracts are younger than 400 days (median
+onboard age 304) and are excluded by a minimum-history threshold, not missing from the data. Pairing it with the
+equity figure implied a shared structural cause that does not exist: the equity hole is delisted names whose
+histories exist and we lack; the crypto figure was a threshold described as a hole. **The equity row stands and the
+rules below stand on it alone** — and the retraction is itself the lesson, since the arithmetic similarity of two
+unrelated numbers is exactly what makes a false pattern persuasive.
+
 D-535's 2.1x Sharpe spread across five definitions was computed with **none of the five being the complete
 universe** — all five came from the same deficient panel, so that spread understates the researcher degree of
 freedom rather than bounding it. Rules: (5) every cross-sectional claim states UNIVERSE COVERAGE (present /
