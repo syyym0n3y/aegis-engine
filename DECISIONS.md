@@ -12686,3 +12686,58 @@ mandates, but not free.
 **This is not `combined-book-p1`.** That row is a different book from French long-short decile streams,
 dollar-neutral, already carrying its own severe qualification (ETF replica captures 13%; capacity ~0.7%/yr against a
 5–6%/yr headline). The shared family label "book" nearly produced a false alarm about the paper rung.
+
+## D-651 (2026-08-27) — six wait-loops ran 14 hours because the observer was inside the set it observed
+The operator's task panel showed five background tasks still RUNNING at 9–14 hours, long after every job they
+watched had finished and been recorded. A sixth had spun for **3½ days** from an earlier session.
+
+```
+until ! pgrep -f "shortvol-surprise"; do sleep 15; done
+```
+
+cannot terminate: the waiting shell's **own command line contains the string it greps for**, so `pgrep` matches the
+waiter, the condition is permanently false, and the loop spins forever.
+
+Same defect as four others catalogued today — a query that cannot return non-zero (D-641), a selection measured on
+its own criterion (D-603), a detector deriving its reference from the fault it detects (D-650), a guard exempting
+rows by a marker every honest row carries (D-636). **Each is a check whose outcome is fixed by its own construction.**
+
+**It persisted because it was harmless** — sleeping shells, no CPU, results already read by polling logs directly.
+Nothing went wrong, so nothing prompted a look; the operator saw it on a screen before the system did. This programme
+has nineteen guards watching for wrong answers and **none watching for work that never ends.**
+
+Fixed: `scripts/wait-for-job.sh` waits on a **PID — an identity, not a description**. Verified three ways: exits when
+the job exits and not before, returns immediately on a finished PID, and **reports a timeout with exit 2** rather
+than exiting silently, since a quiet exit is indistinguishable from completion.
+
+## D-652 (2026-08-27) — the nearest miss is a small-cap, short-side effect
+`intl-momentum-geography` is the closest anything has come to clearing (EM WML **t 5.30** vs a 5.41 ceiling). But WML
+is a research-space decile long-short, and THE INSTRUMENT LAW has killed that shape four times.
+
+| region | BIG spread | SMALL spread | BIG/SMALL |
+|---|---|---|---|
+| dev ex-US | 5.3%/yr, t 2.31 | 11.1%/yr, t 5.97 | **0.47** |
+| Europe | 6.2%/yr, t 2.40 | 14.9%/yr, t 7.35 | **0.42** |
+| Asia-Pac ex-JP | 4.8%/yr, t 1.60 | 15.7%/yr, t 7.03 | **0.31** |
+| Japan | 1.8%/yr, t 0.61 | 1.2%/yr, t 0.52 | both null (known exception) |
+
+**Gate 1 passes, gate 2 fails → NOT SUPPORTED.** Momentum *is* detectable in large caps, but at 31–47% of small-cap
+magnitude against a pre-registered 50% floor. Competing explanation (a), size-concentrated, is supported.
+
+**The leg decomposition inverts the obvious reading.** Raw legs look long-dominated (BIG winners 9.7%/yr vs losers
+4.4%/yr) — good news, since a long-only tilt needs no borrow. On a matched excess-of-RF basis:
+
+| dev ex-US, excess of RF | |
+|---|---|
+| market | 5.1%/yr |
+| BIG winners vs market | **+2.0%/yr, t 1.85 — not significant** |
+| BIG losers vs market | **−3.3%/yr, t −2.56** |
+
+The spread is **short-side dominated** — competing explanation (c), and the worst case for reachability: the short
+leg is the one that costs borrow, and the long-only version an investor could actually hold does not clear.
+
+**A units error was one step from the ledger.** French 6-portfolio files carry *total* returns while `Mkt-RF` is
+*excess*. Comparing directly gave winners +4.6%/yr at **t 4.19**; on a matched basis it is +2.0%/yr at **t 1.85** —
+comfortably significant to not significant. Invisible in the output, because both are plausible percentages.
+
+EM legs remain **UNTESTED**: our French holdings include the EM momentum factor but not the EM 6-portfolio file.
