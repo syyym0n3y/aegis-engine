@@ -12303,3 +12303,24 @@ the honest form" is now a tested requirement, not an assumption.
 
 **Found only because Week 4 required publishing what the research cost.** The discrepancy had been sitting in plain
 view in this file and nothing compared the two numbers.
+
+## W4 (2026-08-27) — the first external surface, and what building it found
+`public/register.html`, published. Six sections: the position stated first, the retraction ledger, a three-tier
+reproduction path with real commands and real expected output, the 16 laws each labelled with the error that bought
+it, what it cost, and what is still open.
+
+**The month's exit criterion is met in a way I did not plan.** Week 4 required publishing what the research *cost* —
+and adding that up exposed D-628: the published deflation ceiling (5.410) and the one the running agents actually
+computed (5.337) were different numbers. The external surface found a live defect on its first day, which is the
+strongest available evidence that the surface does what it claims.
+
+**Four corrections made before publishing**, each because a stated figure did not survive checking:
+
+| claimed | actual |
+|---|---|
+| 39 ingest scripts | **40** |
+| 16 laws, all in doctrine | CONTINUITY had a wired guard but was **never written into CLAUDE.md** — added |
+| 0 survivors | `trd_factory` reports **2** (paper rung, forward clock) — page states both, not the flattering one |
+| 18 guards | 18 *wired*; `infra-guard.ts` exists unwired — verified it guards the **rented** substrate the programme migrated off, and separately verified the owned substrate fails closed (3 guards at a dead host, all exit 1) |
+
+Publishing an unchecked number on a page about checking numbers would have been self-refuting.

@@ -352,3 +352,19 @@ supplies the number; (4) every feed carries a staleness budget matched to how of
 weekly dataset is not stale at three days and crying wolf trains everyone to ignore the alarm; (5) enforced by
 `scripts/forward-scorer.ts` and `scripts/continuity-guard.ts`, both wired into the daily runner and
 `scripts/guard-status.sh` (16 guards).
+
+## THE CONTINUITY LAW (2026-08-26, D-613) — binds every forward clock
+**A forward clock nobody scores is indistinguishable from no forward clock. A rule that MATURES without a verdict
+must turn the board RED, and maturity must produce a NUMBER rather than a flag.**
+Origin: six clocks were registered under THE PRE-COMMITMENT LAW with numeric two-sided rules, and nothing was
+responsible for reading them. The pre-registration removes discretion only at the moment someone actually computes
+the statistic; until then it is a promise, and a promise that no process checks decays into the same
+decide-afterwards failure the law was written to kill. Week 3 added the second half: `scripts/forward-score-specs.ts`
+computes, per clock, the statistic ITS OWN rule names, and distinguishes **not-yet-computable** from **computed and
+inconclusive** — conflating those is how a clock quietly stops meaning anything.
+A SCORER THAT HAS ONLY EVER RETURNED "NO DATA YET" IS UNVERIFIED: all six returned not-yet-computable, so the
+machinery had never produced a number and could not be trusted to produce a correct one — the D-584 defect class,
+where five guards certified green while reading nothing. Verified by backdating: `fwd-ftd-persistence-short` at
+FROM_D=2024-01 reproduces D-618's -22.05%/yr at portfolio t -4.88 to two decimals, and `fwd-hedging-pressure-flip`
+computes t -2.77 over 137 weeks. Enforced by `scripts/continuity-guard.ts` (RED on a matured rule with no verdict,
+RED on a stale forward mark), wired into the daily runner.

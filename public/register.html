@@ -1,0 +1,554 @@
+<title>Register of Refutations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --paper:#F5F6F8; --card:#FFFFFF; --ink:#13161B; --muted:#59616D; --faint:#858C97;
+  --rule:#DCE0E6; --rule-soft:#E9ECF0;
+  --correction:#B02A1F; --correction-bg:#FBEDEB;
+  --held:#1A6076; --held-bg:#E8F1F4;
+  --open:#7A5A12; --open-bg:#F7F0DE;
+  --shadow:0 1px 2px rgba(19,22,27,.05), 0 8px 24px -16px rgba(19,22,27,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D0F12; --card:#14171C; --ink:#E4E7EB; --muted:#949CA8; --faint:#6E7681;
+    --rule:#242932; --rule-soft:#1B1F26;
+    --correction:#E0705F; --correction-bg:#2A1613;
+    --held:#66B4CB; --held-bg:#0F2530;
+    --open:#D8B05A; --open-bg:#2A2213;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D0F12; --card:#14171C; --ink:#E4E7EB; --muted:#949CA8; --faint:#6E7681;
+  --rule:#242932; --rule-soft:#1B1F26;
+  --correction:#E0705F; --correction-bg:#2A1613;
+  --held:#66B4CB; --held-bg:#0F2530;
+  --open:#D8B05A; --open-bg:#2A2213;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Newsreader",Georgia,"Times New Roman",serif;
+  font-size:18px; line-height:1.6; font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+h1,h2,h3{text-wrap:balance;font-weight:500;line-height:1.18;margin:0}
+a{color:inherit}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:2px solid var(--ink);padding:44px 0 20px;margin-bottom:0}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  display:flex;flex-wrap:wrap;gap:10px 20px;margin-bottom:26px
+}
+h1{font-size:clamp(2.9rem,7.5vw,4.6rem);letter-spacing:-.022em;font-weight:400}
+h1 em{font-style:italic;color:var(--correction)}
+.standfirst{
+  font-size:clamp(1.12rem,2.1vw,1.35rem);color:var(--muted);max-width:64ch;
+  margin:20px 0 8px;line-height:1.5;font-weight:300
+}
+
+/* ---------- the position ---------- */
+.position{
+  border-bottom:1px solid var(--rule);padding:34px 0 38px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:26px 34px
+}
+.fig{display:flex;flex-direction:column;gap:5px}
+.fig .n{font-family:"IBM Plex Mono",monospace;font-size:clamp(1.6rem,3.4vw,2.15rem);font-weight:500;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.fig .l{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);line-height:1.45}
+.fig.zero .n{color:var(--correction)}
+.fig.held .n{color:var(--held)}
+
+/* ---------- sections ---------- */
+section{padding:56px 0;border-bottom:1px solid var(--rule)}
+.shead{display:flex;align-items:baseline;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+.snum{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--correction)}
+h2{font-size:clamp(1.7rem,3.6vw,2.3rem);letter-spacing:-.018em}
+.sintro{color:var(--muted);max-width:68ch;margin:14px 0 0;font-size:1.04rem}
+p{margin:16px 0;max-width:70ch}
+.lede{font-size:1.1rem}
+
+/* ---------- retraction ledger ---------- */
+.ledger{margin-top:34px;border-top:1px solid var(--ink)}
+.entry{
+  display:grid;grid-template-columns:112px 1fr;gap:0 26px;
+  padding:24px 0;border-bottom:1px solid var(--rule-soft);align-items:start
+}
+.entry .id{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;
+  color:var(--correction);letter-spacing:.02em;padding-top:5px
+}
+.entry .id .dt{display:block;color:var(--faint);font-weight:400;font-size:10.5px;margin-top:4px;letter-spacing:.06em}
+.claimed{
+  font-size:1.06rem;color:var(--muted);margin:0 0 10px;max-width:74ch;
+  text-decoration:line-through;text-decoration-color:var(--correction);
+  text-decoration-thickness:1.5px;text-underline-offset:2px
+}
+.claimed b{font-weight:500}
+.correction{
+  font-size:1.02rem;margin:0;max-width:74ch;padding-left:15px;
+  border-left:2px solid var(--correction)
+}
+.correction .tag{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--correction);display:block;margin-bottom:5px
+}
+.correction .num{font-family:"IBM Plex Mono",monospace;font-size:.93em;font-variant-numeric:tabular-nums}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto;margin:26px 0;border:1px solid var(--rule);border-radius:3px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+th{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint);background:var(--paper);
+  border-bottom:1px solid var(--rule);white-space:nowrap
+}
+tbody tr:last-child td{border-bottom:none}
+td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{font-family:"IBM Plex Mono",monospace;font-size:12.5px;white-space:nowrap}
+.bad{color:var(--correction)}
+.good{color:var(--held)}
+
+/* ---------- code ---------- */
+pre{
+  background:var(--card);border:1px solid var(--rule);border-radius:3px;
+  padding:16px 18px;overflow-x:auto;margin:16px 0;
+  font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.65;color:var(--ink)
+}
+pre .c{color:var(--faint)}
+pre .o{color:var(--held)}
+code{font-family:"IBM Plex Mono",monospace;font-size:.87em;background:var(--rule-soft);padding:1px 5px;border-radius:2px}
+
+/* ---------- repro steps ---------- */
+.step{border-left:2px solid var(--rule);padding:0 0 4px 22px;margin:30px 0}
+.step h3{font-size:1.16rem;margin-bottom:4px}
+.step .req{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:12px;display:block
+}
+.step.tier1{border-left-color:var(--held)}
+.step.tier3{border-left-color:var(--open)}
+
+/* ---------- law grid ---------- */
+.laws{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:30px;border-radius:3px;overflow:hidden}
+.law{background:var(--card);padding:19px 20px}
+.law h3{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--correction);margin-bottom:9px}
+.law p{font-size:14px;margin:0;color:var(--muted);line-height:1.55}
+.law p b{color:var(--ink);font-weight:500}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--correction-bg);border-left:3px solid var(--correction);
+  padding:20px 24px;margin:30px 0;border-radius:0 3px 3px 0
+}
+.callout.held{background:var(--held-bg);border-left-color:var(--held)}
+.callout.open{background:var(--open-bg);border-left-color:var(--open)}
+.callout p{margin:0;max-width:none;font-size:1.02rem}
+.callout p + p{margin-top:12px}
+.callout .tag{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:8px;color:var(--correction)
+}
+.callout.held .tag{color:var(--held)}
+.callout.open .tag{color:var(--open)}
+
+/* ---------- footer ---------- */
+footer{padding:44px 0 66px;color:var(--faint);font-size:13.5px}
+footer p{max-width:74ch}
+.stamp{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:18px}
+
+@media (max-width:640px){
+  body{font-size:17px}
+  .entry{grid-template-columns:1fr;gap:10px}
+  .entry .id{padding-top:0}
+  .wrap{padding:0 20px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>Aegis — Falsification Engine</span>
+    <span>Record as of 2026-08-27</span>
+    <span>Single operator · not published advice</span>
+  </div>
+  <h1>Register of <em>Refutations</em></h1>
+  <p class="standfirst">
+    A trading research programme that has tested 1,021 specifications and promoted none of them.
+    This page exists so an outsider can check the one thing that matters: whether we retract our own claims
+    before anyone else has to.
+  </p>
+</header>
+
+<div class="position">
+  <div class="fig"><span class="n">1,021</span><span class="l">specifications tested<br>across 32 families</span></div>
+  <div class="fig zero"><span class="n">0</span><span class="l">promoted to capital<br>$0 risked · $0 earned</span></div>
+  <div class="fig"><span class="n">2,265,801</span><span class="l">counted trials<br>ceiling √(2 ln N) = 5.41</span></div>
+  <div class="fig zero"><span class="n">17</span><span class="l">pre-registered claims<br>retracted by us</span></div>
+  <div class="fig held"><span class="n">7</span><span class="l">pre-registered claims<br>that held</span></div>
+  <div class="fig"><span class="n">18</span><span class="l">machine guards, each<br>verified to fail first</span></div>
+</div>
+
+<!-- ============ 1. THE POSITION ============ -->
+<section>
+  <div class="shead"><span class="snum">§1</span><h2>The position, stated first</h2></div>
+
+  <p class="lede">
+    Nothing here works yet. One thousand and twenty-one specifications have been tested across equities, futures,
+    FX, crypto perpetuals and options. <b>None has been promoted to real capital.</b> Two sit at the paper rung on a
+    forward clock and have earned nothing. The most likely terminal state of this programme is that nothing ever
+    clears — and that is the designed outcome of a falsification engine, not its failure.
+  </p>
+
+  <div class="callout">
+    <span class="tag">The claim this page is actually making</span>
+    <p>
+      Not "we found an edge." The claim is narrower and checkable: <b>every number below survived an attempt to kill
+      it, and the ones that didn't are printed here with the same prominence as the ones that did.</b>
+      If you find a claim we have not already recorded against ourselves, the engine has failed at its only job.
+    </p>
+  </div>
+
+  <p>
+    The base rate is unforgiving — roughly 97% of retail traders lose, and under 1% beat fees over fifteen years.
+    So the default verdict on any strategy here is REJECT, and the burden sits entirely on the strategy.
+    The only component with near-certain positive expected value is the risk gate.
+  </p>
+
+  <h3 style="margin-top:34px;font-size:1.15rem">What is actually held</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Dataset</th><th>Rows</th><th>Span / breadth</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>FINRA short volume</td><td class="num">19,150,176</td><td>daily, per-symbol</td><td>free</td></tr>
+        <tr><td>SEC fails-to-deliver</td><td class="num">10,787,134</td><td>2018-01-02 → 2026-07-31, 39,316 symbols</td><td>free</td></tr>
+        <tr><td>ATS / dark-pool weekly</td><td class="num">7,648,218</td><td>weekly</td><td>free</td></tr>
+        <tr><td>EDGAR XBRL fundamentals</td><td class="num">4,097,303</td><td>32 concepts</td><td>free</td></tr>
+        <tr><td>Short interest</td><td class="num">3,904,134</td><td>bi-monthly</td><td>free</td></tr>
+        <tr><td>Perpetual open interest</td><td class="num">3,340,490</td><td>hourly</td><td>free</td></tr>
+        <tr><td>Fama–French factors</td><td class="num">2,607,238</td><td>daily</td><td>free</td></tr>
+        <tr><td>N-PORT fund ownership</td><td class="num">1,422,558</td><td>quarterly</td><td>free</td></tr>
+        <tr><td>13F institutional ownership</td><td class="num">1,006,941</td><td>quarterly</td><td>free</td></tr>
+        <tr><td>Forms 3/4/5 insider</td><td class="num">880,977</td><td>event</td><td>free</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--muted);font-size:.95rem">
+    57,005,898 rows across 94 tables, ingested by 40 scripts. Every source above is free and public.
+    No paid data has been bought, because no hypothesis has yet justified the purchase.
+  </p>
+</section>
+
+<!-- ============ 2. THE RETRACTIONS ============ -->
+<section>
+  <div class="shead"><span class="snum">§2</span><h2>What we retracted</h2></div>
+  <p class="sintro">
+    Twenty-nine claims were pre-registered in an append-only table before their data existed. The table raises on
+    UPDATE and DELETE, so an outcome cannot be rewritten once recorded. Seventeen of the twenty-nine were retracted.
+    The struck line is what was claimed; the marked line is what the measurement actually said.
+  </p>
+
+  <div class="ledger">
+
+    <div class="entry">
+      <div class="id">D-627<span class="dt">2026-08-26</span></div>
+      <div>
+        <p class="claimed">The settlement-fails signal earns <b>−11.10%/yr at t −8.84</b> — the strongest result the programme has produced, after surviving ten consecutive attacks.</p>
+        <p class="correction"><span class="tag">Relative only — the short leg rises</span>
+          Every bucket earns a <span class="num">positive</span> return. The high-surprise bucket is <span class="num">+0.100%</span> raw over 20 sessions — it <i>goes up</i> — and is negative in only 43 of 99 periods. True excess versus the universe is <span class="num">−0.218%</span> at <span class="num">t −3.12</span>, about <span class="num">−2.75%/yr</span>. Roughly a quarter of the headline, reachable only by shorting the hardest-to-borrow names in the market.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-590<span class="dt">2026-08-26</span></div>
+      <div>
+        <p class="claimed">The beta hypothesis is refuted — the short side shows a genuine timing component independent of market exposure.</p>
+        <p class="correction"><span class="tag">False win · retracted same day</span>
+          Reported from a <b>pooled</b> number in which one stop geometry held <span class="num">64.3%</span> of all short trades. Ex-swing, the ratio is <span class="num">0.07×</span> against the pooled <span class="num">1.21×</span>. The conclusion was an artifact of aggregation. This retraction is why THE MECHANISM LAW exists.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-615<span class="dt">2026-08-26</span></div>
+      <div>
+        <p class="claimed">Reg SHO forces close-out of persistent fails after 13 settlement days. That is <b>compelled buying on a regulatory deadline</b> — a mechanical, non-behavioural edge.</p>
+        <p class="correction"><span class="tag">Sign miss — and the stated expectation was wrong</span>
+          I pre-registered publication timing as the likely killer. Instead the opposite happened: persistent fails <i>do</i> predict, but in the direction opposite to the close-out story. The mechanism was wrong in an informative way, and the pre-registration is what made that visible rather than deniable.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-607<span class="dt">2026-08-25</span></div>
+      <div>
+        <p class="claimed">Hedging pressure predicts relative returns across futures markets, in the direction the literature documents.</p>
+        <p class="correction"><span class="tag">The pre-registered direction loses</span>
+          Long-high-hedging-pressure returns <span class="num">−13.48%/yr</span>, portfolio <span class="num">t −4.16</span>, Sharpe <span class="num">−0.93</span> over 1,037 weeks. The mirror gives <span class="num">−13.47%/yr</span>. Halves agree in both. A profitable flip exists — and is <b>not claimable</b>, because it was never registered.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-606<span class="dt">2026-08-25</span></div>
+      <div>
+        <p class="claimed">Perpetuals carry the edge and spot does not — measured at SR 0.54 versus 0.11 on 31 name-matched pairs.</p>
+        <p class="correction"><span class="tag">Reverses at honest breadth</span>
+          At the pre-registered ≥150-name floor (311 matched pairs) the gap <b>inverts</b>: perp <span class="num">SR 0.32</span> against spot <span class="num">SR 0.50</span>. The original 31-pair result measured a universe, not a factor.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-592 / D-593<span class="dt">2026-08-26</span></div>
+      <div>
+        <p class="claimed">At maker fees the sub-fee effect becomes 2.7× the round trip and clears — and the 50–121bp non-retracement return can be taken by entering at the close.</p>
+        <p class="correction"><span class="tag">The fill is not independent of the outcome</span>
+          Monotone across five depths: <b>filled</b> <span class="num">0.78–7.21bp</span> (all t &lt; 1.25) versus <b>unfilled</b> <span class="num">49.67–120.84bp</span> (t to 72.24). You are filled precisely when the move is not happening. Taking it at the close yields <span class="num">−9.03 to −0.99bp</span>; <span class="num">t 72.24 → t −0.63</span>.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-603<span class="dt">2026-08-25</span></div>
+      <div>
+        <p class="claimed">A cross-section of funding rates yields 37 placeable symbols at a net 5.0–6.6%/yr carry. The snapshot passed.</p>
+        <p class="correction"><span class="tag">Circular selection</span>
+          Symbols were selected on trailing-90-day funding and then their trailing-90-day funding was reported. The test measured its own selection criterion. Re-made honestly — select on the first 90 days, measure the next — it does not stand.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-624<span class="dt">2026-08-26</span></div>
+      <div>
+        <p class="claimed">The finding is specific to <b>settlement fails</b> — a distinct microstructural signal about delivery failure.</p>
+        <p class="correction"><span class="tag">Specificity retracted; general structure holds</span>
+          Short-volume surprise on the identical construction gives <span class="num">−5.14%/yr</span> at <span class="num">t −6.34</span> across 5,814,843 events. Same sign, comparable strength. The signal was never about settlement — it is any quantity spiking against its own trailing median.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">D-628<span class="dt">2026-08-27</span></div>
+      <div>
+        <p class="claimed">The deflation ceiling is 5.410 at 2,266,819 counted trials — the bar every result must clear.</p>
+        <p class="correction"><span class="tag">A bar nothing paid for</span>
+          The published ceiling and the one the <i>running agents computed</i> were different numbers. A 734,400-trial sweep read the counter, added its spend in memory, printed an honest 5.410, and never wrote those trials down. Every later run used <span class="num">5.337</span> — lower, and therefore <b>more permissive</b>. No result was falsely cleared (the highest score ever recorded is 3.73), but a control that only holds while nothing is close is not a control. Found only because this page required publishing what the research cost.</p>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="id">W2-noa<span class="dt">2026-08-27</span></div>
+      <div>
+        <p class="claimed">Net operating assets — one of the four factors THE COVERAGE LAW was written about — will show the documented balance-sheet-bloat premium.</p>
+        <p class="correction"><span class="tag">A genuine null, properly powered</span>
+          62 rebalances, mean breadth <span class="num">576</span> names, above the pre-registered 500 floor. Quintiles are non-monotone. This one is <b>evidence about the market rather than about our data</b> — which is the distinction the whole coverage apparatus exists to preserve.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="callout held" style="margin-top:36px">
+    <span class="tag">Seven claims did hold</span>
+    <p>
+      The register is not uniformly negative, and reporting it that way would be its own distortion.
+      Seven pre-registrations survived — among them that the fails signal is <b>independent</b> of short interest
+      (correlation <span class="mono">0.114</span>, opposite signs) and of trading volume (<span class="mono">0.023</span>),
+      and that hedging-pressure's sign <b>replicates</b> out of its original asset class at
+      <span class="mono">t −9.26</span>. Surviving ten attacks is what earned the fails signal an eleventh, which is
+      the one that finally reduced it.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 3. REPRODUCE ============ -->
+<section>
+  <div class="shead"><span class="snum">§3</span><h2>Reproduce a claim</h2></div>
+  <p class="sintro">
+    Three tiers, ordered by what they cost you. The first needs nothing but the repository and runs in two seconds.
+    We state plainly where reproduction gets expensive rather than implying it is all equally easy.
+  </p>
+
+  <div class="step tier1">
+    <h3>Tier 1 — the honest-statistics core</h3>
+    <span class="req">No data · no network · no credentials · ~2 seconds</span>
+    <p>
+      Deflated Sharpe, PBO, walk-forward splitting and the look-ahead contract are pure functions with no
+      dependencies. This is the part of the engine every number downstream relies on.
+    </p>
+<pre><span class="c">$</span> deno test supabase/functions/_shared/
+
+<span class="o">ok | 297 passed | 0 failed (2s)</span></pre>
+    <p style="font-size:.95rem;color:var(--muted)">
+      Includes the fail-closed contract test: every feature row must carry a parseable
+      <code>effective_date</code>, so a backtest cannot read a value before it was legally knowable.
+    </p>
+  </div>
+
+  <div class="step">
+    <h3>Tier 2 — break a guard on purpose</h3>
+    <span class="req">Local Postgres + PostgREST · minutes</span>
+    <p>
+      Eighteen guards enforce the laws in §4. Every one was <b>verified to go RED before its green was trusted</b> —
+      a guard that has only ever passed is an untested guard. Each ships a self-test that must fail on a synthetic
+      violation <i>and</i> pass on honest input:
+    </p>
+<pre><span class="c">$</span> SELFTEST=1 deno run --allow-net --allow-env --allow-read \
+    scripts/trial-ledger-guard.ts
+
+<span class="o">  live counter: N = 2,265,801  ->  ceiling sqrt(2 ln N) = 5.4099
+  static scan flags an unpaid SPENDER: YES
+  static scan SPARES a read-only reporter: YES
+  SELFTEST PASSED — fails on an unpaid ceiling, passes on a paid one.</span></pre>
+    <p style="font-size:.95rem;color:var(--muted)">
+      The second assertion exists because this guard's first version <b>failed it</b> — it flagged correct read-only
+      code. A guard that REDs on working code gets switched off, so both directions are tested permanently.
+    </p>
+  </div>
+
+  <div class="step tier3">
+    <h3>Tier 3 — reproduce a measured result end to end</h3>
+    <span class="req">Full ingest from public sources · hours to days</span>
+    <p>
+      Every dataset in §1 has an ingest script in <code>scripts/</code> and every source is free.
+      Reproduction is genuinely available, and it is genuinely slow — the FTD table alone is 10.8M rows across
+      39,316 symbols. A worked example, scored on a window that was already measured independently:
+    </p>
+<pre><span class="c">$</span> bash scripts/ingest-ftd.sh          <span class="c"># SEC fails-to-deliver, free</span>
+<span class="c">$</span> FROM_D=2024-01-01 LIQUID_ONLY=1 \
+    deno run --allow-net --allow-env --allow-write \
+    scripts/ftd-persistence.ts
+
+<span class="o">  376,597 events, 30 monthly periods, mean breadth 1784, LIQUID HALF
+  BOOK long-most-persistent: -22.05%/yr   PORTFOLIO t -4.88</span></pre>
+    <p style="font-size:.95rem;color:var(--muted)">
+      That figure matches an earlier independent measurement to two decimals. It is also the number
+      <b>D-627 above reduces by roughly 75%</b> once measured against the universe instead of in isolation —
+      both are in the register, and the reduction is the one that counts.
+    </p>
+  </div>
+
+  <div class="callout open">
+    <span class="tag">What you cannot reproduce, stated plainly</span>
+    <p>
+      Results depending on paid data are not reproducible here, because we have not bought any — options surface
+      history, intraday equities and borrow rates remain unpurchased. Eight coverage gaps are open and listed in
+      <code>GAP_REGISTER.md</code> with the specific verdict each one blocks. Where an input was never fetched,
+      the verdict is recorded as <b>UNTESTED</b>, never as a null result about the market.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 4. THE LAWS ============ -->
+<section>
+  <div class="shead"><span class="snum">§4</span><h2>Sixteen laws, each bought with an error</h2></div>
+  <p class="sintro">
+    None of these were imported from a textbook. Every one was written the day a specific measured claim turned out
+    to be wrong, and every one is enforced by a machine guard rather than by intention.
+  </p>
+
+  <div class="laws">
+    <div class="law"><h3>Coverage</h3><p>A null is evidence about the <b>market</b> only if the data could have detected the effect. Otherwise it is evidence about our data. <i>Bought when program-level "no edge" conclusions were drawn while holding 5 of hundreds of available EDGAR concepts.</i></p></div>
+    <div class="law"><h3>Liquidity</h3><p>The promotable number is the <b>liquid tercile's</b>, never the pooled one. <i>Bought when 11–19%/yr headlines decomposed into 20–40%/yr illiquid and 0.9–5.7%/yr liquid.</i></p></div>
+    <div class="law"><h3>Effect size</h3><p>Significance says "is it there". Only <b>multiples of the round-trip cost</b> say "is it worth acting on". <i>Bought on a signal with negative rank IC on 20 of 20 instruments — at 0.02–0.14× the fee.</i></p></div>
+    <div class="law"><h3>Breadth</h3><p>A cross-section under ~50 names is <b>UNTESTED</b>, whatever its t-stat. <i>Bought on 94.2%/yr at SR 1.13 computed on fourteen instruments; at proper breadth, SR 0.34.</i></p></div>
+    <div class="law"><h3>Execution</h3><p>A maker fee is a <b>hypothesis about fills</b>, not a cost model. Measure the return conditional on filling. <i>Bought when the entire positive return lived in the days the order never filled.</i></p></div>
+    <div class="law"><h3>Same-bar corollary</h3><p>A close-derived signal may not act at that close. <i>Bought when the first four specs ever to clear all six gates sign-flipped from +19%/yr to −11%/yr under one day of lag.</i></p></div>
+    <div class="law"><h3>Selection</h3><p>Choosing components on the full sample makes the result <b>in-sample</b>, whatever the split says. <i>Bought on a "selective overlay worth 0.37 Sharpe" that, re-chosen on train only, qualified in zero classes.</i></p></div>
+    <div class="law"><h3>Universe</h3><p>A Sharpe that doubles across defensible universe definitions is <b>NOT IDENTIFIED</b>. <i>Bought on one strategy printing SR 0.61 to 1.30 across five equally defensible definitions of itself.</i></p></div>
+    <div class="law"><h3>Sign</h3><p>A direction asserted is not a direction checked, and a post-hoc flip is never claimable. <i>Bought when the best result in the programme turned out to be the registered direction run backwards.</i></p></div>
+    <div class="law"><h3>Instrument</h3><p>A premium must be measured in the instrument that would <b>hold</b> it. <i>Bought four separate times, each by a different mechanism, each discovered after the claim was made.</i></p></div>
+    <div class="law"><h3>Holdability</h3><p>Depth is not the risk; <b>duration</b> is. State the longest time underwater. <i>Bought on a candidate that survived ten statistical attacks and was killed by 1,363 days underwater.</i></p></div>
+    <div class="law"><h3>Mechanism</h3><p>A causal story requires pre-registration or the label <b>DESCRIPTIVE ONLY</b>. <i>Bought on D-590 above — seven mechanism stories proposed in one day, seven dead.</i></p></div>
+    <div class="law"><h3>Pre-commitment</h3><p>A forward test without a written promote/kill rule is an <b>option to rationalise later</b>. <i>Bought when four forward clocks were found running with no stated decision rule.</i></p></div>
+    <div class="law"><h3>Precondition</h3><p>Every run prints its effective configuration and refuses to start on a near-miss variable name. <i>Bought on nine self-inflicted defects, including a self-test that silently did nothing for days.</i></p></div>
+    <div class="law"><h3>Continuity</h3><p>A matured forward clock without a verdict turns the board red. <i>Bought because a clock nobody scores is indistinguishable from no clock.</i></p></div>
+    <div class="law"><h3>Guards inspect running code</h3><p>A guard on the record does not constrain the <b>agents</b>. <i>Bought with seven green guards and three live production defects, one surfacing a false clear for nine consecutive cycles.</i></p></div>
+  </div>
+</section>
+
+<!-- ============ 5. WHAT THIS COST ============ -->
+<section>
+  <div class="shead"><span class="snum">§5</span><h2>What it cost to find out</h2></div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Measure</th><th>Figure</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Specifications tested</td><td class="num">1,021</td><td>across 32 families</td></tr>
+        <tr><td>Counted trials</td><td class="num">2,265,801</td><td>every run, including failed and iterated</td></tr>
+        <tr><td>Deflation ceiling</td><td class="num">5.4099</td><td>√(2 ln N) — the bar any result must clear</td></tr>
+        <tr><td>Best score currently live</td><td class="num good">2.82</td><td>versus a 5.41 bar — nothing clearing</td></tr>
+        <tr><td>Promoted to capital</td><td class="num bad">0</td><td>$0 risked, $0 earned</td></tr>
+        <tr><td>Ledger entries</td><td class="num">144</td><td>72 explicitly killed</td></tr>
+        <tr><td>Pre-registrations retracted</td><td class="num bad">17 of 29</td><td>append-only; outcomes cannot be rewritten</td></tr>
+        <tr><td>Machine guards</td><td class="num">18</td><td>each verified RED before its green was trusted</td></tr>
+        <tr><td>Offline tests</td><td class="num">297</td><td>0 failing</td></tr>
+        <tr><td>Paid data purchased</td><td class="num">$0</td><td>no hypothesis has yet justified it</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="tag">The uncomfortable summary</span>
+    <p>
+      The most statistically convincing result this programme ever produced reached <span class="mono">t −8.84</span>,
+      survived ten consecutive attacks, and would have made an excellent pitch. The eleventh test showed the short leg
+      <b>rises</b>, and reduced the real number to about a quarter of the headline.
+    </p>
+    <p>
+      That eleventh test is the product. Not the signal.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 6. OPEN ============ -->
+<section style="border-bottom:2px solid var(--ink)">
+  <div class="shead"><span class="snum">§6</span><h2>Open, and deliberately not closed</h2></div>
+  <p class="sintro">
+    This programme does not issue completeness declarations. "Exhausted" and "complete" are banned words here,
+    because on the day they were last used, four supposedly-closed lines turned out to be open.
+  </p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Open item</th><th>Blocked verdict</th><th>Actionable by</th></tr></thead>
+      <tbody>
+        <tr><td>EDGAR full-text filings</td><td>text-derived event signals — table holds 0 rows</td><td class="k">engine</td></tr>
+        <tr><td>On-chain / Blockchair</td><td>settlement-layer flow factors</td><td class="k">engine</td></tr>
+        <tr><td>FRED macro series</td><td>macro conditioning — awaiting an API key</td><td class="k">operator</td></tr>
+        <tr><td>FINRA TRACE</td><td>corporate-bond flow — awaiting registration</td><td class="k">operator</td></tr>
+        <tr><td>Options surface history</td><td>variance-premium in the placeable instrument</td><td class="k">operator (paid)</td></tr>
+        <tr><td>Intraday equities</td><td>equity microstructure at sub-daily horizons</td><td class="k">operator (paid)</td></tr>
+        <tr><td>Borrow-rate history</td><td>whether D-627's residual survives real borrow cost</td><td class="k">operator (paid)</td></tr>
+        <tr><td>Six forward clocks</td><td>maturity from 12 to 104 weeks out</td><td class="k">time</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Five of the six forward clocks carry a written prediction that they will <b>fail</b>, recorded before their data
+    exists, in a table that raises on UPDATE. When they mature, the prediction and the outcome will sit next to each
+    other whether or not the prediction was right. That calibration record is worth more than being right.
+  </p>
+</section>
+
+<footer>
+  <p>
+    Aegis is a single-operator research engine. Nothing here is investment advice, no signal is published, and no
+    strategy has been promoted to capital. Figures are read directly from the engine's own database and ledger on the
+    date stamped below; where a figure is an estimate or an untested quantity, it is labelled as such rather than
+    rounded into confidence.
+  </p>
+  <p class="stamp">
+    Record generated 2026-08-27 · 1,021 specs · 2,265,801 trials · ceiling 5.4099 · 0 promoted
+  </p>
+</footer>
+
+</div>
