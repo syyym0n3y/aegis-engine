@@ -78,6 +78,70 @@ else {
   console.log(`\n  ${ok ? "ok  " : "RED "} forward scorer last mark ${age.toFixed(1)}d ago`);
 }
 
+// D-658: A RULE THAT CANNOT BE SATISFIED BY ITS OWN ENGINE. The CONTINUITY LAW asks whether a matured clock has
+// been SCORED. It never asked whether the rule could be SATISFIED — and fwd-residual-follow asks for ">=126 forward
+// days" with a portfolio t while trd_attribution stamps at a median 31-day cadence, so its own horizon yields FOUR
+// observations. It would have matured, computed a t on four points, and passed. A rule is immutable by design, so
+// this cannot be fixed where it was written; it can only be DETECTED, and detecting it before maturity is the whole
+// value. Horizon divided by engine cadence must leave enough observations for the statistic the rule names.
+{
+  const MIN_OBS = 20;
+  // id -> the recorded mitigation. Adding an entry here is a claim that the scorer refuses to produce a number, and
+  // that claim was verified by exercising the path, not by reading it.
+  const ACKNOWLEDGED: Record<string, string> = {
+    "fwd-residual-follow": "forward-score-specs.ts returns UNDERPOWERED below 20 attribution stamps rather than a portfolio t (D-658, path exercised by BACKDATE=2026-01 returning 8 stamps)",
+  };
+  const CADENCE: Record<string, [string, string]> = {
+    // rule id -> [table, recency column] of the engine that must supply its observations
+    "fwd-residual-follow": ["trd_attribution", "asof"],
+  };
+  const rules = await fetch(`${OWNED}/trd_forward_rules?select=id,promote_if&order=id`, { headers: hdr })
+    .then((r) => r.ok ? r.json() : []).catch(() => []) as { id: string; promote_if: string }[];
+  for (const r of Array.isArray(rules) ? rules : []) {
+    const spec = CADENCE[r.id]; if (!spec) continue;
+    const dm = /(\d+)\s*(forward\s+)?(day|week|month)/i.exec(r.promote_if ?? "");
+    if (!dm) continue;
+    const n = Number(dm[1]), unit = dm[3].toLowerCase();
+    const horizonDays = unit === "day" ? n : unit === "week" ? n * 7 : n * 30.44;
+    // measure the engine's actual cadence rather than assuming it
+    // limit must be large enough to span several DISTINCT stamps. The first version used 40, but trd_attribution
+    // holds ~26 rows per asof, so 40 rows were ONE date, ds.length<3 fired, and the whole check silently skipped —
+    // printing nothing, which reads exactly like passing. That is the defect class this guard exists to catch,
+    // reproduced inside the guard itself.
+    const st = await fetch(`${OWNED}/${spec[0]}?select=${spec[1]}&order=${spec[1]}.desc&limit=3000`, { headers: hdr })
+      .then((x) => x.ok ? x.json() : []).catch(() => []) as Record<string, string>[];
+    const ds = [...new Set((Array.isArray(st) ? st : []).map((x) => Date.parse(x[spec[1]])))].sort((a, b) => b - a);
+    if (ds.length < 3) {
+      red++;
+      console.log(`\n  RED  ${r.id.padEnd(26)} cannot measure engine cadence — only ${ds.length} distinct ${spec[1]} value(s) read from ${spec[0]}.`);
+      console.log(`       A satisfiability check that cannot run is not a passing check.`);
+      continue;
+    }
+    const gaps: number[] = []; for (let i = 1; i < ds.length; i++) gaps.push((ds[i - 1] - ds[i]) / 86400000);
+    gaps.sort((a, b) => a - b);
+    const cad = gaps[Math.floor(gaps.length / 2)];
+    const implied = cad > 0 ? horizonDays / cad : Infinity;
+    if (implied < MIN_OBS) {
+      // A rule is IMMUTABLE by design (THE PRE-COMMITMENT LAW), so a mis-specified one can never be repaired where
+      // it was written and a RED here would be permanent. A permanent red gets switched off — that is how the
+      // agent-output defects survived nine cycles — so an acknowledged mis-specification with a RECORDED MITIGATION
+      // is reported, and only an UNacknowledged one is RED. The mitigation must be real: for fwd-residual-follow the
+      // scorer returns UNDERPOWERED below 20 observations instead of a t, verified by backdating (D-658).
+      if (ACKNOWLEDGED[r.id]) {
+        console.log(`\n  known  ${r.id.padEnd(24)} MIS-SPECIFIED: horizon ${n} ${unit}(s) / ${cad.toFixed(0)}-day cadence = ~${implied.toFixed(0)} observations`);
+        console.log(`         mitigated: ${ACKNOWLEDGED[r.id]}`);
+      } else {
+        red++;
+        console.log(`\n  RED  ${r.id.padEnd(26)} rule horizon ${n} ${unit}(s) against a ${cad.toFixed(0)}-day engine cadence`);
+        console.log(`       = ~${implied.toFixed(0)} observations, under the ${MIN_OBS} a portfolio statistic needs. The rule would MATURE and compute anyway,`);
+        console.log(`       and no mitigation is recorded for it. The rule cannot be edited — the SCORER must refuse to report a statistic.`);
+      }
+    } else {
+      console.log(`\n  ok   ${r.id.padEnd(26)} horizon yields ~${implied.toFixed(0)} observations at a ${cad.toFixed(0)}-day cadence`);
+    }
+  }
+}
+
 console.log(`\n  ${red === 0 ? "CONTINUITY GREEN — data arriving, jobs registered, clocks turning."
   : `${red} CONTINUITY FAILURE(S) — research run against this state may be reading a frozen snapshot.`}`);
 if (red > 0) Deno.exit(1);
