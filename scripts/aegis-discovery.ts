@@ -60,7 +60,18 @@ const ncdf = (z: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const
 async function cycle() {
   console.log("== discovery cycle: loading owned data ==");
   const { fund, syms, hdr } = await loadOwned();
-  if (!syms.length) { console.log("  no bars on owned yet (sync in progress?) — skip"); return; }
+  // D-642: "sync in progress?" was a GUESS printed as a diagnosis, and it is wrong in the case that matters. An
+  // UNREACHABLE database and an EMPTY one produce the identical empty array here, and the message asserted the
+  // benign reading of the two — so a dead substrate read as normal operation and raised no alarm. Distinguish them
+  // by asking whether the endpoint answers at all, and say which one it actually is.
+  if (!syms.length) {
+    let reachable = false;
+    try { const probe = await fetch(`${OWNED}/trd_bars_deep?select=symbol&limit=1`, { headers: hdr }); reachable = probe.ok; } catch { reachable = false; }
+    console.log(reachable
+      ? "  trd_bars_deep is REACHABLE and EMPTY — genuinely no data yet; skipping this cycle"
+      : "  !! trd_bars_deep is UNREACHABLE — this is a DEAD SUBSTRATE, not a sync delay. Conclusions drawn now would be UNKNOWN, not null.");
+    return;
+  }
   const byMonth = await buildMonths(fund, syms, hdr);
   const months = [...byMonth.keys()].sort(); if (months.length < 40) { console.log(`  only ${months.length} months — skip`); return; }
   // THOROUGH: parameter-free candidates → full-sample decile-LS series + per-era + NET-of-cost + skew + drawdown + deflation.
@@ -73,8 +84,18 @@ async function cycle() {
   // The counter is an APPEND-ONLY EVENT LOG (one row per candidate per cycle), not a single-row total — the old read
   // queried a `trials` column that never existed and silently fell back. Live N = documented historical baseline
   // (~1.53M, D-363/364) + the count of logged runs since the owned counter went live.
-  const _bk = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
-  const _live = _bk ? +((_bk.headers.get("content-range") || "").split("/")[1] || 0) : 0;
+  // D-642: THIS FETCH USED TO FAIL OPEN, AND IT WAS DOING SO IN PRODUCTION. `.catch(() => null)` sent _live to 0,
+  // N_TRIALS to the 1.53M baseline, and the deflation ceiling to 5.337 — REGARDLESS of the true trial count. The
+  // agent-output guard caught it live: "noise ceiling 5.34 is below the program's 5.41 (N=2,265,807)". A failed read
+  // therefore did not stop the agent, it LOWERED THE BAR, which is the worst available direction and precisely the
+  // D-584 shape (five guards certifying green while reading nothing). A deflation gate that degrades to a more
+  // permissive threshold when it cannot read its input is not a gate.
+  const _bk = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } })
+    .catch((e) => { throw new Error(`aegis-discovery: cannot read trd_trial_counter (${e instanceof Error ? e.message : e}) — refusing to run on an unverified deflation ceiling`); });
+  if (!_bk.ok) throw new Error(`aegis-discovery: trd_trial_counter HTTP ${_bk.status} — refusing to run on an unverified deflation ceiling`);
+  const _cr = (_bk.headers.get("content-range") || "").split("/")[1];
+  if (!_cr || !Number.isFinite(+_cr)) throw new Error(`aegis-discovery: trial counter returned no total — refusing to invent a ceiling`);
+  const _live = +_cr;
   const N_TRIALS = Number(Deno.env.get("N_TRIALS") || 0) || (1_530_000 + _live), ceil = Math.sqrt(2 * Math.log(N_TRIALS)); const COST = 0.002; const BORROW_M = 0.03 / 12; // F18: 20bp round-trip on traded names + 3%/yr borrow on the SHORT leg
   const results: Record<string, unknown>[] = [];
   for (const cand of CANDIDATES) {
