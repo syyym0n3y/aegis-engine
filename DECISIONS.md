@@ -12642,3 +12642,19 @@ available to us.
 
 **What this also settles:** the COVERAGE LAW factor-input gap is now closed at **15 of 15** held *and tested*,
 rather than 14 held with one unexamined.
+
+**D-648 liquidity decomposition (gate 4)** — run on both halves per D-634 rather than one and inferred:
+
+| | LIQUID | ILLIQUID | POOLED |
+|---|---|---|---|
+| excess | −0.415%, **t −0.47** | **−2.458%, t −2.40** | −1.258%, t −1.61 |
+| book | 1.43%/yr, t 0.29 | 12.66%/yr, t 2.16 | 4.89%/yr, t 1.24 |
+| high bucket negative | 31% | 41% | 38% |
+
+The pooled t 1.24 was a **diluted illiquid effect, not a weak broad one**. The promotable number is the liquid
+half's — **t 0.29**. The precise verdict is CAPACITY-BOUND, not merely underpowered.
+
+**Contrast with D-633, measured the same day on the same machinery:** settlement fails sit in the **liquid** half
+(t −1.99) with the illiquid half carrying the *wrong sign*; share issuance sits in the **illiquid** half with the
+liquid half at zero. Two signals, opposite liquidity profiles, and in both cases **the pooled number described
+neither.**
