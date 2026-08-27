@@ -12589,3 +12589,26 @@ The coverage finding survives the correction: the live-perp intersection only ev
 **What it means:** THE UNIVERSE LAW (D-535) found a 2.1× Sharpe spread across five defensible universe definitions —
 and **none of the five was the current universe**; all were drawn from a panel covering 70.8% of live contracts. A
 sixth definition exists that has never been tested, and unlike the delisted cohort **this gap is fillable**.
+
+## D-647 (2026-08-27) — going-concern language carries a median year of warning
+D-632 measured the hazard at 1.72× and killed it against the pre-registered 2.0 bar. But a hazard ratio says how
+*much* more often; it says nothing about how much *warning*. Measured on cached SEC submissions — survivorship-free,
+both sides CIK-keyed event records:
+
+| | |
+|---|---|
+| flagged filers examined | 1,895 |
+| **reached a 3.01 notice afterwards** | **570 (30.1%)** |
+| never did | 1,325 (69.9%) |
+| **median lead time** | **369 days** (p25 81d, p75 1,219d) |
+| within 90d / 1yr / 2yr | 27.4% / 49.6% / 64.7% |
+
+**The text is a genuine early warning and it is still not reachable, and both halves matter.** A median 369-day lead
+means the auditor phrase is not a coincident restatement of a delisting already underway. That is real information.
+
+Three measured findings sit between it and a position: D-632's 1.72× is below the bar written before the data
+existed; D-516 found delisting notices themselves uncollectable on borrow (−42.6%/yr); and D-645 showed 1,592 of
+3,085 delisting-notice symbols have **no price history at all**, so the return side cannot be measured on our panel
+even if it were tradable.
+
+Scope: 1,895 of 4,006 flagged CIKs — those cached by D-632's sampling. A subsample, stated as such.
