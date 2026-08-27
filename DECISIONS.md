@@ -12324,3 +12324,35 @@ strongest available evidence that the surface does what it claims.
 | 18 guards | 18 *wired*; `infra-guard.ts` exists unwired — verified it guards the **rented** substrate the programme migrated off, and separately verified the owned substrate fails closed (3 guards at a dead host, all exit 1) |
 
 Publishing an unchecked number on a page about checking numbers would have been self-refuting.
+
+## D-629 (2026-08-27) — why the analyses are slow, and why that causes false claims
+The operator asked what holes make this hunt slow. A 16-minute load of one table exposed two compounding defects,
+present in **47 scripts**, neither of which is about data volume.
+
+**1. OFFSET pagination is quadratic.** Measured directly against `trd_short_volume` (19,173,126 rows):
+
+| offset | page time |
+|---|---|
+| 0 | 0.22s |
+| 5,000,000 | 0.91s |
+| 15,000,000 | 1.91s |
+
+Across ~380 pages that is several billion discarded row-scans for **one** table read.
+
+**2. The filter was on the wrong side of the network.** Only 5,822,317 rows (30.4%) belong to symbols that have
+prices, yet all 19.17M were downloaded and then dropped by `if (!priced.has(r.symbol)) continue`. ~70% of a ~1GB
+transfer fetched, parsed, and thrown away.
+
+**Neither is visible in code review.** OFFSET pagination terminates, returns every row, and has no off-by-one.
+Nothing in the loop reveals that page 380 costs nine times page 1.
+
+**Why this matters beyond speed — the actual point.** A sweep that takes twenty minutes gets run once with one
+parameterisation. A sweep that takes ninety seconds gets run against its controls, its eras, and its own null. The
+cost of asking a question determines how many questions get asked, and this programme's central failure mode has
+been reporting a number *before* running the test that would kill it (D-590 pooled, D-627 relative-only, D-621
+degenerate variable). **Slow tooling is an upstream cause of false claims, not an inconvenience.**
+
+**Fix:** `_shared/paged-fetch.ts` — `bySymbol()` filters server-side on the `(symbol, d)` index with no offset at
+all; `byKeyset()` walks a monotonic column with `col=gt.last`. Both **throw** on a failed page rather than ending
+the walk silently: a swallowed error truncates the dataset and the analysis downstream reports a null computed on
+partial data, which is the D-584 shape.

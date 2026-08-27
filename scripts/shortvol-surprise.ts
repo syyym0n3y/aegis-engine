@@ -19,6 +19,7 @@
 // settle + 30 days), never from the settle date, because measuring from settle would be a look-ahead of exactly the
 // kind that has produced this programme's retractions.
 import { declareKnobs, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
+import { bySymbol } from "../supabase/functions/_shared/paged-fetch.ts";
 
 const K = declareKnobs("shortvol-surprise", [
   { name: "PUB_LAG_D", def: "30", note: "calendar days from settle_date to public availability" },
@@ -58,20 +59,28 @@ assertNonEmpty("priced symbols", [...priced], 500);
 // D-624: SHORT VOLUME instead of fails. Same shape — a daily quantity per symbol — so the surprise construction
 // (today vs the name's own trailing 60-day median) transfers exactly. short_vol/total_vol is the standard ratio and
 // is what the board's existing svr_* specs use.
+// D-629: this loop used to page the WHOLE 19,173,126-row table with `order=d&offset=${off}`, then discard most of
+// it client-side with `if (!priced.has(...)) continue`. Two compounding defects: OFFSET pagination is quadratic
+// (measured 0.22s at offset 0 rising to 1.91s at 15M, several billion discarded row-scans across ~380 pages), and
+// only 5,822,317 rows (30.4%) belong to priced symbols, so ~70% of a ~1GB transfer was fetched and thrown away.
+// Asking the database for the symbols we actually want uses the (symbol, d) index and removes the offset entirely.
 const ftd = new Map<string, { d: string; q: number }[]>();
-for (let off = 0;; off += 50000) {
-  const rows = await fetch(`${OWNED}/trd_short_volume?select=symbol,d,short_vol,total_vol&order=d&offset=${off}&limit=50000`, { headers: hdr })
-    .then((r) => r.json()).catch(() => []) as { symbol: string; d: string; short_vol: number; total_vol: number }[];
-  if (!Array.isArray(rows) || !rows.length) break;
-  for (const r of rows) {
-    if (!priced.has(r.symbol)) continue;
-    const tv = +r.total_vol, sv = +r.short_vol;
-    if (!(tv > 0) || !(sv >= 0)) continue;
-    const ratio = sv / tv; if (!Number.isFinite(ratio) || ratio <= 0) continue;
-    (ftd.get(r.symbol) ?? ftd.set(r.symbol, []).get(r.symbol)!).push({ d: r.d, q: ratio });
-  }
-  if (rows.length < 50000) break;
-}
+await bySymbol({
+  rest: OWNED, headers: hdr, table: "trd_short_volume",
+  select: "symbol,d,short_vol,total_vol",
+  symbols: [...priced],
+  onPage: (rows) => {
+    for (const r of rows as unknown as { symbol: string; d: string; short_vol: number; total_vol: number }[]) {
+      const tv = +r.total_vol, sv = +r.short_vol;
+      if (!(tv > 0) || !(sv >= 0)) continue;
+      const ratio = sv / tv; if (!Number.isFinite(ratio) || ratio <= 0) continue;
+      (ftd.get(r.symbol) ?? ftd.set(r.symbol, []).get(r.symbol)!).push({ d: r.d, q: ratio });
+    }
+  },
+});
+// The surprise construction needs each name's own history in date order; server-side batching returns per symbol,
+// so sort explicitly rather than relying on arrival order.
+for (const arr of ftd.values()) arr.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
 assertNonEmpty("symbols with short volume and prices", [...ftd.keys()], 200);
 
 // Prices
