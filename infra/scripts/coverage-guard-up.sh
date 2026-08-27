@@ -108,6 +108,9 @@ while true; do
   if ! deno run --allow-net --allow-env --allow-read --allow-run ../scripts/forward-scorer.ts; then
     echo "$(date -u +%FT%TZ) FORWARD SCORER RED — a pre-registered clock has matured with no verdict recorded"
   fi
+  # W3: spec-specific forward scoring. The D-613 tracker records elapsed time and reds on matured-without-verdict;
+  # this computes the statistic each rule actually names, so maturity produces a NUMBER rather than a flag.
+  deno run --allow-net --allow-env --allow-read --allow-run ../scripts/forward-score-specs.ts || true
   # CONTINUITY (D-613): a stopped ingest fails silently — old rows remain and every query still answers, from a
   # frozen snapshot. This is the check that the whole board is still being fed.
   if ! deno run --allow-net --allow-env --allow-read --allow-run ../scripts/continuity-guard.ts; then
