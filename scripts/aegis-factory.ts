@@ -334,7 +334,7 @@ if(PASS==="all"||PASS==="timing"){
       g_breadth:true /* single-instrument class: breadth law N/A, judged vs BH instead */,
       g_effect:Math.abs(m)*252>=(sw/ (ex.length/252))*10/1e4,
       g_benchmark:m>0 /* must BEAT buy-and-hold (D-439) */,
-      g_liquid:true,g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
+      g_liquid:null,g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
     await record(key,"timing",{inst,rule:rule.name,switches:sw,exec:"lag1"},"single",gate,ceil); done++;
   }
   await log(`  PASS 3 (timing) done: ${series.size*rules.length} specs`);
@@ -589,7 +589,7 @@ if(PASS==="all"||PASS==="factmom"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
     const g:Gate={n_names:live.length,n_periods:rets.length,gross_ann:(m+0.0005)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:true,g_effect:Math.abs(m)>=0.0005,g_benchmark:m>0,g_liquid:true,
+      g_breadth:true,g_effect:Math.abs(m)>=0.0005,g_benchmark:m>0,g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
     await record(key,"factmom",{K,form,factors:live.map(([n])=>n)},"factor_library",g,ceil);done++;
     await log(`    factmom form${form} top${K}: n=${rets.length} net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -746,7 +746,7 @@ if(PASS==="all"||PASS==="intl"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
     const g:Gate={n_names:1,n_periods:rets.length,gross_ann:(m+DRAG12)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:true, g_effect:Math.abs(m)>=DRAG12, g_benchmark:m>0, g_liquid:true,
+      g_breadth:true, g_effect:Math.abs(m)>=DRAG12, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"intl",{suf,label},"intl_panels",g,ceil); done++;
     await log(`    ${label.padEnd(42)} n=${rets.length}  net ${(m*12*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -811,7 +811,7 @@ if(PASS==="all"||PASS==="voltiming"){
       const gate:Gate={n_names:1,n_periods:ex.length,gross_ann:mean(net)*252+ (sw/(ex.length/252))*10/1e4,net_ann:mean(net)*252,
         sharpe:(mean(net)/(sdv(net)||1e-9))*Math.sqrt(252),t,dd:dd*100,ruined,
         g_breadth:true, g_effect:Math.abs(m)*252>=(sw/(ex.length/252))*10/1e4,
-        g_benchmark:m>0 /* must beat buy-and-hold */, g_liquid:true,
+        g_benchmark:m>0 /* must beat buy-and-hold */, g_liquid:null,
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
       await record(key,"voltiming",{inst,rule:rule.name,switches:sw,exec:"lag1"},"single",gate,ceil); done++;
       await log(`    ${inst} ${rule.name.padEnd(12)} n=${ex.length}  excess ${(m*252*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  sw=${sw}`);
@@ -926,7 +926,7 @@ if(PASS==="all"||PASS==="annprem"){
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*diffs.length/4),b2=Math.floor((e+1)*diffs.length/4);return mean(diffs.slice(a,b2));});
     const g:Gate={n_names:Math.round(sumFlag/Math.max(1,nmo)),n_periods:diffs.length,gross_ann:(m+2*FEE_EQ/1e4)*12,net_ann:m*12,
       sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:Math.round(sumFlag/Math.max(1,nmo))>=50, g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m>0, g_liquid:true,
+      g_breadth:Math.round(sumFlag/Math.max(1,nmo))>=50, g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"annprem",{},"equity_all",g,ceil); done++;
     await log(`    annprem pred91: n=${diffs.length}mo  avg announcers ${Math.round(sumFlag/Math.max(1,nmo))}  net ${(m*12*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1016,7 +1016,7 @@ if(PASS==="all"||PASS==="cot"){
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
     const g:Gate={n_names:nMktUsed,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
       g_breadth:nMktUsed>=20 /* TS-portfolio class; market count stated */, g_effect:true /* fees inside net */,
-      g_benchmark:m>0 /* self-financing L/S book */, g_liquid:true,
+      g_benchmark:m>0 /* self-financing L/S book */, g_liquid:null,
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"cot",{signame,thH,exec:"pub_lag6d",markets:nMktUsed},"futures_cot",g,ceil); done++;
     await log(`    cot ${signame} th${thH}: mkts=${nMktUsed} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1064,7 +1064,7 @@ if(PASS==="all"||PASS==="auction"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
     const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"auction",{dir,th,exec:"lag1",switches:swc},"single",g,ceil); done++;
     await log(`    auction ${dir} z${th}: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} sw=${swc} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1109,7 +1109,7 @@ if(PASS==="all"||PASS==="seasonal"){
       let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
       const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
       const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
       await record(key,"seasonal",{inst,rule:rule.name,exec:"calendar",switches:sw},"single",g,ceil); done++;
       if(Math.abs(t)>1.5) await log(`    seasonal ${inst} ${rule.name}: n=${mos.length}mo excess ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1142,7 +1142,7 @@ if(PASS==="all"||PASS==="overnight"){
       let cum=1,pk=1,dd=0,ruined=false;for(const x of mosN){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
       const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mosN.length/4),b2=Math.floor((e+1)*mosN.length/4);return mean(mosN.slice(a2,b2));});
       const g:Gate={n_names:1,n_periods:mosN.length,gross_ann:mG*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-        g_breadth:true, g_effect:m>0, g_benchmark:m>0, g_liquid:true,
+        g_breadth:true, g_effect:m>0, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
       await record(key,"overnight",{inst,leg},"single",g,ceil); done++;
       await log(`    overnight ${inst} ${leg}: gross ${(mG*12*100).toFixed(1)}%/yr  NET(20bp/d) ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)}`);
@@ -1242,7 +1242,7 @@ if(PASS==="all"||PASS==="fxintraday"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
     const g:Gate={n_names:PAIRS21.length,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:true /* 4-pair TS-portfolio class, count stated */, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_breadth:true /* 4-pair TS-portfolio class, count stated */, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"fxintraday",{rule,exec:"completed-bars"},"fx_majors",g,ceil); done++;
     await log(`    fxintraday ${rule}: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1362,7 +1362,7 @@ if(PASS==="all"||PASS==="cotdisagg"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
     const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:nMkt>=20, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_breadth:nMkt>=20, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"cotdisagg",{signame,thH,exec:"pub_lag6d",markets:nMkt},"futures_cot",g,ceil); done++;
     await log(`    cotdisagg ${signame} th${thH}: mkts=${nMkt} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1431,7 +1431,7 @@ if(PASS==="all"||PASS==="tff"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
     const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:nMkt>=8, g_effect:true, g_benchmark:m>0, g_liquid:true,
+      g_breadth:nMkt>=8, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"tff",{signame,thH,exec:"pub_lag6d",markets:nMkt},"futures_cot",g,ceil); done++;
     await log(`    tff ${signame} th${thH}: mkts=${nMkt} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1487,7 +1487,7 @@ if(PASS==="all"||PASS==="xasset"){
       let cum=1,pk=1,dd=0,ruined=false;for(const x of net){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
       const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
       const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
       await record(key,"xasset",{inst,signame,look,exec:"lag1",switches:sw},"single",g,ceil); done++;
       if(Math.abs(t)>1.3) await log(`    xasset ${inst} ${signame} l${look}: n=${mos.length}mo excess ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1647,7 +1647,7 @@ if(PASS==="all"||PASS==="sessions"){
       let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
       const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
       const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
-        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:true,
+        g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
       await record(key,"sessions",{inst,leg,exec:"calendar"},"single",g,ceil); done++;
       await log(`    sessions ${inst.padEnd(14)} ${leg.padEnd(5)}: n=${mos.length}mo excess-vs-24h ${(m*12*100).toFixed(1)}%/yr t=${t2.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1819,7 +1819,7 @@ if(PASS==="volmanaged"){
   await log(`    volmanaged: managed ${(sm.ann*100).toFixed(1)}%/yr SR ${sm.sr.toFixed(2)} DD ${(sm.dd*100).toFixed(0)}%  |  unmanaged ${(su.ann*100).toFixed(1)}%/yr SR ${su.sr.toFixed(2)} DD ${(su.dd*100).toFixed(0)}%  |  paired t ${dt.toFixed(2)}`);
   const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*managed.length/4),b2=Math.floor((e+1)*managed.length/4);return mean(managed.slice(a2,b2));});
   const g:Gate={n_names:6,n_periods:managed.length,gross_ann:sm.ann,net_ann:sm.ann,sharpe:sm.sr,t:sm.t,dd:sm.dd*100,ruined:false,
-    g_breadth:true,g_effect:true,g_benchmark:dt>0,g_liquid:true,
+    g_breadth:true,g_effect:true,g_benchmark:dt>0,g_liquid:null,
     g_era:q4.filter(x=>x>0).length>=3,eras:q4};
   await record(`book|p2|volmanaged`,"book",{policy:"moreira-muir",cap:2,lookback:6,paired_t_vs_unmanaged:+dt.toFixed(2)},"combined",g,ceil); done++;
   await log(`  PASS 32 (volmanaged) done`);
@@ -1911,7 +1911,7 @@ if(PASS==="residual"){
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
     const wins=mos.filter(x=>x>0).length;
     const g:Gate={n_names:UNIV33.length,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
-      g_breadth:true,g_effect:m>0,g_benchmark:m>0,g_liquid:true,
+      g_breadth:true,g_effect:m>0,g_benchmark:m>0,g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
     await record("book|p3|residual_fade","book",{rule:"fade-1d-residual",gate:"adjR2 0.15-0.95, stab>=0.4",exec:"lag1",monthly_win_rate:+(wins/mos.length).toFixed(3)},"combined",g,ceil); done++;
     await log(`    P3 residual-fade: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t2.toFixed(2)} monthly-win ${(100*wins/mos.length).toFixed(0)}% eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -1965,7 +1965,7 @@ if(PASS==="all"||PASS==="eqconc"){
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
     const g2:Gate={n_names:Math.round(avgN/Math.max(1,nMo)),n_periods:rets.length,gross_ann:(m+2*FEE_EQ/1e4)*12,net_ann:m*12,
       sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:2*K>=20,g_effect:Math.abs(m)>=2*FEE_EQ/1e4,g_benchmark:m>0,g_liquid:true,
+      g_breadth:2*K>=20,g_effect:Math.abs(m)>=2*FEE_EQ/1e4,g_benchmark:m>0,g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
     await record(key,"eqconc",{LIQN,K,signals:"hi52+,vol12-,mom12_1+"},"equity_concentrated",g2,ceil); done++;
     await log(`    eqconc liq${LIQN} ${K}L/${K}S: n=${rets.length}mo net ${(m*12*100).toFixed(1)}%/yr SR ${((m/sd)*Math.sqrt(12)).toFixed(2)} t ${t.toFixed(2)} maxDD ${(dd*100).toFixed(0)}% eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -2026,7 +2026,7 @@ if(PASS==="all"||PASS==="nonreliance"){
     const g:Gate={n_names:Math.round(sumF/Math.max(1,nmo)),n_periods:diffs.length,gross_ann:(m+2*FEE_EQ/1e4)*12,net_ann:m*12,
       sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
       g_breadth:false /* few filers per month by nature — event class, count stated */,
-      g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m<0 /* pre-registered NEGATIVE drift for filers */, g_liquid:true,
+      g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m<0 /* pre-registered NEGATIVE drift for filers */, g_liquid:null,
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)).length>=3, eras:q4};
     await record(key,"nonreliance",{tag,look},"equity_all",g,ceil); done++;
     await log(`    nonreliance[${tag}] look${look}: n=${diffs.length}mo avg-flagged ${Math.round(sumF/Math.max(1,nmo))} drift ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
@@ -2143,7 +2143,7 @@ if(PASS==="all"||PASS==="frenchdec"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
     const g:Gate={n_names:1,n_periods:rets.length,gross_ann:(m+DRAG)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
-      g_breadth:true /* each leg a diversified portfolio */, g_effect:Math.abs(m)>=DRAG, g_benchmark:m>0, g_liquid:true,
+      g_breadth:true /* each leg a diversified portfolio */, g_effect:Math.abs(m)>=DRAG, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"frenchdec",{prefix,side,label},"decile_panels",g,ceil); done++;
     await log(`    ${label.padEnd(40)} n=${rets.length}  net ${(m*12*100).toFixed(1)}%/yr  t=${t.toFixed(2)}  eras ${q4.map(x=>x>0?"+":"-").join("")}`);
