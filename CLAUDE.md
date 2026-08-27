@@ -461,3 +461,25 @@ COST, never "net"; (4) a cost stated in bp without a frequency is incomplete, no
 `scripts/turnover-guard.ts` (4-way self-test verified: flags the D-654 shape, passes a compliant row, ignores rows
 claiming no return, exempts event studies where turnover is undefined), binding new work and reporting the **64-row**
 pre-existing backlog every run rather than amnestying it.
+
+## THE COST-INFLATION COROLLARY (2026-08-27, D-661/662) — binds every "significantly loses" claim
+**A flat per-period cost shifts the mean and leaves the variance untouched, so charging a LOSING book manufactures
+its significance. Any claim of the form "X significantly loses" must be verified GROSS.**
+Origin: the two largest |t| values this programme ever recorded were both cost artifacts, measured the same hour.
+| | gross | reported | mean ratio | t ratio |
+|---|---|---|---|---|
+| TFF hedging pressure | −2.07%/yr, **t −1.54** | −12.47%/yr, **t −9.26** | 6.02 | **6.01** |
+| settlement fails book | −3.56%/yr, **t −2.90** | −9.56%/yr, **t −7.80** | 2.69 | **2.69** |
+Both ratios identical to two decimals — the signature of an unchanged standard deviation, not a coincidence.
+**The pattern itself is correct and must not be removed.** Charging costs is right, and for a book that MAKES money
+cost *reduces* |t|, which is conservative. The artifact appears only when a losing book's significance IS the
+finding: then every basis point of assumed fee buys statistical confidence in the loss. 15 scripts subtract a flat
+per-period cost before computing a t.
+Why no existing law catches it: THE EFFECT-SIZE LAW compares a signal against the cost it must beat, and THE
+EXECUTION LAW tests whether a fill assumption holds. **Neither notices that the cost has been added to the RESULT
+rather than compared against it.**
+Rules: (1) any "significantly loses" claim states its GROSS t beside its net; (2) a t computed on a cost-charged
+series is reported as net-of-assumption, never as evidence about the market; (3) when net and gross t differ by more
+than ~2x, the cost model is doing the work and must be justified independently; (4) what saved the fails analysis was
+an accident of construction worth copying — the absolute diagnostic computes bucket returns BEFORE cost, so its
+excess figure is gross and every conclusion built on it survived while the headline did not.
