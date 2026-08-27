@@ -399,3 +399,18 @@ pre-existing backlog every run rather than amnestying it.
 **The guard shipped with its own bug, now permanently in its self-test:** `DESCRIPTIVE ONLY` was in the exemption
 list, and since nearly every honest row carries that MECHANISM-LAW marker, 34 rows were waved through — including
 two that actually complied. An exemption keyed on an unrelated marker makes the green arithmetically meaningless.
+
+## THE POSITIVE-CONTROL RULE (2026-08-27, D-641) — binds every query whose finding is a zero
+**A negative result is indistinguishable from a broken question, because both look like zero. Any query reporting
+NONE / ZERO / EMPTY must be paired with a positive control that MUST return non-zero.**
+Origin: three false-negative queries in one session, none of which errored, two of which pointed at conclusions
+about to be recorded.
+| query | returned | truth |
+|---|---|---|
+| survivorship via epoch integers compared to `'2025-01-01'` lexically | "4,348 of 4,348 stopped trading" | **8** |
+| panel freeze via `first_date` (NULL on every row) | "0 listed after 2019" | **1,269 (29.2%)** |
+| pseudo-replication via `\b` (POSIX has no `\b`) | "0 rows claim a t-stat" | **102** |
+Every guard already has this discipline — a green never made to go red is meaningless. The ad-hoc query had none.
+The control costs one line: count non-nulls, match a value known to exist, check a symbol known to be live.
+**Why it is not pedantry: this programme's output is largely null results, so a defect class that manufactures false
+zeros attacks the thing it produces most.**
