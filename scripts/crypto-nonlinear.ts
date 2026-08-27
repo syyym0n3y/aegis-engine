@@ -202,6 +202,7 @@ const cohorts:{w:Map<string,number>;left:number}[]=[];
 const cohortsL:{w:Map<string,number>;left:number}[]=[];          // live cohorts, each expiring after HOLD days
 const books:Record<string,number[]>={gbmEq:[],gbmConv:[],gbmLiq:[],gbmIlliq:[],gbmHold:[],linHold:[]};
 const legLong:number[]=[],legShort:number[]=[];   // D-637
+let prevCohortSigned:Map<string,number>|null=null; const cohortOverlap:number[]=[]; const cohortFlip:number[]=[];   // D-657
 const bookDates:string[]=[];
 let prevW:Record<string,Map<string,number>>={gbmEq:new Map(),gbmConv:new Map(),gbmLiq:new Map(),gbmIlliq:new Map()};
 const FULLSPAN=Deno.env.get("FULLSPAN")==="1"&&!!Deno.env.get("FEATSET");
@@ -269,6 +270,26 @@ for(const Y of (FULLSPAN?[years[0]]:years.filter(y=>y>=START))){
       const wL=new Map<string,number>();
       for(const i of ordL.slice(0,kH))wL.set(g[i].sym,1/(2*kH));
       for(const i of ordL.slice(-kH))wL.set(g[i].sym,-1/(2*kH));
+      // D-657 TURNOVER MEASUREMENT (THE TURNOVER LAW, D-656). The fee model charges FEE_BP/cohorts every day, which
+      // assumes every position is closed and reopened each cycle — 73 round trips a year at HOLD=5, or 6.57%/yr at
+      // 9bp. That is only correct if consecutive cohorts share no names. Where a name IS re-selected you would net
+      // the position rather than trade it, so persistence makes the charge CONSERVATIVE. Measuring it says whether
+      // the book is overcharged (and its true return higher) or the assumption is right.
+      // SIGN MATTERS AND THE FIRST VERSION IGNORED IT. Counting bare name overlap treats a name that flips from
+      // long to short as if it were held — but a flip is a DOUBLE trade, the most expensive move in the book, not a
+      // netted one. Overlap must be counted only where the SIGN is unchanged, and flips counted as extra turnover.
+      if(prevCohortSigned){
+        let held=0, flipped=0;
+        for(const [s2,w2] of wL){
+          const prev=prevCohortSigned.get(s2);
+          if(prev===undefined) continue;
+          if(Math.sign(prev)===Math.sign(w2)) held++; else flipped++;
+        }
+        const n=Math.max(1,wL.size);
+        cohortOverlap.push(held/n);      // fraction carried at the SAME sign — genuinely nettable
+        cohortFlip.push(flipped/n);      // fraction present but REVERSED — costs a double trade
+      }
+      prevCohortSigned=new Map(wL);
       cohortsL.push({w:wL,left:HOLD});
       for(const c of cohortsL)c.left--;
       while(cohortsL.length&&cohortsL[0].left<=0)cohortsL.shift();
@@ -424,6 +445,22 @@ if(legLong.length>30){
   console.log(Number.isFinite(longShare)
     ? `      => ${(100*longShare).toFixed(0)}% of the spread comes from the LONG side, ${(100*(1-longShare)).toFixed(0)}% from the SHORT side`
     : `      => split UNDEFINED (the two excesses cancel); reported rather than printed as a spurious ratio`);
+}
+// D-657 TURNOVER REPORT
+if(cohortOverlap.length>30){
+  const ov=mean(cohortOverlap);
+  const perDay=FEE_BP/HOLD/1e4, chargedYr=perDay*365*100;
+  const fl=mean(cohortFlip);
+  // A held name trades 0; a new name trades 1; a FLIPPED name trades 2 (close the old side, open the other).
+  const trueTurn=Math.min(2,(1-ov-fl)+2*fl);
+  const trueYr=trueTurn*(365/HOLD)*(FEE_BP/1e4)*100;
+  console.log(`\n    TURNOVER (D-657, THE TURNOVER LAW) — ${cohortOverlap.length} consecutive cohort pairs:`);
+  console.log(`      name overlap between consecutive cohorts: ${(100*ov).toFixed(1)}%`);
+  console.log(`      of which SIGN-UNCHANGED (genuinely nettable): ${(100*ov).toFixed(1)}%  |  SIGN-FLIPPED (double trade): ${(100*fl).toFixed(1)}%`);
+  console.log(`      => traded per cycle: ${(100*trueTurn).toFixed(1)}%  (new names 1x, flips 2x, held 0x)`);
+  console.log(`      fee CHARGED by the model: ${chargedYr.toFixed(2)}%/yr (assumes 100% turnover every cycle)`);
+  console.log(`      fee IMPLIED by measured turnover: ${trueYr.toFixed(2)}%/yr`);
+  console.log(`      => the book is ${chargedYr>trueYr?"OVERCHARGED":"UNDERCHARGED"} by ${Math.abs(chargedYr-trueYr).toFixed(2)}%/yr`);
 }
 // D-638 SURVIVORSHIP REACH: does the delisting cohort touch the TRADED universe, or only the tail?
 if(universeMembers.size){
