@@ -64,6 +64,13 @@ while true; do
   # TURNOVER LAW (D-656): a per-trade cost is not a cost model — the drag is TURNOVER x COST. D-654 is what the
   # omission costs: EM momentum at +4.2%/yr and t 3.98, passing every structural gate, became -0.63%/yr once turnover
   # was measured at 33.5% one-way monthly. 44 of 45 live return claims did not state it.
+  # SCHEMA HONESTY (D-671): three columns in one schema were found lying in a single session — g_liquid holding a
+  # constant, n_names counting factor streams where it elsewhere counts stocks, gross_ann holding the NET return on
+  # 26.7% of specs. The third broke an audit: D-664 bounded cost exposure by gross/net ratios that are 1.0 by
+  # construction for a quarter of the board, certifying as clean the families re-running proved were inflated.
+  if ! deno run --allow-net --allow-env ../scripts/schema-honesty-guard.ts; then
+    echo "$(date -u +%FT%TZ) SCHEMA HONESTY GUARD RED — a column name promises something its values do not deliver"
+  fi
   if ! deno run --allow-net --allow-env ../scripts/turnover-guard.ts; then
     echo "$(date -u +%FT%TZ) TURNOVER GUARD RED — a rebalanced return was claimed without stating how often it trades"
   fi

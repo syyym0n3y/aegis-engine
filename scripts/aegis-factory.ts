@@ -1831,7 +1831,12 @@ if(PASS==="volmanaged"){
   await log(`    volmanaged: managed ${(sm.ann*100).toFixed(1)}%/yr SR ${sm.sr.toFixed(2)} DD ${(sm.dd*100).toFixed(0)}%  |  unmanaged ${(su.ann*100).toFixed(1)}%/yr SR ${su.sr.toFixed(2)} DD ${(su.dd*100).toFixed(0)}%  |  paired t ${dt.toFixed(2)}`);
   const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*managed.length/4),b2=Math.floor((e+1)*managed.length/4);return mean(managed.slice(a2,b2));});
   const g:Gate={n_names:6,n_periods:managed.length,gross_ann:sm.ann,net_ann:sm.ann,sharpe:sm.sr,t:sm.t,dd:sm.dd*100,ruined:false,
-    g_breadth:true,g_effect:true,g_benchmark:dt>0,g_liquid:null,
+    // D-668: p2 is p1's book with a VOL-TARGETING OVERLAY — identical instruments, only the exposure scales. Its
+    // liquidity judgement must therefore equal p1's, which is an explicit true (the core streams are the ones judged
+    // implementable; the vrp variant is not). The D-666 sweep nulled this alongside the genuine placeholders, which
+    // would have revoked this row's survivor status on an INCONSISTENCY rather than on a finding: the same book is
+    // liquid under p1 and unknown under p2. Restored as an explicit, reasoned judgement, not a hardcoded pass.
+    g_breadth:true,g_effect:true,g_benchmark:dt>0,g_liquid:true /* inherits p1|core: same instruments, overlay only */,
     g_era:q4.filter(x=>x>0).length>=3,eras:q4};
   await record(`book|p2|volmanaged`,"book",{policy:"moreira-muir",cap:2,lookback:6,paired_t_vs_unmanaged:+dt.toFixed(2)},"combined",g,ceil); done++;
   await log(`  PASS 32 (volmanaged) done`);
