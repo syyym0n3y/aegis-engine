@@ -12356,3 +12356,59 @@ degenerate variable). **Slow tooling is an upstream cause of false claims, not a
 all; `byKeyset()` walks a monotonic column with `col=gt.last`. Both **throw** on a failed page rather than ending
 the walk silently: a swallowed error truncates the dataset and the analysis downstream reports a null computed on
 partial data, which is the D-584 shape.
+
+## D-630 (2026-08-27) — the short-volume leg fails the absolute diagnostic; D-624's generalisation retracted
+D-627 applied the absolute-vs-relative test to the **fails** leg and cut its headline ~75%. The short-volume leg,
+on which D-624 rested its generalisation, had never been put through it.
+
+| | fails leg (D-627) | short-volume leg |
+|---|---|---|
+| headline | −11.10%/yr, t −8.84 | −5.98%/yr, t −7.37 |
+| **excess vs universe** | −0.218%, **t −3.12** | −0.021%, **t −0.46** |
+| bucket extremes b0 / b3 | graded | **0.779% / 0.781%** |
+
+The cross-section is flat. The headline t measures how precisely a long-short spread is estimated, not whether
+either leg earns anything. D-624's claim that the surprise structure is not specific to settlement rested entirely
+on short volume reproducing at t −6.34; it does not. **Only the fails leg survives, at ~25% of its own headline.**
+The diagnostic was written the day before and applied to one leg and not the other.
+
+## D-631 (2026-08-27) — the immutability guarantee protected the label, not the finding
+THE PRE-COMMITMENT LAW claims a recorded outcome "cannot be rewritten, so a retraction can never be softened into a
+win," verified by four attacks. A fifth succeeded. The trigger locked `claim`/`competing`/`rule`/`kill_condition`/
+`registered_at` and the outcome **label** — but not `outcome_note`, **which is where the finding, the numbers and
+the reason live.** The label is one word; the note is the content.
+
+My test overwrote D-624's note with the string `softened` and **permanently destroyed text**; only ~260 characters
+were reconstructable from an earlier query output. The row carries an explicit RESTORED/TRUNCATED marker rather
+than a silent patch — a quietly repaired record is worse than a visibly damaged one.
+
+Migration 0097 makes `outcome_note` append-only. Verified four ways: overwrite RAISES, truncate RAISES, append
+SUCCEEDS, delete RAISES. Same shape as D-584 and D-628 — a control believed because it had a name and a test, where
+the test covered the adjacent thing rather than the load-bearing one. **"Is there a guard" is the wrong question;
+"what does it refuse, and has anyone made it refuse" is the right one.**
+
+## D-632 (2026-08-27) — going-concern → delisting: real, significant, below the bar I set before looking
+Survivorship-free by construction — both arms are CIK-keyed event records, and the SEC retains every registrant's
+history permanently, including filers with no ticker and no exchange.
+
+| | flawed control | corrected control |
+|---|---|---|
+| flagged reach a 3.01 within 365d | 16.00% | 14.32% |
+| control | 7.08% | 8.33% |
+| **hazard ratio** | **2.26× (z 6.84)** | **1.72× (z 4.64)** |
+| ex-mechanical (90–365d) | 2.28× | 1.73× |
+| **verdict** | **SUPPORTED, 3/3 gates** | **NOT SUPPORTED** |
+
+The association is real: 1.72× at z 4.64, essentially unchanged when the first 90 days are removed, so it is
+prediction rather than the auditor opinion and the delisting notice firing on the same facts. But the
+pre-registered bar was 2.0, written into an append-only table before the data existed. **The rule fires KILL and
+the bar is not moving.**
+
+**The near-miss is the finding.** The first control was keyed on each firm's *first* 10-K in the window, which
+left-censors — 50.0% of control firms got a 2012 reference date purely because that is when the window opens,
+leaving later years populated by newly-registered filers. The flagged arm carried the identical censoring (28.2%
+dated 2012), so fixing only the control would have been worse than the original bug. Had I not checked the date
+distribution *before* reading the result, I would have reported a clean SUPPORTED.
+
+Not a tradability claim in either direction: D-516 already measured delisting notices at −42.6%/yr and found them
+uncollectable on borrow.
