@@ -58,6 +58,12 @@ while true; do
   # an honest ceiling of 5.410 — and never wrote those trials down. Every later run computed 5.337 and believed it. The
   # error is silent, cumulative and ALWAYS PERMISSIVE. Nothing was falsely cleared (max psr_z ever is 3.73) but a control
   # that only holds while nothing is close is not a control. This guard REDs on any ceiling nothing paid for.
+  # BENCHMARK LAW (D-636): a spread is not a return until its universe is subtracted. D-630's t -7.37 decomposed to
+  # an excess of t -0.46 on a flat cross-section. 69 pre-existing rows claim a return with no decomposition; the guard
+  # binds new work and reports that backlog every run rather than amnestying it.
+  if ! deno run --allow-net --allow-env ../scripts/benchmark-guard.ts; then
+    echo "$(date -u +%FT%TZ) BENCHMARK GUARD RED — a spread was reported as a return without subtracting its universe"
+  fi
   if ! deno run --allow-net --allow-env --allow-read ../scripts/trial-ledger-guard.ts; then
     echo "$(date -u +%FT%TZ) TRIAL LEDGER GUARD RED — a deflation ceiling was reported that no recorded trials paid for"
   fi

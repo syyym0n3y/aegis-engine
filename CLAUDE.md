@@ -375,3 +375,27 @@ where five guards certified green while reading nothing. Verified by backdating:
 FROM_D=2024-01 reproduces D-618's -22.05%/yr at portfolio t -4.88 to two decimals, and `fwd-hedging-pressure-flip`
 computes t -2.77 over 137 weeks. Enforced by `scripts/continuity-guard.ts` (RED on a matured rule with no verdict,
 RED on a stale forward mark), wired into the daily runner.
+
+## THE BENCHMARK LAW (2026-08-27, D-627/630/633/636) — the most productive law, and it was never written down
+**A long-short or quantile SPREAD says nothing about whether either leg earns anything. Every cross-sectional return
+claim states the UNIVERSE MEAN over the same periods and the flagged bucket's EXCESS against it, or it is not a
+claim about a signal.**
+Origin: in a single session the absolute diagnostic killed or reshaped three findings, including the strongest
+result this programme had produced.
+| | headline | after subtracting the universe |
+|---|---|---|
+| D-627 fails book | −11.10%/yr, t −8.84 | excess ≈ −2.75%/yr; the short leg **rises** |
+| D-630 short-volume | −5.98%/yr, **t −7.37** | excess −0.021%, **t −0.46**; cross-section FLAT (0.779% vs 0.781%) |
+| D-633 fails by liquidity | one number | liquid **t −1.99**, illiquid **+0.60 — wrong sign** |
+A t-statistic on a spread says how precisely the spread is ESTIMATED, not whether anything was earned. D-630's
+t −7.37 was a tightly-measured difference between two buckets that were both universe drift.
+Rules: (1) every cross-sectional return states its universe mean and excess; (2) a headline whose excess is
+insignificant is recorded as DRIFT, never as an edge; (3) report the proportion of periods the flagged bucket is
+actually negative — a bucket that rises in most periods is not a short; (4) liquidity halves are measured on BOTH
+sides, never one (D-634: four scripts had a filter that could only select the top half, so the illiquid half was
+never measurable, only inferred — and on the fails book that inference was wrong in SIGN);
+(5) enforced by `scripts/benchmark-guard.ts`, which binds work from adoption forward and REPORTS the 69-row
+pre-existing backlog every run rather than amnestying it.
+**The guard shipped with its own bug, now permanently in its self-test:** `DESCRIPTIVE ONLY` was in the exemption
+list, and since nearly every honest row carries that MECHANISM-LAW marker, 34 rows were waved through — including
+two that actually complied. An exemption keyed on an unrelated marker makes the green arithmetically meaningless.
