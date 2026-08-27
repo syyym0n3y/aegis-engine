@@ -12784,3 +12784,29 @@ error, not the data's. Competing explanation (b), decay, is supported: pre-1990 
 turnover, purely because US large-cap execution is about a third of EM's. **Momentum is reachable exactly where
 trading is cheapest and nowhere else** — a statement about market structure, not about momentum. Nothing approaches
 the 5.41 ceiling; the best net figure implies t 1.96 at an optimistic 10bp.
+
+## D-660 (2026-08-27) — the fails signal is net-negative at every horizon
+THE TURNOVER LAW makes an obvious move available on the one surviving signal: cost falls linearly with hold length,
+so if the excess persisted a longer hold would cut cost without cutting return. The book had only ever run at HOLD=20.
+
+| HOLD | excess | t | gross/yr | trips/yr | cost@25bp | **net/yr** |
+|---|---|---|---|---|---|---|
+| 20 | −0.138% | −1.99 | 1.74% | 12.6 | 3.15% | **−1.41%** |
+| 40 | −0.159% | −1.69 | 1.00% | 6.3 | 1.57% | **−0.57%** |
+| 60 | −0.173% | −1.86 | 0.73% | 4.2 | 1.05% | **−0.32%** |
+
+**The excess is front-loaded.** A persistent effect would give −0.276% at HOLD=40 and −0.414% at HOLD=60; observed
+−0.159% (0.58×) and −0.173% (0.42×). So annualised gross falls 1.74% → 0.73% while cost falls 3.15% → 1.05%. The net
+improves and **never crosses zero** — it approaches zero from below by giving up return, not by finding any.
+**A strategy that converges on breaking even as you trade it less is a strategy whose best version is not trading it.**
+
+**This closes the line that was the programme's strongest for three days.** It began as a Reg SHO close-out mechanism
+at t −4.97 (D-615), lost the mechanism (D-621), lost the persistence filter (D-622), lost settlement-specificity
+(D-624, later retracted), lost 75% of its magnitude to the absolute diagnostic (D-627), was found to live in the
+liquid half with the illiquid half wrong-signed (D-633), survived a ticker-reuse control at Δt 0.03 (D-643), and now
+fails on cost at every horizon. **Ten attacks established it was real; the next four established it was never
+reachable.**
+
+An arithmetic error was caught in the same breath: my first cost line doubled a round-trip fee that was already a
+round trip (6.30%/yr where 3.15% is correct). It changed no conclusion — every horizon was net-negative either way —
+**which is exactly why it would have survived a glance.**
