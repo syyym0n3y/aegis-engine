@@ -146,7 +146,7 @@ async function buildEqPanel(){
 }
 // ---------- generic cross-section evaluator ----------
 type Gate={n_names:number;n_periods:number;gross_ann:number;net_ann:number;sharpe:number;t:number;dd:number;ruined:boolean;
-  g_breadth:boolean;g_effect:boolean;g_benchmark:boolean;g_liquid:boolean;g_era:boolean;eras:number[]};
+  g_breadth:boolean;g_effect:boolean;g_benchmark:boolean;g_liquid:boolean|null;g_era:boolean;eras:number[]};   // D-666: g_liquid is nullable because "not computed" is a distinct state from "failed"
 // hold: forward window in months. OVERLAP FIX (the factory's first two "survivors" were this bug): a 3-month forward
 // return sampled MONTHLY gives consecutive observations sharing 2/3 of their window — t inflated ~sqrt(3), the exact
 // D-454 trap. Periods are strided by `hold` so every observation is disjoint; n_periods drops accordingly and the t is
@@ -173,9 +173,14 @@ function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,p
       return e===0?mo<bounds[0]:e===1?mo>=bounds[0]&&mo<bounds[1]:e===2?mo>=bounds[1]&&mo<bounds[2]:mo>=bounds[2];});
     return g.length?mean(g):0;});
   const nn=mean(names);
+  // D-666: g_liquid was hardcoded `true` here, so 995 of 1,021 specs recorded a PASS on a gate that was never
+  // evaluated — a constant stored in a column that reads as a measurement. THE LIQUIDITY LAW is enforced on the
+  // LEDGER by liquidity-guard.ts, but nothing inspected the factory's own gate, which is the D-586 lesson exactly:
+  // a guard on the record does not constrain the code. It is now NULL — "not computed" — and the generated survivor
+  // column treats NULL as false, so nothing can be promoted on a gate nobody ran.
   return {n_names:Math.round(nn),n_periods:rets.length,gross_ann:(m+feeBp/1e4)*perYear,net_ann:m*perYear,
     sharpe:(m/sd)*Math.sqrt(perYear),t,dd:dd*100,ruined,
-    g_breadth:nn>=50,g_effect:Math.abs(m+feeBp/1e4)>=feeBp/1e4,g_benchmark:m>0,g_liquid:true,
+    g_breadth:nn>=50,g_effect:Math.abs(m+feeBp/1e4)>=feeBp/1e4,g_benchmark:m>0,g_liquid:null,
     g_era:eras.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras};
 }
 // ---------- ledger write ----------
