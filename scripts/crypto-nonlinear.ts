@@ -400,16 +400,24 @@ if(Deno.env.get("NULLTEST")==="1"){
 // D-637 LEG REPORT. A dollar-neutral book nets the universe out by construction, so this is NOT the D-627 test —
 // it answers a different question the headline cannot: does the SHORT side contribute, or is the result a long tilt?
 if(legLong.length>30){
-  const uni=legLong.map((v,i)=>(v+legShort[i])/2);          // the two cohorts averaged = the traded universe's own drift
+  // SIGN CONVENTION, and the first version of this block got it wrong. legShort holds the return TO SHORTING the
+  // bottom cohort, so the bottom cohort's OWN return is -legShort. Averaging (legLong + legShort) therefore added
+  // two quantities pointing opposite ways and produced a "universe" of -35.2%/yr with both excesses identical and a
+  // share formula dividing by ~0 (it printed 3.5e12%). The cohort drift is (long + (-short))/2.
+  const uni=legLong.map((v,i)=>(v-legShort[i])/2);
   const st=(v:number[])=>{const m=mean(v),sd=sdv(v)||1e-9;return{yr:m*365*100,sr:(m/sd)*Math.sqrt(365),t:m/(sd/Math.sqrt(v.length))};};
   const L=st(legLong),S=st(legShort),U=st(uni);
   console.log(`\n    LEG DECOMPOSITION (D-637) — n=${legLong.length} days, gross-normalised, fees on the book line only:`);
   console.log(`      LONG cohort        ${L.yr.toFixed(1).padStart(8)}%/yr  SR ${L.sr.toFixed(2).padStart(5)}  t ${L.t.toFixed(2).padStart(5)}`);
-  console.log(`      SHORT cohort (raw) ${S.yr.toFixed(1).padStart(8)}%/yr  SR ${S.sr.toFixed(2).padStart(5)}  t ${S.t.toFixed(2).padStart(5)}   (negative = shorting these PAID)`);
+  console.log(`      SHORT cohort (return TO shorting) ${S.yr.toFixed(1).padStart(8)}%/yr  SR ${S.sr.toFixed(2).padStart(5)}  t ${S.t.toFixed(2).padStart(5)}   (negative = shorting these PAID)`);
   console.log(`      traded universe    ${U.yr.toFixed(1).padStart(8)}%/yr  (the drift a dollar-neutral book cancels by construction)`);
-  console.log(`      long excess vs universe  ${(L.yr-U.yr).toFixed(1).padStart(8)}%/yr   short excess ${(U.yr-S.yr).toFixed(1).padStart(8)}%/yr`);
-  const longShare=(L.yr-U.yr)/Math.max(1e-9,(L.yr-U.yr)+(U.yr-S.yr));
-  console.log(`      => ${(100*longShare).toFixed(0)}% of the spread comes from the LONG side, ${(100*(1-longShare)).toFixed(0)}% from the SHORT side`);
+  const longExc=L.yr-U.yr, shortExc=U.yr-(-S.yr);
+  console.log(`      long excess vs cohort drift ${longExc.toFixed(1).padStart(8)}%/yr   short excess ${shortExc.toFixed(1).padStart(8)}%/yr`);
+  const denom=longExc+shortExc;
+  const longShare=Math.abs(denom)<1e-6?NaN:longExc/denom;
+  console.log(Number.isFinite(longShare)
+    ? `      => ${(100*longShare).toFixed(0)}% of the spread comes from the LONG side, ${(100*(1-longShare)).toFixed(0)}% from the SHORT side`
+    : `      => split UNDEFINED (the two excesses cancel); reported rather than printed as a spurious ratio`);
 }
 // NOWRITE=1 skips the dump. A previous run of this script overwrote production streams with a variant
 // configuration and the damage was undone only by luck of run ordering; a diagnostic re-run must not be able to
