@@ -12864,3 +12864,28 @@ convincingly agreed on noise.
 THE SIGN LAW is unaffected — its origin is the funding book (D-553/554), a separate result — and its rule that a
 post-hoc flip is unclaimable applies here with **more** force, since the flip is now known to be unprofitable both
 gross and net.
+
+## D-664 (2026-08-27) — the factory-wide exposure, bounded
+`aegis-factory` produces the board's 1,021 spec verdicts and carries the identical flat-cost line. It also stores
+`gross_ann` **and** `net_ann`, so gross t is recoverable arithmetically — `t_gross = t_net × (gross/net)` — and the
+whole exposure could be bounded in one query.
+
+| | |
+|---|---|
+| specs with usable gross/net/t | 1,006 |
+| **|t| ≥ 2 NET but < 2 GROSS** | **49 (4.9%)** |
+| of those, survivors | **0** |
+| worst case | net **|t| 22.30** → gross **t 0.05** |
+| families touched | french, nonreliance, nport, overnight, pair, shortside, weekly, xsec_eq, xsec_perp |
+
+**Real, bounded, and it did not reach a promotion.** 4.9% of specs are recorded as significantly negative when gross
+they are indistinguishable from zero — the worst a **446× inflation**, noise wearing a spectacular number. None is a
+survivor, because survivorship requires *positive* performance and cost only ever makes a profitable book harder to
+clear. **The artifact is confined to the losing tail, where it inflates confidence in failure rather than
+manufacturing success.** That is the least damaging place for it to live, and it is still wrong.
+
+**The design lesson is the transferable part.** This audit took one query because the factory stores gross and net
+side by side. D-661, D-662 and D-663 each required re-running an analysis at `COST_BP=0`, because those scripts store
+only the net figure. **Storing both makes cost-inflation auditable forever at zero marginal cost; storing one makes
+every future check an archaeology exercise.** Every analysis that charges a cost should record what it charged and
+what it earned before charging.
