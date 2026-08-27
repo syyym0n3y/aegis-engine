@@ -269,6 +269,22 @@ Rules: (1) every promoted cross-sectional claim states its universe sensitivity,
 variant costs a trial like any other specification; (4) enforced by `scripts/universe-guard.ts` (verified RED on a
 synthetic unstated row and on 9 live rows including the author's own newest claims, PASS after honest statements,
 exempt for single-instrument families, exit-code-checked both directions).
+**EXTENDED 2026-08-27 (D-645/646) — COVERAGE IS NOT BREADTH.** The original law asks for the spread across
+defensible universe definitions. It never asks what fraction of the intended universe is PRESENT, and those are
+different quantities: a book can report breadth of 11,602 name-months while covering 72.7% of its own universe.
+Measured independently on both asset classes on the same day:
+| | intended | present | missing |
+|---|---|---|---|
+| equity FTD universe | 5,766 | 4,191 | **1,575 (27.3%) — every one delisted** |
+| Binance live perps | 524 | 371 | **153 (29.2%)** |
+D-535's 2.1x Sharpe spread across five definitions was computed with **none of the five being the complete
+universe** — all five came from the same deficient panel, so that spread understates the researcher degree of
+freedom rather than bounding it. Rules: (5) every cross-sectional claim states UNIVERSE COVERAGE (present /
+intended) beside its breadth; (6) where the complete universe cannot be constructed, the coverage figure IS the
+statement and the missing cohort's selection mechanism must be named — "27.3% missing, all delisted" is informative
+in a way "72.7% coverage" alone is not; (7) **within-panel attrition is not a coverage measure** — it counts who
+left, never who never joined, and reporting 0.18% attrition beside a 27.3% hole is the specific error this
+extension exists to stop.
 
 ## THE SELECTION LAW (2026-08-22) — binds every result that CHOOSES among components
 **Choosing which components to keep using the full sample, and then reporting an out-of-sample number on that choice, is
