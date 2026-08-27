@@ -10,7 +10,7 @@
 // to compute anything, the scorer says so explicitly — "not yet computable" is a different state from "computed and
 // inconclusive", and conflating them is how a clock quietly stops meaning anything.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
-declareKnobs("forward-score-specs", [{ name: "VERBOSE", def: "" }]);
+declareKnobs("forward-score-specs", [{ name: "VERBOSE", def: "" }, { name: "BACKDATE", def: "", note: "D-658: score a clock from this date instead of its registered start, to EXERCISE scorer paths that real elapsed time has not yet reached. Verification only — never a way to restate a live clock." }]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -61,8 +61,18 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     }
     const days = [...gated.keys()].length;
     const thin = [...gated.values()].filter((n) => n < 5).length;
+    // D-658 POWER FLOOR. The registered rule asks for ">=126 forward days" with a portfolio t, but the attribution
+    // engine stamps at a MEDIAN 31-DAY CADENCE (264 stamps over 22 years) — so 126 days is FOUR observations, and a
+    // t-statistic on four points is not a statistic. The rule is immutable by design and cannot be corrected; what
+    // CAN be corrected is this scorer reporting a number the rule would accept and no one should believe. Below 20
+    // observations it returns UNDERPOWERED rather than a t, and says how long the rule's own horizon really needs.
+    const MIN_OBS = 20;
+    if (days < MIN_OBS) {
+      return { metric: "portfolio_t", value: null, n: days,
+        note: `${days} attribution stamp(s) since the clock start. UNDERPOWERED BY CONSTRUCTION, not merely early: the rule asks for >=126 forward DAYS, but attribution stamps at a ~31-day cadence, so the rule's own horizon yields ~4 observations. ${MIN_OBS} stamps (~${Math.round(MIN_OBS * 31 / 30.44)} months) are needed before a portfolio t means anything. Gate selects <5 instruments on ${thin}/${days} day(s) — the rule's KILL clause.` };
+    }
     return { metric: "portfolio_t", value: null, n: days,
-      note: `${days} forward day(s); gate selects <5 instruments on ${thin}/${days} — the rule's KILL clause. Needs >=126 days to score returns.` };
+      note: `${days} attribution stamp(s); gate selects <5 instruments on ${thin}/${days} — the rule's KILL clause.` };
   },
   // Rule: >=250 forward trading days, realised Sharpe >= 0.60.
   "fwd-crypto-lit5": async (started) => {
@@ -98,7 +108,10 @@ let computable = 0;
 for (const r of rules.sort((a, b) => a.id < b.id ? -1 : 1)) {
   const fn = SCORERS[r.id];
   if (!fn) { console.log(`  NO SCORER  ${r.id} — a clock with no measurement is a flag, not a test`); continue; }
-  const s = await fn(r.clock_started);
+  // D-658: a scorer path that has never executed is unverified (D-613). BACKDATE exercises the paths real time has
+  // not yet reached. It changes what is SCORED, never what was REGISTERED — the rule itself remains immutable.
+  const started = Deno.env.get("BACKDATE") || r.clock_started;
+  const s = await fn(started);
   const val = s.value === null ? "not-yet-computable" : s.value.toFixed(3);
   if (s.value !== null) computable++;
   console.log(`  ${r.id.padEnd(28)} ${s.metric.padEnd(26)} ${val.padStart(18)}  n=${s.n}`);
