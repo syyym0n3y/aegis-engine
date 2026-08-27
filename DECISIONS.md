@@ -12245,3 +12245,29 @@ and gives **960 per quarter** — 2.4× coverage for the same quantity.
 So: **a coverage verdict is a property of the construction as much as of the data.** Declaring something untestable
 without checking whether an equivalent formulation clears the bar is its own kind of premature null. I nearly did
 exactly that.
+
+## W3 (2026-08-27) — Week 3 complete: the forward clocks now produce numbers, and the scorers are verified
+**Built.** `scripts/forward-score-specs.ts` — each of six clocks computes the statistic **its own rule names**
+(monthly Sharpe, portfolio t, t-in-both-universes), wired into the daily runner. "Not-yet-computable" is kept
+deliberately distinct from "computed and inconclusive": conflating them is how a forward clock stops meaning
+anything.
+
+**Predicted.** Six written predictions recorded immutably in `trd_prereg`, with the counter-evidence against myself
+included — I called decay on the FTD effect from three of four era windows and the fourth reversed it, and five of
+the six predictions rest on the same kind of extrapolation. The value is the **calibration record**, not being right.
+
+**Verified — and this was the part that mattered.**
+
+| scorer | backdated to 2024-01 | expected |
+|---|---|---|
+| `fwd-ftd-persistence-short` | **−22.05%/yr, t −4.88** | **−22.05%/yr, t −4.88** (D-618) |
+| `fwd-hedging-pressure-flip` | −8.01%/yr, t −2.77, 137 weeks | path verification |
+
+Every scorer returned *not-yet-computable*, meaning the machinery had never produced a number and could not be
+trusted to produce a correct one — the same defect class as D-584, where five guards certified green while reading
+nothing. A forward test that runs two years and then reports a number from unverified machinery is **worse** than no
+forward test: the pre-registration lends it authority it hasn't earned.
+
+**Found in passing:** `fwd-residual-follow` cannot accrue — the attribution engine stamps `asof` = last available
+*price* date (2026-08-21) while the clock registered 2026-08-24. Its effective start is later than its registered
+one, and without the scorer this would have read as a stalled engine for weeks.
