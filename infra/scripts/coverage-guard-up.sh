@@ -119,6 +119,11 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/mechanism-guard.ts; then
     echo "$(date -u +%FT%TZ) MECHANISM GUARD RED — a causal claim was asserted without a pre-registration"
   fi
+  # GAP REGISTER (W2): a gap marked FILLED whose data has gone stale is worse than an unfilled one — it silently
+  # licenses conclusions the data no longer supports. Reds only on regressions, reports open engine gaps.
+  if ! deno run --allow-net --allow-env ../scripts/gap-register-guard.ts; then
+    echo "$(date -u +%FT%TZ) GAP REGISTER RED — a gap marked filled is empty or stale"
+  fi
   # D-586: print the cycle summary LAST so the state of the whole suite is the final thing in the log, rather than
   # six RED lines buried mid-file with no reader. This is the line a human actually reads.
   ../scripts/guard-status.sh || true

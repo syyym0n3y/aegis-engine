@@ -27,7 +27,7 @@ fi
 echo "== AEGIS GUARD STATUS — live, $(date -u +%FT%TZ) =="
 RED=0; N=0
 for g in coverage liquidity effect-size breadth execution selection universe sign survivor \
-         holdability instrument mechanism agent-output plumbing forward-rules continuity; do
+         holdability instrument mechanism gap-register agent-output plumbing forward-rules continuity; do
   [ -f "scripts/${g}-guard.ts" ] || continue
   N=$((N+1))
   out=$($DENO run --allow-net --allow-env --allow-read --allow-run "scripts/${g}-guard.ts" 2>&1); c=$?
