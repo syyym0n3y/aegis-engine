@@ -12563,3 +12563,29 @@ phrasing is "at least this negative", not "this negative at most".
 **Why this is measurable at all:** the delisting register is an *event* record keyed to symbols, not a price panel,
 so it survives the delisting it records. Same structural property that made the going-concern hazard test possible
 (D-632), and the only route this programme has to bounding a gap it cannot fill.
+
+## D-646 (2026-08-27) — the crypto panel is missing 29% of the LIVE universe
+D-645 showed the equity universe is 72.7% covered because within-panel attrition cannot see who never joined. Same
+question on crypto:
+
+| | |
+|---|---|
+| USDT perpetuals currently TRADING | 524 |
+| present in our panel | 371 |
+| **missing** | **153 (29.2%)** |
+| symbols we hold that no longer trade | 141 |
+
+Equity coverage 72.7%, crypto live coverage 70.8% — two independent routes, nearly identical gaps.
+
+**A false defect was one step from the ledger, and the cause was a table name.** I measured 469,646 rows (14% of
+`trd_perp_oi`) with timestamps before 2017 and was about to record impossible dates in a crypto table. They are not
+impossible: the table holds **CBOE volatility indices** (SKEW, VVIX, VIX9D — back to 1990) and **blockchain.info
+on-chain series** (BTC market-cap since 2009) alongside perpetual open interest. Every date is correct *for what the
+row actually is.* I had inferred contents from the name instead of reading the `venue` column — the same move as
+inferring a mitigation instead of measuring it, which has failed four times today. The check cost one `GROUP BY`.
+
+The coverage finding survives the correction: the live-perp intersection only ever matched binance rows.
+
+**What it means:** THE UNIVERSE LAW (D-535) found a 2.1× Sharpe spread across five defensible universe definitions —
+and **none of the five was the current universe**; all were drawn from a panel covering 70.8% of live contracts. A
+sixth definition exists that has never been tested, and unlike the delisted cohort **this gap is fillable**.
