@@ -12481,3 +12481,28 @@ also have contained top-50 members. The bias reaches the **traded** universe, wh
 It does **not** quantify the return impact. The absent cohort cannot be measured from an endpoint that only lists
 what currently exists — the same wall hit on equities today, where the SEC map resolved 10.7% of delisted filers and
 `trd_bars_deep` holds 4 delisted names of 4,348.
+
+## D-639 (2026-08-27) — I called the delisted cohort unrecoverable one message after failing to check
+Immediately after measuring the survivorship gap I wrote that a survivorship-free crypto panel *"needs a source that
+records what USED to be listed; exchangeInfo is definitionally incapable of it"* and that neither market provides one
+free. The second half was **asserted without a search**, against a doctrine that forbids exactly that.
+
+**It is false.** `GET /fapi/v1/klines?symbol=BTSUSDT` returns full history while BTSUSDT is absent from
+`exchangeInfo`. Binance serves candles for contracts it no longer lists. The binding constraint was never the data —
+it is the **name list**.
+
+Two probes, both sequential and free:
+
+| candidate source | probed | recovered |
+|---|---|---|
+| Binance SPOT USDT base assets | 177 | **19 — exactly those already held** (incl. MATICUSDT, EOSUSDT) |
+| CoinGecko top-1000 by market cap | 471 | **0** |
+
+**Why both returned nothing new, which is itself informative:** Binance lists a perpetual only for an asset it also
+lists on spot, so the spot base-asset set is already a superset of the perp universe; CoinGecko adds nothing because
+market cap is not the selector, *Binance listing* is. The residual cohort is precisely those assets delisted from
+**spot as well**, and no reachable endpoint enumerates them.
+
+**The one route that would close it is blocked by policy, not by nature.** `data.binance.vision` publishes directory
+listings of every symbol that ever had futures data. It is not on the endpoint allowlist and I may not add it —
+logged as an operator-actionable gap, not as an impossibility.
