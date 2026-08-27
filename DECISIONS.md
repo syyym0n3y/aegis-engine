@@ -12889,3 +12889,32 @@ side by side. D-661, D-662 and D-663 each required re-running an analysis at `CO
 only the net figure. **Storing both makes cost-inflation auditable forever at zero marginal cost; storing one makes
 every future check an archaeology exercise.** Every analysis that charges a cost should record what it charged and
 what it earned before charging.
+
+## D-665 (2026-08-27) — the board's highest gross t clears the ceiling and dies between 75 and 100bp
+Mapping best-gross-t by family to find where anything might still live surfaced **szbivar at gross t 12.11** — the
+highest on this board, comfortably above the 5.41 ceiling. Every other family tops out below it.
+
+`szbivar|smallstrev|h1`: gross **23.37%/yr**, net 22.77%, Sharpe 1.18, **t 11.80 over 1,204 months**, `n_names=1`.
+**The factory charged 0.60%/yr.**
+
+| small-cap round trip | annual cost | net | implied t |
+|---|---|---|---|
+| 20bp | 4.80% | 18.57%/yr | 9.38 |
+| 50bp | 12.00% | 11.37%/yr | 5.74 |
+| **75bp** | 18.00% | 5.37%/yr | **2.71** |
+| **100bp** | 24.00% | **−0.63%/yr** | **−0.32** |
+
+**It clears the ceiling gross, and that is the least interesting thing about it.** Small-cap short-term reversal is
+*the* canonical cost-destroyed anomaly, and this spec was charged six-tenths of a percent a year for a strategy that
+turns over essentially its whole book every month in the smallest decile of the market. US small-cap round trip is
+plausibly above 100bp today and was multiples of that before 1975 — fixed commissions cover roughly half this
+century-long sample — so it is **dead across most of its own history and marginal at best in the modern era.**
+
+**Turnover is assumed, not measured**, and the limit is stated rather than buried: French publishes returns, not
+compositions, so ~100% monthly one-way is inferred from the construction (ranking on the previous month's return,
+which by definition does not persist).
+
+THE INSTRUMENT LAW applies before any of this: `n_names=1` is a French research portfolio, and D-530 established this
+family cannot be placed directly, D-555 measured ETF wrappers capturing ~20%, D-556 found concentrated books dead at
+t 0.35. A 23%/yr research-space number surviving to 5.37%/yr at 75bp would still face that conversion — **which
+nothing in this family ever has.**
