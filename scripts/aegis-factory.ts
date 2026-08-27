@@ -1268,16 +1268,36 @@ if(PASS==="all"||PASS==="fxintraday"){
 if(PASS==="all"||PASS==="darkpool"){
   const ats=new Map<string,{wk:string;pub:string;atsSh:number;otcSh:number}[]>();
   {const tmp=new Map<string,Map<string,{pub:string;a:number;o:number}>>();
-  for(let off=0;;off+=50000){
-    const p2=await fetch(`${OWNED}/trd_ats_weekly?select=symbol,week_start,type,published,shares&order=symbol,week_start&offset=${off}&limit=50000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
-    if(!Array.isArray(p2)||!p2.length)break;
+  // D-672: OFFSET pagination on a 7,648,218-row table, which D-629 measured as QUADRATIC — 0.22s at offset 0
+  // rising to 1.91s at 15M on a comparable table, and worse here because of the two-column ORDER BY. 153 pages of
+  // that is the stall observed in the live run. Replaced with KEYSET on week_start: each page is an indexed seek
+  // from the last date seen rather than a scan-and-discard of everything before it. Rows on the boundary date are
+  // de-duplicated by (symbol, week_start, type), because a keyset that drops or repeats a boundary row corrupts the
+  // aggregate silently — which is exactly the failure this fix is supposed to prevent.
+  let lastWk=""; const seenBoundary=new Set<string>();
+  for(;;){
+    const url=`${OWNED}/trd_ats_weekly?select=symbol,week_start,type,published,shares&order=week_start,symbol${lastWk?`&week_start=gte.${lastWk}`:""}&limit=50000`;
+    const p2raw=await fetch(url,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p2raw)||!p2raw.length)break;
+    const p2=(p2raw as {symbol:string;week_start:string;type:string;published:string;shares:number}[])
+      .filter(r=>!seenBoundary.has(`${r.symbol}|${r.week_start}|${r.type}`));
+    if(!p2.length)break;
     for(const r of p2 as {symbol:string;week_start:string;type:string;published:string;shares:number}[]){
       const m2=tmp.get(r.symbol)??tmp.set(r.symbol,new Map()).get(r.symbol)!;
       const e=m2.get(r.week_start)??m2.set(r.week_start,{pub:r.published,a:0,o:0}).get(r.week_start)!;
       if(r.published>e.pub)e.pub=r.published;
       if(r.type==="ATS_W_SMBL")e.a+=+r.shares; else e.o+=+r.shares;
     }
-    if(p2.length<50000)break;
+    // advance the keyset by the last week_start seen, and remember that boundary's rows so the next page can skip
+    // them. Dropping or repeating a boundary row would corrupt the aggregate silently, which is the failure this
+    // whole change exists to avoid rather than trade for speed.
+    const raw=p2raw as {symbol:string;week_start:string;type:string}[];
+    const newLast=raw[raw.length-1].week_start;
+    if(newLast===lastWk&&raw.length>=50000)throw new Error(`aegis-factory: trd_ats_weekly week_start=${newLast} exceeds one page; keyset cannot advance`);
+    seenBoundary.clear();
+    for(const r of raw) if(r.week_start===newLast) seenBoundary.add(`${r.symbol}|${r.week_start}|${r.type}`);
+    lastWk=newLast;
+    if(raw.length<50000)break;
   }
   for(const [sym,m2] of tmp) ats.set(sym,[...m2.entries()].map(([wk,e])=>({wk,pub:e.pub,atsSh:e.a,otcSh:e.o})).sort((x,y)=>x.wk<y.wk?-1:1));}
   await log(`  darkpool: ${[...ats.values()].reduce((a,x)=>a+x.length,0).toLocaleString()} symbol-weeks, ${ats.size} symbols`);
