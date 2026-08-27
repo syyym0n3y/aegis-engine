@@ -56,6 +56,24 @@ const run=(cols:number[][],names:string[])=>{
   const se=Math.sqrt(ssr/(X.length-X[0].length))/Math.sqrt(X.length);
   console.log(`    ${names.join("+").padEnd(26)} R2 ${(r2*100).toFixed(1).padStart(5)}%  alpha ${(w[0]*365*100).toFixed(1).padStart(6)}%/yr  t(alpha) ${(w[0]/se).toFixed(2).padStart(5)}  betas ${names.map((n,i)=>`${n}:${w[i+1].toFixed(3)}`).join(" ")}`);
 };
+// D-644 POSITIVE CONTROL (THE POSITIVE-CONTROL RULE, D-641). This script's headline is a ZERO: "R2 0.0-0.5% across
+// every specification", which is the basis for claiming the crypto book is not merely crypto beta. A near-zero R2
+// everywhere is ALSO exactly what a broken regression produces, and the two are indistinguishable from the output
+// alone. So before believing the zero, the estimator is handed a series with a KNOWN beta and must recover it.
+{
+  const TRUE_BETA = 1.7, TRUE_ALPHA = 0.0004;
+  const synth = mkt.map((m, i) => TRUE_ALPHA + TRUE_BETA * m + ((i * 2654435761) % 1000 - 500) / 1e6);  // deterministic pseudo-noise
+  const Xc = days.map((_, i) => [1, mkt[i]]);
+  const wc = ols(Xc, synth);
+  const yhc = Xc.map((r) => r.reduce((s2, v, i2) => s2 + v * wc[i2], 0));
+  const resc = synth.map((v, i2) => v - yhc[i2]);
+  const ybc = mean(synth);
+  const r2c = 1 - resc.reduce((s2, x) => s2 + x * x, 0) / Math.max(1e-12, synth.reduce((s2, x) => s2 + (x - ybc) ** 2, 0));
+  const betaOK = Math.abs(wc[1] - TRUE_BETA) < 0.05, r2OK = r2c > 0.9;
+  console.log(`    POSITIVE CONTROL — synthetic series built as ${TRUE_ALPHA} + ${TRUE_BETA}*mkt + noise:`);
+  console.log(`      recovered beta ${wc[1].toFixed(3)} (true ${TRUE_BETA})  R2 ${(100 * r2c).toFixed(1)}%  -> ${betaOK && r2OK ? "ESTIMATOR OK" : "ESTIMATOR BROKEN"}`);
+  if (!betaOK || !r2OK) { console.log(`      !! the regression cannot recover a known exposure, so a measured R2 of ~0 is EVIDENCE ABOUT THIS CODE, not about the book. RED.`); Deno.exit(1); }
+}
 console.log(`    raw book: ${(mean(y)*365*100).toFixed(1)}%/yr, SR ${((mean(y)/(sdv(y)||1e-9))*Math.sqrt(365)).toFixed(2)}`);
 run([mkt],["mkt"]);
 run([B],["BTC"]);
