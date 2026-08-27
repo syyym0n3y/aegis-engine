@@ -158,12 +158,22 @@ function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,p
   const per=hold>1?perAll.filter((_,i)=>i%hold===0):perAll;   // DISJOINT windows only
   if(per.length<24)return null;
   const rets:number[]=[],names:number[]=[],moKeys:string[]=[];
+  // D-667: THE BENCHMARK LAW, computed rather than asserted. g_benchmark used to be `m>0` here — a SIGN TEST that
+  // says only that the spread makes money. D-630 is what that misses: a headline at t -7.37 whose excess against
+  // its own universe was t -0.46, because both legs were universe drift and the spread merely measured the drift
+  // precisely. The universe mean over the SAME periods, and the top bucket's excess against it, are now carried.
+  const excessTop:number[]=[];
   for(const [mo,g] of per){
     g.sort((a,b)=>b.v-a.v);
     const q=Math.max(3,Math.floor(g.length/k));
-    rets.push(mean(g.slice(0,q).map(x=>x.fwd))-mean(g.slice(-q).map(x=>x.fwd))-feeBp/1e4);
+    const top=mean(g.slice(0,q).map(x=>x.fwd)), bot=mean(g.slice(-q).map(x=>x.fwd));
+    const uni=mean(g.map(x=>x.fwd));                       // every name in the cross-section, same period
+    rets.push(top-bot-feeBp/1e4);
+    excessTop.push(top-uni);                               // gross of fees: the fee belongs to the book line only
     names.push(g.length); moKeys.push(mo);
   }
+  const mEx=mean(excessTop), sdEx=sdv(excessTop)||1e-9;
+  const tEx=mEx/(sdEx/Math.sqrt(excessTop.length));
   const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
   let cum=1,pk=1,dd=0,ruined=false;
   for(const r of rets){cum*=1+r;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
@@ -180,7 +190,9 @@ function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,p
   // column treats NULL as false, so nothing can be promoted on a gate nobody ran.
   return {n_names:Math.round(nn),n_periods:rets.length,gross_ann:(m+feeBp/1e4)*perYear,net_ann:m*perYear,
     sharpe:(m/sd)*Math.sqrt(perYear),t,dd:dd*100,ruined,
-    g_breadth:nn>=50,g_effect:Math.abs(m+feeBp/1e4)>=feeBp/1e4,g_benchmark:m>0,g_liquid:null,
+    // g_benchmark now requires the TOP bucket to beat its own universe with |t| >= 2, not merely that the spread
+    // is positive. A spread over a flat cross-section can be large and precisely estimated while earning nothing.
+    g_breadth:nn>=50,g_effect:Math.abs(m+feeBp/1e4)>=feeBp/1e4,g_benchmark:(mEx>0&&tEx>=2.0),g_liquid:null,
     g_era:eras.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras};
 }
 // ---------- ledger write ----------
