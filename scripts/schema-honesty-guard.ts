@@ -58,7 +58,7 @@ const WATCH: { table: string; cols: string[]; pairs: [string, string][] }[] = [
 // Known and reasoned, with the decision recorded. An acknowledged entry is REPORTED, never silently skipped —
 // the same pattern D-659 settled for the continuity guard, because a permanent red gets switched off.
 const ACKNOWLEDGED: Record<string, string> = {
-  "trd_factory.gross_ann=net_ann": "D-670: 279 of 1,044 specs (26.7%) assign gross_ann:m*12, net_ann:m*12 in paths that charge cost INSIDE the return loop (fxintraday, cot, tff, timing and others). The cost model is turnover-aware and correct; the gross figure is simply never preserved. Recorded, and the D-664 audit was corrected to a lower bound rather than left claiming completeness.",
+  "trd_factory.gross_ann=net_ann": "D-670 recorded 279 of 1,044 specs (26.7%) assigning gross_ann:m*12, net_ann:m*12 in paths that charge cost INSIDE the return loop, and left it as a known defect. D-684 showed what that hid: 70 of 148 significant-loss claims could not be cost-audited at all, each silently reading as 'holds' because the ratio is 1 by construction. D-684c/d fixed seven passes (timing, xasset, seasonal, sessions, cotdisagg, tff, fxintraday) to accumulate the fee alongside the return; the rate is now 20 of 1,044 (1.9%) and one significant-loss claim remains blind (book|p3|residual_fade). RE-MEASURE THIS NUMBER RATHER THAN TRUSTING THE SENTENCE: a stale acknowledgement that overstates a fixed defect teaches the reader to discount the guard's other lines.",
 };
 
 let red = 0, checked = 0;
