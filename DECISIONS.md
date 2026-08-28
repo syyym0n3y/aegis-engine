@@ -13230,3 +13230,45 @@ constantly — exactly where THE TURNOVER LAW predicts the fee does the most wor
 **Running totals after unblinding:** 148 significant-loss claims → **113 auditable, 61 artifacts (54%)**, 35 still
 blind (xasset 11, seasonal 10, sessions 7, tff 3, fxintraday 3, book 1). Those 35 need the same treatment: their
 passes charge a turnover-aware fee inside the return loop and never keep the gross series.
+
+**D-684d — SIX BLIND FAMILIES UNBLINDED. 70 of 148 significant-loss claims could not be cost-audited; now 1 can't.
+And the last one to be opened flipped sign: hourly FX reversal earns +6.49%/yr GROSS at t 4.14.**
+
+D-670 recorded that 279 specs assign `gross_ann` and `net_ann` the same value in passes that charge cost inside the
+return loop, and that the D-664 audit therefore certified every one of them as unaffected. It was recorded as a known
+defect and left. D-684 then showed what it was hiding: **70 of the 148 significant-loss claims were uncheckable**,
+each silently reading as "holds" because the ratio is 1 by construction.
+
+Six passes now accumulate the fee alongside the return, so the gross series survives — `xasset`, `seasonal`,
+`sessions`, `cotdisagg`, `tff`, `fxintraday`, on top of `timing` (D-684c). Every one records the pair on the
+**excess basis its `t` is computed on**, because a ratio that means different things in different families is how an
+audit certifies what it never checked. Each pass re-run; **the ceiling did not move (5.456, N=2,903,233) across all
+seven re-runs — identical specs against identical data spend no trials, which is D-681 working in production.**
+
+| | before | after |
+|---|---|---|
+| cannot be checked | 70 | **1** (`book\|p3\|residual_fade`) |
+| auditable | 78 | **147** |
+| cost artifacts | 49 (63%) | **74 (50%)** |
+
+**THE SIGN FLIP.** `fxintraday|h1_rev` was recorded as **−26.67%/yr at t −17.00**. Gross it is **+6.49%/yr at
+t +4.14**. Hourly reversal on FX majors is a real, significant gross effect that a 1bp fee paid on ~45% of hourly
+bars consumes several times over. Its mirror `h1_mom` is **−6.49%/yr at t −3.83** — the *exact* negative, as two
+opposite rules on one signal must be, which is the positive control confirming the fee reconstruction is
+arithmetically right rather than merely plausible.
+
+The honest verdict is **SUB-FEE, not a loss**: effect 6.49%/yr against a ~33%/yr cost is **0.20x**, and t 4.14 is
+below the 5.456 ceiling regardless. But "fxintraday loses 39.7%/yr at t −23.40" was a statement about a fee wearing
+the clothes of a statement about markets, and it stood in the ledger as the latter. This also closes the open item
+carried since D-670 ("verify fxintraday at zero cost") — with the opposite answer to the one expected.
+
+**Other reversals worth naming:**
+- `sessions|XAUUSD|off` t −3.36 → **−0.15**; `sessions|USA500IDXUSD|off` t −3.51 → **−0.82**. The claim that the
+  overnight session loses is almost entirely fee.
+- All 6 `tff` specs weaken; `follow_assetmgr|0.8` t −2.52 → −1.56. This is the family where D-661/662 first found the
+  artifact by hand; it is now machine-checkable from the ledger. (These are the factory's TFF specs, a different
+  construction from the D-661 hedging-pressure book — same family and same direction, not the same numbers, and not
+  claimed as a reproduction of them.)
+- `seasonal|*|tom` (turn-of-month) all weaken but **survive**: SPY t −4.44 → −3.35. Another discriminating control.
+
+One spec remains blind, `book|p3|residual_fade` at t −2.974, and is recorded as such rather than counted as a pass.

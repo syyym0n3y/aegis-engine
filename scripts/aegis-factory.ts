@@ -1133,10 +1133,13 @@ if(PASS==="all"||PASS==="seasonal"){
       const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
       let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
       const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
-      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      // D-684d: same defect as xasset — gross_ann equalled net_ann, so no seasonal spec could be cost-audited.
+      const feeM18=sw*(10/1e4)/mos.length;
+      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:(m+feeM18)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
         g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-      await record(key,"seasonal",{inst,rule:rule.name,exec:"calendar",switches:sw},"single",g,ceil); done++;
+      await record(key,"seasonal",{inst,rule:rule.name,exec:"calendar",switches:sw,
+        net_ex_ann:+(m*12).toFixed(6),gross_ex_ann:+((m+feeM18)*12).toFixed(6)},"single",g,ceil); done++;
       if(Math.abs(t)>1.5) await log(`    seasonal ${inst} ${rule.name}: n=${mos.length}mo excess ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
     }
   }
@@ -1235,7 +1238,7 @@ if(PASS==="all"||PASS==="fxintraday"){
   const RULES21=["asian_break","h1_mom","h1_rev"] as const;
   for(const rule of RULES21){
     const key=`fxintraday|${rule}`;
-    const moA=new Map<string,{r:number;n:number}>();
+    const moA=new Map<string,{r:number;n:number;f:number}>();
     for(const p of PAIRS21){
       const a=series21.get(p)!; if(a.length<5000)continue;
       let prevW=0;
@@ -1257,8 +1260,8 @@ if(PASS==="all"||PASS==="fxintraday"){
         const r2=a[i].c/a[i].o-1;
         const fee=(w!==prevW)?1/1e4:0; prevW=w;
         const mo=d.toISOString().slice(0,7);
-        const cur=moA.get(mo)??moA.set(mo,{r:0,n:0}).get(mo)!;
-        cur.r+=(w*r2-fee)/PAIRS21.length; cur.n++;
+        const cur=moA.get(mo)??moA.set(mo,{r:0,n:0,f:0}).get(mo)!;
+        cur.r+=(w*r2-fee)/PAIRS21.length; cur.f+=fee/PAIRS21.length; cur.n++;
       }
     }
     const mos=[...moA.entries()].sort().filter(x=>x[1].n>200).map(x=>x[1].r);
@@ -1266,10 +1269,14 @@ if(PASS==="all"||PASS==="fxintraday"){
     const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
-    const g:Gate={n_names:PAIRS21.length,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+    // D-684d: last of the blind families. An hourly rule that switches on ~45% of bars pays a 1bp fee that many
+    // times, so the entire headline can be the fee — the open question D-670 left, now answerable from the ledger.
+    const feeMfx=mean([...moA.entries()].sort().filter(x=>x[1].n>200).map(x=>x[1].f));
+    const g:Gate={n_names:PAIRS21.length,n_periods:mos.length,gross_ann:(m+feeMfx)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
       g_breadth:true /* 4-pair TS-portfolio class, count stated */, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-    await record(key,"fxintraday",{rule,exec:"completed-bars"},"fx_majors",g,ceil); done++;
+    await record(key,"fxintraday",{rule,exec:"completed-bars",
+      net_ex_ann:+(m*12).toFixed(6),gross_ex_ann:+((m+feeMfx)*12).toFixed(6)},"fx_majors",g,ceil); done++;
     await log(`    fxintraday ${rule}: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 21 (fxintraday) done`);
@@ -1374,7 +1381,7 @@ if(PASS==="all"||PASS==="cotdisagg"){
   ];
   for(const [signame,rule] of SIGS24) for(const [thH,thL] of [[0.8,0.2],[0.9,0.1]] as [number,number][]){
     const key=`cotdisagg|${signame}|${thH}`;
-    const daily=new Map<string,{r:number;n:number}>(); let nMkt=0;
+    const daily=new Map<string,{r:number;n:number;f:number}>(); let nMkt=0;
     for(const [sym,sg] of MAP24.map(m=>[m[0],m[1]] as [string,number])){
       const a=dg.get(sym)!; if(!a||a.length<60)continue;
       const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
@@ -1395,21 +1402,29 @@ if(PASS==="all"||PASS==="cotdisagg"){
         const w=marks[mi].w*sg;
         const r2=bars[i+1][4]/bars[i][4]-1;
         const fee=(w!==prevW)?10/1e4:0; prevW=w;
-        const cur=daily.get(d)??daily.set(d,{r:0,n:0}).get(d)!;
-        cur.r+=w*r2-fee; cur.n++;
+        // D-684d: the fee is accumulated alongside the return so the GROSS series survives. Without it gross_ann
+        // equalled net_ann and this family could not be cost-audited — which matters most here, because D-661/662
+        // measured TFF hedging pressure BY HAND at gross t -1.54 against a reported -9.26. The largest cost artifact
+        // this programme ever found lived in this code path and nothing could see it from the ledger.
+        const cur=daily.get(d)??daily.set(d,{r:0,n:0,f:0}).get(d)!;
+        cur.r+=w*r2-fee; cur.f+=fee; cur.n++;
       }
     }
     const moAgg=new Map<string,number>();
-    for(const [d,v] of daily){ if(v.n<5)continue; moAgg.set(d.slice(0,7),(moAgg.get(d.slice(0,7))||0)+v.r/v.n); }
+    const moFeeAgg=new Map<string,number>();
+    for(const [d,v] of daily){ if(v.n<5)continue; moAgg.set(d.slice(0,7),(moAgg.get(d.slice(0,7))||0)+v.r/v.n);
+      moFeeAgg.set(d.slice(0,7),(moFeeAgg.get(d.slice(0,7))||0)+v.f/v.n); }
     const mos=[...moAgg.entries()].sort().map(x=>x[1]);
     if(mos.length<120){await record(key,"cotdisagg",{signame,thH,exec:"pub_lag6d"},"futures_cot",null,ceil);done++;continue;}
     const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
-    const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+    const feeMcot=mean([...moAgg.keys()].sort().map(k2=>moFeeAgg.get(k2)||0));
+    const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:(m+feeMcot)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
       g_breadth:nMkt>=20, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-    await record(key,"cotdisagg",{signame,thH,exec:"pub_lag6d",markets:nMkt},"futures_cot",g,ceil); done++;
+    await record(key,"cotdisagg",{signame,thH,exec:"pub_lag6d",markets:nMkt,
+      net_ex_ann:+(m*12).toFixed(6),gross_ex_ann:+((m+feeMcot)*12).toFixed(6)},"futures_cot",g,ceil); done++;
     await log(`    cotdisagg ${signame} th${thH}: mkts=${nMkt} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 24 (cotdisagg) done`);
@@ -1443,7 +1458,7 @@ if(PASS==="all"||PASS==="tff"){
   ];
   for(const [signame,rule] of SIGS25) for(const [thH,thL] of [[0.8,0.2],[0.9,0.1]] as [number,number][]){
     const key=`tff|${signame}|${thH}`;
-    const daily=new Map<string,{r:number;n:number}>(); let nMkt=0;
+    const daily=new Map<string,{r:number;n:number;f:number}>(); let nMkt=0;
     for(const [sym,sg] of MAP25.map(m=>[m[0],m[1]] as [string,number])){
       const a=tff.get(sym)!; if(!a||a.length<60)continue;
       const rb=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {bars:number[][]}[];
@@ -1464,21 +1479,29 @@ if(PASS==="all"||PASS==="tff"){
         const w=marks[mi].w*sg;
         const r2=bars[i+1][4]/bars[i][4]-1;
         const fee=(w!==prevW)?10/1e4:0; prevW=w;
-        const cur=daily.get(d)??daily.set(d,{r:0,n:0}).get(d)!;
-        cur.r+=w*r2-fee; cur.n++;
+        // D-684d: the fee is accumulated alongside the return so the GROSS series survives. Without it gross_ann
+        // equalled net_ann and this family could not be cost-audited — which matters most here, because D-661/662
+        // measured TFF hedging pressure BY HAND at gross t -1.54 against a reported -9.26. The largest cost artifact
+        // this programme ever found lived in this code path and nothing could see it from the ledger.
+        const cur=daily.get(d)??daily.set(d,{r:0,n:0,f:0}).get(d)!;
+        cur.r+=w*r2-fee; cur.f+=fee; cur.n++;
       }
     }
     const moAgg=new Map<string,number>();
-    for(const [d,v] of daily){ if(v.n<3)continue; moAgg.set(d.slice(0,7),(moAgg.get(d.slice(0,7))||0)+v.r/v.n); }
+    const moFeeAgg=new Map<string,number>();
+    for(const [d,v] of daily){ if(v.n<3)continue; moAgg.set(d.slice(0,7),(moAgg.get(d.slice(0,7))||0)+v.r/v.n);
+      moFeeAgg.set(d.slice(0,7),(moFeeAgg.get(d.slice(0,7))||0)+v.f/v.n); }
     const mos=[...moAgg.entries()].sort().map(x=>x[1]);
     if(mos.length<100){await record(key,"tff",{signame,thH,exec:"pub_lag6d"},"futures_cot",null,ceil);done++;continue;}
     const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
-    const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+    const feeMtff=mean([...moAgg.keys()].sort().map(k2=>moFeeAgg.get(k2)||0));
+    const g:Gate={n_names:nMkt,n_periods:mos.length,gross_ann:(m+feeMtff)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
       g_breadth:nMkt>=8, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-    await record(key,"tff",{signame,thH,exec:"pub_lag6d",markets:nMkt},"futures_cot",g,ceil); done++;
+    await record(key,"tff",{signame,thH,exec:"pub_lag6d",markets:nMkt,
+      net_ex_ann:+(m*12).toFixed(6),gross_ex_ann:+((m+feeMtff)*12).toFixed(6)},"futures_cot",g,ceil); done++;
     await log(`    tff ${signame} th${thH}: mkts=${nMkt} n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 25 (tff) done`);
@@ -1531,10 +1554,16 @@ if(PASS==="all"||PASS==="xasset"){
       const m=mean(mos),sd=sdv(mos)||1e-9,t=m/(sd/Math.sqrt(mos.length));
       let cum=1,pk=1,dd=0,ruined=false;for(const x of net){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
       const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
-      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
+      // D-684d: gross_ann and net_ann were the SAME value, so the cost-inflation audit could not check any xasset
+      // spec — the ratio is 1 by construction and each read as "holds". `m` is the mean MONTHLY excess net of a
+      // 10bp charge on each of `sw` switches, so the gross series is that mean shifted by the total fee spread over
+      // the same months. Both figures are recorded on the EXCESS basis the t is actually computed on (D-684c).
+      const feeM26=sw*(10/1e4)/mos.length;
+      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:(m+feeM26)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
         g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-      await record(key,"xasset",{inst,signame,look,exec:"lag1",switches:sw},"single",g,ceil); done++;
+      await record(key,"xasset",{inst,signame,look,exec:"lag1",switches:sw,
+        net_ex_ann:+(m*12).toFixed(6),gross_ex_ann:+((m+feeM26)*12).toFixed(6)},"single",g,ceil); done++;
       if(Math.abs(t)>1.3) await log(`    xasset ${inst} ${signame} l${look}: n=${mos.length}mo excess ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
     }
   }
@@ -1672,11 +1701,15 @@ if(PASS==="all"||PASS==="sessions"){
     for(const leg of ["cash","off"]){
       const key=`sessions|${inst}|${leg}`;
       const moEx=new Map<string,number>();
+      // D-684d: the fee is charged on EVERY flushed day (3bp round trip), so recovering the gross series needs the
+      // per-month day count, not a switch count. Without it gross_ann equalled net_ann and no sessions spec could
+      // be cost-audited — 7 significant-loss claims silently reading as "holds".
+      const moFee=new Map<string,number>();
       let dayLeg=0,dayAll=0,curDay="",legBars=0;
       const flush=(d:string)=>{ if(!d)return;
         const fee=2*1.5/1e4;
         const ex=(dayLeg-fee)-dayAll;                       // leg net minus 24h hold
-        const mo=d.slice(0,7); moEx.set(mo,(moEx.get(mo)||0)+ex); };
+        const mo=d.slice(0,7); moEx.set(mo,(moEx.get(mo)||0)+ex); moFee.set(mo,(moFee.get(mo)||0)+fee); };
       for(const b of rows){
         const t=iso30(b.ts); const d=t.slice(0,10); const h=+t.slice(11,13);
         if(d!==curDay){flush(curDay);curDay=d;dayLeg=0;dayAll=0;legBars=0;}
@@ -1691,10 +1724,12 @@ if(PASS==="all"||PASS==="sessions"){
       const m=mean(mos),sd=sdv(mos)||1e-9,t2=m/(sd/Math.sqrt(mos.length));
       let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
       const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
-      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
+      const feeM30=mean([...moEx.keys()].sort().map(k2=>moFee.get(k2)||0));
+      const g:Gate={n_names:1,n_periods:mos.length,gross_ann:(m+feeM30)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
         g_breadth:true, g_effect:true, g_benchmark:m>0, g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
         g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-      await record(key,"sessions",{inst,leg,exec:"calendar"},"single",g,ceil); done++;
+      await record(key,"sessions",{inst,leg,exec:"calendar",
+        net_ex_ann:+(m*12).toFixed(6),gross_ex_ann:+((m+feeM30)*12).toFixed(6)},"single",g,ceil); done++;
       await log(`    sessions ${inst.padEnd(14)} ${leg.padEnd(5)}: n=${mos.length}mo excess-vs-24h ${(m*12*100).toFixed(1)}%/yr t=${t2.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
     }
   }
