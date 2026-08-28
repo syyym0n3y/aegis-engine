@@ -13649,3 +13649,46 @@ overclaimed once today (D-685, the overnight t 6.00 that was an absolute statist
 Coverage of the new statistics is being filled by re-running the affected passes; every family without them is
 reported as UNTESTED rather than counted as compliant, and the guard prints `NOT YET MEASURED` where the data is
 absent.
+
+---
+
+**D-692 — THE INDUSTRY-MOMENTUM EXCESS IS NOT-IDENTIFIED. The same signal on an equally defensible panel is a
+third the size, and the panel where it works is the thin one.**
+
+D-690's absolute diagnostic surfaced the only benchmark-relative result on the board worth a second look:
+`french|ind49|mom12_s0|k3|h1`, whose top tercile of 49 industries beats the industry universe by **+3.52%/yr at
+t 5.26** — long-only, no borrow, the closest thing here to something an L0 account could hold. 22 french specs
+cleared the same test.
+
+**FIRST CHECK — how many IDEAS is that?** Nine distinct signals across 22 specs, and eight of the nine are industry
+momentum at different formation windows. It is **one idea in 22 parameterisations**, not 22 findings. Reporting the
+spec count would be the concentration artifact THE BREADTH LAW exists to catch, applied to specifications instead of
+names.
+
+**SECOND CHECK — THE UNIVERSE LAW (D-535), and it is decisive.** The identical signal, identical parameters, on the
+other equally defensible US cross-section the panel holds (100 size-BM portfolios):
+
+| signal | ind49 excess / t | szbm100 excess / t | ratio |
+|---|---|---|---|
+| mom12_s0 k3 h1 | **3.52%/yr / 5.26** | 1.21%/yr / 2.29 | 2.90x |
+| mom12_s0 k5 h1 | 4.78%/yr / 5.16 | 1.29%/yr / 1.92 | 3.72x |
+| mom6_s1 k3 h3 | 2.62%/yr / 4.82 | 0.80%/yr / 1.55 | 3.27x |
+| mom6_s0 k5 h3 | 2.71%/yr / 2.76 | 0.15%/yr / 0.14 | **18.11x** |
+| mom3_s0 k3 h1 | 1.72%/yr / 2.95 | 0.89%/yr / 1.66 | 1.92x |
+
+**All 20 comparable pairs exceed the law's 1.5x threshold. The minimum is 1.92x; the median is ~3.3x.** On ind49 the
+excess runs 1.61–4.78%/yr at t 2.51–5.26; on szbm100 the same signals give **0.15–1.38%/yr at t 0.14–2.72**, mostly
+insignificant. Recorded **NOT-IDENTIFIED**: this is a property of the 49-industry panel, not a cross-sectional
+momentum effect in US equities.
+
+**AND THE PANEL WHERE IT WORKS IS THE THIN ONE.** ind49 carries **49 names — below the ~50 breadth floor**; szbm100
+carries 100. The identical shape as D-443, where crypto momentum gave SR 1.13 on 14 perps and SR 0.34 at 162.
+
+Three independent reasons not to believe it, each from a law written before this result existed: **t 5.26 does not
+clear the 5.4555 ceiling; universe sensitivity ≥1.92x is NOT-IDENTIFIED; breadth 49 is UNTESTED.** Not mined
+further, not registered forward, and recorded here so it is not rediscovered as new.
+
+**Also measured, and separately useful:** of 63 positive-return specs now carrying the diagnostic, **3 have a
+positive spread whose LONG leg UNDERPERFORMS its own universe** (all `form345`, insider filings) — the D-627 shape,
+where the short leg does all the work. For an account that cannot short — every account below L2 by D-679 — such a
+spread is not a weak signal, it is an unusable one, and the spread number actively misleads about that.
