@@ -13571,3 +13571,44 @@ mechanism (lower return lengthens the phase) rather than in terms of which baske
 
 Positive control aborts the run unless SPY reconstructs the market (11.20%/yr, 14.79% vol) and the 60/40's
 volatility comes in below it (9.06%) — otherwise the weights are not being applied and the ranking is fiction.
+
+---
+
+**D-691 — ENTRY TIMING IS IRRELEVANT TO A CONTRIBUTION-FUNDED LADDER, and the falsification of WHY is
+underpowered — reported as inconclusive rather than confirmed.**
+
+D-680's medians average over regimes: starting in 1999 meets the dot-com bust while the balance is smallest,
+starting in 2009 gets a decade of tailwind first. Conditioning on the trailing drawdown at entry — knowable on the
+day, so conditioning rather than look-ahead — across 733 start months at $40 + $100/mo:
+
+| market on entry day | n | to $10k | to $100k | worst DD |
+|---|---|---|---|---|
+| at/near a high | 439 | 5.8y | 21.5y | −38% |
+| −5% to −15% | 155 | 5.7y | 19.0y | −38% |
+| −15% to −30% | 104 | 5.8y | 20.2y | −38% |
+| deeper than −30% | 35 | 5.7y | 20.9y | −37% |
+
+**Entering at an all-time high versus after a >30% crash differs by 0.1 years to $10k and 0.6 years to $100k.**
+Worst drawdown along the way is −37/−38% regardless of entry. The primary result rests on 733 start months and is
+robust.
+
+**AVAILABILITY KILLS ACTING ON IT ANYWAY:** 60% of months sit within 5% of a high and only **4.8%** are deeper than
+−30%, so a rule that waits for the deep bucket is out of the market ~95% of the time. That rule is a timing overlay
+and is deliberately NOT evaluated here — D-649 measured the class costing ~5.7pp/yr.
+
+**THE MECHANISM IS PLAUSIBLE AND NOT ESTABLISHED.** The natural explanation is that a $40 start means the entry
+price applies to almost no money, which would tie this directly to D-688 (the account is mostly contributions for
+~10 years). The falsification is obvious — a LARGE starting balance should make entry timing matter — and it
+returns something the story does not predict: at **START=$25,000**, median years to $100k run **9.3 (high) / 9.1 /
+10.1 / 10.4 (after a >30% fall)**, i.e. entering at a high is *faster*, while the p90 runs the other way (15.8 vs
+12.7).
+
+**That is not evidence against the mechanism; it is evidence that the test cannot decide.** The deep bucket's 35
+months come from **six distinct episodes** — 1970-06, 1974-07..1975-01, 2001-09..10, 2002-06..2003-07, 2003-09,
+2008-10..2009-07 — and for a question with a twenty-year horizon those overlapping starts are **six independent
+observations, not thirty-five.** THE BREADTH LAW's logic applied to time rather than to names: under ~50 the verdict
+is UNTESTED. Recorded as **inconclusive**, and the mechanism sentence in D-688 is not upgraded on the strength of it.
+
+What the primary null does support, without needing the mechanism: for an account of this shape, **when you start is
+not a lever.** Deposits, starting capital, return, cost, allocation and time have all now been measured; entry
+timing joins deposits on the list of things that do not move the phase.
