@@ -13354,3 +13354,42 @@ Also closed here: `PASS=volmanaged` re-run, so `book|p2|volmanaged` carries the 
 (`g_liquid:true`, inherited from `p1|core` — same instruments, overlay only) rather than the D-666 sweep's null that
 would have revoked a survivor on an inconsistency rather than a finding. Survivors unchanged at 2. Ceiling unmoved
 at 5.4555 across all ten pass re-runs.
+
+---
+
+**D-686 — THE TURNOVER LAW APPLIED TO THE CODE. `evalXsec` charged a full round trip every rebalance with no
+turnover measurement — the fourth time a guard policed the record while the generator went unchecked.**
+
+`evalXsec` builds every cross-sectional spec in the factory and charged `feeBp/1e4` once per rebalance — i.e. it
+assumed **100% of the book turns over every period**. D-654/656 established that the drag is TURNOVER × COST and
+that the omitted half decides: EM momentum went from +4.2%/yr at t 3.98 to −0.63%/yr once 33.5% monthly turnover was
+measured. The law was then enforced by `turnover-guard.ts` on `trd_lineage` — on what was CONCLUDED — while the
+function producing the specs stayed turnover-blind. Same shape as D-586 (`g_liquid`), D-666, and D-681: **a guard on
+the record does not constrain the code.**
+
+**MEASURED, on 220 xsec_eq specs, all now carrying identity so turnover is computable:**
+
+| one-way turnover per rebalance | p10 | median | p90 |
+|---|---|---|---|
+| measured | 9.4% | **17.0%** | 54.8% |
+
+A full round trip implies 50% one-way, so **the old model overcharged the median spec by 2.93x.**
+
+**IT CUTS BOTH WAYS, which is the check that it is a correction and not a loosening.** `rev1m` (1-month reversal)
+measures **86–88% one-way** — the old flat charge was too CHEAP there, and `xsec_eq|rev1m|l1|h3|k10|all` moved the
+other way, from +0.12%/yr to **−0.75%/yr**. At the other end, `leverage|l1|h1|k5|all` turns over **6.4%** and was
+being charged nearly eight times its true drag.
+
+**AND IT CHANGES NO CONCLUSION.** Net-negative specs 76 → 67; |t| ≥ 2 specs 32 → 28; 11 sign flips, every one on a
+spec with |t| < 0.3, i.e. noise before and after. **Specs clearing the 5.4555 ceiling: 0, before and after.** The
+strongest is `xsec_eq|buyback_yield|l0|h3|k10|all` at gross 8.89%/yr, 17.2% turnover, net 8.76%/yr, **t 3.49**.
+
+That is the right kind of result to report: the cost model was structurally wrong, it is now right, the record is
+more honest, and no edge was hiding under the error. Reporting it as a rescue would have been the temptation.
+
+**TWO LIMITS STATED RATHER THAN GLOSSED.** (1) Only the `xsec_eq` caller carries symbol identity; the other nine
+`evalXsec` call sites pass rows without it, so their `turnover_oneway` is **null = UNTESTED ON COST** and they keep
+the old flat charge — rule (3) of the law applied to ourselves rather than a silent assumption. (2) Fixing the
+turnover multiplier does not validate the **10bp round-trip level** for individual US equities across a
+several-hundred-name long-short; that is a separate assumption and the net figures above inherit it. The measured
+turnover now travels in each spec, so anyone can re-cost them without re-running anything.

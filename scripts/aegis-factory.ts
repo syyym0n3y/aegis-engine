@@ -146,13 +146,33 @@ async function buildEqPanel(){
 }
 // ---------- generic cross-section evaluator ----------
 type Gate={n_names:number;n_periods:number;gross_ann:number;net_ann:number;sharpe:number;t:number;dd:number;ruined:boolean;
-  g_breadth:boolean;g_effect:boolean;g_benchmark:boolean;g_liquid:boolean|null;g_era:boolean;eras:number[]};   // D-666: g_liquid is nullable because "not computed" is a distinct state from "failed"
+  g_breadth:boolean;g_effect:boolean;g_benchmark:boolean;g_liquid:boolean|null;g_era:boolean;eras:number[];
+  // D-686: null means UNTESTED ON COST — the rows carried no identity, so turnover could not be measured and the
+  // old flat full-round-trip charge was applied. Distinct from 0, which would mean a book that never trades.
+  turnover_oneway?:number|null};   // D-666: g_liquid is nullable because "not computed" is a distinct state from "failed"
 // hold: forward window in months. OVERLAP FIX (the factory's first two "survivors" were this bug): a 3-month forward
 // return sampled MONTHLY gives consecutive observations sharing 2/3 of their window — t inflated ~sqrt(3), the exact
 // D-454 trap. Periods are strided by `hold` so every observation is disjoint; n_periods drops accordingly and the t is
 // honest. Caught because the h3 rows carried the SAME n_periods as h1 — the number that cannot lie.
-function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,perYear:number,hold=1):Gate|null{
-  const by=new Map<string,{fwd:number;v:number}[]>();
+// D-686: THE TURNOVER LAW, applied to the CODE that generates the specs rather than to the ledger that records them.
+// This function charged `feeBp/1e4` once per rebalance with NO turnover measurement, i.e. it assumed 100% of the book
+// turns over every period. D-654/656 established that the drag is TURNOVER x COST and that the omitted half decides:
+// EM momentum went +4.2%/yr at t 3.98 to -0.63%/yr once 33.5% monthly turnover was measured. The law was then
+// enforced by `turnover-guard.ts` on `trd_lineage` — on what was CONCLUDED — while the function producing every
+// cross-sectional spec in this file remained turnover-blind. That is the D-586 shape for the fourth time: a guard on
+// the record does not constrain the code.
+//
+// DIRECTION OF THE ERROR. A flat full-round-trip charge OVERSTATES cost for any sort held longer than one period.
+// For a LOSING spec that manufactures significance (75 of 148 significant-loss claims turned out to be exactly this,
+// D-684e). For a WINNING spec it is conservative — but conservative is not free: it can push a real edge below the
+// bar, and a null produced by an inflated cost is evidence about the cost.
+//
+// WHAT IS MEASURED. Turnover needs identity: which names were in the bucket last period and which are in it now.
+// Rows carrying `sym` get a measured one-way turnover and a drag of `2 x oneway x feeBp`. Rows without it CANNOT be
+// measured, and are marked UNTESTED ON COST rather than silently charged the old flat fee and reported as "net" —
+// rule (3) of the law, applied to ourselves.
+function evalXsec(rows:{mo:string;fwd:number;v:number;sym?:string}[],feeBp:number,k:number,perYear:number,hold=1):Gate|null{
+  const by=new Map<string,{fwd:number;v:number;sym?:string}[]>();
   for(const r of rows)(by.get(r.mo)??by.set(r.mo,[]).get(r.mo)!).push(r);
   const perAll=[...by.entries()].filter(([,g])=>g.length>=30).sort((a,b)=>a[0]<b[0]?-1:1);
   const per=hold>1?perAll.filter((_,i)=>i%hold===0):perAll;   // DISJOINT windows only
@@ -163,15 +183,35 @@ function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,p
   // its own universe was t -0.46, because both legs were universe drift and the spread merely measured the drift
   // precisely. The universe mean over the SAME periods, and the top bucket's excess against it, are now carried.
   const excessTop:number[]=[];
+  const grossRets:number[]=[];
+  // Turnover is measurable only where the rows carry identity. Measured as the mean over rebalances of the fraction
+  // of each leg replaced, averaged across the two legs — the standard one-way definition D-654 used.
+  const haveSym=rows.length>0&&rows.every(r=>r.sym!==undefined);
+  let prevTop:Set<string>|null=null, prevBot:Set<string>|null=null;
+  const turns:number[]=[];
   for(const [mo,g] of per){
     g.sort((a,b)=>b.v-a.v);
     const q=Math.max(3,Math.floor(g.length/k));
-    const top=mean(g.slice(0,q).map(x=>x.fwd)), bot=mean(g.slice(-q).map(x=>x.fwd));
+    const topG=g.slice(0,q), botG=g.slice(-q);
+    const top=mean(topG.map(x=>x.fwd)), bot=mean(botG.map(x=>x.fwd));
     const uni=mean(g.map(x=>x.fwd));                       // every name in the cross-section, same period
-    rets.push(top-bot-feeBp/1e4);
+    if(haveSym){
+      const tS=new Set(topG.map(x=>x.sym!)), bS=new Set(botG.map(x=>x.sym!));
+      if(prevTop&&prevBot){
+        const outT=[...prevTop].filter(x=>!tS.has(x)).length/Math.max(1,prevTop.size);
+        const outB=[...prevBot].filter(x=>!bS.has(x)).length/Math.max(1,prevBot.size);
+        turns.push((outT+outB)/2);
+      }
+      prevTop=tS; prevBot=bS;
+    }
+    grossRets.push(top-bot);
     excessTop.push(top-uni);                               // gross of fees: the fee belongs to the book line only
     names.push(g.length); moKeys.push(mo);
   }
+  // one-way turnover per rebalance; a round trip costs feeBp, and both legs turn, hence the factor 2.
+  const oneway=turns.length?mean(turns):null;
+  const dragPerPeriod=oneway===null?feeBp/1e4:2*oneway*feeBp/1e4;
+  for(const gr of grossRets) rets.push(gr-dragPerPeriod);
   const mEx=mean(excessTop), sdEx=sdv(excessTop)||1e-9;
   const tEx=mEx/(sdEx/Math.sqrt(excessTop.length));
   const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
@@ -188,7 +228,8 @@ function evalXsec(rows:{mo:string;fwd:number;v:number}[],feeBp:number,k:number,p
   // LEDGER by liquidity-guard.ts, but nothing inspected the factory's own gate, which is the D-586 lesson exactly:
   // a guard on the record does not constrain the code. It is now NULL — "not computed" — and the generated survivor
   // column treats NULL as false, so nothing can be promoted on a gate nobody ran.
-  return {n_names:Math.round(nn),n_periods:rets.length,gross_ann:(m+feeBp/1e4)*perYear,net_ann:m*perYear,
+  return {n_names:Math.round(nn),n_periods:rets.length,gross_ann:(m+dragPerPeriod)*perYear,net_ann:m*perYear,
+    turnover_oneway:oneway,
     sharpe:(m/sd)*Math.sqrt(perYear),t,dd:dd*100,ruined,
     // g_benchmark now requires the TOP bucket to beat its own universe with |t| >= 2, not merely that the spread
     // is positive. A spread over a flat cross-section can be large and precisely estimated while earning nothing.
@@ -236,7 +277,7 @@ for(const sig of SIGNALS) for(const lag of [0,1]) for(const hold of [1,3]) for(c
   // build the (mo, fwd, v) rows for this spec — lag shifts the signal month; hold compounds fwd months
   const byMoSym=new Map<string,EqRow>();
   for(const r of eqPanel)byMoSym.set(`${r.mo}|${r.sym}`,r);
-  const rows:{mo:string;fwd:number;v:number}[]=[];
+  const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
   for(const r of eqPanel){
     let v=r.sig[sig]; if(v==null)continue;
     if(lag>0){const d=new Date(r.mo+"-15T00:00:00Z");d.setUTCMonth(d.getUTCMonth()-lag);
@@ -247,19 +288,21 @@ for(const sig of SIGNALS) for(const lag of [0,1]) for(const hold of [1,3]) for(c
       for(let h=1;h<hold;h++){const d=new Date(r.mo+"-15T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+h);
         const nx=byMoSym.get(`${d.toISOString().slice(0,7)}|${r.sym}`); if(!nx){ok=false;break;} f*=1+nx.fwd;}
       if(!ok)continue; fwd=f-1;}
-    rows.push({mo:r.mo,fwd,v:v as number});
+    rows.push({mo:r.mo,fwd,v:v as number,sym:r.sym});   // D-686: identity carried so turnover is measurable
   }
   let use=rows;
   if(uni==="liqtop"){
     // liq-top-third: per month, keep only the most liquid third BEFORE ranking (the D-450 discipline)
-    use=[]; const tmp=new Map<string,{fwd:number;v:number;dv:number}[]>();
+    use=[]; const tmp=new Map<string,{fwd:number;v:number;dv:number;sym:string}[]>();
     for(const r of eqPanel){const v=r.sig[sig]; if(v==null)continue;
-      (tmp.get(r.mo)??tmp.set(r.mo,[]).get(r.mo)!).push({fwd:r.fwd,v:v as number,dv:r.dv});}
+      (tmp.get(r.mo)??tmp.set(r.mo,[]).get(r.mo)!).push({fwd:r.fwd,v:v as number,dv:r.dv,sym:r.sym});}
     for(const [mo,g] of tmp){g.sort((a,b)=>b.dv-a.dv);
-      for(const x of g.slice(0,Math.max(30,Math.floor(g.length/3))))use.push({mo,fwd:x.fwd,v:x.v});}
+      for(const x of g.slice(0,Math.max(30,Math.floor(g.length/3))))use.push({mo,fwd:x.fwd,v:x.v,sym:x.sym});}
   }
   const g=evalXsec(use,FEE_EQ,k,12/hold,hold);
-  await record(key,"xsec_eq",spec,uni==="liqtop"?"equity_liqtop":"equity_liquid",g,ceil);
+  // D-686: the measured turnover travels with the spec, so THE TURNOVER LAW is satisfied at SOURCE rather than by a
+  // guard reading prose afterwards. null means the rows carried no identity: UNTESTED ON COST, not "no turnover".
+  await record(key,"xsec_eq",{...spec,turnover_oneway:g?.turnover_oneway??null},uni==="liqtop"?"equity_liqtop":"equity_liquid",g,ceil);
   done++;
   if(done%50===0)await log(`  ..${done} specs (${((Date.now()-t0)/60000).toFixed(1)}m)`);
 }
