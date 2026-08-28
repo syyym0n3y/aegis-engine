@@ -24,7 +24,11 @@ console.log(`==> DELISTED-PERP RECOVERY — ${have.size} in panel, ${futSyms.siz
 let found=0,probed=0;
 for(const sym of cands){
   probed++;
-  const j=await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1d&limit=1500`  // plumbing-ok: exchange kline endpoint returns newest-N by design; there is no order parameter and the full window is what we want).then(r=>r.ok?r.json():null).catch(()=>null);
+  // plumbing-ok: exchange kline endpoint returns newest-N by design; there is no order parameter and the full window
+  // is what we want. D-693: this waiver used to sit INSIDE the fetch() argument list, which swallowed the closing
+  // paren and the .then() into the comment — the file has not parsed since it was added, so a script written to
+  // recover the delisted-perp cohort has been dead the whole time. A waiver that breaks the code it waives.
+  const j=await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1d&limit=1500`).then(r=>r.ok?r.json():null).catch(()=>null);
   await sleep(140);
   if(!Array.isArray(j)||j.length<200)continue;
   // [openTime,o,h,l,c,vol,closeTime,quoteVol,trades,takerBuyBase,takerBuyQuote,ignore]

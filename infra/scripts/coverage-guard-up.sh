@@ -105,6 +105,13 @@ while true; do
   if ! deno run --allow-read --allow-env ../scripts/plumbing-guard.ts; then
     echo "$(date -u +%FT%TZ) PLUMBING GUARD RED — a new instance of a known defect class entered the codebase"
   fi
+  # TYPECHECK THE WHOLE SCRIPTS TREE (D-693). `recover-delisted-perps.ts` had a `// plumbing-ok:` waiver written
+  # INSIDE a fetch() argument list, which swallowed the closing paren and the .then() into the comment. The file has
+  # not parsed since — a script written to recover the delisted-perp cohort was dead the whole time and nothing said
+  # so, because nothing typechecked this tree. CLAUDE.md requires `deno check` on supabase/functions only.
+  if ! deno check ../scripts/*.ts > /tmp/aegis-typecheck.log 2>&1; then
+    echo "$(date -u +%FT%TZ) TYPECHECK RED — a script in scripts/ does not compile: $(grep -m1 -E 'error|TS[0-9]+' /tmp/aegis-typecheck.log | cut -c1-140)"
+  fi
   # REGISTRY GUARD (D-682): the guard whose subject is the other guards. A census found 24 guard scripts on disk, 21
   # invoked here, and 17 in the operator's one-command view — so four could go RED daily and never reach a human, which
   # is D-586 recurring inside the fix for D-586. Runs FIRST among the additions because if the registry is inconsistent

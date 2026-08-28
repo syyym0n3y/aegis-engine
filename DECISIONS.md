@@ -13692,3 +13692,30 @@ further, not registered forward, and recorded here so it is not rediscovered as 
 positive spread whose LONG leg UNDERPERFORMS its own universe** (all `form345`, insider filings) — the D-627 shape,
 where the short leg does all the work. For an account that cannot short — every account below L2 by D-679 — such a
 spread is not a weak signal, it is an unusable one, and the spread number actively misleads about that.
+
+---
+
+**D-693 — A WAIVER THAT BROKE THE CODE IT WAIVED. `recover-delisted-perps.ts` has not parsed since the comment was
+added, and nothing typechecks `scripts/`.**
+
+`deno check scripts/*.ts`, run across the whole tree for the first time, found one file that does not compile:
+
+    const j=await fetch(`https://fapi.binance.com/...&limit=1500`  // plumbing-ok: exchange kline endpoint
+    returns newest-N by design...).then(r=>r.ok?r.json():null).catch(()=>null);
+
+The `// plumbing-ok:` waiver was written **inside the `fetch()` argument list**, so the closing paren and the whole
+`.then()` chain were swallowed into the comment. The file has been unparseable since — meaning a script written
+specifically to recover the **delisted-perp cohort**, one of the three open data gaps, has been dead the entire
+time. It is manual-only and wired into nothing, so no scheduled job was affected; what was affected is that a tool
+the register implicitly counts on did not exist.
+
+**The waiver mechanism defeated the guard it was appeasing.** `plumbing-guard.ts` reads source as TEXT, so a file
+that cannot compile still passes it — the guard was green on a file no runtime could load.
+
+**Why nothing caught it:** CLAUDE.md requires `deno check supabase/functions/**/*.ts` before commit and says nothing
+about `scripts/`, which is where essentially all the analysis lives. A tree of ~200 scripts had no compile gate at
+all. Added to the daily runner as an explicit step that reports the first error; the whole tree now compiles.
+
+The transferable point is not the missing check — it is that **a comment is not inert.** Placement inside an
+expression is a code change, and the two false positives earlier today (D-687: prose between a `fetch` and its
+`res.ok` check reading as an unchecked write) were the benign version of the same thing.
