@@ -13272,3 +13272,55 @@ carried since D-670 ("verify fxintraday at zero cost") — with the opposite ans
 - `seasonal|*|tom` (turn-of-month) all weaken but **survive**: SPY t −4.44 → −3.35. Another discriminating control.
 
 One spec remains blind, `book|p3|residual_fade` at t −2.974, and is recorded as such rather than counted as a pass.
+
+---
+
+**D-685 — THE OVERNIGHT PREMIUM: the fee assumption really was off by 20x, and it changed nothing, because the
+benchmark kills it. Includes a correction to my own intermediate claim.**
+
+D-684d's recovered gross data produced a list of **18 specs recorded as losses whose gross effect is positive at
+|t| ≥ 2** — real measured effects the assumed fee consumes. Two appeared to clear the 5.4555 ceiling:
+`overnight|SPY|overnight` (gross +10.11%/yr, t 6.00) and `overnight|QQQ|overnight` (+14.05%/yr, t 5.51).
+
+**The cost criticism was correct.** The factory charged **20bp per day, uniformly**. SPY quotes a one-cent spread on
+a ~$600 price (~0.17bp), and the close and open are auction prints that MOC/MOO orders fill at by construction; a
+retail round trip is ~1bp. So a 50.4%/yr drag was charged against a 10.11%/yr effect. Measured breakeven round trips:
+**SPY 4.03bp/day, QQQ 5.60, IWM 5.36, EEM 4.93, GLD 4.42** — the strategy supports 3–5x the realistic cost, and the
+recorded verdict "loses at t −23.77" was a statement about a placeholder in the voice of a statement about markets.
+
+**AND IT IS STILL NOT AN EDGE, because the benchmark decides it.** Overnight-only versus holding the same fund
+through the same months:
+
+| | ON% | INTRA% | HOLD% | **ON−HOLD** | **t** | b/e bp/day |
+|---|---|---|---|---|---|---|
+| SPY | 10.2 | 1.9 | 12.0 | **−1.9** | **−0.87** | 4.03 |
+| QQQ | 14.1 | −0.2 | 13.8 | **+0.2** | **+0.06** | 5.60 |
+| IWM | 13.4 | −2.2 | 11.2 | **+2.2** | **+0.71** | 5.36 |
+| DIA | 7.7 | 2.7 | 10.5 | −2.8 | −1.23 | 3.06 |
+| EFA | 2.1 | 6.4 | 8.5 | −6.5 | −2.84 | 0.82 |
+
+**Not one instrument beats buy-and-hold significantly.** Overnight-only earns roughly the market's return, using
+252 round trips a year to obtain what holding the fund gives for free.
+
+**MY OWN CORRECTION, which is the transferable part.** The `t_gross 6.00` I surfaced is `portfolio_t × gross/net`
+where the overnight family's `portfolio_t` is computed on the **absolute** series. So it tests "is the overnight
+return nonzero" — a restatement of *stocks go up* — not "does overnight beat holding". **I applied the
+cost-inflation arithmetic correctly and then read the resulting t as if it were an excess statistic**, which is the
+error THE BENCHMARK LAW exists to prevent, committed inside the audit that enforces it. The distinction is
+family-specific and now stated: for `french`/`weekly`/`xsec_*` the gate helper measures a **dollar-neutral
+long-short spread whose benchmark is zero (D-637)**, so their `t_gross` IS a valid excess statistic; for
+single-instrument families (`overnight`, `sessions`, `fxintraday`) it is not, unless the pass records the
+excess-basis pair.
+
+**THE CONTROL EARNED ITS PLACE.** `^GSPC` is uninvestable and runs to 1970: overnight **+1.5%/yr against intraday
++7.7%/yr** — the split *reverses* before the ETF era, with 45.1 years underwater. The overnight premium is a
+post-1993 regime feature, not a property of equities. Any story about market microstructure causing it has to
+explain why it is absent for the first 23 years of the series, and none was pre-registered, so none is claimable
+(MECHANISM LAW).
+
+**WHAT SURVIVES.** After removing the single-instrument families, the honest residue of the 18 is **12 `french`
+long-short specs** — industry and size-BM momentum at gross **+2.5 to +4.6%/yr, t 2.0–3.5**, dollar-neutral so
+benchmarked at zero, net-negative only because of the assumed fee. Real, and **all below the 5.4555 ceiling**, so
+none is promotable. Recorded as SUB-FEE AND BELOW-CEILING, not as an edge, and not re-mined.
+
+9 trials spent (2,903,239 → 2,903,248); ceiling unmoved at 5.4555.
