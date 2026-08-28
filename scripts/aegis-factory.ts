@@ -2208,18 +2208,23 @@ if(PASS==="all"||PASS==="french"){
     const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(let mi=form+skip;mi<months.length-hold;mi++){
       const mo=months[mi];
-      for(const [,mmap] of series){
+      // D-686c: the series NAME was discarded here, so the french family — the largest single group of cost
+      // artifacts on the board (12) — had no measurable turnover and kept a flat charge of a full 40bp round trip
+      // EVERY month, i.e. an assumed 100% turnover. A 49-industry tercile sort does not turn over 100% a month.
+      for(const [fname,mmap] of series){
         let mom=1,ok=true;
         for(let q=mi-form-skip;q<mi-skip;q++){const r2=mmap.get(months[q]); if(r2==null){ok=false;break;} mom*=1+r2;}
         if(!ok)continue;
         let f=1;
         for(let h=1;h<=hold;h++){const r2=mmap.get(months[mi+h-1]); if(r2==null){ok=false;break;} f*=1+r2;}
         if(!ok)continue;
-        rows.push({mo,fwd:f-1,v:dirMom*(mom-1)});
+        rows.push({mo,fwd:f-1,v:dirMom*(mom-1),sym:fname});
       }
     }
-    const g=evalXsec(rows,40,k,12/hold,hold);       // 20bp/side ETF-proxy drag, round trip
-    return record(key,"french",spec,prefix==="ind49:"?"industries_49":"szbm_100",g,ceil).then(()=>{done++;});
+    const g=evalXsec(rows,40,k,12/hold,hold);       // 20bp/side ETF-proxy drag, now charged on measured turnover
+    return record(key,"french",{...(spec as Record<string,unknown>),turnover_oneway:g?.turnover_oneway??null,
+      excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},
+      prefix==="ind49:"?"industries_49":"szbm_100",g,ceil).then(()=>{done++;});
   }
   // fix the >=30-names floor for the 49-industry panel: evalXsec requires >=30/mo — 49 industries pass; grid passes.
   for(const prefix of ["ind49:","szbm100:"]) for(const form of [3,6,12]) for(const skip of [0,1]) for(const k of [3,5]) for(const hold of [1,3]){
