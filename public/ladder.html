@@ -106,14 +106,14 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
 <div class="wrap">
 
 <header>
-  <div class="kicker"><span>Aegis</span><span>Synthesis of 209 decisions, 1,059 specs</span><span>2026-08-28</span></div>
+  <div class="kicker"><span>Aegis</span><span>Synthesis of 215 decisions, 1,059 specs</span><span>2026-08-28</span></div>
   <h1>The Capital Ladder</h1>
   <p class="sub">Everything this programme has ever tested, re-sorted by the one axis it was never organised
   around: how much money a strategy needs before it works, and how much it can hold before it stops.</p>
 </header>
 
 <div class="tally">
-  <div><span class="n">209</span><span class="l">decisions<br>92 killed</span></div>
+  <div><span class="n">215</span><span class="l">decisions<br>92 killed</span></div>
   <div><span class="n">1,059</span><span class="l">specifications<br>tested</span></div>
   <div><span class="n zero">0</span><span class="l">promoted<br>to capital</span></div>
   <div><span class="n">23</span><span class="l">machine guards<br>each verified to fail</span></div>
@@ -357,11 +357,45 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
   the rescue that wasn't there.</p>
 </section>
 
+<section style="border-bottom:2px solid var(--ink)">
+  <div class="head"><span class="num">§7</span><h2>And three-quarters of the wins were the universe</h2></div>
+  <p class="lede">A long-short spread can be large and precisely measured while both of its legs earn exactly what
+  everything else earned. The engine computed that check and threw the answer away.</p>
+
+  <p>A quantile spread says nothing about whether either leg earns anything. The test that separates a signal from
+  drift is whether the <em>top bucket beats its own universe</em> over the same periods — a number the engine
+  calculated on every specification and then collapsed into a yes/no flag. Recording it instead, across 675
+  cross-sectional specifications:</p>
+
+  <div class="tally" style="border-top:1px solid var(--rule)">
+    <div><span class="n">427</span><span class="l">claim a positive<br>return</span></div>
+    <div><span class="n zero">318</span><span class="l">are drift — 74%<br>long leg doesn't beat its universe</span></div>
+    <div><span class="n">90</span><span class="l">survive with<br>adequate breadth</span></div>
+    <div><span class="n zero">0</span><span class="l">clear the<br>significance bar</span></div>
+  </div>
+
+  <div class="note bad">
+    <span class="t">Two arithmetic passes characterise the entire corpus</span>
+    <p>Most claims that something <b>loses</b> were about the assumed fee — 47% of significant losses. Most claims
+    that something <b>makes money</b> were about the universe — 74% of positive results.</p>
+    <p>Neither required reading a single row's prose. Both were recoverable from numbers the engine had already
+    computed and was discarding.</p>
+  </div>
+
+  <p>The 90 that survive are dominated by cash-flow and payout yields — free cash flow (excess <b>7.82%/yr at
+  t 3.99</b>), operating cash flow, buyback yield, accruals. That is the same family placed on a forward clock six
+  days earlier, by a completely different filter. The convergence adds one narrow thing worth stating: <b>those
+  registered leads are not universe drift.</b> Whatever the forward clock eventually says about them, it will not be
+  answering this question.</p>
+
+  <p>None of the 90 clears the significance bar. The board is unchanged.</p>
+</section>
+
 <footer>
   <p>Figures read directly from the engine's ledger on the date stamped below. Aegis is a single-operator research
   programme; no signal is published, nothing is promoted to capital, and this is a synthesis of what was measured
   rather than advice about anyone's money.</p>
-  <p class="stamp">209 decisions · 1,059 specs · 2,903,248 trials · ceiling 5.4555 · 23 guards · 0 promoted</p>
+  <p class="stamp">215 decisions · 1,059 specs · 2,903,248 trials · ceiling 5.4555 · 23 guards · 0 promoted</p>
 </footer>
 
 </div>
