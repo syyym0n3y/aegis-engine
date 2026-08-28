@@ -13324,3 +13324,33 @@ benchmarked at zero, net-negative only because of the assumed fee. Real, and **a
 none is promotable. Recorded as SUB-FEE AND BELOW-CEILING, not as an edge, and not re-mined.
 
 9 trials spent (2,903,239 → 2,903,248); ceiling unmoved at 5.4555.
+
+**D-684e — ZERO BLIND SPECS. All 148 significant-loss claims are now cost-auditable; 75 (51%) are artifacts. The
+last one unblinded flipped sign too.**
+
+`book|p3|residual_fade` was the final spec in the factory whose gross series did not survive. Recovered:
+
+| | net | gross |
+|---|---|---|
+| `book\|p3\|residual_fade` | **−7.18%/yr, t −3.04** | **+3.38%/yr, t +1.43** |
+
+The residual-fade book has a small POSITIVE gross effect that is not significant, and the assumed fee converts it
+into a significant-looking loss. It was recorded as "loses, negative every era". The honest verdict is
+**no effect, and the cost of finding out**.
+
+**Final state of the audit that began at D-684:**
+
+| | at D-684 | now |
+|---|---|---|
+| significant-loss claims | 148 | 148 |
+| cannot be checked | 70 | **0** |
+| cost artifacts | 49 of 78 | **75 of 148 (51%)** |
+
+**Half of every "this significantly loses" statement in this factory was a statement about an assumed fee.** None
+was promotable and none is promoted, so no allocation was ever at risk — the damage was entirely to what the record
+means, which is the only product this programme has.
+
+Also closed here: `PASS=volmanaged` re-run, so `book|p2|volmanaged` carries the reasoned D-668 liquidity judgement
+(`g_liquid:true`, inherited from `p1|core` — same instruments, overlay only) rather than the D-666 sweep's null that
+would have revoked a survivor on an inconsistency rather than a finding. Survivors unchanged at 2. Ceiling unmoved
+at 5.4555 across all ten pass re-runs.

@@ -1940,7 +1940,7 @@ if(PASS==="residual"){
     return M.map(r=>r[p]);};
   const UNIV33:[string,number][]=[["QQQ",10],["IWM",10],["DIA",10],["GLD",10],["AAPL",10],["MSFT",10],["NVDA",10],["AMZN",10],["META",10],["GOOGL",10],["TSLA",10],["JPM",10],["XOM",10],["AMD",10],
     ["GBPUSD=X",1],["JPY=X",1],["AUDUSD=X",1],["HG=F",2],["SI=F",2],["ZW=F",2],["NG=F",2],["KC=F",2],["BTC-USD",5]];
-  const moPnL=new Map<string,{r:number;n:number}>(); let engaged=0,skipped=0;
+  const moPnL=new Map<string,{r:number;n:number;f:number}>(); let engaged=0,skipped=0;
   for(const [sym,feeBp] of UNIV33){
     const pm=await load33(sym); if(pm.size<600)continue;
     // walk in ~21-day blocks: fit on trailing 250d, apply next block
@@ -1982,8 +1982,8 @@ if(PASS==="residual"){
         const r2=b2/a2-1;
         const fee=(pos!==prevW)?feeBp/1e4:0; prevW=pos;
         const mo=days[i+1].slice(0,7);
-        const cur=moPnL.get(mo)??moPnL.set(mo,{r:0,n:0}).get(mo)!;
-        cur.r+=pos*r2-fee; cur.n++;
+        const cur=moPnL.get(mo)??moPnL.set(mo,{r:0,n:0,f:0}).get(mo)!;
+        cur.r+=pos*r2-fee; cur.f+=fee; cur.n++;
       }
     }
   }
@@ -1995,10 +1995,14 @@ if(PASS==="residual"){
     let cum=1,pk=1,dd=0,ruined=false;for(const x of mos){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*mos.length/4),b2=Math.floor((e+1)*mos.length/4);return mean(mos.slice(a2,b2));});
     const wins=mos.filter(x=>x>0).length;
-    const g:Gate={n_names:UNIV33.length,n_periods:mos.length,gross_ann:m*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
+    // D-684d: the last spec in the factory whose gross could not be recovered. Same per-name daily scaling as the
+    // return so the two are on one basis.
+    const feeMres=mean([...moPnL.entries()].sort().filter(x=>x[1].n>50).map(x=>x[1].f/x[1].n*21));
+    const g:Gate={n_names:UNIV33.length,n_periods:mos.length,gross_ann:(m+feeMres)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t:t2,dd:dd*100,ruined,
       g_breadth:true,g_effect:m>0,g_benchmark:m>0,g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
-    await record("book|p3|residual_fade","book",{rule:"fade-1d-residual",gate:"adjR2 0.15-0.95, stab>=0.4",exec:"lag1",monthly_win_rate:+(wins/mos.length).toFixed(3)},"combined",g,ceil); done++;
+    await record("book|p3|residual_fade","book",{rule:"fade-1d-residual",gate:"adjR2 0.15-0.95, stab>=0.4",exec:"lag1",monthly_win_rate:+(wins/mos.length).toFixed(3),
+      net_ex_ann:+(m*12).toFixed(6),gross_ex_ann:+((m+feeMres)*12).toFixed(6)},"combined",g,ceil); done++;
     await log(`    P3 residual-fade: n=${mos.length}mo net ${(m*12*100).toFixed(1)}%/yr t=${t2.toFixed(2)} monthly-win ${(100*wins/mos.length).toFixed(0)}% eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 33 (residual) done`);
