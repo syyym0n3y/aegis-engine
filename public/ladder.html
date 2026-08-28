@@ -106,17 +106,17 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
 <div class="wrap">
 
 <header>
-  <div class="kicker"><span>Aegis</span><span>Synthesis of 195 decisions, 1,059 specs</span><span>2026-08-28</span></div>
+  <div class="kicker"><span>Aegis</span><span>Synthesis of 203 decisions, 1,059 specs</span><span>2026-08-28</span></div>
   <h1>The Capital Ladder</h1>
   <p class="sub">Everything this programme has ever tested, re-sorted by the one axis it was never organised
   around: how much money a strategy needs before it works, and how much it can hold before it stops.</p>
 </header>
 
 <div class="tally">
-  <div><span class="n">195</span><span class="l">decisions<br>92 killed</span></div>
+  <div><span class="n">203</span><span class="l">decisions<br>92 killed</span></div>
   <div><span class="n">1,059</span><span class="l">specifications<br>tested</span></div>
   <div><span class="n zero">0</span><span class="l">promoted<br>to capital</span></div>
-  <div><span class="n">2.90M</span><span class="l">counted trials<br>ceiling 5.4555</span></div>
+  <div><span class="n">23</span><span class="l">machine guards<br>each verified to fail</span></div>
   <div><span class="n zero">19</span><span class="l">pre-registrations<br>we retracted</span></div>
   <div><span class="n zero">64.3%</span><span class="l">of specs unusable<br>at the bottom rung</span></div>
 </div>
@@ -168,10 +168,10 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
     </div>
     <div class="rung here">
       <div><span class="lvl">L1 — the crossover</span><span class="cap">$1,000 – $10,000</span></div>
-      <div class="body">Cumulative return first exceeds cumulative contributions at <b>$24,114</b>, median 9.8
-      years. Below that line the deposit rate <em>is</em> the account; above it the strategy is. The line sits
-      almost exactly where margin and borrow arrive — so the point where research starts mattering and the point
-      where two-thirds of it becomes placeable are the same point.
+      <div class="body">Cumulative return first exceeds cumulative contributions after <b>9.8 years</b> — and that
+      figure is <b>identical at every deposit rate from $50 to $1,000/mo</b>. Only the account <em>size</em> at the
+      crossover scales ($12k at $50/mo, $241k at $1,000/mo). The deposit-dominated phase is a fixed stretch of
+      calendar time, not a dollar threshold you can reach faster by funding harder.
       <span class="tag here">the boundary that matters</span></div>
     </div>
     <div class="rung">
@@ -256,12 +256,16 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
   <div class="head"><span class="num">§5</span><h2>What would change the answer</h2></div>
 
   <div class="note warn">
-    <span class="t">The honest allocation of effort below the crossover</span>
+    <span class="t">You cannot buy your way out of the deposit-dominated phase</span>
     <p>At the median path to $1,000, <b>$940 of the $1,000 is money contributed</b>. At $10,000 it is still
-    <b>69%</b>. Only past <b>$24,114</b> does cumulative return overtake cumulative deposits — and by $100,000 the
-    ratio has inverted, with return supplying <b>75%</b>.</p>
-    <p>So the research programme is not the binding constraint on the account until roughly $24k. This is
-    uncomfortable to write inside a research programme, and it is what 733 real start months say.</p>
+    <b>69%</b>; by $100,000 the ratio has inverted and return supplies <b>75%</b>.</p>
+    <p>The first version of this page called the turn a <b>$24,114 threshold</b>. It isn't one. Swept across a 20×
+    range of deposit rates, the crossover lands at <b>9.8 years every single time</b> — only the account size moves,
+    exactly in proportion. Both contributions and account value are linear in the monthly amount, so their ratio is
+    deposit-free.</p>
+    <p>Starting <em>capital</em> does move it: $5,000 up front cuts it to 7.4 years, $25,000 to 6.3. That asymmetry
+    is the check — had the starting balance done nothing either, the metric would have been broken rather than
+    invariant, and the sweep would have looked identical from outside.</p>
   </div>
 
   <p><b>Six forward clocks are registered</b>, with numeric two-sided promote/kill rules written into an
@@ -275,17 +279,59 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
   property of the series, not of the strategy, and the honest move was to go and get the longer series rather than
   keep reporting the gap.</p>
 
-  <p>What that leaves is a programme whose research output is not currently the constraint on its own account.
-  Below $24,114 the deposit rate decides; above it, nothing among 1,059 tested specifications has cleared the bar.
-  Both halves of that sentence are measurements, and neither is an argument for doing less work — they say <em>where</em>
-  the next unit of work has to land to matter.</p>
+  <p>What that leaves is a programme whose research output is not currently the constraint on its own account. For
+  the first ~10 years the deposit rate decides, regardless of how fast it deposits; after that, nothing among 1,059
+  tested specifications has cleared the bar. Both halves of that sentence are measurements, and neither is an
+  argument for doing less work — they say <em>where</em> the next unit of work has to land to matter.</p>
+</section>
+
+<section style="border-bottom:2px solid var(--ink)">
+  <div class="head"><span class="num">§6</span><h2>Half the losses were the fee</h2></div>
+  <p class="lede">A flat per-period cost shifts the mean and leaves the variance alone — so charging a losing book
+  manufactures its own significance. We checked every claim we had ever made of that shape.</p>
+
+  <p>The engine stores gross and net returns for each specification, so the pre-cost t-statistic is recoverable
+  exactly. Across all 1,059: <b>137 claim a significant loss, and 64 of them (47%) are not significant before the
+  assumed fee.</b></p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>specification</th><th>net</th><th>t</th><th>gross</th><th>t gross</th></tr></thead>
+      <tbody>
+        <tr><td>overnight SPY, intraday leg</td><td class="n">−48.31%/yr</td><td class="n no">−22.30</td>
+            <td class="n">+1.87%/yr</td><td class="n">+0.86</td></tr>
+        <tr><td>hourly FX reversal</td><td class="n">−26.67%/yr</td><td class="n no">−17.00</td>
+            <td class="n">+6.49%/yr</td><td class="n ok">+4.14</td></tr>
+        <tr><td>executive resignations event</td><td class="n">−4.90%/yr</td><td class="n no">−3.47</td>
+            <td class="n">−2.50%/yr</td><td class="n">−1.77</td></tr>
+        <tr><td>delisting notices <em>(control)</em></td><td class="n">−42.61%/yr</td><td class="n">−3.98</td>
+            <td class="n">−40.21%/yr</td><td class="n ok">−3.76</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note bad">
+    <span class="t">The largest t-statistic this programme ever recorded has the opposite sign gross</span>
+    <p>Charging the cost was never wrong — trading an intraday split really does pay a round trip a day. What was
+    wrong is that the ledger stored the net t as <em>the</em> t, so every reader saw −22.30 and read a fact about
+    markets. The honest sentence is <b>"there is no overnight effect, and trading it would cost 50%/yr on top."</b></p>
+    <p>The audit discriminates rather than condemns: delisting notices survive at −3.76 gross, 23 of 35 timing
+    claims hold, and turn-of-month holds. An audit that killed everything would be measuring its own threshold.</p>
+  </div>
+
+  <p>Fixing it exposed a second layer. The function generating every cross-sectional specification charged a
+  <em>full round trip every rebalance</em> — an implied 100% turnover. Measured, the median is <b>17% one-way for
+  equities and 35% for perpetuals</b>, so the median spec was overcharged nearly 3×. Correcting it cuts both ways:
+  1-month reversal turns over 87% and had been <em>under</em>charged. It changed no conclusion — <b>zero
+  specifications clear the significance bar before or after</b> — which is the result worth reporting rather than
+  the rescue that wasn't there.</p>
 </section>
 
 <footer>
   <p>Figures read directly from the engine's ledger on the date stamped below. Aegis is a single-operator research
   programme; no signal is published, nothing is promoted to capital, and this is a synthesis of what was measured
   rather than advice about anyone's money.</p>
-  <p class="stamp">195 decisions · 1,059 specs · 2,903,215 trials · ceiling 5.4555 · 0 promoted</p>
+  <p class="stamp">203 decisions · 1,059 specs · 2,903,248 trials · ceiling 5.4555 · 23 guards · 0 promoted</p>
 </footer>
 
 </div>
