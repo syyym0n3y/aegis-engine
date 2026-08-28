@@ -13497,3 +13497,28 @@ while any monthly amount cuts zero.
 Scope, stated: 9.8 years is specific to a 10.88%/yr, 15.4%-vol market with a negligible start. It is a property of
 this return distribution, not a universal constant, and the sweep above is what makes that checkable rather than
 asserted.
+
+**D-681b — THE GRACE WINDOW WAS THE SECOND WRONG ANSWER, and it was wrong in a way a green would have hidden.**
+
+`trial-idempotency-guard.ts` first tried a calendar adoption boundary; every one of the 5,000 most recent keys was
+written the same day, so it separated nothing. The replacement was a **6-hour grace window**: a clock key inside it
+means the writer is live and RED, older ones are backlog. That looked right and shipped.
+
+**`aegis-discovery` sleeps SIX HOURS between cycles.** A window equal to the writer's own period lets the guard
+flicker green in the gap between two broken cycles — worse than a stable red, because it reads as a fix. Any
+threshold tuned to a cadence breaks silently when the cadence changes.
+
+Found while checking whether the daemon had wedged: 39.8s of CPU across 1h51m elapsed, 2.4MB RSS, log untouched for
+47 minutes. Every symptom of a hung process. **It was sleeping.** Reading the loop — `for(;;){ await cycle(); await
+sleep(6*3600*1000) }` — was the difference between a correct diagnosis and repeating D-674, where a calendar job was
+misread as down.
+
+**The period-independent rule: a family is RED if its NEWEST key contains a clock.** That asks the only question
+that matters — is the most recent thing this writer did still broken? — and cannot be gamed by waiting, by a cadence
+change, or by a daemon sleeping longer than any window someone picked. The rule is now in the self-test in both
+directions (a writer since fixed passes with older clock keys still present; a writer still broken reds), because
+**a replacement rule with no test is precisely what the grace window was.**
+
+Guard now GREEN on that half: newest key in every family is a data fingerprint. The 18 legacy clock keys are
+reported as backlog every run and are deliberately not deleted — the counter is append-only evidence, and removing
+rows to green a guard would lower the ceiling every past conclusion was measured against.

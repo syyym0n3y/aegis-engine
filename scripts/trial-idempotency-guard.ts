@@ -116,18 +116,30 @@ if (!recent.length) { console.error(`!! trd_trial_counter is EMPTY — the count
 // and the legacy backlog is REPORTED every run, never amnestied — the pattern benchmark- and turnover-guard settled.
 // A CALENDAR BOUNDARY WOULD NOT WORK HERE, and trying it is how the rule was found: every one of the 5,000 most
 // recent keys — legacy clock keys included — was written TODAY, so "on or after 2026-08-28" separated nothing. The
-// question is not WHEN a bad key was written but whether bad keys are STILL ARRIVING. So: a clock key inside the
-// grace window means the writer is live and it is RED; older clock keys are a backlog that ages out on its own as the
-// fixed writer produces stable keys. This also means the guard cannot be turned green by waiting a day — only by the
-// writer actually stopping, which is the property worth testing.
-const GRACE_H = Number(Deno.env.get("GRACE_H") || 6);
-const cutoff = Date.now() - GRACE_H * 3600e3;
+// question is not WHEN a bad key was written but whether the writer is STILL WRITING THEM.
+//
+// A FIXED GRACE WINDOW WAS THE SECOND WRONG ANSWER, and it was wrong in a way worth recording. It read: a clock key
+// inside the last 6h means the writer is live. But `aegis-discovery` — the writer this guard was built for — sleeps
+// SIX HOURS between cycles. A window equal to the writer's own period lets the guard flicker green in the gap
+// between two broken cycles, which is worse than a stable red because it looks like a fix. Any threshold tuned to a
+// cadence breaks when the cadence changes, and nothing tells you it broke.
+//
+// THE PERIOD-INDEPENDENT RULE: a family is RED if its NEWEST key contains a clock. That asks exactly the right
+// question — "is the most recent thing this writer did still broken?" — and it cannot be gamed by waiting, by a
+// cadence change, or by a daemon that sleeps longer than any window someone picked.
 const at = (r: unknown) => Date.parse(String((r as { counted_at: string }).counted_at ?? "")) || 0;
+const newestByFam = new Map<string, { run_key: string; t: number }>();
+for (const r of recent) {
+  const f = r.family ?? "?", t = at(r);
+  const cur = newestByFam.get(f);
+  if (!cur || t > cur.t) newestByFam.set(f, { run_key: r.run_key, t });
+}
+const liveFams = new Set([...newestByFam].filter(([, v]) => CLOCK_VALUE.test(v.run_key)).map(([f]) => f));
 const clockRows = recent.filter((r) => CLOCK_VALUE.test(r.run_key));
-const live = clockRows.filter((r) => at(r) >= cutoff);
-const legacy = clockRows.filter((r) => at(r) < cutoff);
+const live = clockRows.filter((r) => liveFams.has(r.family ?? "?"));
+const legacy = clockRows.filter((r) => !liveFams.has(r.family ?? "?"));
 if (legacy.length) {
-  console.log(`  BACKLOG NOT AMNESTIED: ${legacy.length} clock key(s) older than ${GRACE_H}h remain in the counter.`);
+  console.log(`  BACKLOG NOT AMNESTIED: ${legacy.length} clock key(s) remain in the counter from writers since fixed.`);
   console.log(`       Left in place deliberately — the counter is append-only EVIDENCE, and deleting rows to turn a`);
   console.log(`       guard green would lower the ceiling every past conclusion was already measured against.`);
 }
@@ -142,7 +154,7 @@ for (const r of post) {
   e.specs.add(r.run_key.split("|")[0]);
   byFam.set(f, e);
 }
-console.log(`  --   ${recent.length} most recent key(s) read; ${post.length} clock key(s) within the ${GRACE_H}h grace window across ${byFam.size} famil(ies) are in scope`);
+console.log(`  --   ${recent.length} most recent key(s) read; ${post.length} clock key(s) from writers whose NEWEST key still carries one, across ${byFam.size} famil(ies) are in scope`);
 for (const [f, e] of [...byFam.entries()].sort((a, b) => b[1].rows - a[1].rows)) {
   if (e.clock === 0) { console.log(`  ok   ${f.padEnd(18)} ${String(e.rows).padStart(5)} keys, ${String(e.specs.size).padStart(5)} distinct prefixes, no clock`); continue; }
   red++;
@@ -177,7 +189,26 @@ if (Deno.env.get("SELFTEST") === "1") {
   console.log(`    flags a stored ms-epoch ........................... ${c5 ? "YES" : "NO"}`);
   console.log(`    passes a genuine sweep index ...................... ${c6 ? "YES" : "NO"}  (must not drag in grammar-deep)`);
   console.log(`    passes a stored data-fingerprint key .............. ${c7 ? "YES" : "NO"}`);
-  if (!(c1 && c2 && c3 && c4 && c5 && c6 && c7)) { console.log(`    SELFTEST FAILED — guard does not discriminate. RED.`); Deno.exit(1); }
+  // THE NEWEST-KEY RULE ITSELF, tested rather than assumed. It replaced a fixed grace window that the writer's own
+  // 6-hour sleep would have let flicker green, and a replacement rule with no test is exactly what that was.
+  const newestOf = (rs: { family: string; run_key: string; counted_at: string }[]) => {
+    const m = new Map<string, { run_key: string; t: number }>();
+    for (const r of rs) { const t = Date.parse(r.counted_at) || 0; const c = m.get(r.family); if (!c || t > c.t) m.set(r.family, { run_key: r.run_key, t }); }
+    return new Set([...m].filter(([, v]) => CLOCK_VALUE.test(v.run_key)).map(([f]) => f));
+  };
+  const fixed = [
+    { family: "base", run_key: "x|2026-08-28T18:22:46.785Z", counted_at: "2026-08-28T18:22:46Z" },
+    { family: "base", run_key: "x|trd_bars_deep:4350", counted_at: "2026-08-28T20:04:31Z" },   // newer, clean
+  ];
+  const stillBroken = [
+    { family: "base", run_key: "x|trd_bars_deep:4350", counted_at: "2026-08-28T18:22:46Z" },
+    { family: "base", run_key: "x|2026-08-28T20:04:31.000Z", counted_at: "2026-08-28T20:04:31Z" }, // newer, clock
+  ];
+  const c8 = newestOf(fixed).size === 0;
+  const c9 = newestOf(stillBroken).has("base");
+  console.log(`    newest-key rule: passes a writer since FIXED ...... ${c8 ? "YES" : "NO"}  (older clock key is backlog)`);
+  console.log(`    newest-key rule: reds a writer STILL broken ....... ${c9 ? "YES" : "NO"}  (period-independent, no window)`);
+  if (!(c1 && c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9)) { console.log(`    SELFTEST FAILED — guard does not discriminate. RED.`); Deno.exit(1); }
   console.log(`    SELFTEST PASSED.`);
 }
 
