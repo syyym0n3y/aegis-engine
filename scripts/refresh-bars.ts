@@ -114,6 +114,29 @@ for (const sym of due) {
       +((q.low[i] ?? c) * f).toFixed(6), +(c * f).toFixed(6), q.volume[i] ?? 0]);
   }
   if (bars.length < Number(K.MIN_BARS)) { failed.push(`${sym}(${bars.length} bars)`); continue; }
+
+  // D-687 — TICKER RECYCLING. This write REPLACES the stored series wholesale, so a reissued ticker would silently
+  // overwrite one company's decades of history with another company's few weeks. It is not hypothetical: Yahoo
+  // returns 31 bars dated 2026-07-17.. for BBBY, whose original registrant delisted in 2023. The hazard was found
+  // an hour after this script shipped, in this script.
+  // The check is a CONTINUITY assertion, not a length one: an honest refresh EXTENDS what is held, so the incoming
+  // series must still cover the stored start date and must not be materially shorter. Refuse and report — a refusal
+  // is recoverable, an overwrite of history that no longer exists anywhere is not.
+  const heldWm = watermark.get(sym);
+  if (heldWm) {
+    const heldRes = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr }).catch(() => null);
+    const heldJ = heldRes && heldRes.ok ? await heldRes.json().catch(() => null) as { bars: number[][] }[] | null : null;
+    const held = heldJ?.[0]?.bars;
+    if (Array.isArray(held) && held.length) {
+      const heldStart = held[0][0], newStart = bars[0][0];
+      const startedLater = newStart > heldStart + 30 * 86400;     // a month of slack for vendor history trims
+      const muchShorter = bars.length < held.length * 0.9;
+      if (startedLater || muchShorter) {
+        failed.push(`${sym}(RECYCLED? held ${held.length} bars from ${new Date(heldStart * 1000).toISOString().slice(0, 10)}, incoming ${bars.length} from ${new Date(newStart * 1000).toISOString().slice(0, 10)} — NOT WRITTEN)`);
+        continue;
+      }
+    }
+  }
   // fetch() does not throw on HTTP errors; an unchecked write is how a "successful" run writes nothing (D-467). The
   // check is kept ADJACENT to the fetch on purpose — the plumbing guard matches within a proximity window, and prose
   // wedged between the two reads to it as an unchecked write. That false positive was produced twice today, in this
@@ -140,7 +163,10 @@ for (const sym of REQUIRED) {
   if ((now - wm) > staleMs) stillStale.push(`${sym}@${wm ? new Date(wm).toISOString().slice(0, 10) : "ABSENT"}`);
 }
 if (stillStale.length) {
-  console.log(`\n  RED — ${stillStale.length} of ${consumerUniverse.length} symbol(s) the consumer reads are STILL stale:`);
+  // The denominator is REQUIRED, not consumerUniverse: the loop above checks targets AND forces, and printing the
+  // smaller number produced the line "31 of 28 symbol(s)". A count that exceeds its own denominator is small, and it
+  // is exactly the kind of thing that teaches a reader to stop believing the rest of the output.
+  console.log(`\n  RED — ${stillStale.length} of ${REQUIRED.length} symbol(s) the consumer reads are STILL stale:`);
   console.log(`  ${stillStale.join(" ")}`);
   console.log(`  ${K.CONSUMER} will run tomorrow and produce a confident report about a frozen market. That is the defect this exists to stop.`);
   Deno.exit(1);
