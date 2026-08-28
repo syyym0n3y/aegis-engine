@@ -13121,3 +13121,52 @@ consumer's data is fresh", not "the fetches returned 200". After the fix, attrib
 comment placed between a `fetch` and its `res.ok` check pushes the check outside the plumbing guard's proximity
 window, so a checked write reports as a silent write. It happened twice in one session, in `refresh-bars.ts` and
 `check-voltiming-survivor.ts`. Proximity is load-bearing to that guard; prose goes above the block.
+
+---
+
+**D-684 — A THIRD OF EVERY SIGNIFICANT-LOSS CLAIM IN THE FACTORY IS A COST ARTIFACT, AND THE LARGEST t THIS
+PROGRAMME EVER RECORDED HAS THE OPPOSITE SIGN GROSS.**
+
+D-661/662 established THE COST-INFLATION COROLLARY on three hand-measured cases. The check that shipped with it was a
+prose regex asking whether a row MENTIONS its gross figure — necessary, and able to police only what an author chose
+to write. `trd_factory` already stores `gross_ann`, `net_ann` and `portfolio_t` for every spec, and because a flat
+per-period cost shifts the mean while leaving the variance untouched, the gross t is recoverable **exactly**:
+
+    t_gross = t_net × (gross_ann / net_ann)
+
+No migration, no new column, no author cooperation. Applied to all **1,059 specs**: **148 claim a significant loss
+(t ≤ −2). 49 of them — 33% — are significant at net and NOT significant at gross.**
+
+| spec | net | t_net | gross | t_GROSS |
+|---|---|---|---|---|
+| `overnight\|SPY\|intraday` | −48.31%/yr | **−22.30** | **+1.87%/yr** | **+0.86** |
+| `overnight\|TLT\|intraday` | −46.55%/yr | −22.11 | +3.55%/yr | +1.69 |
+| `overnight\|TLT\|overnight` | −49.22%/yr | −21.36 | +0.88%/yr | +0.38 |
+| `weekly\|mom\|all\|k5\|lag1` | −16.42%/yr | −4.74 | −6.02%/yr | −1.74 |
+| `nonreliance\|502r\|look95` | −4.90%/yr | −3.47 | −2.50%/yr | −1.77 |
+| `french\|szbm100\|mom3_s0\|k3\|h1` | −2.93%/yr | −2.69 | **+1.87%/yr** | +1.71 |
+
+By family: french 12, xsec_perp 9, weekly 8, overnight 5, pair 5, xsec_eq 4, nonreliance 3, shortside 2, nport 1.
+**The three largest |t| values in the entire factory are the three most inflated** — exactly inverted from where a
+reader would place their confidence.
+
+**WHAT IS AND IS NOT BEING ALLEGED.** Charging the cost is CORRECT: trading an intraday split really does pay a round
+trip a day, and the overnight pass says so in its own header ("the pre-registered expectation is SUB-FEE"). The
+defect is that the LEDGER stores the net t as THE t with no gross counterpart, so every downstream reader, guard and
+summary sees −22.30 and reads it as a fact about markets. The honest statement is **"there is no overnight/intraday
+effect (t 0.86), and trading it would additionally cost ~50%/yr"** — not "the overnight leg significantly loses".
+None of the 49 is promoted and none could be; the harm is to what the record MEANS, not to any allocation.
+
+**THREE LINEAGE ROWS RETRACTED IN PLACE** (append-only, prefix preserved, verified by re-read):
+- **`exec-resignations`** — recorded as *"the best event result of the program"* and *"a legitimate forward-book
+  CANDIDATE"*. Net −4.90%/yr t −3.47 is **gross −2.50%/yr at t −1.77**; look35 is t −1.65 gross. Withdrawn. The
+  assumed charge is also ~3x too high: a 95-day window holds a name ~3 months, so one-way monthly turnover is ~33%,
+  not the 100% a full monthly round trip assumes (THE TURNOVER LAW compounding the corollary).
+- **`accounting-red-flags`** — 4.01 auditor change, net −13.83%/yr t −2.08 is **gross −11.43%/yr at t −1.72**.
+  Direction still points the literature way; "MATCHED at meaningful magnitude" overstated it. Underpowered stands.
+- **`delisting-notices` SURVIVES and is recorded as the control** — net t −3.98 is gross t −3.76; the fee supplies
+  0.22 of the t. An audit that reports only its failures is not an audit, and this is the row proving the method
+  discriminates rather than condemning everything it touches.
+
+The arithmetic check now runs inside `benchmark-guard.ts` on every cycle and reports the 49 every time. It is not
+wired to RED: nothing is promoted on these rows, and a permanent red gets switched off (D-659).

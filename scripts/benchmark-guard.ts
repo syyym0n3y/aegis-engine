@@ -114,6 +114,50 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
   red += lossRed;
 }
 
+// D-684: THE SAME LAW CHECKED ARITHMETICALLY INSTEAD OF BY REGEX. The prose check above asks whether a row MENTIONS
+// its gross figure — necessary, and it can only ever police what an author chose to write. `trd_factory` already
+// stores gross_ann, net_ann and portfolio_t for every spec, and because a flat per-period cost leaves the variance
+// untouched, the gross t is recoverable exactly:  t_gross = t_net * (gross_ann / net_ann).  No migration, no new
+// column, no author cooperation. Applied across all 1,059 specs it found 49 that are significant at net and NOT at
+// gross — a THIRD of every significant-loss claim in the factory — including the largest |t| the programme has ever
+// recorded, `overnight|SPY|intraday` at t -22.30, whose gross counterpart is +1.87%/yr at t +0.86. The sign flips.
+//
+// WHAT IS AND IS NOT BEING ALLEGED. Charging the cost is CORRECT — trading an intraday split really does pay a
+// round trip a day, and the overnight pass says so in its own header. The defect is that the LEDGER stores the net t
+// as THE t with no gross counterpart, so every downstream reader, guard and summary sees -22.30 and reads it as a
+// fact about markets. The honest statement is "no overnight/intraday effect (t 0.86), and trading it would cost
+// ~50%/yr on top" — not "the overnight leg significantly loses".
+{
+  interface F { spec_key: string; family: string; gross_ann: number | null; net_ann: number | null; portfolio_t: number | null }
+  // KEYSET on id, never OFFSET: spec_key is not unique and offset paging over ties silently drops rows (D-629).
+  const specs: F[] = [];
+  let after = "";
+  for (;;) {
+    const url = `${OWNED}/trd_factory?select=id,spec_key,family,gross_ann,net_ann,portfolio_t&order=id.asc&limit=1000${after ? `&id=gt.${after}` : ""}`;
+    const page = await mustFetch(url, "trd_factory") as unknown as (F & { id: string })[];
+    if (!page.length) break;
+    specs.push(...page);
+    after = page[page.length - 1].id;
+    if (page.length < 1000) break;
+  }
+  if (!specs.length) { console.error(`!! trd_factory returned no specs — RED (a guard that reads nothing is not green).`); Deno.exit(1); }
+  const sig = specs.filter((s) => s.portfolio_t !== null && s.gross_ann !== null && s.net_ann !== null && s.net_ann !== 0 && s.portfolio_t <= -2);
+  const art = sig.filter((s) => Math.abs(s.portfolio_t! * (s.gross_ann! / s.net_ann!)) < 2);
+  const byFam = new Map<string, number>();
+  for (const a of art) byFam.set(a.family, (byFam.get(a.family) ?? 0) + 1);
+  console.log(`\n  ARITHMETIC CHECK on ${specs.length} factory specs: ${sig.length} claim a significant loss (t <= -2);`);
+  console.log(`    ${art.length} are COST ARTIFACTS — significant net, not significant gross.`);
+  if (art.length) {
+    console.log(`    by family: ${[...byFam].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}:${n}`).join("  ")}`);
+    const worst = [...art].sort((a, b) => a.portfolio_t! - b.portfolio_t!).slice(0, 3);
+    for (const w of worst) {
+      console.log(`      ${w.spec_key.padEnd(34)} net ${(w.net_ann! * 100).toFixed(2)}%/yr t ${w.portfolio_t!.toFixed(2)}  ->  gross ${(w.gross_ann! * 100).toFixed(2)}%/yr t ${(w.portfolio_t! * (w.gross_ann! / w.net_ann!)).toFixed(2)}`);
+    }
+    console.log(`    Reported every run, never amnestied. These are not promotable and none is promoted — the harm is`);
+    console.log(`    that their t-statistics are read as findings about markets when they are findings about a fee.`);
+  }
+}
+
 if (Deno.env.get("SELFTEST") === "1") {
   console.log(`\n  SELFTEST:`);
   const bad = "BOOK long-short: -9.56%/yr PORTFOLIO t -7.80";
