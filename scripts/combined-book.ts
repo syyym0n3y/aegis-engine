@@ -38,6 +38,7 @@ const seasonW=(ds:string)=>{const d=new Date(ds+"T00:00:00Z"); const dom=d.getUT
   const dim=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();
   let w=1.0; if(dom<=3||dom>=dim-1) w*=1.15; if(d.getUTCMonth()===8) w*=0.85; return w;};
 const books:Record<string,number[]>={passive:[],season:[],blanket:[],selective:[],full:[]};
+const passiveDates:string[]=[];   // D-678
 const kept:string[]=[];
 for(let d=LB+30;d<dates.length-1;d++){
   const day=dates[d],nxt=dates[d+1],lag=dates[d-LB];
@@ -53,6 +54,10 @@ for(let d=LB+30;d<dates.length-1;d++){
   }
   if(nc<3)continue;
   const w=seasonW(day);
+  passiveDates.push(day);   // D-678: captured HERE, beside the push. `continue` statements above skip dates, so any
+                            // attempt to reconstruct the mapping afterwards by slicing `dates` is wrong — my first
+                            // version did exactly that and produced 4,415 returns labelled 1970-1987 for a book that
+                            // runs to 2026. A date array built anywhere but at the push site is a guess.
   books.passive.push(pa/nc);
   books.season.push((se/nc)*w);
   books.blanket.push(bl/nc);
@@ -63,6 +68,15 @@ for(let d=LB+30;d<dates.length-1;d++){
 const stat=(a:number[])=>{const n=a.length;const m=a.reduce((s,x)=>s+x,0)/n;const sd=Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(n-1));
   let c=1,p=1,dd=0;for(const r of a){c*=1+r;p=Math.max(p,c);dd=Math.min(dd,c/p-1);}
   return {sr:+((sd>0?m/sd:0)*Math.sqrt(252)).toFixed(2),ann:+(m*252*100).toFixed(1),dd:+(dd*100).toFixed(1),vol:+(sd*Math.sqrt(252)*100).toFixed(1)};};
+// D-678: persist the PASSIVE stream with its dates. D-649 established this is the benchmark every active overlay
+// built here failed to beat, which makes it the series the capital-ladder simulation must run on — and a benchmark
+// that exists only as a printed summary cannot be simulated against.
+{
+  const used=passiveDates;
+  await Deno.writeTextFile("/Users/ona/aegis-data/book_passive_daily.tsv",
+    books.passive.map((r,i)=>`${used[i]??i}\t${r}`).join("\n"));
+  console.log(`  passive stream -> book_passive_daily.tsv (${books.passive.length} days, ${used[0]} .. ${used[used.length-1]})`);
+}
 const sp=Math.floor(books.passive.length/1.667);
 console.log(`\n  book                        | FULL SR / ann / maxDD        | OOS SR / ann / maxDD`);
 const LABEL:Record<string,string>={passive:"1. diversified PASSIVE",season:"2. + seasonal tilt",blanket:"3. + BLANKET trend (D-401)",selective:"4. + SELECTIVE trend",full:"5. COMBINED (season+select)"};
