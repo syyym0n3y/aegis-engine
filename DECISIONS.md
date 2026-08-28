@@ -13765,3 +13765,41 @@ as "young":** the crypto panel's live coverage is complete by construction. Of 8
 346 are absent from the 1dSF panel and **346 of 346 are younger than the 400-day history threshold** (median 143d,
 max 399d, zero unusable dates). D-646's explanation holds on the grown universe, now measured rather than assumed.
 Panel composition: 510 symbols, 19 fully absent from exchangeInfo, the rest TRADING or SETTLING.
+
+---
+
+**D-695 — THE COMPLETE ABSOLUTE-DIAGNOSTIC PICTURE: 74% of every positive cross-sectional result on this board is
+universe drift. And the 90 that survive are the family already on the forward clock.**
+
+With the excess-vs-universe statistic now stored on every spec its passes compute (D-690), the second arithmetic
+audit is complete. Coverage: **675 of 776 cross-sectional specs measured**, 283 single-instrument specs exempt by
+construction, **101 reported as NOT MEASURED rather than counted compliant** (weekly 16, frenchdec 13, intl 13,
+nonreliance 10, cotdisagg/tff/cot/eqconc 6 each, and others whose passes do not call `evalXsec`).
+
+| | |
+|---|---|
+| positive-return specs measured | 427 |
+| **top bucket does NOT beat its own universe at \|t\| ≥ 2** | **318 (74%)** |
+| long leg beats its universe | 109 |
+| — of those, on a cross-section under the 50-name breadth floor | 19 (all french, the D-692 kill) |
+| **clear BOTH the absolute test and breadth** | **90** |
+| **clear the 5.4555 deflation ceiling on the excess statistic** | **0** (best 3.99) |
+
+**PUT BESIDE THE COST AUDIT, the two arithmetic passes characterise the whole corpus:**
+**most "it loses" claims were about the assumed fee (47% of significant losses), and most "it makes money" claims
+were about the universe (74% of positive results).** Neither statement required reading a single row's prose; both
+were recoverable from numbers the engine already computed and had been discarding.
+
+**THE CONVERGENCE, and it is the useful part.** The 90 survivors are dominated by cash-flow and payout yields —
+`fcf_yield` (excess 7.82%/yr at t 3.99), `cfo_yield` (7.49% at t 2.96), `buyback_yield` (5.41% at t 3.33),
+`accruals`, `roe`. That is **the same family registered on the forward clock on 2026-08-22**, whose eight leads are
+`buyback_yield` x4, `mom12_1+buyback_yield`, `mom12_1+gross_prof`, `fcf_yield+buyback_yield`,
+`cfo_yield+buyback_yield` — and `xsec_eq|buyback_yield|l1|h3|k10|all` appears in both lists.
+
+Two filters built ten months apart for different reasons select the same corner of the board. **What that adds is
+narrow and worth stating precisely: the registered forward leads are NOT universe drift.** Their long legs beat
+their own cross-sections at t 2.8–3.3, so whatever the forward clock eventually says about them, it will not be
+answering the D-630 question. **They are not re-mined here** — the standing rule on that book is explicit, and
+noting that an existing registration passes a test invented afterwards is a measurement, not a new lead.
+
+None of the 90 clears the ceiling. The board is unchanged: 1,059 specs, 2 survivors, 0 promoted.
