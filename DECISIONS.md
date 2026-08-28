@@ -13522,3 +13522,52 @@ directions (a writer since fixed passes with older clock keys still present; a w
 Guard now GREEN on that half: newest key in every family is a data fingerprint. The 18 legacy clock keys are
 reported as backlog every run and are deliberately not deleted — the counter is append-only evidence, and removing
 rows to green a guard would lower the ceiling every past conclusion was measured against.
+
+---
+
+**D-689 — THE FIFTH LEVER, AND IT POINTS THE OPPOSITE WAY TO STANDARD ADVICE: for an account climbing to a LEVEL,
+Sharpe improvement is the wrong objective.**
+
+Four levers on the ladder had been measured: deposits (raise the level, not the phase — D-688), starting capital
+(shorten the phase), return (nothing in 1,059 specs clears the bar), cost (D-686, improved, revealed nothing). A
+fifth was never examined — **WHICH passive holding.** Every ladder result assumed "the US total market" as if it
+were the only zero-borrow, fractional-share, $1-floor option. Eight fixed-weight baskets of listed ETFs, monthly
+rebalanced, turnover-aware cost, over the common span **2004-11..2026-08 (21.8 years, containing 2008 and 2020)**.
+No forecasting, no conditioning — this is deliberately not the D-649 overlay question.
+
+| portfolio | %/yr | vol | SR | maxDD | UW yr | to $10k | to $100k | **crossover** |
+|---|---|---|---|---|---|---|---|---|
+| **US total** | **11.14** | 14.8 | 0.62 | −51% | 4.3 | 5.7y | **19.3y** | **9.3y** |
+| US 60/40 | 8.18 | 9.1 | **0.68** | −30% | 2.9 | 6.3y | **never** | 13.9y |
+| US 80/20 | 9.71 | 11.8 | 0.65 | −41% | 3.4 | 5.9y | 21.6y | 11.3y |
+| global eq | 9.70 | 15.3 | 0.50 | −54% | 5.3 | 6.0y | never | 12.0y |
+| 4-way diversified | 8.46 | 9.2 | **0.71** | −27% | 2.8 | 6.3y | **never** | 15.1y |
+| eq+gold 80/20 | 11.45 | 12.6 | **0.75** | −41% | 3.1 | 5.9y | 19.8y | 10.4y |
+
+**THE STRUCTURAL RESULT, and it is the durable one.** Five of seven alternatives have a HIGHER Sharpe than 100% US
+equity and every one of them **delays the ladder**. The 4-way diversified basket gains **+0.09 Sharpe** and costs
+**5.8 years** to the crossover while reaching $100k in no eligible path. A 60/40 gains 0.06 Sharpe and costs 4.6
+years. **A small account compounding toward a level does not care about risk-adjusted return; it cares about
+return.** Diversification that lowers the compounding rate lengthens the deposit-dominated phase that D-688 showed
+cannot be shortened by depositing more. This is the opposite of the standard recommendation, and it is not a
+disagreement about the statistics — it is that the objective is different.
+
+The single asset also has **0.00% monthly turnover** against 0.6–1.1% for the baskets, so the diversified options
+pay a small permanent rebalancing cost the single holding does not.
+
+**THE GOLD SLEEVE IS THE ONE THING THAT LOOKS BETTER ON EVERY AXIS, AND IT IS NOT CLAIMABLE.** 80/20 SPY/GLD:
++0.31%/yr, +0.13 Sharpe, 10pp shallower drawdown, 1.2 years less underwater, crossover only 1.1y later. Split in
+half, the mix beats SPY on Sharpe in **both** halves (0.47 vs 0.35; 1.04 vs 0.89), so the correlation benefit is at
+least consistent within the span. But **gold returned 10.71%/yr over this span and roughly −2%/yr nominal over
+1980–2000.** Both halves sit inside gold's bull era, so two-for-two is two halves of one draw, not two draws. A 20%
+sleeve in an asset returning −2%/yr would have cost ~2.6%/yr and pushed the crossover well out. **Recorded as
+NOT-IDENTIFIED for the ladder question** — the honest statement is that the diversification benefit is visible and
+the return contribution is untestable outside a period that flatters it.
+
+**SCOPE, STATED FIRST IN THE SCRIPT AND REPEATED HERE:** 21.8 years settles L1 and L2 and does NOT settle L3, which
+needs ~20 — the L3 column is censored, not failed, and "never" means "not within this span". A ranking measured on
+one 22-year window is not a durable ordering, which is why the structural finding above is stated in terms of the
+mechanism (lower return lengthens the phase) rather than in terms of which basket won.
+
+Positive control aborts the run unless SPY reconstructs the market (11.20%/yr, 14.79% vol) and the 60/40's
+volatility comes in below it (9.06%) — otherwise the weights are not being applied and the ranking is fiction.
