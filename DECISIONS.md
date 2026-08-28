@@ -13170,3 +13170,29 @@ None of the 49 is promoted and none could be; the harm is to what the record MEA
 
 The arithmetic check now runs inside `benchmark-guard.ts` on every cycle and reports the 49 every time. It is not
 wired to RED: nothing is promoted on these rows, and a permanent red gets switched off (D-659).
+
+**D-684b — CORRECTION TO D-684'S DENOMINATOR. The rate is 63%, not 33%, and 47% of the claims cannot be checked
+at all.**
+
+D-684 reported "49 of 148 — 33%". That divides by every significant-loss spec, and **70 of the 148 cannot be
+checked**: they carry `gross_ann == net_ann`, the D-670 defect where the gross figure is never preserved because
+cost is charged inside the return loop. For those the ratio is 1 by construction, `t_gross` equals `t_net`, and
+**every one of them silently reads as "holds"** — the same shape as the D-664 audit that certified the cot and tff
+families clean for exactly this reason, and it recurred inside the audit built to catch it.
+
+| | count |
+|---|---|
+| significant-loss specs (t ≤ −2) | 148 |
+| **cannot be checked — gross==net** | **70** |
+| auditable | 78 |
+| **of the auditable, cost artifacts** | **49 (63%)** |
+
+Unauditable by family: **timing 35, xasset 11, seasonal 10, sessions 7, tff 3, fxintraday 3, book 1.**
+
+So the honest headline is: **63% of every significant-loss claim in this factory that CAN be checked is a cost
+artifact, and 47% of them cannot be checked.** At the observed rate the 70 blind specs would contain ~44 more, which
+is an EXTRAPOLATION and is not claimed as a measurement. The guard now prints both denominators every run, because
+reporting the artifact count against the larger denominator counts the un-checkable ones as passes — which is the
+precise error being corrected here.
+
+The durable fix is to preserve the gross series in the ~7 passes that overwrite it; recorded as open, not done.

@@ -141,12 +141,23 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
     if (page.length < 1000) break;
   }
   if (!specs.length) { console.error(`!! trd_factory returned no specs — RED (a guard that reads nothing is not green).`); Deno.exit(1); }
-  const sig = specs.filter((s) => s.portfolio_t !== null && s.gross_ann !== null && s.net_ann !== null && s.net_ann !== 0 && s.portfolio_t <= -2);
-  const art = sig.filter((s) => Math.abs(s.portfolio_t! * (s.gross_ann! / s.net_ann!)) < 2);
+  const sig = specs.filter((s) => s.portfolio_t !== null && s.portfolio_t <= -2);
+  const both = sig.filter((s) => s.gross_ann !== null && s.net_ann !== null && s.net_ann !== 0);
+  // THE DENOMINATOR IS THE FINDING. D-670: 279 specs assign gross_ann and net_ann the SAME value in code paths that
+  // charge cost inside the return loop, so the ratio is 1 by construction and every one of them reads as "holds".
+  // Dividing artifacts by ALL significant-loss specs would quietly count those as passes — the same shape as the
+  // D-664 audit that certified the cot and tff families clean for exactly this reason. Report both denominators.
+  const blind = both.filter((s) => s.gross_ann === s.net_ann);
+  const auditable = both.filter((s) => s.gross_ann !== s.net_ann);
+  const art = auditable.filter((s) => Math.abs(s.portfolio_t! * (s.gross_ann! / s.net_ann!)) < 2);
   const byFam = new Map<string, number>();
   for (const a of art) byFam.set(a.family, (byFam.get(a.family) ?? 0) + 1);
-  console.log(`\n  ARITHMETIC CHECK on ${specs.length} factory specs: ${sig.length} claim a significant loss (t <= -2);`);
-  console.log(`    ${art.length} are COST ARTIFACTS — significant net, not significant gross.`);
+  const blindFam = new Map<string, number>();
+  for (const a of blind) blindFam.set(a.family, (blindFam.get(a.family) ?? 0) + 1);
+  console.log(`\n  ARITHMETIC CHECK on ${specs.length} factory specs: ${sig.length} claim a significant loss (t <= -2).`);
+  console.log(`    ${blind.length} CANNOT BE CHECKED — gross_ann equals net_ann (D-670), so the ratio is 1 by construction`);
+  console.log(`      and each silently reads as "holds": ${[...blindFam].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}:${n}`).join("  ")}`);
+  console.log(`    ${auditable.length} auditable, of which ${art.length} (${(100 * art.length / Math.max(1, auditable.length)).toFixed(0)}%) are COST ARTIFACTS — significant net, not significant gross.`);
   if (art.length) {
     console.log(`    by family: ${[...byFam].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}:${n}`).join("  ")}`);
     const worst = [...art].sort((a, b) => a.portfolio_t! - b.portfolio_t!).slice(0, 3);
