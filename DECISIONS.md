@@ -13612,3 +13612,40 @@ is UNTESTED. Recorded as **inconclusive**, and the mechanism sentence in D-688 i
 What the primary null does support, without needing the mechanism: for an account of this shape, **when you start is
 not a lever.** Deposits, starting capital, return, cost, allocation and time have all now been measured; entry
 timing joins deposits on the list of things that do not move the phase.
+
+**D-686c / D-690 — THE FRENCH FAMILY: fixing the cost model at source removed 11 of 13 "significant losses"
+outright, and the newly-stored absolute diagnostic finds 37% of its POSITIVE results are universe drift.**
+
+`xsecFrench` discarded the series name when building its rows, so the largest single group of cost artifacts on the
+board had no measurable turnover and kept a flat **40bp round trip EVERY month** — an assumed 100% turnover on a
+49-industry tercile sort. Identity wired; measured one-way turnover is **p10 10.5% / median 35.1% / p90 65.3%.**
+
+| | before | after |
+|---|---|---|
+| specs claiming a significant LOSS | 13 | **2** |
+| specs at \|t\| ≥ 2 | 21 | 13 |
+| sign flips | — | 13 |
+
+**Eleven of the twelve french cost artifacts are simply gone** — the correction removed the manufactured
+significance at source rather than flagging it downstream, which is the difference between a guard and a fix.
+
+**THE ABSOLUTE DIAGNOSTIC, now stored rather than collapsed into a boolean (D-690).** `evalXsec` computed the top
+bucket's excess over its own universe and its t, then discarded both, keeping only `g_benchmark`. Both are now
+recorded per spec, so THE BENCHMARK LAW is checkable arithmetically across the board instead of by regex on prose —
+the same move that made the cost corollary checkable in D-684. First result on the french family:
+
+**Of 35 positive-return french specs, 13 (37%) are DRIFT** — their top bucket does not beat its own universe at
+|t| ≥ 2. That is the D-630 shape (headline t −7.37, excess t −0.46) measured systematically across a family rather
+than found by accident on one row.
+
+**The strongest survivor of that test:** `french|ind49|mom12_s0|k3|h1` — the top tercile of 49 industries beats the
+industry universe by **+3.52%/yr at t 5.26**. Benchmark-relative, long-only (no borrow), and the closest thing on
+this board to a signal that would be holdable at L0. **It does not clear**: the ceiling is 5.4555, and it is one of
+56 french specs so the selection is real. It is also research-space — French industry portfolios are not directly
+placeable, the D-530/555 wall, where an equity long-short measured real alpha and the ETF wrapper captured ~13-20%.
+**Recorded as below-ceiling and instrument-unresolved, not as a lead.** Noted rather than mined, because I already
+overclaimed once today (D-685, the overnight t 6.00 that was an absolute statistic read as an excess one).
+
+Coverage of the new statistics is being filled by re-running the affected passes; every family without them is
+reported as UNTESTED rather than counted as compliant, and the guard prints `NOT YET MEASURED` where the data is
+absent.
