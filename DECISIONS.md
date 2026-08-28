@@ -13719,3 +13719,49 @@ all. Added to the daily runner as an explicit step that reports the first error;
 The transferable point is not the missing check — it is that **a comment is not inert.** Placement inside an
 expression is a code change, and the two false positives earlier today (D-687: prose between a `fetch` and its
 `res.ok` check reading as an unchecked write) were the benign version of the same thing.
+
+---
+
+**D-694 — I DESTROYED 1,313 DAILY BARS AND THEN REPAIRED THEM. Two false claims retracted; the guard I wrote two
+hours earlier did not cover the pattern, only one writer.**
+
+**RETRACTION 1 — "34 delisted perps recovered, none held". FALSE. Zero were new.** The panel was 510 symbols before
+the run and 510 after. My probe script compared candidates against `HELD` — the **19-name list of contracts absent
+from exchangeInfo entirely** — instead of against the full 510-symbol panel, so 34 already-held SETTLING contracts
+looked like new recoveries. The correct statement is that the 34 were already in the panel and the run overwrote
+them with identical or shorter data.
+
+**RETRACTION 2 — "the delisted cohort is recoverable one name at a time and blocked only on enumeration".** The
+probe half is true: klines does serve delisted contracts by name (SRMUSDT 1362 bars, FTTUSDT 1500, BTSUSDT 1213).
+What is false is the implication that a hand list finds anything new. It found nothing. The gap register's
+assessment stands unchanged and was right; my "measurement" of it was an artifact of the wrong comparison set.
+
+**THE DAMAGE.** `recover-delisted-perps.ts` writes with a merge-duplicates upsert keyed on (symbol, tf) — it
+REPLACES the stored array — and its source is ONE `klines` call, which caps at **1500 bars**. **110 panel symbols
+hold more than 1500.** Given an explicit `SYMBOLS` list the script skips its have-set filter, so four already-held
+symbols were overwritten with a shorter series:
+
+| symbol | before | after my run | bars destroyed |
+|---|---|---|---|
+| RLCUSDT | 2219 | 1500 | **719** |
+| DENTUSDT | 1855 | 1500 | 355 |
+| OMGUSDT | 1674 | 1500 | 174 |
+| FTMUSDT | 1565 | 1500 | 65 |
+
+**REPAIRED.** `repair-truncated-perps.ts` pages klines on `startTime` and rebuilt each to at least its former length —
+RLCUSDT 2219, DENTUSDT 1984, OMGUSDT 2248, FTMUSDT 2164, all now running to 2026-08-28. It refuses to write anything
+shorter than what is held, and the same check is now in `recover-delisted-perps.ts`, **verified by re-running the
+identical command: all four SKIP with "rebuilt 1500 < held N — refusing to truncate".**
+
+**THE LESSON, and it is not "be careful".** Two hours before this I added exactly this guard to `refresh-bars.ts`
+after finding the ticker-recycling hazard (D-687), wrote that a wholesale replace from a possibly-shorter source is
+dangerous, tested it four ways — and then walked into the identical failure through a different script. **Guarding
+one writer does not guard the pattern.** The pattern is "replace a stored array from a source that can be shorter
+than it", and it now has the check in both writers; any third writer of this shape needs it too, which is a
+plumbing-guard rule waiting to be written rather than a fact about my attention.
+
+**WHAT SURVIVES FROM THE EPISODE, verified with a NaN guard after the first version silently counted unusable dates
+as "young":** the crypto panel's live coverage is complete by construction. Of 837 USDT contracts in exchangeInfo,
+346 are absent from the 1dSF panel and **346 of 346 are younger than the 400-day history threshold** (median 143d,
+max 399d, zero unusable dates). D-646's explanation holds on the grown universe, now measured rather than assumed.
+Panel composition: 510 symbols, 19 fully absent from exchangeInfo, the rest TRADING or SETTLING.

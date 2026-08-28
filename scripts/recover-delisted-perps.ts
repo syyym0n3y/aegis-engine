@@ -16,11 +16,18 @@ const have=new Set<string>();
 const fut=await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo").then(r=>r.json()).catch(()=>null);
 const futSyms=new Set<string>((fut?.symbols||[]).map((s:{symbol:string})=>s.symbol));
 const spot=await fetch("https://api.binance.com/api/v3/exchangeInfo").then(r=>r.json()).catch(()=>null);
-const cands=[...new Set((spot?.symbols||[])
+// D-694: an explicit SYMBOLS list overrides the derived candidates. The derived list is built from SPOT-listed
+// assets, and the residual delisted cohort is assets delisted from SPOT TOO — so that source can never contain them,
+// which is why the first successful run of this script recovered 0 of 270. The probe was never the problem: klines
+// serves delisted contracts by name (SRMUSDT 1362 bars, FTTUSDT 1500, BTSUSDT 1213). The problem is ENUMERATION, and
+// a hand-supplied list is the one enumeration source that does not depend on the asset still being listed anywhere.
+const OVERRIDE=(Deno.env.get("SYMBOLS")||"").split(/[,\s]+/).filter(Boolean);
+const derived=[...new Set((spot?.symbols||[])
   .filter((s:{symbol:string;quoteAsset:string})=>s.quoteAsset==="USDT")
   .map((s:{symbol:string})=>s.symbol))]
   .filter(s=>!have.has(s as string)&&!futSyms.has(s as string)) as string[];
-console.log(`==> DELISTED-PERP RECOVERY — ${have.size} in panel, ${futSyms.size} currently listed as futures, probing ${cands.length} candidate symbols`);
+const cands:string[]=OVERRIDE.length?OVERRIDE:derived;
+console.log(`==> DELISTED-PERP RECOVERY — ${have.size} in panel, ${futSyms.size} currently listed as futures, probing ${cands.length} candidate symbols${OVERRIDE.length?" (EXPLICIT list)":" (derived from spot listings)"}`);
 let found=0,probed=0;
 for(const sym of cands){
   probed++;
@@ -36,6 +43,14 @@ for(const sym of cands){
               .filter((b:number[])=>b[4]>0);
   if(bars.length<200)continue;
   const lastAge=(Date.now()/1000-bars[bars.length-1][0])/86400;
+  // D-694: THE CHECK WHOSE ABSENCE DESTROYED 1,313 DAILY BARS. This write REPLACES the stored array, and its source
+  // is ONE klines call capped at 1500 bars, while 110 panel symbols hold more than that. Run with an explicit
+  // SYMBOLS list the have-filter is skipped, so already-held symbols get overwritten with a shorter series:
+  // RLCUSDT 2219->1500, DENTUSDT 1855->1500, OMGUSDT 1674->1500, FTMUSDT 1565->1500. Repaired by
+  // `repair-truncated-perps.ts`, which pages on startTime. Never replace a stored array with a shorter one.
+  {const cur=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&symbol=eq.${sym}&select=n_bars`,{headers:hdr}).then(x=>x.json()).catch(()=>[]) as {n_bars:number}[];
+   const held=cur[0]?.n_bars??0;
+   if(bars.length<held){console.log(`  SKIP ${sym.padEnd(14)} rebuilt ${bars.length} < held ${held} — refusing to truncate`);continue;}}
   const w=await fetch(`${OWNED}/trd_bars_intraday?on_conflict=symbol,tf`,{method:"POST",
     headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},
     body:JSON.stringify([{symbol:sym,tf:"1dSF",bars,n_bars:bars.length}])}).catch(()=>null);
