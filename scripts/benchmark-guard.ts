@@ -187,13 +187,30 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
   // WHAT IT MEASURES: of the specs claiming a POSITIVE return, how many have a top bucket that does not beat its own
   // universe at |t| >= 2. Those are DRIFT — the D-627/630/633 shape, where a spread is precisely estimated across a
   // cross-section in which both legs earn the same thing.
+  // COVERAGE MUST SEPARATE "EXEMPT BY CONSTRUCTION" FROM "NOT MEASURED", or the fraction is the misleading kind.
+  // A single-instrument family has no cross-section and therefore no universe mean; its absolute diagnostic is the
+  // comparison against BUY-AND-HOLD, which those passes already compute (D-439/498). Reporting them as "uncovered"
+  // would understate coverage exactly as counting them compliant would overstate it — the D-684b denominator lesson.
+  const SINGLE_INSTRUMENT = /^(timing|overnight|sessions|fxintraday|xasset|seasonal|auction|voltiming|basis)$/i;
+  const xsec = specs.filter((s) => !SINGLE_INSTRUMENT.test(s.family ?? ""));
+  const exemptN = specs.length - xsec.length;
   const scored = specs.filter((s) => s.spec?.excess_top_t !== undefined && s.spec?.excess_top_t !== null);
+  const unmeasured = xsec.filter((s) => s.spec?.excess_top_t === undefined || s.spec?.excess_top_t === null);
+  const unFam = new Map<string, number>();
+  for (const u of unmeasured) unFam.set(u.family, (unFam.get(u.family) ?? 0) + 1);
+  console.log(`\n  ABSOLUTE-DIAGNOSTIC COVERAGE: ${scored.length} of ${xsec.length} cross-sectional specs carry a measured excess statistic.`);
+  console.log(`    ${exemptN} single-instrument spec(s) are exempt by construction — no cross-section, so no universe mean;`);
+  console.log(`    their absolute test is against buy-and-hold and their passes already compute it.`);
+  if (unmeasured.length) {
+    console.log(`    ${unmeasured.length} cross-sectional spec(s) are NOT MEASURED and are reported as such, never as compliant:`);
+    console.log(`      ${[...unFam].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}:${n}`).join("  ")}`);
+  }
   if (scored.length) {
     const positive = scored.filter((s) => (s.net_ann ?? 0) > 0);
     const drift = positive.filter((s) => Math.abs(Number(s.spec!.excess_top_t)) < 2);
     const dFam = new Map<string, number>();
     for (const d of drift) dFam.set(d.family, (dFam.get(d.family) ?? 0) + 1);
-    console.log(`\n  ABSOLUTE DIAGNOSTIC on ${scored.length} specs carrying a measured excess-vs-universe statistic:`);
+    console.log(`\n  ABSOLUTE DIAGNOSTIC on those ${scored.length}:`);
     console.log(`    ${positive.length} claim a POSITIVE return; ${drift.length} (${(100 * drift.length / Math.max(1, positive.length)).toFixed(0)}%) have a top bucket that does NOT beat its own universe at |t| >= 2.`);
     if (drift.length) console.log(`    those are DRIFT, not signal: ${[...dFam].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}:${n}`).join("  ")}`);
     const clean = positive.filter((s) => Number(s.spec!.excess_top_t) >= 2)
@@ -201,9 +218,6 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
     for (const c of clean) {
       console.log(`      strongest excess: ${c.spec_key.padEnd(34)} top bucket ${(Number(c.spec!.excess_top_ann) * 100).toFixed(2)}%/yr over its universe at t ${Number(c.spec!.excess_top_t).toFixed(2)}`);
     }
-  } else {
-    console.log(`\n  ABSOLUTE DIAGNOSTIC: 0 specs carry a stored excess-vs-universe statistic yet — the passes that`);
-    console.log(`    compute it have not been re-run since D-690. Reported as NOT YET MEASURED, never as compliant.`);
   }
 }
 
