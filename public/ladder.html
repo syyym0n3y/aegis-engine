@@ -106,14 +106,14 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
 <div class="wrap">
 
 <header>
-  <div class="kicker"><span>Aegis</span><span>Synthesis of 203 decisions, 1,059 specs</span><span>2026-08-28</span></div>
+  <div class="kicker"><span>Aegis</span><span>Synthesis of 209 decisions, 1,059 specs</span><span>2026-08-28</span></div>
   <h1>The Capital Ladder</h1>
   <p class="sub">Everything this programme has ever tested, re-sorted by the one axis it was never organised
   around: how much money a strategy needs before it works, and how much it can hold before it stops.</p>
 </header>
 
 <div class="tally">
-  <div><span class="n">203</span><span class="l">decisions<br>92 killed</span></div>
+  <div><span class="n">209</span><span class="l">decisions<br>92 killed</span></div>
   <div><span class="n">1,059</span><span class="l">specifications<br>tested</span></div>
   <div><span class="n zero">0</span><span class="l">promoted<br>to capital</span></div>
   <div><span class="n">23</span><span class="l">machine guards<br>each verified to fail</span></div>
@@ -268,6 +268,36 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
     invariant, and the sweep would have looked identical from outside.</p>
   </div>
 
+  <p>There is a fifth lever nobody had examined: <b>which</b> passive holding. Every result above assumed the US
+  total market as though it were the only zero-borrow, $1-floor option. Eight fixed-weight ETF baskets, monthly
+  rebalanced, over 21.8 years containing 2008 and 2020:</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>portfolio</th><th>%/yr</th><th>Sharpe</th><th>max DD</th><th>to $100k</th><th>crossover</th></tr></thead>
+      <tbody>
+        <tr><td><b>US total</b></td><td class="n">11.14</td><td class="n">0.62</td><td class="n">−51%</td>
+            <td class="n ok">19.3y</td><td class="n ok">9.3y</td></tr>
+        <tr><td>US 60/40</td><td class="n">8.18</td><td class="n ok">0.68</td><td class="n">−30%</td>
+            <td class="n no">never</td><td class="n">13.9y</td></tr>
+        <tr><td>4-way diversified</td><td class="n">8.46</td><td class="n ok">0.71</td><td class="n">−27%</td>
+            <td class="n no">never</td><td class="n">15.1y</td></tr>
+        <tr><td>global equity</td><td class="n">9.70</td><td class="n">0.50</td><td class="n">−54%</td>
+            <td class="n no">never</td><td class="n">12.0y</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note bad">
+    <span class="t">Five of seven higher-Sharpe alternatives delay the ladder</span>
+    <p>The 4-way diversified basket gains <b>+0.09 Sharpe</b> and costs <b>5.8 years</b> to the crossover, reaching
+    $100,000 in no eligible path. A 60/40 gains 0.06 and costs 4.6 years.</p>
+    <p><b>An account compounding toward a level does not care about risk-adjusted return. It cares about return.</b>
+    Diversification that lowers the compounding rate lengthens the deposit-dominated phase — the phase that
+    depositing harder already cannot shorten. This is the opposite of the standard recommendation, and the
+    disagreement is not about the statistics; it is that the objective is different.</p>
+  </div>
+
   <p><b>Six forward clocks are registered</b>, with numeric two-sided promote/kill rules written into an
   append-only table before their data existed. Earliest maturity is roughly twelve months. <b>Five of the six carry
   a written prediction that they will fail</b> — recorded in advance, so the calibration record survives whichever
@@ -331,7 +361,7 @@ footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
   <p>Figures read directly from the engine's ledger on the date stamped below. Aegis is a single-operator research
   programme; no signal is published, nothing is promoted to capital, and this is a synthesis of what was measured
   rather than advice about anyone's money.</p>
-  <p class="stamp">203 decisions · 1,059 specs · 2,903,248 trials · ceiling 5.4555 · 23 guards · 0 promoted</p>
+  <p class="stamp">209 decisions · 1,059 specs · 2,903,248 trials · ceiling 5.4555 · 23 guards · 0 promoted</p>
 </footer>
 
 </div>
