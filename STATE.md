@@ -1,5 +1,49 @@
 # STATE — Aegis (live state)
 
+## 2026-08-28 (LATEST) — HALF THE LOSSES WERE THE FEE; the ladder is measured L0-L4; 23 guards, 22 green
+
+**BOARD:** 1,059 specs · **2 survivors** (`book|p1|core` t 6.21, `book|p2|volmanaged` t 7.09 — both research-space,
+breadth 6) · **0 promoted** · N=2,903,248 · ceiling **5.4555** · 23 machine guards, 22 GREEN.
+The single RED is `infra`: the rented Supabase project `glzzoomuhnugsiichnub` is DNS-dead (paused, unpaid invoices),
+so `trd_edge_queue`/`trd_edge_scorecard`/`trd_stage2_results`/`trd_forward_candidates`/`trd_edge_ingest` are
+**UNKNOWN, not null**. OPERATOR-ONLY: settle billing, or finish the owned-infra migration in `infra/RUNBOOK.md`.
+
+**THE COST AUDIT (D-684 .. D-684e, D-686/b).** `t_gross = t_net x (gross/net)` recovers the pre-cost statistic
+exactly, because a flat per-period cost shifts the mean and leaves the variance alone. Of **137 claims that something
+significantly LOSES, 64 (47%) are not significant before the assumed fee.** Zero remain unauditable (was 70).
+Largest |t| ever recorded here, `overnight|SPY|intraday` at −22.30, is **+0.86 gross**. `fxintraday|h1_rev` flips
+from t −17.00 to **+4.14 gross** (sub-fee at 0.20x, not a loss). `exec-resignations` — recorded as "the best event
+result of the program" — is t −1.77 gross and is RETRACTED. Controls survive (`delisting-notices` −3.76 gross,
+23 of 35 timing claims, turn-of-month), so the method discriminates.
+`evalXsec` also charged a full round trip every rebalance with **no turnover measurement**: measured median one-way
+is **17.0% equities / 34.7% perps**, a 2.93x overcharge at the median. Corrected both ways (`rev1m` at 87% was
+UNDER-charged). **0 specs clear the ceiling before or after.**
+
+**THE LADDER (D-678 .. D-680, D-688, D-689).** Walked on 63 years of total-return market, 733 start months.
+L1 $1k median 0.8y · L2 $10k 5.8y · **L3 $100k 20.8y with ZERO eligible failures** · L4 $1M 43.3y, 34 failures.
+**The crossover — where cumulative return overtakes cumulative contributions — is 9.8 years and is INVARIANT to the
+deposit rate** ($50/mo and $1,000/mo both 9.8y; only the size scales, $12k to $241k). Starting capital DOES move it
+(9.8 -> 7.4 -> 6.3y at $40 / $5k / $25k), which is the falsification that proves the invariance is arithmetic.
+D-689: **five of seven higher-Sharpe passive alternatives DELAY the ladder** — a 4-way diversified basket gains
++0.09 Sharpe and costs 5.8 years to the crossover. An account compounding to a LEVEL does not care about Sharpe.
+
+**PROCESS REPAIRS.** `aegis-attribution` had been reporting on a **7-day-stale market** with no ingest at all behind
+it — `scripts/refresh-bars.ts` now runs before it in the daily runner, parses BOTH `UNIVERSE` and `ALL_FORCES` out
+of its consumer, and REDs if any symbol is still stale. Guard census found 24 on disk / 21 in the runner / 17 in the
+operator view, with `infra-guard.ts` wired to NOTHING; `registry-guard.ts` (23rd) now makes that mechanical.
+`trial-idempotency-guard.ts` (22nd) — a clock in `run_key` defeated the counter's uniqueness.
+
+**OPEN, OPERATOR-GATED:** (1) Supabase billing, above. (2) `echo '^https?://data\.binance\.vision/' >>
+~/.claude/hooks/endpoints.allowlist` — blocks the crypto delisted cohort. (3) `delisted-price-history` — VERIFIED
+closed (D-687): Stooq now serves a JS proof-of-work bot challenge (closed by POLICY, not capability), Alpaca needs
+credentials. Blocks every distress/bankruptcy RETURN test; 51.6% of 8-K Item 3.01 filers are absent from the panel.
+
+**OPEN, ENGINE:** backlogs reported and never amnestied — 78 benchmark rows, 64 turnover rows. Six `evalXsec`
+callers (`insider`, `pead`, `form345`, `own13f`, `darkpool`, `hestonsadka`) have turnover identity wired but have not
+been re-run, so their stored rows are `turnover_oneway: null` = UNTESTED ON COST.
+
+**PUBLIC SURFACE:** `public/ladder.html` — the Week-4 external record.
+
 ## 2026-08-24 (LATEST) — THE IMPLEMENTABILITY WALL (D-530/531): research signal is real, the placeable version is NOT
 The book's alpha survives the 9-force model (D-527) but CANNOT be expressed in liquid ETFs (D-530: OOS R2 20.5%,
 replica captures 13%). The placeable analogue built from factor ETFs LOSES money: -1.97%/yr, SR -0.70, t -2.31, all
