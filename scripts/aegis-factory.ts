@@ -149,7 +149,10 @@ type Gate={n_names:number;n_periods:number;gross_ann:number;net_ann:number;sharp
   g_breadth:boolean;g_effect:boolean;g_benchmark:boolean;g_liquid:boolean|null;g_era:boolean;eras:number[];
   // D-686: null means UNTESTED ON COST — the rows carried no identity, so turnover could not be measured and the
   // old flat full-round-trip charge was applied. Distinct from 0, which would mean a book that never trades.
-  turnover_oneway?:number|null};   // D-666: g_liquid is nullable because "not computed" is a distinct state from "failed"
+  turnover_oneway?:number|null;
+  // D-690: the top bucket's excess over its own universe, and its t. A spread can be large and precisely estimated
+  // while both legs are drift (D-630: headline t -7.37, excess t -0.46) — these are the numbers that separate them.
+  excess_top_ann?:number|null; excess_top_t?:number|null};   // D-666: g_liquid is nullable because "not computed" is a distinct state from "failed"
 // hold: forward window in months. OVERLAP FIX (the factory's first two "survivors" were this bug): a 3-month forward
 // return sampled MONTHLY gives consecutive observations sharing 2/3 of their window — t inflated ~sqrt(3), the exact
 // D-454 trap. Periods are strided by `hold` so every observation is disjoint; n_periods drops accordingly and the t is
@@ -230,6 +233,11 @@ function evalXsec(rows:{mo:string;fwd:number;v:number;sym?:string}[],feeBp:numbe
   // column treats NULL as false, so nothing can be promoted on a gate nobody ran.
   return {n_names:Math.round(nn),n_periods:rets.length,gross_ann:(m+dragPerPeriod)*perYear,net_ann:m*perYear,
     turnover_oneway:oneway,
+    // D-690: the EXCESS-vs-universe mean and t, stored rather than collapsed into the g_benchmark boolean. THE
+    // BENCHMARK LAW's machine check currently regexes prose in `trd_lineage` and can only police what an author
+    // chose to write; the numbers deciding it were computed here and thrown away. Storing them makes the law
+    // auditable across the whole board arithmetically, the way D-684 made the cost corollary auditable.
+    excess_top_ann:mEx*perYear, excess_top_t:tEx,
     sharpe:(m/sd)*Math.sqrt(perYear),t,dd:dd*100,ruined,
     // g_benchmark now requires the TOP bucket to beat its own universe with |t| >= 2, not merely that the spread
     // is positive. A spread over a flat cross-section can be large and precisely estimated while earning nothing.
@@ -302,7 +310,7 @@ for(const sig of SIGNALS) for(const lag of [0,1]) for(const hold of [1,3]) for(c
   const g=evalXsec(use,FEE_EQ,k,12/hold,hold);
   // D-686: the measured turnover travels with the spec, so THE TURNOVER LAW is satisfied at SOURCE rather than by a
   // guard reading prose afterwards. null means the rows carried no identity: UNTESTED ON COST, not "no turnover".
-  await record(key,"xsec_eq",{...spec,turnover_oneway:g?.turnover_oneway??null},uni==="liqtop"?"equity_liqtop":"equity_liquid",g,ceil);
+  await record(key,"xsec_eq",{...spec,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},uni==="liqtop"?"equity_liqtop":"equity_liquid",g,ceil);
   done++;
   if(done%50===0)await log(`  ..${done} specs (${((Date.now()-t0)/60000).toFixed(1)}m)`);
 }
@@ -344,7 +352,7 @@ if(PASS==="all"||PASS==="perp"){
     const key=`xsec_perp|${sig}|h${hold}|k${k}`;
     const rows=pp.filter(r=>r.sig[sig]!=null).map(r=>({mo:r.mo,fwd:r.fwd,v:r.sig[sig] as number,sym:r.sym}));
     const g=evalXsec(rows,FEE_PERP,k,365/hold,hold);
-    await record(key,"xsec_perp",{sig,hold_d:hold,buckets:k,turnover_oneway:g?.turnover_oneway??null},"perps_sf",g,ceil); done++;
+    await record(key,"xsec_perp",{sig,hold_d:hold,buckets:k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"perps_sf",g,ceil); done++;
   }
   await log(`  PASS 2 (perp) done: ${PSIG.length*6} specs`);
 }
@@ -435,7 +443,7 @@ if(PASS==="all"||PASS==="pairs"){
       rows.push({mo,fwd:eqPanel[i].fwd,v:x+y,sym:eqPanel[i].sym});
     }
     const g=evalXsec(rows,FEE_EQ,10,12,1);
-    await record(key,"pair",{a:A,b:B,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++; pd++;
+    await record(key,"pair",{a:A,b:B,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_liquid",g,ceil); done++; pd++;
     if(pd%40===0)await log(`  ..pairs ${pd}`);
   }
   await log(`  PASS 4 (pairs) done: ${pd} specs`);
@@ -485,7 +493,7 @@ if(PASS==="all"||PASS==="insider"){
       rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"insider",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++;
+    await record(key,"insider",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 6 (insider) done: ${SIGS6.length*4} specs`);
 }
@@ -547,7 +555,7 @@ if(PASS==="all"||PASS==="shortside"){
       rows.push({mo:r.mo,fwd:r.fwd,v:dir*v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"shortside",{sig,dir,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++;
+    await record(key,"shortside",{sig,dir,hold,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 7 (shortside) done`);
 }
@@ -584,7 +592,7 @@ if(PASS==="all"||PASS==="pead"){
       rows.push({mo:r.mo,fwd:r.fwd,v:sp});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"pead",{minEst,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++;
+    await record(key,"pead",{minEst,hold,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 8 (pead) done`);
 }
@@ -718,7 +726,7 @@ if(PASS==="all"||PASS==="nport"){
       rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"nport",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
+    await record(key,"nport",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 10 (nport) done: ${SIGS10.length*4} specs`);
 }
@@ -764,7 +772,7 @@ if(PASS==="all"||PASS==="form345"){
       rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"form345",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
+    await record(key,"form345",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 11 (form345) done: ${SIGS11.length*4} specs`);
 }
@@ -940,7 +948,7 @@ if(PASS==="all"||PASS==="own13f"){
       rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"own13f",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
+    await record(key,"own13f",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 14 (own13f) done: ${SIGS14.length*4} specs`);
 }
@@ -1387,7 +1395,7 @@ if(PASS==="all"||PASS==="darkpool"){
       rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"darkpool",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
+    await record(key,"darkpool",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 22 (darkpool) done: ${SIGS22.length*4} specs`);
 }
@@ -1720,7 +1728,7 @@ if(PASS==="all"||PASS==="hestonsadka"){
       use=rows2;
     }
     const g=evalXsec(use,FEE_EQ,k,12/hold,hold);
-    await record(key,"hestonsadka",{univ,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
+    await record(key,"hestonsadka",{univ,k,turnover_oneway:g?.turnover_oneway??null,excess_top_ann:g?.excess_top_ann??null,excess_top_t:g?.excess_top_t??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 29 (hestonsadka) done`);
 }

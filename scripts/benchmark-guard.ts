@@ -177,6 +177,34 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
     console.log(`    Reported every run, never amnestied. These are not promotable and none is promoted — the harm is`);
     console.log(`    that their t-statistics are read as findings about markets when they are findings about a fee.`);
   }
+
+  // D-690: THE BENCHMARK LAW ITSELF, checked arithmetically instead of by regex. The prose check at the top of this
+  // file asks whether a lineage row MENTIONS its universe decomposition — necessary, and able to police only what an
+  // author chose to write, which is why 78 rows sit in a backlog. The numbers that actually decide it were computed
+  // inside `evalXsec` and thrown away; they are now stored per spec (excess_top_ann, excess_top_t), so the whole
+  // board can be checked the way D-684 checked the cost corollary.
+  //
+  // WHAT IT MEASURES: of the specs claiming a POSITIVE return, how many have a top bucket that does not beat its own
+  // universe at |t| >= 2. Those are DRIFT — the D-627/630/633 shape, where a spread is precisely estimated across a
+  // cross-section in which both legs earn the same thing.
+  const scored = specs.filter((s) => s.spec?.excess_top_t !== undefined && s.spec?.excess_top_t !== null);
+  if (scored.length) {
+    const positive = scored.filter((s) => (s.net_ann ?? 0) > 0);
+    const drift = positive.filter((s) => Math.abs(Number(s.spec!.excess_top_t)) < 2);
+    const dFam = new Map<string, number>();
+    for (const d of drift) dFam.set(d.family, (dFam.get(d.family) ?? 0) + 1);
+    console.log(`\n  ABSOLUTE DIAGNOSTIC on ${scored.length} specs carrying a measured excess-vs-universe statistic:`);
+    console.log(`    ${positive.length} claim a POSITIVE return; ${drift.length} (${(100 * drift.length / Math.max(1, positive.length)).toFixed(0)}%) have a top bucket that does NOT beat its own universe at |t| >= 2.`);
+    if (drift.length) console.log(`    those are DRIFT, not signal: ${[...dFam].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}:${n}`).join("  ")}`);
+    const clean = positive.filter((s) => Number(s.spec!.excess_top_t) >= 2)
+      .sort((a, b) => Number(b.spec!.excess_top_t) - Number(a.spec!.excess_top_t)).slice(0, 3);
+    for (const c of clean) {
+      console.log(`      strongest excess: ${c.spec_key.padEnd(34)} top bucket ${(Number(c.spec!.excess_top_ann) * 100).toFixed(2)}%/yr over its universe at t ${Number(c.spec!.excess_top_t).toFixed(2)}`);
+    }
+  } else {
+    console.log(`\n  ABSOLUTE DIAGNOSTIC: 0 specs carry a stored excess-vs-universe statistic yet — the passes that`);
+    console.log(`    compute it have not been re-run since D-690. Reported as NOT YET MEASURED, never as compliant.`);
+  }
 }
 
 if (Deno.env.get("SELFTEST") === "1") {
