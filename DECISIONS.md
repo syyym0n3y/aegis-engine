@@ -12944,3 +12944,61 @@ to beat it at **t ≥ 2.0**. Exercised on PASS=french: **9 of 25 positive-return
 
 Existing values retained — computed and defensible for their construction; the stricter test binds new specs. **The
 asymmetry is recorded rather than one standard quietly applied to old rows and another to new.**
+
+---
+
+**D-679 — THE LADDER SYNTHESIS. Every analysis this programme has ever made, re-sorted by capital.**
+
+The operator asked for a synthesis across the ladder. This is the corpus re-read along an axis it was never
+organised around: not "does the effect exist" but "how much money does it need before it works, and how much can it
+hold before it stops". Read directly from the ledger on 2026-08-28: **195 lineage rows** (92 killed, 49 monitoring,
+43 fixed), **36 pre-registrations** (19 retracted, 7 confirmed, 8 inconclusive, 2 open), **1,059 specs, 2 survivors,
+0 promoted**, 2,903,215 counted trials, ceiling 5.4555, 43 families.
+
+**THE FINDING THAT REORGANISES THE REST. 681 of 1,059 specifications (64.3%) are long-short constructions** —
+quintile spreads, decile sorts, WML, HML, pair trades. Every one requires margin and stock borrow, and neither
+exists in an account below roughly $10,000. Two-thirds of the research is structurally inapplicable to the account
+it was meant to grow. The comfortable reading would be that the long-only region is merely unexplored; it is not.
+**267 long-only-viable specs have been tested and their best portfolio t is 1.58** against a ceiling of 5.4555. The
+imbalance is a misallocation of effort, not an unexplored seam. Spread families reach t 4.18 and also clear nothing.
+
+**CAPITAL BANDS.** Every candidate has a floor (below which fixed cost and minimum size eat it) and a ceiling
+(above which capacity kills it). Most bands never cover where the money actually is:
+
+| candidate | floor | ceiling | measured | verdict |
+|---|---|---|---|---|
+| diversified passive | ~$1 fractional | unbounded | 8.6%/yr OOS, SR 0.73 | spans L0-L3 |
+| crypto book | ~$5,000 | $1-5M AUM | 72.8%/yr | 1,363 days underwater (D-565) |
+| US momentum long-only | ~$1 | large | +1.40%/yr, t 1.24 | does not clear |
+| EM momentum | ~$1 | large | -0.63%/yr at 60bp | dead at real cost (D-654) |
+| combined book p1 | unplaceable | ETF captures 13% | 5.09% -> 0.68%/yr | no placeable band (D-555/556) |
+| small-cap reversal | high (microcap) | small (microcap) | dies 75-100bp | floor above ceiling |
+| settlement fails | ~$10,000 | moderate | net-negative | dead every horizon |
+
+**Exactly one candidate has a band spanning the whole ladder, and it is the benchmark every active overlay here was
+measured against and lost to** (D-649: passive OOS SR 0.73 at 8.6%/yr; best active variant 0.51 at 2.9%; the trend
+overlay is a drawdown purchase costing ~5.7pp/yr).
+
+**CAUSE-OF-DEATH CENSUS across 92 killed rows:** breadth/underpowered 50, liquidity/capacity 26, deflation 22,
+benchmark drift 19, cost/turnover 18, sign miss 17, holdability 16, instrument 13. **Breadth and capacity together
+account for 76 — more than cost, deflation and drift combined.** That is a sharper statement than "nothing works":
+the effects are frequently *there*, and they are located where size cannot go.
+
+**WHERE EFFORT ACTUALLY BELONGS AT L0.** D-678 simulated the climb on 305 real start months. $1,000 was reached in
+305 of 305 paths, median 0.8 years — **of which $940 of the $1,000 is money contributed.** A strategy twice as good
+acts on the remaining 6%. Static and commissioned, $40 compounds at -6.4%/yr and never arrives. At the bottom of
+this ladder the research programme is not the binding constraint on the account; the deposit rate is. Uncomfortable
+to write inside a research programme, and it is what the simulation says.
+
+**L3 IS CENSORED, NOT REFUSED.** Every simulated path ran out of panel before the ~25 years $100/mo compounding
+needs. The first version of the simulator reported that truncation as strategy failure — the exact false-negative
+shape THE POSITIVE-CONTROL RULE exists to catch — until censoring was separated from failure (D-678). The untested
+region is a capital level, not a signal family.
+
+**FORWARD STATE:** six clocks registered with numeric two-sided rules written before their data existed; earliest
+maturity ~12 months. **Five of the six carry a written prediction that they will fail**, so the calibration record
+survives whichever way they land.
+
+Published as an external surface at `public/ladder.html` — the Week-4 exit criterion is that an outsider can read
+the record, reproduce a claim, and find a retraction we made against ourselves before they could. The retractions
+are on the page.

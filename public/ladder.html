@@ -1,0 +1,260 @@
+<title>The Capital Ladder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EEF0F3; --panel:#FFFFFF; --ink:#12151A; --mid:#525A66; --dim:#8B939F;
+  --rule:#D6DAE0; --hair:#E6E9ED;
+  --live:#0F5F73; --live-bg:#E2F0F3;
+  --dead:#A32E22; --dead-bg:#FBEAE8;
+  --warn:#7A5A12; --warn-bg:#F8F1DE;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C0E11; --panel:#14181D; --ink:#E7EAEE; --mid:#98A1AD; --dim:#69727E;
+  --rule:#232830; --hair:#1B2027;
+  --live:#5FB3C7; --live-bg:#0D2A32;
+  --dead:#DE6E60; --dead-bg:#2A1512;
+  --warn:#D6AE59; --warn-bg:#2A2213;
+}}
+:root[data-theme="dark"]{
+  --bg:#0C0E11; --panel:#14181D; --ink:#E7EAEE; --mid:#98A1AD; --dim:#69727E;
+  --rule:#232830; --hair:#1B2027;
+  --live:#5FB3C7; --live-bg:#0D2A32;
+  --dead:#DE6E60; --dead-bg:#2A1512;
+  --warn:#D6AE59; --warn-bg:#2A2213;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:0 26px}
+.mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:"Fraunces",Georgia,serif;font-weight:400;text-wrap:balance;line-height:1.15;margin:0}
+a{color:inherit}
+
+header{padding:52px 0 26px;border-bottom:2px solid var(--ink)}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--mid);display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:22px}
+h1{font-size:clamp(2.6rem,6.5vw,4rem);letter-spacing:-.02em}
+.sub{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--mid);max-width:62ch;margin:18px 0 0;font-weight:300}
+
+.tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:22px 30px;
+  padding:30px 0;border-bottom:1px solid var(--rule)}
+.tally div{display:flex;flex-direction:column;gap:4px}
+.tally .n{font-family:"IBM Plex Mono",monospace;font-size:clamp(1.5rem,3vw,2rem);font-weight:500;letter-spacing:-.03em;line-height:1}
+.tally .l{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);line-height:1.4}
+.tally .zero{color:var(--dead)}
+
+section{padding:48px 0;border-bottom:1px solid var(--rule)}
+.head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px;flex-wrap:wrap}
+.num{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;letter-spacing:.1em;color:var(--live)}
+h2{font-size:clamp(1.55rem,3.2vw,2.05rem);letter-spacing:-.015em}
+.lede{color:var(--mid);max-width:66ch;margin:12px 0 0}
+p{margin:15px 0;max-width:68ch}
+
+/* the ladder itself */
+.ladder{margin:30px 0;display:flex;flex-direction:column-reverse;gap:2px}
+.rung{background:var(--panel);border:1px solid var(--rule);border-left:4px solid var(--rule);
+  padding:16px 20px;display:grid;grid-template-columns:150px 1fr;gap:6px 20px;align-items:start}
+.rung.here{border-left-color:var(--warn);background:var(--warn-bg)}
+.rung .lvl{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:13px}
+.rung .cap{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--dim);display:block;margin-top:3px}
+.rung .body{font-size:14.5px;color:var(--mid)}
+.rung .body b{color:var(--ink);font-weight:500}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 7px;border-radius:2px;background:var(--hair);color:var(--mid);margin-left:8px;white-space:nowrap}
+.tag.here{background:var(--warn);color:#fff}
+
+.scroll{overflow-x:auto;margin:24px 0;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:600px}
+th,td{text-align:left;padding:10px 15px;border-bottom:1px solid var(--hair);vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim);background:var(--bg);border-bottom:1px solid var(--rule);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ok{color:var(--live);font-weight:500}
+.no{color:var(--dead);font-weight:500}
+
+.note{background:var(--live-bg);border-left:3px solid var(--live);padding:18px 22px;margin:26px 0;border-radius:0 3px 3px 0}
+.note.bad{background:var(--dead-bg);border-left-color:var(--dead)}
+.note.warn{background:var(--warn-bg);border-left-color:var(--warn)}
+.note p{margin:0;max-width:none;font-size:15.5px}
+.note p+p{margin-top:11px}
+.note .t{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:7px;color:var(--live)}
+.note.bad .t{color:var(--dead)} .note.warn .t{color:var(--warn)}
+
+/* cause-of-death bars */
+.bars{margin:22px 0;display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:190px 1fr 38px;gap:12px;align-items:center;font-size:13.5px}
+.bar .lab{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mid);text-align:right}
+.bar .track{background:var(--hair);height:16px;border-radius:2px;overflow:hidden}
+.bar .fill{height:100%;background:var(--live);opacity:.85}
+.bar .v{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+footer{padding:40px 0 64px;color:var(--dim);font-size:13px}
+.stamp{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:16px}
+@media (max-width:640px){
+  body{font-size:16px}
+  .rung{grid-template-columns:1fr;gap:8px}
+  .bar{grid-template-columns:130px 1fr 34px}
+  .wrap{padding:0 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="kicker"><span>Aegis</span><span>Synthesis of 195 decisions, 1,059 specs</span><span>2026-08-28</span></div>
+  <h1>The Capital Ladder</h1>
+  <p class="sub">Everything this programme has ever tested, re-sorted by the one axis it was never organised
+  around: how much money a strategy needs before it works, and how much it can hold before it stops.</p>
+</header>
+
+<div class="tally">
+  <div><span class="n">195</span><span class="l">decisions<br>92 killed</span></div>
+  <div><span class="n">1,059</span><span class="l">specifications<br>tested</span></div>
+  <div><span class="n zero">0</span><span class="l">promoted<br>to capital</span></div>
+  <div><span class="n">2.90M</span><span class="l">counted trials<br>ceiling 5.4555</span></div>
+  <div><span class="n zero">19</span><span class="l">pre-registrations<br>we retracted</span></div>
+  <div><span class="n zero">64.3%</span><span class="l">of specs unusable<br>at the bottom rung</span></div>
+</div>
+
+<section>
+  <div class="head"><span class="num">§1</span><h2>The finding that reorganises everything else</h2></div>
+  <p class="lede">Sorted by family, this corpus looks like broad coverage. Sorted by capital, it looks like
+  something else entirely.</p>
+
+  <div class="note bad">
+    <span class="t">Two-thirds of the work cannot be held at the rung being climbed</span>
+    <p><b>681 of 1,059 specifications (64.3%) are long-short constructions</b> — quintile spreads, decile sorts,
+    WML, HML, pair trades. Every one requires margin and stock borrow. Neither exists in an account below roughly
+    $10,000. That is not an emphasis problem; it is two-thirds of the research being <em>structurally inapplicable</em>
+    to the account it was meant to grow.</p>
+    <p>The comfortable explanation would be that the long-only region is simply unexplored. <b>It isn't.</b>
+    267 long-only-viable specifications have been tested, and their best portfolio t is <b>1.58</b> against a
+    deflation ceiling of 5.4555. The imbalance is a misallocation of effort, not an unexplored seam.</p>
+  </div>
+</section>
+
+<section>
+  <div class="head"><span class="num">§2</span><h2>The ladder, and what is actually available on each rung</h2></div>
+  <p class="lede">Levels are set by cost regime, not round numbers — the boundary is where fixed cost stops
+  exceeding any plausible edge.</p>
+
+  <div class="ladder">
+    <div class="rung">
+      <div><span class="lvl">L3</span><span class="cap">$100,000 +</span></div>
+      <div class="body">Capacity becomes the binding constraint. Every strong cross-sectional result this
+      programme produced decomposed to <b>0.9–5.7%/yr in the liquid tercile</b>. The crypto book's measured
+      capacity ceiling is <b>$1–5M AUM</b>, where net turns negative.
+      <span class="tag">untested — panel too short</span></div>
+    </div>
+    <div class="rung">
+      <div><span class="lvl">L2</span><span class="cap">$10,000 – $100,000</span></div>
+      <div class="body">Costs fall below 0.1%/yr; shorting becomes possible; the research question becomes
+      <em>live</em>. Nothing has cleared it — <b>0 of 1,059 specs promoted</b>, best net edge +1.40%/yr at t 1.24.
+      <span class="tag">reachable, nothing to deploy</span></div>
+    </div>
+    <div class="rung">
+      <div><span class="lvl">L1</span><span class="cap">$1,000 – $10,000</span></div>
+      <div class="body">Compounding becomes visible. Simulated on 305 real start months:
+      <b>median 6.3 years</b> from $40 at $100/mo, with 19 genuine failures among eligible paths.
+      <span class="tag">simulated</span></div>
+    </div>
+    <div class="rung here">
+      <div><span class="lvl">L0 — you are here</span><span class="cap">$40 – $1,000</span></div>
+      <div class="body">Contribution phase. Reached $1,000 in <b>305 of 305</b> simulated paths, median
+      <b>0.8 years</b> — of which <b>94% is money contributed</b>. Static and commissioned, $40 compounds at
+      <b>−6.4%/yr</b> and never arrives.
+      <span class="tag here">binding rung</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="head"><span class="num">§3</span><h2>Every candidate has a capital band. One spans the ladder.</h2></div>
+  <p class="lede">A floor, below which cost and minimum size eat it. A ceiling, above which capacity kills it.
+  Most candidates have a band that never covers where the money is.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>candidate</th><th>floor</th><th>ceiling</th><th>measured</th><th>verdict</th></tr></thead>
+      <tbody>
+        <tr><td><b>diversified passive</b></td><td class="n">~$1 fractional</td><td class="n">unbounded</td>
+            <td class="n">8.6%/yr OOS, SR 0.73</td><td class="ok">spans L0–L3</td></tr>
+        <tr><td>crypto book</td><td class="n">~$5,000</td><td class="n">$1–5M</td>
+            <td class="n">72.8%/yr</td><td class="no">1,363 days underwater</td></tr>
+        <tr><td>US momentum, long-only</td><td class="n">~$1</td><td class="n">large</td>
+            <td class="n">+1.40%/yr, t 1.24</td><td class="no">edge does not clear</td></tr>
+        <tr><td>EM momentum</td><td class="n">~$1</td><td class="n">large</td>
+            <td class="n">−0.63%/yr at 60bp</td><td class="no">dead at real cost</td></tr>
+        <tr><td>combined book p1</td><td class="n">unplaceable</td><td class="n">ETF captures 13%</td>
+            <td class="n">5.09% → 0.68%/yr</td><td class="no">no placeable band</td></tr>
+        <tr><td>small-cap reversal</td><td class="n">high (microcap)</td><td class="n">small (microcap)</td>
+            <td class="n">dies 75–100bp</td><td class="no">floor above ceiling</td></tr>
+        <tr><td>settlement fails</td><td class="n">~$10,000</td><td class="n">moderate</td>
+            <td class="n">net-negative</td><td class="no">dead every horizon</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="t">The structural result</span>
+    <p>Exactly one candidate has a band covering the whole ladder — and it is <b>the benchmark every active overlay
+    built here was measured against and lost to</b>. Out of sample: passive SR 0.73 at 8.6%/yr; the best active
+    variant 0.51 at 2.9%. The trend overlay is a drawdown purchase costing ~5.7pp/yr of return.</p>
+  </div>
+</section>
+
+<section>
+  <div class="head"><span class="num">§4</span><h2>What actually kills things</h2></div>
+  <p class="lede">Cause of death across 92 killed rows. The adversary is not what the literature warns about.</p>
+
+  <div class="bars">
+    <div class="bar"><span class="lab">breadth / underpowered</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">50</span></div>
+    <div class="bar"><span class="lab">liquidity / capacity</span><span class="track"><span class="fill" style="width:52%"></span></span><span class="v">26</span></div>
+    <div class="bar"><span class="lab">deflation ceiling</span><span class="track"><span class="fill" style="width:44%"></span></span><span class="v">22</span></div>
+    <div class="bar"><span class="lab">benchmark / universe drift</span><span class="track"><span class="fill" style="width:38%"></span></span><span class="v">19</span></div>
+    <div class="bar"><span class="lab">cost / turnover</span><span class="track"><span class="fill" style="width:36%"></span></span><span class="v">18</span></div>
+    <div class="bar"><span class="lab">sign miss / post-hoc flip</span><span class="track"><span class="fill" style="width:34%"></span></span><span class="v">17</span></div>
+    <div class="bar"><span class="lab">holdability / drawdown</span><span class="track"><span class="fill" style="width:32%"></span></span><span class="v">16</span></div>
+    <div class="bar"><span class="lab">instrument / unplaceable</span><span class="track"><span class="fill" style="width:26%"></span></span><span class="v">13</span></div>
+  </div>
+
+  <p><b>Breadth and capacity together account for 76 kills — more than cost, deflation and drift combined.</b>
+  This programme keeps finding effects in places too thin to hold money. That is a sharper statement than
+  "nothing works": the effects are frequently <em>there</em>, and they are located where size cannot go.</p>
+</section>
+
+<section style="border-bottom:2px solid var(--ink)">
+  <div class="head"><span class="num">§5</span><h2>What would change the answer</h2></div>
+
+  <div class="note warn">
+    <span class="t">The honest allocation of effort at L0</span>
+    <p>At the median simulated path to $1,000, <b>$940 of the $1,000 is money contributed.</b> A strategy twice as
+    good acts on the remaining 6%. At the bottom of this ladder the research programme is <em>not</em> the binding
+    constraint on the account — the deposit rate is.</p>
+    <p>This is uncomfortable to write inside a research programme, and it is what the simulation says.</p>
+  </div>
+
+  <p><b>Six forward clocks are registered</b>, with numeric two-sided promote/kill rules written into an
+  append-only table before their data existed. Earliest maturity is roughly twelve months. <b>Five of the six carry
+  a written prediction that they will fail</b> — recorded in advance, so the calibration record survives whichever
+  way they land.</p>
+
+  <p>The untested region is not a signal family. It is <b>L3</b>: every simulated path ran out of panel before the
+  ~25 years that $100/mo compounding needs, so the top of the ladder is <em>censored, not refused</em>. Reporting
+  that as failure would be the same error this programme has caught in itself repeatedly — and the first version of
+  the simulator did exactly that, until censoring was separated from failure.</p>
+</section>
+
+<footer>
+  <p>Figures read directly from the engine's ledger on the date stamped below. Aegis is a single-operator research
+  programme; no signal is published, nothing is promoted to capital, and this is a synthesis of what was measured
+  rather than advice about anyone's money.</p>
+  <p class="stamp">195 decisions · 1,059 specs · 2,903,215 trials · ceiling 5.4555 · 0 promoted</p>
+</footer>
+
+</div>
