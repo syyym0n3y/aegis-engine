@@ -310,7 +310,7 @@ for(const sig of SIGNALS) for(const lag of [0,1]) for(const hold of [1,3]) for(c
 // ================= PASS 2 — PERP CROSS-SECTIONS (498-contract survivorship-free universe) =================
 if(PASS==="all"||PASS==="perp"){
   const meta=await fetch(`${OWNED}/trd_bars_intraday?tf=eq.1dSF&select=symbol,n_bars&order=n_bars.desc&limit=2000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {symbol:string;n_bars:number}[];
-  type PRow={mo:string;fwd:number;sig:Record<string,number|null>};
+  type PRow={mo:string;fwd:number;sym:string;sig:Record<string,number|null>};   // D-686: identity for turnover
   const pp:PRow[]=[];
   for(let i=0;i<meta.length;i+=25){
     const part=meta.slice(i,i+25).map(m=>`"${m.symbol}"`).join(",");
@@ -327,7 +327,7 @@ if(PASS==="all"||PASS==="perp"){
         const rets:number[]=[]; for(let q=k-30;q<k;q++)if(b[q][4]>0&&b[q-1]?.[4]>0)rets.push(b[q][4]/b[q-1][4]-1);
         const fw=b.slice(k-7,k); let tb=0,tv=0; for(const x of fw){tb+=x[7]||0;tv+=x[5]||0;}
         const v7=mean(b.slice(k-7,k).map(x=>x[5]||0)), v30=mean(b.slice(k-30,k).map(x=>x[5]||0));
-        pp.push({mo:new Date(b[k][0]*1000).toISOString().slice(0,10),fwd,sig:{
+        pp.push({mo:new Date(b[k][0]*1000).toISOString().slice(0,10),fwd,sym:r.symbol,sig:{
           mom7:px(7),mom14:px(14),mom30:px(30),mom60:px(60),
           rev1:px(1)!=null?-(px(1) as number):null,rev3:px(3)!=null?-(px(3) as number):null,
           vol30:rets.length>20?-sdv(rets):null,                              // pre-registered: LOW vol good
@@ -342,9 +342,9 @@ if(PASS==="all"||PASS==="perp"){
   const PSIG=Object.keys(pp[0]?.sig??{});
   for(const sig of PSIG) for(const hold of [1,3,7]) for(const k of [5,10]){
     const key=`xsec_perp|${sig}|h${hold}|k${k}`;
-    const rows=pp.filter(r=>r.sig[sig]!=null).map(r=>({mo:r.mo,fwd:r.fwd,v:r.sig[sig] as number}));
+    const rows=pp.filter(r=>r.sig[sig]!=null).map(r=>({mo:r.mo,fwd:r.fwd,v:r.sig[sig] as number,sym:r.sym}));
     const g=evalXsec(rows,FEE_PERP,k,365/hold,hold);
-    await record(key,"xsec_perp",{sig,hold_d:hold,buckets:k},"perps_sf",g,ceil); done++;
+    await record(key,"xsec_perp",{sig,hold_d:hold,buckets:k,turnover_oneway:g?.turnover_oneway??null},"perps_sf",g,ceil); done++;
   }
   await log(`  PASS 2 (perp) done: ${PSIG.length*6} specs`);
 }
@@ -427,15 +427,15 @@ if(PASS==="all"||PASS==="pairs"){
   for(let a=0;a<SIGNALS.length;a++) for(let b2=a+1;b2<SIGNALS.length;b2++){
     const A=SIGNALS[a],B=SIGNALS[b2];
     const key=`pair|${A}+${B}|h1|k10`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     const ra=rankPanel.get(A)!, rb=rankPanel.get(B)!;
     for(const [mo,idxs] of byMo) for(const i of idxs){
       const x=ra.get(`${mo}|${i}`), y=rb.get(`${mo}|${i}`);
       if(x==null||y==null)continue;
-      rows.push({mo,fwd:eqPanel[i].fwd,v:x+y});
+      rows.push({mo,fwd:eqPanel[i].fwd,v:x+y,sym:eqPanel[i].sym});
     }
     const g=evalXsec(rows,FEE_EQ,10,12,1);
-    await record(key,"pair",{a:A,b:B},"equity_liquid",g,ceil); done++; pd++;
+    await record(key,"pair",{a:A,b:B,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++; pd++;
     if(pd%40===0)await log(`  ..pairs ${pd}`);
   }
   await log(`  PASS 4 (pairs) done: ${pd} specs`);
@@ -472,7 +472,7 @@ if(PASS==="all"||PASS==="insider"){
   const SIGS6=["ins1m","ins3m","ins6m","ins_cnt3m","ins_off3m"] as const;
   for(const sig of SIGS6) for(const hold of [1,3]) for(const k of [5,10]){
     const key=`insider|${sig}|h${hold}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       const end=moEnd(r.mo);
       let v:number;
@@ -482,10 +482,10 @@ if(PASS==="all"||PASS==="insider"){
       else if(sig==="ins_cnt3m")v=trail(r.sym,end,91,false).n;
       else v=trail(r.sym,end,91,true).v/(r.dv||1);
       if(!(v>0))continue;                                     // signal defined only where buying occurred
-      rows.push({mo:r.mo,fwd:r.fwd,v});
+      rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"insider",{sig,hold,k},"equity_liquid",g,ceil); done++;
+    await record(key,"insider",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 6 (insider) done: ${SIGS6.length*4} specs`);
 }
@@ -524,7 +524,7 @@ if(PASS==="all"||PASS==="shortside"){
   for(const sig of SIGS7) for(const dir of [1,-1]) for(const hold of [1,3]) for(const k of [5,10]){
     if((sig==="si_dtc"||sig==="si_chg")&&dir===1)continue;    // pre-registered NEGATIVE direction only for SI levels/changes
     const key=`shortside|${sig}|${dir>0?"pos":"neg"}|h${hold}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       const end=moEnd(r.mo); if(end<"2018-10-31")continue;    // coverage begins with the data
       let v:number|null=null;
@@ -544,10 +544,10 @@ if(PASS==="all"||PASS==="shortside"){
           if(!prev||!(prev.qty>0))continue; v=c.qty/prev.qty-1; }
       }
       if(v==null||!Number.isFinite(v))continue;
-      rows.push({mo:r.mo,fwd:r.fwd,v:dir*v});
+      rows.push({mo:r.mo,fwd:r.fwd,v:dir*v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"shortside",{sig,dir,hold,k},"equity_liquid",g,ceil); done++;
+    await record(key,"shortside",{sig,dir,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 7 (shortside) done`);
 }
@@ -571,7 +571,7 @@ if(PASS==="all"||PASS==="pead"){
   const moEnd=(mo:string)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()+1);d.setUTCDate(0);return d.toISOString().slice(0,10);};
   for(const minEst of [0,3]) for(const hold of [1,3]) for(const k of [5,10]){
     const key=`pead|sue45|est${minEst}|h${hold}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       if(r.mo<"2017-03")continue;
       const end=moEnd(r.mo), a=ev.get(r.sym); if(!a)continue;
@@ -584,7 +584,7 @@ if(PASS==="all"||PASS==="pead"){
       rows.push({mo:r.mo,fwd:r.fwd,v:sp});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"pead",{minEst,hold,k},"equity_liquid",g,ceil); done++;
+    await record(key,"pead",{minEst,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_liquid",g,ceil); done++;
   }
   await log(`  PASS 8 (pead) done`);
 }
@@ -700,7 +700,7 @@ if(PASS==="all"||PASS==="nport"){
   const SIGS10=["own_brd_chg3","own_brd_chg1","own_flow3","own_crowd","own_val_chg3"] as const;
   for(const sig of SIGS10) for(const hold of [1,3]) for(const k of [5,10]){
     const key=`nport|${sig}|h${hold}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       const end=moEnd10(r.mo), cur=at(r.sym,end);
       if(!cur||cur.eff<minus(end,190))continue;              // stale ownership (>~6mo old) is no signal
@@ -715,10 +715,10 @@ if(PASS==="all"||PASS==="nport"){
         else v=prev.val>0?(cur.val-prev.val)/prev.val:null;
       }
       if(v===null||!isFinite(v))continue;
-      rows.push({mo:r.mo,fwd:r.fwd,v});
+      rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"nport",{sig,hold,k},"equity_all",g,ceil); done++;
+    await record(key,"nport",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 10 (nport) done: ${SIGS10.length*4} specs`);
 }
@@ -751,7 +751,7 @@ if(PASS==="all"||PASS==="form345"){
   const SIGS11=["f345_sell3m","f345_net3m","f345_ratio3m","f345_buy3m","f345_sell6m"] as const;
   for(const sig of SIGS11) for(const hold of [1,3]) for(const k of [5,10]){
     const key=`form345|${sig}|h${hold}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       const t=trail345(r.sym,moEnd11(r.mo),sig==="f345_sell6m"?182:91);
       if(!t)continue;
@@ -761,10 +761,10 @@ if(PASS==="all"||PASS==="form345"){
       else if(sig==="f345_net3m"){ v=(t.b>0||t.s>0)&&r.dv?(t.b-t.s)/r.dv:null; }
       else { v=(t.b+t.s)>0?t.b/(t.b+t.s):null; }               // buy share of insider activity
       if(v===null||!isFinite(v))continue;
-      rows.push({mo:r.mo,fwd:r.fwd,v});
+      rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"form345",{sig,hold,k},"equity_all",g,ceil); done++;
+    await record(key,"form345",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 11 (form345) done: ${SIGS11.length*4} specs`);
 }
@@ -924,7 +924,7 @@ if(PASS==="all"||PASS==="own13f"){
   const SIGS14=["i13_brd_chg","i13_sh_chg","i13_crowd","i13_val_chg"] as const;
   for(const sig of SIGS14) for(const hold of [1,3]) for(const k of [5,10]){
     const key=`own13f|${sig}|h${hold}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       const end=moEnd14(r.mo), hit=at13(r.sym,end);
       if(!hit||hit.cur.eff<minus14(end,200))continue;          // stale (>~2 quarters) is no signal
@@ -937,10 +937,10 @@ if(PASS==="all"||PASS==="own13f"){
         else v=p.val>0?(hit.cur.val-p.val)/p.val:null;
       }
       if(v===null||!isFinite(v))continue;
-      rows.push({mo:r.mo,fwd:r.fwd,v});
+      rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"own13f",{sig,hold,k},"equity_all",g,ceil); done++;
+    await record(key,"own13f",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 14 (own13f) done: ${SIGS14.length*4} specs`);
 }
@@ -1368,7 +1368,7 @@ if(PASS==="all"||PASS==="darkpool"){
   const SIGS22=["dp_share","dp_share_chg"] as const;
   for(const sig of SIGS22) for(const hold of [1,3]) for(const k of [5,10]){
     const key=`darkpool|${sig}|h${hold}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       const a=ats.get(r.sym); if(!a)continue;
       const end=moEnd22(r.mo);
@@ -1384,10 +1384,10 @@ if(PASS==="all"||PASS==="darkpool"){
       if(sig==="dp_share") v=rAvg/r.dv;
       else{const pAvg=mean(prior.map(shTot)); v=pAvg>0?rAvg/pAvg-1:null;}
       if(v===null||!isFinite(v))continue;
-      rows.push({mo:r.mo,fwd:r.fwd,v});
+      rows.push({mo:r.mo,fwd:r.fwd,v,sym:r.sym});
     }
     const g=evalXsec(rows,FEE_EQ,k,12/hold,hold);
-    await record(key,"darkpool",{sig,hold,k},"equity_all",g,ceil); done++;
+    await record(key,"darkpool",{sig,hold,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 22 (darkpool) done: ${SIGS22.length*4} specs`);
 }
@@ -1691,13 +1691,13 @@ if(PASS==="all"||PASS==="hestonsadka"){
   const minusMo=(mo:string,k:number)=>{const d=new Date(mo+"-01T00:00:00Z");d.setUTCMonth(d.getUTCMonth()-k);return d.toISOString().slice(0,7);};
   for(const hold of [1]) for(const k of [5,10]) for(const univ of ["all","liqtop"]){
     const key=`hestonsadka|samemonth5y|${univ}|k${k}`;
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(const r of eqPanel){
       if(univ==="liqtop"&&!(r.dv>0))continue;
       const past:number[]=[];
       for(let y=1;y<=5;y++){const v=mret.get(`${r.sym}|${minusMo(r.mo,12*y)}`);if(v!==undefined)past.push(v);}
       if(past.length<3)continue;
-      rows.push({mo:r.mo,fwd:r.fwd,v:mean(past)});
+      rows.push({mo:r.mo,fwd:r.fwd,v:mean(past),sym:r.sym});
     }
     // liquid filter inside evalXsec universe convention: reuse dv tercile by pre-filtering
     let use=rows;
@@ -1720,7 +1720,7 @@ if(PASS==="all"||PASS==="hestonsadka"){
       use=rows2;
     }
     const g=evalXsec(use,FEE_EQ,k,12/hold,hold);
-    await record(key,"hestonsadka",{univ,k},"equity_all",g,ceil); done++;
+    await record(key,"hestonsadka",{univ,k,turnover_oneway:g?.turnover_oneway??null},"equity_all",g,ceil); done++;
   }
   await log(`  PASS 29 (hestonsadka) done`);
 }
@@ -2197,7 +2197,7 @@ if(PASS==="all"||PASS==="french"){
   const months=[...new Set(ff.map(r=>r.month))].sort();
   function xsecFrench(prefix:string,form:number,skip:number,dirMom:1|-1,k:number,hold:number,key:string,spec:unknown){
     const series=[...bySeries.entries()].filter(([f])=>f.startsWith(prefix));
-    const rows:{mo:string;fwd:number;v:number}[]=[];
+    const rows:{mo:string;fwd:number;v:number;sym?:string}[]=[];
     for(let mi=form+skip;mi<months.length-hold;mi++){
       const mo=months[mi];
       for(const [,mmap] of series){

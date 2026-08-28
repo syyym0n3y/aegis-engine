@@ -13425,3 +13425,31 @@ contrast correctly answers "No data found, symbol may be delisted". This is THE 
 The 300-bar panel floor happens to exclude a 31-bar recycled ticker today. **That is luck, not a guard**, and it is
 recorded as luck: any future ingest that lowers the floor, or that fetches a delisted name after the ticker has been
 reissued and accumulated a year of history, walks straight into it.
+
+**D-686b — TURNOVER MEASURED ACROSS THE FACTORY, not just one caller. The perp panel behaves the opposite way to
+equities, and the correction cuts both ways there too.**
+
+D-686 wired identity through one of ten `evalXsec` callers and honestly marked the other nine UNTESTED ON COST. All
+ten now carry it, and every `record()` site stores the measured `turnover_oneway` in its spec, so the number travels
+with the row instead of living only in a gate nobody reads.
+
+**Perps turn over roughly twice as fast as equities**, and the flat charge was therefore closer to right on average
+while being badly wrong at both tails:
+
+| | p10 | median | p90 | implied by a flat round trip |
+|---|---|---|---|---|
+| `xsec_eq` | 9.4% | **17.0%** | 54.8% | 50% |
+| `xsec_perp` | 13.4% | **34.7%** | 82.9% | 50% |
+
+**Both directions again, which is the check that this is a correction and not a loosening.** `xsec_perp|rev1|h1|k10`
+turns over **82.9%** one-way and was UNDERCHARGED: it moves from +13.5%/yr to **−8.2%/yr**. `xsec_perp|hi60|h1|k10`
+turns over 17.0% and was overcharged: −4.7%/yr to **+17.0%/yr**. Seven of 60 perp specs flip sign; `|t| ≥ 2` goes
+11 → 7. **Specs clearing the 5.4555 ceiling: 0, before and after** — the strongest is `flow7|h1|k5` at t −2.78.
+
+Passes re-run with turnover measured: `eq` (220), `perp` (60), `pairs` (231), `shortside`. Ceiling unmoved at 5.4555
+throughout — sixteen consecutive pass re-runs spending zero trials, which is D-681 doing its job in production and
+is worth more as a demonstration than as a claim.
+
+Remaining callers (`insider`, `pead`, `form345`, `own13f`, `darkpool`, `hestonsadka`) have the identity wired and
+will pick up measured turnover on their next run; until then their stored rows keep the flat charge and are marked
+`turnover_oneway: null` = UNTESTED ON COST rather than silently assumed.
