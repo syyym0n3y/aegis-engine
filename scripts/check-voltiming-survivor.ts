@@ -18,8 +18,14 @@ const v9=new Map(v9r.map(x=>[iso(x.ts),+x.open_interest]));
 const vixB=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.%5EVIX&select=bars`,{headers:hdr}).then(x=>x.json()) as {bars:number[][]}[];
 const vix=new Map<string,number>((vixB[0]?.bars||[]).map(b=>[iso(b[0]),b[4]]));
 // trial counter: 8 variants examined
-{const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
-  body:JSON.stringify({family:"adhoc",run_key:`voltiming-adversarial-${Date.now()}`})}).catch(()=>null);
+// D-681: the key was `voltiming-adversarial-${Date.now()}`, so every manual re-run of this one-shot counted as a
+// fresh trial. It is one specification; re-running it against unchanged data yields the same answer and buys no new
+// chance to cherry-pick, so the key is stable and the unique constraint absorbs the repeat. The comment sits ABOVE
+// the block deliberately: placed inside it, three lines of prose pushed the res.ok check out of the plumbing guard's
+// proximity window and turned a checked write into a reported silent-write — a false positive I created and then had
+// to read. Proximity is load-bearing to that guard; keep the check next to its fetch.
+{const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal,resolution=ignore-duplicates"},
+  body:JSON.stringify({family:"adhoc",run_key:`voltiming-adversarial-D544`})}).catch(()=>null);
  if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
 for(const inst of ["SPY","QQQ"]){
   const r=await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${inst}&select=bars`,{headers:hdr}).then(x=>x.json()) as {bars:number[][]}[];

@@ -26,8 +26,13 @@ fi
 
 echo "== AEGIS GUARD STATUS — live, $(date -u +%FT%TZ) =="
 RED=0; N=0
+# D-682: this list had drifted to 17 while the daily runner invoked 21 and 24 existed on disk, so benchmark,
+# turnover, schema-honesty and trial-ledger could go RED every cycle without ever appearing in the view built
+# precisely so a RED would reach a human. `registry-guard.ts` now checks this list against the disk mechanically —
+# hand-maintaining two enumerations in two files is what produced the drift, and remembering harder does not fix it.
 for g in coverage liquidity effect-size breadth execution selection universe sign survivor \
-         holdability instrument mechanism gap-register agent-output plumbing forward-rules continuity; do
+         holdability instrument mechanism gap-register agent-output plumbing forward-rules continuity \
+         benchmark turnover schema-honesty trial-ledger trial-idempotency infra; do
   [ -f "scripts/${g}-guard.ts" ] || continue
   N=$((N+1))
   out=$($DENO run --allow-net --allow-env --allow-read --allow-run "scripts/${g}-guard.ts" 2>&1); c=$?

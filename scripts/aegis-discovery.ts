@@ -7,6 +7,7 @@
 // Candidates this generation: base composite, value×momentum & quality×momentum INTERACTIONS, CAPPED score (the calibration
 // showed extremes reverse), CONVICTION (sign·z²), and DISPERSION-CONDITIONED (trade harder when cross-sectional spread is
 // wide). Logs every candidate + whether it beats base OOS to trd_discovery_log. Loops (daemon) — the uncharted-territory search.
+import { dataVersion } from "../supabase/functions/_shared/data-version.ts";
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
 const ONCE = Deno.args.includes("--once");
@@ -150,7 +151,23 @@ async function cycle() {
     ? `   ${String(r.candidate).padEnd(20)} *** RUINED *** cumulative equity went to zero or below — no Sharpe is reported, because a wiped-out book cannot earn the returns that follow its own bankruptcy (win ${r.win_pct}% skew ${r.skew}, n=${r.n_months})`
     : `   ${String(r.candidate).padEnd(20)} TEST(OOS) ${String(r.test_net_sharpe).padStart(6)} train ${String(r.train_net_sharpe).padStart(6)} full ${String(r.net_sharpe).padStart(6)} exTop1 ${String(r.sharpe_ex_top1).padStart(5)} exTop3 ${String(r.sharpe_ex_top3).padStart(5)} win ${r.win_pct}% skew ${r.skew} psr_z ${r.psr_valid ? r.psr_z : "INVALID(|skew|>2)"} ${r.passes_deflation ? "CLEARS" : "fails"} ${r.beats_base ? "BEATS-BASE" : ""} eras:${JSON.stringify(r.per_era_net_sharpe)}`);
   // F9 FIX: increment trd_trial_counter — the stated non-negotiable ("increments on EVERY backtest run, including failed").
-  // The daemon re-tests candidates every cycle; N must grow so the deflation ceiling reflects the true search breadth.
+  //
+  // D-681 CORRECTION. The line that used to sit here read: "The daemon re-tests candidates every cycle; N must grow
+  // so the deflation ceiling reflects the true search breadth." That reasoning is wrong, and the key it produced
+  // (`${candidate}|${new Date().toISOString()}`) put the WALL CLOCK inside a column whose UNIQUE constraint is the
+  // only thing making the counter idempotent — so a daemon that re-computes an identical answer forever also grows
+  // the programme's noise ceiling forever.
+  //
+  // WHAT A TRIAL ACTUALLY IS. The deflation ceiling sqrt(2 ln N) corrects for SELECTION: the more distinct
+  // specifications searched, the more likely the best of them is luck. Re-running the SAME specification against the
+  // SAME data yields the same number and creates no new option to cherry-pick, so it is not a second trial. A trial
+  // is a (SPECIFICATION, DATA-VERSION) pair — the same spec against materially moved data IS a fresh trial, because
+  // the answer can differ and a choice therefore exists.
+  //
+  // Direction of harm from the old key: the ceiling was too HIGH, which is conservative and cannot manufacture a
+  // false edge — but it can kill a real one, and a null produced by an inflated bar is evidence about the bar, not
+  // about the market. Measured at discovery: 138 rows for 6 distinct specifications over 23 cycles, i.e. 132
+  // spurious trials against a live N of 2.9M — REAL AND IMMATERIAL TODAY, unbounded if left running.
   // REBUILT (D-467). The old block wrote {id:"global", total:N} into a table whose actual columns are
   // (id uuid, family, run_key, counted_at) — every write 400'd, and because fetch() does NOT throw on HTTP errors the
   // catch never fired and this printed "trial counter: 0 -> N" as SUCCESS on every cycle. The counter stayed EMPTY for
@@ -158,14 +175,28 @@ async function cycle() {
   // non-negotiable ("increments on EVERY backtest run"). Fix: write the append-only shape the table actually has, CHECK
   // res.ok, and verify by re-reading the count — never by trusting the request.
   {
-    const cyc = new Date().toISOString();
-    const rows = results.map((r) => ({ family: String(r.family ?? "discovery"), run_key: `${r.candidate}|${cyc}` }));
-    const res = await fetch(`${OWNED}/trd_trial_counter`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify(rows) }).catch(() => null);
-    if (!res || !res.ok) console.log(`  WRITE-FAILED trd_trial_counter ${res ? res.status + " " + (await res.text()).slice(0, 120) : "network"}`);
-    else {
-      const back = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
-      const cnt = back ? +((back.headers.get("content-range") || "").split("/")[1] || 0) : -1;
-      console.log(`  trial counter: +${rows.length} this cycle, ${cnt} live rows total (verified by re-read)`);
+    // The key is the data fingerprint, not the clock. Identical panel -> identical key -> the unique constraint
+    // absorbs the write and N does not move. A refresh or an append to either table changes the fingerprint and the
+    // re-test counts, which is the case where it genuinely should.
+    const dv = await dataVersion(OWNED, hdr, { trd_bars_deep: null, trd_fundamentals: null });
+    const fp = dv.map((x) => `${x.table}:${x.rows}`).join(",");
+    const unreadable = dv.filter((x) => x.rows < 0);
+    if (unreadable.length) {
+      // A fingerprint with a hole would collide across genuinely different panels and silently suppress real trials.
+      // Refuse rather than degrade — the D-628 contract.
+      console.log(`  trial counter: SKIPPED — cannot fingerprint ${unreadable.map((x) => x.table).join(", ")}; refusing to write a key that may collide across different data.`);
+    } else {
+      const rows = results.map((r) => ({ family: String(r.family ?? "discovery"), run_key: `${r.candidate}|${fp}` }));
+      const before = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
+      const nBefore = before ? +((before.headers.get("content-range") || "").split("/")[1] || 0) : -1;
+      const res = await fetch(`${OWNED}/trd_trial_counter`, { method: "POST", headers: { ...hdr, "Content-Type": "application/json", Prefer: "return=minimal,resolution=ignore-duplicates" }, body: JSON.stringify(rows) }).catch(() => null);
+      if (!res || !res.ok) console.log(`  WRITE-FAILED trd_trial_counter ${res ? res.status + " " + (await res.text()).slice(0, 120) : "network"}`);
+      else {
+        const back = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
+        const cnt = back ? +((back.headers.get("content-range") || "").split("/")[1] || 0) : -1;
+        const added = cnt >= 0 && nBefore >= 0 ? cnt - nBefore : -1;
+        console.log(`  trial counter: +${added} new of ${rows.length} tested (${rows.length - Math.max(0, added)} already counted against this data version), ${cnt} live rows total (verified by re-read)`);
+      }
     }
   }
   // log to the owned discovery ledger

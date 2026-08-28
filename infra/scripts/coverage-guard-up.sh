@@ -105,6 +105,24 @@ while true; do
   if ! deno run --allow-read --allow-env ../scripts/plumbing-guard.ts; then
     echo "$(date -u +%FT%TZ) PLUMBING GUARD RED — a new instance of a known defect class entered the codebase"
   fi
+  # REGISTRY GUARD (D-682): the guard whose subject is the other guards. A census found 24 guard scripts on disk, 21
+  # invoked here, and 17 in the operator's one-command view — so four could go RED daily and never reach a human, which
+  # is D-586 recurring inside the fix for D-586. Runs FIRST among the additions because if the registry is inconsistent
+  # the other greens are a statement about a subset nobody enumerated.
+  if ! deno run --allow-read --allow-env ../scripts/registry-guard.ts; then
+    echo "$(date -u +%FT%TZ) REGISTRY GUARD RED — a guard exists that nothing runs; enforcement has become documentation"
+  fi
+  # INFRA GUARD (D-408, WIRED D-682): the substrate probe. It was written to distinguish "the engine is down, so every
+  # conclusion is UNKNOWN" from "we measured a null" — and it had been wired into NOTHING since it was built. The guard
+  # that detects a dead substrate was itself dead. Non-fatal here: an outage must be LOUD, not a runner that stops.
+  if ! deno run --allow-net --allow-env --allow-run ../scripts/infra-guard.ts; then
+    echo "$(date -u +%FT%TZ) INFRA GUARD RED — substrate unreachable; today's conclusions are UNKNOWN, not null"
+  fi
+  # TRIAL IDEMPOTENCY GUARD (D-681): a clock inside run_key defeats the unique constraint that makes the trial counter
+  # idempotent, so a daemon recomputing one identical answer forever also grows the ceiling every result must clear.
+  if ! deno run --allow-net --allow-env --allow-read ../scripts/trial-idempotency-guard.ts; then
+    echo "$(date -u +%FT%TZ) TRIAL IDEMPOTENCY GUARD RED — a re-test of an unchanged spec is counted as a fresh trial"
+  fi
   # FORWARD SCORER (D-474): scores registered factory leads on completed post-registration months. Exits in ~1s unless a
   # new month needs scoring (~monthly work on a daily cadence). Prints FORWARD STATUS every run so the accrual is visible
   # in this log; WRITE-FAILED markers here page via the agent-output guard. Selftest-verified end-to-end before wiring.
@@ -123,6 +141,13 @@ while true; do
   deno run --allow-net --allow-env ../scripts/collect-vx-curve.ts || true
   # BINANCE SENTIMENT COLLECTOR (D-502b): API serves ~30d only — the series accrues from 2026-08-23.
   deno run --allow-net --allow-env ../scripts/collect-binance-sentiment.ts || true
+  # BAR REFRESH (D-683) — MUST PRECEDE THE ATTRIBUTION ENGINE. There was no scheduled ingest for the attribution
+  # universe at all: bars were refreshed by hand, last on 2026-08-21, and the engine below ran every morning writing
+  # 27 clean rows dated a week earlier while its log said "27 attribution rows written". Fetches only what is stale
+  # (~13s when due, ~2s when not), sequentially, from an allowlisted keyless endpoint, and exits RED if any symbol
+  # the engine reads is still stale afterwards — success is "the consumer's data is fresh", not "the fetches 200'd".
+  deno run --allow-net --allow-env --allow-read ../scripts/refresh-bars.ts > ../data/refresh-bars.log 2> ../data/refresh-bars.err \
+    || echo "$(date -u +%FT%TZ) BAR REFRESH RED — the attribution universe is stale; today's decomposition describes a frozen market"
   # CAUSAL ATTRIBUTION ENGINE (D-520 P3): daily force decomposition + measured ignorance per instrument.
   deno run --allow-net --allow-env ../scripts/aegis-attribution.ts > ../data/attribution.log 2> ../data/attribution.err || true
   # PAPER RUNG (D-521): monthly French panel refresh (idempotent) + mark the frozen P2 book. $0 at risk, kill-switch honored.

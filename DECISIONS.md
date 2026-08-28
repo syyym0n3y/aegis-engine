@@ -13002,3 +13002,122 @@ survives whichever way they land.
 Published as an external surface at `public/ladder.html` — the Week-4 exit criterion is that an outsider can read
 the record, reproduce a claim, and find a retraction we made against ourselves before they could. The retractions
 are on the page.
+
+---
+
+**D-680 — L3 AND L4 MEASURED. The censoring in D-678/679 was a property of the series, not the strategy.**
+
+D-678 walked the climb on the passive book's 305 real months and had to report L3 ($100,000) as CENSORED: every path
+ran out of panel before the ~25 years $100/mo compounding needs. Separating truncation from failure was right — and
+separating a problem is not solving it. The panel to answer it was already on disk: Ken French's market series runs
+**1963-07 to 2026-06, 756 months, 63 years**. `scripts/capital-ladder-long.ts` walks all 733 eligible start months on
+total-return market (Mkt-RF **+ RF**; using the excess series would understate the climb by ~4.4%/yr).
+
+**POSITIVE CONTROL FIRST, and the script ABORTS if it fails** — a mis-assembled series produces a clean, plausible,
+wrong ladder. Reconstruction: 10.88%/yr, vol 15.41%, RF 4.44%, Sharpe 0.42. All four inside their expected bands.
+
+| level | reached | p10 | median | p90 | eligible failures | censored |
+|---|---|---|---|---|---|---|
+| L1 $1,000 | 733/733 | 0.7y | **0.8y** | 0.8y | 0 | 0 |
+| L2 $10,000 | 693/733 | 5.0y | **5.8y** | 7.3y | 0 | 45 |
+| L3 $100,000 | 527/733 | 17.7y | **20.8y** | 25.2y | **0** | 225 |
+| L4 $1,000,000 | 206/733 | 42.3y | 43.3y | 44.1y | **34** | 496 |
+
+**L3 has zero eligible failures across 63 years of history.** It is slow, not uncertain. **L4 is the first rung with
+real failures** (34 of 206 eligible). Worst drawdown along the way: median −46.9%, worst −50.5%; longest time
+underwater 6.1 years. The $5/trade regime costs ~0.5y at L3 — commission was never the binding constraint at these
+sizes, which retires a question this programme had been treating as open.
+
+**THE CROSSOVER — the finding D-678 was one rung too low to see.** D-678 found the deposit rate dominates at L1 and
+that was reported as if it settled the ladder. Contribution is linear in time and return is exponential, so the
+crossover is a measurable month: cumulative return first exceeds cumulative contributions at **median 9.8 years, at
+an account size of $24,114** (p10 $16,427 / p90 $39,997), in 654 of 732 paths. Below ~$24k the deposit rate is the
+account; above it the strategy is. **That boundary sits almost exactly where margin and borrow become available** —
+so the point where the research programme starts mattering and the point where 64.3% of its specs become placeable
+(D-679) are the same point, reached by two unrelated routes.
+
+**WHAT AN EDGE IS WORTH, PRICED IN DEPOSITS** (median years to L3): +0% alpha at $100/mo = 20.8y; **+5%/yr sustained
+net alpha at $100/mo = 16.7y** (−4.1y); **+0% alpha at $150/mo = 17.4y** (−3.4y). An alpha this programme has never
+produced buys 4.1 years. A deposit increase available this afternoon buys 3.4. That is a measurement, not a
+preference, and it is the honest allocation of effort below the crossover.
+
+---
+
+**D-681 — A CLOCK IN THE KEY. The trial counter's idempotency was guaranteed by a module 2 of 12 writers used.**
+
+`trial-ledger.ts` (D-628) states in its own header that `run_key` is UNIQUE so "a re-run of the same sweep inserts
+nothing and the count does not inflate". `aegis-discovery.ts` bypassed it and wrote `${candidate}|${new
+Date().toISOString()}` directly. **The clock makes every key unique by construction**, so a daemon that had
+recomputed six identical answers for 23 consecutive cycles wrote **138 rows for 6 specifications**. A census found
+**ten scripts writing the counter directly and two using the shared ledger**; two of the ten embed a clock.
+
+The comment justifying it was explicit and wrong: *"the daemon re-tests candidates every cycle; N must grow so the
+ceiling reflects the true search breadth."* **The deflation ceiling corrects for SELECTION.** Re-running one
+specification against unchanged data returns the same number and creates no new opportunity to cherry-pick. A trial
+is a **(SPECIFICATION, DATA-VERSION) pair** — the same spec against materially moved data IS a fresh trial. The key
+is now the `dataVersion()` fingerprint of the tables read, and the write refuses rather than degrading when a table
+cannot be fingerprinted (a fingerprint with a hole would collide across different panels and suppress real trials).
+
+**REPORTED AT ITS TRUE SIZE: 132 spurious trials against a live N of 2,903,215 moves sqrt(2 ln N) by nothing
+measurable.** What earns a guard is the shape, not the magnitude — an always-on daemon writing an unbounded series
+nobody read, where the harm is a ceiling too HIGH: conservative, incapable of manufacturing a false edge, and
+perfectly capable of killing a real one. A null produced by an inflated bar is evidence about the bar.
+
+`scripts/trial-idempotency-guard.ts` (22nd guard) inspects **both the running code and the stored keys** — a ledger-
+only guard would have missed this entirely, which is the D-586 lesson. **A calendar adoption boundary was tried
+first and failed**: all 5,000 most recent keys were written the same day, so "on or after today" separated nothing.
+The rule that works asks whether bad keys are STILL ARRIVING (a grace window), so the guard cannot be turned green by
+waiting — only by the writer stopping. Legacy keys are left in place and REPORTED: `trd_trial_counter` is append-only
+evidence, and deleting rows to green a guard would lower the ceiling every past conclusion was measured against.
+Verified RED with clock keys live, GREEN with none, 7-way self-test, exit-code-checked both directions.
+
+---
+
+**D-682 — THERE WERE THREE ANSWERS TO "HOW MANY GUARDS ARE THERE", AND THE GUARD THAT DETECTS A DEAD SUBSTRATE WAS
+WIRED TO NOTHING.**
+
+Census on 2026-08-28: **24 guard scripts on disk, 21 invoked by the daily runner, 17 in `scripts/guard-status.sh` —
+the operator's one-command view.** So benchmark, turnover, schema-honesty and trial-ledger could go RED every cycle
+and never appear in the view built *precisely so a RED would reach a human*. That is D-586 recurring inside the fix
+for D-586: `guard-status.sh` exists because four guards had been RED since a 14:40 cycle and nobody knew.
+
+And **`infra-guard.ts` was in neither list.** It is the D-408 substrate probe — the guard whose entire job is to
+distinguish "the engine is down, so every conclusion is UNKNOWN" from "we measured a null". **The guard that detects
+a dead substrate had itself been dead.** Wiring it produced an immediate RED that had been true and unseen: the
+rented Supabase project `glzzoomuhnugsiichnub` is **DNS-unresolvable (paused for unpaid invoices)**, and
+`trd_edge_queue`, `trd_edge_scorecard`, `trd_stage2_results`, `trd_forward_candidates` and `trd_edge_ingest` live
+ONLY there. Queue progress and stage-2 verdicts are **UNKNOWN, not null**. `aegis-worker.ts`, the one bar-writer that
+is a daemon, talks to that dead broker. Remediation is operator-only (billing) and is recorded, not attempted.
+
+`scripts/registry-guard.ts` (23rd) makes the omission mechanical: every `scripts/*-guard.ts` must appear in both the
+runner and the operator view. Fixing the lists fixes today; every guard added since D-586 had drifted from at least
+one of them, because adding a guard meant remembering two hand-maintained enumerations in two files in two
+languages. Exemptions carry their reason and are PRINTED every run — this guard is exempt from `guard-status.sh`
+because listing itself there would have it assert its own presence, which is not a check. Verified RED at 7 unwired,
+GREEN at 24 wired, 6-way self-test including that a prefix must not count as a match.
+
+---
+
+**D-683 — THE FEED THAT NOTHING WAS FEEDING. A daily engine wrote a confident report about a week-old market.**
+
+`io.aegis.daily` ran `aegis-attribution.ts` every morning without error and logged "27 attribution rows written".
+**Every row was dated 2026-08-21** — seven days stale, caught by the continuity guard at 7.8d against a 7.5d budget.
+
+**The cause was not a broken ingest. There was no ingest.** `trd_bars_deep` for the attribution universe was
+refreshed by hand; `ingest-force-instruments.ts` (22 ETFs) is scheduled nowhere; `aegis-worker.ts` talks to the dead
+rented broker (D-682). The automated path was doubly absent. This is D-613 in its literal form: *"an ingest that
+stops leaves the last good rows in place, so every query keeps answering plausibly from a frozen snapshot."*
+
+`scripts/refresh-bars.ts` refreshes only what the daily consumers read (4,348 symbols exist; ~53 matter daily) and is
+wired into the runner **before** the attribution engine. **The first version reproduced the exact defect it was
+written to prevent**: I hand-listed plausible force ETFs from memory, refreshed 52 symbols to today — and the engine
+still reported 2026-08-21, because the MKT force is **`^GSPC`**, which was not on my list. The fix is not a better
+memory: the refresher now PARSES both `UNIVERSE` and `ALL_FORCES` out of its consumer, refuses to run if either
+cannot be parsed, and exits RED if any symbol the consumer reads is still stale afterwards. Success is "the
+consumer's data is fresh", not "the fetches returned 200". After the fix, attribution writes **28 rows for
+2026-08-28** and the continuity guard is green at 0.8d. Idempotent: a second run fetches nothing.
+
+**Two false positives I created and had to read**, both worth recording because the cause was identical: a correct
+comment placed between a `fetch` and its `res.ok` check pushes the check outside the plumbing guard's proximity
+window, so a checked write reports as a silent write. It happened twice in one session, in `refresh-bars.ts` and
+`check-voltiming-survivor.ts`. Proximity is load-bearing to that guard; prose goes above the block.
