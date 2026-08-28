@@ -128,12 +128,12 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
 // fact about markets. The honest statement is "no overnight/intraday effect (t 0.86), and trading it would cost
 // ~50%/yr on top" — not "the overnight leg significantly loses".
 {
-  interface F { spec_key: string; family: string; gross_ann: number | null; net_ann: number | null; portfolio_t: number | null }
+  interface F { spec_key: string; family: string; spec: Record<string, unknown> | null; gross_ann: number | null; net_ann: number | null; portfolio_t: number | null }
   // KEYSET on id, never OFFSET: spec_key is not unique and offset paging over ties silently drops rows (D-629).
   const specs: F[] = [];
   let after = "";
   for (;;) {
-    const url = `${OWNED}/trd_factory?select=id,spec_key,family,gross_ann,net_ann,portfolio_t&order=id.asc&limit=1000${after ? `&id=gt.${after}` : ""}`;
+    const url = `${OWNED}/trd_factory?select=id,spec_key,family,spec,gross_ann,net_ann,portfolio_t&order=id.asc&limit=1000${after ? `&id=gt.${after}` : ""}`;
     const page = await mustFetch(url, "trd_factory") as unknown as (F & { id: string })[];
     if (!page.length) break;
     specs.push(...page);
@@ -147,9 +147,19 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
   // charge cost inside the return loop, so the ratio is 1 by construction and every one of them reads as "holds".
   // Dividing artifacts by ALL significant-loss specs would quietly count those as passes — the same shape as the
   // D-664 audit that certified the cot and tff families clean for exactly this reason. Report both denominators.
-  const blind = both.filter((s) => s.gross_ann === s.net_ann);
-  const auditable = both.filter((s) => s.gross_ann !== s.net_ann);
-  const art = auditable.filter((s) => Math.abs(s.portfolio_t! * (s.gross_ann! / s.net_ann!)) < 2);
+  // Where `t` is computed on a DIFFERENT series than gross_ann/net_ann — the timing family measures excess over
+  // buy-and-hold — the ratio of the absolute figures is the wrong reconstruction, so those passes record the
+  // excess-basis pair in their spec JSON and it is preferred here. A single ratio silently meaning two different
+  // things per family is how an audit certifies what it never checked (D-684b).
+  const pair = (s: F): [number, number] | null => {
+    const ge = Number(s.spec?.gross_ex_ann), ne = Number(s.spec?.net_ex_ann);
+    if (Number.isFinite(ge) && Number.isFinite(ne) && ne !== 0) return [ge, ne];
+    if (s.gross_ann !== null && s.net_ann !== null && s.net_ann !== 0) return [s.gross_ann, s.net_ann];
+    return null;
+  };
+  const blind = both.filter((s) => { const p = pair(s); return p !== null && p[0] === p[1]; });
+  const auditable = both.filter((s) => { const p = pair(s); return p !== null && p[0] !== p[1]; });
+  const art = auditable.filter((s) => { const p = pair(s)!; return Math.abs(s.portfolio_t! * (p[0] / p[1])) < 2; });
   const byFam = new Map<string, number>();
   for (const a of art) byFam.set(a.family, (byFam.get(a.family) ?? 0) + 1);
   const blindFam = new Map<string, number>();
@@ -162,7 +172,7 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
     console.log(`    by family: ${[...byFam].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}:${n}`).join("  ")}`);
     const worst = [...art].sort((a, b) => a.portfolio_t! - b.portfolio_t!).slice(0, 3);
     for (const w of worst) {
-      console.log(`      ${w.spec_key.padEnd(34)} net ${(w.net_ann! * 100).toFixed(2)}%/yr t ${w.portfolio_t!.toFixed(2)}  ->  gross ${(w.gross_ann! * 100).toFixed(2)}%/yr t ${(w.portfolio_t! * (w.gross_ann! / w.net_ann!)).toFixed(2)}`);
+      { const p=pair(w)!; console.log(`      ${w.spec_key.padEnd(34)} net ${(p[1]*100).toFixed(2)}%/yr t ${w.portfolio_t!.toFixed(2)}  ->  gross ${(p[0]*100).toFixed(2)}%/yr t ${(w.portfolio_t!*(p[0]/p[1])).toFixed(2)}`); }
     }
     console.log(`    Reported every run, never amnestied. These are not promotable and none is promoted — the harm is`);
     console.log(`    that their t-statistics are read as findings about markets when they are findings about a fee.`);

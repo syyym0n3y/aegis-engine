@@ -13196,3 +13196,37 @@ reporting the artifact count against the larger denominator counts the un-checka
 precise error being corrected here.
 
 The durable fix is to preserve the gross series in the ~7 passes that overwrite it; recorded as open, not done.
+
+**D-684c — THE TIMING FAMILY UNBLINDED: a `(0)` placeholder made 35 claims uncheckable, and 12 of them are
+artifacts. The family's overall conclusion survives.**
+
+The timing pass built its gate with `gross_ann: mean(net.map((x,i)=>x+ (0)))*252` — **a placeholder for the fee that
+was never filled in**, so `gross_ann === net_ann` on every one of 209 timing specs and the D-684 audit could check
+none of them. The `(0)` is the tell: someone meant to add the fee back.
+
+Correcting it exposed a second, subtler problem worth more than the first. **The timing family's `t` is computed on
+excess-over-buy-and-hold, not on the absolute series `gross_ann`/`net_ann` describe**, so the ratio
+`gross_ann/net_ann` would NOT have reconstructed the gross t even once the placeholder was fixed — it would have
+produced a confident wrong number for 209 specs. The pass now records `gross_ex_ann` and `net_ex_ann` in its spec
+JSON (no migration; the `spec` column already exists), and the guard prefers that pair where present. **A single
+ratio silently meaning different things in different families is exactly how an audit certifies what it never
+checked.**
+
+Re-ran `PASS=timing` (209 specs, ceiling unmoved at 5.456 — a re-run of identical specs against identical data spends
+no trials, which is D-681 working). Of **35 significant-loss timing claims, 12 (34%) are cost artifacts**:
+
+| spec | net_ex | t_net | gross_ex | t_GROSS |
+|---|---|---|---|---|
+| `timing\|EEM\|rsi2_mr` | −16.30%/yr | −3.30 | −9.74%/yr | **−1.97** |
+| `timing\|GLD\|rsi2_mr` | −13.46%/yr | −3.88 | −6.86%/yr | **−1.98** |
+| `timing\|QQQ\|rsi2_mr` | −13.56%/yr | −3.38 | −7.20%/yr | **−1.79** |
+| `timing\|SPY\|breakout_20` | −16.82%/yr | −5.25 | −11.75%/yr | −3.67 *holds* |
+
+**The family's conclusion — timing rules lose to buy-and-hold — SURVIVES at gross for 23 of 35**, several strongly
+(SPY breakout t −3.67 gross). That matters: an audit that condemned everything it touched would be measuring its own
+threshold rather than the work. The artifacts cluster in `rsi2_mr`, a 2-day mean-reversion rule that switches
+constantly — exactly where THE TURNOVER LAW predicts the fee does the most work.
+
+**Running totals after unblinding:** 148 significant-loss claims → **113 auditable, 61 artifacts (54%)**, 35 still
+blind (xasset 11, seasonal 10, sessions 7, tff 3, fxintraday 3, book 1). Those 35 need the same treatment: their
+passes charge a turnover-aware fee inside the return loop and never keep the gross series.

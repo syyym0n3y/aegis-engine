@@ -341,13 +341,26 @@ if(PASS==="all"||PASS==="timing"){
     const m=mean(ex),sd=sdv(ex)||1e-9,t=m/(sd/Math.sqrt(ex.length));
     let cum=1,pk=1,dd=0,ruined=false; for(const x of net){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*ex.length/4),b2=Math.floor((e+1)*ex.length/4);return mean(ex.slice(a,b2));});
-    const gate:Gate={n_names:1,n_periods:ex.length,gross_ann:mean(net.map((x,i)=>x+ (0)))*252, net_ann:mean(net)*252,
+    // D-684b: `gross_ann:mean(net.map((x,i)=>x+ (0)))*252` — the `(0)` was a placeholder for the fee that was never
+    // filled in, so gross_ann equalled net_ann on every timing spec and the D-684 cost-inflation audit could not
+    // check ANY of them: the ratio is 1 by construction and 35 significant-loss claims silently read as "holds".
+    // The fee actually charged is `sw` switches x 10bp, so the gross series is the net one shifted by that per period.
+    // NOTE FOR THE AUDITOR: `t` above is computed on `ex` (excess over buy-and-hold), not on `net`, so the ratio
+    // gross_ann/net_ann does NOT reconstruct the gross t for this family. The fee shift is identical in ABSOLUTE
+    // terms on both series (buy-and-hold pays no fee), so the reconstruction uses `switches`, recorded in the spec
+    // below, rather than the ratio. Stated here because a ratio that silently means something different per family
+    // is exactly how an audit certifies what it never checked.
+    const gate:Gate={n_names:1,n_periods:ex.length,gross_ann:(mean(net)+sw*(10/1e4)/net.length)*252, net_ann:mean(net)*252,
       sharpe:(mean(net)/(sdv(net)||1e-9))*Math.sqrt(252),t,dd:dd*100,ruined,
       g_breadth:true /* single-instrument class: breadth law N/A, judged vs BH instead */,
       g_effect:Math.abs(m)*252>=(sw/ (ex.length/252))*10/1e4,
       g_benchmark:m>0 /* must BEAT buy-and-hold (D-439) */,
       g_liquid:null,g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
-    await record(key,"timing",{inst,rule:rule.name,switches:sw,exec:"lag1"},"single",gate,ceil); done++;
+    // The audit needs the gross and net of the series `t` was actually computed on. Recording only `switches` would
+    // leave the auditor to re-derive it and get the basis wrong, so both figures are stored outright.
+    const feePer=sw*(10/1e4)/net.length;
+    await record(key,"timing",{inst,rule:rule.name,switches:sw,exec:"lag1",
+      net_ex_ann:+(m*252).toFixed(6),gross_ex_ann:+((m+feePer)*252).toFixed(6)},"single",gate,ceil); done++;
   }
   await log(`  PASS 3 (timing) done: ${series.size*rules.length} specs`);
 }
