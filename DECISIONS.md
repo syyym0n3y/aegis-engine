@@ -13393,3 +13393,35 @@ the old flat charge — rule (3) of the law applied to ourselves rather than a s
 turnover multiplier does not validate the **10bp round-trip level** for individual US equities across a
 several-hundred-name long-short; that is a separate assumption and the net figures above inherit it. The measured
 turnover now travels in each spec, so anyone can re-cost them without re-running anything.
+
+---
+
+**D-687 — THE VERIFIED SEARCH ON THE LARGEST OPEN GAP, AND A HAZARD FOUND WHILE RUNNING IT: a delisted-name query
+that RETURNS DATA can be returning a different company.**
+
+`delisted-price-history` is the gap that blocks every distress, bankruptcy, delisting and going-concern RETURN test:
+`trd_bars_deep` holds **4 delisted symbols of 4,348 (0.1%)**, and D-645 measured **1,592 of 3,085 symbols with an 8-K
+Item 3.01 delisting notice (51.6%) absent from the price panel**, 1,575 of them present in `trd_ftd` — they traded.
+It was marked operator-actionable on the reasoning "free sources are survivor-only by construction". OPERATING
+DOCTRINE forbids asserting paid-or-impossible without a verified search, and that search had not been run.
+
+**Two free routes tested; both genuinely closed, for different reasons that must not be blurred:**
+
+1. **Stooq** — allowlisted, and the source most likely to retain delisted US tickers. Its CSV endpoint now returns a
+   **JavaScript proof-of-work bot challenge** instead of data. Solving that is bypassing bot detection and is out of
+   bounds. **The route is closed by policy, not by capability** — recorded that way, because "we cannot" and "we may
+   not" are different facts and only one of them could change with better engineering.
+2. **Alpaca** — allowlisted, historical endpoints are a plausible source, but **no APCA credentials exist here** and
+   creating an account is operator-only.
+
+Status unchanged: **operator-actionable**. What changed is that it is now verified rather than assumed.
+
+**THE HAZARD, found while probing.** Yahoo returns **31 bars dated 2026-07-17..2026-08-28 for `BBBY`** — a ticker
+whose original registrant delisted in 2023. **A delisted-name query that returns data can be returning a different
+company.** The control that catches it is the bar count and start date, not the presence of a response; `SIVBQ` by
+contrast correctly answers "No data found, symbol may be delisted". This is THE POSITIVE-CONTROL RULE's mirror image
+— that rule guards against false ZEROS, and this is a false NON-zero, which no existing check looks for.
+
+The 300-bar panel floor happens to exclude a 31-bar recycled ticker today. **That is luck, not a guard**, and it is
+recorded as luck: any future ingest that lowers the floor, or that fetches a delisted name after the ticker has been
+reissued and accumulated a year of history, walks straight into it.
