@@ -13453,3 +13453,47 @@ is worth more as a demonstration than as a claim.
 Remaining callers (`insider`, `pead`, `form345`, `own13f`, `darkpool`, `hestonsadka`) have the identity wired and
 will pick up measured turnover on their next run; until then their stored rows keep the flat charge and are marked
 `turnover_oneway: null` = UNTESTED ON COST rather than silently assumed.
+
+---
+
+**D-688 — CORRECTION TO D-680: the crossover is not a dollar threshold, it is ~9.8 YEARS, and it is invariant to the
+deposit rate. You cannot buy your way out of the deposit-dominated phase.**
+
+D-680 reported that cumulative return overtakes cumulative contributions at **$24,114, median 9.8 years**, and I
+framed it as a threshold — "below $24,114 the deposit rate is the account; above it the strategy is". That reads as
+a fixed dollar level you reach sooner by depositing more. **It is not.** Swept across a 20x range of deposit rates
+on the same 733 start months:
+
+| deposit | crossover TIME (p10 / median / p90) | crossover SIZE (median) |
+|---|---|---|
+| $50/mo | 6.6 / **9.8** / 16.0 yr | $12,116 |
+| $100/mo | 6.6 / **9.8** / 16.0 yr | $24,114 |
+| $200/mo | 6.6 / **9.8** / 16.0 yr | $48,242 |
+| $500/mo | 6.6 / **9.8** / 16.0 yr | — |
+| $1,000/mo | 6.6 / **9.8** / 16.0 yr | $240,851 |
+
+**The time is identical to the decimal at every rate; the size is exactly proportional** (1x / 2x / 4x / 20x). The
+reason is arithmetic: with a negligible starting balance, both cumulative contributions and account value are linear
+in the monthly amount, so their ratio is deposit-free. The crossover is set by the market's compounding rate alone.
+
+**FALSIFIED BEFORE BELIEVED.** If the invariance is real arithmetic then the STARTING balance — which is not linear
+in the deposit — must move it. It does:
+
+| starting capital | crossover time (median) | crossover size |
+|---|---|---|
+| $40 | **9.8 yr** | $24,114 |
+| $5,000 | **7.4 yr** | $28,371 |
+| $25,000 | **6.3 yr** | $66,378 |
+
+Had START done nothing either, the metric would have been broken rather than invariant, and the sweep would have
+looked exactly the same from the outside. This is the check that separates the two.
+
+**WHAT IT MEANS FOR THE $40 QUESTION.** Deposits and returns are not substitutes on this axis. More deposits raise
+the LEVEL of the account and do not change WHEN return starts dominating it; only a larger starting balance, a
+higher return, or waiting does. So for the specific purpose of escaping the deposit-dominated phase, **a lump sum is
+worth strictly more than a contribution stream of the same present value** — $25,000 up front cuts 3.5 years off,
+while any monthly amount cuts zero.
+
+Scope, stated: 9.8 years is specific to a 10.88%/yr, 15.4%-vol market with a negligible start. It is a property of
+this return distribution, not a universal constant, and the sweep above is what makes that checkable rather than
+asserted.
