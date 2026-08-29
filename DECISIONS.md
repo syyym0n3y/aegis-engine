@@ -13911,3 +13911,56 @@ different premium, a different mechanism, a different span. The pattern is now g
 rule rather than an observation: **on a contribution-funded climb to a fixed level, every risk-reducing,
 return-reducing holding tested so far has made the climb longer.** That is a prediction future candidates can be
 tested against, and it is falsifiable by the first one that doesn't.
+
+---
+
+**D-701 — LEVERAGE. The pre-registered rule PASSED, and the rule was missing a gate the programme's own law
+mandates. The headline is a financing assumption, and one of my predictions was flatly wrong.**
+
+Every lever measured on this ladder either lowers return (D-689 baskets, D-700 option writing — both made the climb
+longer) or does not move the phase (D-688 deposits, D-691 entry timing). Leverage is the only one that raises the
+compounding rate. Pre-registered with three numeric gates and my expectations, before running.
+
+| leverage | to $10k | to $100k | ruin | med maxDD | med UW |
+|---|---|---|---|---|---|
+| 1.00x | 5.8y | **20.3y** | 0.0% | −47% | 3.3y |
+| 1.50x | 5.3y | 17.3y | 0.0% | −64% | 4.3y |
+| 2.00x | 5.1y | 16.2y | 0.0% | −77% | 5.9y |
+| 3.00x | 4.7y | **14.7y** | 0.0% | **−91%** | **8.6y** |
+
+**GATE 1 SPEED: PASS** — 5.6 years faster at the registered 150bp borrow.
+**GATE 2 RUIN: PASS, and MY PREDICTION WAS WRONG ON THE ARITHMETIC.** I expected ruin to bind at 2x+. A
+daily-rebalanced constant-leverage position cannot reach zero unless the index falls **more than 33.3% in one day**;
+the worst day in 1970–2026 is 1987-10-19 at **−20.47%**, which a 3x position survives at −61.4%. Verified on **14,285
+daily ^GSPC returns**, because the monthly series I first used would have hidden intramonth ruin whether or not it
+existed.
+**GATE 3 INSTRUMENT: PASS.** SSO captures **75%** and UPRO **88%** of the naive levered gain over SPY — against the
+**13–20%** factor-ETF conversion of D-555/556. The reason is worth recording: the wrappers embed **institutional**
+financing, so the placeable route gets *better* borrow than retail margin does.
+
+**WHY A PASS IS NOT A PROMOTION — two reasons, both mine to own.**
+
+**(a) THE HEADLINE IS A FINANCING ASSUMPTION AND IT INVERTS INSIDE THE PLAUSIBLE RANGE.** Swept:
+
+| borrow spread over RF | 3.0x to $100k | vs 1.0x |
+|---|---|---|
+| 25bp (box spread) | 13.6y | −6.7y |
+| 150bp *(registered)* | 14.7y | −5.6y |
+| **400bp (typical retail margin)** | 17.6y | **−2.7y** |
+| **800bp (poor retail margin)** | **23.6y** | **+3.3y SLOWER** |
+
+The registered 150bp was optimistic. **At realistic retail financing the effect shrinks by more than half, and at
+poor financing leverage makes the climb longer than not levering at all.** This is a result about access to cheap
+borrow, not about leverage.
+
+**(b) MY GATE SET OMITTED HOLDABILITY, which D-565/566 requires of every deployable claim.** Median maxDD −77% at 2x
+and **−91% at 3x**, with median time underwater **5.9 and 8.6 years**. A −91% drawdown held for 8.6 years is not
+ruin arithmetically and is not something a human holds. I wrote three gates and the programme's own law mandates a
+fourth.
+
+**Recorded as INCONCLUSIVE — not promoted, not killed — with the pre-registration left exactly as written.**
+Rewriting a rule after seeing the data is the specific failure `trd_prereg` exists to prevent, so the honest entry is
+*the rule passed and the rule was incomplete*, not a quietly amended rule that fails.
+
+It is nonetheless the first thing this programme has measured that shortens the ladder at all, conditional on
+financing, and that conditionality is the finding.
