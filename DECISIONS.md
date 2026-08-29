@@ -13964,3 +13964,57 @@ Rewriting a rule after seeing the data is the specific failure `trd_prereg` exis
 
 It is nonetheless the first thing this programme has measured that shortens the ladder at all, conditional on
 financing, and that conditionality is the finding.
+
+---
+
+**D-702 — BEHAVIOURAL ERROR IS THE LARGEST SINGLE EFFECT THIS PROGRAMME HAS MEASURED, and it is a drag you avoid
+rather than a return you find.**
+
+Three register items testable with data already on disk, measured in one unit so their magnitudes are comparable.
+
+**1. BEHAVIOURAL ERROR** — sell when the market's drawdown from its peak exceeds a threshold, re-enter after a
+recovery, cash earns the risk-free rate. A caricature of panic, deliberately: the point is the shape and severity of
+the cost, not a claim to have measured any real investor.
+
+| rule | to $100k | vs holding | years in cash | % of paths that sold |
+|---|---|---|---|---|
+| never sells | **20.3y** | — | 0.0 | 0 |
+| sells at −30%, back after +20% | 20.8y | +0.6y | 2.3 | 74 |
+| sells at −20%, back after +20% | 21.8y | +1.6y | 6.0 | 96 |
+| sells at −20%, back after +50% | 21.8y | +1.6y | 8.9 | 96 |
+| **sells at −10%, back after +20%** | **25.8y** | **+5.5y** | **9.7** | 97 |
+
+**A jumpy rule costs +5.5 years — more than the +4.1 years a sustained +5%/yr net alpha would buy** (D-680), and
+that alpha has failed to appear in 1,059 specifications while this drag requires no edge at all to avoid. The
+mechanism is visible in the last two columns: cost scales with time spent out of the market, and a −10% trigger
+fires on 97% of paths and keeps the account in cash for 9.7 of its climbing years.
+
+**2. CURRENCY OF ACCOUNT — and my first comparison was confounded.** The initial run compared each currency against
+a USD baseline computed on the FULL 756-month panel while the currency rows spanned only their 271–356 month
+overlap: an ERA difference reported as a CURRENCY difference. Span-matched, the numbers move materially —
+GBP −1.4y → **−0.8y**, EUR −1.2y → **−0.6y**, JPY −1.3y → **−1.8y**. All three are *negative*, i.e. the non-USD
+investor arrived sooner, because the dollar strengthened over these particular spans. **That is a period fact, not a
+structural one**, and it would reverse on a weakening dollar. Recorded as a real risk of period-dependent sign,
+measured on one draw.
+
+**3. TAX-LOSS HARVESTING** — a credit accruing only while the position is down (a rising market has nothing to
+harvest). A 1.0%/yr credit buys **0.4 years** and +5.2% of terminal wealth. A minor lever, now measured rather than
+assumed.
+
+**THE RANKING THAT NOW EXISTS**, everything in years off the climb to $100,000, negative meaning faster:
+
+| lever | effect |
+|---|---|
+| **not panic-selling (vs a −10% trigger)** | **−5.5y** |
+| leverage 3x at 150bp borrow | −5.6y *(but −91% drawdown, and +3.3y at retail borrow — D-701)* |
+| +5%/yr sustained net alpha | −4.1y *(never produced in 1,059 specs)* |
+| depositing $150/mo instead of $100 | −3.4y |
+| currency of account | ±1.8y, period-dependent |
+| tax, heaviest drag modelled | +1.1y *(and −27% of terminal wealth)* |
+| tax-loss harvesting at 1%/yr | −0.4y |
+| entry timing | ±0.6y |
+| a higher-Sharpe passive basket | +2.0 to +5.8y |
+| option writing | +6.1y |
+
+**The two largest levers are behavioural and financial-structural, not analytical.** That is the answer to what a
+programme like this should be spending its effort on, and it took building the coverage map to see it.
