@@ -14374,3 +14374,48 @@ mid-session for four months of every year and the result would be about an arbit
 `bars` and cast the parse, so every day silently had `bars === undefined`. It surfaced as a null-property crash
 rather than as a wrong number — the better of the two outcomes, and the reason the script now asserts the shape
 after parsing instead of trusting the cast.
+
+---
+
+**D-712 — THE BAR-RESOLUTION BIAS, MEASURED. The apparent edge appears ONLY at hourly bars; 1, 5 and 15-minute all
+agree on zero. And a paired-array bug of mine, caught by the typechecker chasing a different error.**
+
+D-711 showed the same opening-range rule giving +7.32 pts at t 4.27 on hourly bars and essentially nothing on
+minute bars. Asserting the mechanism is not measuring it. This is a **controlled comparison**: one instrument, one
+identical rule, one identical set of 2,656 days, four bar sizes all aggregated from the SAME minute source and
+anchored on the session open — so the opening range is the same price extremes at every resolution and **only the
+detection of the break is coarsened.**
+
+| bar size | trades | ambiguity | mean% | t | **EXCESS%** | vs 1-min |
+|---|---|---|---|---|---|---|
+| 1 min | 2,656 | **0.0%** | 0.0127 | 1.15 | **0.0022** | — |
+| 5 min | 2,656 | 0.2% | 0.0126 | 1.14 | 0.0021 | −0.0001 |
+| 15 min | 2,656 | 1.5% | 0.0126 | 1.14 | 0.0020 | −0.0001 |
+| **60 min** | 2,656 | **11.5%** | **0.0421** | **4.30** | **0.0315** | **+0.0293** |
+
+**THE BIAS IS SHARPLY NON-LINEAR, NOT GRADUAL.** One, five and fifteen-minute bars agree to the fourth decimal —
+excess ≈ 0.002%, t ≈ 1.14. At sixty minutes the identical rule reports **t 4.30 and an excess fourteen times
+larger, conjured from nothing.**
+
+**THE MECHANISM, and it gives a usable rule of thumb.** With a 30-minute range and a 150-minute window, hourly bars
+leave only ~2 bars in which to detect the break, so the first bar's extreme almost always contains it and the study
+books the move to that extreme — a distance a live order could never have caught. At 15 minutes there are 10 bars
+and detection is fine-grained enough to be honest. **Bar size must be small relative to the trade window; roughly
+ten bars or more appears to be safe and two or three is not.**
+
+**AMBIGUITY FALLS AS RESOLUTION COARSENS — 11.5% at hourly, 0.0% at minute — WHICH IS THE OPPOSITE OF REASSURING.**
+Coarse bars do not resolve whipsaws, they **absorb** them: both touches vanish inside one bar's range and the day
+looks clean. A low ambiguity count on coarse data is evidence of hiding, not of cleanliness.
+
+**CONSEQUENCE FOR D-710, stated because the sweep's conclusion depends on it.** That sweep ran 100 specifications
+across 37 series **entirely on hourly bars**. The bias is POSITIVE, so those figures are **upper bounds** and the
+finding of 0 survivors is if anything stronger than reported. Had the bias been negative the sweep would have
+required a full re-run.
+
+**A PAIRED-ARRAY BUG, found by chasing an unrelated typecheck error.** `deno check` flagged
+`x - bench[i] ?? 0` as an unreachable null-coalesce — cosmetic. Fixing it exposed the real defect underneath:
+**`bench` was appended on every day with a valid range, including no-break days where no trade exists, while `rets`
+was appended only on resolved trades.** The arrays drifted apart by the no-break count and every excess after the
+first no-break paired a trade with a different day's benchmark. Paired arrays must be appended at the same point or
+they are not paired; the script now asserts equal lengths and exits RED otherwise. This is the third time this
+session that a typecheck or a guard chasing something small has surfaced something that changes a number.
