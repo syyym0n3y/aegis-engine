@@ -14018,3 +14018,41 @@ assumed.
 
 **The two largest levers are behavioural and financial-structural, not analytical.** That is the answer to what a
 programme like this should be spending its effort on, and it took building the coverage map to see it.
+
+---
+
+**D-703 — SPIN-OFFS: UNTESTED ON COVERAGE, exactly as pre-registered. The survivorship control has no comparison
+group, which is itself the proof.**
+
+Spun-off subsidiaries outperforming for up to three years is a documented, long-only, no-borrow effect — one of the
+few placeable at the bottom of the ladder. Fetched from EDGAR full-text: **4,105 Form 10-12B hits, 2005–2026,
+complete coverage, no saturated window**, deduping to 1,526 registrations and 387 distinct filers.
+
+**THE COVERAGE STATEMENT CAME FIRST AND IT DECIDED THE OUTCOME.** Only **126 of 387 (32.6%)** join to price history.
+The chain loses rows at every link: EDGAR returns a CIK, **`trd_cik_ticker` holds 0 rows** — a table that exists,
+resolves nothing, and had been silently contributing nothing — so every resolution came from a ticker EDGAR happened
+to inline in its `names` field, and the panel is 4,350 mostly-surviving US names.
+
+| horizon | n | mean excess | **median** | t | % positive |
+|---|---|---|---|---|---|
+| 12mo | 126 | **+28.85%** | **+0.25%** | 2.00 | **50%** |
+| 24mo | 123 | +30.77% | +7.42% | 2.69 | 53% |
+| 36mo | 115 | +18.30% | +2.08% | 50% | 1.17 |
+
+**GATE 2 COULD NOT BE COMPUTED, AND THAT IS THE VERDICT.** The survivorship split returns **126 still-listed and
+ZERO ended events at every horizon.** There is no comparison group, because a spun-off child that failed is not in a
+price panel built from surviving listings. This is not a weak survivorship control — it is proof the sample is
+survivors *by construction*.
+
+**THE DISTRIBUTION IS THE SECOND TELL.** Mean +28.85% against a **median of +0.25%**, with **50% of events
+positive**. A documented outperformance that is a coin flip with a near-zero median is a lottery shape driven by a
+few enormous winners — and outliers are precisely what a survivor-only sample over-represents.
+
+**No claim about spin-offs is made.** The prediction registered beforehand read: *"I expect a POSITIVE point
+estimate and I will NOT be able to distinguish it from survivorship... a positive result on a survivor-biased 32.6%
+sample is not evidence about spin-offs."* That is what happened, and registering it first is what stops a +28.85%
+headline from being narrated as a finding.
+
+**The blocker is `delisted-price-history`** — the same operator-gated gap as D-687, where Stooq is closed by
+bot-challenge policy and Alpaca needs credentials. It has now blocked a *second* research item rather than remaining
+an abstract concern, which is worth recording: the gap's cost is no longer hypothetical.
