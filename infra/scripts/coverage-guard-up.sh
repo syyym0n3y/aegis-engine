@@ -125,6 +125,14 @@ while true; do
   if ! deno run --allow-net --allow-env --allow-run ../scripts/infra-guard.ts; then
     echo "$(date -u +%FT%TZ) INFRA GUARD RED — substrate unreachable; today's conclusions are UNKNOWN, not null"
   fi
+  # DRIVER REGISTER (D-716): the per-instrument inventory of observable inputs and whether we hold them. It goes RED
+  # only on a BROKEN PROBE — a mistyped column, or an empty filter on a populated table — which is a register bug and
+  # the D-641 false-MISSING class, not a market finding. Runs here so a newly-added table with a wrong probe, or a
+  # feed that has silently emptied, surfaces as a loud error rather than a quiet "we don't hold it" that becomes a
+  # narrated coverage conclusion. The MISSING/DEBT tallies it prints are the standing account of what the stack lacks.
+  if ! deno run --allow-net --allow-env ../scripts/driver-register.ts >/dev/null; then
+    echo "$(date -u +%FT%TZ) DRIVER REGISTER RED — a driver probe is broken (false-MISSING risk); fix the probe before trusting coverage"
+  fi
   # TRIAL IDEMPOTENCY GUARD (D-681): a clock inside run_key defeats the unique constraint that makes the trial counter
   # idempotent, so a daemon recomputing one identical answer forever also grows the ceiling every result must clear.
   if ! deno run --allow-net --allow-env --allow-read ../scripts/trial-idempotency-guard.ts; then

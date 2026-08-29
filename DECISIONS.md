@@ -14529,3 +14529,51 @@ on precisely the runs where it mattered, and the first run showed no wiring line
 when everything else is already green is not a check.** Moved ahead of the verdict and folded into the red count.
 
 Both stale feeds refreshed: FX/index hourly re-crawled across eight instruments, crypto funding running.
+
+## D-716 — the DRIVER REGISTER: a per-instrument inventory of observable inputs, and the seven false-MISSING it caught in itself
+
+An external list of ten gold drivers was supplied (CPI/inflation expectations, geopolitical risk premium, real
+yields, the dollar index, central-bank buying/de-dollarisation, the COT report, ETF flows, the gold/silver ratio,
+seasonality, and the World Gold Council attribution framework). The instruction: account for every niche and broad
+driver of every instrument, and know what data we lack. `scripts/driver-register.ts` is that accounting — it names,
+per instrument class, the observable quantities that move the instrument, and GOES AND LOOKS whether we hold each.
+
+**THIS IS A DIFFERENT REGISTER FROM D-697.** The coverage map asks which APPROACHES we have tested. This asks one
+level down and never asked before: for a given INSTRUMENT, what are the observable inputs, and do we hold them. A
+programme can test every approach on a thin set of inputs and still be blind — and THE COVERAGE LAW says that
+blindness is a fact about US, not the market.
+
+**THE DISTINCTION THE SOURCE LIST DOES NOT MAKE, and that matters most.** Item ten, the WGC framework, is an
+ATTRIBUTION model: it decomposes returns that already happened. Attribution is not prediction. Central-bank reserve
+data is quarterly and lagged — it can EXPLAIN a move and cannot CONDITION a position at any horizon we trade. So
+every driver is tagged PREDICT / CONDITION / EXPLAIN. A register of true facts is not a strategy, and this programme
+has killed results at |t| over 20 that were real and untradable.
+
+**THE REGISTER CAUGHT SEVEN FALSE-MISSING IN ITSELF — the D-641 failure class, reproduced inside the tool built to
+prevent it.** The first run reported 28 HELD. Five equity tables holding MILLIONS of rows — short interest
+(3.9M), settlement fails (10.8M), ATS dark-pool (7.6M), 13F (1.0M), NPORT (1.4M) — were scored MISSING because the
+probe named a column that did not exist (`settlement_date` for `settlement`, `cik` for `cusip`), PostgREST returned
+400, and the old code read that as absence. Two crypto drivers were the harder case: `venue=eq.blockchain` (the data
+is under `blockchain.info`, 967k rows of hash-rate / transaction counts / active addresses) and `symbol=like.*DVOL*`
+(DVOL is an INTERVAL not a symbol; Deribit holds 22k rows of dvol/skew25/atm_iv) — both WELL-FORMED queries
+returning zero because the VALUE was wrong, indistinguishable from genuine absence. True count: **35 HELD**.
+
+**THE POSITIVE CONTROL IS NOW BUILT INTO THE REGISTER (D-716b/c):** a probe that errors (400/404) is a BROKEN probe,
+reported loudly and failing the run, never counted as MISSING; and an empty filter on a POPULATED table is flagged
+as a probe-value bug for a human eye rather than scored as a market absence. A false MISSING is worse than a loud
+error because it becomes a narrated market conclusion.
+
+**WHAT THE HONEST REGISTER SHOWS WE LACK.**
+- RESEARCH DEBT (free, obtainable, unfetched — a research failure per THE COVERAGE LAW, not a market finding):
+  GLD/IAU shares outstanding (real ETF flow), the Caldara-Iacoviello GPR index, equity advance/decline breadth
+  (computable from the 4,350-name panel we already hold), commodity inventories (EIA/USDA).
+- REAL BARRIERS: TIPS/real yields and CPI/breakevens (FRED credential-gated) — note gold's stated driver is the REAL
+  yield and the nominal curve we hold is NOT a substitute; FX foreign short rates (the carry differential needs both
+  legs, only the US is held — why 'carry' is UNTESTED not null); commodity futures curve (no 2nd contract, so roll
+  yield is uncomputable); dealer gamma (`trd_gex_state` is one all-NULL row); earnings revisions (licensed);
+  DELISTED price history (the largest hole — 27.3% of the equity universe, all delisted, has blocked D-687/D-703);
+  borrow cost (paid — every short-side result assumes rather than observes it); gold options surface (paid; note
+  crypto options ARE held via Deribit).
+
+The register is OPEN and is explicitly not a completeness claim — it was seeded from an EXTERNAL list precisely
+because a list I wrote alone would inherit the blind spots it exists to find.
