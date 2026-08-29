@@ -13871,3 +13871,43 @@ buy-and-hold holding realises nothing else until it sells. **Every ACTIVE specif
 here, not overstated** — a strategy that turns over realises gains continuously, so its recurring drag is larger by
 roughly (turnover x gain x rate). Measuring that properly needs the per-spec turnover D-686 now stores, and is
 recorded as open rather than done.
+
+---
+
+**D-700 — OPTION WRITING, PRE-REGISTERED AND KILLED. The prediction was written first and was correct on all three
+counts; one gate defect caught by its own output.**
+
+`coverage-map.ts` identified option writing as the largest untested item that is genuinely **placeable at L0** — no
+borrow, no margin, fractional shares, and ETF wrappers that exist. The CBOE PutWrite index runs to **1996 (361
+months, 30.1 years)** and is free; PBP/QYLD/XYLD are what an account could actually hold. **Registered in
+`trd_prereg` with a numeric two-sided rule and my expectation BEFORE running it**, so being wrong would be visible.
+
+| | %/yr | vol | Sharpe | maxDD | UW yr |
+|---|---|---|---|---|---|
+| ^PUT | **8.52** | 10.5 | **0.62** | −33% | **3.3** |
+| SPY | **10.49** | 15.3 | 0.55 | −51% | 6.2 |
+
+**GATE 1 — RETURN: FAIL.** Higher Sharpe, shallower drawdown, half the time underwater — and **1.98pp/yr less
+return**, exactly the shape predicted. Worth stating precisely: the monthly difference carries **t −1.56**, so
+put-write does *not* significantly underperform. It simply does not out-*return*, and the ladder amplifies that.
+
+**GATE 2 — INSTRUMENT: FAIL, after I fixed a defect in my own gate.** The wrappers track their index at **92–144%**
+(PBP 144, QYLD 92, XYLD 97) — dramatically better than the **13–20%** factor-ETF capture of D-555/556, and a
+genuinely useful separate finding about which wrapper types convert. But the index excess over SPY is **negative**
+(−4.08 / −5.89 / −6.17pp), so they are **good trackers of a bad thing**. My gate accepted `|excess| > 0.25`, so
+faithful tracking of a LOSS scored 144% and the gate read **PASS**. Corrected to require a POSITIVE excess; it now
+fails. A capture ratio is only meaningful when there is something worth capturing.
+
+**GATE 3 — LADDER: FAIL. 27.1 years to $100,000 against 21.0 for simply holding — 6.1 years slower.** The D-689
+mechanism again, and now confirmed on a second, entirely independent asset class: an account compounding toward a
+LEVEL cares about return, not risk-adjusted return.
+
+**KILLED by the pre-registered rule.** Outcome appended to `trd_prereg` with the original prediction preserved as a
+prefix, verified by re-read.
+
+**WHAT THIS ADDS BEYOND ONE MORE NULL.** D-689 found five of seven higher-Sharpe passive baskets delay the ladder,
+measured on equity/bond/gold mixes over 21.8 years. D-700 reproduces it on **option-writing over 30 years** — a
+different premium, a different mechanism, a different span. The pattern is now general enough to state as a working
+rule rather than an observation: **on a contribution-funded climb to a fixed level, every risk-reducing,
+return-reducing holding tested so far has made the climb longer.** That is a prediction future candidates can be
+tested against, and it is falsifiable by the first one that doesn't.
