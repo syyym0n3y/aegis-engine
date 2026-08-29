@@ -1588,6 +1588,20 @@ but reports INSUFFICIENT DATA — it needs two inputs:
    the $10/mo cloud project exists. Congress ingestion deferred (House PTRs are messy
    PDFs; EDGAR/Form-4 is the cleaner + stronger signal).
 
+## Driver register (D-716, 2026-08-29) — what we can OBSERVE per instrument
+`scripts/driver-register.ts` — per-instrument-class inventory of observable inputs (PREDICT/CONDITION/EXPLAIN),
+probed live. **35 HELD** after the register caught **7 false-MISSING in itself** (5 equity tables of millions of
+rows on mistyped columns; 2 crypto on wrong filter values — the D-641 class inside the tool built to prevent it).
+Positive control now built in: a broken probe fails the run, an empty filter on a populated table flags a probe bug.
+Wired into the daily board. Standing gaps it prints:
+- **Free research debt (no barrier, just unfetched):** GLD/IAU shares outstanding, GPR index, equity breadth
+  (computable from the panel we hold — no fetch), commodity inventories. Closing needs endpoint-allowlist adds
+  (GPR/EIA) or a new table (breadth = schema gate).
+- **Real barriers:** TIPS/real-yields + CPI (FRED-gated — and the nominal curve is NOT a substitute for gold's real
+  yield), FX foreign short rates (carry needs both legs), commodity 2nd contract (roll yield uncomputable), dealer
+  gamma (all-NULL table), earnings revisions (licensed), delisted price history (27.3% of equity universe — the big
+  hole), borrow cost (paid). Crypto options ARE held (Deribit dvol/skew/IV); gold options are not.
+
 ## Blocked on operator (free actions / config)
 - ✅ ~~Start Docker~~ — Colima installed + local DB up + `0001` verified.
 - ✅ ~~Allowlist the 4 legal data-source endpoints~~ — added (House/Senate/SEC/Alpaca).
