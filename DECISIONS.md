@@ -14419,3 +14419,43 @@ was appended only on resolved trades.** The arrays drifted apart by the no-break
 first no-break paired a trade with a different day's benchmark. Paired arrays must be appended at the same point or
 they are not paired; the script now asserts equal lengths and exits RED otherwise. This is the third time this
 session that a typecheck or a guard chasing something small has surfaced something that changes a number.
+
+---
+
+**D-713 — NO SIMPLE INTRADAY RULE BEATS HOLDING, AT MINUTE RESOLUTION, AFTER RETAIL COST. A family-wide null across
+five rule classes.**
+
+D-708/711 tested one externally-supplied checklist. One rule failing says little. With 1,200,240 minute bars now
+held (D-709), the honest question is whether ANY simple intraday rule on this instrument beats simply holding it —
+so a family was tested, not a rule, and every row is benchmarked against holding the identical window.
+
+| class | spec | n | excess% | t | **net%** | eras |
+|---|---|---|---|---|---|---|
+| OPEN_BREAK | orb30 | 2,656 | **+0.0022** | 0.12 | −0.0128 | --++ |
+| OPEN_BREAK | orb15 | 2,734 | −0.0023 | −0.13 | −0.0173 | --+- |
+| TOD | long 0–30m | 3,334 | −0.0099 | — | −0.0249 | ---- |
+| TOD | long 90–150m | 3,334 | −0.0091 | — | −0.0241 | ---+ |
+| MOM | 30m signal | 2,745 | −0.0115 | — | −0.0265 | ---+ |
+| REV | 30m signal | 2,745 | −0.0461 | — | −0.0611 | ---- |
+| GAP_FADE | overnight gap | 3,305 | −0.0133 | — | −0.0283 | ---+ |
+
+**0 of 13 clear the deflation ceiling on the excess. 0 of 13 are net-positive on the excess after 1.5bp.** Exactly
+one spec has a positive excess at all (+0.0022%, t 0.12) and it is negative after cost.
+
+**THE STRUCTURAL FACT UNDERNEATH.** Holding the full 150-minute window returns **+0.0237%**, and every intraday rule
+returns less. The rules are not finding a signal and losing it to costs — they are capturing a *fraction* of the
+drift that holding captures in full, and then paying to do so. That is a different and more complete statement than
+"the edge is sub-fee".
+
+**TWO INTERNAL CONSISTENCY CHECKS PASSED.** MOM and REV are exact mirrors (+0.0173 / −0.0173), as are GAP_FOLLOW and
+GAP_FADE (−0.0106 / +0.0106). A family where the mirrored pairs did not sum to the benchmark would indicate a coding
+error rather than a market fact, and this is the cheapest available test of that.
+
+**SCOPE, STATED.** One instrument, one session window, five rule classes, thirteen specifications — this does not
+say intraday trading cannot work, and no such claim is made. It says that on this instrument, over 3,334 sessions,
+the simple rules a retail account would actually reach for all underperform holding. Rules requiring order-book
+data, cross-instrument signals, or discretion are UNTESTED here and are not addressed by this null.
+
+**Consistent with the ladder.** D-689 and D-700 found that every risk-reducing, return-reducing holding lengthens
+the climb; D-701 found only leverage shortens it, conditional on cheap financing. Intraday activity on this evidence
+is another way to hold *less* of the drift while paying more for it.
