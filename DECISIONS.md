@@ -14613,3 +14613,28 @@ correct thing to surface). Daily runner: `refresh-breadth.sh` wired after the ea
 
 Three free debts remain, all needing an endpoint I cannot allowlist myself: GLD/IAU shares outstanding, the GPR
 index, commodity inventories (EIA/USDA).
+
+## D-718 — is breadth informative? The washout hypothesis LOSES; a U-shape appears but is DESCRIPTIVE ONLY
+
+Having built breadth (D-717), the question that decides whether it may enter any confidence view: does it inform
+forward equity-index returns, or is it decorative? `scripts/breadth-conditioning.ts` tests the folklore washout
+hypothesis — low breadth (oversold) -> high forward return, monotonically falling as breadth rises — on SPY
+forward-20d returns, 1993-2026, decile edges fixed on TRAIN (60%) and applied to TEST (SELECTION LAW), rank-based so
+the survivorship level-bias cancels.
+
+**THE PRE-REGISTERED HYPOTHESIS IS REJECTED.** Spearman of decile vs forward return on TEST is -0.03 (a monotone
+washout would be strongly negative); the D1-minus-D10 spread is 0.15% at t=0.40 — nothing. Breadth is NOT a monotone
+confidence axis for forward SPY returns.
+
+**A U-SHAPE APPEARED, AND IT IS DESCRIPTIVE ONLY.** On TEST both extremes carry high forward returns — D1 (breadth
+0.00-0.33) +2.65% and D10 (0.78-1.00) +2.50% — while the MIDDLE, D5 (breadth 0.55-0.60), is the worst at +0.06%.
+Read charitably this is washout-bounce at the bottom and thrust-continuation at the top with indecision in between.
+BUT: (1) it is not the hypothesis I registered, so per THE MECHANISM LAW the story is DESCRIPTIVE ONLY, not a
+claimable finding; (2) the per-decile t-stats (to 6.78) are inflated by overlapping 20-day windows — they are not
+independent observations; (3) no costs, execution, or borrow are modelled. It is a lead for a future PRE-REGISTERED
+test, not an edge.
+
+**CONSEQUENCE FOR THE OPERATOR'S ASK.** Breadth is a legitimately HELD observable and a real description of the tape
+state, but it does not clear even the low bar of a monotone forward relationship, let alone the gate stack. It may
+sit in a confidence VIEW as context; it may not carry a position. This is the programme's prior holding: an observable
+being real does not make it predictive, and predictive does not make it tradable.
