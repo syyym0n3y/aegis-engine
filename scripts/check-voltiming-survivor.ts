@@ -24,7 +24,7 @@ const vix=new Map<string,number>((vixB[0]?.bars||[]).map(b=>[iso(b[0]),b[4]]));
 // the block deliberately: placed inside it, three lines of prose pushed the res.ok check out of the plumbing guard's
 // proximity window and turned a checked write into a reported silent-write — a false positive I created and then had
 // to read. Proximity is load-bearing to that guard; keep the check next to its fetch.
-{const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal,resolution=ignore-duplicates"},
+{const tw=await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"return=minimal,resolution=ignore-duplicates"},
   body:JSON.stringify({family:"adhoc",run_key:`voltiming-adversarial-D544`})}).catch(()=>null);
  if(!tw||(!tw.ok&&tw.status!==409))console.log(`WRITE-FAILED trd_trial_counter ${tw?tw.status:"net"}`);}
 for(const inst of ["SPY","QQQ"]){

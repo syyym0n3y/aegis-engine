@@ -76,7 +76,11 @@ SERVE(async () => {
       if (fresh.length) {
         const rows = fresh.map((t) => ({ candidate: c.candidate, entry_ts: t.entryTs, exit_ts: t.exitTs, side: t.side, entry: t.entry, stop: t.stop, target: t.target, exit_price: t.exit, gross_r: t.grossR, cost_r: t.costR, net_r: t.netR, outcome: t.outcome }));
         // idempotent append: duplicates on (candidate, entry_ts) are ignored
-        await fetch(`${SB}/rest/v1/trd_forward_trade`, { method: "POST", headers: { ...hdr, Prefer: "resolution=ignore-duplicates,return=minimal" }, body: JSON.stringify(rows) });
+        // D-714: without an on_conflict target the ignore-duplicates header is inert, so a re-tick that re-sends any
+        // already-stored trade 409s and the WHOLE BATCH is rejected — including the genuinely new trades in it. The
+        // response was never checked either, so that loss would have been silent.
+        const fr = await fetch(`${SB}/rest/v1/trd_forward_trade?on_conflict=candidate,entry_ts`, { method: "POST", headers: { ...hdr, Prefer: "resolution=ignore-duplicates,return=minimal" }, body: JSON.stringify(rows) });
+        if (!fr.ok) console.log(`WRITE-FAILED trd_forward_trade ${fr.status}`);
       }
 
       // recompute rollup from the ledger (source of truth), not from this tick's delta

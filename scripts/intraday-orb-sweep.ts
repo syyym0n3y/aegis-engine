@@ -68,7 +68,8 @@ for (const sym of ["USATECHIDXUSD", "USA500IDXUSD", "XAUUSD", "BRENTCMDUSD", "EU
 }
 // ---- source 2: trd_bars_intraday tf=1h (crypto + a few equities) ------------------------------------------------
 {
-  const rows = await fetch(`${OWNED}/trd_bars_intraday?select=symbol,bars&tf=eq.1h&limit=100`, { headers: hdr })
+  // ORDER IS LOAD-BEARING: `limit` with no `order` leaves which rows you get to the storage layer (D-629).
+  const rows = await fetch(`${OWNED}/trd_bars_intraday?select=symbol,bars&tf=eq.1h&order=symbol.asc&limit=100`, { headers: hdr })
     .then((r) => r.ok ? r.json() : []) as { symbol: string; bars: number[][] }[];
   for (const r of rows) {
     const bars: Bar[] = (r.bars || []).filter((b) => b[4] > 0).map((b) => ({ ts: b[0], o: b[1], h: b[2], l: b[3], c: b[4] }));

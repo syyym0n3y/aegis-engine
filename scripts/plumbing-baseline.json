@@ -21,7 +21,7 @@
  "silent-write|supabase/functions/trd-edge-stage2/index.ts": 1,
  "silent-write|supabase/functions/trd-effective-n/index.ts": 2,
  "silent-write|supabase/functions/trd-fear-exec/index.ts": 5,
- "silent-write|supabase/functions/trd-forward-tick/index.ts": 3,
+ "silent-write|supabase/functions/trd-forward-tick/index.ts": 2,
  "silent-write|supabase/functions/trd-forward-validate/index.ts": 4,
  "silent-write|supabase/functions/trd-fundamentals-load/index.ts": 3,
  "silent-write|supabase/functions/trd-fundflow-load/index.ts": 3,

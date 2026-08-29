@@ -60,6 +60,21 @@ function lint(fileAbs:string,src:string){
   // a guard that is off. Now: only files that read a VALUE column, and any of the three known disciplines counts.
   const readsValue=/trd_fundamentals\?[^"`']*\bvalue\b|trd_fundamentals\?[^"`']*concept=/.test(src);
   const hasPIT=/effective_date|\beff\b|asOf|point.in.time|\bpit\(|period_end[\s\S]{0,4000}?(LAG|lag_d|lagD)/i.test(src);
+  // RULE 5 — IGNORE-DUPLICATES WITHOUT AN on_conflict TARGET (D-714). `Prefer: resolution=ignore-duplicates` is
+  // INERT unless the request names the constraint: PostgREST has nothing to resolve against and the insert 409s on
+  // exactly the case the header was added to handle. Found in THREE places at once — aegis-discovery (logging a
+  // WRITE-FAILED every cycle after D-681 correctly made its key idempotent), check-voltiming-survivor, and the
+  // trd-edge-backtest function — plus the shared trial-ledger, whose advertised idempotency had never once been
+  // exercised because every caller used a fresh runId.
+  // MATCH THE HEADER, NOT PROSE. The first version matched the bare phrase and flagged trial-ledger.ts:81 — which is
+  // the COMMENT EXPLAINING THIS VERY FIX. A guard that reds on its own documentation gets waived, and a waived guard
+  // is off. Requiring `Prefer:` on the same line restricts it to actual requests.
+  for(const m of src.matchAll(/Prefer[^\n]*resolution=ignore-duplicates/g)){
+    const at=src.slice(0,m.index??0).split("\n").length;
+    const win=lines.slice(Math.max(0,at-8),at+2).join(" ");
+    if(!/on_conflict=/.test(win))
+      hits.push({file,line:at,rule:"inert-upsert",snip:"Prefer: resolution=ignore-duplicates with no on_conflict target — the header is inert and the write 409s on any legitimate re-run"});
+  }
   if(/trd_fundamentals/.test(src)&&readsValue&&!hasPIT)
     hits.push({file,line:1,rule:"lookahead-risk",snip:"reads fundamental VALUES with no point-in-time discipline anywhere in the file (no effective_date, no asOf, no period_end+lag) — a historical query returning today's value is look-ahead by default"});
 }

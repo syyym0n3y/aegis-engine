@@ -14459,3 +14459,39 @@ data, cross-instrument signals, or discretion are UNTESTED here and are not addr
 **Consistent with the ladder.** D-689 and D-700 found that every risk-reducing, return-reducing holding lengthens
 the climb; D-701 found only leverage shortens it, conditional on cheap financing. Intraday activity on this evidence
 is another way to hold *less* of the drift while paying more for it.
+
+---
+
+**D-714 — ONE INERT HEADER IN FOUR PLACES, AND THE RULE THAT FOUND TWO MY GREP MISSED. One of them was silently
+dropping whole batches of forward trades.**
+
+D-710 fixed `spendTrials`: `Prefer: resolution=ignore-duplicates` is **inert without an `on_conflict` target** —
+PostgREST has nothing to resolve against, so the insert 409s on exactly the case the header exists to handle. The
+agent-output guard then went RED on `aegis-discovery` logging **WRITE-FAILED every cycle**, which is the same defect
+one layer out: D-681 had correctly made its key data-versioned and idempotent, and the write path could not express
+it.
+
+**A manual grep found three sites. A plumbing rule found five.**
+
+| site | consequence |
+|---|---|
+| `_shared/trial-ledger.ts` | threw on any re-run — its advertised idempotency had **never once been exercised** |
+| `aegis-discovery.ts` | WRITE-FAILED every cycle after D-681 made the key correct |
+| `check-voltiming-survivor.ts` | 409 on every manual re-run |
+| `trd-edge-backtest/index.ts` | no ignore-duplicates at all |
+| **`trd-forward-tick/index.ts`** | **the serious one — see below** |
+
+**THE ONE THAT WAS NOT COSMETIC.** `trd-forward-tick` appends FORWARD TRADES in a batch. Without the target, a tick
+that re-sends any already-stored trade 409s and **PostgREST rejects the entire batch — including the genuinely new
+trades in it.** The response was never checked either, so that loss was silent. On a forward book whose entire
+purpose is an append-only record that cannot be rationalised later, silently dropping new trades is the failure the
+book exists to prevent. Now targeted on `(candidate, entry_ts)` and the response is checked.
+
+**THE RULE'S OWN FIRST VERSION FLAGGED ITS OWN DOCUMENTATION.** It matched the bare phrase
+`resolution=ignore-duplicates` and reded on `trial-ledger.ts:81` — the comment explaining this very fix. A guard that
+reds on its own documentation gets waived, and a waived guard is off. Narrowed to require `Prefer:` on the same
+line, which restricts it to actual requests. That is the third time this session a new rule has over-fired on its
+first run and needed narrowing before it was worth keeping — the pattern is consistent enough to expect it.
+
+The rule also caught a truncation defect in my own `intraday-orb-sweep.ts` (a `limit` with no `order`, undefined row
+selection, D-629). Plumbing baseline ratcheted from 155 to 154.

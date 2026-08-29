@@ -189,7 +189,7 @@ async function cycle() {
       const rows = results.map((r) => ({ family: String(r.family ?? "discovery"), run_key: `${r.candidate}|${fp}` }));
       const before = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
       const nBefore = before ? +((before.headers.get("content-range") || "").split("/")[1] || 0) : -1;
-      const res = await fetch(`${OWNED}/trd_trial_counter`, { method: "POST", headers: { ...hdr, "Content-Type": "application/json", Prefer: "return=minimal,resolution=ignore-duplicates" }, body: JSON.stringify(rows) }).catch(() => null);
+      const res = await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`, { method: "POST", headers: { ...hdr, "Content-Type": "application/json", Prefer: "return=minimal,resolution=ignore-duplicates" }, body: JSON.stringify(rows) }).catch(() => null);
       if (!res || !res.ok) console.log(`  WRITE-FAILED trd_trial_counter ${res ? res.status + " " + (await res.text()).slice(0, 120) : "network"}`);
       else {
         const back = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
