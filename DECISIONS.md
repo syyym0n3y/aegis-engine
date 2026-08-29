@@ -14098,3 +14098,29 @@ were correct code**: two are guards that merely name the table, and three (`goin
 correct code teaches people to waive it, and a waived guard is off.** Narrowed to require a VALUE read and to accept
 any of the three disciplines; verified it still FLAGS a synthetic violator that reads `concept=` and `value` with no
 lag anywhere. Plumbing guard back to 0 regressions against baseline.
+
+---
+
+**D-705 — THE BACKFILL TURNED FIVE GUARDS RED, WHICH IS THE PROOF IT MATTERED.**
+
+D-698 backfilled 16 lineage rows for findings that had lived only in prose. Within minutes the board went from 1 RED
+to 5. **That is not a regression — it is the laws binding work that no guard could previously see.** The liquidity,
+universe, benchmark (x3) and turnover guards all fired on rows whose findings were a day old and had been invisible.
+
+Every one was resolved from measurements already made, not new claims:
+- **`industry-momentum-not-identified`** — needed its turnover (french one-way p10 10.5% / median 35.1% / p90 65.3%,
+  D-686c) and an explicit statement that the quoted excesses ARE the universe decomposition.
+- **`passive-allocation-ladder`** — needed its benchmark stated (every basket is reported as a difference from 100%
+  US total held over identical months), its capacity answered (broad listed ETFs against a $100k ladder — capacity
+  binds nowhere in range), and its gross figures given (costs total under 0.10%/yr; at zero cost the ordering is
+  unchanged and crossovers move under 0.1 years, so **no conclusion rests on the cost model**).
+- **`delisted-equity-verified-search`** — universe sensitivity NOT APPLICABLE, stated rather than omitted: it is a
+  data-access verdict with no cross-sectional return claim.
+
+**AND A LESSON ABOUT THE GUARDS THEMSELVES.** My first attempt wrote each statement in my own words and two guards
+stayed red. They require specific *phrasings* — `capacity answer: <20+ chars>`, an explicit universe-mean form —
+because those are the forms their self-tests verify. **Writing the content and expecting a regex to recognise it is
+the same error as assuming a guard is green because the work was done.** The phrasing requirement is not pedantry;
+it is what makes the check mechanical rather than a matter of interpretation.
+
+Board back to **22 of 23 green**, the single RED being the operator-gated Supabase billing outage.
