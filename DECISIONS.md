@@ -14124,3 +14124,43 @@ the same error as assuming a guard is green because the work was done.** The phr
 it is what makes the check mechanical rather than a matter of interpretation.
 
 Board back to **22 of 23 green**, the single RED being the operator-gated Supabase billing outage.
+
+---
+
+**D-706 — THE LADDER VALIDATED ACROSS TIMEFRAMES AND TWO INDEPENDENT SOURCES. It holds. And the validation itself
+produced a lever worth ~4 years.**
+
+Every ladder result — L1/L2/L3 timings, the 9.8-year crossover invariance, the allocation ordering, the leverage
+table, the behavioural cost — was computed on MONTHLY returns from ONE source. The programme's standing rule is that
+no verdict comes from a pooled number and timeframe is an axis every result must be disaggregated across. **The
+ladder had never been disaggregated across anything.**
+
+**CHECK 1 — TIMEFRAME INVARIANCE within ^GSPC.** Same underlying, three sampling rates. The terminal balance cannot
+depend on how often it is sampled, so any material gap is a bug, not a finding.
+
+| | to $1k | to $10k | to $100k | crossover |
+|---|---|---|---|---|
+| daily (14,285 steps) | 0.7y | 6.0y | 24.1y | 11.0y |
+| weekly (2,989) | 0.7y | 6.1y | 24.5y | 11.2y |
+| monthly (680) | 0.8y | 6.1y | 24.3y | 11.3y |
+| **spread** | **0.07y** | **0.10y** | **0.40y** | **0.25y** |
+
+**PASSES.** D-680, D-688, D-689, D-701 and D-702 are not artifacts of monthly compounding. The contribution lands
+once per calendar month at every resolution — depositing once per *step* would have made the timeframes disagree for
+a reason that has nothing to do with markets, and the check would have reported a bug it created itself.
+
+**CHECK 2 — CROSS-SOURCE.** French Mkt-RF+RF (TOTAL return) against ^GSPC (PRICE index). These must NOT match: the
+total-return series must reach every level sooner, by roughly the dividend yield. Implied dividend from the gap:
+**2.77%/yr**, squarely inside the 1.5–3.5% expected for US equities over this era. Two separately constructed series
+differ by exactly the amount they should — the strongest validation available without a third vendor.
+
+**AND THE GAP IS ITSELF A FINDING: dividends are worth ~4 years on the ladder.** Price-index-only reaches $100,000
+in **24.3 years** against **20.3** for total return. That is larger than the heaviest tax drag modelled (+1.1y),
+comparable to raising the deposit by 50% (−3.4y), and it requires nothing but holding an accumulating or
+dividend-reinvesting vehicle rather than a price-tracking one. It belongs in the lever table and had been invisible
+because every ladder run used a total-return series without ever asking what the alternative cost.
+
+**A FALSE ALARM FIXED, same class as the plumbing rule an hour earlier.** The direction check flagged
+*** WRONG DIRECTION *** at the $1,000 rung where both series read 0.8y — a tie at one-decimal resolution, on a rung
+that is ~94% contributed money where dividends cannot move the crossing. A check that cries wolf gets ignored;
+ties now report as ties with the reason.
