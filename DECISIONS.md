@@ -14577,3 +14577,39 @@ error because it becomes a narrated market conclusion.
 
 The register is OPEN and is explicitly not a completeness claim — it was seeded from an EXTERNAL list precisely
 because a list I wrote alone would inherit the blind spots it exists to find.
+
+## D-717 — equity BREADTH: the first free research-debt from the driver register, closed with no schema change
+
+D-716's register named four FREE research debts — data we could have but never fetched. Equity breadth was the only
+one needing NO external endpoint: it is computable entirely from the 4,184-name equity panel already held. Closed it.
+
+**NO SCHEMA GATE.** `trd_macro_series(series, d, v)` — a generic keyed store from migration 0095 — was empty. Breadth
+became its first tenant, so this needed no new table and no migration: the operator's schema STOP-gate was never
+touched. Five series now populate it (66,798 rows, 1973-2026): % above 200dma, % above 50dma, advancer fraction,
+% within 2% of the 252-day high, % within 2% of the 252-day low.
+
+**COMPUTED IN-DB, not shipped.** 19.2M bars as jsonb over REST would move ~1GB; `scripts/build-breadth.sql` unnests
+and aggregates inside the owned node in one transaction (temp tables are ON COMMIT DROP, so the whole pipeline lives
+in one BEGIN/COMMIT — under psql per-statement autocommit they would otherwise vanish between statements, which the
+first run proved by erroring on a missing `_px`). Idempotent via ON CONFLICT (series,d) DO UPDATE.
+
+**POSITIVE CONTROL BEFORE THE FULL RUN.** On 15 large caps the %>200dma read 0.87 at the 2007 top, 0.00 at the 2009
+and COVID bottoms, 0.73-0.80 at bull peaks — breadth high at tops, zero at bottoms, exactly as it must. The full
+4,184-name panel then read ~0.57 at the 2007/2021 tops and ~0.05 at the 2008/2009/2020 crashes: LOWER at tops than
+the blue-chip sample, which is correct — breadth across all names is weaker than across fifteen mega-caps.
+
+**THE SURVIVORSHIP CAVEAT IS BAKED INTO THE DATA, not just the docs.** This panel holds SURVIVING names; the
+delisted-history hole (27.3% of the universe, D-687/D-703) means dead companies are absent, so a breadth LEVEL is
+biased UP — the names that fell below their averages and delisted are not counted. Every series carries a `_surv`
+suffix so no downstream reader can forget it. Breadth is valid as a CONDITIONING variable (its MOVES are informative)
+but its level is not the true market's. It is a CONDITION driver, not a PREDICT one — it describes the state of the
+tape at a point in time, which is the "confidence at a point in time" the instruction asked for, without implying
+any tradable edge the gates have not cleared.
+
+**FULLY WIRED, per the D-715 rule that every watched feed have an owner the runner invokes.** Register: breadth flips
+DEBT -> HELD (36 held, debt 4->3). Continuity: watched with `refresh-breadth.sh` as owner, 10d budget tracking the
+panel cadence (breadth can never be fresher than its input — if it reads stale, the PANEL is stale, which is the
+correct thing to surface). Daily runner: `refresh-breadth.sh` wired after the earnings refresh. Board stays GREEN.
+
+Three free debts remain, all needing an endpoint I cannot allowlist myself: GLD/IAU shares outstanding, the GPR
+index, commodity inventories (EIA/USDA).

@@ -45,6 +45,10 @@ const FEEDS: [string, string, string, number, string][] = [
   ["trd_fx_hourly?select=ts&order=ts.desc&limit=1", "FX/index hourly", "ts", 3, "ingest-dukascopy.py"],
   ["trd_attribution?select=asof&order=asof.desc&limit=1", "attribution engine", "asof", 3, "aegis-attribution.ts"],
   ["trd_earnings?select=report_date&order=report_date.desc&limit=1", "earnings", "report_date", 7, "ingest-earnings.ts"],
+  // Breadth (D-717) is DERIVED from the equity panel, so its newest date is the panel's newest bar — it can never be
+  // fresher than its input. Budget 10d tracks the equity price cadence, not a market feed's; if breadth reads stale
+  // it means the PANEL is stale, which is the correct thing to surface. Owner is the recompute wrapper.
+  ["trd_macro_series?series=eq.breadth_pct_gt_200dma_surv&select=d&order=d.desc&limit=1", "equity breadth", "d", 10, "refresh-breadth.sh"],
 ];
 
 const today = Date.now();

@@ -166,6 +166,11 @@ while true; do
   bash ../scripts/ingest-cot-disagg.sh > ../data/cot-disagg.log 2>&1 || echo "$(date -u +%FT%TZ) COT DISAGG REFRESH FAILED"
   bash ../scripts/ingest-cot-tff.sh    > ../data/cot-tff.log    2>&1 || echo "$(date -u +%FT%TZ) COT TFF REFRESH FAILED"
   deno run --allow-net --allow-env ../scripts/ingest-earnings.ts > ../data/earnings.log 2>&1     || echo "$(date -u +%FT%TZ) EARNINGS REFRESH FAILED"
+  # EQUITY BREADTH (D-717): recompute the five breadth_* series in-DB from the panel. Idempotent (ON CONFLICT DO
+  # UPDATE). Must run AFTER refresh-bars.ts below so breadth reflects the freshest panel — but the recompute reads the
+  # whole panel regardless, so ordering only affects same-day freshness, not correctness. Owns the 'equity breadth'
+  # feed the continuity guard watches; without this line that feed would red in ten days per the D-715 rule.
+  bash ../scripts/refresh-breadth.sh > ../data/breadth.log 2>&1 || echo "$(date -u +%FT%TZ) BREADTH REFRESH FAILED — the continuity-watched breadth feed has no other owner"
   # NQ INTRADAY ACCRUAL (D-709). Yahoo serves NQ=F 1-minute bars for only ~7 days and 5-minute for ~60, and both
   # windows ROLL — a day not fetched is permanently unrecoverable. The cache is append-only and merges on timestamp,
   # so running it daily accumulates a minute history Yahoo itself will not serve twice. This is the data that decides
