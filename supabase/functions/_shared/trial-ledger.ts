@@ -78,12 +78,18 @@ export async function spendTrials(
       for (let j = i; j < Math.min(i + CHUNK, opts.spent); j++) {
         rows.push({ family: opts.family, run_key: `${opts.runId}|${j}` });
       }
-      const res = await fetch(`${opts.rest}/trd_trial_counter`, {
+      // D-710 FIX: `resolution=ignore-duplicates` is INERT WITHOUT AN on_conflict TARGET. PostgREST needs to be told
+      // which constraint the resolution applies to; without it the insert 409s on the unique run_key. The effect was
+      // that this module THREW on any legitimate re-run — contradicting its own header, which states "a re-run of the
+      // same sweep inserts nothing and the count does not inflate". It had never been exercised: every caller until
+      // now used a fresh runId each time, so the idempotency it advertises had never once been tested.
+      const res = await fetch(`${opts.rest}/trd_trial_counter?on_conflict=run_key`, {
         method: "POST",   // plumbing-ok: audited — status checked on the next line and thrown on
         headers: { ...opts.headers, "Content-Type": "application/json", Prefer: "return=minimal,resolution=ignore-duplicates" },
         body: JSON.stringify(rows),
       });
       // A failed write must NOT degrade to a smaller N. That would reproduce the exact defect this file exists to kill.
+      // A 409 is now a real failure rather than the expected result of running the same sweep twice.
       if (!res.ok) throw new Error(`spendTrials: failed to record trials (HTTP ${res.status}) — refusing to report a ceiling that was not paid for`);
       written += rows.length;
     }

@@ -14266,3 +14266,67 @@ are unusually favourable here: at ~1 index point round trip against a 7–12 poi
 gross, versus the sub-fee failures that killed almost everything else this session. And on **MNQ at $2/point** a
 20-point stop risks $40, which is placeable at L0–L1 where almost nothing else on this board is — the instrument
 question, for once, has a good answer.
+
+---
+
+**D-709 — IMPORTING THE RESOLUTION THE QUESTION NEEDED. The source was already here and one script had been
+throwing it away since May.**
+
+D-708 left the NQ Motion Model UNTESTED because the intrabar ordering inside the opening hour is unobservable at
+hourly resolution, and that ordering decides winner or whipsaw on 22% of days. The fix required minute bars.
+
+**`ingest-dukascopy.py` (D-504) has been fetching Dukascopy m1 candles since 2026-05 and AGGREGATING THEM TO HOURLY
+before storing** — discarding the exact resolution the question needs, for months, from an already-allowlisted free
+source. `ingest-dukascopy-m1.py` keeps them: one request returns a whole day of minutes, so 2016–2026 is ~2,700
+sequential requests. Scale verified against a known level before committing to the run (June 2024 probe returned
+18,636 against NDX's actual ~19,000) rather than assumed from the D-504 constant.
+
+**AND THE INSTRUMENT THE MODEL ACTUALLY NAMES.** D-708 tested a Nasdaq-100 CFD because it was the only intraday
+proxy held; THE INSTRUMENT LAW says that is a research proxy, and the four times this programme ignored the
+distinction it was wrong every time. `NQ=F` is the contract, and MNQ tracks it exactly. Cached at four resolutions:
+1m (7,756 bars), 5m (13,752), 15m (4,607), 1h (13,706, back to 2024-04).
+
+**THAT ONE WAS TIME-CRITICAL AND IS NOW IN THE DAILY RUNNER.** Yahoo serves 1-minute for ~7 days and 5-minute for
+~60, and both windows ROLL — a day not fetched is permanently unrecoverable. The cache merges on timestamp and never
+overwrites a stored bar, so daily runs accumulate a minute history Yahoo itself will not serve twice.
+
+Persisting minute bars to Postgres needs a new table, which is an operator gate under the standing rules. The
+importer caches locally so the analysis is reproducible today without one; the migration is offered, not assumed.
+
+---
+
+**D-710 — THE ORB SETUP CLASS RUN ACROSS THE ENTIRE INTRADAY STACK. 0 of 100 specifications survive, and fixing my
+own summary column cut the apparent success rate by a factor of five.**
+
+Testing one externally-supplied checklist on one instrument and stopping is how a family gets called dead on a
+sample of one. `intraday-orb-sweep.ts` runs the setup class — define a range over an opening window, trade the
+break, hold to a horizon — across **37 instrument/resolution series**: 8 FX/index/commodity CFDs, 25 crypto perps
+and NQ=F at every resolution cached. 100 specifications, each spent as a trial.
+
+| instrument | res | ow/hz | n | amb% | mean% | t | bench% | excess% | **net%** | eras |
+|---|---|---|---|---|---|---|---|---|---|---|
+| XAUUSD | 1h | 1/3 | 2,689 | 18% | 0.028 | **5.62** | 0.012 | 0.016 | **−0.004** | ++++ |
+| USATECHIDXUSD | 1h | 1/3 | 2,036 | 6% | 0.024 | 3.81 | 0.008 | 0.017 | −0.003 | ++-+ |
+| NQ=F | 1h | 1/6 | 595 | 6% | 0.043 | 3.04 | 0.014 | 0.028 | +0.008 | ++++ |
+| ZECUSDT | 1h | 1/3 | 2,241 | 7% | 0.128 | 3.29 | −0.091 | 0.219 | +0.119 | ++++ |
+
+**Clearing the 5.4555 ceiling: 1 of 100. Also net-positive on the excess after cost: 0.**
+
+**THE SUMMARY COLUMN I GOT WRONG.** My first version computed `net` as the raw mean minus cost rather than the
+EXCESS minus cost — reporting a spread as a return without subtracting its universe, the exact D-627 error,
+committed in my own reporting column while the script's header explained why that error matters. On XAUUSD it is the
+difference between **+0.008% (looks tradable)** and **−0.004% (is not)**, and across the sweep it moved the
+net-positive count from **57 to 11**. The crypto rows also carried a 2bp cost that belongs to index futures; perps
+pay ~4–5bp *per side*, so they now carry 10bp — the rows with the largest headline numbers were exactly the ones
+being flattered.
+
+**AND A BUG IN THE SHARED TRIAL LEDGER, found because this was the first caller ever to re-run.** `spendTrials`
+threw HTTP 409 on the second identical run. Its `Prefer: resolution=ignore-duplicates` is **inert without an
+`on_conflict` target** — PostgREST needs telling which constraint the resolution applies to. So the module
+CONTRADICTED ITS OWN HEADER, which states *"a re-run of the same sweep inserts nothing and the count does not
+inflate"*. Every previous caller used a fresh runId, so **the idempotency it advertised had never once been
+exercised.** Fixed and verified in both directions: two identical runs now leave N at 2,903,348.
+
+Ambiguity rates are low here (median 5%, p90 10%) because these are 1-hour opening ranges on 3–6 hour horizons —
+unlike the NQ model's tighter window where it reached 22%. The rate is reported per spec because a specification
+with a high ambiguity rate is measuring its own resolution, not breakouts.
