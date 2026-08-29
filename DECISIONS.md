@@ -14638,3 +14638,26 @@ test, not an edge.
 state, but it does not clear even the low bar of a monotone forward relationship, let alone the gate stack. It may
 sit in a confidence VIEW as context; it may not carry a position. This is the programme's prior holding: an observable
 being real does not make it predictive, and predictive does not make it tradable.
+
+## D-718b — the breadth U-shape REPLICATED out-of-sample (3/3), pre-registered — the programme's first OOS-confirmed conditioning pattern
+
+The U-shape from D-718 was found post-hoc on SPY, so it was registered as prereg `D718-breadth-ushape` with a numeric
+two-sided kill BEFORE any held-out instrument was examined: the middle breadth tercile (deciles 4-7) forward-20d mean
+must be LOWER than the extreme terciles (D1-3, D8-10) on >=2 of QQQ/IWM/DIA, else the pattern dies.
+
+**IT PASSED 3 OF 3.** QQQ extremes 2.04% vs middle 1.12% (-0.92pp); IWM 1.98% vs 0.23% (-1.75pp); DIA 1.51% vs 0.56%
+(-0.95pp). On three instruments never used to find the pattern, the middle of the breadth range under-returns both
+extremes — washout-bounce at the bottom, thrust-continuation at the top, chop in the middle. The outcome is recorded
+against the prereg as REPLICATED-OOS; the append-only trigger then REFUSED an attempt to soften the note (D-631
+protection verified live, not assumed).
+
+**WHAT THIS IS, STATED PRECISELY.** It is the first conditioning pattern this programme has confirmed under a genuine
+pre-registered out-of-sample test. It is NOT a tradable edge: no costs, execution, or borrow are modelled; the
+forward-20d windows overlap so the rule was deliberately written on the ORDERING of tercile means, not on a t-stat;
+and it is a statement about the STATE of the tape, not a position. The correct next step is a pre-registered FORWARD
+clock, not capital. It earns breadth a place as CONTEXT in a point-in-time confidence view — which is exactly, and
+only, what the operator's instruction asked breadth to be.
+
+**WHY IT MATTERS METHODOLOGICALLY.** The naive monotone hypothesis (D-718) LOST; the non-monotone one, registered
+before it could be fitted, WON. The difference between the two was not the data — it was that one story was written
+after seeing the deciles and one before. That is the PRE-COMMITMENT LAW doing exactly what it exists to do.
