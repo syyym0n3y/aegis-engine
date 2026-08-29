@@ -44,6 +44,24 @@ function lint(fileAbs:string,src:string){
     if(cm&&+cm[1].replace(/_/g,"")<1_000_000)
       hits.push({file,line:i+1,rule:"frozen-ceiling",snip:`deflation ceiling from literal N=${cm[1]} — the bar is frozen below the program's real trial count`});
   }
+  // RULE 4 — FUNDAMENTALS READ WITH NO POINT-IN-TIME FILTER (D-704). CLAUDE.md states look-ahead is "structurally
+  // impossible ... every feature carries the effectiveDate it was legally knowable (trd_features), and the backtest
+  // may only read via asOf()". `trd_features` IS EMPTY (0 rows) and its only two referencing scripts were last
+  // touched 2026-06-07 and are wired into nothing. The protection is REAL but lives elsewhere: aegis-factory builds
+  // an in-memory map keyed on `effective_date` and every read goes through asOf/ttm, which filter `eff <= d`.
+  // So the discipline is enforced by every script CALLING IT CORRECTLY — a code-review hope, which is exactly what
+  // the invariant claims it is not. This makes it mechanical: a file that loads trd_fundamentals and never mentions
+  // an effective-date filter is reading the LATEST value at every historical date, which is look-ahead by default.
+  // THE RULE OVER-FIRED ON ITS FIRST RUN AND WAS NARROWED, which is the correction that matters more than the rule.
+  // It flagged five files and ALL FIVE were correct code: two are GUARDS that merely name the table, and three
+  // (going-concern, net-share-issuance, noa-factor) use `period_end` plus an explicit LAG_D knob — "days after
+  // period_end before the filing is public" — which is a DIFFERENT AND EQUALLY VALID point-in-time discipline that
+  // my regex did not know about. A guard that flags correct code teaches people to waive it, and a waived guard is
+  // a guard that is off. Now: only files that read a VALUE column, and any of the three known disciplines counts.
+  const readsValue=/trd_fundamentals\?[^"`']*\bvalue\b|trd_fundamentals\?[^"`']*concept=/.test(src);
+  const hasPIT=/effective_date|\beff\b|asOf|point.in.time|\bpit\(|period_end[\s\S]{0,4000}?(LAG|lag_d|lagD)/i.test(src);
+  if(/trd_fundamentals/.test(src)&&readsValue&&!hasPIT)
+    hits.push({file,line:1,rule:"lookahead-risk",snip:"reads fundamental VALUES with no point-in-time discipline anywhere in the file (no effective_date, no asOf, no period_end+lag) — a historical query returning today's value is look-ahead by default"});
 }
 async function walk(dir:string){
   for await (const e of Deno.readDir(dir)){

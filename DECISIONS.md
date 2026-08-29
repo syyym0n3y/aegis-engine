@@ -14056,3 +14056,45 @@ headline from being narrated as a finding.
 **The blocker is `delisted-price-history`** — the same operator-gated gap as D-687, where Stooq is closed by
 bot-challenge policy and Alpaca needs credentials. It has now blocked a *second* research item rather than remaining
 an abstract concern, which is worth recording: the gap's cost is no longer hypothetical.
+
+---
+
+**D-704 — A NON-NEGOTIABLE INVARIANT NAMED AN EMPTY TABLE. 45 of 97 tables hold nothing, and one of them is the
+look-ahead mechanism CLAUDE.md calls "structurally impossible".**
+
+Checking whether register items were testable turned up four empty tables by accident, so I censused all of them.
+**45 of 97 `trd_*` tables are EMPTY.** Some are correctly empty — `trd_trades`, `trd_manual_trades`,
+`trd_pnl_snapshot`, `trd_risk_ledger` are empty because nothing has ever traded, which is the programme working.
+Others are capabilities the schema advertises and does not have:
+
+- **`trd_cik_ticker` (0 rows)** — it is *why* the D-703 spin-off join lost 67% of its filers. Every resolution came
+  from a ticker EDGAR happened to inline.
+- **`trd_fundflow` / `trd_fundflow_signal` (0 rows)** — the Form D funding-flow tracker. The coverage map's "capital
+  raises: TESTED, 5 rows" was lineage *prose* with no data behind it.
+- `trd_macro_series`, `trd_factor`, `trd_factor_ic`, `trd_factor_value`, `trd_features`, `trd_edge_*` — all empty.
+
+**AND THE ONE THAT MATTERS.** CLAUDE.md's non-negotiable invariants stated:
+
+> *"Look-ahead is structurally impossible, not a code-review hope — every feature carries the `effectiveDate` it was
+> legally knowable (`trd_features`), and the backtest may only read via `asOf()`."*
+
+**`trd_features` holds 0 rows.** Its only two referencing scripts, `trd-ingest-prices.ts` and
+`trd-strategy-backtest.ts`, were last touched 2026-06-07 and are wired into nothing. **The stated mechanism has
+never run.**
+
+**THE PROTECTION IS REAL AND LIVES ELSEWHERE — this is a correction, not an alarm.** `aegis-factory` builds an
+in-memory map keyed on `effective_date` and every fundamental read goes through `asOf()`/`ttm()`, which filter
+`eff <= d`; I verified there is **no bypass** — the only three `fund.get(` sites are the loader and the two
+accessors. Other scripts use `period_end` plus an explicit `LAG_D` publication lag (typically 90 days). Both
+disciplines are sound.
+
+**What is false is the word "structurally".** They hold because every script calls them correctly — exactly the
+code-review hope the wording denied. CLAUDE.md now says so, and `plumbing-guard.ts` **RULE 4** makes it mechanical:
+a file reading fundamental VALUES with none of the three recognised disciplines goes RED.
+
+**THE RULE OVER-FIRED ON ITS FIRST RUN AND THAT IS THE MORE USEFUL LESSON.** It flagged five files and **all five
+were correct code**: two are guards that merely name the table, and three (`going-concern`, `net-share-issuance`,
+`noa-factor`) use `period_end` + `LAG_D`, a valid discipline my regex did not know existed. **A guard that flags
+correct code teaches people to waive it, and a waived guard is off.** Narrowed to require a VALUE read and to accept
+any of the three disciplines; verified it still FLAGS a synthetic violator that reads `concept=` and `value` with no
+lag anywhere. Plumbing guard back to 0 regressions against baseline.

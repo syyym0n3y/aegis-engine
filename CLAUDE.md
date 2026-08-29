@@ -38,10 +38,21 @@ which is a SUCCESS of the engine, not a failure.** See [`DECISIONS.md`](./DECISI
   rung. Stage 1 touches $0 and has no broker order path at all.
 - **No LLM in the order path, ever.** Execution is deterministic rules + the
   risk gate only. LLMs may reason about strategy *specs*, never place orders.
-- **Look-ahead is structurally impossible**, not a code-review hope — every
-  feature carries the `effectiveDate` it was legally knowable (`trd_features`),
-  and the backtest may only read via `asOf()`. The 45-day STOCK Act lag lives in
-  that column and cannot be engineered away.
+- **Look-ahead is guarded per-script, NOT structurally — corrected 2026-08-29 (D-704).**
+  This invariant used to read *"structurally impossible, not a code-review hope —
+  every feature carries the `effectiveDate` it was legally knowable
+  (`trd_features`), and the backtest may only read via `asOf()`."* **`trd_features`
+  holds 0 rows**, and its only two referencing scripts were last touched
+  2026-06-07 and are wired into nothing. The stated mechanism has never run.
+  What IS live and correct: `aegis-factory` builds an in-memory map keyed on
+  `effective_date` and every fundamental read goes through `asOf()`/`ttm()`, which
+  filter `eff <= d`; other scripts use `period_end` plus an explicit publication
+  lag (`LAG_D`, typically 90 days). Both are sound. Neither is structural — they
+  hold because every script calls them correctly, which is precisely the
+  code-review hope the old wording denied. Enforced from 2026-08-29 by
+  `plumbing-guard.ts` RULE 4, which reds on a file reading fundamental VALUES with
+  none of the three recognised disciplines. The 45-day STOCK Act lag is applied in
+  the same way and is equally a convention rather than a structural impossibility.
 - **A null is only a market finding if the data could have detected it** (COVERAGE LAW is an invariant):
   before writing any null, verify the required input is actually loaded; if not the verdict is UNTESTED. Enforced by
   `scripts/coverage-guard.ts`, which exits RED on inadequate coverage.
