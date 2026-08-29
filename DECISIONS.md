@@ -14207,3 +14207,62 @@ cost alone before the era gate is reached.
 OBJECT, and my script iterated it as data and printed an empty table with no error — a false negative dressed as a
 null result. The first version crashed loudly, which was better. The query now asserts the response shape and
 carries a positive control that the filter returns non-zero rows.
+
+---
+
+**D-708 — THE NQ MOTION MODEL (externally supplied). Not usable as written, for three separate reasons, and the
+strongest version of it collapsed on a flaw I built and then found.**
+
+An opening-range-breakout checklist for NQ futures, 8:30–11:00: trade only when the opening range is **5–20 points**
+(over 20 "too wide and volatile", under 5 "too tight"); no-trade on red-folder news, JPOW speaking, the day before
+NFP, the afternoon before FOMC; on news days with an abnormal wick, use an iFVG setup instead. Tested on
+`USATECHIDXUSD` hourly — 79,848 bars, 2016–2026, 3,327 days, the only Nasdaq-100 proxy held at intraday resolution.
+
+**1. THE FILTER IS STATED IN POINTS AND HAS STOPPED FIRING.** The index ran ~3,900 → ~30,800 over the sample, so
+"20 points" was **0.44% of level in 2016 and 0.074% today**:
+
+| year | median level | days in the 5–20 point band |
+|---|---|---|
+| 2016 | 4,541 | **152/257 (59%)** |
+| 2020 | 10,364 | 29/259 (11%) |
+| 2024 | 18,997 | 3/258 (1%) |
+| **2026** | 27,114 | **0/165 (0%)** |
+
+A filter in absolute points is a different filter every year, and this one now selects **nothing**. That is a
+specification defect, not a market finding, and it must be normalised (percent of level, or a multiple of recent
+range) before the rule means one thing.
+
+**2. HALF THE DIRECTIONAL CLAIM IS BACKWARDS.** Normalised to percent of level, follow-through by opening-range
+width: 0.05–0.10% → **+10.29 pts**; 0.10–0.20% → +10.36; 0.20–0.40% → +12.15; 0.40–0.80% → +6.50; **0.80%+ → +0.22
+(t 0.04)**. Relative to its own trailing 20-day median, the widest bucket is **−14.80 pts**. So *"over 20 points is
+too wide"* is **supported**; *"under 5 points is too tight"* is **contradicted** — the tightest ranges are among the
+best, not unusable.
+
+**3. THE CORE CLAIM CANNOT BE RESOLVED AT THIS RESOLUTION, AND MY FIRST ANSWER WAS WRONG.** The first version
+discarded days where both the opening high and low broke inside the same hourly bar — 22% of the sample — and
+reported **+15.41 pts at t 7.30**, which would have been the first thing ever to clear this programme's 5.4555
+ceiling. It survived the benchmark check (holding long the same window gives +0.67, t 0.40), the direction check
+(down-breaks +15.24 at t 4.43, so not index drift), and era stability (positive in all four eras).
+
+**It did not survive re-reading my own code.** A day breaking both ways inside one bar is a **whipsaw — a day the
+breakout failed.** Excluding them selects on the outcome. Bounded:
+
+| treatment | n | mean | t |
+|---|---|---|---|
+| clean breaks only *(my first version)* | 2,141 | **+15.41** | **7.30** |
+| all days, ambiguous at a coin flip *(the estimate)* | 2,697 | **+7.32** | **4.27** |
+| all days, ambiguous at worst *(lower bound)* | 2,697 | **−4.87** | **−2.46** |
+
+**The 22% carried more than half the result**, and the coin-flip estimate of t 4.27 is **below the ceiling**. The
+ambiguous days average **−23.81 points** at a coin flip, which is what a whipsaw is.
+
+**VERDICT: UNTESTED at the resolution required, and unusable as written.** Whether this is a real edge or a
+loss-maker depends entirely on which side triggers first inside the opening hour — unobservable in hourly data, and
+the plausible range spans **+7.32 to −4.87 points**. What would resolve it is **minute bars on NQ**, which this
+programme does not hold and which are not among the free sources already verified (D-687).
+
+**Not dismissed — three parts of it are worth keeping.** The wide-range exclusion is empirically supported. Costs
+are unusually favourable here: at ~1 index point round trip against a 7–12 point mean move, cost is under 15% of
+gross, versus the sub-fee failures that killed almost everything else this session. And on **MNQ at $2/point** a
+20-point stop risks $40, which is placeable at L0–L1 where almost nothing else on this board is — the instrument
+question, for once, has a good answer.
