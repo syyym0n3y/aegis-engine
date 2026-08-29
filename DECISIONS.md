@@ -13803,3 +13803,71 @@ answering the D-630 question. **They are not re-mined here** — the standing ru
 noting that an existing registration passes a test invented afterwards is a measurement, not a new lead.
 
 None of the 90 clears the ceiling. The board is unchanged: 1,059 specs, 2 survivors, 0 promoted.
+
+---
+
+**D-697/698 — THE COVERAGE MAP FOUND THAT 14 OF 18 OF TODAY'S OWN DECISIONS WERE NEVER IN THE LEDGER, and that its
+own first classifier over-reported coverage.**
+
+`coverage-guard.ts` asks whether the DATA behind a verdict was adequate. Nothing asked the prior question: of the
+documented ways people have actually made money in markets, which has this programme touched at all?
+`scripts/coverage-map.ts` enumerates 61 approaches grouped by MECHANISM and classifies each by counting matching
+lineage rows and factory specs — measured, not asserted.
+
+**FIRST VERSION OVER-REPORTED, WHICH IS THE DANGEROUS DIRECTION.** It matched anywhere in the verdict prose, and
+every suspicious hit checked was a false positive:
+
+| approach | reported | what actually matched |
+|---|---|---|
+| tax drag & wrapper | 32 rows | **"ETF WRAPPERs"** — the programme has never modelled tax at all |
+| carry | 32 rows | the VERB ("filings *carry* negative drift") |
+| behavioural avoidance | 54 rows | "HOLDABILITY", "discipline" in prose |
+| covered calls | 2 rows | "over**writ**e" — a data overwrite |
+| macro regime | 26 rows | "inflation" inside "cost-**inflat**ion" |
+
+A classifier that over-reports lets the programme believe it covered something it never touched — precisely the
+failure the map exists to prevent, reproduced inside the map. Fixed by matching only `id`, `family` and `hypothesis`,
+which name a row's SUBJECT, rather than the verdict, which discusses it. **The debt list went from 11 to 22.**
+
+**AND THEN THE MAP FOUND SOMETHING WORSE.** It reported no ledger evidence for allocation choice, contribution rate
+and sequence-of-returns — all of which I had measured *the same day*. The map was right. **Of 18 decisions recorded
+today, 14 never reached `trd_lineage`.** The programme's own invariant reads *"Every edge decision updates
+`trd_lineage` alongside its DECISIONS.md entry... the whole development is auditable in SQL, not prose."* **Every
+guard reads `trd_lineage`.** So the cost audit, the ladder, the absolute diagnostic, the allocation result and both
+retractions were invisible to all 23 guards and to any SQL audit — written in prose and nowhere else.
+
+16 rows backfilled and verified by re-read. The lesson is the one the session keeps producing: **the record is not
+the prose, and a discipline that lives only in a markdown file is a feeling of discipline.**
+
+---
+
+**D-699 — TAX DRAG MEASURED FOR THE FIRST TIME. Worth about a quarter of an alpha in TIME, and 27% of terminal
+wealth. My prior was wrong on one axis and right on the other.**
+
+In 1,059 specifications this programme has modelled 10bp fees to four decimal places and never once modelled tax on
+the account it exists to grow. Measured on the same 733 start months, as a DRAG SENSITIVITY exactly like the
+expense-ratio sensitivity already in the ladder — no jurisdiction is modelled, no wrapper is named, and nobody's
+actual position can be read off it:
+
+| scenario | to $10k | to $100k | crossover | 20-yr terminal |
+|---|---|---|---|---|
+| no drag | 5.8y | **20.3y** | 9.6y | **$82,473** |
+| dividends taxed 20% | 5.8y | 20.8y | 9.8y | $78,184 |
+| div 20% + terminal 10% | 5.8y | 20.8y | 9.8y | $72,769 |
+| div 40% + terminal 20% | 5.8y | 21.4y | 10.1y | $64,226 |
+| **div 40% + terminal 28%** | 5.8y | **21.4y** | 10.1y | **$60,208** |
+
+**IN TIME: +1.1 years to $100,000**, against the **+4.1 years** a sustained +5%/yr net alpha buys (D-680). So on the
+time axis tax is worth roughly a quarter of an alpha this programme has failed to produce in 1,059 attempts — real,
+and NOT the larger lever. **I expected it to dominate and it does not.**
+
+**IN TERMINAL WEALTH: −27.0%**, $82,473 to $60,208 at twenty years. The two measures diverge because the terminal
+charge is not paid until a sale: the balance still crosses $100,000 gross, so the *climb* barely moves while the
+*proceeds* move a great deal. Both numbers are correct answers to different questions, and quoting only the one that
+flatters the point would have been the error.
+
+**SCOPE, STATED IN THE SCRIPT AND HERE.** The recurring leg is modelled on the dividend yield alone, because a
+buy-and-hold holding realises nothing else until it sells. **Every ACTIVE specification on this board is understated
+here, not overstated** — a strategy that turns over realises gains continuously, so its recurring drag is larger by
+roughly (turnover x gain x rate). Measuring that properly needs the per-spec turnover D-686 now stores, and is
+recorded as open rather than done.

@@ -646,7 +646,7 @@ if(PASS==="all"||PASS==="factmom"){
   const allMo=[...new Set(live.flatMap(([,m])=>[...m.keys()]))].sort();
   for(const K of [2,3]) for(const form of [12,6]){
     const key=`factmom|f${live.length}|form${form}|top${K}|h1`;
-    const rets:number[]=[];
+    const rets:number[]=[]; const excessTopF:number[]=[];
     for(let i=form+1;i<allMo.length;i++){
       const scored:{n:string;mom:number;nxt:number}[]=[];
       for(const [n,m] of live){
@@ -659,15 +659,21 @@ if(PASS==="all"||PASS==="factmom"){
       scored.sort((a,b)=>b.mom-a.mom);
       const top=scored.slice(0,K), bot=scored.slice(-K);
       rets.push(mean(top.map(x=>x.nxt))-mean(bot.map(x=>x.nxt))-0.0005);
+      // D-696: the top bucket against the whole factor cross-section it was ranked within.
+      excessTopF.push(mean(top.map(x=>x.nxt))-mean(scored.map(x=>x.nxt)));
     }
     if(rets.length<300){await record(key,"factmom",{K,form},"factor_library",null,ceil);done++;continue;}
+    const mExF=excessTopF.length?mean(excessTopF):NaN, sdExF=excessTopF.length?(sdv(excessTopF)||1e-9):NaN;
+    const tExF=excessTopF.length?mExF/(sdExF/Math.sqrt(excessTopF.length)):NaN;
     const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
     let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
     const g:Gate={n_names:live.length,n_periods:rets.length,gross_ann:(m+0.0005)*12,net_ann:m*12,sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
       g_breadth:true,g_effect:Math.abs(m)>=0.0005,g_benchmark:m>0,g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
-    await record(key,"factmom",{K,form,factors:live.map(([n])=>n)},"factor_library",g,ceil);done++;
+    await record(key,"factmom",{K,form,factors:live.map(([n])=>n),
+      excess_top_ann:Number.isFinite(mExF)?+(mExF*12).toFixed(6):null,
+      excess_top_t:Number.isFinite(tExF)?+tExF.toFixed(4):null},"factor_library",g,ceil);done++;
     await log(`    factmom form${form} top${K}: n=${rets.length} net ${(m*12*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 9 (factmom) done`);
@@ -1661,7 +1667,7 @@ if(PASS==="all"||PASS==="weekly"){
   const weeks=[...byW.keys()].sort();
   for(const [sig,dir] of [["rev",-1],["mom",1]] as [("rev"|"mom"),number][]) for(const univ of ["all","liq"]) for(const k of [5,10]) for(const lag of [0,1]){
     const key=`weekly|${sig}|${univ}|k${k}${lag?"|lag1":""}`;
-    const rets:number[]=[];
+    const rets:number[]=[]; const excessTopW:number[]=[];
     for(const wk of weeks){
       let g=byW.get(wk)!;
       if(univ==="liq"){const ds=[...g].map(r=>r.dv).sort((a,b)=>a-b);const cut=ds[Math.floor(ds.length*2/3)];g=g.filter(r=>r.dv>=cut);}
@@ -1675,8 +1681,15 @@ if(PASS==="all"||PASS==="weekly"){
       if(lgood.length<3||sgood.length<3)continue;
       const lr=mean(lgood.map(pick)),sr=mean(sgood.map(pick));
       rets.push(lr-sr-2*FEE_EQ/1e4);                       // full flip both legs weekly, stated
+      // D-696: THE BENCHMARK LAW, carried here too. The spread above says nothing about whether the LONG leg earns
+      // anything — 318 of 427 positive cross-sectional results on this board turned out to be universe drift once
+      // this was measured (D-695), and this pass was one of the 101 that could not be checked at all.
+      {const uAll=[...g.keys()].filter(i2=>Number.isFinite(pick(i2)));
+       if(uAll.length>=10) excessTopW.push(lr-mean(uAll.map(pick)));}
     }
     if(rets.length<200){await record(key,"weekly",{sig,univ,k,exec:lag?"lag1":"same-close"},"equity_weekly",null,ceil);done++;continue;}
+    const mExW=excessTopW.length?mean(excessTopW):NaN, sdExW=excessTopW.length?(sdv(excessTopW)||1e-9):NaN;
+    const tExW=excessTopW.length?mExW/(sdExW/Math.sqrt(excessTopW.length)):NaN;
     const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
     let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a2=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a2,b2));});
@@ -1684,7 +1697,9 @@ if(PASS==="all"||PASS==="weekly"){
       sharpe:(m/sd)*Math.sqrt(52),t,dd:dd*100,ruined,
       g_breadth:true, g_effect:Math.abs(m)>=2*FEE_EQ/1e4, g_benchmark:m>0, g_liquid:univ==="liq",
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
-    await record(key,"weekly",{sig,univ,k,exec:lag?"lag1":"same-close"},"equity_weekly",g2,ceil); done++;
+    await record(key,"weekly",{sig,univ,k,exec:lag?"lag1":"same-close",
+      excess_top_ann:Number.isFinite(mExW)?+(mExW*52).toFixed(6):null,
+      excess_top_t:Number.isFinite(tExW)?+tExW.toFixed(4):null},"equity_weekly",g2,ceil); done++;
     await log(`    weekly ${sig} ${univ} k${k}${lag?" LAG1":""}: n=${rets.length}wk net ${(m*52*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 28 (weekly) done`);
@@ -2081,7 +2096,7 @@ if(PASS==="all"||PASS==="eqconc"){
       if(vals.some(v=>v==null||!Number.isFinite(v as number)))continue;
       (byMo.get(r.mo)??byMo.set(r.mo,[]).get(r.mo)!).push({sym:r.sym,fwd:r.fwd,dv:r.dv,score:0});
     }
-    const rets:number[]=[]; let avgN=0,nMo=0;
+    const rets:number[]=[]; const excessTopE:number[]=[]; let avgN=0,nMo=0;
     for(const [mo,g0] of [...byMo.entries()].sort()){
       if(g0.length<LIQN)continue;
       const g=[...g0].sort((a,b)=>b.dv-a.dv).slice(0,LIQN);     // the LIQN most liquid names that month
@@ -2098,8 +2113,13 @@ if(PASS==="all"||PASS==="eqconc"){
       const L=ord.slice(0,K),S=ord.slice(-K);
       const r2=mean(L.map(i=>g[i].fwd))-mean(S.map(i=>g[i].fwd))-2*FEE_EQ/1e4;
       rets.push(r2); avgN+=2*K; nMo++;
+      // D-696: the LONG leg against the liquid universe it was picked from, gross of the fee (the fee belongs to the
+      // book line, not to the question "does this bucket beat its own cross-section").
+      excessTopE.push(mean(L.map(i=>g[i].fwd))-mean(g.map(x=>x.fwd)));
     }
     if(rets.length<120){await record(key,"eqconc",{LIQN,K},"equity_concentrated",null,ceil);done++;continue;}
+    const mExE=excessTopE.length?mean(excessTopE):NaN, sdExE=excessTopE.length?(sdv(excessTopE)||1e-9):NaN;
+    const tExE=excessTopE.length?mExE/(sdExE/Math.sqrt(excessTopE.length)):NaN;
     const m=mean(rets),sd=sdv(rets)||1e-9,t=m/(sd/Math.sqrt(rets.length));
     let cum=1,pk=1,dd=0,ruined=false;for(const x of rets){cum*=1+x;if(cum<=0){ruined=true;break;}pk=Math.max(pk,cum);dd=Math.min(dd,cum/pk-1);}
     const q4=[0,1,2,3].map(e=>{const a=Math.floor(e*rets.length/4),b2=Math.floor((e+1)*rets.length/4);return mean(rets.slice(a,b2));});
@@ -2107,7 +2127,9 @@ if(PASS==="all"||PASS==="eqconc"){
       sharpe:(m/sd)*Math.sqrt(12),t,dd:dd*100,ruined,
       g_breadth:2*K>=20,g_effect:Math.abs(m)>=2*FEE_EQ/1e4,g_benchmark:m>0,g_liquid:null,   // D-666: not computed here either — NULL, never a hardcoded pass
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3,eras:q4};
-    await record(key,"eqconc",{LIQN,K,signals:"hi52+,vol12-,mom12_1+"},"equity_concentrated",g2,ceil); done++;
+    await record(key,"eqconc",{LIQN,K,signals:"hi52+,vol12-,mom12_1+",
+      excess_top_ann:Number.isFinite(mExE)?+(mExE*12).toFixed(6):null,
+      excess_top_t:Number.isFinite(tExE)?+tExE.toFixed(4):null},"equity_concentrated",g2,ceil); done++;
     await log(`    eqconc liq${LIQN} ${K}L/${K}S: n=${rets.length}mo net ${(m*12*100).toFixed(1)}%/yr SR ${((m/sd)*Math.sqrt(12)).toFixed(2)} t ${t.toFixed(2)} maxDD ${(dd*100).toFixed(0)}% eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 34 (eqconc) done`);
