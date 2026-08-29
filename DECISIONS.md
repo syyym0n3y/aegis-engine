@@ -14495,3 +14495,37 @@ first run and needed narrowing before it was worth keeping — the pattern is co
 
 The rule also caught a truncation defect in my own `intraday-orb-sweep.ts` (a `limit` with no `order`, undefined row
 selection, D-629). Plumbing baseline ratcheted from 155 to 154.
+
+---
+
+**D-715 — THE CONTINUITY GUARD WATCHED SIX FEEDS AND FIVE HAD NO OWNER. Watching a feed is not the same as feeding
+it, and the guard now checks that too.**
+
+Two feeds were flagged stale — crypto funding at 5.3 days against a 4.5-day budget, FX/index hourly at 7.9 against
+7.5. Refreshing them by hand would have been the third such one-off. Checking *why* they were stale gave the real
+answer: **neither had any scheduled ingest at all.** Extending that check to every watched feed:
+
+**Five of six had no refresher the daily runner invokes.** Only `aegis-attribution.ts` was wired — and only because
+D-683 wired it after that engine spent a week reporting on a frozen market. Three of the other five had already
+gone stale; the remaining two were fresh by luck.
+
+**A guard that reports staleness while nothing owns the cause trains everyone to read its red as background noise.**
+That is the same failure as an unclearable guard, arrived at from the opposite direction.
+
+**THE FIX IS STRUCTURAL, NOT A REFRESH.** The feed table now carries a fifth field — the refresher expected to keep
+it current — and the guard reads the daily runner and **reds on any watched feed whose refresher the runner never
+invokes.** A feed added without an owner now fails immediately rather than in three weeks when its data has quietly
+frozen. All five wired, each idempotent and scoped to the recent gap so a daily run is cheap and an outage
+self-heals.
+
+**AND THE INGEST THAT COULD NOT BE SCHEDULED.** `ingest-dukascopy.py` hardcoded `START=2016-01-01`, so the only way
+to run it was a full ten-year crawl — twenty-plus minutes, which is why in practice it was run by hand, which is to
+say almost never. The range is now env-configurable and defaults to ten days back. **A job that can only be run
+expensively is a job that will not be run.**
+
+**A PLACEMENT BUG IN MY OWN FIX, caught by reading the output rather than trusting it.** I appended the wiring check
+to the end of the file, where it sat behind an early `Deno.exit(1)` on the staleness verdict — so it never executed
+on precisely the runs where it mattered, and the first run showed no wiring line at all. **A check that only fires
+when everything else is already green is not a check.** Moved ahead of the verdict and folded into the red count.
+
+Both stale feeds refreshed: FX/index hourly re-crawled across eight instruments, crypto funding running.

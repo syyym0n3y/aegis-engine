@@ -148,6 +148,16 @@ while true; do
   deno run --allow-net --allow-env ../scripts/collect-vx-curve.ts || true
   # BINANCE SENTIMENT COLLECTOR (D-502b): API serves ~30d only — the series accrues from 2026-08-23.
   deno run --allow-net --allow-env ../scripts/collect-binance-sentiment.ts || true
+  # THE FIVE UNOWNED FEEDS (D-715). The continuity guard watched six feeds and only ONE had a refresher the runner
+  # actually invoked — the one wired in D-683 after the attribution engine spent a week reporting on frozen data.
+  # Three of the other five had already gone stale; the remaining two were fresh by luck. A guard that reports
+  # staleness while nothing owns the cause trains everyone to read its red as background noise.
+  # Each is idempotent and scoped to the recent gap, so a daily run is cheap and an outage self-heals.
+  FROM=$(date -u -v-10d +%F 2>/dev/null || date -u -d '10 days ago' +%F)     PAIRS="EURUSD:1e-5,GBPUSD:1e-5,USDJPY:1e-3,AUDUSD:1e-5,XAUUSD:1e-3,USA500IDXUSD:1e-3,USATECHIDXUSD:1e-3,BRENTCMDUSD:1e-3"     python3 ../scripts/ingest-dukascopy.py > ../data/dukascopy.log 2>&1     || echo "$(date -u +%FT%TZ) FX/INDEX HOURLY REFRESH FAILED — the feed the continuity guard watches has no other owner"
+  deno run --allow-net --allow-env ../scripts/ingest-funding-full.ts > ../data/funding.log 2>&1     || echo "$(date -u +%FT%TZ) CRYPTO FUNDING REFRESH FAILED"
+  bash ../scripts/ingest-cot-disagg.sh > ../data/cot-disagg.log 2>&1 || echo "$(date -u +%FT%TZ) COT DISAGG REFRESH FAILED"
+  bash ../scripts/ingest-cot-tff.sh    > ../data/cot-tff.log    2>&1 || echo "$(date -u +%FT%TZ) COT TFF REFRESH FAILED"
+  deno run --allow-net --allow-env ../scripts/ingest-earnings.ts > ../data/earnings.log 2>&1     || echo "$(date -u +%FT%TZ) EARNINGS REFRESH FAILED"
   # NQ INTRADAY ACCRUAL (D-709). Yahoo serves NQ=F 1-minute bars for only ~7 days and 5-minute for ~60, and both
   # windows ROLL — a day not fetched is permanently unrecoverable. The cache is append-only and merges on timestamp,
   # so running it daily accumulates a minute history Yahoo itself will not serve twice. This is the data that decides

@@ -13,7 +13,13 @@ PAIRS={"EURUSD":1e-5,"GBPUSD":1e-5,"USDJPY":1e-3,"AUDUSD":1e-5}
 import os
 if os.environ.get("PAIRS"):  # e.g. PAIRS="XAUUSD:1e-3,USA500IDXUSD:1e-3"
     PAIRS={p.split(":")[0]:float(p.split(":")[1]) for p in os.environ["PAIRS"].split(",")}
-START=dt.date(2016,1,1); END=dt.date(2026,8,22)
+# D-715: the range is env-configurable so the DAILY runner can ask for just the recent gap. It was hardcoded to the
+# full 2016-2026 span, which meant the only way to run it was a 20-minute crawl — so in practice it was run by hand,
+# which is to say almost never, and the feed it owns had drifted 7.9 days stale while the continuity guard reported
+# it faithfully and nothing acted. FROM defaults to 10 days back: idempotent, cheap, and enough to close any gap a
+# short outage opens.
+START=dt.date.fromisoformat(os.environ.get("FROM")) if os.environ.get("FROM") else dt.date.today()-dt.timedelta(days=10)
+END=dt.date.fromisoformat(os.environ.get("TO")) if os.environ.get("TO") else dt.date.today()
 UA={"User-Agent":"Mozilla/5.0"}
 def fetch(path):
     for attempt in range(4):

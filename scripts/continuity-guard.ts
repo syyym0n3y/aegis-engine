@@ -27,22 +27,40 @@ async function jwt() {
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
 const GRACE = Number(Deno.env.get("GRACE") || 1.5);
 
-// table, human label, the column carrying recency, how often the SOURCE publishes (days)
-const FEEDS: [string, string, string, number][] = [
-  ["trd_perp_oi?venue=eq.binance&interval=eq.funding&select=ts&order=ts.desc&limit=1", "crypto funding", "ts", 1],
-  ["trd_cot_disagg?select=report_date&order=report_date.desc&limit=1", "CFTC disaggregated", "report_date", 7],
-  ["trd_cot_tff?select=report_date&order=report_date.desc&limit=1", "CFTC financial (TFF)", "report_date", 7],
-  ["trd_fx_hourly?select=ts&order=ts.desc&limit=1", "FX/index hourly", "ts", 3],
-  ["trd_attribution?select=asof&order=asof.desc&limit=1", "attribution engine", "asof", 3],
-  ["trd_earnings?select=report_date&order=report_date.desc&limit=1", "earnings", "report_date", 7],
+// table, human label, the column carrying recency, how often the SOURCE publishes (days), and the REFRESHER that is
+// supposed to keep it current.
+//
+// D-715: THE FIFTH FIELD EXISTS BECAUSE WATCHING A FEED IS NOT THE SAME AS FEEDING IT. Three times now a feed has
+// gone stale while this guard faithfully reported it and NOTHING owned the cause: the attribution universe had no
+// scheduled bar ingest at all (D-683), and crypto funding and the FX/index hourly feed had no scheduled refresher
+// either — both were being topped up by hand, which is to say not at all. A guard that reports staleness forever
+// while no process can fix it trains everyone to read the red as background noise.
+//
+// The refresher name is now checked against the daily runner, so a feed added here without a scheduled refresher
+// turns the guard RED immediately rather than in three weeks when its data has quietly frozen.
+const FEEDS: [string, string, string, number, string][] = [
+  ["trd_perp_oi?venue=eq.binance&interval=eq.funding&select=ts&order=ts.desc&limit=1", "crypto funding", "ts", 1, "ingest-funding-full.ts"],
+  ["trd_cot_disagg?select=report_date&order=report_date.desc&limit=1", "CFTC disaggregated", "report_date", 7, "ingest-cot-disagg.sh"],
+  ["trd_cot_tff?select=report_date&order=report_date.desc&limit=1", "CFTC financial (TFF)", "report_date", 7, "ingest-cot-tff.sh"],
+  ["trd_fx_hourly?select=ts&order=ts.desc&limit=1", "FX/index hourly", "ts", 3, "ingest-dukascopy.py"],
+  ["trd_attribution?select=asof&order=asof.desc&limit=1", "attribution engine", "asof", 3, "aegis-attribution.ts"],
+  ["trd_earnings?select=report_date&order=report_date.desc&limit=1", "earnings", "report_date", 7, "ingest-earnings.ts"],
 ];
 
 const today = Date.now();
+
+// D-715: EVERY WATCHED FEED MUST HAVE A REFRESHER THE RUNNER ACTUALLY INVOKES. Read the daily runner once, up front,
+// so an unwired feed is caught the moment it is added rather than three weeks later when its data has frozen.
+let runnerSrc = "";
+try { runnerSrc = await Deno.readTextFile(new URL("../infra/scripts/coverage-guard-up.sh", import.meta.url).pathname); }
+catch { console.error("!! cannot read the daily runner — cannot verify any feed is wired. RED."); Deno.exit(1); }
+const unwired = FEEDS.filter(([, , , , r]) => !runnerSrc.includes(r));
+
 let red = 0;
 console.log("==> CONTINUITY GUARD — is the data still arriving, and are the clocks still turning?");
 console.log("    a stopped ingest fails SILENTLY: old rows stay, queries keep answering, everything is stale.\n");
 
-for (const [path, label, col, everyDays] of FEEDS) {
+for (const [path, label, col, everyDays, refresher] of FEEDS) {
   const rows = await fetch(`${OWNED}/${path}`, { headers: hdr }).then((r) => r.ok ? r.json() : null).catch(() => null);
   if (!Array.isArray(rows) || !rows.length) { red++; console.log(`  RED  ${label.padEnd(22)} unreadable or empty`); continue; }
   const raw = (rows[0] as Record<string, unknown>)[col];
@@ -142,6 +160,16 @@ else {
   }
 }
 
-console.log(`\n  ${red === 0 ? "CONTINUITY GREEN — data arriving, jobs registered, clocks turning."
+// THE WIRING CHECK MUST RUN BEFORE THE VERDICT, not after it. Placed at the end of the file it sat behind an early
+// `Deno.exit(1)` and never executed on exactly the runs where it mattered — a check that only fires when everything
+// else is already green is not a check. Found by reading the output, which showed no wiring line at all.
+if (unwired.length) {
+  red += unwired.length;
+  console.log(`\n  ${unwired.length} WATCHED FEED(S) HAVE NO REFRESHER IN THE DAILY RUNNER — this guard can report`);
+  console.log(`  their staleness forever and nothing will ever fix it. That is how three feeds froze already.`);
+  for (const [, label, , , r] of unwired) console.log(`  RED  ${label.padEnd(24)} expects ${r}, which the runner never invokes`);
+}
+
+console.log(`\n  ${red === 0 ? "CONTINUITY GREEN — data arriving, jobs registered, clocks turning, every feed owned."
   : `${red} CONTINUITY FAILURE(S) — research run against this state may be reading a frozen snapshot.`}`);
 if (red > 0) Deno.exit(1);
