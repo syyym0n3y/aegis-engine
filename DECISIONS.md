@@ -14330,3 +14330,47 @@ exercised.** Fixed and verified in both directions: two identical runs now leave
 Ambiguity rates are low here (median 5%, p90 10%) because these are 1-hour opening ranges on 3–6 hour horizons —
 unlike the NQ model's tighter window where it reached 22%. The rate is reported per spec because a specification
 with a high ambiguity rate is measuring its own resolution, not breakouts.
+
+---
+
+**D-711 — THE NQ MOTION MODEL, RESOLVED. No edge over simply holding, at any opening-range length. And the hourly
+result that looked like an edge was an artifact of the bar size — a methodological finding worth more than the
+verdict.**
+
+D-708 could not decide this: at hourly resolution 22% of days broke both sides of the opening range inside one bar,
+and the verdict spanned **+7.32 to −4.87 points** depending on an ordering the data could not show. D-709 imported
+**1,200,240 minute bars, 3,334 days, 2016–2026.**
+
+**THE AMBIGUITY COLLAPSES FROM 22% TO 0.0%** — one day out of 2,734. The question is now fully resolved rather than
+bounded, and the residual is measured rather than assumed.
+
+| opening range | follow-through | benchmark (hold) | **EXCESS** | net of 1.5bp |
+|---|---|---|---|---|
+| 5-minute | — | — | — | **−0.0116%** |
+| 15-minute | 0.0197% (t 1.60) | 0.0220% (t 1.69) | **−0.0023% (t −0.13)** | **−0.0173%** |
+| 30-minute | 0.0127% (t 1.15) | 0.0106% (t 0.88) | **+0.0022% (t 0.12)** | **−0.0128%** |
+
+**THE BREAKOUT HAS NO EXCESS OVER SIMPLY HOLDING.** t of −0.13 and +0.12 on 2,656–2,734 trades. Net of a realistic
+MNQ round trip, every variant is negative. Era quartiles: `++-+`, `--+-`, `--++` — no stability at any length.
+
+**THE METHODOLOGICAL FINDING IS THE TRANSFERABLE PART: COARSE BARS SYSTEMATICALLY FLATTER BREAKOUT STUDIES.** The
+hourly version showed +7.32 pts at t 4.27; the minute version shows essentially zero excess. The mechanism is
+mechanical, not statistical — at hourly resolution the breakout is detected from the *whole hour's* high, so the
+study implicitly enters at a level the market had already travelled well past. At minute resolution the entry sits
+where the break actually occurred and the apparent edge disappears. **Any breakout result computed on bars much
+coarser than its entry trigger is suspect by construction, and this programme now has a measured instance of the
+size of that distortion.**
+
+**WHAT SURVIVES OF THE CHECKLIST.** One thing, and it is consistent across all three lengths: **the widest opening
+ranges are the worst bucket** (excess −0.0124%, −0.0586%, −0.0950% at 5/15/30-minute). *"Over 20 points is too
+wide"* is empirically supported. The rest is not: the width buckets are otherwise non-monotone noise, *"under 5
+points is too tight"* is contradicted (D-708), and the points-based threshold selects **0% of 2026 days**.
+
+**SESSION HANDLING WAS MADE EXPLICIT BECAUSE GETTING IT WRONG IS SILENT.** 8:30 US Central is 13:30 UTC under
+daylight time and 14:30 under standard time; a single year-round offset would measure the "opening" range
+mid-session for four months of every year and the result would be about an arbitrary window.
+
+**A BUG OF MINE, caught by the failure mode being loud.** The cache stores bars under `b`; my interface declared
+`bars` and cast the parse, so every day silently had `bars === undefined`. It surfaced as a null-property crash
+rather than as a wrong number — the better of the two outcomes, and the reason the script now asserts the shape
+after parsing instead of trusting the cast.
