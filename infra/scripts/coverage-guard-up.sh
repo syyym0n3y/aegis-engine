@@ -148,6 +148,13 @@ while true; do
   deno run --allow-net --allow-env ../scripts/collect-vx-curve.ts || true
   # BINANCE SENTIMENT COLLECTOR (D-502b): API serves ~30d only — the series accrues from 2026-08-23.
   deno run --allow-net --allow-env ../scripts/collect-binance-sentiment.ts || true
+  # NQ INTRADAY ACCRUAL (D-709). Yahoo serves NQ=F 1-minute bars for only ~7 days and 5-minute for ~60, and both
+  # windows ROLL — a day not fetched is permanently unrecoverable. The cache is append-only and merges on timestamp,
+  # so running it daily accumulates a minute history Yahoo itself will not serve twice. This is the data that decides
+  # D-708: the NQ Motion Model is UNTESTED only because the intrabar ordering inside the opening hour is unobservable
+  # at the resolution held, and one minute bar resolves it.
+  deno run --allow-net --allow-env --allow-write --allow-read ../scripts/ingest-nq-yahoo.ts > ../data/nq-intraday.log 2>&1 \
+    || echo "$(date -u +%FT%TZ) NQ INTRADAY ACCRUAL FAILED — a rolling window was missed and cannot be refetched"
   # BAR REFRESH (D-683) — MUST PRECEDE THE ATTRIBUTION ENGINE. There was no scheduled ingest for the attribution
   # universe at all: bars were refreshed by hand, last on 2026-08-21, and the engine below ran every morning writing
   # 27 clean rows dated a week earlier while its log said "27 attribution rows written". Fetches only what is stale
