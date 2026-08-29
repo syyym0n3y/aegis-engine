@@ -1667,7 +1667,8 @@ if(PASS==="all"||PASS==="weekly"){
   const weeks=[...byW.keys()].sort();
   for(const [sig,dir] of [["rev",-1],["mom",1]] as [("rev"|"mom"),number][]) for(const univ of ["all","liq"]) for(const k of [5,10]) for(const lag of [0,1]){
     const key=`weekly|${sig}|${univ}|k${k}${lag?"|lag1":""}`;
-    const rets:number[]=[]; const excessTopW:number[]=[];
+    const rets:number[]=[]; const excessTopW:number[]=[]; const turnsW:number[]=[];
+    let prevLongW:Set<string>|null=null, prevShortW:Set<string>|null=null;
     for(const wk of weeks){
       let g=byW.get(wk)!;
       if(univ==="liq"){const ds=[...g].map(r=>r.dv).sort((a,b)=>a-b);const cut=ds[Math.floor(ds.length*2/3)];g=g.filter(r=>r.dv>=cut);}
@@ -1686,6 +1687,16 @@ if(PASS==="all"||PASS==="weekly"){
       // this was measured (D-695), and this pass was one of the 101 that could not be checked at all.
       {const uAll=[...g.keys()].filter(i2=>Number.isFinite(pick(i2)));
        if(uAll.length>=10) excessTopW.push(lr-mean(uAll.map(pick)));}
+      // D-707: MEASURED TURNOVER. This family charged a flat 20bp round trip EVERY WEEK — an assumed 100% flip of
+      // both legs, 52 times a year, ~10.4%/yr of drag that was never checked against what the book actually does.
+      // For weekly reversal the assumption is plausibly close, and "plausibly close" is exactly what THE TURNOVER
+      // LAW says is not a cost model. Identity comes from the symbol carried on each row.
+      {const tS=new Set(long.map(i2=>g[i2].sym)), bS=new Set(short.map(i2=>g[i2].sym));
+       if(prevLongW&&prevShortW){
+         const oT=[...prevLongW].filter(x=>!tS.has(x)).length/Math.max(1,prevLongW.size);
+         const oB=[...prevShortW].filter(x=>!bS.has(x)).length/Math.max(1,prevShortW.size);
+         turnsW.push((oT+oB)/2);}
+       prevLongW=tS; prevShortW=bS;}
     }
     if(rets.length<200){await record(key,"weekly",{sig,univ,k,exec:lag?"lag1":"same-close"},"equity_weekly",null,ceil);done++;continue;}
     const mExW=excessTopW.length?mean(excessTopW):NaN, sdExW=excessTopW.length?(sdv(excessTopW)||1e-9):NaN;
@@ -1699,7 +1710,8 @@ if(PASS==="all"||PASS==="weekly"){
       g_era:q4.filter(x=>Math.sign(x)===Math.sign(m)&&m>0).length>=3, eras:q4};
     await record(key,"weekly",{sig,univ,k,exec:lag?"lag1":"same-close",
       excess_top_ann:Number.isFinite(mExW)?+(mExW*52).toFixed(6):null,
-      excess_top_t:Number.isFinite(tExW)?+tExW.toFixed(4):null},"equity_weekly",g2,ceil); done++;
+      excess_top_t:Number.isFinite(tExW)?+tExW.toFixed(4):null,
+      turnover_oneway:turnsW.length?+(turnsW.reduce((a,b)=>a+b,0)/turnsW.length).toFixed(4):null},"equity_weekly",g2,ceil); done++;
     await log(`    weekly ${sig} ${univ} k${k}${lag?" LAG1":""}: n=${rets.length}wk net ${(m*52*100).toFixed(1)}%/yr t=${t.toFixed(2)} eras ${q4.map(x=>x>0?"+":"-").join("")}`);
   }
   await log(`  PASS 28 (weekly) done`);

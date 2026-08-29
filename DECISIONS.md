@@ -14164,3 +14164,46 @@ because every ladder run used a total-return series without ever asking what the
 *** WRONG DIRECTION *** at the $1,000 rung where both series read 0.8y — a tie at one-decimal resolution, on a rung
 that is ~94% contributed money where dividends cannot move the crossing. A check that cries wolf gets ignored;
 ties now report as ties with the reason.
+
+---
+
+**D-707 — WEEKLY SHORT-TERM REVERSAL: the strongest benchmark-relative result on the board with adequate breadth,
+killed on three of four pre-registered gates. 12.6bp of excess per round trip against a 20–30bp round trip.**
+
+The MTF disaggregation of D-695 surfaced it. Disaggregating the pooled "74% of positive results are drift" figure by
+hold period and bucket count showed the drift rate tracks **breadth**, not timeframe — k=3 (breadth 46) drifts 28%,
+k=5 (breadth 432) 80%, k=10 (breadth 454) 73%, and the families with the lowest drift are the thinnest. **One family
+did not fit: `weekly`, breadth 497, 0% drift, median excess t 3.94.**
+
+| spec | turnover | excess%/yr | excess t | @10bp | @20bp | @30bp | era gate |
+|---|---|---|---|---|---|---|---|
+| `rev\|all\|k5` | 78.8% | **+10.33** | **5.16** | +2.1 | **−6.1** | −14.2 | pass |
+| `rev\|all\|k5\|lag1` | 78.8% | +9.03 | 4.55 | +0.8 | −7.4 | −15.6 | **FAIL** |
+| `rev\|liq\|k10` | 86.9% | +13.08 | 3.43 | +4.0 | −5.0 | −14.0 | pass |
+
+**GATE 1 PASS, barely** — at 10bp the excess nets +0.8% to +4.0%/yr. **GATE 2 FAIL DECISIVELY** — at 20bp every one
+of eight specs is negative. **GATE 3 FAIL for the spec that matters**: the lag-1 executable version of the headline
+misses the era gate, so once same-bar execution is removed the effect is absent from at least two era quartiles.
+**GATE 4 FAIL** — excess t 5.16 against the live 5.4555 ceiling.
+
+**TURNOVER WAS MEASURED HERE FOR THE FIRST TIME** — this family had only ever *assumed* a flat 20bp weekly charge.
+Measured: **78.8% one-way at k5, 86.9% at k10**, i.e. the book flips almost entirely every week, ~82 round trips a
+year.
+
+**THE EFFECT-SIZE STATEMENT IS THE CLEAN ONE.** 10.33%/yr ÷ ~82 round trips = **12.6bp of excess per round trip**,
+against a realistic 20–30bp round trip on a 497-name weekly-flipping book that necessarily reaches into the least
+liquid names. **0.42x–0.63x its cost: SUB-FEE**, the D-426 shape exactly.
+
+**WHAT IS REAL AND WORTH KEEPING.** Gross of costs this is genuinely the strongest benchmark-relative result the
+board has produced with adequate breadth: **+9 to +13%/yr over its own universe at breadth 497**, universe-stable
+across all/liq and k5/k10 at **1.08x–1.10x** (against the 1.5x threshold french momentum failed at 1.92–18x), and it
+survives lag-1 execution. The market fact is not in dispute. The tradability is, and it fails by a factor of two on
+cost alone before the era gate is reached.
+
+**PREDICTION SCORING.** I wrote *"KILLED ON COST"* — correct. I wrote *"what would surprise me is era instability"*
+— and the executable lag-1 headline does fail the era gate, so the surprise happened.
+
+**A QUERY DEFECT CAUGHT MID-INVESTIGATION.** Asking PostgREST for a non-existent `eras` column returns an ERROR
+OBJECT, and my script iterated it as data and printed an empty table with no error — a false negative dressed as a
+null result. The first version crashed loudly, which was better. The query now asserts the response shape and
+carries a positive control that the filter returns non-zero rows.
