@@ -14661,3 +14661,69 @@ only, what the operator's instruction asked breadth to be.
 **WHY IT MATTERS METHODOLOGICALLY.** The naive monotone hypothesis (D-718) LOST; the non-monotone one, registered
 before it could be fitted, WON. The difference between the two was not the data — it was that one story was written
 after seeing the deciles and one before. That is the PRE-COMMITMENT LAW doing exactly what it exists to do.
+
+## D-719 — the discovery write-bug swept across the stack: two instances fixed, and a guard false-negative it exposed
+
+The agent-output guard went RED on discovery: `WRITE-FAILED trd_trial_counter 409` and `WRITE-FAILED trd_discovery_log
+400`. Both were real, both were the write-plumbing class this programme has fixed repeatedly (D-710/714), and the
+operator's standing instruction was to sweep the whole stack for the same shape, not patch the one the guard caught.
+
+**INSTANCE 1 — 409-as-failure on an idempotent counter (aegis-discovery.ts).** The trial-counter batch repeated
+`base_composite|<fp>` once per result — an INTRA-BATCH duplicate that 409s despite on_conflict=run_key, because ON
+CONFLICT arbitrates against the table, not against sibling rows in one statement. Two fixes: dedupe the batch by
+run_key (a trial is not counted twice in one run), and treat 409 as the idempotent success it is (`status !== 409`),
+matching the D-681 doctrine every other trial write already followed.
+
+**INSTANCE 2 — column-spread into a typed table (aegis-discovery.ts).** `trd_discovery_log` was written with `...r`,
+so any metric added to discovery's in-memory shape but not to the table 400s the WHOLE batch — a silent loss of the
+ledger the guard reads. Now projected onto the table's known columns, so a new metric is a no-op until a migration
+adds it; and the response body is printed so the next 400 names its column.
+
+**INSTANCE 3, found by the sweep — inert-upsert in trd-ripshort-scan.** `trd_ripshort_scan` (UNIQUE scan_date,ticker)
+was written with resolution=ignore-duplicates and NO on_conflict target, result unchecked — so every re-scan of a date
+409s and silently drops the batch, the exact D-710 forward-tick failure. Fixed: on_conflict=scan_date,ticker + a
+checked result.
+
+**THE GUARD THAT SHOULD HAVE CAUGHT INSTANCE 3 HAD A FALSE-NEGATIVE.** plumbing-guard RULE 5's proximity window was
+[at-8, at+2] — the +2 forward reach let the NEXT statement's on_conflict clear this write: the ripshort inert write
+(line 58) was waved through because the trd_scan_cursor upsert two lines below carried on_conflict=id. A PostgREST
+on_conflict is a URL param and always PRECEDES its Prefer line, never follows it, so the window is now backward-only
+[at-4, at]. And the rule had NO self-test at all — the class was "clean" only because nobody had broken its input.
+The selftest now carries the exact false-negative shape (an inert write immediately followed by a write that HAS
+on_conflict) and expects 4; break-to-verify confirmed the old window scores 3 and mismatches. A guard rule with no
+self-test is an unverified rule, and this one had been trusted for two decisions.
+
+## D-719b — CORRECTION: the two discovery write-failures were a STALE DAEMON, not live source bugs
+
+D-719 claimed discovery's `trd_trial_counter 409` and `trd_discovery_log 400` were live bugs fixed by the dedup and
+column-whitelist changes. Verified against the running layer, that diagnosis is WRONG, and the correction matters more
+than the original claim.
+
+**THE 409 WAS A STALE DAEMON.** `on_conflict=run_key` entered discovery's source in D-714 (2026-08-29 22:44). The
+daemon writing the failing log (pid 9094) had started ~2026-08-28 21:00 — a full day EARLIER — so it was executing
+pre-D-714 code with no on_conflict target, and 409'd every cycle. Reproduction through the actual PostgREST layer
+proves the CURRENT source pattern (on_conflict=run_key + resolution=ignore-duplicates) returns 201 for an intra-batch
+duplicate, a pre-existing key, and a mixed batch alike. The operative fix was killing pid 9094 so launchd (KeepAlive)
+respawned it (pid 49628) on current source. My dedupe-by-run_key and status!==409 additions are correct defensive
+hardening — 409-tolerance now matches the factory tail and D-681 everywhere — but they are NOT what fixes the 409.
+
+**THE 400 WAS ALSO STALE.** A direct POST of the exact current result shape (line 144, unchanged since D-378
+2026-08-20) to trd_discovery_log returns 201 — every field maps to a column, psr_z is numeric-or-null (the "INVALID"
+string is display-only, never stored). The column-whitelist I added prevents a FUTURE 400 when a new metric is added
+to the result shape before its migration, and the response body is now printed so the next real 400 is self-naming —
+both good, neither a fix for a live bug, because there was no live bug in current source.
+
+**WHAT THIS SESSION ACTUALLY MISSED, and the lesson.** The agent-output guard reads the LATEST run's log; it cannot
+tell a live-source defect from a long-running daemon on stale code. When a guard flags an agent, the FIRST check must
+be whether the running process matches the committed source — a `ps -o etime` against the last relevant commit time —
+before diagnosing the code. I spent the diagnosis writing defensive code for a bug that a one-line process-age check
+would have identified as already-fixed-pending-restart. The three REAL findings of D-719 stand and are verified: the
+trd-ripshort-scan inert-upsert (UNIQUE scan_date,ticker, no on_conflict, silent batch drop — a genuine live bug), the
+plumbing-guard RULE 5 false-negative (forward window let a sibling write's on_conflict clear an inert one, now
+backward-only with the exact shape in its selftest), and the factory 409-handling inconsistency.
+
+**A DURABLE GUARD FOR THE CLASS.** The real gap is that nothing checks whether a long-lived daemon has drifted from
+its source. The agent-output guard's staleness check measures LOG age, not CODE age. A daemon started before the last
+commit to its own script is running code the repo no longer contains — the exact condition that manufactured two
+phantom bugs here. That check belongs on the board; noting it for the next session rather than bolting it on at hour
+two of this one.
