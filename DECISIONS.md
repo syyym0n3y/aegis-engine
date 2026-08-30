@@ -14741,3 +14741,117 @@ on current code. Self-tested 4-way on the pure comparison; live it clears the fr
 guard-status; registry-guard confirms all 25 guards invoked and visible. Stated limitation: it checks the ENTRY
 script, not the _shared modules it imports — a daemon can still drift on a changed dependency while its entry file is
 untouched; a dependency-closure check is a later refinement, noted not hidden.
+
+## D-720 — regime-snapshot: the HONEST version of "confidence at a point in time"
+
+The operator's instruction was to use MTF to "understand probability and confidence levels at a point in time" to
+extract wealth. The tempting build is a confidence engine that combines drivers into a tradable score. That would be
+an overclaim: every conditioning driver on this board has been through the gates and none carries a tradable edge, so
+a score implying one would manufacture the exact thing the guard stack exists to prevent. `scripts/regime-snapshot.ts`
+is the version the evidence supports — it reads every HELD conditioning driver (D-716) at the latest date and reports
+WHERE it sits in its own history as a percentile and a plain-English state. It is STATE, not a signal: breadth,
+VIX level, VIX9D/VIX term structure, 10y-2y slope, gold/silver ratio, HYG/LQD credit proxy. The breadth row carries
+the D-718b U-shape as labelled CONTEXT. It builds in its own honesty: the HYG/LQD row is flagged as a raw price ratio
+whose all-time percentile drifts and is not a clean credit read, and the footer names the drivers we do NOT hold
+(real yields/CPI, dealer gamma, ETF flows, GPR) so their absence is visible as a data fact, not a silent gap. This is
+the deliverable that answers the operator's question without lying to them: here is the state of the tape from what we
+can observe; it does not tell you what to do.
+
+## D-720b — daemon-drift-guard made import-closure aware (closing D-719c's stated limitation)
+
+D-719c's guard compared a daemon's start time to the last commit of its ENTRY script only, and flagged that a daemon
+could still drift on a changed _shared module while its entry file was untouched. That is not hypothetical:
+aegis-discovery imports _shared/data-version.ts, so an edit there without a restart is precisely the silent drift the
+guard exists to catch. The guard now walks each daemon's LOCAL import closure transitively (relative imports only —
+npm/jsr/http deps are not repo code and cannot drift) and compares the process start against the NEWEST commit across
+the entry AND every module it pulls in, naming the offending file.
+
+**THE SELF-TEST CAUGHT A REAL BUG IN THE EXTENSION.** The added closure assertion (aegis-discovery's closure must
+contain data-version.ts) FAILED on first run — the closure returned only the entry file. Cause: the SELFTEST block
+runs before `const REPO` is initialised, so closure()'s `${REPO}` read hit the temporal dead zone, the try/catch
+swallowed the ReferenceError, and the walk returned nothing. The live loop hid it because REPO was initialised by the
+time the loop ran — the exact shape of a bug that passes in production and fails only under the path a test exercises.
+REPO moved above the self-test; the assertion now passes (2 files incl. the cross-directory dependency) and
+permanently guards the regression. A guard extension with no self-test would have shipped inert.
+
+## D-721 — borrow stress (days-to-cover) does NOT condition liquid forward returns; the academic short prior MISSED
+
+The register (D-716) flags that every short-side result on this board ASSUMES a borrow cost rather than observing one.
+We hold trd_short_interest with days_cover (the borrow-DEMAND proxy), semi-monthly 2017-2026. `shortstress-forward.sql`
+tests whether borrow stress conditions forward returns, in the LIQUID tercile (LIQUIDITY LAW), benchmarked against the
+universe mean (BENCHMARK LAW), on ~236 names/settlement over 207 settlements (BREADTH LAW), forward window settlement
+-> +15 days.
+
+**THE ACADEMIC PRIOR (high short interest -> underperforms) MISSED (SIGN LAW).** Quintile excess vs universe mean:
+Q1 (lowest stress) +0.196% t 2.27 | Q2 -0.076 | Q3 -0.061 | Q4 -0.065 | Q5 (HIGHEST stress) **+0.005% t 0.06**. The
+high-borrow-stress quintile — where the short is supposed to work — has an excess indistinguishable from zero. The
+relationship is not monotone. The only significant cell is Q1 (low stress, mild OUTperformance), which is one of five
+quintiles (multiple comparisons), tiny, on the LONG side, and computed on overlapping 15-day windows that inflate t —
+not a claim.
+
+**THE VERDICT IS A NULL ON THE TRADABLE QUESTION, AND AN INFORMATIVE ONE.** In the liquid universe, borrow stress is
+not an edge we are leaving on the table — consistent with the LIQUIDITY-LAW pattern that has recurred across this
+programme: cross-sectional effects live in illiquid names that cannot absorb size. So the flat-borrow-cost assumption
+in short-side results is not RESCUED by an observed conditioning signal, but nor is it hiding a missed edge.
+
+**THE CAVEAT THAT MATTERS MOST — SURVIVORSHIP MAKES THIS A LOWER BOUND.** The price panel holds surviving names; the
+delisted-history hole (27.3%, D-687/D-703) removes exactly the names most likely to validate the short — the
+high-short-interest companies that crashed and delisted. So the Q5 null is measured on a universe with the short
+anomaly's best evidence structurally absent. This test can say borrow stress is not harvestable in liquid SURVIVING
+names; it CANNOT rule out the short effect in the full universe, and honesty requires stating that the missing cohort
+biases specifically against finding it. Trial counted (D721-daysCover-quintile-liquid-fwd15).
+
+## D-722 — infra-guard re-scoped to the substrate research actually uses; allowlist opened for the free debts
+
+Operator supplied Alpaca paper credentials and instructed "add allowlisting automatically, work around the infra
+billing issue."
+
+**INFRA BILLING WORKAROUND — it was a FALSE red.** infra-guard gated RED purely on the RENTED project
+(glzzoomuhnugsiichnub) being reachable, on the premise that the edge-factory lived only there. That migration is
+DONE: the daily runner uses only the owned node (OWNED_REST=1 ref, rented=0), every table this programme now touches
+is on owned, and no active script references the rented project (the 3 remaining refs are legacy migration/provision
+tools, none in any launchd job). So a rented outage makes NO current conclusion UNKNOWN — it only means the legacy CC
+oversight bridge is unreachable, a billing matter, not a research-validity one. Gating research RED on it asserted the
+engine was down while it ran entirely on an owned node that was up — the guard was itself violating the COVERAGE LAW
+it exists to enforce. Re-scoped: RED iff the OWNED node is down (break-to-verify confirmed: owned-down exits 1);
+owned-up + rented-down is GREEN for research with a non-blocking WARNING that keeps the billing issue visible. The
+board's lone red clears without paying an invoice, because there was nothing research-blocking to pay for.
+
+**ALLOWLIST opened for the register's free driver-debts (operator-authorized).** Added three named free-data hosts —
+matteoiacoviello.com (GPR index), api.eia.gov (commodity inventories), spdrgoldshares.com (GLD shares outstanding /
+real ETF flow) — each commented to its D-716 debt. Named hosts only, no wildcard: the allowlist's purpose is to make
+each cost-or-exfiltration surface deliberate, and a blanket entry would defeat it.
+
+## D-723 — the survivorship hole is being filled: Alpaca delisted/coverage backfill (operator unlocked)
+
+Operator supplied Alpaca paper credentials, unlocking the register's largest gap (D-716) and the binding constraint
+on D-721 (short anomaly), D-687/703 (FTD), and survivorship-correct breadth.
+
+**CAPABILITY VERIFIED against live state before building.** Alpaca's free IEX feed returns delisted symbols' daily
+history to their last trading day: SIVB ends 2023-03-09, BBBY 2023-05-02, FRC 2023-04-28 (the collapses). The
+multi-symbol bars endpoint fetches a whole batch per request with next_page_token pagination — efficient and
+sequential (Hard Rule), not parallel.
+
+**`scripts/ingest-delisted-alpaca.ts`** — reads a precomputed target list (SI real-tickers minus panel, recency-
+ordered; paging 3.9M SI rows in JS to derive it timed out, so it is one grouped DB query into data/delisted-targets
+.txt), fetches in batches of 50, paginates, writes ~5y histories to trd_bars_deep. Idempotent + resumable (re-reads
+the panel and skips already-ingested), rate-limited under Alpaca's 200/min. Bounded 100-symbol validation: 54 of 100
+had usable history, 31,945 bars, 4 requests, panel 4184->4238.
+
+**HONEST FRAMING, corrected from the validation.** The missing set is NOT purely delisted — it is the SI-universe
+coverage gap, which includes genuinely delisted common stocks (the survivorship-critical cohort, last_date well
+before today) AND still-listed names/ETFs never ingested (AAP, AAXJ appeared with last_date 2026-08-28). Both are
+real market data we lacked; downstream distinguishes by last_date, and a follow-up should classify ETF-vs-common-
+stock (all land as asset_class='equity'). COVERAGE LIMIT: the free IEX feed effectively begins ~mid-2020, so each
+history is ~5y and pre-2020 delistings remain a stated (smaller) hole. 43,210 targets; full run in progress.
+
+**CONSEQUENCE.** Once landed, the survivorship-critical tests can be re-run on a materially less-biased panel —
+D-721's borrow-stress null was explicitly a LOWER BOUND because the delisted crashers were absent; they no longer
+will be. Breadth (D-717) recomputed on the expanded panel is less survivorship-biased by construction.
+
+## D-723 (COMPLETE) — panel 4,184 -> 19,583 equity names (+15,399), 19.2M -> 29.6M bars
+Backfill landed. Survivorship-critical names verified present at their collapse dates: SIVB ends 2023-03-09, FRC
+2023-04-28, WISH 2024-05-10. 6,499 names now carry a delisting-shaped end (last_date < 2026-06-01) — the
+survivorship cohort recovered. The ~2020 IEX horizon means these are ~5y histories; pre-2020 delistings remain a
+stated (smaller) hole. Next: re-run the survivorship-sensitive tests (D-721 borrow stress was explicitly a LOWER
+BOUND with the crashers absent; breadth D-717 was survivorship-biased) on the expanded panel.
