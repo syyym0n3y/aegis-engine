@@ -47,6 +47,7 @@ const has = {
   cryptoFunding: await exists("trd_perp_oi?interval=eq.funding&select=ts&limit=1"),
   cryptoFlows: await exists("trd_perp_oi?venue=eq.blockchain.info&select=ts&limit=1"),
   macroInfl: await exists("trd_macro_series?series=like.*cpi*&select=d&limit=1") || await exists("trd_macro_series?series=like.*breakeven*&select=d&limit=1"),
+  gpr: await exists("trd_macro_series?series=eq.gpr&select=d&limit=1"),   // D-727: ingested
 };
 
 const A = (g: Cell, ei: Cell, es: Cell, fx: Cell, co: Cell, rb: Cell, cr: Cell): Record<Cls, Cell> =>
@@ -55,8 +56,8 @@ const A = (g: Cell, ei: Cell, es: Cell, fx: Cell, co: Cell, rb: Cell, cr: Cell):
 const DRIVERS: Driver[] = [
   { name: "1 CPI / inflation expectations", use: "condition", note: has.macroInfl ? "held" : "FRED-gated: no CPI/breakeven/survey series anywhere in the stack",
     cells: A("GATED", "GATED", "N/A", "N/A", "GATED", "GATED", "N/A") },
-  { name: "2 geopolitical risk", use: "condition", note: "Caldara-Iacoviello GPR index — FREE, now allowlisted (matteoiacoviello.com), not yet ingested",
-    cells: A("DEBT", "DEBT", "N/A", "DEBT", "DEBT", "N/A", "N/A") },
+  { name: "2 geopolitical risk", use: "condition", note: has.gpr ? "HELD — Caldara-Iacoviello GPR ingested to trd_macro_series (D-727), monthly, positive-controlled" : "GPR index free+allowlisted, not yet ingested",
+    cells: A(has.gpr ? "HELD" : "DEBT", has.gpr ? "HELD" : "DEBT", "N/A", has.gpr ? "HELD" : "DEBT", has.gpr ? "HELD" : "DEBT", "N/A", "N/A") },
   { name: "3 real yields (TIPS)", use: "condition", note: "only the NOMINAL curve is held; the real leg needs TIPS/breakeven (FRED-gated). Nominal is NOT a substitute",
     cells: A("GATED", "GATED", "N/A", "N/A", "GATED", "GATED", "N/A") },
   { name: "4 dollar (DXY / USD)", use: "condition", note: has.fxPairs ? "FX pairs held -> a USD basket is DERIVABLE; DXY not stored as its own driver" : "no FX",
@@ -65,8 +66,8 @@ const DRIVERS: Driver[] = [
     cells: A("GATED", "N/A", "N/A", "GATED", "N/A", "GATED", "N/A") },
   { name: "6 COT positioning", use: "condition", note: has.cot ? "held (trd_cot_disagg/tff) for the futures complex; crypto uses funding+OI as the analogue" : "COT MISSING",
     cells: A(has.cot ? "HELD" : "GATED", has.cot ? "HELD" : "GATED", "N/A", has.cot ? "HELD" : "GATED", has.cot ? "HELD" : "GATED", has.cot ? "HELD" : "GATED", has.cryptoFunding ? "HELD" : "GATED") },
-  { name: "7 fund / ETF flows", use: "condition", note: "GLD/IAU shares outstanding FREE + now allowlisted (spdrgoldshares.com), not ingested; trd_fundflow is Form-D raises, not ETF creation/redemption; crypto has on-chain flows",
-    cells: A("DEBT", "DEBT", "N/A", "N/A", "DEBT", "DEBT", has.cryptoFlows ? "HELD" : "DEBT") },
+  { name: "7 fund / ETF flows", use: "condition", note: "HARDER THAN THE REGISTER ASSUMED: the SPDR issuer serves PDF bar-lists via a Cloudflare JS-app API, not a clean shares-outstanding CSV; WGC ETF-flow data sits behind forms. Not a simple free download. Crypto on-chain flows ARE held.",
+    cells: A("GATED", "GATED", "N/A", "N/A", "GATED", "GATED", has.cryptoFlows ? "HELD" : "DEBT") },
   { name: "8 cross-asset ratio (gold/silver etc.)", use: "condition", note: has.metals ? "GC=F & SI=F held -> ratio HELD; other relative-value ratios DERIVABLE from held prices" : "metals missing",
     cells: A(has.metals ? "HELD" : "DEBT", "DERIVE", "DERIVE", "DERIVE", "DERIVE", "DERIVE", "DERIVE") },
   { name: "9 seasonality", use: "condition", note: "a COMPUTATION on the price history we already hold, not a feed — DERIVABLE for every class with enough history",
