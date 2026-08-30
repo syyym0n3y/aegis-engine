@@ -246,11 +246,14 @@ function evalXsec(rows:{mo:string;fwd:number;v:number;sym?:string}[],feeBp:numbe
 }
 // ---------- ledger write ----------
 let written=0,trialRows:{family:string;run_key:string}[]=[];
+const trialSeen=new Set<string>();   // D-719: dedupe run_keys within a flush — a repeated spec_key (e.g. base_composite)
+                                     // makes the batch an intra-batch duplicate that 409s despite on_conflict=run_key.
 async function record(spec_key:string,family:string,spec:unknown,universe:string,g:Gate|null,ceil:number){
-  trialRows.push({family,run_key:spec_key});
+  if(!trialSeen.has(spec_key)){trialSeen.add(spec_key);trialRows.push({family,run_key:spec_key});}
   if(trialRows.length>=200){
     const r=await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`,{method:"POST",headers:{...hdr,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(trialRows)}).catch(()=>null);
-    if(!r||!r.ok)await log(`WRITE-FAILED trd_trial_counter ${r?r.status:"net"}`);
+    // 409 = a run_key already counted (idempotent), not a defect — matches the final flush at the tail and D-681.
+    if(!r||(!r.ok&&r.status!==409))await log(`WRITE-FAILED trd_trial_counter ${r?r.status:"net"}`);
     trialRows=[];
   }
   const row=g?{spec_key,family,spec,universe,n_names:g.n_names,n_periods:g.n_periods,gross_ann:+g.gross_ann.toFixed(4),
