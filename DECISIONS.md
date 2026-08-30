@@ -14855,3 +14855,30 @@ Backfill landed. Survivorship-critical names verified present at their collapse 
 survivorship cohort recovered. The ~2020 IEX horizon means these are ~5y histories; pre-2020 delistings remain a
 stated (smaller) hole. Next: re-run the survivorship-sensitive tests (D-721 borrow stress was explicitly a LOWER
 BOUND with the crashers absent; breadth D-717 was survivorship-biased) on the expanded panel.
+
+## D-724 — the backfill was RAW-priced; caught by checking the re-run before believing it (not by a guard)
+
+The D-721 re-run on the expanded panel looked like a WIN — the borrow-stress short anomaly appearing where
+survivorship had hidden it: Q1 (low stress) +0.897% t 1.99, monotone decline Q1->Q4 (-0.105, -0.260, -0.347 t -2.71),
+the classic short-interest shape. It was a DATA ARTIFACT. `ingest-delisted-alpaca.ts` fetched with Alpaca's default
+`adjustment=raw`, while the existing panel is split/dividend ADJUSTED. Verified on NVDA's 2024 10:1 split: raw prints
+1208.42 -> 121.93 (a fake -90% "return"), adjustment=all prints 120.63 -> 121.72. Mixing a raw series into an
+adjusted cross-section turns every split into a giant spurious return, and those dominate the quintile means.
+
+**IT WAS CAUGHT BY THE DISCIPLINE, NOT A GUARD.** No machine check flags an adjustment-convention mismatch — the
+prices are individually valid, only inconsistent with the panel. What caught it was refusing to believe a result that
+reversed a prior null until the entry/exit prices behind it were inspected, exactly the artifact flagged BEFORE the
+re-run ran. This is the INSTRUMENT/PRECONDITION discipline: a number that suddenly agrees with the hypothesis is the
+one to distrust most.
+
+**FIX.** adjustment param added, default 'all' (must match the panel). The 15,399 raw names purged (exactly, original
+4,184 untouched, verified by count) and re-ingested split/dividend-adjusted. The D-721 re-run must be repeated on the
+corrected panel before ANY conclusion about whether survivorship was masking the short anomaly — the "win" above is
+retracted as an artifact until then.
+
+## D-724 (confirmed) — adjustment=all VERIFIED as the panel's convention, not assumed
+The fix required knowing the existing panel's adjustment convention. Verified against an original-panel name at a date
+where split-only and split+dividend diverge: AAPL 2021-06-01 original = 121.04, Alpaca adjustment=all = 120.96 (0.07%
+vendor noise), adjustment=split = 124.20. The panel is split+DIVIDEND adjusted (total-return style), so adjustment=all
+is correct and the re-ingest is panel-consistent. Had it been split-only, adjustment=all would have introduced a
+dividend-yield bias across the borrow-stress quintiles — checked rather than assumed.
