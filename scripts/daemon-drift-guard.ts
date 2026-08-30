@@ -10,9 +10,11 @@
 // touching scripts/<X>.ts. If the process is OLDER than its source, it has drifted and must be restarted. The fix is
 // always the same and always safe under launchd KeepAlive — kill the process, launchd respawns it on current source.
 //
-// LIMITATION, STATED: this compares the ENTRY script only, not the shared modules it imports. A daemon can still
-// drift on a changed _shared/*.ts while its entry file is untouched. The entry file is the dominant signal and the
-// one that moved in the incident; a full dependency-closure check is a later refinement, noted not hidden.
+// IMPORT-CLOSURE AWARE (D-720b, closing D-719c's stated limitation). The first version compared the ENTRY script
+// only, so a daemon could drift on a changed _shared/*.ts while its entry file was untouched — and this is not
+// hypothetical: aegis-discovery imports _shared/data-version.ts, so an edit there without a restart is exactly the
+// silent drift the guard exists to catch. The check now walks each daemon's LOCAL import closure transitively and
+// compares the process start against the NEWEST commit across the entry file AND every module it pulls in.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
 declareKnobs("daemon-drift-guard", [{ name: "SELFTEST", def: "0", note: "1 = run the parse/compare self-test and exit" }]);
 
@@ -21,6 +23,12 @@ async function sh(cmd: string[]): Promise<string> {
   const { stdout } = await p.output();
   return new TextDecoder().decode(stdout);
 }
+
+// REPO must be initialised BEFORE the self-test block below, which calls closure() — closure reads `${REPO}...`, and
+// as a `const` REPO is in the temporal dead zone until this line. The first self-test caught exactly this: the
+// closure's try/catch swallowed the TDZ ReferenceError and returned only the entry file, so the dependency check
+// looked inert. The live loop hid it because REPO was initialised by the time the loop ran.
+const REPO = new URL("..", import.meta.url).pathname;
 
 // Pure comparison so it can be self-tested without real processes: drift iff the process started strictly before the
 // last commit to its script (with a small grace so a restart racing a commit in the same minute is not flagged).
@@ -37,11 +45,47 @@ if ((Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1") {
   ];
   let ok = true;
   for (const [s, c, want] of cases) { const got = drifted(s, c); if (got !== want) { ok = false; console.error(`  SELFTEST FAIL: drifted(${s},${c}) = ${got}, want ${want}`); } }
-  console.log(ok ? "  SELFTEST OK — drift comparison correct in all 4 directions" : "  SELFTEST FAILED");
+  // Closure walk must transitively include a KNOWN cross-directory dependency, or the D-720b extension is inert:
+  // aegis-discovery imports ../supabase/functions/_shared/data-version.ts, so that path must appear in its closure.
+  const clo = await closure("scripts/aegis-discovery.ts");
+  const hasDep = clo.some((f) => f.includes("data-version.ts"));
+  if (!hasDep) { ok = false; console.error(`  SELFTEST FAIL: closure did not resolve the data-version.ts dependency (got ${clo.join(", ")})`); }
+  else console.log(`  closure walk resolved ${clo.length} files incl. the cross-directory dependency`);
+  console.log(ok ? "  SELFTEST OK — drift comparison correct in all 4 directions, closure walk resolves dependencies" : "  SELFTEST FAILED");
   Deno.exit(ok ? 0 : 2);
 }
 
-const REPO = new URL("..", import.meta.url).pathname;
+// Walk a script's LOCAL import closure (relative "./" and "../" imports only — npm/jsr/http deps are not repo code
+// and cannot drift against a commit). Returns the repo-relative paths of the entry plus every local module it pulls
+// in, transitively, with a visited set so import cycles terminate. A file that cannot be read is skipped, not fatal.
+async function closure(entryRel: string): Promise<string[]> {
+  const seen = new Set<string>(), out: string[] = [];
+  async function visit(rel: string) {
+    if (seen.has(rel)) return;
+    seen.add(rel); out.push(rel);
+    let src = "";
+    try { src = await Deno.readTextFile(`${REPO}${rel}`); } catch { return; }
+    for (const m of src.matchAll(/from\s+"(\.\.?\/[^"]+)"/g)) {
+      // Resolve the relative import against the importing file's directory, then make it repo-relative again.
+      const abs = new URL(m[1], `file://${REPO}${rel}`).pathname;
+      const childRel = abs.startsWith(REPO) ? abs.slice(REPO.length) : abs;
+      await visit(childRel);
+    }
+  }
+  await visit(entryRel);
+  return out;
+}
+// Newest commit epoch across a set of repo paths (0 if none are tracked).
+async function newestCommit(paths: string[]): Promise<{ epoch: number; file: string }> {
+  let best = { epoch: 0, file: "" };
+  for (const p of paths) {
+    const ct = (await sh(["git", "-C", REPO, "log", "-1", "--format=%ct", "--", p])).trim();
+    const e = Number(ct);
+    if (Number.isFinite(e) && e > best.epoch) best = { epoch: e, file: p };
+  }
+  return best;
+}
+
 // macOS ps: lstart is an absolute timestamp Date.parse understands; command carries the script path.
 const ps = await sh(["ps", "-axo", "pid=,lstart=,command="]);
 const drifts: string[] = [], checked: string[] = [];
@@ -56,15 +100,16 @@ for (const line of ps.split("\n")) {
   const script = `scripts/${sm[1]}`;
   const startEpoch = Math.floor(Date.parse(lstart) / 1000);
   if (!Number.isFinite(startEpoch)) continue;
-  // Last commit touching this script. If the file is untracked/never committed, skip (no baseline to compare).
-  const ct = (await sh(["git", "-C", REPO, "log", "-1", "--format=%ct", "--", script])).trim();
-  if (!ct) continue;
-  const commitEpoch = Number(ct);
+  // Newest commit across the ENTRY script AND its whole local import closure. If nothing is tracked, skip.
+  const clo = await closure(script);
+  const newest = await newestCommit(clo);
+  if (!newest.epoch) continue;
   const ageH = ((Date.now() / 1000 - startEpoch) / 3600).toFixed(1);
-  checked.push(`${script} (pid ${pid}, up ${ageH}h)`);
-  if (drifted(startEpoch, commitEpoch)) {
-    const behindH = ((commitEpoch - startEpoch) / 3600).toFixed(1);
-    drifts.push(`${script}: pid ${pid} started ${behindH}h BEFORE its last commit — running code the repo no longer contains. Restart it (kill ${pid}; launchd KeepAlive respawns on current source).`);
+  const via = newest.file === script ? "" : ` via ${newest.file}`;
+  checked.push(`${script} (pid ${pid}, up ${ageH}h, closure ${clo.length} file${clo.length === 1 ? "" : "s"})`);
+  if (drifted(startEpoch, newest.epoch)) {
+    const behindH = ((newest.epoch - startEpoch) / 3600).toFixed(1);
+    drifts.push(`${script}: pid ${pid} started ${behindH}h BEFORE its newest source commit${via} — running code the repo no longer contains. Restart it (kill ${pid}; launchd KeepAlive respawns on current source).`);
   }
 }
 
