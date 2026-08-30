@@ -14906,3 +14906,11 @@ liquid names — now demonstrated on a panel that can no longer be dismissed as 
 strong version of the true weak tilt, manufactured by split cliffs. The corrected numbers sit between the biased and
 the artifact — the honest signal is the weak-and-insignificant one, and the discipline that distrusted the strong
 version is what kept the artifact out of the ledger. Trial counted (D721b).
+
+## D-719 (empirically confirmed on the live daemon) — discovery writes clean and idempotent across cycles
+The restarted discovery daemon (fixed code) ran multiple cycles: "trial counter: +6 new of 6 tested (0 already
+counted against this data version), 1,373,373 live rows total (verified by re-read)" with ZERO new WRITE-FAILED
+(discovery.log still shows only the 4 pre-restart stale lines). The write succeeds, re-reads confirm it landed, and
+the +6-new/0-already accounting proves idempotency (an unchanged spec against the same data version would count 0).
+This is the strongest verification: not a reproduction, the actual production daemon over repeated cycles. Closes the
+D-719/719b loop — stale-daemon diagnosis and the dedup/409-tolerance/column-whitelist hardening both confirmed live.
