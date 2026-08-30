@@ -1592,6 +1592,16 @@ but reports INSUFFICIENT DATA — it needs two inputs:
 migrated off the rented project). Session 2026-08-29/30 added driver-register + daemon-drift-guard (24th, code-age
 not log-age, import-closure aware).
 
+## SELF-INFLICTED INCIDENT + RECOVERY (D-725, 2026-08-30). The D-723 backfill CLOBBERED every ETF/index (SPY/QQQ/
+HYG/LQD/GLD/TLT/...) — the target list excluded only asset_class='equity' so ETFs under etf/sector/index classes
+became targets, and the symbol-PK upsert overwrote their full histories with ~5y IEX stubs. Caught by the D-718b
+U-shape flipping to KILLED with 605 obs identical across all 3 instruments (the instruments had shrunk, not the
+signal). No usable backup. RECOVERED: restore-clobbered-etfs.ts re-fetched 51 ETFs from Yahoo full adjusted history
+(recycling-guarded) into etf/sector classes; SPY back to 8,453 bars; D-718b REPRODUCES 3/3 exactly. Root cause fixed:
+ingest excludes ALL classes + ignore-duplicates; build-breadth $5 floor so penny names can't dominate; breadth
+recomputed, U-shape re-verified. Outstanding: a shared anti-clobber guard across ingests. Equity panel 19,531 (incl
+15k delisted/penny — use the LIQUIDITY-LAW liquid tercile for any cross-section, as D-721b does).
+
 ## SURVIVORSHIP HOLE FILLED (D-723/724, operator unlocked Alpaca). Panel 4,184 -> 19,582 equity names, 29.6M bars,
 ~5y adjusted histories (IEX ~mid-2020 horizon; pre-2020 delistings a smaller remaining hole). Crashers present
 (SIVB/FRC/WISH at collapse dates). MUST fetch adjustment=all (verified = panel convention). Payoff delivered:
