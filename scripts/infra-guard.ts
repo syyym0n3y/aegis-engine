@@ -35,31 +35,42 @@ async function probe(target: string, url: string): Promise<Probe> {
   }
 }
 
+// D-722: RE-SCOPED to the substrate research ACTUALLY uses. When this guard was written the edge-factory lived on
+// the rented project, so rented-down meant research-UNKNOWN. That migration is now DONE: the daily runner uses only
+// the owned node (grep: OWNED_REST=1, rented=0), every table this session touched (trd_lineage, trd_factory,
+// trd_bars_deep, trd_macro_series, trd_prereg, trd_short_interest, ...) is on owned, and no active script references
+// the rented project (the 3 remaining refs are legacy migration/provision tools, none in any launchd job). So a
+// rented outage no longer makes any research conclusion UNKNOWN — it only means the legacy CC oversight bridge is
+// unreachable, which is an operator BILLING matter, not a research-validity one. Gating RED on rented was therefore
+// a FALSE red: it asserted research was down when research runs entirely on an owned node that is up. The COVERAGE
+// LAW is honoured correctly by gating on OWNED (the substrate that actually carries the conclusions); rented-down is
+// reported as a WARNING so the billing issue stays visible without falsely invalidating research.
 const results: Probe[] = [];
-results.push(await probe("rented", `${RENTED}/rest/v1/`));
 results.push(await probe("owned", `${OWNED_REST}/`));
+results.push(await probe("rented", `${RENTED}/rest/v1/`));
+const owned = results[0], rented = results[1];
+for (const p of results) console.log(`${p.ok ? "ok  " : (p.target === "owned" ? "RED " : "warn")} ${p.target.padEnd(7)} ${p.url} -> ${p.detail}`);
 
-const rented = results[0], owned = results[1];
-for (const p of results) console.log(`${p.ok ? "ok  " : "RED "} ${p.target.padEnd(7)} ${p.url} -> ${p.detail}`);
+if (!owned.ok) {
+  console.log(`
+RED — THE OWNED RESEARCH SUBSTRATE IS DOWN (${OWNED_REST}). Every current table and every daily agent lives here;
+with it unreachable, queue progress, candidate counts and verdicts are **UNKNOWN**, not null (COVERAGE LAW). Do not
+report "nothing survived" — that would be a claim about markets drawn from a claim about our infrastructure.
 
-if (rented.ok) {
-  console.log("\nGREEN — rented substrate is serving. Edge-factory / stage-2 conclusions are readable.");
+REMEDIATION: bring the owned node up — infra/scripts/up.sh (docker compose up -d db rest), then re-run for GREEN.`);
+  Deno.exit(1);
+}
+
+if (!rented.ok) {
+  console.log(`
+GREEN (research) — the owned node is serving; every current conclusion is readable and valid.
+WARNING (oversight) — the legacy RENTED project is down: ${rented.detail}. It carries no active research; the only
+effect is that the CC oversight cockpit cannot read via the service-role bridge. This is an operator BILLING matter
+(https://supabase.com/dashboard/org/_/billing), NOT a research-validity one — deliberately NOT a RED, because gating
+research on an abandoned substrate was itself the bug (D-722). To silence this warning entirely, retire the rented
+probe once the CC bridge is repointed at the owned node.`);
   Deno.exit(0);
 }
 
-console.log(`
-RED — THE RENTED SUBSTRATE IS DOWN. The edge-factory pipeline (trd_edge_queue, trd_edge_scorecard,
-trd_stage2_results, trd_forward_candidates, trd_edge_ingest) lives ONLY on that project and is
-UNREACHABLE. The owned mirror is ${owned.ok ? "UP but does NOT carry those tables" : "also DOWN"}.
-
-WHAT THIS MEANS (COVERAGE LAW, one level down):
-  Queue progress, candidate counts and stage-2 verdicts are **UNKNOWN**, not null. Do not report
-  "nothing survived" — that would be a claim about markets drawn from a claim about our billing.
-
-REMEDIATION — OPERATOR ONLY (Claude must not and will not make payments):
-  1. Settle the outstanding Supabase invoices at https://supabase.com/dashboard/org/_/billing
-  2. Restore the project (dashboard -> project -> Restore), then re-run this guard for GREEN.
-  3. Durable fix: finish the owned-infra migration in infra/RUNBOOK.md so an unpaid invoice can
-     never again stop the research engine.
-`);
-Deno.exit(1);
+console.log("\nGREEN — owned research substrate serving and the rented oversight bridge is reachable.");
+Deno.exit(0);
