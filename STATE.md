@@ -1588,9 +1588,18 @@ but reports INSUFFICIENT DATA — it needs two inputs:
    the $10/mo cloud project exists. Congress ingestion deferred (House PTRs are messy
    PDFs; EDGAR/Form-4 is the cleaner + stronger signal).
 
-## Guards: 24 (D-719c added daemon-drift). Board 23/24 GREEN; only `infra` (Supabase billing) RED — operator-gated.
-Session 2026-08-29/30 added: driver-register (wired, not a pass/fail *-guard), daemon-drift-guard (24th). The
-stale-daemon class (D-719b) is now caught by code-age comparison, not just log-age.
+## Guards: 24. Board ALL GREEN (D-722 re-scoped infra to the owned node — the billing red was FALSE; engine fully
+migrated off the rented project). Session 2026-08-29/30 added driver-register + daemon-drift-guard (24th, code-age
+not log-age, import-closure aware).
+
+## SURVIVORSHIP HOLE FILLED (D-723/724, operator unlocked Alpaca). Panel 4,184 -> 19,582 equity names, 29.6M bars,
+~5y adjusted histories (IEX ~mid-2020 horizon; pre-2020 delistings a smaller remaining hole). Crashers present
+(SIVB/FRC/WISH at collapse dates). MUST fetch adjustment=all (verified = panel convention). Payoff delivered:
+**D-721b — borrow-stress null CONFIRMED ROBUST** to survivorship (Q5 -0.102% t-0.65 on the complete panel; a raw-price
+re-run's apparent "win" was a split-cliff artifact, retracted — caught by distrusting the result that agreed with the
+hypothesis). Free-debt hosts now allowlisted (GPR/EIA/GLD). Follow-ups (fresh context): re-run breadth D-717 on the
+expanded panel as a NEW less-biased series (don't silently overwrite the _surv series D-718b's U-shape used); weekly
+delisted-backfill cron; ETF-vs-common-stock classification of the new names.
 
 ## Driver register (D-716, 2026-08-29) — what we can OBSERVE per instrument
 `scripts/driver-register.ts` — per-instrument-class inventory of observable inputs (PREDICT/CONDITION/EXPLAIN),
