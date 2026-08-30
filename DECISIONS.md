@@ -14882,3 +14882,27 @@ where split-only and split+dividend diverge: AAPL 2021-06-01 original = 121.04, 
 vendor noise), adjustment=split = 124.20. The panel is split+DIVIDEND adjusted (total-return style), so adjustment=all
 is correct and the re-ingest is panel-consistent. Had it been split-only, adjustment=all would have introduced a
 dividend-yield bias across the borrow-stress quintiles — checked rather than assumed.
+
+## D-721b — borrow-stress null CONFIRMED on the survivorship-complete, adjustment-consistent panel
+
+The Alpaca unlock (D-723/724) let D-721's own lower-bound caveat be tested directly: re-run the borrow-stress
+quintiles on a panel that now contains the delisted crashers (SIVB, FRC, WISH, ...) and is adjustment-consistent.
+Liquid tercile, ~799 names/settlement (was 236), 207 settlements. Result vs the two prior panels:
+
+| quintile | original (survivorship-biased) | corrected (complete + adjusted) |
+|---|---|---|
+| Q1 low stress  | +0.196% t 2.27 | +0.521% t 1.18 |
+| Q4             | -0.065% t -1.35 | -0.218% t -1.76 |
+| Q5 high stress | +0.005% t 0.06 | **-0.102% t -0.65** |
+
+**THE NULL HOLDS AND IS NOW ROBUST TO THE OBJECTION D-721 RAISED ABOUT ITSELF.** Including the crashers moved Q5 from
+flat (+0.005%) to mildly negative (-0.102%), so survivorship WAS masking a little of the short — exactly the lower
+bound D-721 flagged. But even corrected, NOTHING is significant (every |t| < 1.8, far below any deflated bar). The
+direction now weakly MATCHES the academic prior (high stress underperforms; SIGN LAW) where the biased panel MISSED
+it, but the magnitude is indistinguishable from noise in the liquid universe. Borrow stress is not a tradable edge in
+liquid names — now demonstrated on a panel that can no longer be dismissed as survivorship-limited.
+
+**THE RETRACTED ARTIFACT (D-724) sat between these two:** raw prices gave Q1 +0.897% / Q4 t -2.71, a spuriously
+strong version of the true weak tilt, manufactured by split cliffs. The corrected numbers sit between the biased and
+the artifact — the honest signal is the weak-and-insignificant one, and the discipline that distrusted the strong
+version is what kept the artifact out of the ledger. Trial counted (D721b).
