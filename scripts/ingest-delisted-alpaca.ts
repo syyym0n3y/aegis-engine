@@ -45,8 +45,12 @@ const epoch = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
 // Keyset over the target list: symbols in SI (real ticker) not already in the panel. Computed via two reads and a
 // JS difference (PostgREST has no anti-join), which is fine at this scale and keeps the query simple and auditable.
 async function pageAll(path: string): Promise<Record<string, unknown>[]> {
+  // Offset paging is only stable under a total ORDER BY, or pages can skip/duplicate rows. Enforce it rather than
+  // trust the caller — every call site does pass order=, and this makes that a checked invariant not a convention.
+  if (!/order=/.test(path)) throw new Error(`pageAll requires order= for stable paging: ${path}`);
   const out: Record<string, unknown>[] = [];
   for (let off = 0; ; off += 1000) {
+    // plumbing-ok: audited — order= is asserted above, so this paged limit is deterministic, not row-layout roulette.
     const r = await fetch(`${OWNED}/${path}&offset=${off}&limit=1000`, { headers: hdr });
     if (!r.ok) throw new Error(`${path} HTTP ${r.status}`);
     const j = await r.json(); if (!Array.isArray(j) || !j.length) break;
