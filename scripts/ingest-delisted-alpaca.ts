@@ -24,6 +24,7 @@ const K = declareKnobs("ingest-delisted-alpaca", [
   { name: "START", def: "2015-01-01", note: "history start (IEX data effectively begins ~2016)" },
   { name: "SLEEP_MS", def: "400", note: "delay between requests — keeps us under Alpaca's 200/min" },
   { name: "TARGETS", def: "/Users/ona/Projects/aegis/data/delisted-targets.txt", note: "precomputed missing-symbol list (one per line, recency-ordered)" },
+  { name: "ADJUSTMENT", def: "all", note: "split+dividend adjustment — MUST be 'all' to match the existing panel's adjusted convention; 'raw' (Alpaca's default) puts split cliffs in the series and contaminates every cross-sectional return test (D-724)" },
 ]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -78,7 +79,7 @@ for (let i = 0; i < work.length; i += BATCH) {
   const acc = new Map<string, number[][]>();   // symbol -> bars [ts,o,h,l,c,v]
   let token: string | null = null;
   do {
-    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${batch.join(",")}&timeframe=1Day&feed=iex&start=${K.START}&limit=10000${token ? `&page_token=${encodeURIComponent(token)}` : ""}`;
+    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${batch.join(",")}&timeframe=1Day&feed=iex&adjustment=${K.ADJUSTMENT}&start=${K.START}&limit=10000${token ? `&page_token=${encodeURIComponent(token)}` : ""}`;
     const r = await fetch(url, { headers: alpacaH });
     reqs++;
     if (!r.ok) { console.log(`    batch ${i / BATCH | 0}: HTTP ${r.status} ${(await r.text()).slice(0, 100)} — skipping`); token = null; await sleep(Number(K.SLEEP_MS)); continue; }
