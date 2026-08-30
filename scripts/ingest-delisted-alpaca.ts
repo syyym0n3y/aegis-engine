@@ -64,8 +64,10 @@ console.log("==> loading target list from file + current panel (for resume)…")
 // interest rows in JS to derive it took thousands of requests and timed out. Regenerate the file with:
 //   docker exec aegis-db psql ... "SI real-tickers minus panel, order by max(settlement) desc" > data/delisted-targets.txt
 const fileSyms = (await Deno.readTextFile(K.TARGETS)).split("\n").map((s) => s.trim()).filter(Boolean);
-// Re-read the panel so a re-run skips symbols already ingested (idempotent resume). Only ~4k+ rows, a handful of pages.
-const inPanel = new Set((await pageAll("trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol")).map((x) => x.symbol as string));
+// D-725: exclude ALL panel symbols, not just asset_class='equity'. The original bug targeted ETFs/indices stored
+// under etf/sector/index classes because the exclusion filtered on equity only, and the symbol-PK upsert then
+// OVERWROTE their full histories. Any symbol already present under ANY class must never be a target.
+const inPanel = new Set((await pageAll("trd_bars_deep?select=symbol,n_bars&order=symbol")).map((x) => x.symbol as string));
 const targets = fileSyms.filter((s) => !inPanel.has(s));
 assertNonEmpty("target symbols", targets, 100);
 const cap = Number(K.MAX_SYMBOLS) > 0 ? Number(K.MAX_SYMBOLS) : targets.length;
@@ -106,7 +108,10 @@ for (let i = 0; i < work.length; i += BATCH) {
   }
   empty += batch.length - acc.size;
   if (rows.length) {
-    const w = await fetch(`${OWNED}/trd_bars_deep?on_conflict=symbol`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal,resolution=merge-duplicates" }, body: JSON.stringify(rows) });
+    // D-725: ignore-duplicates, NOT merge — a NEW-names-only ingest must never OVERWRITE an existing series. This is
+    // the second line of defence behind the all-classes exclusion above: even if a symbol slips through, an accidental
+    // collision inserts nothing rather than clobbering a full history (the D-723 failure that truncated SPY/QQQ/...).
+    const w = await fetch(`${OWNED}/trd_bars_deep?on_conflict=symbol`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal,resolution=ignore-duplicates" }, body: JSON.stringify(rows) });
     if (!w.ok && w.status !== 409) console.log(`    WRITE-FAILED trd_bars_deep ${w.status} ${(await w.text()).slice(0, 120)}`);
     else written += rows.length;
   }

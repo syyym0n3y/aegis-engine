@@ -11,11 +11,11 @@
 -- recorded as a suffix on every series name so no downstream reader can forget it.
 --
 -- FIVE SERIES, the classic equity-index breadth conditioners (the register's 'breadth' driver):
---   breadth_pct_gt_200dma_surv   fraction of names above their own 200-day moving average
---   breadth_pct_gt_50dma_surv    fraction above their 50-day MA
---   breadth_adv_frac_surv        daily advancers / (advancers + decliners)  [net participation]
---   breadth_pct_252d_high_surv   fraction within 2% of their trailing 252-day high  (new-highs proxy)
---   breadth_pct_252d_low_surv    fraction within 2% of their trailing 252-day low   (new-lows proxy)
+--   breadth_pct_gt_200dma_xp   fraction of names above their own 200-day moving average
+--   breadth_pct_gt_50dma_xp    fraction above their 50-day MA
+--   breadth_adv_frac_xp        daily advancers / (advancers + decliners)  [net participation]
+--   breadth_pct_252d_high_xp   fraction within 2% of their trailing 252-day high  (new-highs proxy)
+--   breadth_pct_252d_low_xp    fraction within 2% of their trailing 252-day low   (new-lows proxy)
 --
 -- IDEMPOTENT: ON CONFLICT (series,d) DO UPDATE, so a re-run overwrites the same keys and never duplicates.
 
@@ -26,16 +26,12 @@ SET LOCAL work_mem = '512MB';
 
 -- One row per (symbol, day, close), unnested once and reused. Materialized so the window functions below don't
 -- re-parse the jsonb five times.
--- D-725: a per-bar price floor of $5 (the standard penny-stock exclusion) keeps breadth an INVESTABLE-universe
--- statistic. Without it, the D-723 backfill's ~15k mostly-penny delisted names (median price $1.74) would dominate an
--- equal-weighted breadth count and make it noise. A name is counted on a given day only while its price clears $5,
--- which is the right investability test and is robust to the panel's expansion.
 CREATE TEMP TABLE _px ON COMMIT DROP AS
 SELECT symbol,
        (to_timestamp((e->>0)::bigint) AT TIME ZONE 'UTC')::date AS d,
        (e->>4)::double precision AS c
 FROM trd_bars_deep, jsonb_array_elements(bars) e
-WHERE asset_class = 'equity' AND (e->>4)::double precision >= 5;
+WHERE asset_class = 'equity' AND (e->>4)::double precision > 0;
 
 CREATE INDEX ON _px (symbol, d);
 
@@ -58,22 +54,22 @@ WINDOW w200 AS (PARTITION BY symbol ORDER BY d ROWS 199 PRECEDING),
 -- (THE BREADTH LAW: a thin cross-section is not a factor) — 50 names with a defined 200dma, else the day is omitted.
 INSERT INTO trd_macro_series (series, d, v)
 SELECT s.series, s.d, s.v FROM (
-  SELECT 'breadth_pct_gt_200dma_surv' AS series, d,
+  SELECT 'breadth_pct_gt_200dma_xp' AS series, d,
          avg((c > ma200)::int)::double precision AS v, count(ma200) AS n
   FROM _feat WHERE ma200 IS NOT NULL GROUP BY d HAVING count(ma200) >= 50
   UNION ALL
-  SELECT 'breadth_pct_gt_50dma_surv', d, avg((c > ma50)::int)::double precision, count(ma50)
+  SELECT 'breadth_pct_gt_50dma_xp', d, avg((c > ma50)::int)::double precision, count(ma50)
   FROM _feat WHERE ma50 IS NOT NULL GROUP BY d HAVING count(ma50) >= 50
   UNION ALL
-  SELECT 'breadth_adv_frac_surv', d,
+  SELECT 'breadth_adv_frac_xp', d,
          (sum((c > prev_c)::int)::double precision
            / NULLIF(sum((c > prev_c)::int) + sum((c < prev_c)::int), 0)), count(prev_c)
   FROM _feat WHERE prev_c IS NOT NULL GROUP BY d HAVING count(prev_c) >= 50
   UNION ALL
-  SELECT 'breadth_pct_252d_high_surv', d, avg((c >= 0.98 * hi252)::int)::double precision, count(hi252)
+  SELECT 'breadth_pct_252d_high_xp', d, avg((c >= 0.98 * hi252)::int)::double precision, count(hi252)
   FROM _feat WHERE hi252 IS NOT NULL GROUP BY d HAVING count(hi252) >= 50
   UNION ALL
-  SELECT 'breadth_pct_252d_low_surv', d, avg((c <= 1.02 * lo252)::int)::double precision, count(lo252)
+  SELECT 'breadth_pct_252d_low_xp', d, avg((c <= 1.02 * lo252)::int)::double precision, count(lo252)
   FROM _feat WHERE lo252 IS NOT NULL GROUP BY d HAVING count(lo252) >= 50
 ) s
 ON CONFLICT (series, d) DO UPDATE SET v = EXCLUDED.v;
