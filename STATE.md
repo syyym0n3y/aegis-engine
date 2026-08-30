@@ -1588,6 +1588,10 @@ but reports INSUFFICIENT DATA — it needs two inputs:
    the $10/mo cloud project exists. Congress ingestion deferred (House PTRs are messy
    PDFs; EDGAR/Form-4 is the cleaner + stronger signal).
 
+## Guards: 24 (D-719c added daemon-drift). Board 23/24 GREEN; only `infra` (Supabase billing) RED — operator-gated.
+Session 2026-08-29/30 added: driver-register (wired, not a pass/fail *-guard), daemon-drift-guard (24th). The
+stale-daemon class (D-719b) is now caught by code-age comparison, not just log-age.
+
 ## Driver register (D-716, 2026-08-29) — what we can OBSERVE per instrument
 `scripts/driver-register.ts` — per-instrument-class inventory of observable inputs (PREDICT/CONDITION/EXPLAIN),
 probed live. **35 HELD** after the register caught **7 false-MISSING in itself** (5 equity tables of millions of

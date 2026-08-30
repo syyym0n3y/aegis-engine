@@ -14727,3 +14727,17 @@ its source. The agent-output guard's staleness check measures LOG age, not CODE 
 commit to its own script is running code the repo no longer contains — the exact condition that manufactured two
 phantom bugs here. That check belongs on the board; noting it for the next session rather than bolting it on at hour
 two of this one.
+
+## D-719c — the machine guard for the stale-daemon class: daemon-drift-guard (24th guard)
+
+The contract requires every fix to ship a guard that reds on regression. D-719b's real failure was a daemon running
+code older than its own source, and nothing on the board could see it — the agent-output guard reads LOG age, so a
+daemon on stale code writing a fresh log of already-fixed failures reads as a live defect. `daemon-drift-guard.ts`
+closes the class: for every running `deno run scripts/<X>.ts` process it compares the process start time (ps lstart)
+to the last commit touching scripts/<X>.ts, and REDs — naming the pid to kill — when the process is more than a
+minute older than its source. The fix is always the same and safe under launchd KeepAlive: kill the pid, it respawns
+on current code. Self-tested 4-way on the pure comparison; live it clears the freshly-restarted discovery daemon
+(0.1h) and the autopilot daemon (30.8h, its source unchanged in that window). Wired into the daily runner and
+guard-status; registry-guard confirms all 25 guards invoked and visible. Stated limitation: it checks the ENTRY
+script, not the _shared modules it imports — a daemon can still drift on a changed dependency while its entry file is
+untouched; a dependency-closure check is a later refinement, noted not hidden.
