@@ -16,7 +16,10 @@
 // silent drift the guard exists to catch. The check now walks each daemon's LOCAL import closure transitively and
 // compares the process start against the NEWEST commit across the entry file AND every module it pulls in.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
-declareKnobs("daemon-drift-guard", [{ name: "SELFTEST", def: "0", note: "1 = run the parse/compare self-test and exit" }]);
+const K = declareKnobs("daemon-drift-guard", [
+  { name: "SELFTEST", def: "0", note: "1 = run the parse/compare self-test and exit" },
+  { name: "MIN_AGE_MIN", def: "60", note: "only flag processes up longer than this — the guard targets RESIDENT daemons, not one-shot batch jobs (an ingest/analysis whose source is committed mid-run is not the stale-daemon danger; it exits or picks up current code well before this)" },
+]);
 
 async function sh(cmd: string[]): Promise<string> {
   const p = new Deno.Command(cmd[0], { args: cmd.slice(1), stdout: "piped", stderr: "null" });
@@ -104,8 +107,14 @@ for (const line of ps.split("\n")) {
   const clo = await closure(script);
   const newest = await newestCommit(clo);
   if (!newest.epoch) continue;
-  const ageH = ((Date.now() / 1000 - startEpoch) / 3600).toFixed(1);
+  const ageMin = (Date.now() / 1000 - startEpoch) / 60;
+  const ageH = (ageMin / 60).toFixed(1);
   const via = newest.file === script ? "" : ` via ${newest.file}`;
+  // A process up less than MIN_AGE is a batch job (ingest/analysis), not a resident daemon — the stale-daemon danger
+  // is code running unrestarted for HOURS across commits, not a script whose source was tweaked while it briefly ran.
+  // A recently-started process is running code it JUST loaded, so it cannot be stale yet — whether it is a batch job
+  // that will exit or a daemon just restarted. Only once it has run past MIN_AGE across commits is drift meaningful.
+  if (ageMin < Number(K.MIN_AGE_MIN)) { checked.push(`${script} (pid ${pid}, up ${ageH}h — under MIN_AGE, just-loaded code, not drift-checked)`); continue; }
   checked.push(`${script} (pid ${pid}, up ${ageH}h, closure ${clo.length} file${clo.length === 1 ? "" : "s"})`);
   if (drifted(startEpoch, newest.epoch)) {
     const behindH = ((newest.epoch - startEpoch) / 3600).toFixed(1);
