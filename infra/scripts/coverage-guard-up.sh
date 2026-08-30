@@ -133,6 +133,13 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/driver-register.ts >/dev/null; then
     echo "$(date -u +%FT%TZ) DRIVER REGISTER RED — a driver probe is broken (false-MISSING risk); fix the probe before trusting coverage"
   fi
+  # DAEMON DRIFT GUARD (D-719c): a long-lived daemon that started before the last commit to its own script is running
+  # code the repo no longer contains — the exact condition that made the discovery daemon print two already-fixed
+  # write-failures for an hour (D-719b). The agent-output guard reads LOG age; this reads CODE age. RED lists the pid
+  # to kill (launchd KeepAlive respawns it on current source).
+  if ! deno run --allow-run --allow-env ../scripts/daemon-drift-guard.ts; then
+    echo "$(date -u +%FT%TZ) DAEMON DRIFT GUARD RED — a daemon is running stale code; restart the pid(s) it names"
+  fi
   # TRIAL IDEMPOTENCY GUARD (D-681): a clock inside run_key defeats the unique constraint that makes the trial counter
   # idempotent, so a daemon recomputing one identical answer forever also grows the ceiling every result must clear.
   if ! deno run --allow-net --allow-env --allow-read ../scripts/trial-idempotency-guard.ts; then

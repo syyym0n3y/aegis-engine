@@ -32,7 +32,7 @@ RED=0; N=0
 # hand-maintaining two enumerations in two files is what produced the drift, and remembering harder does not fix it.
 for g in coverage liquidity effect-size breadth execution selection universe sign survivor \
          holdability instrument mechanism gap-register agent-output plumbing forward-rules continuity \
-         benchmark turnover schema-honesty trial-ledger trial-idempotency infra; do
+         benchmark turnover schema-honesty trial-ledger trial-idempotency daemon-drift infra; do
   [ -f "scripts/${g}-guard.ts" ] || continue
   N=$((N+1))
   out=$($DENO run --allow-net --allow-env --allow-read --allow-run "scripts/${g}-guard.ts" 2>&1); c=$?
