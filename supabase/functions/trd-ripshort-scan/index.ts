@@ -55,7 +55,11 @@ SERVE(async(req)=>{const cors={"Content-Type":"application/json","Access-Control
   for(const sym of slice){const b=(await bars(sym)).map(x=>x.c);if(b.length<200)continue;const ma=sma(b,200),r=rsi(b),px=b.at(-1)!;
     if(r>70&&px<ma){const tier=px<5?"micro":px<20?"small":px<100?"mid":"large";const actionable=bull&&px>=50;
       rows.push({scan_date:session,ticker:sym,px:+px.toFixed(2),tier,rsi:+r.toFixed(1),ma200:+ma.toFixed(2),actionable});}}
-  if(rows.length)await fetch(`${SB}/rest/v1/trd_ripshort_scan`,{method:"POST",headers:{...H,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(rows)});
+  // D-719: on_conflict=scan_date,ticker is REQUIRED — the table has UNIQUE(scan_date,ticker), and without the target
+  // resolution=ignore-duplicates is inert, so a re-scan of the same date 409s and (result unchecked) silently drops
+  // the whole batch. Same failure class as the D-710 forward-tick loss. Result is now checked so a drop is loud.
+  if(rows.length){const wr=await fetch(`${SB}/rest/v1/trd_ripshort_scan?on_conflict=scan_date,ticker`,{method:"POST",headers:{...H,Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify(rows)});
+    if(!wr.ok&&wr.status!==409)console.error(`WRITE-FAILED trd_ripshort_scan ${wr.status} ${(await wr.text()).slice(0,140)}`);}
   const newIdx=idx+CHUNK;firingTotal+=rows.length;
   await fetch(`${SB}/rest/v1/trd_scan_cursor?on_conflict=id`,{method:"POST",headers:{...H,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id:"ripshort",scan_date:session,idx:newIdx,total,firing_total:firingTotal,status:newIdx>=total?"done":"running",updated_at:new Date().toISOString()})});
   return new Response(JSON.stringify({ok:true,regime:bull?"bull":"bear",processed:slice.length,firingThisChunk:rows.length,idx:newIdx,of:total,firingTotal,pct:Math.round(newIdx/total*100)}),{headers:cors});

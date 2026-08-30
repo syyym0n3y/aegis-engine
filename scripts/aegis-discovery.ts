@@ -186,11 +186,20 @@ async function cycle() {
       // Refuse rather than degrade — the D-628 contract.
       console.log(`  trial counter: SKIPPED — cannot fingerprint ${unreadable.map((x) => x.table).join(", ")}; refusing to write a key that may collide across different data.`);
     } else {
-      const rows = results.map((r) => ({ family: String(r.family ?? "discovery"), run_key: `${r.candidate}|${fp}` }));
+      // DEDUPE BY run_key WITHIN THE BATCH (D-719). `base_composite` (and any repeated candidate) appears once per
+      // result but is ONE spec — sending it N times makes the POST an intra-batch duplicate that some PostgREST
+      // builds reject with a raw 23505 despite on_conflict=run_key, because ON CONFLICT arbitrates against the table,
+      // not against sibling rows in the same statement. A trial is not counted twice in one run, so collapsing
+      // duplicates here is correct, not merely defensive.
+      const seen = new Set<string>();
+      const rows = results.map((r) => ({ family: String(r.family ?? "discovery"), run_key: `${r.candidate}|${fp}` }))
+        .filter((r) => (seen.has(r.run_key) ? false : (seen.add(r.run_key), true)));
       const before = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
       const nBefore = before ? +((before.headers.get("content-range") || "").split("/")[1] || 0) : -1;
       const res = await fetch(`${OWNED}/trd_trial_counter?on_conflict=run_key`, { method: "POST", headers: { ...hdr, "Content-Type": "application/json", Prefer: "return=minimal,resolution=ignore-duplicates" }, body: JSON.stringify(rows) }).catch(() => null);
-      if (!res || !res.ok) console.log(`  WRITE-FAILED trd_trial_counter ${res ? res.status + " " + (await res.text()).slice(0, 120) : "network"}`);
+      // A 409 on an append-only idempotent counter is the EXPECTED result of re-running an unchanged spec against the
+      // same data version, not a failure (D-681 doctrine, applied everywhere else — this write was the exception).
+      if (!res || (!res.ok && res.status !== 409)) console.log(`  WRITE-FAILED trd_trial_counter ${res ? res.status + " " + (await res.text()).slice(0, 120) : "network"}`);
       else {
         const back = await fetch(`${OWNED}/trd_trial_counter?select=id&limit=1`, { headers: { ...hdr, Prefer: "count=exact" } }).catch(() => null);
         const cnt = back ? +((back.headers.get("content-range") || "").split("/")[1] || 0) : -1;
@@ -200,8 +209,15 @@ async function cycle() {
     }
   }
   // log to the owned discovery ledger
-  { const res = await fetch(`${OWNED}/trd_discovery_log`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify(results.map((r) => ({ ...r, tested_at: new Date().toISOString() }))) }).catch(() => null);
-    if (!res || !res.ok) console.log(`  WRITE-FAILED trd_discovery_log ${res ? res.status : "network"}`); }
+  // Project each result onto ONLY the columns trd_discovery_log actually has (D-719). Spreading `...r` posted every
+  // field the result object carried, so a metric added to discovery's in-memory shape but never to the table 400s the
+  // whole batch — a silent loss of the ledger the guard reads. Whitelisting the known columns makes a new metric a
+  // no-op here until a migration adds its column, instead of breaking the write. The response BODY is now printed so
+  // the next 400 names its offending column instead of hiding behind a bare status.
+  { const COLS = ["candidate","family","oos_ic","oos_sharpe","calib_spread","psr_z","passes_deflation","beats_base","n_test_months","note","ruined","train_net_sharpe","test_net_sharpe","test_months","gross_sharpe","net_sharpe","net_ann_pct","win_pct","skew","maxdd_pct","psr_valid","sharpe_ex_top1","sharpe_ex_top3","noise_ceiling","per_era_net_sharpe","n_months"];
+    const payload = results.map((r) => { const o: Record<string, unknown> = { tested_at: new Date().toISOString() }; for (const c of COLS) if (c in (r as object)) o[c] = (r as Record<string, unknown>)[c]; return o; });
+    const res = await fetch(`${OWNED}/trd_discovery_log`, { method: "POST", headers: { ...hdr, Prefer: "return=minimal" }, body: JSON.stringify(payload) }).catch(() => null);
+    if (!res || !res.ok) console.log(`  WRITE-FAILED trd_discovery_log ${res ? res.status + " " + (await res.text()).slice(0, 160) : "network"}`); }
 }
 
 console.log(`==> AEGIS DISCOVERY (owned:${OWNED}, ${ONCE ? "once" : "daemon"}) — creative search, OOS+deflation disciplined`);

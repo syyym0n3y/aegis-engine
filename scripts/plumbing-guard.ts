@@ -71,7 +71,12 @@ function lint(fileAbs:string,src:string){
   // is off. Requiring `Prefer:` on the same line restricts it to actual requests.
   for(const m of src.matchAll(/Prefer[^\n]*resolution=ignore-duplicates/g)){
     const at=src.slice(0,m.index??0).split("\n").length;
-    const win=lines.slice(Math.max(0,at-8),at+2).join(" ");
+    // D-719: the window must NOT extend past the Prefer line. on_conflict is a URL query param and in a fetch() the
+    // URL is argument one, the options (with Prefer) argument two — so on_conflict ALWAYS precedes its Prefer, never
+    // follows it. The old +2 forward window let the NEXT statement's on_conflict clear this write: trd-ripshort-scan
+    // line 58 (no target, 409s and drops the batch) was waved through because line 60's trd_scan_cursor upsert had
+    // on_conflict=id two lines below. Scan backward only, and just far enough for a reasonably-wrapped fetch call.
+    const win=lines.slice(Math.max(0,at-4),at).join(" ");
     if(!/on_conflict=/.test(win))
       hits.push({file,line:at,rule:"inert-upsert",snip:"Prefer: resolution=ignore-duplicates with no on_conflict target — the header is inert and the write 409s on any legitimate re-run"});
   }
@@ -88,16 +93,22 @@ async function walk(dir:string){
 for(const r of ROOTS) await walk(r).catch(()=>{});
 if(SELFTEST){
   // prove every rule fires on synthetic violations, and that plumbing-ok waives them
+  // The last two lines are the D-719 inert-upsert case: w1 has NO on_conflict (must fire), and the very next line w2
+  // DOES have on_conflict — with the old forward window w2's target falsely cleared w1 (the trd-ripshort-scan miss).
+  // Both writes are .ok-checked so ONLY inert-upsert fires, not silent-write. w2 uses merge-duplicates so the rule's
+  // regex never matches it. Expect: truncation + silent-write + frozen-ceiling + inert-upsert = 4.
   const bad=`const a=await fetch(\`\${OWNED}/trd_bars_deep?select=symbol,bars&limit=150\`,{headers:h});
 await fetch(\`\${OWNED}/trd_x\`,{method:"POST",body:b}).catch(()=>{});
 const ceil=Math.sqrt(2*Math.log(1000));
 // plumbing-ok: audited — existence check
-const c=await fetch(\`\${OWNED}/trd_y?limit=500\`,{headers:h});`;
+const c=await fetch(\`\${OWNED}/trd_y?limit=500\`,{headers:h});
+const w1=await fetch(\`\${OWNED}/trd_z\`,{method:"POST",headers:{...h,Prefer:"resolution=ignore-duplicates"},body:b});if(!w1.ok)throw 0;
+const w2=await fetch(\`\${OWNED}/trd_w?on_conflict=id\`,{method:"POST",headers:{...h,Prefer:"resolution=merge-duplicates"},body:b});if(!w2.ok)throw 0;`;
   const before=hits.length;
   lint("SELFTEST.ts",bad);
-  console.log(`SELFTEST: ${hits.length-before} violations detected (expect 3 — the plumbing-ok line is waived):`);
+  console.log(`SELFTEST: ${hits.length-before} violations detected (expect 4 — the plumbing-ok line is waived):`);
   for(const h of hits.slice(before)) console.log(`  ${h.rule.padEnd(15)} ${h.snip}`);
-  if(hits.length-before!==3){console.error("!! selftest mismatch");Deno.exit(2);}
+  if(hits.length-before!==4){console.error("!! selftest mismatch");Deno.exit(2);}
   Deno.exit(1);   // selftest is a deliberate red
 }
 // RATCHET (the repo's own pattern — "a CI ratchet keeps unguarded-paid red"). ~150 of these sites predate the rules and
