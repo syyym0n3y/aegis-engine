@@ -15017,3 +15017,85 @@ replaced the inline gold/silver computation for consistency. The footer's "do NO
 no longer among the gaps; the real gaps named are real yields/CPI, dealer gamma, central-bank flows, equity ETF flows.
 A live read surfaced a coherent divergence (equity risk-on extremes vs growth-off copper/gold + very-elevated GPR) —
 which is STATE, not a signal, and exactly what the snapshot is for.
+
+## D-729 — REAL YIELDS unlocked from FRED keyless CSV: drivers #1 & #3 GATED -> HELD, gold's #1 driver was absent
+
+The register and memory had CPI/inflation and real yields as FRED-CREDENTIAL-gated ("FRED blocks the Supabase edge").
+That was the EDGE environment; the stack runs on the owned node now, where FRED's KEYLESS fredgraph.csv is reachable
+with no API key. `ingest-fred-macro.ts` loads 5y/10y/30y TIPS real yields (DFII*), 5y/10y breakeven inflation
+(T*YIE), and headline + core CPI (CPIAUCSL/CPILFESL) into trd_macro_series — 30,785 rows. Positive control on the
+10y real yield PASSES decisively: 2021 ZIRP peak = -1.17% (deeply negative), 2023 tightening = +2.52% (firmly
+positive). Wired into the daily runner and the regime snapshot (real yield + breakeven rows added).
+
+**WHY THIS IS THE SESSION'S MOST IMPORTANT DRIVER CLOSURE:** the 10y REAL yield is gold's stated #1 driver (the clip's
+driver #3), and it had been ENTIRELY ABSENT — the nominal curve is not a substitute (nominal minus an unheld
+inflation expectation is not a real yield). The coverage matrix went 31->39 HELD, 15->7 gated. The only driver TYPES
+still gated are #5 central-bank flows (COFER quarterly, EXPLAIN-only — cannot condition a position anyway) and #7
+equity ETF flows (SPDR JS-app). Every CONDITION driver that is free or keyless is now held.
+
+## D-730 — macro regime conditioning: real yields VALIDATE as a driver, but give NO forward edge (untested->null)
+
+First of the 19 untested approaches (D-697 coverage map) closed with the newly-complete driver set, and the sharpest:
+does the real yield (D-729, gold's stated #1 driver) actually condition its instruments? Three tests on GC=F/SPY/TLT:
+- (A) DRIVER FACT-CHECK, contemporaneous: corr(daily return, d[real yield]) = gold -0.040, SPY -0.009, TLT -0.204,
+  all NEGATIVE as the prior demands. The driver is REAL — weak at the daily frequency for gold (the clip's "#1
+  driver" is directionally right but modest), mechanical for bonds.
+- (B) forward-20d on the real-yield LEVEL: significant, low-minus-high t -3.83 / -4.85 / -8.33. I DISTRUSTED it because
+  the real-yield level is highly persistent (negative 2012-2021, +2.5% in 2007 and 2023-26), so level-deciles are
+  era-deciles.
+- (C) STATIONARITY CONTROL, forward-20d on the real-yield CHANGE: fall-minus-rise t 0.16 / -0.27 / -0.13 — WASHES OUT
+  on all three. (B) was a non-stationarity/era artifact, proven not asserted.
+
+VERDICT: real yields are a confirmed contemporaneous driver and NOT a tradable forward signal. A TRUSTWORTHY null —
+the data is now adequate (real yields held) and the stationarity control makes the null a measurement, not an
+absence. Recorded in trd_lineage (D730-macro-regime-cond, status measured). The convenient significant result was
+distrusted and disproven — the same discipline that caught the raw-price and ETF-clobber artifacts this session.
+
+## D-731 — currency of account: a real ~1.3pp/yr structural effect for a UK investor (untested->measured)
+Closes the "currency of account / FX exposure" approach. Structural decomposition (not a timing signal, so free of the
+D-730 non-stationarity trap): SPY held by a GBP investor over ~2000-2026 returned +14.02%/yr unhedged-GBP vs +12.67%
+USD — GBP weakness added +1.35pp/yr — at +0.4pp extra vol (the FX term is partly diversifying, not additive). The FX
+term alone was -1.19%/yr GBP appreciation (i.e. depreciation) at 10.1% standalone vol. Path-dependent (Brexit era), so
+recorded as a MEASURED structural fact for the ladder's base-currency choice, NOT a prediction. Also recorded this
+session: 4 ladder-mechanics approaches D-680 already measured (behavioural not-panic-selling -5.5y, leverage
+net-negative at retail borrow, tax +1.1y/-27%, sequence-of-returns dispersion). Coverage map: 6 approaches moved from
+UNTESTED to measured (macro-regime D-730 + these five).
+
+## D-731b — bond carry: no tradable term-spread signal in TLT (untested->null); + FRED nominal/credit/NFCI added
+Closes the bond leg of "carry". Added FRED nominal Treasuries (ust_3m/2y/10y, 1976+), BAA-10y credit spread, and NFCI
+financial conditions to trd_macro_series (all keyless). Bond carry test on TLT: the raw term-spread LEVEL is
+DEGENERATE (non-stationary — train deciles leave empty test buckets, NaN), so tested via a rolling-750d z-score
+(stationary carry). Result: steep-minus-flat t=1.29, NOT significant — the documented bond risk premium does not
+appear as a tradable forward signal in TLT (a duration-fixed ETF over one disinflation-then-shock cycle). The change
+control's t=13.57 is a 2022 rate-shock ERA artifact (curve inverted and bonds crashed contemporaneously), not a
+forward edge. NULL, recorded. The degeneracy is itself the D-730 lesson: naive level-conditioning on a persistent
+macro variable breaks; a stationary construction is mandatory.
+
+## D-732 — SEC-filing event-extraction build: scoped, CIK map populated, merger-arb Phase 1 in progress
+Operator: scope the SEC-filing event-extraction build (unlocks merger-arb, spin-offs, IPO/lockup, SPAC, index
+inclusion) and execute. Scoped against LIVE holdings — obstacles measured, not assumed (docs/SEC_EVENT_EXTRACTION_SCOPE
+.md).
+
+FOUNDATION DONE: `trd_cik_ticker` populated — 8,004 current CIK->ticker mappings from SEC company_tickers.json
+(allowlisted www.sec.gov). The resolver every event study needs.
+
+THE MEASURED OBSTACLE: raw filings carry accession+date+category but no resolved ticker. Spin-off resolution via
+accession-prefix CIK is 2.6% (39/1,526) — the prefix is the filing AGENT, and a spinco is not listed at its 10-12B,
+so its ticker is absent from the filing entirely. Tractability, measured: merger-arb and SPAC have LISTED parties
+(FTS returns their tickers); spin-offs and IPO/lockup are blocked on registrant-CIK resolution (needs data.sec.gov
+submissions metadata, not allowlisted); index inclusion is not an EDGAR event (needs index-provider data).
+
+PHASE 1 (merger arb) EXECUTING: ingesting "agreement and plan of merger" 8-Ks 2015-2023 via the FTS ingester
+(~1,300/quarter, ticker captured from display_names) + a benchmarked, liquid-tercile event study of the tradable
+POST-announcement drift (merger-arb-event.ts). Caveats baked in: filer is a target/acquirer mix; deal PRICE is not
+held so this measures drift not spread-to-deal. Phases 2-4 (SPAC, spin-offs, IPO/lockup) are fresh-context units per
+the scope doc — each a distinct ingest+resolver+study with its own obstacle.
+
+## D-732 Phase 1 (merger arb) — NULL: announcements efficiently priced, no liquid drift
+Event study on 6,669 resolved merger-8-K events (2015-2023). ALL: announcement pop excess +1.39% (t 3.8) but
+POST-announcement drift +0.08% (t 0.11). LIQUID tercile: pop washes to +0.12% (t 0.8 — priced instantly in liquid
+names), drift -0.12% (t -0.38). VERDICT NULL: the pop is concentrated in illiquid small-caps (can't absorb size, the
+LIQUIDITY-LAW pattern) and even there leaves no tradable drift. Caveat: this is drift not spread-to-deal (deal price
+not held); a full arb book needs the terms + failure hazard, but the drift proxy already shows no free lunch in liquid
+names. Merger arb closed. Phase 2 (SPAC) is the next tractable unit; spin-offs/IPO remain blocked on registrant-CIK
+resolution (data.sec.gov allowlist), index inclusion on non-EDGAR data.
