@@ -1592,6 +1592,16 @@ but reports INSUFFICIENT DATA — it needs two inputs:
 migrated off the rented project). Session 2026-08-29/30 added driver-register + daemon-drift-guard (24th, code-age
 not log-age, import-closure aware).
 
+## SEC EVENT-EXTRACTION BUILD (D-732, 2026-08-31) — scoped + CIK foundation + merger-arb Phase 1 DONE.
+`trd_cik_ticker` populated (8,004 mappings, SEC company_tickers.json). `docs/SEC_EVENT_EXTRACTION_SCOPE.md` = phased
+plan with MEASURED obstacles. Phase 1 merger-arb: NULL (6,669 events 2015-2023; ann-pop +1.39% illiquid-concentrated,
+liquid drift -0.12% t-0.38 — efficiently priced). trd_raw_filings now holds 26,099 merger 8-Ks (2015-2023, 9,615
+tickered). NEXT PHASES (fresh context, each a distinct obstacle): Phase 2 SPAC — ticker CHANGES at de-SPAC so the
+FTS ticker may be the defunct SPAC one, needs the post-merger ticker resolved; Phase 3 spin-offs — blocked on
+registrant-CIK (accession=agent 97%, spinco unlisted at 10-12B; needs data.sec.gov submissions API allowlisted);
+Phase 4 IPO/lockup — same registrant block + S-1/424B ingest; index-inclusion — needs non-EDGAR index-provider data.
+To extend: run ingest-edgar-fts.ts PHRASE=<x> FORMS=<y> TAG=<z>, then an event study on the pattern of merger-arb-event.ts.
+
 ## DRIVER COVERAGE COMPLETE ON THE FREE AXIS (D-726..731b, 2026-08-31). Matrix 39 held / 7 derivable / 0 free-debt
 / 7 gated. Ingested: GPR (D-727), derivable drivers usd_basket/ratios/seasonality (D-728), FRED real yields +
 breakevens + CPI + nominal Treasuries + BAA credit + NFCI (D-729/731b, all KEYLESS fredgraph.csv — the 'FRED-gated'
