@@ -76,21 +76,47 @@ add("equity vol (VIX)", await closes("^VIX"),
   add("yield curve (10y-2y)", slope, (_p, v) => `${v.toFixed(2)}% — ${v < 0 ? "INVERTED" : v < 0.5 ? "flat" : "normal"}`);
 }
 
-// 5. Gold/silver ratio. High = silver cheap to gold / risk-off metals (the clip's driver #8).
-{
-  const g = await closes("GC=F"), s = await closes("SI=F");
-  const sm = new Map(s.map((x) => [x.d, x.v]));
-  const gsr = g.map((x) => ({ d: x.d, v: x.v / (sm.get(x.d) || NaN) })).filter((x) => Number.isFinite(x.v));
-  add("gold/silver ratio", gsr, (p, v) => `${v.toFixed(1)} — ${p > 80 ? "stretched high (silver cheap)" : p > 20 ? "mid-range" : "stretched low"}`);
-}
+// 5. DOLLAR — usd_basket DXY-proxy (D-728). High percentile = strong dollar, a headwind for gold/commodities/EM.
+add("dollar (USD basket)", await series("trd_macro_series?series=eq.usd_basket&select=d,v&order=d&limit=100000"),
+  (p, v) => `${v.toFixed(1)} — ${p > 80 ? "very strong" : p > 55 ? "firm" : p > 45 ? "neutral" : p > 20 ? "soft" : "very weak"}`);
 
-// 6. Credit spread proxy HYG/LQD. Low ratio = HY stress relative to IG.
+// 6. GEOPOLITICAL RISK — GPR index (D-727), monthly. High percentile = elevated risk (gold/oil/safe-haven tailwind).
+add("geopolitical risk (GPR)", await series("trd_macro_series?series=eq.gpr&select=d,v&order=d&limit=100000"),
+  (p, v) => `${v.toFixed(0)} — ${p > 85 ? "very elevated" : p > 60 ? "elevated" : p > 30 ? "normal" : "calm"}`,
+  "monthly; EXPLAINS gold/oil/safe-haven tailwinds, does not time them");
+
+// 7. CROSS-ASSET RATIOS (D-728) — relative-value regime.
+add("gold/silver ratio", await series("trd_macro_series?series=eq.ratio_gold_silver&select=d,v&order=d&limit=100000"),
+  (p, v) => `${v.toFixed(1)} — ${p > 80 ? "stretched high (silver cheap / risk-off metals)" : p > 20 ? "mid-range" : "stretched low"}`);
+add("stocks/bonds (SPY/TLT)", await series("trd_macro_series?series=eq.ratio_stocks_bonds&select=d,v&order=d&limit=100000"),
+  (p, v) => `${v.toFixed(2)} — ${p > 80 ? "risk-on extreme (stocks rich vs bonds)" : p > 55 ? "risk-on" : p > 45 ? "neutral" : p > 20 ? "risk-off" : "risk-off extreme"}`);
+add("copper/gold (growth)", await series("trd_macro_series?series=eq.ratio_copper_gold&select=d,v&order=d&limit=100000"),
+  (p, v) => `${v.toFixed(4)} — ${p > 70 ? "reflation / growth-on" : p > 30 ? "neutral" : "growth-off / recession-lean"}`);
+
+// 8. Credit spread proxy HYG/LQD. Low ratio = HY stress relative to IG.
 {
   const hyg = await closes("HYG"), lqd = await closes("LQD");
   const lm = new Map(lqd.map((x) => [x.d, x.v]));
   const cr = hyg.map((x) => ({ d: x.d, v: x.v / (lm.get(x.d) || NaN) })).filter((x) => Number.isFinite(x.v));
   add("credit (HYG/LQD)", cr, (p) => p > 70 ? "risk-on" : p > 30 ? "neutral" : "risk-off (HY under stress)",
     "CAVEAT: raw PRICE ratio, not option-adjusted spread — its all-time percentile drifts with price levels and is NOT a clean credit read; use the direction of its short-term change, not this level");
+}
+
+// 9. SEASONALITY (D-728) — the CURRENT calendar month's historical bias for gold/spy/oil. A CONDITION, not a trade.
+{
+  const latest = rows.map((r) => r.asof).filter((a) => /^\d{4}-\d\d-\d\d$/.test(a)).sort().pop() || "2000-01-01";
+  const month = Number(latest.slice(5, 7));
+  const mname = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1];
+  for (const [tag, label] of [["gold", "gold"], ["spy", "SPY"], ["oil", "oil"]] as [string, string][]) {
+    const s = await series(`trd_macro_series?series=eq.seasonal_${tag}&select=d,v&order=d&limit=100`);
+    if (!s.length) continue;
+    const byMonth = new Map(s.map((x) => [Number(x.d.slice(5, 7)), x.v]));
+    const v = byMonth.get(month);
+    if (v == null) continue;
+    const rank = [...byMonth.entries()].sort((a, b) => b[1] - a[1]).findIndex(([m]) => m === month) + 1;
+    // pctile here is the month's rank among the 12 (12/12 = best month), NOT a history percentile — labelled so.
+    rows.push({ name: `seasonality ${label} (${mname})`, asof: mname, val: v, pctile: 100 * (13 - rank) / 12, state: `${v > 0 ? "+" : ""}${v.toFixed(2)}%/mo historically, rank ${rank}/12 ${rank <= 3 ? "(seasonally strong)" : rank >= 10 ? "(seasonally weak)" : ""}` });
+  }
 }
 
 assertNonEmpty("drivers read", rows, 3);
@@ -103,5 +129,7 @@ for (const r of rows) {
 console.log(`\n    THIS IS STATE, NOT A SIGNAL. Every driver here is a CONDITIONING observable with no tradable edge past`);
 console.log(`    the gates. The snapshot describes the current regime from what we hold; it does not tell you what to`);
 console.log(`    do, and reading a percentile as a direction is the overclaim the guard stack exists to prevent.`);
-console.log(`    Drivers we do NOT hold and so cannot place here: real yields/CPI, dealer gamma, ETF flows, GPR`);
-console.log(`    (driver register D-716). Their absence is a fact about our data, not a market with nothing to say.`);
+console.log(`    Drivers we do NOT hold and so cannot place here: real yields / CPI (FRED-gated), dealer gamma (all-NULL),`);
+console.log(`    central-bank flows (COFER quarterly), equity ETF flows (issuer JS-app). Their absence is a fact about our`);
+console.log(`    data, not a market with nothing to say (driver-coverage-matrix D-726). The seasonality rows read the`);
+console.log(`    CURRENT month's historical bias; a rank of 1/12 is the seasonally strongest month, NOT a history percentile.`);
