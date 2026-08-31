@@ -29,7 +29,7 @@ const sd = (a: number[]) => { const m = mean(a); return Math.sqrt(a.reduce((x, y
 const tstat = (a: number[]) => a.length < 2 ? 0 : mean(a) / ((sd(a) || 1e-12) / Math.sqrt(a.length));
 const addDays = (d: string, n: number) => { const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 
-async function pageAll(path: string) { const out: Record<string, unknown>[] = []; for (let off = 0; ; off += 1000) { const r = await fetch(`${OWNED}/${path}&offset=${off}&limit=1000`, { headers: hdr }); if (!r.ok) break; const j = await r.json(); if (!Array.isArray(j) || !j.length) break; out.push(...j); if (j.length < 1000) break; } return out; }
+async function pageAll(path: string) { if (!/order=/.test(path)) throw new Error(`pageAll requires order=: ${path}`); /* plumbing-ok: audited — order= asserted above */ const out: Record<string, unknown>[] = []; for (let off = 0; ; off += 1000) { const r = await fetch(`${OWNED}/${path}&offset=${off}&limit=1000`, { headers: hdr }); if (!r.ok) break; const j = await r.json(); if (!Array.isArray(j) || !j.length) break; out.push(...j); if (j.length < 1000) break; } return out; }
 async function bars(sym: string): Promise<number[][]> { const raw = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr }).then((x) => x.json()).catch(() => []); return (raw?.[0]?.bars || []).filter((b: number[]) => b[4] > 0); }
 
 // MIN_D restricts inceptions to a period where the panel captures FAILURES too (2021+ via the IEX backfill), which

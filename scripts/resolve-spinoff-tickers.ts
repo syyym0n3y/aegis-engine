@@ -21,7 +21,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Unresolved spin-off filings (ticker still null).
 async function pageAll(path: string) {
+  if (!/order=/.test(path)) throw new Error(`pageAll requires order= for stable paging: ${path}`);   // D-725
   const out: Record<string, unknown>[] = [];
+  // plumbing-ok: audited — order= asserted above, so this paged limit is deterministic.
   for (let off = 0; ; off += 1000) { const r = await fetch(`${OWNED}/${path}&offset=${off}&limit=1000`, { headers: hdr }); if (!r.ok) break; const j = await r.json(); if (!Array.isArray(j) || !j.length) break; out.push(...j); if (j.length < 1000) break; }
   return out;
 }
