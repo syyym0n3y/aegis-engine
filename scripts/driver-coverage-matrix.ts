@@ -46,7 +46,8 @@ const has = {
   attribution: await exists("trd_attribution?select=symbol&limit=1"),
   cryptoFunding: await exists("trd_perp_oi?interval=eq.funding&select=ts&limit=1"),
   cryptoFlows: await exists("trd_perp_oi?venue=eq.blockchain.info&select=ts&limit=1"),
-  macroInfl: await exists("trd_macro_series?series=like.*cpi*&select=d&limit=1") || await exists("trd_macro_series?series=like.*breakeven*&select=d&limit=1"),
+  macroInfl: await exists("trd_macro_series?series=eq.cpi&select=d&limit=1"),          // D-729: FRED keyless
+  realYield: await exists("trd_macro_series?series=eq.real_yield_10y&select=d&limit=1"),
   gpr: await exists("trd_macro_series?series=eq.gpr&select=d&limit=1"),   // D-727: ingested
   usd: await exists("trd_macro_series?series=eq.usd_basket&select=d&limit=1"),        // D-728: built
   ratios: await exists("trd_macro_series?series=eq.ratio_gold_silver&select=d&limit=1"),
@@ -57,12 +58,12 @@ const A = (g: Cell, ei: Cell, es: Cell, fx: Cell, co: Cell, rb: Cell, cr: Cell):
   ({ "gold/metals": g, "equity-index": ei, "equity-single": es, "fx": fx, "commodity": co, "rates/bonds": rb, "crypto": cr });
 
 const DRIVERS: Driver[] = [
-  { name: "1 CPI / inflation expectations", use: "condition", note: has.macroInfl ? "held" : "FRED-gated: no CPI/breakeven/survey series anywhere in the stack",
-    cells: A("GATED", "GATED", "N/A", "N/A", "GATED", "GATED", "N/A") },
+  { name: "1 CPI / inflation expectations", use: "condition", note: has.macroInfl ? "HELD — CPI + core CPI + 5y/10y breakevens from FRED keyless fredgraph.csv (D-729)" : "FRED-gated: no CPI/breakeven series",
+    cells: A(has.macroInfl ? "HELD" : "GATED", has.macroInfl ? "HELD" : "GATED", "N/A", "N/A", has.macroInfl ? "HELD" : "GATED", has.macroInfl ? "HELD" : "GATED", "N/A") },
   { name: "2 geopolitical risk", use: "condition", note: has.gpr ? "HELD — Caldara-Iacoviello GPR ingested to trd_macro_series (D-727), monthly, positive-controlled" : "GPR index free+allowlisted, not yet ingested",
     cells: A(has.gpr ? "HELD" : "DEBT", has.gpr ? "HELD" : "DEBT", "N/A", has.gpr ? "HELD" : "DEBT", has.gpr ? "HELD" : "DEBT", "N/A", "N/A") },
-  { name: "3 real yields (TIPS)", use: "condition", note: "only the NOMINAL curve is held; the real leg needs TIPS/breakeven (FRED-gated). Nominal is NOT a substitute",
-    cells: A("GATED", "GATED", "N/A", "N/A", "GATED", "GATED", "N/A") },
+  { name: "3 real yields (TIPS)", use: "condition", note: has.realYield ? "HELD — 5y/10y/30y TIPS real yields from FRED keyless (D-729); gold's #1 driver, previously entirely absent" : "nominal only; real leg FRED-gated",
+    cells: A(has.realYield ? "HELD" : "GATED", has.realYield ? "HELD" : "GATED", "N/A", "N/A", has.realYield ? "HELD" : "GATED", has.realYield ? "HELD" : "GATED", "N/A") },
   { name: "4 dollar (DXY / USD)", use: "condition", note: has.usd ? "HELD — usd_basket DXY-proxy built from EUR/JPY/GBP/CAD/CHF (D-728), 100-normalised, positive-controlled" : "FX held; USD basket derivable, not built",
     cells: A(has.usd ? "HELD" : "DERIVE", has.usd ? "HELD" : "DERIVE", "N/A", "HELD", has.usd ? "HELD" : "DERIVE", has.usd ? "HELD" : "DERIVE", has.usd ? "HELD" : "DERIVE") },
   { name: "5 central-bank buying / official flows", use: "explain", note: "IMF COFER / reserve data is QUARTERLY + lagged, not ingested — EXPLANATORY at best, cannot condition a position",

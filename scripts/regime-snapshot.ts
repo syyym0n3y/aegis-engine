@@ -76,6 +76,13 @@ add("equity vol (VIX)", await closes("^VIX"),
   add("yield curve (10y-2y)", slope, (_p, v) => `${v.toFixed(2)}% — ${v < 0 ? "INVERTED" : v < 0.5 ? "flat" : "normal"}`);
 }
 
+// 4b. REAL YIELD (10y TIPS) — gold's #1 driver (D-729). LOW/negative real yields = gold tailwind; high = headwind.
+add("real yield (10y TIPS)", await series("trd_macro_series?series=eq.real_yield_10y&select=d,v&order=d&limit=100000"),
+  (p, v) => `${v.toFixed(2)}% — ${v < 0 ? "NEGATIVE (strong gold tailwind)" : p > 70 ? "high (gold headwind)" : p > 30 ? "moderate" : "low (gold-supportive)"}`);
+// 4c. BREAKEVEN INFLATION (10y) — market-implied inflation expectations (D-729).
+add("inflation expectations (10y breakeven)", await series("trd_macro_series?series=eq.breakeven_10y&select=d,v&order=d&limit=100000"),
+  (p, v) => `${v.toFixed(2)}% — ${p > 80 ? "elevated" : p > 40 ? "anchored" : "low/disinflationary"}`);
+
 // 5. DOLLAR — usd_basket DXY-proxy (D-728). High percentile = strong dollar, a headwind for gold/commodities/EM.
 add("dollar (USD basket)", await series("trd_macro_series?series=eq.usd_basket&select=d,v&order=d&limit=100000"),
   (p, v) => `${v.toFixed(1)} — ${p > 80 ? "very strong" : p > 55 ? "firm" : p > 45 ? "neutral" : p > 20 ? "soft" : "very weak"}`);
@@ -129,7 +136,7 @@ for (const r of rows) {
 console.log(`\n    THIS IS STATE, NOT A SIGNAL. Every driver here is a CONDITIONING observable with no tradable edge past`);
 console.log(`    the gates. The snapshot describes the current regime from what we hold; it does not tell you what to`);
 console.log(`    do, and reading a percentile as a direction is the overclaim the guard stack exists to prevent.`);
-console.log(`    Drivers we do NOT hold and so cannot place here: real yields / CPI (FRED-gated), dealer gamma (all-NULL),`);
+console.log(`    Drivers we do NOT hold and so cannot place here: dealer gamma (all-NULL),`);
 console.log(`    central-bank flows (COFER quarterly), equity ETF flows (issuer JS-app). Their absence is a fact about our`);
 console.log(`    data, not a market with nothing to say (driver-coverage-matrix D-726). The seasonality rows read the`);
 console.log(`    CURRENT month's historical bias; a rank of 1/12 is the seasonally strongest month, NOT a history percentile.`);
