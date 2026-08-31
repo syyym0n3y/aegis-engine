@@ -98,6 +98,37 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: "portfolio_t", value: null, n: el,
       note: `${el} day(s) of the 728 required. Scored by scripts/ftd-persistence.ts with FROM_D=${started} and LIQUID_ONLY=1.` };
   },
+  // Rule (D-733): >=20 NEW liquid spincos with 500d; 500d liquid MEDIAN excess vs IWM >= +10pp; win>55%; top-5<40%.
+  // This scorer computes exactly that statistic on spincos from 10-12B filings AFTER the clock start — self-contained,
+  // reusing the spinoff-event.ts logic (inception discipline, survivorship-corrected, size-matched vs IWM, liquid
+  // tercile, judged on the MEDIAN). Returns null with a count while <20 accrue (the honest not-yet-computable state).
+  "fwd-spinoff-premium": async (started) => {
+    const iso = (ts: number) => new Date(ts * 1000).toISOString().slice(0, 10);
+    const addCal = (d: string, n: number) => { const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+    const bars = async (sym: string): Promise<number[][]> => { const raw = await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`); return ((raw?.[0]?.bars) || []).filter((b: number[]) => b[4] > 0); };
+    const evts = (await q(`trd_raw_filings?filing_type=like.10-12B%25&ticker=not.is.null&disclosed_date=gt.${started}&select=ticker,disclosed_date&order=disclosed_date`) as { ticker: string; disclosed_date: string }[])
+      .filter((e) => /^[A-Z]{1,5}$/.test(e.ticker) && /^\d{4}-\d\d-\d\d$/.test(e.disclosed_date));
+    const iwm = new Map((await bars("IWM")).map((b) => [iso(b[0]), b[4]]));
+    const rows: { ex: number; dv: number }[] = [];
+    for (const e of evts) {
+      const b = await bars(e.ticker); if (b.length < 60) continue;
+      const dt = b.map((x) => iso(x[0])); const first = dt[0];
+      if (!(first >= e.disclosed_date && first <= addCal(e.disclosed_date, 150))) continue;   // inception discipline
+      let iT = 500;
+      if (iT >= b.length) { if (dt[dt.length - 1] >= "2026-06-01") continue; iT = b.length - 1; }   // survivorship: delisters to last bar
+      const p0 = b[0][4], p1 = b[iT][4], s0 = iwm.get(dt[0]), s1 = iwm.get(dt[iT]);
+      if (!(p0 > 0 && p1 > 0 && s0 && s1)) continue;
+      const dv = b.map((x) => x[4] * x[5]); const medDV = [...dv].sort((a, z) => a - z)[dv.length >> 1];
+      rows.push({ ex: ((p1 / p0 - 1) - (s1 / s0 - 1)) * 100, dv: medDV });
+    }
+    const liq = rows.sort((a, b) => a.dv - b.dv).slice(Math.floor(rows.length * 2 / 3)).map((x) => x.ex);
+    if (liq.length < 20) return { metric: "liq_median_excess_vs_iwm_500d_pp", value: null, n: liq.length, note: `${liq.length} new liquid spincos with full 500d forward data since ${started}; rule needs >=20 (~3-4y to accrue). not-yet-computable.` };
+    const med = [...liq].sort((a, b) => a - b)[liq.length >> 1];
+    const win = 100 * liq.filter((x) => x > 0).length / liq.length;
+    const s = [...liq].sort((a, b) => b - a); const tot = liq.reduce((p, x) => p + x, 0); const top5 = tot ? 100 * s.slice(0, 5).reduce((p, x) => p + x, 0) / tot : 0;
+    return { metric: "liq_median_excess_vs_iwm_500d_pp", value: med, n: liq.length,
+      note: `${liq.length} new liquid spincos: median ${med.toFixed(1)}pp, win-rate ${win.toFixed(0)}%, top-5 ${top5.toFixed(0)}%. PROMOTE if median>=+10 & win>55 & top5<40; KILL if median<=0 / win<50 / top5>60.` };
+  },
 };
 
 const rules = await q(`trd_forward_rules?select=id,clock_started,promote_if,kill_if`) as
@@ -116,6 +147,10 @@ for (const r of rules.sort((a, b) => a.id < b.id ? -1 : 1)) {
   if (s.value !== null) computable++;
   console.log(`  ${r.id.padEnd(28)} ${s.metric.padEnd(26)} ${val.padStart(18)}  n=${s.n}`);
   console.log(`      ${s.note}`);
+  // A BACKDATE run VERIFIES the scorer path (D-613) — it must NOT write a mark, or a backdated in-sample value lands
+  // in the append-only forward record looking like a real forward observation (it did, once, for fwd-spinoff-premium
+  // — corrected by an appended note). trd_forward_marks is the immutable record of REAL forward readings only.
+  if (Deno.env.get("BACKDATE")) { console.log(`      (BACKDATE verification — no mark written)`); continue; }
   await fetch(`${OWNED}/trd_forward_marks`, {
     method: "POST",   // plumbing-ok: audited — response checked on the next line and reported per rule
     headers: { ...hdr, Prefer: "return=minimal" },
