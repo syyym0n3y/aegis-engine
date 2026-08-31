@@ -129,6 +129,32 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: "liq_median_excess_vs_iwm_500d_pp", value: med, n: liq.length,
       note: `${liq.length} new liquid spincos: median ${med.toFixed(1)}pp, win-rate ${win.toFixed(0)}%, top-5 ${top5.toFixed(0)}%. PROMOTE if median>=+10 & win>55 & top5<40; KILL if median<=0 / win<50 / top5>60.` };
   },
+  // Rule (D-734): >=15 NEW de-SPACs with 500d; FULL-universe 500d MEDIAN excess vs IWM <= -10pp; win<45% -> persists.
+  // Tests whether the -40.7pp in-sample de-SPAC underperformance is structural or a 2020-21 boom artifact. Full
+  // universe (the effect is in illiquid names), from the completion 8-K date, survivorship-corrected.
+  "fwd-despac-underperf": async (started) => {
+    const iso = (ts: number) => new Date(ts * 1000).toISOString().slice(0, 10);
+    const barsOf = async (sym: string): Promise<number[][]> => { const raw = await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`); return ((raw?.[0]?.bars) || []).filter((b: number[]) => b[4] > 0); };
+    const evts = (await q(`trd_raw_filings?filing_type=like.%25despac%25&ticker=not.is.null&disclosed_date=gt.${started}&select=ticker,disclosed_date&order=disclosed_date`) as { ticker: string; disclosed_date: string }[])
+      .filter((e) => /^[A-Z]{1,5}$/.test(e.ticker) && /^\d{4}-\d\d-\d\d$/.test(e.disclosed_date));
+    const first = new Map<string, string>();
+    for (const e of evts) { const c = first.get(e.ticker); if (!c || e.disclosed_date < c) first.set(e.ticker, e.disclosed_date); }
+    const iwm = new Map((await barsOf("IWM")).map((b) => [iso(b[0]), b[4]]));
+    const exs: number[] = [];
+    for (const [tk, d] of first) {
+      const b = await barsOf(tk); if (b.length < 40) continue;
+      const dt = b.map((x) => iso(x[0])); const ci = dt.findIndex((x) => x >= d); if (ci < 0) continue;
+      let iT = ci + 500; if (iT >= b.length) { if (dt[dt.length - 1] >= "2026-06-01") continue; iT = b.length - 1; }
+      if (iT <= ci) continue;
+      const p0 = b[ci][4], p1 = b[iT][4], s0 = iwm.get(dt[ci]), s1 = iwm.get(dt[iT]);
+      if (!(p0 > 0 && p1 > 0 && s0 && s1)) continue;
+      exs.push(((p1 / p0 - 1) - (s1 / s0 - 1)) * 100);
+    }
+    if (exs.length < 15) return { metric: "median_excess_vs_iwm_500d_pp", value: null, n: exs.length, note: `${exs.length} new de-SPACs with 500d since ${started}; rule needs >=15. Post-boom de-SPAC volume is low — may stay inconclusive. not-yet-computable.` };
+    const m = [...exs].sort((a, b) => a - b)[exs.length >> 1];
+    const win = 100 * exs.filter((x) => x > 0).length / exs.length;
+    return { metric: "median_excess_vs_iwm_500d_pp", value: m, n: exs.length, note: `${exs.length} new de-SPACs: median ${m.toFixed(1)}pp, win-rate ${win.toFixed(0)}%. PERSISTS if median<=-10 & win<45; BOOM-ARTIFACT if median>=0 / win>55.` };
+  },
 };
 
 const rules = await q(`trd_forward_rules?select=id,clock_started,promote_if,kill_if`) as
