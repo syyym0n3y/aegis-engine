@@ -15099,3 +15099,46 @@ LIQUIDITY-LAW pattern) and even there leaves no tradable drift. Caveat: this is 
 not held); a full arb book needs the terms + failure hazard, but the drift proxy already shows no free lunch in liquid
 names. Merger arb closed. Phase 2 (SPAC) is the next tractable unit; spin-offs/IPO remain blocked on registrant-CIK
 resolution (data.sec.gov allowlist), index inclusion on non-EDGAR data.
+
+## D-733 Phase 3 — spin-offs: the programme's first robust POSITIVE event finding (candidate, not promoted)
+Allowlisted data.sec.gov; the EDGAR submissions API resolves a 10-12B's registrant CIK->ticker (the accession
+prefix works; the original ingest had already captured 806 spinco tickers, provenance verified: CEG/GEHC/GEV/KD/OGN/
+SOLV/VLTO are all real spincos). Event study on 520 spincos captured at inception, survivorship-corrected (delisters
+measured to their last bar), size-matched.
+
+RESULT — spin-off premium CONFIRMED in direction and broad: 500d liquid excess median +22.8% vs SPY, +27.6% vs IWM
+(size-matched, STRONGER — so not the small-cap factor), win-rate 68-84%, top-5 names only 21% of total at 500d (broad,
+not a lottery). It survived every attack: survivorship (delisters included, barely moved it), size-matching (bigger vs
+IWM), outlier concentration (broad at 500d), and provenance (spincos not parents, verified against known deals).
+
+WHY IT IS A CANDIDATE, NOT A PROMOTION — the magnitude is implausibly large (2-3x the published ~15% anomaly) because
+the captured cohort is recent (2020-24) and exceptional (Constellation +400%, GE HealthCare, Kenvue, Veralto — a
+banner era for large-cap spinoffs); the 2021+ subset is smaller (n 48) and outlier-driven (top-5 43-75%); spincos are
+illiquid at inception with forced index-exclusion selling not costed here. The DIRECTION is the robust part; the
+MAGNITUDE is period-inflated. Honest next step: cost model + a pre-registered forward clock on future spinoffs. This
+is the first time the distrust-the-convenient-result discipline ended not in a retraction but in a real, caveated
+positive — because the checks (survivorship, size, provenance, outlier) all passed.
+
+## D-733 Phase 4 — IPO lock-up expiry: NULL in the liquid tercile (illiquid + borrow-gated)
+Ingested 3,379 IPO 424B4 prospectuses (2018-2023, 1,886 tickered). Event study on 1,523 lock-up expiries (IPO+180d,
+window [-5,+15]d): ALL median -3.53% (t -2.18) — the documented insider-selling drop is REAL. But LIQUID tercile
+median -0.54% (t 1.25) — it VANISHES; the effect lives entirely in illiquid small-cap IPOs (run-up 101.9% ALL vs 8.8%
+liquid gives away the 2020-21 moonshot cohort). LIQUIDITY LAW again, and shorting the drop needs borrow (paid, IPO
+shares hard-to-borrow). NULL in the tradable universe. Both operator-requested phases now done: spin-offs (POSITIVE
+candidate D-733 Phase 3), IPO/lockup (NULL). SEC approaches: merger-arb NULL, spin-offs CANDIDATE, IPO/lockup NULL;
+SPAC (ticker-change) and index-inclusion (non-EDGAR) remain.
+
+## D-733 — spin-off premium: PRE-REGISTERED forward clock (fwd-spinoff-premium, immutable)
+The one positive candidate of the session earns or loses its claim on data that does not yet exist. Registered in
+trd_forward_rules (append-only, immutability verified — an UPDATE raises "UPDATE/DELETE forbidden", promote_if stays
+original). Spec: prospective spincos from 10-12B filings AFTER 2026-08-31, held from distribution, LIQUID tercile,
+excess vs size-matched IWM at 500 trading days, survivorship-corrected, judged on MEDIAN + win-rate (not the
+outlier/period-inflated mean).
+- PROMOTE (ALL): >=20 new liquid spincos with full 500d; 500d liquid MEDIAN excess vs IWM >= +10.0pp — deliberately
+  the LOWER end of the published ~10-20pp, NOT the in-sample +22-27pp which was period-inflated; win-rate >55%;
+  top-5 concentration <40% (broad).
+- KILL (ANY): after >=20 spincos, median excess <=0 (decayed/period-specific); win-rate <50%; top-5 >60% (a lottery).
+- INCONCLUSIVE: <20 new liquid spincos with 500d — still accruing (~3-4 years to a meaningful read).
+The bar is calibrated to be HARDER than the in-sample result (D-571 discipline: judge forward against a conservative
+threshold; the period-inflated magnitude is explicitly not the promote condition). The direction is what forward-tests;
+the magnitude must clear a bar set below what the in-sample cohort delivered.
