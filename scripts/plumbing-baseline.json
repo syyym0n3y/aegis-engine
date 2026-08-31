@@ -47,7 +47,7 @@
  "silent-write|supabase/functions/trd-position-manager/index.ts": 3,
  "silent-write|supabase/functions/trd-prereg-tick/index.ts": 2,
  "silent-write|supabase/functions/trd-r007-tick/index.ts": 1,
- "silent-write|supabase/functions/trd-ripshort-scan/index.ts": 4,
+ "silent-write|supabase/functions/trd-ripshort-scan/index.ts": 3,
  "silent-write|supabase/functions/trd-risk-monitor/index.ts": 3,
  "silent-write|supabase/functions/trd-risk-officer/index.ts": 5,
  "silent-write|supabase/functions/trd-signal-refresh/index.ts": 2,
