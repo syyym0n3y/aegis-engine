@@ -15142,3 +15142,45 @@ outlier/period-inflated mean).
 The bar is calibrated to be HARDER than the in-sample result (D-571 discipline: judge forward against a conservative
 threshold; the period-inflated magnitude is explicitly not the promote condition). The direction is what forward-tests;
 the magnitude must clear a bar set below what the in-sample cohort delivered.
+
+## D-733 — forward scorer wired to score fwd-spinoff-premium (CONTINUITY LAW), backdate-verified
+A forward clock nobody scores is indistinguishable from no clock (D-613). Added a scorer to forward-score-specs.ts
+(already wired into the daily runner) that computes the EXACT statistic the rule names: 500d liquid MEDIAN excess vs
+IWM for spincos from 10-12B filings AFTER the clock start, survivorship-corrected, with win-rate + top-5 concentration
+against the promote/kill thresholds.
+- LIVE (2026-08-31 start): not-yet-computable, 0 new liquid spincos with 500d — the honest accruing state.
+- BACKDATE=2020-01-01 VERIFICATION (D-613: a scorer that only ever says "no data" is unverified): computes median
+  45.5pp, win-rate 67%, top-5 43% (n=54), reproducing the D-733 cohort — proof the path yields a real number. Note the
+  top-5 43% already FAILS the promote breadth condition (<40%), so even the in-sample cohort is at the edge — exactly
+  what the forward test resolves.
+- A DESIGN BUG found and fixed: the scorer wrote a mark on EVERY run, so the BACKDATE verification landed a spurious
+  45.524 in the append-only trd_forward_marks looking like a real forward reading. Fixed: BACKDATE runs no longer
+  write marks (protects every clock). The one polluting mark could not be deleted (append-only) so it was corrected by
+  an appended note documenting it as a backdate artifact — the honest way to fix an immutable ledger.
+
+## D-734 — SPAC (de-SPAC underperformance CONFIRMED, not tradable) + index-inclusion (data-blocked)
+The last two SEC approaches. SPAC: ingested 5,257 de-SPAC completion 8-Ks ("consummation of the business
+combination", SPAC-specific language, 2019-2023). FIX along the way: the FTS ingester exited on the first 409, but a
+de-SPAC 8-K also contains "agreement and plan of merger" and many were already stored as merger (unique key is
+accession alone) — made the ingester on_conflict + ignore-duplicates so cross-search overlap is a no-op, not a crash.
+Event study (204 de-SPACs vs IWM): ALL 500d median -40.7% (GROSS, t -3.63) — the documented de-SPAC destruction is
+REAL and large. But LIQUID tercile 500d is FLAT (median -3.7%, t 0.08): the destruction is in illiquid small de-SPACs
+(LIQUIDITY LAW), and de-SPACs are hard-to-borrow (short needs paid borrow). CONFIRMED finding, NOT a tradable liquid
+edge. Sample partial (merger-overlapping de-SPACs tagged merger).
+
+INDEX INCLUSION: BLOCKED on the data source, honestly. It is NOT an EDGAR event — it needs S&P/FTSE-Russell
+reconstitution announcements (adds/deletes + dates), and no clean free allowlisted feed exists (index providers
+publish no free historical membership API; the only free source is Wikipedia S&P-500-changes, fragile scraping,
+S&P-500 only). Recorded UNTESTED (data never adequate), not null — needs a paid index-membership dataset.
+
+SEC EVENT-EXTRACTION BUILD COMPLETE across the reachable set: merger-arb NULL, spin-offs CANDIDATE (+ forward clock),
+IPO/lockup NULL, de-SPAC CONFIRMED-not-tradable, index-inclusion data-blocked. 4 of 5 tested; the 5th honestly gated.
+
+## D-734 — de-SPAC underperformance forward clock (fwd-despac-underperf) + scorer, backdate-verified
+Registered an immutable forward clock testing whether the -40.7pp de-SPAC underperformance is STRUCTURAL or a
+2020-21 boom artifact (NOT a trade — it lives in illiquid names and de-SPACs are hard-to-borrow). Prospective
+de-SPACs after 2026-08-31, full universe, 500d excess vs IWM, survivorship-corrected. PERSISTS (ALL): >=15 new
+de-SPACs, 500d median <= -10pp (milder than the boom -40.7), win<45%. BOOM-ARTIFACT (ANY): median>=0 or win>55%.
+Scorer added to forward-score-specs.ts (daily-wired): live not-yet-computable (0 de-SPACs since start); BACKDATE=2019
+reproduces median -40.7pp / win 31% (n=204) — path verified (D-613). Honest caveat in the horizon: post-boom de-SPAC
+volume is low, so this may never accrue 15 — a legitimate "cannot re-test" outcome, not a failure.
