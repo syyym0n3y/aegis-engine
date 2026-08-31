@@ -91,12 +91,17 @@ const batch: Record<string, unknown>[] = [];
 
 const flush = async () => {
   if (DRY || !batch.length) { batch.length = 0; return; }
-  const res = await fetch(`${OWNED}/trd_raw_filings`, {
+  // on_conflict=source,source_id + ignore-duplicates (D-734): an accession can match MORE THAN ONE event search — a
+  // de-SPAC completion 8-K also contains "agreement and plan of merger" and may already be stored under another
+  // filing_type. The unique key is (source, source_id) alone, so a collision must be SKIPPED, not fail the batch
+  // (the plain insert exited the whole run on the first overlap). Idempotent re-runs, and cross-search overlap is a
+  // no-op rather than a crash. The already-stored copy keeps its original tag — a known, documented limitation.
+  const res = await fetch(`${OWNED}/trd_raw_filings?on_conflict=source,source_id`, {
     method: "POST",   // plumbing-ok: audited — status checked immediately below
-    headers: { ...hdr, Prefer: "return=minimal" },
+    headers: { ...hdr, Prefer: "return=minimal,resolution=ignore-duplicates" },
     body: JSON.stringify(batch),
   });
-  if (!res.ok) { console.error(`!! write failed HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); Deno.exit(1); }
+  if (!res.ok && res.status !== 409) { console.error(`!! write failed HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`); Deno.exit(1); }
   written += batch.length;
   batch.length = 0;
 };
