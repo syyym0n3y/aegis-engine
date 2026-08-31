@@ -32,7 +32,9 @@ const tstat = (a: number[]) => a.length < 2 ? 0 : mean(a) / ((sd(a) || 1e-12) / 
 
 // Events: (ticker, filing_date) from the merger ingest. FTS stored the filer ticker in the ticker column.
 async function pageAll(path: string): Promise<Record<string, unknown>[]> {
+  if (!/order=/.test(path)) throw new Error(`pageAll requires order= for stable paging: ${path}`);   // D-725
   const out: Record<string, unknown>[] = [];
+  // plumbing-ok: audited — order= is asserted above, so this paged limit is deterministic.
   for (let off = 0; ; off += 1000) { const r = await fetch(`${OWNED}/${path}&offset=${off}&limit=1000`, { headers: hdr }); if (!r.ok) break; const j = await r.json(); if (!Array.isArray(j) || !j.length) break; out.push(...j); if (j.length < 1000) break; }
   return out;
 }
