@@ -14914,3 +14914,106 @@ counted against this data version), 1,373,373 live rows total (verified by re-re
 the +6-new/0-already accounting proves idempotency (an unchanged spec against the same data version would count 0).
 This is the strongest verification: not a reproduction, the actual production daemon over repeated cycles. Closes the
 D-719/719b loop — stale-daemon diagnosis and the dedup/409-tolerance/column-whitelist hardening both confirmed live.
+
+## D-725 — the D-723 backfill CLOBBERED every ETF/index; caught by a finding flipping, recovered from Yahoo
+
+**THE MISTAKE.** The D-723 delisted backfill computed its target list as "short-interest tickers MINUS the
+asset_class='equity' panel". ETFs and indices (SPY, QQQ, IWM, DIA, HYG, LQD, GLD, TLT, SLV, the sector XLs, ...) were
+stored under etf/sector/index classes, so the equity-only exclusion did not see them — they were treated as MISSING,
+became targets, and because trd_bars_deep's PRIMARY KEY is `symbol` ALONE, the `on_conflict=symbol merge-duplicates`
+upsert OVERWROTE their full multi-decade histories with ~5y Alpaca IEX stubs. SPY went from 8,453 bars (since 1993)
+to 1,532 (since 2018); QQQ, IWM and dozens more truncated to 2020. Every test reading them silently ran on the stub.
+
+**HOW IT WAS CAUGHT — a finding flipped, and the flip was internally inconsistent.** Re-testing the breadth U-shape
+(D-718b) on an expanded-panel breadth returned KILLED 0/3 with exactly 605 test obs on all three instruments. Two
+tells: (a) a breadth series numerically near-identical to the original should not flip a 3/3 result; (b) 605 obs
+*identical* across QQQ/IWM/DIA means the instruments — not the breadth — were the binding constraint, i.e. their
+histories had shrunk. Tracing that led to the clobber. NO GUARD caught it (the plumbing recycling-guard lives in
+refresh-bars.ts, not in the new Alpaca ingest); the inconsistency of a too-convenient result did.
+
+**RECOVERY.** No usable backup existed (the only dump was 137KB, schema-only). `restore-clobbered-etfs.ts` re-fetched
+51 programme-used ETFs/indices from Yahoo at full adjusted history (the original source, per D-478) with a RECYCLING
+GUARD that only ever replaces a series with a LONGER one, and placed them in etf/sector classes — out of the equity
+breadth universe, where they never belonged (original breadth was 4,184 equities). SPY restored to 8,453 bars, and
+the D-718b U-shape then REPRODUCED exactly (QQQ 2757 obs, 3/3, identical numbers), proving test integrity recovered.
+The contaminated `_xp` breadth (66,823 rows) was deleted; nothing was ever claimed from it.
+
+**ROOT-CAUSE FIXES.** (1) the Alpaca ingest now excludes ALL panel symbols regardless of class, and writes with
+ignore-duplicates so a collision can never overwrite. (2) build-breadth.sql gained a $5 price floor so the backfill's
+~15k mostly-penny delisted names (median price $1.74) cannot dominate an equal-weighted breadth count — breadth is now
+an investable-universe statistic, robust to the expansion. (3) A durable guard against symbol-PK clobber across
+ingests is the outstanding item — the recycling discipline exists in one ingest and must be a shared check.
+
+**THE LESSON, restated because it keeps being the same one.** The programme's own doctrine — distrust the result that
+agrees with you — is what caught a self-inflicted data-loss that no machine check saw. The convenient "survivorship
+was hiding the U-shape's failure" reading was false; the truth was that I had broken the instruments.
+
+## D-726 — PRICE-DRIVER COVERAGE MATRIX: the canonical 10 drivers x every instrument class
+
+Operator asked to confirm the canonical price drivers (CPI/inflation, geopolitical risk, real yields, dollar,
+central-bank buying, COT, ETF flows, gold/silver ratio, seasonality, WGC attribution) are accounted for in EVERY
+instrument, and that no price driver is unaccounted for anywhere. `scripts/driver-coverage-matrix.ts` is that audit —
+a live-probed matrix of driver-type x class (gold/metals, equity-index, equity-single, fx, commodity, rates/bonds,
+crypto), each cell HELD / DERIVE (computable from held data) / DEBT (free, unfetched) / GATED (paid/credential/
+quarterly) / N/A. Result: 16 held, 18 derivable, 8 free-debt, 11 gated.
+
+**HELD across their instruments:** COT positioning (whole futures complex + crypto funding/OI analogue), the dollar
+for FX, the gold/silver ratio, and the WGC-style attribution engine (trd_attribution decomposes every instrument's
+return into factor betas + residual, per-era and per-timeframe — the generalised framework).
+
+**DERIVABLE from data we already hold, not yet wired as explicit drivers:** a USD basket (from the FX pairs), cross-
+asset ratios beyond gold/silver, and seasonality (a computation on price history). Accounted for in DATA; a build
+task, not a data gap.
+
+**FREE DEBT (now allowlisted, just needs ingesting):** the Caldara-Iacoviello GPR geopolitical-risk index; ETF flows
+(GLD/IAU shares outstanding — trd_fundflow is Form-D raises, not ETF creation/redemption).
+
+**GATED (real barriers, named):** CPI/inflation expectations and real yields (both FRED-gated — the nominal curve is
+NOT a real-yield substitute); central-bank/official flows (IMF COFER quarterly + lagged).
+
+**THE DISTINCTION THE SOURCE LIST OMITS, and the one that matters most:** drivers 5 (central-bank flows) and 10 (the
+attribution framework) are EXPLAIN-only — quarterly-lagged or backward-looking. They explain a move; they cannot
+condition a position. A driver being real does not make it tradable. The matrix is OPEN, not a completeness claim.
+
+## D-726/727 (closed) — driver matrix after ingesting GPR: 0 free-debt remaining, every gap named
+
+After ingesting GPR (D-727), the coverage matrix re-probes to: 20 HELD, 18 DERIVABLE-from-held-data, **0 FREE-DEBT**,
+15 GATED. Driver #2 (geopolitical risk) flipped DEBT->HELD across gold/equity-index/fx/commodity. Driver #7 (ETF
+flows) was CORRECTED from "free debt" to GATED — the register optimistically called it a free issuer download, but the
+SPDR site serves PDF bar-lists via a Cloudflare JS-app API and WGC flow data sits behind forms; it is not a clean CSV,
+so it is an honest harder gap, not a free one I failed to fetch. Crypto on-chain flows ARE held, so #7 is covered
+there.
+
+**THE ANSWER TO "IS ANY PRICE DRIVER UNACCOUNTED FOR": no silent gap remains.** Every canonical driver is either
+HELD, DERIVABLE from data we hold (USD basket, cross-asset ratios, seasonality — a build task, not a data gap), or a
+NAMED gated barrier (CPI/real-yields FRED-gated; central-bank flows COFER-quarterly; ETF flows issuer-JS-app). The
+0-free-debt line is the load-bearing one: there is no free driver we simply failed to fetch. The gated set is the
+honest edge of what the stack can see, per THE COVERAGE LAW.
+
+## D-728 — the DERIVABLE drivers, built: USD basket, cross-asset ratios, seasonality
+
+D-726 marked dollar, cross-asset ratios and seasonality as DERIVABLE — present in the data, not yet explicit drivers.
+`build-derivable-drivers.ts` wires them into trd_macro_series from held prices, each positive-controlled or the run REDs:
+- **usd_basket** — a DXY-proxy geometric index from EUR/JPY/GBP/CAD/CHF (SEK unavailable; five weights renormalised),
+  100-normalised. Control: 2022-09 = 120.4 (Fed tightening) >> 2011-08 = 82.2 (post-QE weakness). PASS.
+- **ratios** — gold/silver (COVID spike 125.9 vs median 68), stocks/bonds SPY/TLT (2021 risk-on peak 3.49), copper/gold
+  (2020 growth-collapse low), oil/gold (negative-WTI-week low). All controls PASS.
+- **seasonality** — per-month mean return for gold/spy/oil, 12 values each. SPY's strongest month is November (Santa
+  rally) as expected. **The data CORRECTED the source clip:** gold's strongest month is JANUARY (new-year buying), not
+  the Aug-Sep the clip claimed — Aug is strong (+2.25%) but second-tier. Reporting the measurement, not the folklore.
+
+8 series, 31,550 rows, idempotent, wired into the daily runner. Matrix now 31 HELD / 7 derivable / 0 free-debt / 15
+gated: the 7 remaining derivable cells are per-instrument extensions (a ratio or seasonal for a specific name), each a
+one-liner on demand. These are CONDITION drivers — observables now explicit and probeable across instruments; no
+tradable edge is claimed, and drivers 5/10 remain EXPLAIN-only.
+
+## D-728b — derivable drivers wired into the regime snapshot
+
+`regime-snapshot.ts` now reads the D-728 series, so the point-in-time state view spans 14 conditioning drivers:
+breadth, VIX, VIX term structure, yield curve, **dollar (USD basket)**, **geopolitical risk (GPR)**, gold/silver,
+**stocks/bonds (SPY/TLT)**, **copper/gold**, credit (HYG/LQD), and **seasonality** for gold/spy/oil (the CURRENT
+calendar month's historical bias, ranked 1-12, not a history percentile — labelled as such). The stored ratio series
+replaced the inline gold/silver computation for consistency. The footer's "do NOT hold" list was corrected — GPR is
+no longer among the gaps; the real gaps named are real yields/CPI, dealer gamma, central-bank flows, equity ETF flows.
+A live read surfaced a coherent divergence (equity risk-on extremes vs growth-off copper/gold + very-elevated GPR) —
+which is STATE, not a signal, and exactly what the snapshot is for.
