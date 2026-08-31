@@ -23,6 +23,10 @@ const MAP: [string, string][] = [
   ["DFII5", "real_yield_5y"], ["DFII10", "real_yield_10y"], ["DFII30", "real_yield_30y"],
   ["T5YIE", "breakeven_5y"], ["T10YIE", "breakeven_10y"],
   ["CPIAUCSL", "cpi"], ["CPILFESL", "cpi_core"],
+  // Nominal constant-maturity Treasuries (D-731b) — long history (from 1962/1976), for the term spread / bond carry.
+  ["DGS3MO", "ust_3m"], ["DGS2", "ust_2y"], ["DGS10", "ust_10y"],
+  // Credit + financial-conditions conditioners (keyless, free): BAA-10y spread, NFCI.
+  ["BAA10Y", "credit_baa_10y"], ["NFCI", "fin_conditions"],
 ];
 
 const out: { series: string; d: string; v: number }[] = [];
