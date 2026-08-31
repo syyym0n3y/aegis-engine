@@ -177,6 +177,8 @@ while true; do
   # UPDATE). Must run AFTER refresh-bars.ts below so breadth reflects the freshest panel — but the recompute reads the
   # whole panel regardless, so ordering only affects same-day freshness, not correctness. Owns the 'equity breadth'
   # feed the continuity guard watches; without this line that feed would red in ten days per the D-715 rule.
+  # DERIVABLE DRIVERS (D-728): USD basket, cross-asset ratios, seasonality — recomputed from held prices, idempotent.
+  deno run --allow-net --allow-env ../scripts/build-derivable-drivers.ts > ../data/derivable.log 2>&1 || echo "$(date -u +%FT%TZ) DERIVABLE DRIVERS BUILD FAILED"
   # GPR geopolitical-risk index (D-727): monthly, idempotent, closes driver #2 of the coverage matrix. Cheap re-run.
   deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-gpr.ts > ../data/gpr.log 2>&1 || echo "$(date -u +%FT%TZ) GPR INGEST FAILED"
   bash ../scripts/refresh-breadth.sh > ../data/breadth.log 2>&1 || echo "$(date -u +%FT%TZ) BREADTH REFRESH FAILED — the continuity-watched breadth feed has no other owner"

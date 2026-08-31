@@ -48,6 +48,9 @@ const has = {
   cryptoFlows: await exists("trd_perp_oi?venue=eq.blockchain.info&select=ts&limit=1"),
   macroInfl: await exists("trd_macro_series?series=like.*cpi*&select=d&limit=1") || await exists("trd_macro_series?series=like.*breakeven*&select=d&limit=1"),
   gpr: await exists("trd_macro_series?series=eq.gpr&select=d&limit=1"),   // D-727: ingested
+  usd: await exists("trd_macro_series?series=eq.usd_basket&select=d&limit=1"),        // D-728: built
+  ratios: await exists("trd_macro_series?series=eq.ratio_gold_silver&select=d&limit=1"),
+  seasonal: await exists("trd_macro_series?series=eq.seasonal_gold&select=d&limit=1"),
 };
 
 const A = (g: Cell, ei: Cell, es: Cell, fx: Cell, co: Cell, rb: Cell, cr: Cell): Record<Cls, Cell> =>
@@ -60,18 +63,18 @@ const DRIVERS: Driver[] = [
     cells: A(has.gpr ? "HELD" : "DEBT", has.gpr ? "HELD" : "DEBT", "N/A", has.gpr ? "HELD" : "DEBT", has.gpr ? "HELD" : "DEBT", "N/A", "N/A") },
   { name: "3 real yields (TIPS)", use: "condition", note: "only the NOMINAL curve is held; the real leg needs TIPS/breakeven (FRED-gated). Nominal is NOT a substitute",
     cells: A("GATED", "GATED", "N/A", "N/A", "GATED", "GATED", "N/A") },
-  { name: "4 dollar (DXY / USD)", use: "condition", note: has.fxPairs ? "FX pairs held -> a USD basket is DERIVABLE; DXY not stored as its own driver" : "no FX",
-    cells: A("DERIVE", "DERIVE", "N/A", "HELD", "DERIVE", "DERIVE", "DERIVE") },
+  { name: "4 dollar (DXY / USD)", use: "condition", note: has.usd ? "HELD — usd_basket DXY-proxy built from EUR/JPY/GBP/CAD/CHF (D-728), 100-normalised, positive-controlled" : "FX held; USD basket derivable, not built",
+    cells: A(has.usd ? "HELD" : "DERIVE", has.usd ? "HELD" : "DERIVE", "N/A", "HELD", has.usd ? "HELD" : "DERIVE", has.usd ? "HELD" : "DERIVE", has.usd ? "HELD" : "DERIVE") },
   { name: "5 central-bank buying / official flows", use: "explain", note: "IMF COFER / reserve data is QUARTERLY + lagged, not ingested — EXPLANATORY at best, cannot condition a position",
     cells: A("GATED", "N/A", "N/A", "GATED", "N/A", "GATED", "N/A") },
   { name: "6 COT positioning", use: "condition", note: has.cot ? "held (trd_cot_disagg/tff) for the futures complex; crypto uses funding+OI as the analogue" : "COT MISSING",
     cells: A(has.cot ? "HELD" : "GATED", has.cot ? "HELD" : "GATED", "N/A", has.cot ? "HELD" : "GATED", has.cot ? "HELD" : "GATED", has.cot ? "HELD" : "GATED", has.cryptoFunding ? "HELD" : "GATED") },
   { name: "7 fund / ETF flows", use: "condition", note: "HARDER THAN THE REGISTER ASSUMED: the SPDR issuer serves PDF bar-lists via a Cloudflare JS-app API, not a clean shares-outstanding CSV; WGC ETF-flow data sits behind forms. Not a simple free download. Crypto on-chain flows ARE held.",
     cells: A("GATED", "GATED", "N/A", "N/A", "GATED", "GATED", has.cryptoFlows ? "HELD" : "DEBT") },
-  { name: "8 cross-asset ratio (gold/silver etc.)", use: "condition", note: has.metals ? "GC=F & SI=F held -> ratio HELD; other relative-value ratios DERIVABLE from held prices" : "metals missing",
-    cells: A(has.metals ? "HELD" : "DEBT", "DERIVE", "DERIVE", "DERIVE", "DERIVE", "DERIVE", "DERIVE") },
-  { name: "9 seasonality", use: "condition", note: "a COMPUTATION on the price history we already hold, not a feed — DERIVABLE for every class with enough history",
-    cells: A("DERIVE", "DERIVE", "DERIVE", "DERIVE", "DERIVE", "DERIVE", "DERIVE") },
+  { name: "8 cross-asset ratio (gold/silver etc.)", use: "condition", note: has.ratios ? "HELD — gold/silver, stocks/bonds, copper/gold, oil/gold built (D-728), positive-controlled; more derivable on demand" : "metals held, ratios derivable",
+    cells: A(has.ratios ? "HELD" : "DERIVE", has.ratios ? "HELD" : "DERIVE", "DERIVE", "DERIVE", has.ratios ? "HELD" : "DERIVE", has.ratios ? "HELD" : "DERIVE", "DERIVE") },
+  { name: "9 seasonality", use: "condition", note: has.seasonal ? "HELD — per-month mean-return built for gold/spy/oil (D-728); data corrected the clip: gold's strongest month is JANUARY, not Sep. Derivable for any instrument." : "computable from held price history",
+    cells: A(has.seasonal ? "HELD" : "DERIVE", has.seasonal ? "HELD" : "DERIVE", "DERIVE", "DERIVE", has.seasonal ? "HELD" : "DERIVE", "DERIVE", "DERIVE") },
   { name: "10 attribution framework (WGC-style)", use: "explain", note: has.attribution ? "trd_attribution decomposes each instrument's return into factor betas + residual (per-era, per-tf) — this IS the WGC framework, generalised" : "attribution engine absent",
     cells: A(has.attribution ? "HELD" : "GATED", has.attribution ? "HELD" : "GATED", has.attribution ? "HELD" : "GATED", has.attribution ? "HELD" : "GATED", has.attribution ? "HELD" : "GATED", has.attribution ? "HELD" : "GATED", has.attribution ? "HELD" : "GATED") },
 ];
