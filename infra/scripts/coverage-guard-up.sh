@@ -179,6 +179,8 @@ while true; do
   # feed the continuity guard watches; without this line that feed would red in ten days per the D-715 rule.
   # DERIVABLE DRIVERS (D-728): USD basket, cross-asset ratios, seasonality — recomputed from held prices, idempotent.
   deno run --allow-net --allow-env ../scripts/build-derivable-drivers.ts > ../data/derivable.log 2>&1 || echo "$(date -u +%FT%TZ) DERIVABLE DRIVERS BUILD FAILED"
+  # LADDER HARVESTER (D-735): the structural-wealth engine — compound + deposits + honest de-risk tradeoff. Report-only.
+  deno run --allow-net --allow-env ../scripts/ladder-harvester.ts > ../data/harvester.log 2>&1 || echo "$(date -u +%FT%TZ) LADDER HARVESTER FAILED"
   # FRED macro (D-729): real yields, breakevens, CPI from keyless fredgraph.csv, idempotent. Gold's #1 driver.
   deno run --allow-net --allow-env ../scripts/ingest-fred-macro.ts > ../data/fred.log 2>&1 || echo "$(date -u +%FT%TZ) FRED MACRO INGEST FAILED"
   # GPR geopolitical-risk index (D-727): monthly, idempotent, closes driver #2 of the coverage matrix. Cheap re-run.
