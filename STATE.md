@@ -1592,6 +1592,21 @@ but reports INSUFFICIENT DATA — it needs two inputs:
 migrated off the rented project). Session 2026-08-29/30 added driver-register + daemon-drift-guard (24th, code-age
 not log-age, import-closure aware).
 
+## DRIVER COVERAGE COMPLETE ON THE FREE AXIS (D-726..731b, 2026-08-31). Matrix 39 held / 7 derivable / 0 free-debt
+/ 7 gated. Ingested: GPR (D-727), derivable drivers usd_basket/ratios/seasonality (D-728), FRED real yields +
+breakevens + CPI + nominal Treasuries + BAA credit + NFCI (D-729/731b, all KEYLESS fredgraph.csv — the 'FRED-gated'
+block was the edge env only). Regime snapshot = 14 drivers (D-728b). Remaining gated: central-bank flows (COFER
+quarterly, EXPLAIN-only), equity ETF flows (SPDR JS-app), + options/borrow (PAID).
+
+## APPROACHES: coverage-map 46 evidenced / 12 untested / 3 blocked (was 19 untested at session start). Closed this
+session: macro-regime-conditioning (D-730 NULL — real yields validate as driver, no forward edge, non-stationarity
+control), currency-of-account (D-731 measured, ~1.3pp/yr FX effect), bond-carry (D-731b NULL — rolling-z t=1.29),
+4 ladder-mechanics (D-680 recorded). REMAINING FREE (need dedicated builds, do fresh): index-inclusion, merger-arb,
+spin-offs, IPO/lockup, SPAC (all need SEC-filing event extraction — a shared capability), Form-D dilution (needs
+Form-D ingest into trd_fundflow, currently empty), tax-loss-harvesting (tax sim). REMAINING PAID: skew, dealer-gamma,
+covered-calls, put-write, securities-lending. LESSON THREADED THROUGH: naive level-conditioning on persistent macro
+variables is degenerate (D-730/731b) — always pair with a stationary change/rolling-z control.
+
 ## SELF-INFLICTED INCIDENT + RECOVERY (D-725, 2026-08-30). The D-723 backfill CLOBBERED every ETF/index (SPY/QQQ/
 HYG/LQD/GLD/TLT/...) — the target list excluded only asset_class='equity' so ETFs under etf/sector/index classes
 became targets, and the symbol-PK upsert overwrote their full histories with ~5y IEX stubs. Caught by the D-718b
