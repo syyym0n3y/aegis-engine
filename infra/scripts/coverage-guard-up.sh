@@ -189,6 +189,9 @@ while true; do
   deno run --allow-net --allow-env ../scripts/ladder-harvester.ts > ../data/harvester.log 2>&1 || echo "$(date -u +%FT%TZ) LADDER HARVESTER FAILED"
   # CBOE free vol indices (D-737): SKEW/VVIX/VIX3M options-regime, keyless, idempotent.
   deno run --allow-net --allow-env ../scripts/ingest-cboe.ts > ../data/cboe.log 2>&1 || echo "$(date -u +%FT%TZ) CBOE INGEST FAILED"
+  # S&P 500 membership changes (D-740): Wikipedia, free, writes data/sp500-changes.json (data/ is gitignored, so the
+  # index-inclusion retest depends on this running). Stamps the source actually parsed; TSLA positive control.
+  SP500_OUT=../data/sp500-changes.json deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-sp500-changes.ts > ../data/sp500.log 2>&1 || echo "$(date -u +%FT%TZ) SP500 CHANGES INGEST FAILED"
   # FRED macro (D-729): real yields, breakevens, CPI from keyless fredgraph.csv, idempotent. Gold's #1 driver.
   deno run --allow-net --allow-env ../scripts/ingest-fred-macro.ts > ../data/fred.log 2>&1 || echo "$(date -u +%FT%TZ) FRED MACRO INGEST FAILED"
   # GPR geopolitical-risk index (D-727): monthly, idempotent, closes driver #2 of the coverage matrix. Cheap re-run.
