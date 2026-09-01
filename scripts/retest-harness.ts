@@ -28,6 +28,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 0.05, note: "gold-vs-real-yield contemporaneous corr (the driver check)" },
   { name: "bond-carry", args: ["scripts/bond-carry.ts"], pick: /ROLLING Z.*?steep-minus-flat t=(-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "bond-carry rolling-z t (was NULL, t 1.29)" },
+  { name: "fx-carry", args: ["scripts/fx-carry.ts"], pick: /Sharpe \(ann\)\s+(-?\d+\.?\d*)/i,
+    moved: (p, n) => Math.abs(n - p) > 0.3, note: "fx-carry G6 long-short Sharpe (was NULL, SR 0.22 / t 1.06, D-738)" },
 ];
 
 let state: Record<string, number> = {};

@@ -15241,3 +15241,22 @@ in bps (IBKR's free file is FTP + blocked here — demand proxies SI/short-vol/F
 revisions (licensed); real-time equity L2 (paid; crypto L2 is free via exchange WebSocket but not captured). The
 lesson: "paid" was a lazy label on several of these — FRED-foreign and CBOE-free were sitting in the open. The map
 now shows testable-vs-truly-gated precisely, so effort goes where the data actually exists.
+
+## D-738 — FX carry, RUN on the D-737-unlocked foreign rate legs: NO SIGNIFICANT CARRY (G6), breadth-floored
+The D-737 unlock removed the "needs both rate legs" block on FX carry; D-736's odds-map had it as "testable, not yet
+run." This RUNS it. Carry = rate_3m_X − ust_3m (FRED keyless foreign 3m) ranking the placeable developed majors
+GBP/EUR/AUD/JPY/CAD/CHF, monthly 2004-2026, as a dollar-neutral top-half-minus-bottom-half long-short (+the carry
+earned while held), lag-1 execution. `scripts/fx-carry.ts`.
+RESULT — a clean null, correctly signed against us:
+- long-short: gross 1.44%/yr, **Sharpe 0.22, t 1.06** over 272 months — not significant;
+- turnover is trivial (0.04 one-way/mo — carry is a persistent level), so cost is not the killer (drag 0.02%/yr, net
+  1.42%/yr); it simply does not earn;
+- **SIGN MISSED (D-553 discipline):** the pooled level regression slope is −0.98 (naive t −2.27), the WRONG sign for
+  a carry premium — high-carry developed currencies DEPRECIATED on net over this span, the opposite of UIP-failure;
+- **17.7 years underwater** (HOLDABILITY, D-565) — un-holdable even if it had earned.
+Honest scope, three laws stated on the row: **BREADTH = 6 < ~50 floor → UNTESTED as a cross-section** (D-443), so even
+the number is descriptive, not promotable; the EM high-yielders where the textbook carry premium concentrates are
+outside the placeable majors and not held (that is the real gap, recorded on the odds map); the long-short is already
+a dollar-neutral excess spread so no benchmark subtraction is owed. Lineage `D-738-fx-carry` (measured); odds-map FX
+section updated from "not yet run" to the measured absence. The D-737 data block is gone and the effect, measured, is
+absent — exactly the base rate (0 of ~1.37M). Not a gate clearance; not on a forward clock.
