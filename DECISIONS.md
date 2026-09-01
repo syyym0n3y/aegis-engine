@@ -15260,3 +15260,19 @@ outside the placeable majors and not held (that is the real gap, recorded on the
 a dollar-neutral excess spread so no benchmark subtraction is owed. Lineage `D-738-fx-carry` (measured); odds-map FX
 section updated from "not yet run" to the measured absence. The D-737 data block is gone and the effect, measured, is
 absent — exactly the base rate (0 of ~1.37M). Not a gate clearance; not on a forward clock.
+
+## D-739 — options/vol-regime conditioning (CBOE SKEW/VVIX/VIX3M, D-737-unlocked): NULL, and the naive t was an overlap artifact
+The second D-737 unlock, RUN. Three index-level options-regime signals — SKEW (tail pricing), VVIX (vol-of-vol),
+VIX3M/VIX (term structure) — as rolling-z(252) conditioning SPY forward-21d, lag-1 execution, tercile cuts frozen on
+train (<2015), overlap-adjusted t. `scripts/options-regime.ts`. Three trials, no parameter search.
+RESULT — NULL on all three out-of-sample: overlap-adjusted |t| **0.28 / 0.88 / 0.80** on ~1,000 days per side.
+Coverage adequate (8,415 / 4,820 / 3,989 aligned signal-days) → a market statement, not a data statement.
+Two things worth keeping beyond the null:
+1. **The naive t would have been reported as a finding.** SKEW HIGH−LOW at naive Welch t −4.98, term structure at
+   t −4.00 — divided by √21 for the 21-day window overlap, both collapse to ~−1. Overlapping-window t-stats join
+   pooled-perp t (D-415) and cost-charged t (D-661) in the register of large numbers that were not real.
+2. **The BENCHMARK LAW did most of the killing** — SPY's unconditional 21d mean is +0.87–1.14% over these windows;
+   the "bearish" high-SKEW tercile is negative only 28.7% of periods. Drift, not a short. VVIX also sign-flips across
+   the split (train −9.9, test +11.5 %/yr), which disqualifies it independent of any t.
+Lineage `D-739-options-regime` (measured, DESCRIPTIVE ONLY). Odds-map equity-index line updated. Wired into the
+retest harness. Free half of the options gap now CLOSED-AS-NULL; the per-strike surface remains paid/UNTESTED.
