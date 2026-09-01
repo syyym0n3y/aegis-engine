@@ -15184,3 +15184,42 @@ de-SPACs, 500d median <= -10pp (milder than the boom -40.7), win<45%. BOOM-ARTIF
 Scorer added to forward-score-specs.ts (daily-wired): live not-yet-computable (0 de-SPACs since start); BACKDATE=2019
 reproduces median -40.7pp / win 31% (n=204) — path verified (D-613). Honest caveat in the horizon: post-boom de-SPAC
 volume is low, so this may never accrue 15 — a legitimate "cannot re-test" outcome, not a failure.
+
+## D-735 — ladder harvester: the structural-wealth engine + the honest de-risk verdict
+Built the structural-wealth automation the ladder finding (D-680) points to: compound a total-return vehicle (SPY) +
+monthly deposits, with a rules-based TREND DE-RISK overlay (lag-1 execution, EXECUTION LAW) for "sell when odds are
+against us". Measured on SPY 1993-2026 ($150/mo, $60,600 deposited):
+| strategy | final | vs deposits | CAGR | max DD | switches |
+|---|---|---|---|---|---|
+| buy & hold | $547,847 | 9.04x | 6.8% | 52% | 0 |
+| trend 200d | $342,441 | 5.65x | 5.3% | 22% | 214 |
+| trend + 3% band | $383,180 | 6.32x | 5.7% | 23% | 56 |
+| high-conviction regime | $344,946 | 5.69x | 5.3% | 36% | 34 |
+
+THE VERDICT, tested FOUR ways: every de-risk mode COSTS 30-37% of terminal wealth ($164k-205k). The best (3% band)
+still gives up 30% to cut drawdown 52%->23%; the high-conviction regime (trend + breadth washout) protects LESS
+(DD->36%) for the same cost. De-risking is a DRAWDOWN tool, not a return tool — and for a DISCIPLINED saver who will
+not panic-sell, buy-and-hold + deposits wins by $164k+ here. The ONLY saver de-risking helps is one who would
+PANIC-SELL a -52% hold: for them a -23% path they can stick with beats a -52% path they'd bail on at the bottom (the
+-5.5y not-panic-selling lever, D-680). So "sell when conditions are against us", built and tested honestly, tells a
+disciplined investor: DON'T — just hold and keep depositing. The tool reports the current trend signal (all three:
+INVESTED as of 2026-08) and is wired report-only into the daily runner. This is the structural fortune the engine
+actually found — the compounding, the deposits, the discipline — with the timing overlay measured and, for the
+disciplined, declined.
+
+## D-736 — the honest whole-market map: market-odds-map + retest-harness
+Operator directive: encapsulate our entire understanding per instrument, know the best/worst odds with risk shown,
+keep re-testing new data, no shortcuts at limitations, keep the stack honest. Delivered — with one honest challenge:
+"nothing about markets we don't know" is impossible (COVERAGE LAW), so what is built is the complete map of what we
+KNOW, what we DON'T (gated data named), and the odds where we have evidence.
+- `market-odds-map.ts` — per instrument class (equity 19,531 / index+ETF 74 / crypto 510 / fx 20 / commodity 16 /
+  rates), states: drivers held, approaches TESTED, the ODDS verdict, confidence-to-act, RISK, and the exact data gap.
+  Led by the base rate (1.37M trials -> 0 promoted; the liquid retail universe is efficiently priced). The odds are
+  brutally honest: MOSTLY NO EDGE (negative EV after costs), one long-only survivor (spin-offs, on a clock), and the
+  worst-and-most-common case ("an efficiently-priced liquid instrument") shown as loudly as any candidate.
+- `retest-harness.ts` — re-runs the key research verdicts (spinoff, de-SPAC, merger-arb, macro-regime, bond-carry) on
+  current data each cycle, tracks each headline number run-to-run, and REDs when one MOVES MATERIALLY — so new data
+  (new spin-offs, new prices) can turn a null into a signal or kill a candidate without anyone re-mining by hand. A
+  flip is a prompt for a human, never an auto-verdict (the D-613 discipline). Adding a test is one manifest line.
+Both wired into the daily runner. This is the honest encapsulation: not "we know everything", but "we know exactly
+what we know, what we can't, and the odds — and we keep checking as the data grows".

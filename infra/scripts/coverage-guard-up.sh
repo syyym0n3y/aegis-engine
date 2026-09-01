@@ -179,6 +179,12 @@ while true; do
   # feed the continuity guard watches; without this line that feed would red in ten days per the D-715 rule.
   # DERIVABLE DRIVERS (D-728): USD basket, cross-asset ratios, seasonality — recomputed from held prices, idempotent.
   deno run --allow-net --allow-env ../scripts/build-derivable-drivers.ts > ../data/derivable.log 2>&1 || echo "$(date -u +%FT%TZ) DERIVABLE DRIVERS BUILD FAILED"
+  # MARKET ODDS MAP (D-736): the honest per-instrument synthesis of what we know + the odds + risk. Report-only.
+  deno run --allow-net --allow-env ../scripts/market-odds-map.ts > ../data/odds-map.log 2>&1 || echo "$(date -u +%FT%TZ) ODDS MAP FAILED"
+  # RE-TEST HARNESS (D-736): re-run the key research verdicts on current data; RED if any moved materially since last.
+  if ! deno run --allow-net --allow-env --allow-run --allow-read --allow-write ../scripts/retest-harness.ts > ../data/retest.log 2>&1; then
+    echo "$(date -u +%FT%TZ) RE-TEST: a research verdict MOVED materially on new data — see data/retest.log"
+  fi
   # LADDER HARVESTER (D-735): the structural-wealth engine — compound + deposits + honest de-risk tradeoff. Report-only.
   deno run --allow-net --allow-env ../scripts/ladder-harvester.ts > ../data/harvester.log 2>&1 || echo "$(date -u +%FT%TZ) LADDER HARVESTER FAILED"
   # FRED macro (D-729): real yields, breakevens, CPI from keyless fredgraph.csv, idempotent. Gold's #1 driver.
