@@ -15386,3 +15386,24 @@ most expensive thing on this map; the cheap lever is the holder's tolerance — 
 −52% / 3.4y and keep depositing. The smaller fractions exist for the saver who would otherwise sell at the bottom
 (D-680). Gross of tax and fund fees. Nothing is timed. Lineage `D-744-holdability-sizer`; wired into the daily runner
 as the operator's standing sizing table; WEALTH_PATH P0 now points at it. The engine's output, not advice.
+
+## D-745 — GLD holdings HELD free and live (the register's last research debt); "flows drive gold" REFUTED — flow follows price
+The driver register's one remaining RESEARCH DEBT was ETF flow (GLD shares outstanding). The issuer's CSV path now
+serves a PDF; the live archive is an XLSX on `api.spdrgoldshares.com` (found on the historical-data page,
+subdomain allowlisted under operator-authorised auto-allowlisting). `scripts/ingest-gld-holdings.ts`: daily tonnes,
+shares outstanding and premium/discount, 2004-11-18 → 2026-08-31, live in the daily runner; controls Aug-2020 peak
+1,279t (> 1,150) and Dec-2015 trough 630t (< 750) PASS. Register: **45 HELD / 0 research debt / 6 blocked with a
+named barrier** (central-bank reserves, gold options, dealer gamma, earnings revisions, order-book depth, borrow
+cost) — not a completeness claim; the list is what the register knows to ask for.
+`scripts/gld-flow.ts` — first test of the driver, both directions, 1,082 weeks:
+| | result |
+|---|---|
+| after INFLOW week | +4.61%/yr (t 0.81) |
+| after OUTFLOW week | **+18.19%/yr (t 3.23)** |
+| sign-conditioned long-inflow book | gross t −1.88; post-2016 t −0.28; **RUINED** (log DD −193%) |
+| SIGN vs prior | **MISSED — backwards** |
+| corr(last-week gold return, this-week flow) | **0.329, t 11.44** |
+Flow is a LAGGING consequence of price, not a driver. The contrarian flip is an unregistered post-hoc flip
+(D-511b) and is dead in the modern half regardless. Correct use of the driver: attribution/context, never a signal.
+Lineage `D-745-gld-flow` (measured). Odds-map commodity line and retest harness updated. IAU not ingested (GLD is
+~2/3 of US gold-ETF holdings). Trials 2.

@@ -32,9 +32,10 @@ The daily thing the engine should do is **monitor**, not trade: ingest, guard bo
   construction.
 - **Structural finding (the real asset):** compound + deposit + don't-panic-sell, measured at 9x/34y. Confidence HIGH
   (D-680/735) — it is the one thing here that has cleared every attack, because it isn't a forecast.
-- **Data:** 39 drivers held, survivorship hole filled (4,184→19,582 names), FX carry + options-regime unlocked free
-  (D-737). Still unfetched but FREE: EIA/USDA inventories, commodity 2nd contracts (roll), EM currency rates,
-  S&P-500 membership (Wikipedia). Truly paid: per-strike options surface, borrow fee bps, analyst revisions, L2.
+- **Data (2026-09-02):** driver register **45 HELD / 0 research debt / 6 blocked with a named barrier**. Unlocked free
+  this session: FRED foreign rates (14 ccy), CBOE options regime, Wikipedia S&P membership, EIA curve (CL/NG) +
+  weekly inventories, GLD holdings. Truly gated after a real search: per-strike options surface, borrow fee bps,
+  analyst revisions, L2, curves for GC/ZC/ZW/ZS/HG/SI, central-bank reserves (quarterly), S&P announcement dates.
 - **Integrity:** 24 guards, all green, each verified to fail. The engine is more reliable than any strategy it holds.
 
 ## 3. What "wealth from markets" actually decomposes into (the arithmetic that sets the path)

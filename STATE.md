@@ -23,6 +23,11 @@
   analyst revisions (licensed), equity L2 (paid), curves for GC/ZC/ZW/ZS/HG/SI (no free historical source found),
   S&P announcement dates (press releases, unfetched), consensus inventory surprise (estimates). EIA weekly
   inventories are now HELD live (keyless, in the daily runner) and the post-release change is NULL (D-743).
+- **2026-09-02 additions:** holdability sizer (D-744 — a 30% drawdown ceiling costs 59% of terminal wealth; wired
+  daily); GLD holdings HELD live and "flows drive gold" REFUTED — flow follows price, corr 0.33 (D-745). Driver
+  register **45 HELD / 0 research debt / 6 blocked-with-named-barrier**; the eight false-MISSING/DEBT entries it
+  carried for held data were corrected the same day (a register that says MISSING for what we hold is the
+  false-MISSING class it exists to catch). Retest harness now tracks 12 verdicts.
 
 ## 2026-08-28 (LATEST) — HALF THE LOSSES WERE THE FEE; the ladder is measured L0-L4; 23 guards, 22 green
 

@@ -71,7 +71,7 @@ const CLASSES: Cls[] = [
     gap: "EM carry measured in RESEARCH space — the placeable NDF/forward conversion is NOT measured (INSTRUMENT LAW); foreign LONG rates still partial" },
   { name: "Commodities", universeQ: "trd_bars_deep?asset_class=eq.commodity&select=symbol",
     drivers: "front-month price, COT positioning; FUTURES CURVE contracts 1-4 for CL + NG (EIA keyless, 1983+/1994+, ends 2024-04, D-742); EIA weekly INVENTORIES crude ex-SPR + gas storage (keyless, LIVE, D-743)",
-    tested: "roll yield / backwardation (CL, NG — D-742), inventory-change conditioning post-release (CL, NG — D-743), seasonality (built), cross-asset ratios (built)",
+    tested: "roll yield / backwardation (CL, NG — D-742), inventory-change conditioning post-release (CL, NG — D-743), gold ETF flow (D-745: REFUTED as a driver — gold rises MORE after outflows; flow FOLLOWS price at corr 0.33), seasonality (built), cross-asset ratios (built)",
     odds: "ROLL YIELD MEASURED: CL backwardation premium looks real full-sample (t 2.72, prior MATCHED) but is CARRIED BY 1985-2004 — post-2005 t 1.18, 6.3y underwater, -82% DD: NULL out-of-sample. NG: RUINED — a -25%/yr contango bleed no curve rule rescues. Seasonality + ratios are CONTEXT drivers, not standalone edges.",
     conf: "near-zero; the defining commodity edge is absent OOS where measurable (2 curves) and UNTESTED on the other 6",
     risk: "storage/delivery, contango bleed (NG -25%/yr unconditional), negative prices (WTI -37.63 on 2020-04-20), geopolitical shocks",
