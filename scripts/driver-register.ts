@@ -67,7 +67,8 @@ const REG: Driver[] = [
     proxy: "GLD price held; SHARES OUTSTANDING, which is what flow actually means, is not",
     blocked: "Not ingested. Obtainable free from the issuer's daily holdings file — this is a RESEARCH DEBT, not a barrier." },
   { cls: "gold", name: "geopolitical risk index", use: "condition",
-    blocked: "The Caldara-Iacoviello GPR index is free and monthly/daily, and is NOT ingested. RESEARCH DEBT, not a barrier." },
+    probe: "trd_macro_series?series=eq.gpr&select=d&limit=1",
+    proxy: "Caldara-Iacoviello GPR headline + threats/acts decomposition, monthly (D-727), in the daily runner" },
   { cls: "gold", name: "options skew / implied vol", use: "condition",
     blocked: "No GOLD options surface held (paid). The INDEX-level options regime (CBOE SKEW/VVIX/VIX3M, D-737) is held under equity-index and was tested NULL (D-739); it is not a gold surface." },
   // ---- EQUITY INDEX --------------------------------------------------------------------------------------------
@@ -124,7 +125,8 @@ const REG: Driver[] = [
   { cls: "equity-single", name: "8-K event text", use: "condition", probe: "trd_raw_filings?select=source_id&limit=1" },
   { cls: "equity-single", name: "earnings dates", use: "condition", probe: "trd_earnings?select=report_date&limit=1" },
   { cls: "equity-single", name: "DELISTED price history", use: "predict",
-    blocked: "The largest hole in the stack. 51.6% of 8-K Item 3.01 delisting filers are absent from the price panel and 1,575 of 5,766 equity names (27.3%) are missing, ALL delisted. It has now blocked two research items (D-687, D-703). Stooq is closed by bot-challenge policy; Alpaca needs operator credentials." },
+    probe: "trd_bars_deep?asset_class=eq.equity&last_date=lt.2026-01-01&select=symbol&limit=1",
+    proxy: "FILLED from Alpaca IEX with adjustment=all (D-723/724): panel 4,184 -> 19,5xx names, ~6,500 of them already ended (delisted names present). HONEST LIMIT: the IEX history reaches ~mid-2020, so names delisted BEFORE 2020 remain absent — the pre-2020 survivorship hole is narrower, not closed. The D-725 ETF clobber from this backfill was repaired and the ingest now excludes all non-equity classes." },
   { cls: "equity-single", name: "borrow cost / availability", use: "condition",
     blocked: "Paid. Every short-side result on this board therefore assumes a borrow cost rather than observing one." },
 ];
