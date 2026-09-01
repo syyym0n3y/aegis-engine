@@ -15276,3 +15276,19 @@ Two things worth keeping beyond the null:
    the split (train −9.9, test +11.5 %/yr), which disqualifies it independent of any t.
 Lineage `D-739-options-regime` (measured, DESCRIPTIVE ONLY). Odds-map equity-index line updated. Wired into the
 retest harness. Free half of the options gap now CLOSED-AS-NULL; the per-strike surface remains paid/UNTESTED.
+
+## D-740 — S&P 500 index inclusion (Wikipedia, free): post-effective excess NULL, prior MATCHED, the pop UNTESTED
+Third D-737 unlock, RUN. `scripts/ingest-sp500-changes.ts` pulls the membership changes free (the table had MOVED
+off the page D-737 verified — to `Historical_components_of_the_S&P_500`; the ingest detects the absence, falls
+back, and STAMPS the source actually parsed into the JSON rather than silently substituting — the provenance
+discipline of D-641). 407 rows, 387 additions, 1976–2026; positive control TSLA 2020-12-21 PASS.
+`scripts/index-inclusion-event.ts`: entry at the first close strictly AFTER the effective date (the effective
+close is the rebalance auction, not a price a non-index trader gets), excess vs SPY, liquid tercile both halves.
+RESULT — NULL at every horizon: liquid tercile t −0.75 / −0.28 / +0.38 / −0.89 at 5/21/63/250d, proportion
+positive 48/51/48/31%. **SIGN MATCHED** — the literature's flat-to-negative post-effective return is what the data
+shows. Coverage 246/385 (63.9%), and the missing mechanism (acquired/renamed/delisted large caps) tilts toward
+POSITIVE-excess names, so the null was measured on a sample biased against it.
+What stays open, honestly: the **announcement-to-effective pop is UNTESTED**, not null — announcement dates are not
+in the data (they exist in S&P press releases; a free-source probe is a legitimate next step, not a closed door).
+Lineage `D-740-index-inclusion` (measured). Odds-map equity line updated; wired into the retest harness.
+All three D-737 unlocks are now RUN (D-738/739/740) — three nulls, each a market statement with coverage stated.

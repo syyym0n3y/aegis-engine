@@ -157,7 +157,7 @@ const liqMeans = WINS.map((_, wi) => {
 }).filter((x): x is { t: number; m: number } => x !== null);
 const anyPosSig = liqMeans.some((x) => x.m > 0 && x.t > 2);
 console.log(`  OUTCOME: ${anyPosSig ? "MISSED — a liquid-tercile horizon is significantly POSITIVE, against the prior." : "MATCHED — no liquid-tercile horizon is significantly positive; excess is flat-to-negative as predicted."}`);
-console.log(`  (Sign direction across horizons, liquid tercile: ${sumSign > 0 ? "+" : sumSign < 0 ? "-" : "mixed"} on ${nWin} horizons.)`);
+console.log(`  (Liquid-tercile mean sign, net across the ${nWin} measured horizons: ${sumSign > 0 ? "net +" : sumSign < 0 ? "net -" : "even split"} (sum of signs ${sumSign}); the per-horizon signs are in the table above and are not unanimous.)`);
 
 console.log(`\n  BENCHMARK LAW: every figure above is ALREADY an excess over SPY on the same window, so it is not`);
 console.log(`  universe drift by construction. A flat/negative excess with |t|<2 is recorded as DRIFT (nothing earned`);

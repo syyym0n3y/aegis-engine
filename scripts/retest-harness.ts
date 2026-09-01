@@ -32,6 +32,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 0.3, note: "fx-carry G6 long-short Sharpe (was NULL, SR 0.22 / t 1.06, D-738)" },
   { name: "options-regime", args: ["scripts/options-regime.ts"], pick: /VERDICT S1 SKEW z252:.*?\|t\|\s+(-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "options-regime SKEW OOS overlap-adjusted |t| (was NULL, 0.28, D-739)" },
+  { name: "index-inclusion", args: ["--allow-read", "--allow-write", "scripts/index-inclusion-event.ts"], pick: /^\s+21\s+\d+\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+(-?\d+\.?\d*)/m,
+    moved: (p, n) => Math.abs(n - p) > 1.5, note: "S&P-500 inclusion 21d full-sample excess t (was NULL, -1.39, D-740)" },
 ];
 
 let state: Record<string, number> = {};

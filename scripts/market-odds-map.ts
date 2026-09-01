@@ -43,8 +43,8 @@ interface Cls { name: string; universeQ: string; drivers: string; tested: string
 const CLASSES: Cls[] = [
   { name: "US equity (single names)", universeQ: "trd_bars_deep?asset_class=eq.equity&select=symbol",
     drivers: "price/vol, fundamentals(PIT), short-interest, FTD, dark-pool, insider, 13F, NPORT, 8-K, earnings, breadth",
-    tested: "momentum, value, quality, payout, PEAD, insider, 13F, dark-pool, short-interest, FTD, merger-arb, spin-off, IPO/lockup, de-SPAC",
-    odds: "MOSTLY NO EDGE. Cross-sectional factors: real in research space, DEAD as placeable long-shorts (borrow, thousands of names). Events: merger-arb/lockup NULL in liquid; de-SPAC underperf real but illiquid+borrow-gated. ONE survivor: SPIN-OFF premium (long-only, small-size-fits) on a forward clock.",
+    tested: "momentum, value, quality, payout, PEAD, insider, 13F, dark-pool, short-interest, FTD, merger-arb, spin-off, IPO/lockup, de-SPAC, S&P-500 inclusion",
+    odds: "MOSTLY NO EDGE. Cross-sectional factors: real in research space, DEAD as placeable long-shorts (borrow, thousands of names). Events: merger-arb/lockup NULL in liquid; S&P-500 inclusion post-effective NULL with prior MATCHED (D-740; the pre-effective pop is UNTESTED for want of announcement dates); de-SPAC underperf real but illiquid+borrow-gated. ONE survivor: SPIN-OFF premium (long-only, small-size-fits) on a forward clock.",
     conf: "near-zero to act, EXCEPT spin-offs (candidate, unproven forward)",
     risk: "97% of retail lose; single-name idiosyncratic + gap risk is total-loss-capable",
     gap: "borrow cost (paid), options/vol surface (paid), real-time L2 (paid), analyst revisions (licensed)" },
