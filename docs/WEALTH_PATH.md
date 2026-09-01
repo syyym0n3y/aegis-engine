@@ -69,6 +69,9 @@ Wealth is an INCOME problem being routed through a market VESSEL. The market com
 Automate the deposit; hold the broad, cheapest vehicle; fix currency-of-account and the tax wrapper once; size to
 the −52%/3.4y that buy-and-hold has historically demanded so panic-selling is never triggered. The ladder harvester
 runs daily and reports its "current signals" as CONTEXT for risk, never as an order.
+**The sizing table is now measured (D-744, `scripts/holdability-sizer.ts`, daily):** a 30% drawdown ceiling forces
+50% equity and costs **59% of terminal wealth**; 80% equity costs 29% for a −43% worst case. Safety bought through
+the mix is the most expensive item on this map — the cheap lever is deciding in advance to hold through −52%/3.4y.
 
 **P1 — Keep the falsification engine running daily (the only thing that can ever find an edge).**
 Daily runner: ingest → guards → retest harness → forward scorer. Spin-off (the sole long-only candidate that fits

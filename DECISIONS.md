@@ -15366,3 +15366,23 @@ subsets no better; both naive weekly books RUINED (log DD −242% / −145%) und
 Consistent with the report's information being priced within the release day. The consensus SURPRISE (vs analyst
 estimates) is not held and stays UNTESTED. Lineage `D-743-inventory-surprise` (measured). Odds-map commodity line:
 inventories moved from "free, unfetched" to HELD-live-and-tested. Retest-wired. Trials 2.
+
+## D-744 — the holdability sizer: the price of a drawdown ceiling, measured — and it is enormous
+Every timing rule tested costs wealth (D-498/730/735/739). What ends deployments is depth and DURATION the holder
+cannot sit through (D-565). So the one "how much / when" tool the evidence licenses is a SIZER, not a timer:
+`scripts/holdability-sizer.ts` replays SPY + T-bills (ust_3m), $150/mo, monthly rebalance to equity fraction w,
+1993–2026, and reports what each step of safety costs. Control: w=100% reproduces D-735's buy-and-hold within 0.6%
+($544,413 vs $547,847) — and that control caught a $0 first run (a month-end pointer that never advanced past bar 0,
+so no deposit was ever made; PRECONDITION LAW, fixed with a Set + a non-empty assert).
+| equity | terminal | worst DD | underwater | wealth given up |
+|---|---|---|---|---|
+| 100% | $544k | −52% | 3.4y | — |
+| 80% | $384k | −43% | 3.1y | −29% |
+| 60% | $268k | −33% | 2.7y | −51% |
+| 50% | $223k | −27% | 2.4y | **−59%** |
+| 20% | $128k | −9% | 1.2y | −77% |
+**A 30% drawdown ceiling forces 50% equity and costs 59% of terminal wealth.** Safety bought through the mix is the
+most expensive thing on this map; the cheap lever is the holder's tolerance — deciding in advance to sit through
+−52% / 3.4y and keep depositing. The smaller fractions exist for the saver who would otherwise sell at the bottom
+(D-680). Gross of tax and fund fees. Nothing is timed. Lineage `D-744-holdability-sizer`; wired into the daily runner
+as the operator's standing sizing table; WEALTH_PATH P0 now points at it. The engine's output, not advice.

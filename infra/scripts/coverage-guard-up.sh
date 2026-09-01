@@ -187,6 +187,8 @@ while true; do
   fi
   # LADDER HARVESTER (D-735): the structural-wealth engine — compound + deposits + honest de-risk tradeoff. Report-only.
   deno run --allow-net --allow-env ../scripts/ladder-harvester.ts > ../data/harvester.log 2>&1 || echo "$(date -u +%FT%TZ) LADDER HARVESTER FAILED"
+  # Holdability sizer (D-744): equity fraction vs drawdown tolerance on the full held history; control vs D-735 inside.
+  deno run --allow-net --allow-env ../scripts/holdability-sizer.ts > ../data/sizer.log 2>&1 || echo "$(date -u +%FT%TZ) HOLDABILITY SIZER FAILED"
   # EIA weekly inventories (D-743): commercial crude ex-SPR + Lower-48 gas storage, keyless XLS, idempotent, LIVE weekly
   # (unlike the D-742 curve mirror, which froze at 2024-04 and is deliberately NOT here). Positive controls inside.
   deno run --allow-net --allow-env ../scripts/ingest-eia-inventories.ts > ../data/eia-inv.log 2>&1 || echo "$(date -u +%FT%TZ) EIA INVENTORIES INGEST FAILED"
