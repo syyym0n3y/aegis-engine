@@ -1,5 +1,29 @@
 # STATE — Aegis (live state)
 
+## 2026-09-01 (LATEST) — the free frontier closed as market findings; 24 guards green; the honest wealth path written
+- **Board:** 24 guards, all green, each verified to fail. 2,903,411 trials; 0 promoted of 229 leads; 8 forward clocks,
+  0 producing a number yet (spin-off needs ~3–4y to accrue). Retest harness re-runs **10** research verdicts daily
+  and flags a material move (none so far).
+- **Data unblocked FREE this session (D-737/741/742), each a former "gated" label that was lazy:** FRED keyless foreign
+  short rates for 14 currencies (G6 + NZD + MXN/BRL/ZAR/TRY/INR/KRW/CNY); CBOE SKEW/VVIX/VIX3M; Wikipedia S&P-500
+  membership (table had moved — the ingest stamps the source it parsed); EIA keyless futures CURVE contracts 1–4 for
+  CL (1983+) and NG (1994+), ending 2024-04 (research history, not a live feed). Allowlisted: cdn.cboe.com,
+  en.wikipedia.org, eia.gov/dnav. The three items in the older "Real barriers" list below that read FRED-gated /
+  FX-both-legs / commodity-2nd-contract are now HELD.
+- **Five approaches verdicted on that data, all honest nulls or non-edges:** FX carry G6 NULL (D-738, SR 0.22, sign
+  MISSED); options-regime NULL OOS — naive t −5 was a 21d-overlap artifact (D-739); S&P inclusion post-effective NULL,
+  prior MATCHED, the pop UNTESTED (D-740); EM carry is a RISK PREMIUM not an edge — t 2.79 is the rate differential
+  collected against a −3%/yr spot leg, under the 5.46 ceiling, breadth 14, research-space (D-741); commodity roll:
+  CL null out-of-sample (full t 2.72 carried by 1985–2004; post-2005 t 1.18; −82% DD), NG RUINED (D-742).
+- **The honest wealth path is written:** [`docs/WEALTH_PATH.md`](./docs/WEALTH_PATH.md) — "extract wealth daily" is
+  the one thing 2.9M trials say cannot be done at this budget; the measured engine is deposits × compounding ×
+  (1 − leakage), alpha = 0; start now, stop never (every timing rule costs 30–37%), size to holdability. P0 structural
+  (operator-side), P1 falsification daily, P2 free frontier (now run), P3 ladder dormant until a clock clears.
+- **Still truly gated, with the blocker named:** per-strike equity options (paid), borrow fee bps (IBKR FTP blocked),
+  analyst revisions (licensed), equity L2 (paid), curves for GC/ZC/ZW/ZS/HG/SI (no free historical source found),
+  S&P announcement dates (press releases, unfetched), consensus inventory surprise (estimates). EIA weekly
+  inventories are now HELD live (keyless, in the daily runner) and the post-release change is NULL (D-743).
+
 ## 2026-08-28 (LATEST) — HALF THE LOSSES WERE THE FEE; the ladder is measured L0-L4; 23 guards, 22 green
 
 **BOARD:** 1,059 specs · **2 survivors** (`book|p1|core` t 6.21, `book|p2|volmanaged` t 7.09 — both research-space,

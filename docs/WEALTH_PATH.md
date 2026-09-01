@@ -74,14 +74,17 @@ runs daily and reports its "current signals" as CONTEXT for risk, never as an or
 Daily runner: ingest → guards → retest harness → forward scorer. Spin-off (the sole long-only candidate that fits
 small size) resolves in ~3–4y; nothing to do but not touch it.
 
-**P2 — Close the FREE research frontier (cheap, and the odds map names it).**
-1. options-regime conditioning (CBOE SKEW/VVIX/VIX3M, held, unrun);
-2. S&P-500 index-inclusion event study (Wikipedia, reachable, unbuilt);
-3. commodity roll yield — 2nd contract (the defining commodity edge, data-blocked so far — probe free sources);
-4. EIA/USDA inventories (free, unfetched);
-5. EM currency rates for the carry book (where the premium actually lives; G6 measured absent, D-738).
-Expected outcome, honestly: more verified nulls. Their value is confidence, per the COVERAGE LAW — an unfetched
-free dataset is a research failure, not a market finding.
+**P2 — Close the FREE research frontier (cheap, and the odds map names it).** RUN 2026-09-01, same day:
+| item | result |
+|---|---|
+| 1. options-regime conditioning (CBOE SKEW/VVIX/VIX3M) | **NULL** OOS, |t| 0.28–0.88; the naive t −5 was a 21d-overlap artifact (D-739) |
+| 2. S&P-500 index inclusion (Wikipedia, free) | **NULL** post-effective, prior MATCHED; the pre-effective pop UNTESTED for want of announcement dates (D-740) |
+| 3. commodity roll yield (EIA keyless curve, CL+NG) | CL **NULL out-of-sample** (full t 2.72 carried by 1985–2004, post-2005 t 1.18, −82% DD); NG **RUINED** (D-742) |
+| 4. EIA inventories (keyless, LIVE weekly) | HELD; post-release change conditioning **NULL** (CL t −0.62, NG 0.16), naive weekly books RUINED; two construction defects caught before recording (D-743) |
+| 5. EM carry (14 currencies, FRED keyless) | **a risk premium, not an edge**: EM t 2.79 is the rate differential collected against a −3%/yr spot leg, under the 5.46 ceiling, breadth 14, research-space not NDF (D-741) |
+Outcome as expected: verified nulls, each a market statement with coverage stated. Their value is confidence, per
+the COVERAGE LAW — an unfetched free dataset is a research failure, not a market finding. Five more approaches are
+now off the "untested" list and on the "measured absent" list, which is the only direction this map moves honestly.
 
 **P3 — Promotion ladder, dormant until a clock clears.** Paper → micro → small with real samples, kill-switch record,
 DSR>0.95 / PBO<0.5 locked. Broker creds NOT provisioned before then.

@@ -15344,3 +15344,25 @@ that the story must not outrun the disaggregation). NG's dominant fact is the �
 rescues a book that was wiped out. Lineage `D-742-commodity-roll` (measured). Odds-map commodity line updated;
 retest-wired. GC/ZC/ZW/ZS/HG/SI remain UNTESTED with the blocker named (no free historical curve found).
 Operator option, not required: a FREE EIA v2 key (`EIA_API_KEY`) would make CL/NG a live feed — same two commodities.
+
+## D-743 — EIA inventories HELD free and live; inventory-change conditioning NULL — and two defects caught before recording
+The last "free, unfetched" item on the commodity line. Same keyless EIA XLS mirror as D-742, but these are LIVE
+(through 2026-08-21, weekly): commercial crude ex-SPR (WCESTUS1, 1982+) and Lower-48 working gas (2010+).
+`scripts/ingest-eia-inventories.ts`, wired into the daily runner (the D-742 curve mirror, frozen at 2024-04, is
+deliberately not). **The positive control earned its keep on the first run:** the first series ID chosen (WCRSTUS1)
+returned 777–833M bbl for 2024 — total stocks INCLUDING the SPR, not the ~430M commercial figure the market trades
+on. Control RED → series swapped → 413–461M → PASS. A parse that "worked" would have shipped the wrong driver.
+`scripts/inventory-surprise.ts` — does the weekly change, acted on AFTER publication (release day F+5 crude / F+6
+gas, entry the first close after, lag-1), condition the next week? Two construction defects were caught by READING
+THE FIRST OUTPUT rather than recording it (PRECONDITION LAW, D-598):
+1. crude events from 1983 mapped onto CL=F's first bar (2000) and replicated one 5-day return ~880 times — printing
+   an unconditional **86%/yr at t 16.6**, which is not a market number. Fixed: out-of-range skip, unique-entry
+   assert, and a benchmark sanity control (|unconditional| > 40%/yr → RED).
+2. a plain 52-week z-score left gas SEASONALITY in: builds every summer, draws every winter, so "short on build"
+   was "short all summer" and printed after-BUILD **+42%/yr**. Fixed with the same-calendar-week 5-year baseline —
+   the "vs 5-yr average" the market itself quotes — after which it vanished.
+RESULT — NULL both: CL sign-conditioned gross t −0.62 (SIGN MISSED), NG t 0.16 (MATCHED, insignificant); large-|z|
+subsets no better; both naive weekly books RUINED (log DD −242% / −145%) under 0.66–0.90 one-way weekly turnover.
+Consistent with the report's information being priced within the release day. The consensus SURPRISE (vs analyst
+estimates) is not held and stays UNTESTED. Lineage `D-743-inventory-surprise` (measured). Odds-map commodity line:
+inventories moved from "free, unfetched" to HELD-live-and-tested. Retest-wired. Trials 2.

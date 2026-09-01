@@ -38,6 +38,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "EM-only carry gross t (research-space premium, not promotable, 2.79, D-741)" },
   { name: "commodity-roll", args: ["scripts/commodity-roll.ts"], pick: /post-2005 \(OOS-style\): -?\d+\.?\d*%\/yr t (-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "CL roll-yield post-2005 gross t (NULL OOS, 1.18, D-742; static EIA history so should not move)" },
+  { name: "inventory-surprise", args: ["scripts/inventory-surprise.ts"], pick: /SIGN-CONDITIONED short-build\/long-draw \(gross\)\s+-?\d+\.?\d*%\/yr\s+SR -?\d+\.?\d*\s+gross t (-?\d+\.?\d*)/i,
+    moved: (p, n) => Math.abs(n - p) > 1.0, note: "CL inventory-change conditioning gross t (NULL, -0.62, D-743; live weekly feed)" },
 ];
 
 let state: Record<string, number> = {};
