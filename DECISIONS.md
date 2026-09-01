@@ -15292,3 +15292,26 @@ What stays open, honestly: the **announcement-to-effective pop is UNTESTED**, no
 in the data (they exist in S&P press releases; a free-source probe is a legitimate next step, not a closed door).
 Lineage `D-740-index-inclusion` (measured). Odds-map equity line updated; wired into the retest harness.
 All three D-737 unlocks are now RUN (D-738/739/740) — three nulls, each a market statement with coverage stated.
+
+## D-741 — FX carry, EM-extended (14 currencies): the premium IS in EM — and it is a risk premium in research space, not an edge
+Answers the D-738 gap directly. FRED keyless short rates resolved for MXN/BRL/ZAR/TRY/INR/KRW/CNY/NZD (3m interbank
+where it exists; overnight/policy for BRL/INR and TRY-after-2008, named on the row rather than hidden under the
+`rate_3m_` name). Positive controls TRY-2024 > 30% (47.00) and BRL-2023 > 10% (13.75) PASS. `scripts/fx-carry-em.ts`.
+RESULT — where the carry lives:
+| book | gross %/yr | Sharpe | gross t | NET @15bp | underwater | worst DD |
+|---|---|---|---|---|---|---|
+| DEV (G6+NZD) | 2.54 | 0.29 | 1.39 | 2.39 | 9.3y | −43.6% |
+| EM only | 7.01 | 0.59 | **2.79** | 6.69 | 5.2y | −34.7% |
+| ALL 14 | 4.99 | 0.53 | 2.51 | 4.76 | 3.8y | −28.1% |
+D-738's developed null is reproduced, not overturned. EM is positive in both eras (6.8 / 7.2 %/yr) and neither era
+alone clears t 2. **The uncomfortable decomposition:** the portfolio sign MATCHES the carry-premium prior while the
+pooled level regression MISSES in all three books (ALL slope −0.54, gross t −4.32). Split additively, the ENTIRE
+return is the rate differential being collected (EM carry leg +10.04 %/yr — a near-deterministic level whose t is
+meaningless) against a **negative spot leg (−3.03 %/yr)**. It is not a forecasting signal; it is a bet that EM spot
+depreciates by less than the differential, paid for by holding EM risk through 5.2 years underwater.
+WHY IT IS NOT PROMOTABLE, by law: gross t 2.79 is far under the **5.46 deflation ceiling** at 2.9M trials; BREADTH
+14 < 50 (UNTESTED as a cross-section); UNIVERSE Sharpe 0.29→0.59 across DEV/ALL/EM is a **2.0x spread → NOT
+IDENTIFIED**; INSTRUMENT — this is a RESEARCH PROXY (spot + policy rate), the placeable instrument is the NDF/forward
+whose implied carry embeds a basis and whose deliverability is restricted for TRY/BRL/INR — conversion NOT measured
+(this is the 4-of-4 failure shape of D-575). Lineage `D-741-fx-carry-em` (measured, DESCRIPTIVE ONLY). Odds-map FX
+line updated. Retest-wired. If pursued, the only legitimate next step is to measure it IN the NDF.

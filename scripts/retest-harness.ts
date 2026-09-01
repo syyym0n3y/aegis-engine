@@ -34,6 +34,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "options-regime SKEW OOS overlap-adjusted |t| (was NULL, 0.28, D-739)" },
   { name: "index-inclusion", args: ["--allow-read", "--allow-write", "scripts/index-inclusion-event.ts"], pick: /^\s+21\s+\d+\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+(-?\d+\.?\d*)/m,
     moved: (p, n) => Math.abs(n - p) > 1.5, note: "S&P-500 inclusion 21d full-sample excess t (was NULL, -1.39, D-740)" },
+  { name: "fx-carry-em", args: ["scripts/fx-carry-em.ts"], pick: /EM : gross t (-?\d+\.?\d*)/i,
+    moved: (p, n) => Math.abs(n - p) > 1.0, note: "EM-only carry gross t (research-space premium, not promotable, 2.79, D-741)" },
 ];
 
 let state: Record<string, number> = {};

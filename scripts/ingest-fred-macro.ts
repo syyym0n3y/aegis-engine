@@ -32,6 +32,20 @@ const MAP: [string, string][] = [
   // rate_differential is now computable for the major pairs. Monthly (carry is a slow signal), from ~1990s.
   ["IR3TIB01GBM156N", "rate_3m_gbp"], ["IR3TIB01EZM156N", "rate_3m_eur"], ["IR3TIB01JPM156N", "rate_3m_jpy"],
   ["IR3TIB01CAM156N", "rate_3m_cad"], ["IR3TIB01AUM156N", "rate_3m_aud"], ["IR3TIB01CHM156N", "rate_3m_chf"],
+  // EM + NZD short rates (D-741) — D-738 recorded the gap explicitly: "EM high-yielders where the textbook carry
+  // premium concentrates are not held". Each ID below was VERIFIED by fetching before being added; where the OECD 3m
+  // interbank series (IR3TIB01) does not exist (BRL, INR -> 404) or is DEAD (TRY: IR3TIB01TRM156N stops 2008-04) the
+  // immediate/call policy rate (IRSTCI01) is used instead. The name keeps the rate_3m_ prefix for consistency with the
+  // G6 above, but for BRL/TRY/INR the underlying instrument is an OVERNIGHT policy rate, not a 3m interbank rate —
+  // stated here so no reader mistakes the label for the instrument (INSTRUMENT LAW).
+  ["IR3TIB01MXM156N", "rate_3m_mxn"],   // 3m interbank, 1997-01 -> 2026-06
+  ["IRSTCI01BRM156N", "rate_3m_brl"],   // call/SELIC, 1996-10 -> 2026-06 (no 3m interbank series exists)
+  ["IR3TIB01ZAM156N", "rate_3m_zar"],   // 3m interbank, 1980-12 -> 2026-06
+  ["IRSTCI01TRM156N", "rate_3m_try"],   // call rate, 1986-05 -> 2026-05 (3m interbank series dead after 2008)
+  ["IRSTCI01INM156N", "rate_3m_inr"],   // call rate, 1968-01 -> 2026-06 (no 3m interbank series exists)
+  ["IR3TIB01KRM156N", "rate_3m_krw"],   // 3m interbank, 1991-01 -> 2026-06
+  ["IR3TIB01CNM156N", "rate_3m_cny"],   // 3m interbank, 1997-06 -> 2026-05
+  ["IR3TIB01NZM156N", "rate_3m_nzd"],   // 3m interbank, 1973-12 -> 2026-06
 ];
 
 const out: { series: string; d: string; v: number }[] = [];
