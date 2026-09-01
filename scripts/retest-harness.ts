@@ -36,6 +36,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.5, note: "S&P-500 inclusion 21d full-sample excess t (was NULL, -1.39, D-740)" },
   { name: "fx-carry-em", args: ["scripts/fx-carry-em.ts"], pick: /EM : gross t (-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "EM-only carry gross t (research-space premium, not promotable, 2.79, D-741)" },
+  { name: "commodity-roll", args: ["scripts/commodity-roll.ts"], pick: /post-2005 \(OOS-style\): -?\d+\.?\d*%\/yr t (-?\d+\.?\d*)/i,
+    moved: (p, n) => Math.abs(n - p) > 1.0, note: "CL roll-yield post-2005 gross t (NULL OOS, 1.18, D-742; static EIA history so should not move)" },
 ];
 
 let state: Record<string, number> = {};

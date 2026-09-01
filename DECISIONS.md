@@ -15315,3 +15315,32 @@ IDENTIFIED**; INSTRUMENT — this is a RESEARCH PROXY (spot + policy rate), the 
 whose implied carry embeds a basis and whose deliverability is restricted for TRY/BRL/INR — conversion NOT measured
 (this is the 4-of-4 failure shape of D-575). Lineage `D-741-fx-carry-em` (measured, DESCRIPTIVE ONLY). Odds-map FX
 line updated. Retest-wired. If pursued, the only legitimate next step is to measure it IN the NDF.
+
+## D-742 — commodity roll yield UNBLOCKED free (EIA keyless curve) and MEASURED: CL null out-of-sample, NG ruined
+The odds map had commodity CARRY/ROLL as "UNTESTED (no 2nd contract)". A probe (OPERATING_DOCTRINE: research before
+you defer) established the honest data facts first: Yahoo serves dated futures ONLY while listed — every historical
+front month is 404 (earliest CL in existence Oct-2026), so a past term structure cannot be built there; Stooq is
+bot-blocked (now verified locally, not just from edge, D-283); Nasdaq CHRIS is deprecated; EIA's v2 API wants a key.
+But EIA ALSO publishes the same series as static keyless XLS — contracts 1–4 daily, WTI from 1983 and Henry Hub from
+1994. `^https?://(www\.)?eia\.gov/dnav/` allowlisted (operator-authorised auto-allowlisting), `scripts/ingest-eia-curve.ts`
+→ 70,697 rows into `trd_macro_series` (eia_cl_c1..c4, eia_ng_c1..c4). Positive controls: WTI front **−37.63 on
+2020-04-20** (no broken parse produces that) and NG > $8 in 2022 (9.68) PASS. Known limit stated: the mirror ends
+2024-04-05 (sheet range verified, 0 rows after), so it is a research history, NOT a live feed — deliberately not
+wired into the daily runner as fresh.
+`scripts/commodity-roll.ts` — the return is holding the 2nd contract for a month, ln(c1[t+1]/c2[t]), so the roll is
+embedded rather than faked by a jumping continuous series; sign-of-curve rule, no fitted parameter; 2 trials.
+| | CL (471 mo) | NG (363 mo) |
+|---|---|---|
+| unconditional long (benchmark) | 3.18%/yr, t 0.55 | **−25.17%/yr, t −2.73** (contango bleed) |
+| backwardation vs contango months | +19.99 (t 2.63) vs −11.93 — **MATCHED** | −36.0 vs −22.5 — **MISSED** |
+| sign-conditioned L/S, gross | 15.75%/yr, SR 0.43, **t 2.72** | 11.07%/yr, t 1.19 |
+| halves pre / post-2005 | **t 2.77 / t 1.18** | t 0.55 / t 1.09 |
+| holdability | 6.3y underwater, **−82% DD** | **RUINED** (log DD −236%) |
+**The full-sample CL t is carried by 1985–2004.** The post-2005 half — the only OOS-style number — is t 1.18 on 231
+months. Positive in every decade, nothing after 1995 clears t 1, and an −82% drawdown makes it un-holdable anyway. The
+script's verdict rule was corrected in the same session to REQUIRE the post-2005 half (it had printed
+"CANDIDATE-IN-SAMPLE" before the era split was added — the era split was run BEFORE recording, per the D-597 lesson
+that the story must not outrun the disaggregation). NG's dominant fact is the −25%/yr bleed; no curve-sign rule
+rescues a book that was wiped out. Lineage `D-742-commodity-roll` (measured). Odds-map commodity line updated;
+retest-wired. GC/ZC/ZW/ZS/HG/SI remain UNTESTED with the blocker named (no free historical curve found).
+Operator option, not required: a FREE EIA v2 key (`EIA_API_KEY`) would make CL/NG a live feed — same two commodities.
