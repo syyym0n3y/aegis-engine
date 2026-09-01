@@ -15223,3 +15223,21 @@ KNOW, what we DON'T (gated data named), and the odds where we have evidence.
   flip is a prompt for a human, never an auto-verdict (the D-613 discipline). Adding a test is one manifest line.
 Both wired into the daily runner. This is the honest encapsulation: not "we know everything", but "we know exactly
 what we know, what we can't, and the odds — and we keep checking as the data grows".
+
+## D-737 — "gated" data is not a bottleneck: FX carry + options-regime UNLOCKED free, others researched honestly
+Operator: get the gated data free, do not treat it as a complete bottleneck. Researched every item; several were
+defeatable (the operator was right — I had over-labelled them "paid"):
+- **FX CARRY LEG — UNLOCKED.** FRED carries foreign 3-month interbank rates KEYLESS (OECD IR3TIB01): GBP/EUR/JPY/CAD/
+  AUD/CHF now in trd_macro_series (rate_3m_*). Carry = rate_differential is computable for the majors — the approach
+  was "gated" only for want of the foreign leg, which was free all along. FX carry moves UNTESTED -> testable.
+- **OPTIONS / VOL REGIME — PARTIALLY UNLOCKED.** The full per-strike equity surface is genuinely paid, but CBOE
+  publishes the INDEX-level signals FREE (cdn.cboe.com, keyless): SKEW (tail/crash pricing, from 1990), VVIX
+  (vol-of-vol), VIX3M (term structure). Ingested to trd_macro_series (cboe_skew/vvix/vix3m). This is the
+  "dealer positioning / tail pricing" family the register had as options-gated — now held at index level.
+- **INDEX MEMBERSHIP — reachable free (not yet built).** Wikipedia's S&P-500 page has a structured "Date added"
+  change history (confirmed 200 + parseable). Index-inclusion moves from "needs paid data" to "buildable free (S&P-500)".
+HONESTLY STILL HARD/PAID (named, not waved): full per-strike equity options surface (OptionMetrics/ORATS); borrow FEE
+in bps (IBKR's free file is FTP + blocked here — demand proxies SI/short-vol/FTD held instead); analyst estimate
+revisions (licensed); real-time equity L2 (paid; crypto L2 is free via exchange WebSocket but not captured). The
+lesson: "paid" was a lazy label on several of these — FRED-foreign and CBOE-free were sitting in the open. The map
+now shows testable-vs-truly-gated precisely, so effort goes where the data actually exists.

@@ -54,7 +54,7 @@ const CLASSES: Cls[] = [
     odds: "NO TRADABLE TIMING EDGE. Vol-timing sign-FLIPPED on execution lag (D-498); macro-regime conditioning WASHED OUT under stationarity (D-730); trend de-risk COSTS 30-37% of wealth (D-735, drawdown tool not return tool). Breadth U-shape is CONTEXT only, OOS-confirmed but not tradable.",
     conf: "near-zero to time; HIGH confidence that buy-and-hold + deposits beats timing (D-680/735)",
     risk: "-52% peak drawdown, 3.4y underwater on buy-and-hold — survivable only by not panic-selling",
-    gap: "dealer gamma (all-NULL table), options surface (paid)" },
+    gap: "full per-strike equity options surface (paid); INDEX-level vol regime NOW HELD free (CBOE SKEW/VVIX/VIX3M, D-737)" },
   { name: "Crypto (perps + spot)", universeQ: "trd_bars_intraday?tf=eq.1dSF&select=symbol",
     drivers: "price(SF panel), perp funding, open interest, on-chain (hash/tx/addresses), Deribit dvol/skew, taker flow",
     tested: "funding carry, momentum, order-flow, variance premium, GBM/universe, cross-sectional factors",
@@ -65,10 +65,10 @@ const CLASSES: Cls[] = [
   { name: "FX (majors)", universeQ: "trd_bars_deep?asset_class=eq.fx&select=symbol",
     drivers: "price(hourly+daily), COT positioning, US short rate; FOREIGN short rates NOT held",
     tested: "carry (partial), currency-of-account (structural)",
-    odds: "CARRY UNTESTED (needs both rate legs — only US held). Currency-of-account is a real STRUCTURAL effect (~1.3pp/yr for a GBP investor, D-731) but path-dependent, not a signal.",
-    conf: "near-zero; the core carry test is data-blocked",
+    odds: "CARRY NOW TESTABLE (foreign rate legs unlocked, D-737) — not yet run; the block is removed. Currency-of-account is a real STRUCTURAL effect (~1.3pp/yr for a GBP investor, D-731) but path-dependent, not a signal.",
+    conf: "carry test data-unblocked (D-737), pending a run; currency-of-account is structural not a signal",
     risk: "leverage-driven blowup risk; central-bank regime shifts",
-    gap: "FOREIGN short rates (the carry leg) — gated" },
+    gap: "FOREIGN short rates NOW HELD (FRED foreign 3m, D-737) -> carry testable; foreign LONG rates still partial" },
   { name: "Commodities", universeQ: "trd_bars_deep?asset_class=eq.commodity&select=symbol",
     drivers: "front-month price, COT positioning; 2nd contract (roll/curve) NOT held; inventories NOT ingested",
     tested: "seasonality (built), cross-asset ratios (built)",
@@ -100,7 +100,7 @@ assertNonEmpty("classes", CLASSES, 5);
 console.log(`  THE ONLY LIVE PATHS TO A CLAIM (forward clocks — verdict on data that does not exist yet):`);
 for (const c of clocks) console.log(`    · ${c.id}`);
 console.log(`\n  WHAT WE PROVABLY CANNOT KNOW (the honest edge of the map, per the COVERAGE LAW): options/vol surfaces,`);
-console.log(`  borrow cost/availability, real-time L2 depth, foreign short rates, commodity roll, index membership,`);
+console.log(`  borrow FEE in bps (IBKR-FTP-blocked; demand proxies held), full per-strike options surface, real-time L2 depth, commodity roll,`);
 console.log(`  central-bank flows — all paid or non-EDGAR. A verdict in these spaces is UNTESTED, never NULL.`);
 console.log(`\n  BOTTOM LINE: the best odds we have found for a low-budget trader are STRUCTURAL (compound + deposits +`);
 console.log(`  don't-panic-sell, D-735) plus ONE unproven long-only candidate (spin-offs). The worst odds — and the`);

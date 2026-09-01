@@ -27,6 +27,11 @@ const MAP: [string, string][] = [
   ["DGS3MO", "ust_3m"], ["DGS2", "ust_2y"], ["DGS10", "ust_10y"],
   // Credit + financial-conditions conditioners (keyless, free): BAA-10y spread, NFCI.
   ["BAA10Y", "credit_baa_10y"], ["NFCI", "fin_conditions"],
+  // FOREIGN 3-month interbank rates (D-737) — the FX CARRY leg, which was "gated" for want of both rate legs. FRED
+  // carries them keyless (OECD IR3TIB01). US is DGS3MO above; these give GBP/EUR/JPY/CAD/AUD/CHF, so carry =
+  // rate_differential is now computable for the major pairs. Monthly (carry is a slow signal), from ~1990s.
+  ["IR3TIB01GBM156N", "rate_3m_gbp"], ["IR3TIB01EZM156N", "rate_3m_eur"], ["IR3TIB01JPM156N", "rate_3m_jpy"],
+  ["IR3TIB01CAM156N", "rate_3m_cad"], ["IR3TIB01AUM156N", "rate_3m_aud"], ["IR3TIB01CHM156N", "rate_3m_chf"],
 ];
 
 const out: { series: string; d: string; v: number }[] = [];
