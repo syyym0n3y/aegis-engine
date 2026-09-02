@@ -3,6 +3,7 @@
 // worker. Endpoints (no-verify-jwt):
 //   GET  ?claim=1&worker=<id>   → atomically claim one pending job (trd_claim_job skip-locked) → job JSON or {job:null}
 //   GET  ?bars=<SYMBOL>         → deep daily bars for a symbol from trd_bars_deep (worker's input data)
+//   GET  ?splits=1              → split ratios (trd_macro_series "split:*") so the worker can restate raw share counts
 //   POST {job_id,status,result,error,signals[]} → mark job done/error (+ optionally upsert computed trd_signal rows)
 const SB = Deno.env.get("SUPABASE_URL")!, SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const H = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
@@ -81,6 +82,18 @@ Deno.serve(async (req) => {
         if (!Array.isArray(p) || !p.length) break;
         for (const r of p as { ticker: string; concept: string; effective_date: string; period_end: string; value: number }[]) rows.push({ t: r.ticker, c: r.concept, e: r.effective_date, p: r.period_end, v: r.value });
         if (p.length < 1000) break;
+      }
+      return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
+    }
+    if (req.method === "GET" && url.searchParams.get("splits")) {
+      // D-747: trd_bars_deep closes are SPLIT-ADJUSTED while EntityCommonStockSharesOutstanding is RAW AS FILED, so the
+      // worker cannot form a market cap without the split ratios. Served here because the worker holds no secret.
+      const rows: { s: string; d: string; v: number }[] = [];
+      for (let off = 0; ; off += 10000) {
+        const p = await fetch(`${SB}/rest/v1/trd_macro_series?series=like.split:*&select=series,d,v&order=series.asc,d.asc&offset=${off}&limit=10000`, { headers: H }).then((r) => r.json()).catch(() => []);
+        if (!Array.isArray(p) || !p.length) break;
+        for (const r of p as { series: string; d: string; v: number }[]) rows.push({ s: r.series.slice(6), d: r.d, v: r.v });
+        if (p.length < 10000) break;
       }
       return new Response(JSON.stringify({ ok: true, rows }), { headers: cors });
     }

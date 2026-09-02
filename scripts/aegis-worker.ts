@@ -6,10 +6,33 @@
 // the 33-yr deep history) which also emits per-instrument buy/sell SIGNALS. Idempotent, resumable, credential-free.
 //   Run once:   deno run -A scripts/aegis-worker.ts --once
 //   Run daemon: deno run -A scripts/aegis-worker.ts           (polls, uncapped, until killed)
+import { adjSharesMs, type Split } from "../supabase/functions/_shared/shares-adj.ts";
 const BROKER = Deno.env.get("AEGIS_BROKER") || "https://glzzoomuhnugsiichnub.supabase.co/functions/v1/trd-compute";
 const WORKER = Deno.env.get("AEGIS_WORKER_ID") || "w-local";
 const ONCE = Deno.args.includes("--once");
 const POLL_MS = 3000;
+
+// D-747: trd_bars_deep closes are SPLIT-ADJUSTED (today's share units) while EntityCommonStockSharesOutstanding is
+// RAW AS FILED. `sh * px` mixes the two bases and is wrong by the product of every split after the filing date. The
+// worker holds no secret, so the ratios come from the broker (`?splits=1`). Loaded once, cached.
+// FAIL LOUD, not silently: if the broker cannot serve them, every market cap below is in mixed units and says so —
+// a correction that quietly degrades to a no-op is the defect wearing the fix's clothes.
+let SPLITS: Map<string, Split[]> | null = null;
+async function getSplits(): Promise<Map<string, Split[]>> {
+  if (SPLITS) return SPLITS;
+  const r = await fetch(`${BROKER}?splits=1`).then((x) => x.json()).catch(() => null);
+  const rows = (r?.rows ?? []) as { s: string; d: string; v: number }[];
+  const m = new Map<string, Split[]>();
+  for (const x of rows) {
+    if (!x.s || x.d === "1900-01-01" || !Number.isFinite(x.v) || !(x.v > 0)) continue;   // 1900 = "checked, no splits"
+    (m.get(x.s) ?? m.set(x.s, []).get(x.s)!).push({ d: x.d, v: x.v });
+  }
+  for (const [, a] of m) a.sort((p, q) => p.d < q.d ? -1 : 1);
+  if (!m.size) console.log("  !! WARNING: broker served NO split rows — every market cap in this run is in MIXED share units (D-747). Deploy trd-compute with ?splits=1.");
+  else console.log(`  splits: ${rows.length} events across ${m.size} symbols`);
+  SPLITS = m;
+  return m;
+}
 
 const ERAS: [string, number, number][] = [
   ["pre_dotcom_<2000", 0, 2000], ["dotcom_bust_00_02", 2000, 2003], ["bull_03_07", 2003, 2008],
@@ -168,14 +191,16 @@ async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
 async function runFundamentalsIC(params: { horizon?: number }) {
   const HZ = params.horizon ?? 63; // ~1 quarter forward
   const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const splits = await getSplits();
   const rows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   // ticker → concept → sorted [{eff(ms), val}]
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of rows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
   for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
-  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, atMs: number): number | null => {
-    const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= atMs) v = x.v; else break; } return v;
-  };
+  // pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+  // units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+  const pitRec = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): { e: number; v: number } | null => { const a = m?.[c]; if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, atMs: number): number | null => pitRec(m, c, atMs)?.v ?? null;
   const FACS = ["value_bm", "earnings_yield", "quality_roe", "investment", "leverage"] as const;
   const byMonth: Record<string, Map<string, { x: number[]; y: number[] }>> = {}; for (const f of FACS) byMonth[f] = new Map();
   const symbols = await getUniverse();
@@ -187,9 +212,9 @@ async function runFundamentalsIC(params: { horizon?: number }) {
     for (let i = 0; i < b.length - HZ; i++) {
       const dt = new Date(ts[i] * 1000); const mo = dt.toISOString().slice(0, 7); if (mo === lastMonth) continue; lastMonth = mo; // one obs/month/name
       const atMs = ts[i] * 1000, px = c[i]; const fwd = c[i + HZ] / c[i] - 1; if (!Number.isFinite(fwd) || !(px > 0)) continue;
-      const be = pit(fm, "StockholdersEquity", atMs), ni = pit(fm, "NetIncomeLoss", atMs), assets = pit(fm, "Assets", atMs), liab = pit(fm, "Liabilities", atMs), sh = pit(fm, "EntityCommonStockSharesOutstanding", atMs);
+      const be = pit(fm, "StockholdersEquity", atMs), ni = pit(fm, "NetIncomeLoss", atMs), assets = pit(fm, "Assets", atMs), liab = pit(fm, "Liabilities", atMs); const shR = pitRec(fm, "EntityCommonStockSharesOutstanding", atMs), sh = shR?.v ?? null;
       const assetsPrev = pit(fm, "Assets", atMs - 365 * 864e5);
-      const mcap = sh && sh > 0 ? sh * px : null;
+      const mcap = sh && sh > 0 && shR ? adjSharesMs(sh, splits.get(sym), shR.e) * px : null;
       const fac: Record<string, number | null> = {
         value_bm: mcap && be != null ? be / mcap : null,
         earnings_yield: mcap && ni != null ? ni / mcap : null,
@@ -218,11 +243,15 @@ async function runFundamentalsIC(params: { horizon?: number }) {
 async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?: number; liq_min_dvol?: number; n_trials?: number }) {
   const COST_ALL = params.cost_bps_all ?? 0.010, COST_LIQ = params.cost_bps_liq ?? 0.0020, LIQ = params.liq_min_dvol ?? 1e6, HZ = 21;
   const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
   for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
-  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  // pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+  // units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+  const pitRec = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): { e: number; v: number } | null => { const a = m?.[c]; if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => pitRec(m, c, at)?.v ?? null;
   const PFAC = ["mom_12_1", "lowvol_60", "high_52w", "max_lottery", "rev_5d"] as const;
   const FFAC = ["value_bm", "quality_roe", "earnings_yield"] as const;
   const ALLF = [...PFAC, ...FFAC];
@@ -242,7 +271,7 @@ async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?:
       const sd = Math.sqrt(r60.reduce((a, x) => a + x * x, 0) / r60.length);
       const pf: Record<string, number> = { mom_12_1: c[i - 21] / c[i - 252] - 1, lowvol_60: -sd, high_52w: c[i] / Math.max(...c.slice(i - 252, i + 1)), max_lottery: -Math.max(...rets), rev_5d: -(c[i] / c[i - 5] - 1) };
       for (const f of PFAC) { const val = pf[f]; if (!Number.isFinite(val)) continue; (data[f].get(mo) ?? data[f].set(mo, []).get(mo)!).push({ v: val, f: fwd, dv, s: sym }); }
-      if (fm) { const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at); const mcap = sh && sh > 0 ? sh * px : null;
+      if (fm) { const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), shR = pitRec(fm, "EntityCommonStockSharesOutstanding", at); const sh = shR?.v ?? null; const mcap = sh && sh > 0 && shR ? adjSharesMs(sh, splits.get(sym), shR.e) * px : null;
         const ff: Record<string, number | null> = { value_bm: mcap && be != null ? be / mcap : null, quality_roe: be && be > 0 && ni != null ? ni / be : null, earnings_yield: mcap && ni != null ? ni / mcap : null };
         for (const f of FFAC) { const val = ff[f]; if (val == null || !Number.isFinite(val)) continue; (data[f].get(mo) ?? data[f].set(mo, []).get(mo)!).push({ v: val, f: fwd, dv, s: sym }); }
       }
@@ -302,11 +331,15 @@ async function runFactorBlend(params: { factors?: string[]; oos_frac?: number; c
   const FACS = params.factors ?? ["mom_12_1", "lowvol_60", "value_bm", "quality_roe"];
   const OOS = params.oos_frac ?? 0.5, COST = params.cost_bps ?? 0.0020, LIQ = params.liq_min_dvol ?? 1e6, HZ = 21;
   const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
   for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
-  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  // pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+  // units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+  const pitRec = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): { e: number; v: number } | null => { const a = m?.[c]; if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => pitRec(m, c, at)?.v ?? null;
   // per month: array of { s, dv, fwd, vals:Record<factor,number> }
   const byMonth = new Map<string, { s: string; dv: number; fwd: number; vals: Record<string, number> }[]>();
   const symbols = await getUniverse();
@@ -321,7 +354,7 @@ async function runFactorBlend(params: { factors?: string[]; oos_frac?: number; c
       const rets: number[] = []; for (let k = i - 20; k <= i; k++) rets.push(c[k] / c[k - 1] - 1);
       const r60: number[] = []; for (let k = i - 59; k <= i; k++) r60.push(c[k] / c[k - 1] - 1);
       const sd = Math.sqrt(r60.reduce((a, x) => a + x * x, 0) / r60.length);
-      const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at); const mcap = sh && sh > 0 ? sh * px : null;
+      const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), shR = pitRec(fm, "EntityCommonStockSharesOutstanding", at); const sh = shR?.v ?? null; const mcap = sh && sh > 0 && shR ? adjSharesMs(sh, splits.get(sym), shR.e) * px : null;
       const all: Record<string, number | null> = { mom_12_1: c[i - 21] / c[i - 252] - 1, lowvol_60: -sd, high_52w: c[i] / Math.max(...c.slice(i - 252, i + 1)), max_lottery: -Math.max(...rets), rev_5d: -(c[i] / c[i - 5] - 1), value_bm: mcap && be != null ? be / mcap : null, quality_roe: be && be > 0 && ni != null ? ni / be : null, earnings_yield: mcap && ni != null ? ni / mcap : null };
       const vals: Record<string, number> = {}; for (const f of FACS) { const x = all[f]; if (x != null && Number.isFinite(x)) vals[f] = x; }
       if (!Object.keys(vals).length) continue;
@@ -361,6 +394,7 @@ async function runFactorBlend(params: { factors?: string[]; oos_frac?: number; c
 async function runResidualAttribution(params: { horizon?: number }) {
   const HZ = params.horizon ?? 63;
   const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
@@ -369,7 +403,10 @@ async function runResidualAttribution(params: { horizon?: number }) {
   const insider = new Map<string, { e: number; v: number }[]>();
   for (const r of (ir?.rows ?? []) as { t: string; d: string; v: number }[]) (insider.get(r.t) ?? insider.set(r.t, []).get(r.t)!).push({ e: new Date(r.d).getTime(), v: r.v });
   for (const a of insider.values()) a.sort((x, y) => x.e - y.e);
-  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  // pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+  // units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+  const pitRec = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): { e: number; v: number } | null => { const a = m?.[c]; if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => pitRec(m, c, at)?.v ?? null;
   const FACS = ["value_bm", "earnings_yield", "quality_roe", "investment", "net_issuance", "insider_buy"] as const;
   const byMonth: Record<string, Map<string, { s: string; v: number; f: number }[]>> = {}; for (const f of FACS) byMonth[f] = new Map();
   const symbols = await getUniverse();
@@ -380,8 +417,11 @@ async function runResidualAttribution(params: { horizon?: number }) {
     for (let i = 0; i < b.length - HZ; i++) {
       const mo = new Date(ts[i] * 1000).toISOString().slice(0, 7); if (mo === lastMonth) continue; lastMonth = mo;
       const at = ts[i] * 1000, px = c[i]; const fwd = c[i + HZ] / c[i] - 1; if (!(px > 0) || !Number.isFinite(fwd)) continue;
-      const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), assets = pit(fm, "Assets", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at);
-      const assetsPrev = pit(fm, "Assets", at - 365 * 864e5), shPrev = pit(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5);
+      const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), assets = pit(fm, "Assets", at);
+      const shR = pitRec(fm, "EntityCommonStockSharesOutstanding", at), shPrevR = pitRec(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5);
+      const assetsPrev = pit(fm, "Assets", at - 365 * 864e5);
+      // both filings restated into today's share units before differencing, else a split reads as a fake issuance
+      const sp = splits.get(sym); const sh = shR ? adjSharesMs(shR.v, sp, shR.e) : null, shPrev = shPrevR ? adjSharesMs(shPrevR.v, sp, shPrevR.e) : null;
       const mcap = sh && sh > 0 ? sh * px : null;
       let insBuy = 0; if (im && mcap) { for (const e of im) { if (e.e > at) break; if (e.e > at - 90 * 864e5) insBuy += e.v; } insBuy = insBuy / mcap; }
       const sig: Record<string, number | null> = {
@@ -419,11 +459,15 @@ async function runResidualAttribution(params: { horizon?: number }) {
 async function runOpportunityScan(params: { top?: number; min_dvol?: number }) {
   const TOP = params.top ?? 40, LIQ = params.min_dvol ?? 5e6;
   const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
   for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
-  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  // pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+  // units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+  const pitRec = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): { e: number; v: number } | null => { const a = m?.[c]; if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => pitRec(m, c, at)?.v ?? null;
   // IC weights from the measured, regime-robust residual attribution (D-373) — the market told us these, we don't guess
   const W: Record<string, number> = { value_bm: 0.108, quality_roe: 0.096, earnings_yield: 0.087, mom_12_1: 0.038, net_issuance: 0.040 };
   const FAC = Object.keys(W);
@@ -436,7 +480,9 @@ async function runOpportunityScan(params: { top?: number; min_dvol?: number }) {
     let dv = 0, cnt = 0; for (let k = i - 21; k < i; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cnt++; } } dv = cnt ? dv / cnt : 0;
     if (dv < LIQ) return; // LIQUID only — the trap tail is excluded by construction
     const fm = fund.get(sym); const at = ts[i] * 1000;
-    const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at), shPrev = pit(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5);
+    const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), shR = pitRec(fm, "EntityCommonStockSharesOutstanding", at), shPrevR = pitRec(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5);
+    // both filings restated into today's share units before differencing, else a split reads as a fake issuance
+    const sp = splits.get(sym); const sh = shR ? adjSharesMs(shR.v, sp, shR.e) : null, shPrev = shPrevR ? adjSharesMs(shPrevR.v, sp, shPrevR.e) : null;
     const mcap = sh && sh > 0 ? sh * px : null;
     const f: Record<string, number> = {};
     if (mcap && be != null) f.value_bm = be / mcap;
@@ -471,10 +517,14 @@ async function runOpportunityScan(params: { top?: number; min_dvol?: number }) {
 async function runProbabilityLadder(params: { horizon?: number; min_dvol?: number; top?: number }) {
   const HZ = params.horizon ?? 21, LIQ = params.min_dvol ?? 5e6, TOP = params.top ?? 50;
   const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const splits = await getSplits();
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[]) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
   for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
-  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => { const a = m?.[c]; if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+  // pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+  // units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+  const pitRec = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): { e: number; v: number } | null => { const a = m?.[c]; if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+  const pit = (m: Record<string, { e: number; v: number }[]> | undefined, c: string, at: number): number | null => pitRec(m, c, at)?.v ?? null;
   const W: Record<string, number> = { value_bm: 0.108, quality_roe: 0.096, earnings_yield: 0.087, mom_12_1: 0.038, net_issuance: 0.040 };
   const FAC = Object.keys(W);
   // per month: liquid names with their raw factor values + forward return (null for the latest, tradeable month)
@@ -489,7 +539,9 @@ async function runProbabilityLadder(params: { horizon?: number; min_dvol?: numbe
       const px = c[i]; if (!(px > 0)) continue;
       let dv = 0, cnt = 0; for (let k = i - 21; k < i; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cnt++; } } dv = cnt ? dv / cnt : 0; if (dv < LIQ) continue;
       const fwd = i + HZ < b.length ? c[i + HZ] / c[i] - 1 : null;
-      const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), sh = pit(fm, "EntityCommonStockSharesOutstanding", at), shp = pit(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5); const mc = sh && sh > 0 ? sh * px : null;
+      const at = ts[i] * 1000; const be = pit(fm, "StockholdersEquity", at), ni = pit(fm, "NetIncomeLoss", at), shR = pitRec(fm, "EntityCommonStockSharesOutstanding", at), shpR = pitRec(fm, "EntityCommonStockSharesOutstanding", at - 365 * 864e5);
+      // both filings restated into today's share units before differencing, else a split reads as a fake issuance
+      const sp = splits.get(sym); const sh = shR ? adjSharesMs(shR.v, sp, shR.e) : null, shp = shpR ? adjSharesMs(shpR.v, sp, shpR.e) : null; const mc = sh && sh > 0 ? sh * px : null;
       const f: Record<string, number> = { mom_12_1: c[i - 21] / c[i - 252] - 1 };
       if (mc && be != null) f.value_bm = be / mc; if (be && be > 0 && ni != null) f.quality_roe = ni / be; if (mc && ni != null) f.earnings_yield = ni / mc; if (sh && shp && shp > 0) f.net_issuance = -(sh / shp - 1);
       (byMonth.get(mo) ?? byMonth.set(mo, []).get(mo)!).push({ sym, f, fwd, px });

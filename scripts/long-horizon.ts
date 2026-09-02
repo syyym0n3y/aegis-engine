@@ -4,6 +4,7 @@
 // order-flow edge required — and where the documented value/quality premia actually live. Uses data already loaded.
 // Tests the full factor panel at 126d / 252d / 504d against the same controls: PIT, liquid-only, within-month cross-section,
 // train/test, net of cost (which is far smaller at these horizons because turnover collapses).
+import { adjSharesMs, loadSplits } from "../supabase/functions/_shared/shares-adj.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"lh",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const H=async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};};
@@ -15,7 +16,13 @@ for(let off=0;;off+=1000){const p=await fetch(`${OWNED}/trd_fundamentals?select=
    const m=fund.get(r.ticker)??fund.set(r.ticker,{}).get(r.ticker)!;(m[r.concept]||=[]).push({e:new Date(r.effective_date).getTime(),v:+r.value});}
  if(p.length<1000)break;}
 for(const m of fund.values()) for(const k in m) m[k].sort((a,b)=>a.e-b.e);
-const pit=(a:{e:number;v:number}[]|undefined,at:number)=>{if(!a)return null;let v:number|null=null;for(const x of a){if(x.e<=at)v=x.v;else break;}return v;};
+// pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share units
+// by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+const pitRec=(a:{e:number;v:number}[]|undefined,at:number)=>{if(!a)return null;let r:{e:number;v:number}|null=null;for(const x of a){if(x.e<=at)r=x;else break;}return r;};
+const pit=(a:{e:number;v:number}[]|undefined,at:number)=>pitRec(a,at)?.v??null;
+// trd_bars_deep closes are SPLIT-ADJUSTED; EntityCommonStockSharesOutstanding is RAW AS FILED (D-747).
+const splits=await loadSplits(OWNED,hdr);
+console.log(`  splits: ${[...splits.values()].reduce((n,a)=>n+a.length,0)} events across ${splits.size} symbols`);
 const esyms:string[]=[];
 for(let off=0;;off+=1000){const p=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);if(!Array.isArray(p)||!p.length)break;for(const r of p as {symbol:string}[])esyms.push(r.symbol);if(p.length<1000)break;}
 const targets=esyms.filter(s=>fund.has(s));
@@ -31,8 +38,9 @@ for(let i=0;i<targets.length;i+=25){
       const mo=new Date(ts[j]*1000).toISOString().slice(0,7); if(mo===last)continue; last=mo;
       const at=ts[j]*1000, px=c[j]; if(!(px>0))continue;
       let dv=0,cn=0; for(let k=j-21;k<j;k++){if(c[k]>0&&vol[k]>0){dv+=c[k]*vol[k];cn++;}} if(!cn||dv/cn<LIQ)continue;
-      const be=pit(fm.StockholdersEquity,at), ni=pit(fm.NetIncomeLoss,at), sh=pit(fm.EntityCommonStockSharesOutstanding,at);
-      const mc=sh&&sh>0?sh*px:null; if(!mc||be==null||ni==null||!(be>0))continue;
+      const be=pit(fm.StockholdersEquity,at), ni=pit(fm.NetIncomeLoss,at);
+      const shR=pitRec(fm.EntityCommonStockSharesOutstanding,at); const sh=shR?.v??null;
+      const mc=sh&&sh>0&&shR?adjSharesMs(sh,splits.get(row.symbol),shR.e)*px:null; if(!mc||be==null||ni==null||!(be>0))continue;
       const v=be/mc, q=ni/be, e=ni/mc;
       for(const h of HZS){const fwd=c[j+h]/c[j]-1; if(!Number.isFinite(fwd))continue;
         (panels.get(h)!.get(mo)??panels.get(h)!.set(mo,[]).get(mo)!).push({v,q,e,fwd});}

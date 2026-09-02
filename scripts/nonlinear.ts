@@ -7,6 +7,7 @@
 // represent interactions and non-monotonicity that rank-IC cannot see -- beats the linear baselines OUT OF SAMPLE.
 // Discipline: strict walk-forward (train on <= year Y-1, predict year Y, never re-using future data), the SAME cost model,
 // and the null is stated in advance: if the GBM does not beat the linear composite OOS, non-linearity is NULL for this panel.
+import { adjShares, loadSplits } from "../supabase/functions/_shared/shares-adj.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"nl",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
@@ -54,17 +55,24 @@ if(USE_FUND){
 }
 // asOf: the most recent value whose effective_date is <= the decision date. This is the ONLY read path -- a fundamental is
 // unusable before it was legally knowable, and that lag lives in effective_date, not here.
-function asOf(t:string,c:string,date:string):number|null{
+// asOfRec keeps the effective_date beside the value: a RAW share count is only restatable into today's share units
+// by knowing which splits fell after ITS FILING (D-747). asOf stays value-only, so no other caller changes.
+function asOfRec(t:string,c:string,date:string):{eff:string;v:number}|null{
   const a=fund.get(t)?.get(c); if(!a||!a.length)return null;
   let lo=0,hi=a.length-1,best=-1;
   while(lo<=hi){const mid=(lo+hi)>>1; if(a[mid].eff<=date){best=mid;lo=mid+1;}else hi=mid-1;}
-  return best<0?null:a[best].v;
+  return best<0?null:a[best];
 }
+function asOf(t:string,c:string,date:string):number|null{ return asOfRec(t,c,date)?.v ?? null; }
 // prior value at least `back` days before `date` -- for growth rates (asset growth, issuance)
-function asOfBack(t:string,c:string,date:string,back:number):number|null{
+function asOfBackRec(t:string,c:string,date:string,back:number):{eff:string;v:number}|null{
   const d=new Date(date+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()-back);
-  return asOf(t,c,d.toISOString().slice(0,10));
+  return asOfRec(t,c,d.toISOString().slice(0,10));
 }
+function asOfBack(t:string,c:string,date:string,back:number):number|null{ return asOfBackRec(t,c,date,back)?.v ?? null; }
+// trd_bars_deep closes are SPLIT-ADJUSTED; EntityCommonStockSharesOutstanding is RAW AS FILED (D-747).
+const splits=await loadSplits(OWNED,hdr);
+console.log(`    splits: ${[...splits.values()].reduce((n,a)=>n+a.length,0)} events across ${splits.size} symbols`);
 const meta:{symbol:string}[]=[];
 for(let off=0;;off+=1000){const p=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);if(!Array.isArray(p)||!p.length)break;meta.push(...p);if(p.length<1000)break;}
 console.log(`==> NON-LINEAR / CONDITIONAL TEST — universe ${meta.length} equities | PRICE_MIN=$${PRICE_MIN} DV_MIN=$${(DV_MIN/1e6).toFixed(0)}M/day`);
@@ -104,15 +112,19 @@ for(let i=0;i<meta.length;i+=30){
       const fx:number[]=[];
       if(USE_FUND){
         const dt=new Date(b[k][0]*1000).toISOString().slice(0,10);
-        const sh=asOf(r.symbol,"EntityCommonStockSharesOutstanding",dt);
-        const mc=(sh&&sh>0)?px*sh:null;
+        const shRec=asOfRec(r.symbol,"EntityCommonStockSharesOutstanding",dt); const sh=shRec?.v??null;
+        const mc=(sh&&sh>0&&shRec)?px*adjShares(sh,splits.get(r.symbol),shRec.eff):null;
         const eq=asOf(r.symbol,"StockholdersEquity",dt), ni=asOf(r.symbol,"NetIncomeLoss",dt), at=asOf(r.symbol,"Assets",dt);
-        const atP=asOfBack(r.symbol,"Assets",dt,400), shP=asOfBack(r.symbol,"EntityCommonStockSharesOutstanding",dt,400);
+        const atP=asOfBack(r.symbol,"Assets",dt,400);
+        // both filings restated into today's units before differencing, else a split reads as a fake -100% issuance
+        const shPRec=asOfBackRec(r.symbol,"EntityCommonStockSharesOutstanding",dt,400); const shP=shPRec?.v??null;
+        const shAdj=(sh!=null&&shRec)?adjShares(sh,splits.get(r.symbol),shRec.eff):null;
+        const shPAdj=(shP!=null&&shPRec)?adjShares(shP,splits.get(r.symbol),shPRec.eff):null;
         const ac=asOf(r.symbol,"AssetsCurrent",dt), lc=asOf(r.symbol,"LiabilitiesCurrent",dt), csh=asOf(r.symbol,"CashAndCashEquivalentsAtCarryingValue",dt);
         // A missing fundamental is NOT zero -- zero is a real, extreme rank. Missing rows are dropped from the fundamental
         // panel entirely rather than imputed, so the model never learns from a fabricated value.
         if(mc===null||eq===null||ni===null||at===null||atP===null||!atP||shP===null||!shP||ac===null||lc===null||!lc||csh===null||!at)continue;
-        fx.push(eq/mc, ni/mc, at/atP-1, sh!/shP-1, ac/lc, csh/at);
+        fx.push(eq/mc, ni/mc, at/atP-1, shAdj!/shPAdj!-1, ac/lc, csh/at);
         if(!fx.every(Number.isFinite))continue;
       }
       const y=c[kn]/c[k]-1;                                      // forward 1-month return

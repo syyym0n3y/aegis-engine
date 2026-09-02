@@ -5,12 +5,16 @@
 // but unlevered costs, free financing on cash instruments, 4 non-investable legs, and an equity-index-only pre-1993 window):
 // honest net Sharpe is 0.22, psr_z 1.26, FAILS (D-384). The equity tilt is tail-driven: 0.30 ex-top-3-months and its psr_z is
 // REFUSED (skew 8.5 is outside PSR validity) (D-386). This file therefore produces a research WATCHLIST, not a trade list.
+import { adjSharesMs, loadSplits } from "../supabase/functions/_shared/shares-adj.ts";
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
 const TARGET_VOL = Number(Deno.env.get("TARGET_VOL") || 0.12); // 12% annualised portfolio target
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "pos", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const H = async () => { const t = await jwt(); return { "Content-Type": "application/json", Authorization: `Bearer ${t}`, apikey: t }; };
-const pit = (a: { e: number; v: number }[] | undefined, at: number) => { if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+// pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+// units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+const pitRec = (a: { e: number; v: number }[] | undefined, at: number) => { if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+const pit = (a: { e: number; v: number }[] | undefined, at: number) => pitRec(a, at)?.v ?? null;
 
 const hdr = await H();
 console.log("==> AEGIS POSITIONING — combining UNVALIDATED legs into a watchlist book, DORMANT/capital-safe");
@@ -55,12 +59,15 @@ const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
 const fetchRetry=async(url:string)=>{for(let a=0;a<3;a++){try{const r=await fetch(url,{headers:hdr});if(r.ok)return await r.json();}catch(_e){/*retry*/}await new Promise(res=>setTimeout(res,2000*(a+1)));}return null;};
 for (let off = 0; ; off += 50000) { const p = await fetchRetry(`${OWNED}/trd_fundamentals?select=ticker,concept,effective_date,value&order=ticker&offset=${off}&limit=50000`); if (!Array.isArray(p) || !p.length) break; for (const r of p as { ticker: string; concept: string; effective_date: string; value: number }[]) { const m = fund.get(r.ticker) ?? fund.set(r.ticker, {}).get(r.ticker)!; (m[r.concept] ||= []).push({ e: new Date(r.effective_date).getTime(), v: +r.value }); } if (p.length < 50000) break; }
 for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
+// trd_bars_deep closes are SPLIT-ADJUSTED; EntityCommonStockSharesOutstanding is RAW AS FILED (D-747).
+const splits = await loadSplits(OWNED, hdr);
+console.log(`  splits: ${[...splits.values()].reduce((n, a) => n + a.length, 0)} events across ${splits.size} symbols`);
 const esyms: string[] = [];
 for (let off = 0; ; off += 1000) { const p = await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`, { headers: hdr }).then((r) => r.json()); if (!Array.isArray(p) || !p.length) break; for (const r of p as { symbol: string }[]) esyms.push(r.symbol); if (p.length < 1000) break; }
 const eq: { sym: string; value: number; quality: number; px: number; dvol: number }[] = [];
 for (let i = 0; i < esyms.length; i += 25) {
   const rows = await fetch(`${OWNED}/trd_bars_deep?symbol=in.(${esyms.slice(i, i + 25).map((s) => `"${s}"`).join(",")})&select=symbol,bars`, { headers: hdr }).then((r) => r.json()) as { symbol: string; bars: number[][] }[];
-  for (const row of rows) { const b = row.bars; if (!b || b.length < 60) continue; const j = b.length - 1; const px = b[j][4]; if (!(px > 0)) continue; let dv = 0, cn = 0; for (let k = Math.max(0, j - 21); k < j; k++) { if (b[k][4] > 0 && b[k][5] > 0) { dv += b[k][4] * b[k][5]; cn++; } } dv = cn ? dv / cn : 0; if (dv < 5e6) continue; const fm = fund.get(row.symbol); const at = b[j][0] * 1000; const be = pit(fm?.StockholdersEquity, at), ni = pit(fm?.NetIncomeLoss, at), sh = pit(fm?.EntityCommonStockSharesOutstanding, at); const mc = sh && sh > 0 ? sh * px : null; if (!mc || be == null || ni == null || !(be > 0)) continue; eq.push({ sym: row.symbol, value: be / mc, quality: ni / be, px: +px.toFixed(2), dvol: dv }); }
+  for (const row of rows) { const b = row.bars; if (!b || b.length < 60) continue; const j = b.length - 1; const px = b[j][4]; if (!(px > 0)) continue; let dv = 0, cn = 0; for (let k = Math.max(0, j - 21); k < j; k++) { if (b[k][4] > 0 && b[k][5] > 0) { dv += b[k][4] * b[k][5]; cn++; } } dv = cn ? dv / cn : 0; if (dv < 5e6) continue; const fm = fund.get(row.symbol); const at = b[j][0] * 1000; const be = pit(fm?.StockholdersEquity, at), ni = pit(fm?.NetIncomeLoss, at); const shR = pitRec(fm?.EntityCommonStockSharesOutstanding, at); const sh = shR?.v ?? null; const mc = sh && sh > 0 && shR ? adjSharesMs(sh, splits.get(row.symbol), shR.e) * px : null; if (!mc || be == null || ni == null || !(be > 0)) continue; eq.push({ sym: row.symbol, value: be / mc, quality: ni / be, px: +px.toFixed(2), dvol: dv }); }
 }
 // cross-sectional z + quality_tilt_value composite
 const zc = (k: "value" | "quality") => { const xs = eq.map((r) => r[k]); const m = xs.reduce((a, b) => a + b, 0) / xs.length; const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length) || 1; return (x: number) => Math.max(-4, Math.min(4, (x - m) / sd)); };

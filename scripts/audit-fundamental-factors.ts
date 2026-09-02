@@ -12,6 +12,7 @@
 //   PSEUDO-REPL. — the PORTFOLIO t-stat (n = rebalances) decides, never the name-day IC t (D-451)
 //   EFFECT SIZE  — stated against the round-trip cost it must beat (D-429)
 //   BENCHMARK    — compared with equal-weight buy-and-hold of the same universe (D-439)
+import { adjShares, loadSplits } from "../supabase/functions/_shared/shares-adj.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"af",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
@@ -37,13 +38,20 @@ for(const [,m] of fund) for(const [,a] of m) a.sort((x,y)=>x.eff<y.eff?-1:1);
 const spans=CONC.map(c=>{let mx="";for(const [,m] of fund){const a=m.get(c);if(a?.length){const e=a[a.length-1].eff;if(e>mx)mx=e;}}return `${c.slice(0,22)}→${mx.slice(0,7)}`;});
 console.log(`==> FUNDAMENTAL FACTORS on the REPAIRED panel — ${facts.toLocaleString()} facts, ${fund.size} tickers`);
 console.log(`    freshness: ${spans.join("  ")}`);
-function asOf(t:string,c:string,d:string):number|null{
+// asOfRec keeps the effective_date beside the value: a RAW share count is only restatable into today's share units
+// by knowing which splits fell after ITS FILING (D-747). asOf/back stay value-only, so no other caller changes.
+function asOfRec(t:string,c:string,d:string):{eff:string;v:number}|null{
   const a=fund.get(t)?.get(c); if(!a?.length)return null;
   let lo=0,hi=a.length-1,best=-1;
   while(lo<=hi){const m=(lo+hi)>>1; if(a[m].eff<=d){best=m;lo=m+1;}else hi=m-1;}
-  return best<0?null:a[best].v;
+  return best<0?null:a[best];
 }
-const back=(t:string,c:string,d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return asOf(t,c,x.toISOString().slice(0,10));};
+function asOf(t:string,c:string,d:string):number|null{ return asOfRec(t,c,d)?.v ?? null; }
+const backRec=(t:string,c:string,d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return asOfRec(t,c,x.toISOString().slice(0,10));};
+const back=(t:string,c:string,d:string,days:number)=>backRec(t,c,d,days)?.v ?? null;
+// trd_bars_deep closes are SPLIT-ADJUSTED; EntityCommonStockSharesOutstanding is RAW AS FILED (D-747).
+const splits=await loadSplits(OWNED,hdr);
+console.log(`    splits: ${[...splits.values()].reduce((n,a)=>n+a.length,0)} events across ${splits.size} symbols`);
 
 const meta:{symbol:string}[]=[];
 for(let off=0;;off+=1000){const p=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);if(!Array.isArray(p)||!p.length)break;meta.push(...p);if(p.length<1000)break;}
@@ -64,9 +72,14 @@ for(let i=0;i<meta.length;i+=30){
       let dv=0,cn=0; for(let q=Math.max(0,k-21);q<k;q++) if(b[q][4]>0&&b[q][5]>0){dv+=b[q][4]*b[q][5];cn++;}
       if(!cn||dv/cn<DV_MIN)continue;                      // LIQUIDITY: rank inside the tradable universe
       const d=new Date(b[k][0]*1000).toISOString().slice(0,10);
-      const sh=asOf(r.symbol,"EntityCommonStockSharesOutstanding",d); const mc=(sh&&sh>0)?px*sh:null;
+      const shRec=asOfRec(r.symbol,"EntityCommonStockSharesOutstanding",d); const sh=shRec?.v??null;
+      const mc=(sh&&sh>0&&shRec)?px*adjShares(sh,splits.get(r.symbol),shRec.eff):null;
       const eq=asOf(r.symbol,"StockholdersEquity",d), ni=asOf(r.symbol,"NetIncomeLoss",d), at=asOf(r.symbol,"Assets",d);
-      const atP=back(r.symbol,"Assets",d,400), shP=back(r.symbol,"EntityCommonStockSharesOutstanding",d,400);
+      const atP=back(r.symbol,"Assets",d,400);
+      // both filings restated into today's units before differencing, else a split reads as a fake -100% issuance
+      const shPRec=backRec(r.symbol,"EntityCommonStockSharesOutstanding",d,400); const shP=shPRec?.v??null;
+      const shAdj=(sh!=null&&shRec)?adjShares(sh,splits.get(r.symbol),shRec.eff):null;
+      const shPAdj=(shP!=null&&shPRec)?adjShares(shP,splits.get(r.symbol),shPRec.eff):null;
       const ac=asOf(r.symbol,"AssetsCurrent",d), lc=asOf(r.symbol,"LiabilitiesCurrent",d), csh=asOf(r.symbol,"CashAndCashEquivalentsAtCarryingValue",d);
       const acP=back(r.symbol,"AssetsCurrent",d,400), lcP=back(r.symbol,"LiabilitiesCurrent",d,400), cshP=back(r.symbol,"CashAndCashEquivalentsAtCarryingValue",d,400);
       const fwd=b[kn][4]/px-1; if(!Number.isFinite(fwd)||Math.abs(fwd)>3)continue;
@@ -76,7 +89,7 @@ for(let i=0;i<meta.length;i+=30){
         (ac!==null&&lc!==null&&csh!==null&&acP!==null&&lcP!==null&&cshP!==null&&at&&at>0)
           ? -(((ac-csh)-lc)-((acP-cshP)-lcP))/at : null,                             // accruals (sign: LOW accruals good)
         (at&&atP&&atP>0)? -(at/atP-1) : null,                                        // asset growth (sign: LOW growth good)
-        (sh&&shP&&shP>0)? -(sh/shP-1) : null,                                        // net issuance (sign: LOW issuance good)
+        (shAdj&&shPAdj&&shPAdj>0)? -(shAdj/shPAdj-1) : null,                                        // net issuance (sign: LOW issuance good)
       ];
       if(f.every(x=>x===null))continue;
       panel.push({mo:new Date(b[k][0]*1000).toISOString().slice(0,7),sym:r.symbol,f,fwd});

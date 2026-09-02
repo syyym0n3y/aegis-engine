@@ -7,6 +7,7 @@
 // Candidates this generation: base composite, value×momentum & quality×momentum INTERACTIONS, CAPPED score (the calibration
 // showed extremes reverse), CONVICTION (sign·z²), and DISPERSION-CONDITIONED (trade harder when cross-sectional spread is
 // wide). Logs every candidate + whether it beats base OOS to trd_discovery_log. Loops (daemon) — the uncharted-territory search.
+import { adjSharesMs, loadSplits, type Split } from "../supabase/functions/_shared/shares-adj.ts";
 import { dataVersion } from "../supabase/functions/_shared/data-version.ts";
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -14,7 +15,10 @@ const ONCE = Deno.args.includes("--once");
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "disc", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const H = async () => { const t = await jwt(); return { "Content-Type": "application/json", Authorization: `Bearer ${t}`, apikey: t }; };
 const rankIC = (xs: number[], ys: number[]) => { const n = xs.length; if (n < 20) return 0; const rk = (a: number[]) => { const idx = a.map((v, i) => [v, i] as [number, number]).sort((p, q) => p[0] - q[0]); const r = new Array(n); for (let k = 0; k < n; k++) r[idx[k][1]] = k; return r; }; const rx = rk(xs), ry = rk(ys), mx = (n - 1) / 2; let sxy = 0, sx = 0, sy = 0; for (let i = 0; i < n; i++) { const dx = rx[i] - mx, dy = ry[i] - mx; sxy += dx * dy; sx += dx * dx; sy += dy * dy; } return sx > 0 && sy > 0 ? sxy / Math.sqrt(sx * sy) : 0; };
-const pit = (a: { e: number; v: number }[] | undefined, at: number) => { if (!a) return null; let v: number | null = null; for (const x of a) { if (x.e <= at) v = x.v; else break; } return v; };
+// pitRec keeps the filing timestamp beside the value: a RAW share count is only restatable into today's share
+// units by knowing which splits fell after ITS FILING (D-747). pit stays value-only, so no other caller changes.
+const pitRec = (a: { e: number; v: number }[] | undefined, at: number) => { if (!a) return null; let r: { e: number; v: number } | null = null; for (const x of a) { if (x.e <= at) r = x; else break; } return r; };
+const pit = (a: { e: number; v: number }[] | undefined, at: number) => pitRec(a, at)?.v ?? null;
 
 async function loadOwned() {
   const hdr = await H();
@@ -23,11 +27,13 @@ async function loadOwned() {
   for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
   const syms: string[] = [];
   for (let off = 0; ; off += 1000) { const p = await fetch(`${OWNED}/trd_bars_deep?select=symbol&asset_class=eq.equity&order=symbol&offset=${off}&limit=1000`, { headers: hdr }).then((r) => r.json()).catch(() => []); if (!Array.isArray(p) || !p.length) break; for (const r of p as { symbol: string }[]) syms.push(r.symbol); if (p.length < 1000) break; }
-  return { fund, syms, hdr };
+  // trd_bars_deep closes are SPLIT-ADJUSTED; EntityCommonStockSharesOutstanding is RAW AS FILED (D-747).
+  const splits = await loadSplits(OWNED, hdr);
+  return { fund, syms, hdr, splits };
 }
 
 // build per-month cross-sections of the base factor z-scores + forward return, on the LIQUID names
-async function buildMonths(fund: Map<string, Record<string, { e: number; v: number }[]>>, syms: string[], hdr: Record<string, string>) {
+async function buildMonths(fund: Map<string, Record<string, { e: number; v: number }[]>>, syms: string[], hdr: Record<string, string>, splits: Map<string, Split[]>) {
   const LIQ = 5e6, HZ = 21;
   const byMonth = new Map<string, { sym: string; f: Record<string, number>; fwd: number | null }[]>();
   for (let i = 0; i < syms.length; i += 25) {
@@ -35,7 +41,9 @@ async function buildMonths(fund: Map<string, Record<string, { e: number; v: numb
     const rows = await fetch(`${OWNED}/trd_bars_deep?symbol=in.(${part.map((s) => `"${s}"`).join(",")})&select=symbol,bars`, { headers: hdr }).then((r) => r.json()).catch(() => []);
     for (const row of (Array.isArray(rows) ? rows : []) as { symbol: string; bars: number[][] }[]) {
       const b = row.bars; if (!b || b.length < 300) continue; const c = b.map((r) => r[4]), v = b.map((r) => r[5]), ts = b.map((r) => r[0]); const fm = fund.get(row.symbol); let last = "";
-      for (let j = 260; j < b.length; j++) { const mo = new Date(ts[j] * 1000).toISOString().slice(0, 7); if (mo === last) continue; last = mo; const px = c[j]; if (!(px > 0)) continue; let dv = 0, cn = 0; for (let k = j - 21; k < j; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cn++; } } if (!cn || dv / cn < LIQ) continue; const at = ts[j] * 1000; const be = pit(fm?.StockholdersEquity, at), ni = pit(fm?.NetIncomeLoss, at), sh = pit(fm?.EntityCommonStockSharesOutstanding, at), shp = pit(fm?.EntityCommonStockSharesOutstanding, at - 365 * 864e5);
+      for (let j = 260; j < b.length; j++) { const mo = new Date(ts[j] * 1000).toISOString().slice(0, 7); if (mo === last) continue; last = mo; const px = c[j]; if (!(px > 0)) continue; let dv = 0, cn = 0; for (let k = j - 21; k < j; k++) { if (c[k] > 0 && v[k] > 0) { dv += c[k] * v[k]; cn++; } } if (!cn || dv / cn < LIQ) continue; const at = ts[j] * 1000; const be = pit(fm?.StockholdersEquity, at), ni = pit(fm?.NetIncomeLoss, at), shR = pitRec(fm?.EntityCommonStockSharesOutstanding, at), shpR = pitRec(fm?.EntityCommonStockSharesOutstanding, at - 365 * 864e5);
+      // both filings restated into today's share units before differencing, else a split reads as a fake -100% issuance
+      const sp = splits.get(row.symbol); const sh = shR ? adjSharesMs(shR.v, sp, shR.e) : null, shp = shpR ? adjSharesMs(shpR.v, sp, shpR.e) : null;
       // F5 FIX: market cap uses a LAGGED price (c[j-21], matching mom's lag). Using c[j] put the same close in the signal
       // denominator AND the forward-return denominator, so any dip mechanically raised `value` and `fwd` together — that is
       // short-horizon reversal masquerading as a value premium.
@@ -60,7 +68,7 @@ const ncdf = (z: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const
 
 async function cycle() {
   console.log("== discovery cycle: loading owned data ==");
-  const { fund, syms, hdr } = await loadOwned();
+  const { fund, syms, hdr, splits } = await loadOwned();
   // D-642: "sync in progress?" was a GUESS printed as a diagnosis, and it is wrong in the case that matters. An
   // UNREACHABLE database and an EMPTY one produce the identical empty array here, and the message asserted the
   // benign reading of the two — so a dead substrate read as normal operation and raised no alarm. Distinguish them
@@ -73,7 +81,7 @@ async function cycle() {
       : "  !! trd_bars_deep is UNREACHABLE — this is a DEAD SUBSTRATE, not a sync delay. Conclusions drawn now would be UNKNOWN, not null.");
     return;
   }
-  const byMonth = await buildMonths(fund, syms, hdr);
+  const byMonth = await buildMonths(fund, syms, hdr, splits);
   const months = [...byMonth.keys()].sort(); if (months.length < 40) { console.log(`  only ${months.length} months — skip`); return; }
   // THOROUGH: parameter-free candidates → full-sample decile-LS series + per-era + NET-of-cost + skew + drawdown + deflation.
   const ERAS: [string, number, number][] = [["qe_10_19", 2010, 2020], ["covid_20_21", 2020, 2022], ["tightening_22_26", 2022, 2100]];
