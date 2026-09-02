@@ -50,6 +50,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 15, note: "odd-lot tenders 2020+ share priced above market, % (real/retail-only/negligible, 50, D-751; reads cached JSON — refetch is manual)" },
   { name: "prediction-markets", args: ["--allow-read", "scripts/prediction-markets.ts"], pick: /\(b\) LONGSHOT LEG[\s\S]*?GROSS mean -?\d+\.?\d*%\/contract\s+t -?\d+\.?\d*\s+CLUSTERED t (-?\d+\.?\d*)/,
     moved: (p, n) => Math.abs(n - p) > 1.5, note: "Polymarket longshot-short @30d gross clustered t (NULL, seller loses, -2.16, D-753; cached JSON — refetch is manual)" },
+  { name: "ipo-pop", args: ["--allow-read", "--allow-write", "scripts/ipo-pop.ts"], pick: /open -> \+250d, excess vs IWM\s+n=\s*\d+\s+mean\s+(-?\d+\.?\d*)%/,
+    moved: (p, n) => Math.abs(n - p) > 8, note: "IPO retail-realisable open->250d excess vs IWM, % (AVOID signal, -27.5, D-754; cached 424B4 index)" },
 ];
 
 let state: Record<string, number> = {};

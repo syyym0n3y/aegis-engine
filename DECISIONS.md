@@ -15650,3 +15650,20 @@ Capacity: Polymarket favourite-leg volume median $12M/market. **Placeability: Ka
 Polymarket geo-blocks the UK — deployable size for this operator is zero, stated as a fact; no route around either
 is proposed or built.** 50 trials counted, not written. Lineage `D-753-prediction-markets`. FRONTIER: MEASURED,
 closed. A different market did not produce a different answer.
+
+## D-754 — IPO pop: real, and entirely in the part retail cannot reach; the buyable leg loses 27% over a year
+Frontier row "paid for capital in a primary market." `scripts/ipo-pop.ts`: 5,261 424B4 filings 2015–2026 → 1,553
+inception-confirmed IPO events, offer prices parsed (5/5 controls exact: ABNB $68, RDDT $34, ARM $51, AHR $12, NEXA
+$16). A first-run defect — nominal offer prices against split-ADJUSTED panel opens printed a mean pop of
+1.97×10¹⁰% (ADTX) — is now a scale screen; the 382 screened names are the later reverse-split failures, so the
+allocated leg is stated as biased UPWARD.
+| leg | result |
+|---|---|
+| (a) ALLOCATED, offer → first close (gross) | **+20.15% mean, +5.75% median, t 11.31**, n 1,121 — prior MATCHED; **72.8% of the total pop sits in the top decile of deals** (the oversubscribed ones retail is scaled out of); liquid tercile +33% |
+| (b) RETAIL-REALISABLE, first open → +250d excess vs IWM, net 30bp | **−27.52% mean, −46.59% median, t −10.34, positive 24.3%**, n 1,372; liquid tercile −13.11%, t −3.91; 2020–26 alone −38.4%, t −12.6 |
+| eras | 2015–19 looks positive (+11%, t 2.3) and is SURVIVORSHIP-EXPOSED (backfill starts ~2020) — not comparable |
+Allocation realism (sourced assumptions): syndicate-allocated, broker-gated, FINRA 5130/5131; fills are largest on the
+deals nobody wants — adverse selection on the exact variable that produces the pop, so even the allocated mean
+overstates a retail allocated return by an untested amount. **The primary-market premium is a fee paid to
+allocation, not to capital.** UK leg: was UNTESTED for an allowlist reason only; LSE hosts now allowlisted and a UK
+build dispatched. Lineage `D-754-ipo-pop`. FRONTIER: MEASURED (US); the retail-realisable leg is an AVOID signal.
