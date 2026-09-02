@@ -103,6 +103,20 @@ DSR>0.95 / PBO<0.5 locked. Broker creds NOT provisioned before then.
 | daily, structurally | US PDT rule $25k; UK stamp duty 0.5% one-way kills turnover outright; crypto VIP tiers ~$250M/30d |
 **Daily extraction starts working at no budget on anything measured. Structural compounding started at the first deposit.**
 
+## 6b. The frontier beyond predict-the-return (2026-09-02, docs/FRONTIER.md) — every row now measured
+| mechanism | measured answer |
+|---|---|
+| closed-end fund discounts | **the one candidate**: liquid-tercile excess ~4%/yr at t 3.3–3.8 in the survivorship-clean 2019+ window (upper bound; 52% of the 2010 universe is missing); forward clock registered, 24 months, no honest way to shorten it (D-750/750b/750c) |
+| odd-lot tender priority | real, retail-only, **~$2k/yr on ~$15k**; ceiling absolute at 99 shares (D-751) |
+| securities lending | ~0 on a broad ETF (the fund keeps it); 0.2–4.9%/yr on liquid single names on assumed rates; a rounding line on a small account (D-752) |
+| VIX-futures roll | ruined at margin on 8 days, ruined UNLEVERED on 2018-02-05; SPY dominates (D-749) |
+| Russell reconstitution | proxy-null, underpowered on years (D-748) |
+| prediction markets | null where testable, untested where the archive is closed, unplaceable from the UK (D-753) |
+| IPO / primary market | the pop is real and entirely in the allocated leg (US +20%, UK +12.9%); the buyable leg is −27.5%/yr (US) or flat (UK) — a fee paid to allocation, not capital (D-754) |
+Net of the whole frontier: **one candidate on a clock, one negligible retail-only mechanism, zero new edges** — and
+three share-base defects under the valuation family found and fixed along the way (D-747b/f/g). The deposit
+arithmetic in §6a still binds every row.
+
 ## 6. What would change this answer
 
 - A forward clock clears its pre-registered rule → P3 activates for that spec only.
