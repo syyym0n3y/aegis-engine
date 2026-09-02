@@ -48,6 +48,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.5, note: "CEF widest-discount excess-over-universe t (CANDIDATE upper bound, 8.09, D-750; live via refresh-cef)" },
   { name: "odd-lot", args: ["--allow-read", "scripts/odd-lot-tender.ts"], pick: /ERA 2020\+ \(CLEAN\): n=\d+ \| prem>0 \d+ \((\d+)%\)/i,
     moved: (p, n) => Math.abs(n - p) > 15, note: "odd-lot tenders 2020+ share priced above market, % (real/retail-only/negligible, 50, D-751; reads cached JSON — refetch is manual)" },
+  { name: "prediction-markets", args: ["--allow-read", "scripts/prediction-markets.ts"], pick: /\(b\) LONGSHOT LEG[\s\S]*?GROSS mean -?\d+\.?\d*%\/contract\s+t -?\d+\.?\d*\s+CLUSTERED t (-?\d+\.?\d*)/,
+    moved: (p, n) => Math.abs(n - p) > 1.5, note: "Polymarket longshot-short @30d gross clustered t (NULL, seller loses, -2.16, D-753; cached JSON — refetch is manual)" },
 ];
 
 let state: Record<string, number> = {};
