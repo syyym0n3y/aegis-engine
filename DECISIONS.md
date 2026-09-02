@@ -15610,3 +15610,22 @@ acceleration — the CONTINUITY-LAW failure — and it is irreversible; the agen
 to. Lineage `D-750-cef-discount` corrected: Test A is descriptive support for the mechanism, not independent
 evidence. The honest acceleration for D-750 is history-side: the within-window dead-fund calibration D-750b left
 underpowered. **The wait cannot be shortened without lying, and it will not be.**
+
+## D-752 — securities lending income, quantified: UNTESTED-ON-RATE; a rounding line on a small account; the CEF hard-to-borrow folklore refuted on our own data
+Frontier row "paid for providing a service." `scripts/lending-income.ts`. Rate source researched before anything was
+assumed: IBKR / iBorrowDesk hosts were not allowlisted (not fetched — patterns reported; iBorrowDesk added and probed
+after, see below); Yahoo `quoteSummary` is crumb-gated (401 ×3) and gives demand, never a fee. So the fee is ASSUMED
+from broker disclosures (GC 25–50bp; warm 1–5%; hot 5–50%+; IBKR lender share 50%) and multiplied by an on-loan
+probability most write-ups omit. Demand is MEASURED on held short interest (settlement 2026-07-31, 722 liquid names):
+44.6% GC / 35.2% warm / **20.2% hot**, median short 5.10% of split-consistent shares outstanding; the hot share is
+**flat across liquidity halves** (22.3% vs 22.5%).
+| portfolio | income to the HOLDER, %/yr (best..worst, assumed rates) | capital for $100/mo |
+|---|---|---|
+| broad ETF | **0.00–0.01** (lending revenue accrues to the fund) | $9.6M .. never |
+| equal-weight liquid single names | 0.21–4.91 | $24k .. $569k |
+| widest-discount CEF tercile (D-750) | **0.00–0.02** — 89/89 covered: 88 GC, 1 warm, 0 hot | $5.1M .. $427M |
+What the lender bears, as facts: shares leave SIPC coverage; voting transfers; dividends become substitute payments
+taxed as ordinary income (can exceed the whole GC fee); loans are terminable so the income is zero whenever nobody
+wants the shares. Verdict: real, forecast-free, **a rounding line on a small account** (D-746's $60k threshold
+binds); material only on capital that already is. The binding unknown is P(on loan), which only an enrolled
+statement can supply. Lineage `D-752-lending-income`. FRONTIER: MEASURED (bracket).
