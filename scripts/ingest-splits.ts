@@ -25,7 +25,7 @@
 // GWAV ratio < 1 (the reverse split that produced the $80T artifact). RED if either fails.
 //
 // SEQUENTIAL by mandate — one Yahoo request at a time with a sleep between. No parallelism, no batching.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 
 const K = declareKnobs("ingest-splits", [
   { name: "SPLIT_SLEEP_MS", def: "150", note: "sleep between sequential Yahoo requests" },
@@ -151,9 +151,11 @@ for (let i = 0; i < work.length; i++) {
 console.log(`    DONE fetching: ${fetched} symbols marked, ${withSplits} carry splits, ${splitRows} split rows written, ${failed} unknown to Yahoo`);
 
 // ---------- 4. POSITIVE CONTROLS (D-641) — a broken query returns zero, and so does a universe with no splits ----------
+// D-757: a POSITIVE CONTROL read that swallows its own transport failure returns zero and so FAKES the very
+// failure it exists to detect. Strict read: retry, then throw.
+const { q: sq } = mkStrictRead(OWNED, hdr);
 const readSeries = async (sym: string) =>
-  await fetch(`${OWNED}/trd_macro_series?series=eq.${encodeURIComponent("split:" + sym)}&select=d,v&order=d.asc`, { headers: hdr })
-    .then((r) => r.ok ? r.json() : []) as { d: string; v: number }[];
+  await sq(`trd_macro_series?series=eq.${encodeURIComponent("split:" + sym)}&select=d,v&order=d.asc`) as { d: string; v: number }[];
 
 const aapl = await readSeries("AAPL");
 const gwav = await readSeries("GWAV");

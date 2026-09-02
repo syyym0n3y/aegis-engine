@@ -24,7 +24,7 @@
 // event is kept only when the ticker's FIRST BAR IN THE PANEL falls within [file_date-5d, file_date+30d] — i.e. the
 // panel captured the name starting to trade. That both selects IPOs and guarantees we are measuring from inception
 // rather than from a truncated history (the D-733 spin-off discipline, same failure mode).
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials } from "../supabase/functions/_shared/trial-ledger.ts";
 
 const K = declareKnobs("ipo-pop", [
@@ -158,8 +158,10 @@ console.log(`    ${withTicker.length.toLocaleString()} registrants carry a resol
 // (2) INCEPTION TEST + PRICES from trd_bars_deep
 // ─────────────────────────────────────────────────────────────────────────────
 type Bar = number[];
+// D-757: strict read — a transport failure retries then THROWS, never becomes an empty result.
+const { q: sq } = mkStrictRead(OWNED, hdr);
 const barsOf = async (sym: string): Promise<Bar[]> => {
-  const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr }).then((x) => x.ok ? x.json() : []).catch(() => []);
+  const r = await sq(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`);
   return (r?.[0]?.bars || []).filter((b: Bar) => b[4] > 0 && b[1] > 0);
 };
 const iwmBars = await barsOf("IWM");

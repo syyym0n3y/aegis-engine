@@ -9,7 +9,7 @@
 // cleared the gates; the liquid, retail-tradable universe is efficiently priced; every real effect found lives in
 // illiquid names or needs paid borrow. So for MOST instruments the honest odds are "no edge — negative EV after
 // costs", and that IS the answer, not a hole to fill. The few survivors are named, on forward clocks, with risk shown.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 declareKnobs("market-odds-map", []);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -22,7 +22,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 const one = async (p: string) => { const r = await fetch(`${OWNED}/${p}`, { headers: { ...hdr, Prefer: "count=exact", Range: "0-0" } }); return +(r.headers.get("content-range")?.split("/")[1] ?? 0); };
 
 // The base rate — the headline odds for any trader, from this programme's own ledger.

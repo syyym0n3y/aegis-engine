@@ -28,7 +28,7 @@
 //  POSITIVE-CONTROL RULE (D-641): every zero-shaped query carries a control that must return non-zero.
 //  BREADTH LAW (D-443): a thin cross-section is UNTESTED, not evidence.
 //  MECHANISM LAW (D-597): DESCRIPTIVE ONLY. No pre-registration exists for either mechanism; no causal claim is made.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials } from "../supabase/functions/_shared/trial-ledger.ts";
 
 const K = declareKnobs("forced-selling", [
@@ -66,9 +66,11 @@ const pctPos = (a: number[]) => (100 * a.filter((x) => x > 0).length) / a.length
 const f = (x: number, n = 2) => (Number.isFinite(x) ? x.toFixed(n) : "  n/a");
 
 type Bar = number[];
-async function bars(sym: string): Promise<Bar[]> {                       // plumbing-ok: single ordered series per symbol
-  const raw = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr })
-    .then((x) => x.json()).catch(() => []);
+// D-757: strict reads throughout — the hand-rolled retry below was written for exactly this failure (D-756) and is
+// now the shared helper, so every read in this file inherits it rather than only the one that got caught.
+const { q: sq, qAll } = mkStrictRead(OWNED, hdr);
+async function bars(sym: string): Promise<Bar[]> {
+  const raw = await sq(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`);
   return (raw?.[0]?.bars || []).filter((b: Bar) => b[4] > 0);
 }
 /** last index whose date <= d, or -1 */
@@ -241,13 +243,9 @@ console.log(`  DESCRIPTIVE ONLY (D-597). The unit of observation is the YEAR, no
 console.log(`  same seasonal event, and pooling name-level returns would count one January as thousands of observations.\n`);
 
 // universe
-const esyms: string[] = [];
-for (let off = 0;; off += 1000) {   // plumbing-ok: paginated symbol list, one ordered read
-  const p = await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol&offset=${off}&limit=1000`, { headers: hdr }).then((r) => r.json()).catch(() => []);
-  if (!Array.isArray(p) || !p.length) break;
-  for (const r of p as { symbol: string }[]) esyms.push(r.symbol);
-  if (p.length < 1000) break;
-}
+// D-757: qAll checks its own walk against the server's Content-Range total, so a page that fails mid-walk is an
+// exception rather than a short universe. This is the exact read that returned 8,600 of 15,502 (D-756).
+const esyms: string[] = (await qAll(`trd_bars_deep?asset_class=eq.equity&select=symbol&order=symbol.asc`) as { symbol: string }[]).map((r) => r.symbol);
 assertNonEmpty("equity panel symbols", esyms, 1000);
 // drop warrants / units / rights / preferreds by suffix convention. This is a HEURISTIC and is stated as one: the
 // panel's `equity` class also contains ETFs, which no suffix rule removes. The $vol and price floors reduce but do
@@ -265,18 +263,8 @@ for (let i = 0; i < cand.length; i += BATCH) {
   // downstream, with no error and no missing-row count. This was observed: one run scanned 15,502 symbols and another
   // 8,600, because the local PostgREST dropped mid-scan and `.catch(() => [])` turned that into an empty batch. Batches
   // now retry and then THROW — a partial panel is UNTESTED, never a quietly different answer.
-  let rows: { symbol: string; bars: Bar[] }[] | null = null;
-  for (let att = 0; att < 4 && rows === null; att++) {
-    try {
-      const r = await fetch(`${OWNED}/trd_bars_deep?symbol=in.(${chunk.map((s) => `"${s}"`).join(",")})&select=symbol,bars`, { headers: hdr });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      rows = await r.json();
-    } catch (e) {
-      if (att === 3) throw new Error(`panel scan FAILED at offset ${i} after 4 attempts (${e}) — refusing to report a partial universe`);
-      await new Promise((res) => setTimeout(res, 1500 * (att + 1)));
-    }
-  }
-  for (const row of rows!) {
+  const rows = await sq(`trd_bars_deep?symbol=in.(${chunk.map((s) => `"${s}"`).join(",")})&select=symbol,bars`) as { symbol: string; bars: Bar[] }[];
+  for (const row of rows) {
     scanned++;
     const b = (row.bars || []).filter((x) => x[4] > 0);
     if (b.length < 120) continue;

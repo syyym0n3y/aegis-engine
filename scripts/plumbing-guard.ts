@@ -43,6 +43,32 @@ function lint(fileAbs:string,src:string){
     const cm=L.match(/Math\.sqrt\(\s*2\s*\*\s*Math\.log\(\s*(\d[\d_]*)\s*\)/);
     if(cm&&+cm[1].replace(/_/g,"")<1_000_000)
       hits.push({file,line:i+1,rule:"frozen-ceiling",snip:`deflation ceiling from literal N=${cm[1]} — the bar is frozen below the program's real trial count`});
+    // RULE 6 — SILENT READ (D-756/757). The mirror of RULE 2, and the more dangerous half. RULE 2 caught a swallowed
+    // WRITE; nothing caught a swallowed READ. The near-universal helper
+    //     const q = (p) => fetch(`${OWNED}/${p}`,{headers}).then(r => r.ok ? r.json() : []).catch(() => [])
+    // turns connection-refused, 500, 502, 429 and a truncated mid-restart body into an EMPTY ARRAY, which is
+    // arithmetically indistinguishable from "the market has nothing here". On 2026-09-02 PostgREST OOM-restarted
+    // twice and a 15,502-symbol universe silently became 8,600 with no error raised and no exception thrown; the
+    // script finished and printed a coherent, wrong number (D-756).
+    // WHY assertNonEmpty DOES NOT COVER THIS: it catches the ALL-empty case. A PARTIAL universe — batch 7 of 40
+    // returning [] — leaves a non-empty, plausible, wrong panel, and that is the case that produces false NULLS.
+    // The fix is `mkStrictRead` in _shared/run-preconditions.ts: retry the transient, THROW on the persistent.
+    // SCOPED TO OUR OWN DATABASE deliberately. A swallowed read of a THIRD-PARTY feed (Yahoo, EDGAR) is often a
+    // legitimate "this symbol has no data" and flagging those would bury the real signal in noise — the mistake
+    // RULE 4 made on its first run and had to be narrowed out of.
+    {
+      // The window must not reach past THIS statement. A first version looked back two lines unconditionally, and the
+      // two lines above the synthetic read happened to be POST writes — whose `method:"POST"` tripped the write
+      // exclusion and silenced the rule entirely in its own self-test. When the fetch is on the same line, that line
+      // IS the statement; only a wrapped chain needs the lookback.
+      const win = /fetch\(/.test(L) ? L : lines.slice(Math.max(0, i - 2), i + 1).join(" ");
+      const swallowsRead = /\.catch\(\s*\(\s*\)\s*=>\s*(\[\s*\]|null)\s*\)/.test(L)
+        || /\.ok\s*\?[^:]*\.json\(\)\s*:\s*(\[\s*\]|null)/.test(L);
+      const ownedRead = /\$\{(OWNED|REST|SB|O)\}|rest\/v1/.test(win) && /fetch\(/.test(win)
+        && !/method:\s*"(POST|PATCH|DELETE|PUT)"/.test(win);
+      if (swallowsRead && ownedRead)
+        hits.push({file,line:i+1,rule:"silent-read",snip:"read of our own database whose transport failure becomes [] — an infrastructure hiccup is indistinguishable from a null result (use mkStrictRead)"});
+    }
   }
   // RULE 4 — FUNDAMENTALS READ WITH NO POINT-IN-TIME FILTER (D-704). CLAUDE.md states look-ahead is "structurally
   // impossible ... every feature carries the effectiveDate it was legally knowable (trd_features), and the backtest
@@ -96,19 +122,22 @@ if(SELFTEST){
   // The last two lines are the D-719 inert-upsert case: w1 has NO on_conflict (must fire), and the very next line w2
   // DOES have on_conflict — with the old forward window w2's target falsely cleared w1 (the trd-ripshort-scan miss).
   // Both writes are .ok-checked so ONLY inert-upsert fires, not silent-write. w2 uses merge-duplicates so the rule's
-  // regex never matches it. Expect: truncation + silent-write + frozen-ceiling + inert-upsert = 4.
+  // regex never matches it. Expect: truncation + silent-write + frozen-ceiling + inert-upsert + silent-read = 5.
   const bad=`const a=await fetch(\`\${OWNED}/trd_bars_deep?select=symbol,bars&limit=150\`,{headers:h});
 await fetch(\`\${OWNED}/trd_x\`,{method:"POST",body:b}).catch(()=>{});
 const ceil=Math.sqrt(2*Math.log(1000));
 // plumbing-ok: audited — existence check
 const c=await fetch(\`\${OWNED}/trd_y?limit=500\`,{headers:h});
 const w1=await fetch(\`\${OWNED}/trd_z\`,{method:"POST",headers:{...h,Prefer:"resolution=ignore-duplicates"},body:b});if(!w1.ok)throw 0;
-const w2=await fetch(\`\${OWNED}/trd_w?on_conflict=id\`,{method:"POST",headers:{...h,Prefer:"resolution=merge-duplicates"},body:b});if(!w2.ok)throw 0;`;
+const w2=await fetch(\`\${OWNED}/trd_w?on_conflict=id\`,{method:"POST",headers:{...h,Prefer:"resolution=merge-duplicates"},body:b});if(!w2.ok)throw 0;
+const s1=await fetch(\`\${OWNED}/trd_a?select=x\`,{headers:h}).then(r=>r.ok?r.json():[]);
+// plumbing-ok: audited — third-party feed, empty is a real answer
+const s2=await fetch(\`\${OWNED}/trd_b?select=x\`,{headers:h}).catch(()=>[]);`;
   const before=hits.length;
   lint("SELFTEST.ts",bad);
-  console.log(`SELFTEST: ${hits.length-before} violations detected (expect 4 — the plumbing-ok line is waived):`);
+  console.log(`SELFTEST: ${hits.length-before} violations detected (expect 5 — both plumbing-ok lines are waived):`);
   for(const h of hits.slice(before)) console.log(`  ${h.rule.padEnd(15)} ${h.snip}`);
-  if(hits.length-before!==4){console.error("!! selftest mismatch");Deno.exit(2);}
+  if(hits.length-before!==5){console.error("!! selftest mismatch");Deno.exit(2);}
   Deno.exit(1);   // selftest is a deliberate red
 }
 // RATCHET (the repo's own pattern — "a CI ratchet keeps unguarded-paid red"). ~150 of these sites predate the rules and

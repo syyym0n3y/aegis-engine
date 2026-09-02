@@ -9,7 +9,7 @@
 // Reported both ways: (a) does flow PREDICT next-week return (the tradable question); (b) does last week's RETURN
 // predict this week's flow (the flow-follows-price question, descriptive). HONESTY: single instrument, GROSS unless
 // NET labelled, turnover/drag, time underwater, RUINED check, era halves, SIGN prior stated first, 2 trials.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 declareKnobs("gld-flow", [{ name: "RT_BP", def: "5", note: "round-trip GC futures cost in bp" }]);
 const RT_BP = Number(Deno.env.get("RT_BP") || "5");
 
@@ -23,7 +23,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 
 type Bar = [number, number, number, number, number, number];
 const iso = (ts: number) => new Date(ts * 1000).toISOString().slice(0, 10);

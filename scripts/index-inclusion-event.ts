@@ -18,7 +18,7 @@
 // LIQUIDITY LAW (D-419/423): the promotable number, if there were one, is the LIQUID tercile's, not the pooled one.
 // COVERAGE LAW (D-641/645): events whose ticker has no panel bars are reported as a coverage statement with the
 // selection mechanism named — they are NOT dropped silently.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials } from "../supabase/functions/_shared/trial-ledger.ts";
 
 const K = declareKnobs("index-inclusion-event", [
@@ -46,9 +46,10 @@ const tstat = (a: number[]) => (a.length < 2 ? 0 : mean(a) / ((sd(a) || 1e-12) /
 const med = (a: number[]) => { const s = [...a].sort((x, y) => x - y); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
 const pctPos = (a: number[]) => (100 * a.filter((x) => x > 0).length) / a.length;
 
+// D-757: strict read — a transport failure retries then THROWS, never becomes an empty result.
+const { q: sq } = mkStrictRead(OWNED, hdr);
 async function bars(sym: string): Promise<number[][]> {
-  const raw = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr })
-    .then((x) => x.json()).catch(() => []);
+  const raw = await sq(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`);
   return (raw?.[0]?.bars || []).filter((b: number[]) => b[4] > 0);
 }
 

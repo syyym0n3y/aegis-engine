@@ -16,7 +16,7 @@
 //     for naming consistency with the G6; the instrument is stated here so the proxy is never read as the real thing.
 //     EM deliverable-forward pricing also carries capital-control and NDF-basis effects this rate differential does
 //     not capture — the differential is a RESEARCH PROXY for EM carry, not a placeable instrument.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 declareKnobs("fx-carry-em", [{ name: "RT_BP", def: "15", note: "round-trip FX cost in bp (EM ~10-25bp, majors ~2-6bp)" }]);
 const RT_BP = Number(Deno.env.get("RT_BP") || "15");
 
@@ -30,7 +30,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 
 // Yahoo FX convention: invert=false means the symbol is USD-per-foreign (its return IS the currency's return vs USD);
 // invert=true means foreign-per-USD, so the currency's return vs USD is the return of 1/price.

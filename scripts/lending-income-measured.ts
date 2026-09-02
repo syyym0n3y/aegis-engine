@@ -17,7 +17,7 @@
 // DESCRIPTIVE ONLY (MECHANISM LAW, D-597). No lineage row, no pre-registration, no promotion, no advice.
 // lending-income.ts is left untouched, so the assumed-rate and measured-rate answers can be read side by side.
 
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 
 const K = declareKnobs("lending-income-measured", [
   { name: "LIM_DVOL", def: "1000000", note: "liquid-universe floor: 60-day MEDIAN dollar volume, USD (matches the ingest)" },
@@ -38,7 +38,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 const pct = (x: number) => `${(100 * x).toFixed(3)}%`;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const quant = (a: number[], p: number) => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * (s.length - 1)))]; };

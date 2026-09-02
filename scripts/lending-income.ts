@@ -19,7 +19,7 @@
 // POSITIVE-CONTROL RULE (D-641): every count that could be zero is paired with a control that must not be.
 // COVERAGE LAW: a portfolio whose names are absent from the short-interest panel is UNTESTED, not "0% income".
 
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 import { adjShares, loadSplits, type Split } from "../supabase/functions/_shared/shares-adj.ts";
 
 const K = declareKnobs("lending-income", [
@@ -41,7 +41,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const pct = (x: number) => `${(100 * x).toFixed(2)}%`;
 

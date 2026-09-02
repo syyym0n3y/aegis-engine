@@ -118,3 +118,117 @@ export function assertTouched(label: string, touched: number, expected: number):
     Deno.exit(1);
   }
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// STRICT READS (D-757) — the ninth precondition, and the one the other eight could not see.
+//
+// EVIDENCE. D-756: a swallowed read shrank a 15,502-symbol universe to 8,600 with no error and no exception, during a
+// PostgREST OOM restart. The script ran to completion and printed a coherent, wrong answer. The near-universal helper
+//     const q = (p) => fetch(`${OWNED}/${p}`, {headers}).then(r => r.ok ? r.json() : []).catch(() => [])
+// converts EVERY transport failure — connection refused, 500, 502, 429, a mid-restart truncated body — into an empty
+// array that is arithmetically indistinguishable from "the market has nothing here". On a day the database restarts
+// twice, that manufactures false NULLS across an entire session's research.
+//
+// WHY assertNonEmpty IS NOT ENOUGH, stated precisely because it is the obvious objection: assertNonEmpty catches the
+// ALL-EMPTY case, where every read failed. It cannot catch a PARTIAL universe — batch 7 of 40 returning [] leaves a
+// non-empty, plausible, wrong panel. The all-empty case is the loud one and was never the dangerous one.
+//
+// The rules this encodes:
+//   (1) a READ FAILURE IS AN EXCEPTION, never a value. No path returns [] for a failure, ever.
+//   (2) transient failures (network error, 5xx, 429) are RETRIED — an OOM restart is recoverable and should not
+//       abort an hour of work — but a failure that survives the retries THROWS with the path and the status.
+//   (3) a PAGED read asserts its own completeness against the server's own Content-Range total, so a partial page
+//       walk cannot pass silently. This is the POSITIVE-CONTROL RULE applied to plumbing: the server is asked how
+//       many rows exist and the answer is checked, rather than trusting that the loop terminated for a good reason.
+//   (4) a paged read without `order=` is refused (plumbing RULE 1): un-ordered pagination returns an arbitrary and
+//       possibly overlapping sample of physical row order.
+//   (5) assertCoverage states the shortfall in the units the caller cares about (symbols, dates, events), because
+//       "got 8,600" is only alarming next to "requested 15,502".
+
+export interface StrictReadOpts {
+  retries?: number;          // attempts BEYOND the first (default 3 total attempts)
+  backoffMs?: number;        // base backoff, doubled per attempt (default 250)
+  fetchImpl?: typeof fetch;  // injectable for tests
+  sleep?: (ms: number) => Promise<void>;
+}
+export interface StrictRead {
+  /** One read. Returns parsed JSON. THROWS on any non-OK after retries — never returns [] for a failure. */
+  q: (path: string, opts?: RequestInit) => Promise<any>;
+  /** Paged read. Requires `order=`; asserts the walked row count equals the server's Content-Range total. */
+  qAll: (pathWithOrder: string, pageSize?: number) => Promise<any[]>;
+}
+
+const TRANSIENT = (s: number) => s >= 500 || s === 429 || s === 408;
+
+export function mkStrictRead(owned: string, hdr: Record<string, string>, o: StrictReadOpts = {}): StrictRead {
+  const attempts = (o.retries ?? 2) + 1;
+  const base = o.backoffMs ?? 250;
+  const F = o.fetchImpl ?? fetch;
+  const nap = o.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+
+  async function raw(path: string, opts: RequestInit = {}): Promise<Response> {
+    const url = path.startsWith("http") ? path : `${owned}/${path.replace(/^\//, "")}`;
+    let last = "";
+    for (let a = 1; a <= attempts; a++) {
+      let res: Response;
+      try {
+        res = await F(url, { ...opts, headers: { ...hdr, ...(opts.headers as Record<string, string> ?? {}) } });
+      } catch (e) {
+        last = `network error: ${e instanceof Error ? e.message : String(e)}`;
+        if (a < attempts) { await nap(base * 2 ** (a - 1)); continue; }
+        throw new Error(`STRICT READ FAILED after ${a} attempt(s): ${url}\n   ${last}`);
+      }
+      if (res.ok) return res;
+      last = `HTTP ${res.status} ${res.statusText}: ${(await res.text().catch(() => "")).slice(0, 200)}`; // plumbing-ok: error-body read, failure already established
+      if (TRANSIENT(res.status) && a < attempts) { await nap(base * 2 ** (a - 1)); continue; }
+      throw new Error(`STRICT READ FAILED after ${a} attempt(s): ${url}\n   ${last}`);
+    }
+    throw new Error(`STRICT READ FAILED: ${url}\n   ${last}`);
+  }
+
+  const q = async (path: string, opts?: RequestInit) => await (await raw(path, opts)).json();
+
+  const qAll = async (pathWithOrder: string, pageSize = 1000): Promise<any[]> => {
+    if (!/[?&]order=/.test(pathWithOrder)) {
+      throw new Error(`qAll refuses an unordered paged read (plumbing RULE 1): ${pathWithOrder}\n   Without order=, page boundaries follow physical row order and the walk may skip and duplicate rows.`);
+    }
+    const rows: any[] = [];
+    let total = -1;
+    for (let from = 0; ; from += pageSize) {
+      const res = await raw(pathWithOrder, {
+        headers: { Range: `${from}-${from + pageSize - 1}`, "Range-Unit": "items", Prefer: "count=exact" },
+      });
+      const cr = res.headers.get("content-range") ?? "";
+      const m = cr.match(/\/(\d+|\*)\s*$/);
+      if (m && m[1] !== "*") total = Number(m[1]);
+      const page = await res.json();
+      if (!Array.isArray(page)) throw new Error(`qAll expected an array page, got ${typeof page}: ${pathWithOrder}`);
+      rows.push(...page);
+      if (page.length < pageSize) break;
+      if (total >= 0 && rows.length >= total) break;
+    }
+    if (total < 0) {
+      throw new Error(`qAll got no Content-Range total from the server for ${pathWithOrder} — completeness is unverifiable, which is the failure this helper exists to prevent.`);
+    }
+    if (rows.length !== total) {
+      throw new Error(`qAll INCOMPLETE: walked ${rows.length} row(s) but the server reports ${total} for ${pathWithOrder}. A partial page walk is a partial universe, not a null result.`);
+    }
+    return rows;
+  };
+
+  return { q, qAll };
+}
+
+/**
+ * A partial universe is not a null result. Throws with the shortfall stated in the caller's own units.
+ * D-756: 8,600 of 15,502 symbols (55.5%) read as "the market" for an entire analysis.
+ */
+export function assertCoverage(label: string, got: number, requested: number, minFrac = 0.98): void {
+  const frac = requested > 0 ? got / requested : 0;
+  if (frac < minFrac) {
+    throw new Error(
+      `!! ${label}: COVERAGE SHORTFALL — got ${got} of ${requested} (${(100 * frac).toFixed(1)}%, floor ${(100 * minFrac).toFixed(1)}%); ` +
+      `${requested - got} missing. A partial read is evidence about our PLUMBING, not about the market (COVERAGE LAW).`,
+    );
+  }
+}

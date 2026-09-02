@@ -13,7 +13,7 @@
 // (universe sensitivity does not apply; a cross-sectional claim is UNTESTED). (2) Signal at month-end t, position
 // held t -> t+1 (lag-1 by construction). (3) Coverage ends 2024-04 (EIA XLS mirror), stated. (4) Turnover, cost drag,
 // time underwater and worst DD beside every return. (5) Pre-stated SIGN prior: backwardation -> positive return.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 declareKnobs("commodity-roll", [{ name: "RT_BP", def: "10", note: "round-trip futures cost in bp (CL/NG ~5-15bp incl. slippage)" }]);
 const RT_BP = Number(Deno.env.get("RT_BP") || "10");
 
@@ -27,7 +27,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 
 // month-end value of a daily series (last obs in each calendar month)
 async function monthEnd(series: string): Promise<Map<string, number>> {

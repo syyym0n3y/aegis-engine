@@ -9,7 +9,7 @@
 // the largest w whose drawdown they will GENUINELY hold — the table shows exactly what the smaller w costs. This is
 // the engine's measured output on the held history, not advice; nobody here is a licensed adviser.
 // POSITIVE CONTROL: w=100% must reproduce the ladder harvester's buy-and-hold figure (D-735) — same deposit, same dates.
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 declareKnobs("holdability-sizer", [
   { name: "DEPOSIT", def: "150", note: "monthly deposit, $" },
   { name: "START", def: "1993-01-29", note: "first month (SPY inception; matches ladder-harvester)" },
@@ -27,7 +27,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 
 type Bar = [number, number, number, number, number, number];
 const iso = (ts: number) => new Date(ts * 1000).toISOString().slice(0, 10);

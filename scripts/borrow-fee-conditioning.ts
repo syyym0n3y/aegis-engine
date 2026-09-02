@@ -21,7 +21,7 @@
 // LIQUIDITY LAW (D-634): both halves measured, never one.  TURNOVER LAW (D-654): stated, not omitted.
 // DESCRIPTIVE ONLY (MECHANISM LAW, D-597). No pre-registration, no lineage row, no promotion.
 
-import { assertNonEmpty, declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { assertNonEmpty, declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 
 const K = declareKnobs("borrow-fee-conditioning", [
   { name: "BFC_DVOL", def: "1000000", note: "liquid-universe floor: 60-day MEDIAN dollar volume, USD" },
@@ -40,7 +40,10 @@ async function jwt() {
   return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 const hdr = await (async () => { const t = await jwt(); return { Authorization: `Bearer ${t}`, apikey: t }; })();
-const q = async (p: string) => await fetch(`${OWNED}/${p}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-757: STRICT read. A transport failure now RETRIES and then THROWS with the path and status, instead of
+// returning [] — which was indistinguishable from "the market has nothing here" (D-756: a PostgREST OOM
+// restart silently shrank a 15,502-symbol universe to 8,600 and the run finished, printing a wrong number).
+const { q } = mkStrictRead(OWNED, hdr);
 const pct = (x: number) => `${(100 * x).toFixed(3)}%`;
 const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / (a.length || 1);
