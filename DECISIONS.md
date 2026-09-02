@@ -15584,3 +15584,29 @@ Verdict: **real, retail-only, financially negligible** — below the deposit ari
 but the first measured thing that is capacity-INVERTED. Lineage `D-751-odd-lot-tender`. FRONTIER: MEASURED. The
 pooled pre-2020 number is not the quotable one. The fetch (997 EDGAR documents) is NOT in the daily runner; the
 analysis reads the cached JSON and is retest-wired.
+
+## D-747d — value/payout families RE-EARNED on split-consistent caps (PASS=eq): 220 specs, 0 survivors; the writes proven by xmin because the ledger cannot say
+`PASS=eq` re-ran the XSEC_EQ grid on the corrected panel (273,360 rows; 7,723 splits loaded; ftd 10.8M day-rows).
+After-state of the seven mc-derived signals (10 specs each): bm t −1.74..−0.70; ep −2.23..0.64; cfo_yield −0.87..1.63;
+fcf_yield −0.47..2.02; buyback_yield 0.47..1.59; div_yield −0.68..1.03; shareholder_yield −0.03..0.94 — **0 survivors,
+0 ruined**; the price/volume controls (mom12_1, gross_prof) are unchanged in kind. The value/payout family is a null
+on honest caps, as it was on contaminated ones — the contamination inflated nothing far enough to matter here, and
+that is a finding, not a relief. Trial counter unchanged by design (same spec_keys → idempotent; a re-run of the same
+spec is not a new trial). **A ledger defect found by asserting the run landed (PRECONDITION LAW):** `trd_factory` has
+`run_at` (insert default) and no `updated_at`; `merge-duplicates` overwrites the statistics silently, so the ledger
+can neither prove a re-run landed nor show what the numbers were before. Proven this time via Postgres `xmin` (eq
+rows at txids 43668–43888 today vs untouched rows at 27538–33896). Adding `updated_at` + a `prev_*` snapshot is a
+schema change → operator gate; recorded as debt. `PASS=pairs`, `gbmexport`, `equity-nonlinear` still running.
+
+## D-750c — the CEF companion clock was NOT registered: Test A's t 12.56 is pseudo-replication; the existing clock is already the most powerful available
+Asked to register a faster, independently pre-committed clock on the within-fund Test A statistic ("~250 fund-
+observations a month"), the build ran the POWER calculation first and it refuted the premise. Fund-months within a
+month ride the same market move; the correct unit is the month. Clustered by month: full panel t **2.29** (n 275),
+clean 2019-10+ window t **1.54** (n 84) — not 12.56. Power at HALF the in-sample effect: **305 forward months**; the
+best repair (same-month demeaning) still needs 106. The existing `fwd-cef-discount` (cross-sectional demean, σ_month
+≈ 80bp) is the most powerful clock this panel affords, and its 24-month horizon has 80% power only near the FULL
+in-sample effect. Registering a clock whose own power says 25 years would be a promise nobody can check dressed as
+acceleration — the CONTINUITY-LAW failure — and it is irreversible; the agent stopped, wrote nothing, and was right
+to. Lineage `D-750-cef-discount` corrected: Test A is descriptive support for the mechanism, not independent
+evidence. The honest acceleration for D-750 is history-side: the within-window dead-fund calibration D-750b left
+underpowered. **The wait cannot be shortened without lying, and it will not be.**
