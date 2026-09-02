@@ -224,6 +224,15 @@ while true; do
   # at the resolution held, and one minute bar resolves it.
   deno run --allow-net --allow-env --allow-write --allow-read ../scripts/ingest-nq-yahoo.ts > ../data/nq-intraday.log 2>&1 \
     || echo "$(date -u +%FT%TZ) NQ INTRADAY ACCRUAL FAILED — a rolling window was missed and cannot be refetched"
+  # BORROW FEES (iBorrowDesk): per-name borrow fee (%/yr) + lendable shares, DAILY, for the liquid US universe plus
+  # the D-750 CEF set. Closes the driver register's last BLOCKED-Paid row — "Paid" was a lead, not a fact.
+  # MEASURED SERVER CONSTRAINT: the host serves ~100 requests per window and then returns HTTP 444 for about an hour,
+  # regardless of spacing (verified twice — a 150ms run and a 1,200ms run were both cut off near 100 requests). So
+  # this is a BUDGETED ACCRUAL, not a sweep: BF_BUDGET=90 names per run in priority order (most-expensive controls,
+  # then the D-750 CEF universe, then liquid equities by descending dollar volume), resuming where the last run
+  # stopped. The intended ~4,100-name universe therefore takes ~46 daily runs to fill, and the script PRINTS its panel
+  # completeness every run so a partial panel can never be read as a complete one. Cheap (~2 min), safe to re-run.
+  deno run --allow-net --allow-env --allow-read ../scripts/ingest-borrow-fees.ts > ../data/borrow-fees.log 2>&1 || echo "$(date -u +%FT%TZ) BORROW FEE INGEST FAILED — short-side costs revert to assumed"
   # BAR REFRESH (D-683) — MUST PRECEDE THE ATTRIBUTION ENGINE. There was no scheduled ingest for the attribution
   # universe at all: bars were refreshed by hand, last on 2026-08-21, and the engine below ran every morning writing
   # 27 clean rows dated a week earlier while its log said "27 attribution rows written". Fetches only what is stale

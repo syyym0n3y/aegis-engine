@@ -128,7 +128,8 @@ const REG: Driver[] = [
     probe: "trd_bars_deep?asset_class=eq.equity&last_date=lt.2026-01-01&select=symbol&limit=1",
     proxy: "FILLED from Alpaca IEX with adjustment=all (D-723/724): panel 4,184 -> 19,5xx names, ~6,500 of them already ended (delisted names present). HONEST LIMIT: the IEX history reaches ~mid-2020, so names delisted BEFORE 2020 remain absent — the pre-2020 survivorship hole is narrower, not closed. The D-725 ETF clobber from this backfill was repaired and the ingest now excludes all non-equity classes." },
   { cls: "equity-single", name: "borrow cost / availability", use: "condition",
-    blocked: "Paid. Every short-side result on this board therefore assumes a borrow cost rather than observing one." },
+    probe: "trd_macro_series?series=like.borrow_fee:*&select=d&limit=1",
+    proxy: "FILLED from iBorrowDesk (scripts/ingest-borrow-fees.ts): DAILY per-name borrow fee (%/yr) and lendable shares over ~1 YEAR of history, keyless HTTPS/JSON, republishing the IBKR shortable-stocks feed. Series borrow_fee:<SYM> and borrow_avail:<SYM>. The 'Paid' label was a LEAD, not a fact — the sixth such label to fall. HONEST LIMITS: it is ONE BROKER'S retail-facing indicative rate (a lendable-supply proxy for a retail account), not the wholesale securities-lending market; history is ~1y, so any conditioning test on it is SHORT-SAMPLE and underpowered; `available` saturates at round numbers for easy names. Short-side results predating this still ASSUME a borrow cost — the assumption is now checkable, not yet re-checked." },
 ];
 
 // THE POSITIVE CONTROL, built into the register itself (D-716b). The first run reported five MISSING rows —
