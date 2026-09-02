@@ -15760,3 +15760,10 @@ assumed bracket's 4.9% ceiling is refuted on the names measured; a broad ETF is 
 line by measurement now, not by assumption. `scripts/borrow-fee-conditioning.ts` (high fee → low return) is
 **UNTESTED by its own precondition** — 194 of the 500 rows it requires; it will run itself once the trickle passes
 the floor. P(on loan) is the only unmeasured layer left. Lineage `D-752-lending-income` updated.
+
+## D-557b — the survivor guard caught the D-747 re-run nulling `book|p1|core`'s FALSE-SURVIVOR acknowledgement; re-stamped
+The re-run's `merge-duplicates` upsert wrote `note = null` on `book|p1|core`, erasing the D-557 in-place
+acknowledgement; the survivor guard went RED ("flagged survivor but the ledger disclaims this statistic") — the
+guard working exactly as designed, and the third time today the ledger's lack of versioning (D-747d) has cost
+something. The acknowledgement is restored on the row (the claim is not); the factory should carry
+acknowledgements forward on upsert rather than overwrite `note` — recorded as part of the same schema/ledger debt.
