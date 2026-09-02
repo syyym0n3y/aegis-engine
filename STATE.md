@@ -1701,10 +1701,11 @@ Wired into the daily board. Standing gaps it prints:
   hole), borrow cost (paid). Crypto options ARE held (Deribit dvol/skew/IV); gold options are not.
 
 ## Blocked on operator (free actions / config)
-- **Restore the CC Supabase project `glzzoomuhnugsiichnub` (currently INACTIVE/paused)** if the `aegis-worker` path is
-  still wanted: `trd-compute` needs redeploying with the D-747c `?splits=1` endpoint, and the deploy fails against a
-  paused project. Nothing live depends on it — the owned node runs everything — and the worker warns loudly if it
-  ever runs against the old broker. (2026-09-02)
+- **CC Supabase project `glzzoomuhnugsiichnub` is INACTIVE and the restore is blocked by UNPAID INVOICES on the
+  Supabase organisation `wasnnddzbnjailwhaxyg`** (`restore_project` → PaymentRequiredException, 2026-09-02). Settling
+  that is a payment action only the operator can take. Once restored: `supabase functions deploy trd-compute
+  --project-ref glzzoomuhnugsiichnub` (source already committed with the D-747c `?splits=1` endpoint). Nothing live
+  depends on it — the owned node runs everything — and the worker warns loudly if it ever runs against the old broker.
 - ✅ ~~Start Docker~~ — Colima installed + local DB up + `0001` verified.
 - ✅ ~~Allowlist the 4 legal data-source endpoints~~ — added (House/Senate/SEC/Alpaca).
 - **Alpaca paper** account → creds for Vault `cc_trd_alpaca_paper_*` (free, paper only).
