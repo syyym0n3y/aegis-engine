@@ -15781,3 +15781,21 @@ wrong inputs is not a verdict. Verified the writes landed via Postgres `xmin` (D
 leads are scored by the patched `factory-forward-score.ts` from their next mark. One residual fixed in the same
 commit: `equity-nonlinear.ts` printed a hardcoded ceiling "5.34 at N≈1.53M" — the stale-ceiling class the
 agent-output guard exists for — now read live from the trial counter.
+
+## D-755 — CEF tender offers at NAV: real on the tendered slice (7.5%), under 1% of the position after proration; the odd-lot carve-out barely exists; the discount widens again afterwards
+Second wrapper mechanism, adjacent to the D-750 candidate. `scripts/cef-tender.ts`: 997 SC TO filings → 265
+CEF-shaped candidates → all primary documents refetched → **92 confirmed CEF tenders priced as a % of NAV**
+(modal 98%; six levels 95–100; 3 of 5 sponsor families present as control) → **26 measurable** against held
+price+NAV (65 funds absent from the bar cache: liquidated or outside the universe — UNTESTED, not null).
+| | result |
+|---|---|
+| capture on the tendered slice | **median 7.46%**, t 11.90, 26/26 positive (median discount at filing −8.80% vs a 2pp haircut) |
+| position level after proration (~10% of shares sought) | **0.79% median**, t 7.87 — an UPPER bound (wide-discount tenders are oversubscribed) |
+| odd-lot priority | granted in **2 of 26**; $35.63 median on $693; **$71 total over 13.7 years** |
+| realised path | discount −8.80% → −10.22% (expiration) → −11.06% (+21d): narrowed in 7/26, reopened in 16/26 |
+| downside · capacity | 1/26 NAV fell more than the capture; 0 terminations; median fund volume $1.3M/day |
+| relation to D-750 | widest-tercile fund-months are 2.03× as likely to see a tender within 12 months — 207 of 22,028: **far too rare to be the convergence mechanism** |
+Two corrections recorded: the brief's premise ("the 94 dropped filings were CEFs at NAV") was wrong — only 42 were
+fund-shaped and CEF tenders had been dropped one filter earlier; and a parser defect (boilerplate "exceeds 2% of
+outstanding shares" read as shares sought in 21 events) made proration look 5× harsher until it was caught by
+inspecting the parse, not the total. Lineage `D-755-cef-tender`. FRONTIER: MEASURED, closed. Trials 3.
