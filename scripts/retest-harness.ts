@@ -44,6 +44,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "GLD flow -> gold sign-conditioned gross t (prior backwards, -1.88, D-745; live daily feed)" },
   { name: "vix-roll", args: ["--allow-read", "scripts/vix-roll.ts"], pick: /STRATEGY A[\s\S]*?gross t (-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "short-VIX (A, XIV construction) gross t (ruined, 1.89, D-749; needs ingest-vx-curve refresh)" },
+  { name: "cef-discount", args: ["--allow-read", "--allow-write", "scripts/cef-discount.ts"], pick: /EXCESS of widest over the universe\s+-?\d+\.?\d*%\/yr\s+t (-?\d+\.?\d*)/i,
+    moved: (p, n) => Math.abs(n - p) > 1.5, note: "CEF widest-discount excess-over-universe t (CANDIDATE upper bound, 8.09, D-750; live via refresh-cef)" },
 ];
 
 let state: Record<string, number> = {};

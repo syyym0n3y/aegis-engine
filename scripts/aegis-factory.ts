@@ -11,6 +11,7 @@
 // Honesty is structural: portfolio_t only (n = rebalances), pre-registered signal SIGNS (a spec tests its documented
 // direction; flipping sign to fit is a different spec and costs another trial), era gate = same net sign in >=3 of 4 eras,
 // survivor = the ledger's GENERATED column, never this script's opinion.
+import { adjShares, type Split } from "../supabase/functions/_shared/shares-adj.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"fac",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application/json",Authorization:`Bearer ${t}`,apikey:t};})();
@@ -47,11 +48,39 @@ async function loadFund(){
   for(const [,m] of fund) for(const [,a] of m) a.sort((x,y)=>x.eff<y.eff?-1:1);
   await log(`  fundamentals: ${n.toLocaleString()} facts, ${fund.size} tickers`);
 }
-function asOf(t:string,c:string,d:string):number|null{
+// asOfRec returns the VALUE together with the effective_date it was filed under. The date is not decoration: a raw
+// share count can only be restated in today's share units by knowing which splits happened after ITS FILING, not
+// after the date being priced (see supabase/functions/_shared/shares-adj.ts). asOf() is the value-only wrapper, so
+// every existing caller is unchanged.
+function asOfRec(t:string,c:string,d:string):FRec|null{
   const a=fund.get(t)?.get(c); if(!a?.length)return null;
   let lo=0,hi=a.length-1,best=-1;
   while(lo<=hi){const m=(lo+hi)>>1;if(a[m].eff<=d){best=m;lo=m+1;}else hi=m-1;}
-  return best<0?null:a[best].v;
+  return best<0?null:a[best];
+}
+function asOf(t:string,c:string,d:string):number|null{ return asOfRec(t,c,d)?.v ?? null; }
+// ---------- splits (the share-base correction) ----------
+// trd_bars_deep closes are SPLIT-ADJUSTED (today's share units); EntityCommonStockSharesOutstanding is RAW AS FILED
+// (then's units). px_adj * sh_raw is wrong by the product of every split after the filing date — GWAV 2021-05-28
+// priced out at "$80.7T" that way. The bias is directional: forward-splitters are past winners, so their past caps
+// were inflated and every past YIELD (bm, ep, cfo/fcf/buyback/div/shareholder yield) was deflated for exactly the
+// names that went on to win — a look-ahead-shaped tilt toward "value works". Split rows are ingested by
+// scripts/ingest-splits.ts; the d="1900-01-01", v=1 rows are "checked, no splits" sentinels and are inert.
+const splits=new Map<string,Split[]>();
+async function loadSplits(){
+  let n=0;
+  for(let off=0;;off+=10000){
+    const p=await fetch(`${OWNED}/trd_macro_series?series=like.split:*&select=series,d,v&order=series.asc,d.asc&offset=${off}&limit=10000`,{headers:hdr}).then(r=>r.json()).catch(()=>[]);
+    if(!Array.isArray(p)||!p.length)break;
+    for(const r of p as {series:string;d:string;v:number}[]){
+      if(r.d==="1900-01-01")continue;                       // sentinel: checked, no splits
+      if(!Number.isFinite(r.v)||!(r.v>0))continue;
+      const sym=r.series.slice(6);
+      (splits.get(sym)??splits.set(sym,[]).get(sym)!).push({d:r.d,v:r.v});n++;}
+    if(p.length<10000)break;
+  }
+  await log(`  splits: ${n.toLocaleString()} split events across ${splits.size} symbols`);
+  if(n===0)await log(`  !! WARNING: the split table is EMPTY — every market cap below is in mixed share units. See scripts/ingest-splits.ts.`);
 }
 const back=(t:string,c:string,d:string,days:number)=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return asOf(t,c,x.toISOString().slice(0,10));};
 // trailing-4-quarter sum for FLOW concepts (quarterly frames)
@@ -99,7 +128,10 @@ async function buildEqPanel(){
         const fwd=c[kn]/px-1; if(!Number.isFinite(fwd)||Math.abs(fwd)>3)continue;
         const d=new Date(b[k][0]*1000).toISOString().slice(0,10), mo=d.slice(0,7);
         const rets:number[]=[]; for(let q=Math.max(1,k-252);q<=k;q++)if(c[q-1]>0)rets.push(c[q]/c[q-1]-1);
-        const sh=asOf(r.symbol,"EntityCommonStockSharesOutstanding",d); const mc=(sh&&sh>0)?px*sh:null;
+        const shRec=asOfRec(r.symbol,"EntityCommonStockSharesOutstanding",d); const sh=shRec?.v??null;
+        // px is SPLIT-ADJUSTED; sh is RAW AS FILED. adjShares restates the raw count into today's share units using
+        // the splits that occurred after shRec.eff — the FILING date, not the pricing date.
+        const mc=(sh&&sh>0&&shRec)?px*adjShares(sh,splits.get(r.symbol),shRec.eff):null;
         const at=asOf(r.symbol,"Assets",d), eq=asOf(r.symbol,"StockholdersEquity",d);
         const ocf=ttm(r.symbol,"NetCashProvidedByUsedInOperatingActivities",d);
         const capex=ttm(r.symbol,"PaymentsToAcquirePropertyPlantAndEquipment",d);
@@ -273,7 +305,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"||PASS0==="hestonsadka"||PASS0==="eqconc"){ await loadFund(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"||PASS0==="hestonsadka"||PASS0==="eqconc"){ await loadFund(); await loadSplits(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;

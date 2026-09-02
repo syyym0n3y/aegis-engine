@@ -248,6 +248,16 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/mechanism-guard.ts; then
     echo "$(date -u +%FT%TZ) MECHANISM GUARD RED — a causal claim was asserted without a pre-registration"
   fi
+  # MARKET CAP GUARD (the share-base defect): trd_bars_deep closes are SPLIT-ADJUSTED and EDGAR cover-page share
+  # counts are RAW AS FILED, so `mc = px * sh` mixed two share bases — GWAV priced out at "$80.7T" on 2021-05-28.
+  # The error is DIRECTIONAL: later forward-splitters are past winners, so their past caps were inflated and every
+  # past yield built on them was deflated for exactly the names that went on to win — a look-ahead-shaped tilt
+  # toward "value works", from a units bug rather than a market. This ranks the top-15 by the CORRECTED cap on
+  # three fixed dates and reds if the ranking stops being recognisable, if any cap exceeds $10T, or if the split
+  # table has gone empty (which would silently turn the correction back into a no-op).
+  if ! deno run --allow-net --allow-env ../scripts/market-cap-guard.ts; then
+    echo "$(date -u +%FT%TZ) MARKET CAP GUARD RED — market caps are mixing two share bases; every mc-derived yield is contaminated"
+  fi
   # GAP REGISTER (W2): a gap marked FILLED whose data has gone stale is worse than an unfilled one — it silently
   # licenses conclusions the data no longer supports. Reds only on regressions, reports open engine gaps.
   if ! deno run --allow-net --allow-env ../scripts/gap-register-guard.ts; then

@@ -15489,3 +15489,52 @@ the result: zero roll cost on skipped roll days; ~165 dropped expiry-day returns
 through −112% into negative equity (printing maxDD −154% — the past-−100% shape `agent-output-guard` exists for).
 Ruin is now absorbing. Lineage `D-749-vix-roll`. FRONTIER: MEASURED, closed. Prior on record was "real but
 un-holdable"; the measurement is worse — not even significant gross.
+
+## D-750 — closed-end fund discounts: the first frontier mechanism that did not die on contact — CANDIDATE, NOT IDENTIFIED, UPPER BOUND
+The ledger had RULED THIS OUT UNEXAMINED (D-491's "small-account ponds"). Built without hand-picking: EDGAR N-CEN
+full-text (closed-end | N-2, the CEF-only registration form) → 1,513 filer CIKs → 454 ticker candidates → 302 with a
+Yahoo `X{T}X` NAV series ≥ 3y → 274 with price+NAV, 1998-10..2026-09. Controls GAB + PDI PASS — and the FIRST run
+returned 0 funds, caught by that control: Yahoo `range=max` silently returns MONTHLY bars whatever `interval` says;
+daily needs `period1/period2` (a broken question and a real null were indistinguishable, D-641).
+`scripts/cef-discount.ts`, 12 trials:
+| | result |
+|---|---|
+| widest-discount tercile EXCESS over the CEF universe | **+5.54%/yr, t 8.09**, 73% of months positive, N 334, breadth 197 |
+| decomposition | NAV +2.22 (t 1.08, nothing) vs **discount-change +4.12 (t 4.72)** — it is convergence |
+| liquidity, both ends | liquid 5.28 (t 6.08) · mid 4.94 · illiquid 6.49 — **survives in the liquid names** |
+| eras | pre-2016 5.93 (t 5.96) · post-2016 4.92 (t 6.16) |
+| long-only, net | 11.88%/yr after 15.3%/mo turnover at 30bp; worst DD −41%, 25 months underwater |
+| own-history z < −1 (Test A) | +77bp/month over the fund's own mean, t 12.56, 85% of 260 funds |
+| universe sensitivity | Sharpe 0.95–1.53 across four defensible universes: **1.62× → NOT IDENTIFIED** |
+Why it is NOT an edge, stated as loudly as the number: (1) **survivorship runs toward the result** — the universe is
+2019–25 filers backtested to 1998, so every fund liquidated, open-ended or merged before 2019 is absent, and those
+are disproportionately the persistently-wide-discount funds; within-panel attrition (1.1%) is not a coverage measure
+(D-645 rule 7). Every figure above is an **upper bound** until the hole is measured — attack dispatched
+(`scripts/cef-survivorship.ts`: measure the pre-2019 hole from N-SAR/N-CSR filers, survivorship-clean 2019+ window
+with membership frozen at the start, pessimistic reinstatement bracket). (2) The 1.62× universe spread. (3) t 8.09 is
+above the 5.46 ceiling in-sample — the first such number since the D-498 phantoms — which is precisely why it is
+attacked rather than believed. Forward clock `fwd-cef-discount` registered BEFORE any forward data (PRE-COMMITMENT
+LAW: liquid CEFs, promote ≥ 2.5%/yr AND t ≥ 2 after ≥ 24 months; kill ≤ 0 or a single-month excess < −8%), with a
+scorer and a live refresh. Lineage `D-750-cef-discount` (monitoring). FRONTIER: CANDIDATE. Budget note (D-746):
+long-only, no borrow, fits small size; capacity bounded at institutional scale, not at this one.
+
+## D-747b — the split-consistency fix LANDED: split table, shared helper, factory patched, 25th guard self-tested RED on the old construction; and a SECOND share-base defect found
+`scripts/ingest-splits.ts`: Yahoo `events=splits` for all 6,151 fundamentals tickers (sequential, resumable via
+sentinels) → 7,723 split events into `trd_macro_series` as `split:<SYM>`; controls AAPL 7:1 2014-06-09 and 4:1
+2020-08-31, GWAV reverse — PASS. `supabase/functions/_shared/shares-adj.ts` (`splitFactorAfter`, `adjShares`,
+`loadSplits`) with tests (AAPL 2013 filing × 28; boundary; identity; reverse; malformed) — 302 shared tests pass.
+`aegis-factory.ts`: `asOfRec()` exposes the filing date; `mc = px × adjShares(sh, splits, eff)`.
+**25th guard `market-cap-guard.ts`:** top-15-by-cap on 2015-01-02 / 2021-05-28 / latest must hold ≥ 8 known
+large caps (era-appropriate anchors — a 2026-flavoured list scored 6/15 on 2015 and would have kept the guard red
+forever) and no cap > $10T. GREEN 14/15, 10/15, 9/15. **Self-test: the OLD construction scores 0/15 with a largest
+"cap" of $2×10¹⁰ T — RED; corrected PASS.** Wired into guard-status.sh and the runner; board 25/25 green.
+**Second defect, distinct, UNFIXED and reported every run:** foreign private issuers file ORDINARY shares on the
+EDGAR cover while the panel carries the ADR price — LTM "$29.05T", BSAC "$6.63T", CCL "$27.13T", with TM/BABA/HSBC/
+AMX inflated under the $10T line. No split ratio can fix it and no form-type/ADR-ratio data is held; the guard sets
+these aside from the ranking mechanically (they out-cap every anchor AND have no post-filing split, so the split
+correction provably is not the cause) and prints them rather than dropping them. Research debt, named.
+**Still contaminated, now in fix:** `issuance` (raw share count differenced across a split) and `ftd_stress`
+(fails/raw shares) in the factory grid, and the identical `px × raw shares` in seven more scripts — including
+`factory-forward-score.ts:93`, WHICH SCORES THE LIVE PAYOUT FORWARD CLOCK. Then the value/payout families
+(`PASS=eq`, `PASS=pairs`, `PASS=gbmexport` → `equity-nonlinear.ts`) must be RE-RUN to re-earn every verdict; price/
+volume and asset-scaled families never touched `mc` and stand. Each re-run spends trials and raises the ceiling.
