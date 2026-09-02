@@ -15467,3 +15467,25 @@ Clustered by year (the honest unit): 5 yearly means, t −2.00. 2010–2020 UNTE
 names (pre-2020 survivorship hole). Verdict: PROXY-NULL / UNDERPOWERED-ON-YEARS, explicitly not "no effect" — no
 float adjustment, no share-class aggregation, no eligibility screens, all biasing a true effect toward zero. To be
 re-run on true caps once D-747's fix lands. DESCRIPTIVE ONLY; trials 1.
+
+## D-749 — the equity variance premium IN ITS INSTRUMENT (short VIX futures): ruined margined, ruined UNLEVERED, or null
+Frontier item "paid for holding a risk nobody wants at that size." The VRP was research-verified and then died as a
+crypto straddle (D-574); it had never been measured in its own placeable equity instrument. CBOE serves per-expiry
+VX history free (`scripts/ingest-vx-curve.ts`: 597 contracts, 168 monthly used, 429 weeklies marked and excluded;
+a second pass recovered 6 holiday-shifted expiries a Wednesday-only probe missed; pre-2016 files carry Settle=0 so
+price = Settle else Close, measured not assumed). Controls: 2020-03-16 front 72.63 and backwardated; 2017-06-15
+contango — PASS. `scripts/vix-roll.ts`, three constructions, 3 trials, 3,440 days 2013–2026:
+| | gross %/yr | gross t | worst day | holdability | verdict |
+|---|---|---|---|---|---|
+| A short 1m constant-maturity (XIV) | 39.35 | 1.89 | **−97.95% (2018-02-05)** — reproduces XIV within 2pp | −99.6% DD, 8.6y underwater, still | RUINED at 25% margin on **8 separate days** |
+| B short front in contango, lag-1 | 24.90 | 1.19 | **−112.64% of FULL collateral** | equity → 0 | **RUINED UNLEVERED** |
+| C short c1–c2 calendar | 4.71 | 0.96 | −15% | 9.3y underwater | NULL (net −2.28 after 6.99 roll drag) |
+| SPY, same span | 15.30 | **3.37** | −10.9% | −33.7%, 1.9y | dominates on every axis |
+The sign prior MATCHED in all three — the carry exists. Its return per unit risk is indistinguishable from noise over
+13.7 years even before a tick of cost, and the tail is a recurring CLASS (eight ruin days for A), not one event. This is
+the **fifth consecutive INSTRUMENT-LAW conversion failure** (D-530/555/556/574/749) and the first found by measuring
+the instrument FIRST rather than last. Three construction defects caught mid-build, each of which would have flattered
+the result: zero roll cost on skipped roll days; ~165 dropped expiry-day returns; and a drawdown that compounded
+through −112% into negative equity (printing maxDD −154% — the past-−100% shape `agent-output-guard` exists for).
+Ruin is now absorbing. Lineage `D-749-vix-roll`. FRONTIER: MEASURED, closed. Prior on record was "real but
+un-holdable"; the measurement is worse — not even significant gross.

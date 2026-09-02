@@ -42,6 +42,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "CL inventory-change conditioning gross t (NULL, -0.62, D-743; live weekly feed)" },
   { name: "gld-flow", args: ["scripts/gld-flow.ts"], pick: /SIGN-CONDITIONED \(gross\)\s+-?\d+\.?\d*%\/yr\s+SR -?\d+\.?\d*\s+gross t (-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "GLD flow -> gold sign-conditioned gross t (prior backwards, -1.88, D-745; live daily feed)" },
+  { name: "vix-roll", args: ["--allow-read", "scripts/vix-roll.ts"], pick: /STRATEGY A[\s\S]*?gross t (-?\d+\.?\d*)/i,
+    moved: (p, n) => Math.abs(n - p) > 1.0, note: "short-VIX (A, XIV construction) gross t (ruined, 1.89, D-749; needs ingest-vx-curve refresh)" },
 ];
 
 let state: Record<string, number> = {};

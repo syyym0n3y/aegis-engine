@@ -191,6 +191,9 @@ while true; do
   deno run --allow-net --allow-env ../scripts/holdability-sizer.ts > ../data/sizer.log 2>&1 || echo "$(date -u +%FT%TZ) HOLDABILITY SIZER FAILED"
   # Budget threshold map (D-746): at what budget / cost tier each real-but-blocked effect would start working.
   deno run --allow-net --allow-env ../scripts/budget-threshold-map.ts > ../data/budget-map.log 2>&1 || echo "$(date -u +%FT%TZ) BUDGET MAP FAILED"
+  # VIX futures curve (D-749): CBOE per-expiry VX history -> data/vx-contracts.json (gitignored; import.meta-relative path,
+  # cwd-safe). Live daily; feeds the vix-roll retest. ~600 sequential CDN fetches at 200ms — a few minutes.
+  deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-vx-curve.ts > ../data/vx.log 2>&1 || echo "$(date -u +%FT%TZ) VX CURVE INGEST FAILED"
   # GLD daily holdings (D-745): issuer archive XLSX, tonnes + shares outstanding, live daily; controls inside.
   deno run --allow-net --allow-env ../scripts/ingest-gld-holdings.ts > ../data/gld.log 2>&1 || echo "$(date -u +%FT%TZ) GLD HOLDINGS INGEST FAILED"
   # EIA weekly inventories (D-743): commercial crude ex-SPR + Lower-48 gas storage, keyless XLS, idempotent, LIVE weekly

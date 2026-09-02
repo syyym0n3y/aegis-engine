@@ -73,8 +73,9 @@ const hdr = await (async () => { const t = await jwt(); return { Authorization: 
 async function pageAll(path: string): Promise<Record<string, unknown>[]> {
   if (!/order=/.test(path)) throw new Error(`pageAll requires order=: ${path}`);
   const out: Record<string, unknown>[] = [];
+  if (!/order=/.test(path)) throw new Error(`pageAll needs an explicit order= (got ${path})`);   // deterministic pages, not row-layout accidents
   for (let off = 0;; off += 1000) {
-    const r = await fetch(`${OWNED}/${path}&offset=${off}&limit=1000`, { headers: hdr });
+    const r = await fetch(`${OWNED}/${path}&offset=${off}&limit=1000`, { headers: hdr }); // plumbing-ok: order= asserted above; offset-paged to exhaustion
     if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
     const j = await r.json();
     if (!Array.isArray(j) || !j.length) break;
