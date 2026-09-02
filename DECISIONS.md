@@ -15799,3 +15799,20 @@ Two corrections recorded: the brief's premise ("the 94 dropped filings were CEFs
 fund-shaped and CEF tenders had been dropped one filter earlier; and a parser defect (boilerplate "exceeds 2% of
 outstanding shares" read as shares sought in 21 events) made proration look 5× harsher until it was caught by
 inspecting the parse, not the total. Lineage `D-755-cef-tender`. FRONTIER: MEASURED, closed. Trials 3.
+
+## D-756 — absorbing forced selling: index demotions and tax-loss rebound both NULL; and a swallowed READ that returned a smaller universe without error
+`scripts/forced-selling.ts`. (A) 143 S&P 500 market-cap demotions (239 acquisition/merger/bankruptcy removals
+excluded — the filter's control), 89 usable: liquid-tercile excess vs IWM 5/21/63/250d = −0.38 / **−4.40 (t −1.96,
+the WRONG sign)** / +0.48 / +3.90 — nothing clears |t| 2; the only large numbers sit in the illiquid tercile and the
+pre-2022 era with medians far below their means — the survivorship signature (54 of 143 names missing, and those
+the bankrupt/taken-private ones). (B) 26 Decembers, 15,502 symbols scanned: bottom-decile Nov-1→Dec-15 losers
+bought after Dec-15 and held to Jan-31: **+1.65%/event, year-clustered t 1.36**, positive 54%; to Feb-28 −0.61
+(t −0.59); size halves identical; **drop December 2000 and it is +0.66%, t 0.90; the survivorship-clean 2020+ years
+are −1.81%, t −0.87, positive 2 of 6.** Both priors UNDECIDED; both DESCRIPTIVE ONLY; 40 trials.
+**The consequential finding is a defect class:** two runs of (B) gave different answers (2000 excess 26.17% vs
+17.66%; t 1.36 vs 1.15) because PostgREST dropped mid-scan and a batch fetch's `.catch(() => [])` silently returned
+an **8,600-symbol universe instead of 15,502** — no error, no missing-row count, a plausible different number. On a
+day PostgREST has OOM-restarted twice, that pattern — present in nearly every read helper in this repo — turns
+infrastructure hiccups into false nulls. The script now retries, throws on a failed batch, and refuses to report
+under 98% of requested symbols. A **silent-read plumbing rule** and a strict shared read helper are dispatched
+(D-757). Lineage `D-756-forced-selling`. FRONTIER: MEASURED, closed.

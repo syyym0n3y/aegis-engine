@@ -24,7 +24,7 @@
 ## Second wave (2026-09-02 evening) — mechanisms added after the first wave was measured
 | mechanism of payment | why it is different | status |
 |---|---|---|
-| **absorbing FORCED selling** — index demotions (index funds must sell on the effective date); December tax-loss losers | the seller is price-insensitive by mandate or by tax calendar | **BUILDING** (`forced-selling.ts`: S&P removals held; panel held) |
+| **absorbing FORCED selling** — index demotions (index funds must sell on the effective date); December tax-loss losers | the seller is price-insensitive by mandate or by tax calendar | **MEASURED (D-756)**: demotions do not rebound in liquid names (21d wrong sign); tax-loss rebound is one December (2000) and negative in the clean years. Closed. |
 | **holding cash with an option attached** — pre-deal SPAC shares below trust value | redeemable at trust; the downside is a T-bill, the upside a deal pop | **BUILDING** (`spac-trust.ts` from the 424B4 index) |
 | **patience in a wrapper, second mechanism** — CEF tender offers at 98–100% of NAV | the discount is paid out to holders by the fund itself; often odd-lot priority | **MEASURED (D-755)**: 7.5% on the tendered slice, **0.8% of the position after proration**; odd-lot priority in 2/26 ($71 over 14y); the discount widens again; too rare to explain D-750. Closed. |
 | rights issues (UK nil-paid rights) | forced sellers of rights at a discount to theoretical value | UNEXAMINED — LSE RNS text per issuer (host allowlisted) |
