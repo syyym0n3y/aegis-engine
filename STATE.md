@@ -7,9 +7,15 @@
   "$80.7T"). The 8 payout forward leads' HISTORICAL justification must be re-earned; their forward marks are clean.
   Fix: Yahoo split table → `adjShares()` helper (deno test) → factory patch → 25th guard `market-cap-guard.ts`
   (self-tested RED on the old construction) → re-run value/payout families.
-- **Frontier (docs/FRONTIER.md):** mechanisms of PAYMENT beyond predict-the-return: VIX-futures roll (in the
-  instrument), closed-end fund discounts, odd-lot tender priority (capacity-inverted), Russell recon (rule-based) —
-  three still running; Russell PROXY-NULL/underpowered (D-748).
+- **D-747 fix LANDED (D-747b):** split table (7,723 events), `adjShares()` helper + tests, factory patched, **25th guard
+  `market-cap-guard`** self-tested RED on the old construction; board 25/25. Still in fix: `issuance`/`ftd_stress` and 7
+  scripts incl. the LIVE payout forward scorer; then value/payout families must be RE-RUN. Second share-base defect
+  (ADR ordinary shares vs ADR price: LTM, BSAC, CCL…) named and reported by the guard, unfixed.
+- **Frontier (docs/FRONTIER.md):** VIX-futures roll **MEASURED — ruined margined / ruined UNLEVERED / null; SPY
+  dominates (D-749)**. Russell PROXY-NULL/underpowered (D-748). **Closed-end fund discounts: CANDIDATE (D-750)** —
+  widest-discount tercile +5.54%/yr excess over the universe, t 8.09, liquid tercile t 6.08, both eras, discount
+  convergence not NAV; UPPER BOUND (survivorship toward it — attack running) and NOT IDENTIFIED (1.62× universe
+  spread); forward clock `fwd-cef-discount` in registration. Odd-lot tenders running.
 
 ## 2026-09-01 (LATEST) — the free frontier closed as market findings; 24 guards green; the honest wealth path written
 - **Board:** 24 guards, all green, each verified to fail. 2,903,411 trials; 0 promoted of 229 leads; 8 forward clocks,
