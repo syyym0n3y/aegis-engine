@@ -15629,3 +15629,24 @@ taxed as ordinary income (can exceed the whole GC fee); loans are terminable so 
 wants the shares. Verdict: real, forecast-free, **a rounding line on a small account** (D-746's $60k threshold
 binds); material only on capital that already is. The binding unknown is P(on loan), which only an enrolled
 statement can supply. Lineage `D-752-lending-income`. FRONTIER: MEASURED (bracket).
+
+## D-753 — prediction markets (Polymarket + Kalshi): null where testable, untested where the archive is closed, unplaceable from the UK either way
+Frontier row "a different market altogether", built at the operator's instruction that nothing is off limits for
+RESEARCH. Public read-only data only. `scripts/prediction-markets-ingest.ts`, `scripts/prediction-markets.ts`.
+**Data facts first:** Polymarket's closed-market `outcomePrices` is the settlement vector (voids dropped, not read
+as NO); pre-resolution prices come from the CLOB history; Gamma refuses `offset > 2100` and silently caps `limit`
+at 100 — a pagination bug skipped 400 of every 500 markets on the first pass and was fixed to advance by rows
+returned. Sample: the 1,496 highest-volume resolved binaries (601 events, 2.64y). **Kalshi's settled archive is not
+publicly reachable** — only a newest-first cursor works, and 60,000 rows span **3.1 hours** of wall clock (12 series,
+median contract lifetime 0.04 days). Its 30d/7d/1d horizons are UNTESTED, not null.
+| | result |
+|---|---|
+| Polymarket calibration @30d | p<0.3 gap **+0.023** (N 917), p≥0.7 gap −0.010 (N 75) — **SIGN MISSED both halves**: underdogs were UNDERpriced |
+| favourite leg (buy ≥0.90) | 30d N 24 → underpowered; 7d +0.73% net, clustered t 0.22; 1d −0.91%, t −0.30 |
+| longshot short (sell ≤0.10) @30d | GROSS −0.63%/contract, clustered t −2.16 — **the seller loses** |
+| buy-all-YES benchmark | gross −11.7%, t −0.75 (zero drift); the first run's "−69% at t −19" was a flat 1c half-spread on sub-cent contracts — **a cost artifact, corrected** (D-661) |
+| Kalshi longshot short (last trade) | +2.70%, clustered t 6.61 — **disqualified four ways**: control failed, same-bar entry (D-498), 17 clusters over 3.1 hours, median volume $185 |
+Capacity: Polymarket favourite-leg volume median $12M/market. **Placeability: Kalshi is US-persons/KYC-only;
+Polymarket geo-blocks the UK — deployable size for this operator is zero, stated as a fact; no route around either
+is proposed or built.** 50 trials counted, not written. Lineage `D-753-prediction-markets`. FRONTIER: MEASURED,
+closed. A different market did not produce a different answer.
