@@ -15816,3 +15816,21 @@ day PostgREST has OOM-restarted twice, that pattern — present in nearly every 
 infrastructure hiccups into false nulls. The script now retries, throws on a failed batch, and refuses to report
 under 98% of requested symbols. A **silent-read plumbing rule** and a strict shared read helper are dispatched
 (D-757). Lineage `D-756-forced-selling`. FRONTIER: MEASURED, closed.
+
+## D-758 — UK rights issues UNTESTED (a data finding, with a retraction on the record); UK retail-only wrappers QUANTIFIED — the ISA is worth more than any edge this engine has promoted
+**Rights issues** (`scripts/rights-issues-uk.ts`): the LSE RNS search and full-text endpoints were found from the
+site's own JS (`components/refresh` with `path:"news"`, `period=custom&afterdate=YYYYMMDD…`; `pages?path=news-article
+&parameters=newsId=…`). The archive floor is **2024-02** — pre-2024 windows return zero with `executed=true` — so the
+2015–2026 span and the named controls do not exist on these hosts. 460 hits → 48 matches → 17 clusters → 6 parsable
+→ **4 measurable**. The nil-paid line is not on Yahoo (0/24 suffix probes), and a cum-price observability test against
+the issuers' own stated TERPs **fails 2 of 2** (Great Portland 304p observed vs 345p stated) — no genuine cum-rights
+close, therefore no TERP, no discount: **VOID, SIGN forced to UNTESTED in code.** A first run anchored on announcement
+dates printed **+6.46% premium to TERP** across 5 events and is retracted in the script, with a per-row
+predicted-vs-realised residual check so an anchor error cannot pass as a market fact again. Lineage
+`D-758-uk-rights-issues`.
+**UK retail-only instruments** (`scripts/uk-retail-structural.ts`; nsandi.com and gov.uk allowlisted, rates fetched
+live and positive-controlled): Premium Bonds **4.35% tax-free** (2026-09 draw; 27 changes back to 2008) capped at
+£50k; **ISA alpha-equivalent 0.63%/yr (£10k, basic rate) to 1.45%/yr (£200k, higher rate)** on the D-735 6.8% CAGR —
+an earlier "~3%/yr" was a divide-by-horizon artifact, replaced; LISA £1,000/yr max, age-gated, conditional money.
+Against D-746 the deposit still dominates below ~$60k; but the wrapper's ~1.2%/yr is forecast-free and **larger than
+any edge this engine has promoted, which is zero**. It belongs in WEALTH_PATH P0. Lineage `D-758-uk-retail-structural`.

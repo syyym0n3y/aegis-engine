@@ -74,6 +74,10 @@ runs daily and reports its "current signals" as CONTEXT for risk, never as an or
 50% equity and costs **59% of terminal wealth**; 80% equity costs 29% for a −43% worst case. Safety bought through
 the mix is the most expensive item on this map — the cheap lever is deciding in advance to hold through −52%/3.4y.
 
+**The wrapper, quantified (D-758, `scripts/uk-retail-structural.ts`):** the ISA is worth **0.63%/yr (£10k, basic rate)
+to 1.45%/yr (£200k, higher rate)** as an alpha-equivalent on the 6.8% CAGR — forecast-free, and more than any edge
+this engine has ever promoted. Premium Bonds 4.35% tax-free to £50k. Both are decisions, not signals.
+
 **P1 — Keep the falsification engine running daily (the only thing that can ever find an edge).**
 Daily runner: ingest → guards → retest harness → forward scorer. Spin-off (the sole long-only candidate that fits
 small size) resolves in ~3–4y; nothing to do but not touch it.
