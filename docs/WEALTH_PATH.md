@@ -26,7 +26,7 @@ The daily thing the engine should do is **monitor**, not trade: ingest, guard bo
 ## 2. Scoreboard — exactly where we are
 
 - **Edge found:** none. 0/224 promoted. Deflation ceiling 5.46 at N≈2.9M; nothing near it honestly.
-- **Live candidates:** 8 forward clocks, **0 of 8 currently produce a number** (all not-yet-computable — spin-off
+- **Live candidates:** 9 forward clocks (fwd-cef-discount added 2026-09-02), **0 of 9 currently produce a number** (all not-yet-computable — spin-off
   needs ≥20 liquid spincos with 500d data, ~3–4y; de-SPAC may stay inconclusive; paper book's first markable month
   hasn't occurred). Pre-registered, immutable, scored daily. This is the ONLY path to a claim, and it is slow by
   construction.
@@ -35,8 +35,8 @@ The daily thing the engine should do is **monitor**, not trade: ingest, guard bo
 - **Data (2026-09-02):** driver register **45 HELD / 0 research debt / 6 blocked with a named barrier**. Unlocked free
   this session: FRED foreign rates (14 ccy), CBOE options regime, Wikipedia S&P membership, EIA curve (CL/NG) +
   weekly inventories, GLD holdings. Truly gated after a real search: per-strike options surface, borrow fee bps,
-  analyst revisions, L2, curves for GC/ZC/ZW/ZS/HG/SI, central-bank reserves (quarterly), S&P announcement dates.
-- **Integrity:** 24 guards, all green, each verified to fail. The engine is more reliable than any strategy it holds.
+  analyst revisions, L2, curves for GC/ZC/ZW/ZS/HG/SI, central-bank reserves (quarterly), S&P announcement dates. Borrow FEE bps later found free (iBorrowDesk, D-752) — ingest in build.
+- **Integrity:** 25 guards (market-cap added 2026-09-02, self-tested RED on three old constructions), all green, each verified to fail. The engine is more reliable than any strategy it holds.
 
 ## 3. What "wealth from markets" actually decomposes into (the arithmetic that sets the path)
 
