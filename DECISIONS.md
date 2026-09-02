@@ -15667,3 +15667,13 @@ deals nobody wants — adverse selection on the exact variable that produces the
 overstates a retail allocated return by an untested amount. **The primary-market premium is a fee paid to
 allocation, not to capital.** UK leg: was UNTESTED for an allowlist reason only; LSE hosts now allowlisted and a UK
 build dispatched. Lineage `D-754-ipo-pop`. FRONTIER: MEASURED (US); the retail-realisable leg is an AVOID signal.
+
+## D-747e — PostgREST OOM-killed mid re-run; a stale training input was caught by the freshness assert the PRECONDITION LAW demands; containers now auto-restart
+During the D-747 re-earn chain (`eq` ✓ 220 specs, `pairs` ✓ 231 specs, ceiling unchanged by design), `aegis-rest` was
+OOM-killed (exit 137) while `PASS=gbmexport` was reading the panel; three guards went RED for the same cause
+("cannot reach trd_trial_counter / split table"; infra "bring the owned node up") and `gbmexport` FAILED. The chain
+then started `equity-nonlinear` on the PREVIOUS `eqpanel.tsv` — a model about to be trained on the pre-fix export
+while reporting itself as the post-fix result. Killed before it wrote anything. This is the D-598 defect class
+exactly ("a stale .tsv read after a run wrote nothing"), and the relaunch now refuses to train unless the export's
+mtime post-dates the run start. `aegis-rest` and `aegis-db` had `restart=no`; set to `unless-stopped` so an OOM
+kill no longer takes the owned node down until the runner's next loop. `gbmexport → equity-nonlinear` resumed.
