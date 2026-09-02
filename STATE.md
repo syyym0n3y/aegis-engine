@@ -11,6 +11,17 @@
   `market-cap-guard`** self-tested RED on the old construction; board 25/25. Still in fix: `issuance`/`ftd_stress` and 7
   scripts incl. the LIVE payout forward scorer; then value/payout families must be RE-RUN. Second share-base defect
   (ADR ordinary shares vs ADR price: LTM, BSAC, CCL…) named and reported by the guard, unfixed.
+- **2026-09-02 late — D-747 became THREE share-base defects, two fixed, one in fix:** split units (fixed, 25th guard);
+  ADR ordinary-vs-ADR shares (fixed — 1,192 FPIs flagged, 692 ratios validated, rest excluded, guard set-aside deleted,
+  self-test 2 fires); 21 single-point EDGAR share spikes as filed (BTI exactly 1e6× — reader-side filter in build; the
+  guard stays RED visibly until it lands). The value/payout re-run must run once more after the third fix (105 FPIs in
+  the top-1,000 by volume). PostgREST was OOM-killed mid-run; containers now `restart=unless-stopped`; a stale
+  training input was caught and refused (D-747e).
+- **Frontier, all rows now measured or in final build:** lending income UNTESTED-ON-RATE bracket, rounding line on a
+  small account (D-752; iBorrowDesk per-name fees found free — ingest in build); prediction markets null where
+  testable / untested where the archive is closed / unplaceable from the UK (D-753); IPO pop real and entirely in the
+  allocated leg, the buyable leg −27.5%/yr vs IWM (D-754; UK leg in build). Retest harness tracks 17 verdicts; its
+  own ONLY knob was leaking into children and refusing them — fixed with clearEnv.
 - **Frontier (docs/FRONTIER.md):** VIX-futures roll **MEASURED — ruined margined / ruined UNLEVERED / null; SPY
   dominates (D-749)**. Russell PROXY-NULL/underpowered (D-748). **Closed-end fund discounts: CANDIDATE (D-750)** —
   widest-discount tercile +5.54%/yr excess over the universe, t 8.09, liquid tercile t 6.08, both eras, discount
