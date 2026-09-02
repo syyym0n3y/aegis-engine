@@ -15713,3 +15713,15 @@ $572M/day; HL, BTI, SWKS, SW, PKG, ALK, CROX, BTDR). Full list in the agent log 
 printout. Guard: 2015 15/15, 2021 11/15, 2026 11/15, both self-tests fire, **25/25 green with no escape hatch** —
 a scrubbed point is removed, a surviving cap over $10T still reds. 314 shared tests pass. The value/payout families
 now RE-RUN with all three share-base fixes in (split units, ADR ratio, spike scrub).
+
+## D-754b — UK IPO leg: the buyable leg is flat (t 0.46); the allocated leg is UNTESTED for a data reason, now being chased
+`scripts/ipo-pop-uk.ts`. The LSE site's real API (`api.londonstockexchange.com/api/v1/pages?path=…`, components via
+POST) serves a ~1-week rolling recent-issues feed (764 rows, 45 fields, **none an issue price**); the full history is
+in Reports on `docs.londonstockexchange.com`, not allowlisted at build time → **allocated leg UNTESTED (UK)**, a data
+gap, not a finding; host now allowlisted and probed. Universe: 1,606 lines (997 Main, 609 AIM). **Retail-realisable
+leg, 491 UK inceptions 2015–2026, first open → +250d excess vs ISF.L net 30bp: +1.78% mean, −7.31% median, t 0.46,
+41% positive; liquid tercile +2.36%, t 0.36 — flat, prior MATCHED.** Two defects caught: the first run printed a
+Main-market +63d mean of +73.5% against a 0.37% median — dormant shells (FVV +9,898% on zero first-month volume)
+with stale opening prints, untradeable at the open the study claims to buy; a tradability floor removed 50 and a
+trimmed mean now sits beside every raw mean. ROO.L (Deliveroo) is absent because delisted — the survivorship hole
+shown rather than hidden. Retail-offer flag UNTESTED with named blockers. Lineage `D-754-ipo-pop` extended.
