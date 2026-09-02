@@ -323,7 +323,8 @@ async function record(spec_key:string,family:string,spec:unknown,universe:string
   const row=g?{spec_key,family,spec,universe,n_names:g.n_names,n_periods:g.n_periods,gross_ann:+g.gross_ann.toFixed(4),
     net_ann:+g.net_ann.toFixed(4),sharpe_net:+g.sharpe.toFixed(3),portfolio_t:+g.t.toFixed(3),maxdd_pct:+g.dd.toFixed(1),
     ruined:g.ruined,g_breadth:g.g_breadth,g_effect:g.g_effect,g_benchmark:g.g_benchmark,g_liquid:g.g_liquid,g_era:g.g_era,
-    g_deflation:g.t>ceil,note:null}
+    g_deflation:g.t>ceil}   // NO `note` key on a computed row: merge-duplicates only touches provided columns, so an
+                            // acknowledgement stamped on the row (D-557 "FALSE SURVIVOR") survives a re-run (D-557b)
     :{spec_key,family,spec,universe,ruined:false,note:"UNTESTED: insufficient panel"};
   const r=await fetch(`${OWNED}/trd_factory?on_conflict=spec_key`,{method:"POST",
     headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([row])}).catch(()=>null);
