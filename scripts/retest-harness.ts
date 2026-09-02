@@ -61,7 +61,7 @@ console.log(`==> RE-TEST HARNESS — re-running ${run.length} research verdict(s
 const flags: string[] = [];
 for (const t of run) {
   const p = new Deno.Command("deno", { args: ["run", "--allow-net", "--allow-env", ...t.args], cwd: REPO, stdout: "piped", stderr: "piped",
-    env: (() => { const e = { ...Deno.env.toObject() }; delete e.ONLY; return e; })() });   // the harness's own knob must not leak into a child whose declareKnobs() would refuse it as a near-miss (found on prediction-markets)
+    clearEnv: true, env: (() => { const e = { ...Deno.env.toObject() }; delete e.ONLY; return e; })() });   // clearEnv: Deno MERGES env with the parent's by default, so a deleted key would still be inherited   // the harness's own knob must not leak into a child whose declareKnobs() would refuse it as a near-miss (found on prediction-markets)
   const { stdout, stderr } = await p.output();
   const out = new TextDecoder().decode(stdout) + new TextDecoder().decode(stderr);
   const m = out.match(t.pick);
