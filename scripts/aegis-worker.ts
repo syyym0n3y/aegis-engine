@@ -1,13 +1,158 @@
 #!/usr/bin/env -S deno run --allow-net --allow-env
 // aegis-worker.ts — the OWN COMPUTE NODE. A standalone, UNCAPPED worker you run yourself (`deno run -A scripts/aegis-worker.ts`)
-// on your Mac or any box. It talks ONLY to the trd-compute broker (no secret on this machine), draining trd_compute_jobs
+// on your Mac or any box. By DEFAULT it drains trd_compute_jobs straight from the OWNED node ($OWNED_REST, local
+// PostgREST + JWT_SECRET) — zero dependency on any *.supabase.co host. Set AEGIS_BROKER to run it on a REMOTE box
+// through the trd-compute broker instead, which keeps no secret on that machine. Either way it drains trd_compute_jobs
 // and running heavy era-disaggregated work that the 2s Supabase edge cap physically cannot hold — the substrate that turns
 // the factor engine into the causal-ATTRIBUTION engine. Job types: 'deep_factor_ic' (era-disaggregated + deflated IC across
 // the 33-yr deep history) which also emits per-instrument buy/sell SIGNALS. Idempotent, resumable, credential-free.
 //   Run once:   deno run -A scripts/aegis-worker.ts --once
 //   Run daemon: deno run -A scripts/aegis-worker.ts           (polls, uncapped, until killed)
-import { adjSharesMs, type Split } from "../supabase/functions/_shared/shares-adj.ts";
-const BROKER = Deno.env.get("AEGIS_BROKER") || "https://glzzoomuhnugsiichnub.supabase.co/functions/v1/trd-compute";
+import { adjSharesMs, loadSplits, type Split } from "../supabase/functions/_shared/shares-adj.ts";
+
+// ─── MODE (D-751) ──────────────────────────────────────────────────────────────────────────────────────────────
+// The worker used to DEFAULT to the CC Supabase edge fn `trd-compute` as its broker. That project is INACTIVE behind
+// unpaid invoices, so the default path of the compute node pointed at a host that does not answer — and the failure
+// was quiet: every broker fetch is `.catch(() => null)`, so an unreachable broker is indistinguishable from an empty
+// queue. DEFAULT IS NOW THE OWNED NODE: claim/complete trd_compute_jobs and every data endpoint straight against
+// $OWNED_REST (local PostgREST) with the same JWT construction every other script in scripts/ uses. The broker path
+// stays selectable via AEGIS_BROKER for a REMOTE box that must hold no secret — that was the broker's only real
+// purpose, and it is preserved rather than removed.
+const BROKER_ENV = Deno.env.get("AEGIS_BROKER") || "";
+const OWNED_MODE = BROKER_ENV === "";
+const OWNED = Deno.env.get("OWNED_REST") || `http://localhost:${Deno.env.get("REST_PORT") || "33000"}`;
+// In owned mode BROKER is a sentinel URL: every existing call site builds `${BROKER}?x=...`, and `bfetch` parses that
+// query and serves it locally. Keeping the call sites byte-identical across modes is what stops the two drifting.
+const BROKER = BROKER_ENV || "owned://node";
+
+const SECRET = Deno.env.get("JWT_SECRET") || "";
+async function ownedJwt() {
+  const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "worker", exp: 4102444800 });
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`)));
+  return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
+}
+const OHDR: Record<string, string> = OWNED_MODE
+  ? await (async () => { const t = await ownedJwt(); return { Authorization: `Bearer ${t}`, apikey: t, "Content-Type": "application/json" }; })()
+  : {};
+const oq = async (path: string): Promise<unknown[]> =>
+  await fetch(`${OWNED}/${path}`, { headers: OHDR }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// PostgREST pages at 1000 rows by default and the broker's endpoints all paged, so the owned equivalents must too or
+// a "complete" pull silently truncates — the D-641 false-zero shape one level down. The owned node imposes no
+// max-rows cap (verified: limit=50000 returns 50000), so the page is far larger than the edge fn could use — 2.6M
+// trd_ff_factors rows at the edge's 1000/page is 2,609 sequential round-trips and the job never finishes.
+async function opage<T>(path: string, page = 25000): Promise<T[]> {
+  const out: T[] = [];
+  for (let off = 0;; off += page) {
+    const p = await oq(`${path}&offset=${off}&limit=${page}`) as T[];
+    if (!Array.isArray(p) || !p.length) break;
+    out.push(...p);
+    if (p.length < page) break;
+  }
+  return out;
+}
+// EVERY WRITE REPORTS (plumbing guard, silent-write class). A swallowed write is how a job is marked done while its
+// result never landed — the D-375 failure the retry loop below exists for. `wr` awaits, checks the status, and logs
+// a WRITE-FAILED line the agent-output guard already pages on; it never hides a rejection.
+async function wr(label: string, p: Promise<Response>): Promise<boolean> {
+  try { const r = await p; if (!r.ok) { console.log(`  WRITE-FAILED ${label} — HTTP ${r.status} ${(await r.text().catch(() => "")).slice(0, 160)}`); return false; } return true; }
+  catch (e) { console.log(`  WRITE-FAILED ${label} — ${e instanceof Error ? e.message : String(e)}`); return false; }
+}
+// The owned-node equivalent of trd-compute, endpoint for endpoint with supabase/functions/trd-compute/index.ts.
+// If you add an endpoint there, add it here, or the two modes answer different questions from the same call site.
+async function ownedBroker(u: string, init?: RequestInit): Promise<Response> {
+  const J = (o: unknown) => new Response(JSON.stringify(o), { headers: { "Content-Type": "application/json" } });
+  const url = new URL(u);
+  const g = (k: string) => url.searchParams.get(k);
+  if (init?.method === "POST") {
+    const body = JSON.parse(String(init.body ?? "{}")) as {
+      job_id?: number; status?: string; result?: unknown; error?: string;
+      signals?: Record<string, unknown>[]; attribution?: Record<string, unknown>[];
+      bars_upsert?: { symbol: string; asset_class: string; bars: number[][] }[];
+    };
+    const post = (p: string, rows: unknown, prefer: string) =>
+      fetch(`${OWNED}/${p}`, { method: "POST", headers: { ...OHDR, Prefer: prefer }, body: JSON.stringify(rows) });   // plumbing-ok: audited — this write's response IS checked, by wr() which awaits it and logs WRITE-FAILED on a non-ok status or a rejection
+    if (body.bars_upsert?.length) {
+      const rows = body.bars_upsert.map((b) => ({ symbol: b.symbol, asset_class: b.asset_class || "equity", bars: b.bars, updated_at: new Date().toISOString() }));
+      await wr(`bars_upsert ${rows.length} symbol(s)`, post("trd_bars_deep?on_conflict=symbol", rows, "resolution=merge-duplicates,return=minimal"));
+      if (!body.job_id) return J({ ok: true, upserted: rows.length });
+    }
+    if (body.job_id) {
+      await wr(`job ${body.job_id} status=${body.status || "done"}`, fetch(`${OWNED}/trd_compute_jobs?id=eq.${body.job_id}`, {
+        method: "PATCH", headers: { ...OHDR, Prefer: "return=minimal" },   // plumbing-ok: audited — this write's response IS checked, by wr() which awaits it and logs WRITE-FAILED on a non-ok status or a rejection
+        body: JSON.stringify({ status: body.status || "done", result: body.result ?? null, error: body.error ?? null, done_at: new Date().toISOString() }),
+      }));
+    }
+    if (body.signals?.length) {
+      await wr(`${body.signals.length} signal(s)`, post("trd_signal?on_conflict=symbol", body.signals.map((s) => ({ ...s, updated_at: new Date().toISOString() })), "resolution=merge-duplicates,return=minimal"));
+    }
+    if (body.attribution?.length) {
+      const full = body.attribution.filter((a) => a.r2 != null).map((a) => ({ ...a, updated_at: new Date().toISOString() }));
+      const partial = body.attribution.filter((a) => a.r2 == null);
+      if (full.length) await wr(`${full.length} attribution row(s)`, post("trd_attribution?on_conflict=symbol", full, "resolution=merge-duplicates,return=minimal"));
+      for (const a of partial) {
+        const { symbol, ...rest } = a as Record<string, unknown>;
+        await wr(`attribution patch ${symbol}`, fetch(`${OWNED}/trd_attribution?symbol=eq.${encodeURIComponent(String(symbol))}`, { method: "PATCH", headers: { ...OHDR, Prefer: "return=minimal" }, body: JSON.stringify({ ...rest, updated_at: new Date().toISOString() }) }));   // plumbing-ok: audited — this write's response IS checked, by wr() which awaits it and logs WRITE-FAILED on a non-ok status or a rejection
+      }
+    }
+    await wr("heartbeat trd_beat", fetch(`${OWNED}/rpc/trd_beat`, { method: "POST", headers: OHDR, body: JSON.stringify({ p_fn: "aegis-worker", p_outcome: `job ${body.job_id} ${body.status || "done"}; ${body.signals?.length || 0} signals` }) }));   // plumbing-ok: audited — this write's response IS checked, by wr() which awaits it and logs WRITE-FAILED on a non-ok status or a rejection
+    return J({ ok: true });
+  }
+  if (g("claim")) {
+    const j = await fetch(`${OWNED}/rpc/trd_claim_job`, { method: "POST", headers: OHDR, body: JSON.stringify({ p_worker: g("worker") || "anon" }) }).then((r) => r.ok ? r.json() : []).catch(() => []);
+    return J({ ok: true, job: Array.isArray(j) && j.length ? j[0] : null });
+  }
+  if (g("bars")) {
+    const b = await oq(`trd_bars_deep?symbol=eq.${encodeURIComponent(g("bars")!)}&select=symbol,asset_class,bars`);
+    return J({ ok: true, row: b.length ? b[0] : null });
+  }
+  if (g("barsbatch")) {
+    const inList = g("barsbatch")!.split(",").filter(Boolean).map((s) => `"${s}"`).join(",");
+    return J({ ok: true, rows: await oq(`trd_bars_deep?symbol=in.(${encodeURIComponent(inList)})&select=symbol,bars`) });
+  }
+  if (g("intraday")) {
+    const b = await oq(`trd_bars_intraday?symbol=eq.${encodeURIComponent(g("intraday")!)}&tf=eq.${g("tf") || "1m"}&select=symbol,bars`);
+    return J({ ok: true, row: b.length ? b[0] : null });
+  }
+  if (g("universe")) {
+    const rows = await opage<{ symbol: string }>(`trd_bars_deep?select=symbol&asset_class=eq.${g("class") || "equity"}&order=symbol`);
+    return J({ ok: true, symbols: rows.map((r) => r.symbol) });
+  }
+  if (g("allclasses")) return J({ ok: true, rows: await opage(`trd_bars_deep?select=symbol,asset_class&order=symbol`) });
+  if (g("ff")) return J({ ok: true, rows: await opage(`trd_ff_factors?select=month,factor,ret&order=month`) });
+  if (g("insider")) {
+    const rpc = g("opp") === "1" ? "trd_insider_sample_opp" : "trd_insider_sample";
+    const s = await fetch(`${OWNED}/rpc/${rpc}`, { method: "POST", headers: OHDR, body: JSON.stringify({ p_limit: Number(g("insider")) || 300 }) }).then((r) => r.ok ? r.json() : []).catch(() => []);
+    return J({ ok: true, sample: Array.isArray(s) ? s : [] });
+  }
+  if (g("insider_all")) {
+    const rows = await opage<{ ticker: string; disclosed_date: string; value_usd: number }>(`trd_insider?disclosed_date=not.is.null&select=ticker,disclosed_date,value_usd&order=ticker`);
+    return J({ ok: true, rows: rows.map((r) => ({ t: r.ticker, d: r.disclosed_date, v: +r.value_usd })) });
+  }
+  if (g("fundamentals")) {
+    const rows = await opage<{ ticker: string; concept: string; effective_date: string; period_end: string; value: number }>(`trd_fundamentals?ticker=not.is.null&select=ticker,concept,effective_date,period_end,value&order=ticker`);
+    return J({ ok: true, rows: rows.map((r) => ({ t: r.ticker, c: r.concept, e: r.effective_date, p: r.period_end, v: r.value })) });
+  }
+  if (g("splits")) {
+    // D-751: the shared loadSplits() is the ONE implementation the other seven scripts use — reusing it here means
+    // the worker's share-base correction cannot drift from theirs.
+    const m = await loadSplits(OWNED, OHDR);
+    const rows: { s: string; d: string; v: number }[] = [];
+    for (const [sym, arr] of m) for (const x of arr) rows.push({ s: sym, d: x.d, v: x.v });
+    return J({ ok: true, rows });
+  }
+  if (g("worklist")) {
+    const w = await fetch(`${OWNED}/rpc/trd_price_worklist`, { method: "POST", headers: OHDR, body: JSON.stringify({ p_n: Number(g("worklist")) || 200 }) }).then((r) => r.ok ? r.json() : []).catch(() => []);
+    return J({ ok: true, tickers: (Array.isArray(w) ? w : []).map((r: { ticker: string }) => r.ticker) });
+  }
+  const jobs = await oq(`trd_compute_jobs?select=status&limit=1000`) as { status: string }[];
+  const by: Record<string, number> = {};
+  for (const j of jobs) by[j.status] = (by[j.status] || 0) + 1;
+  return J({ ok: true, jobs_by_status: by });
+}
+// Every broker call site goes through this. In broker mode it IS fetch; in owned mode it is the local equivalent.
+const bfetch = (u: string, init?: RequestInit): Promise<Response> => OWNED_MODE ? ownedBroker(u, init) : fetch(u, init);
 const WORKER = Deno.env.get("AEGIS_WORKER_ID") || "w-local";
 const ONCE = Deno.args.includes("--once");
 const POLL_MS = 3000;
@@ -20,7 +165,7 @@ const POLL_MS = 3000;
 let SPLITS: Map<string, Split[]> | null = null;
 async function getSplits(): Promise<Map<string, Split[]>> {
   if (SPLITS) return SPLITS;
-  const r = await fetch(`${BROKER}?splits=1`).then((x) => x.json()).catch(() => null);
+  const r = await bfetch(`${BROKER}?splits=1`).then((x) => x.json()).catch(() => null);
   const rows = (r?.rows ?? []) as { s: string; d: string; v: number }[];
   const m = new Map<string, Split[]>();
   for (const x of rows) {
@@ -28,7 +173,7 @@ async function getSplits(): Promise<Map<string, Split[]>> {
     (m.get(x.s) ?? m.set(x.s, []).get(x.s)!).push({ d: x.d, v: x.v });
   }
   for (const [, a] of m) a.sort((p, q) => p.d < q.d ? -1 : 1);
-  if (!m.size) console.log("  !! WARNING: broker served NO split rows — every market cap in this run is in MIXED share units (D-747). Deploy trd-compute with ?splits=1.");
+  if (!m.size) console.log(`  !! WARNING: ${OWNED_MODE ? "the owned node holds NO split rows" : "broker served NO split rows"} — every market cap in this run is in MIXED share units (D-747). ${OWNED_MODE ? "Check trd_macro_series series like split:*." : "Deploy trd-compute with ?splits=1."}`);
   else console.log(`  splits: ${rows.length} events across ${m.size} symbols`);
   SPLITS = m;
   return m;
@@ -69,7 +214,7 @@ function dsrStats(monthly: number[], nTrials: number) {
 // our 1.5M grid of self-run trials). This is the sample where value/profitability/momentum either clear deflation or don't.
 async function runFFDeflated(params: { n_trials?: number }) {
   const N = params.n_trials ?? 1000;
-  const r = await fetch(`${BROKER}?ff=1`).then((x) => x.json()).catch(() => null);
+  const r = await bfetch(`${BROKER}?ff=1`).then((x) => x.json()).catch(() => null);
   const rows = (r?.rows ?? []) as { month: string; factor: string; ret: number }[];
   const byF = new Map<string, { month: string; ret: number }[]>();
   for (const x of rows) (byF.get(x.factor) ?? byF.set(x.factor, []).get(x.factor)!).push({ month: x.month, ret: x.ret });
@@ -85,7 +230,7 @@ async function runFFDeflated(params: { n_trials?: number }) {
 }
 
 async function getBars(sym: string): Promise<number[][] | null> {
-  const r = await fetch(`${BROKER}?bars=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
+  const r = await bfetch(`${BROKER}?bars=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
   return r?.row?.bars ?? null; // [[ts,o,h,l,c,v],...]
 }
 // D-362b speedup: batch-fetch bars in chunks and process each symbol IMMEDIATELY, discarding the chunk before the next —
@@ -94,14 +239,14 @@ async function getBars(sym: string): Promise<number[][] | null> {
 async function forEachBars(symbols: string[], fn: (sym: string, bars: number[][]) => void, chunk = 30) {
   for (let i = 0; i < symbols.length; i += chunk) {
     const part = symbols.slice(i, i + chunk);
-    const r = await fetch(`${BROKER}?barsbatch=${encodeURIComponent(part.join(","))}`).then((x) => x.json()).catch(() => null);
+    const r = await bfetch(`${BROKER}?barsbatch=${encodeURIComponent(part.join(","))}`).then((x) => x.json()).catch(() => null);
     const rows = (r?.rows ?? []) as { symbol: string; bars: number[][] }[];
     const m = new Map<string, number[][]>(); for (const row of rows) if (row.bars) m.set(row.symbol, row.bars);
     for (const s of part) { const b = m.get(s); if (b) fn(s, b); }
   }
 }
 async function getIntraday(sym: string): Promise<number[][] | null> {
-  const r = await fetch(`${BROKER}?intraday=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
+  const r = await bfetch(`${BROKER}?intraday=${encodeURIComponent(sym)}`).then((x) => x.json()).catch(() => null);
   return r?.row?.bars ?? null; // minute [[ts_sec,o,h,l,c,v],...]
 }
 function iret(bars: number[][]): Map<number, number> {
@@ -146,7 +291,7 @@ async function runStrategySweep(params: { symbols?: string[]; horizon?: number }
 // diluted real cross-sectional edges toward zero — violated our own no-pooling law). Also: overnight tested as its OWN
 // return (close→open), not 21d. Universe MUST be homogeneous (equities). t = mean(dailyIC)/(sd/sqrt(#days)) — honest N.
 async function getUniverse(): Promise<string[]> {
-  const r = await fetch(`${BROKER}?universe=1`).then((x) => x.json()).catch(() => null);
+  const r = await bfetch(`${BROKER}?universe=1`).then((x) => x.json()).catch(() => null);
   return (r?.symbols ?? []) as string[];
 }
 async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
@@ -190,7 +335,7 @@ async function runXsecSweep(params: { symbols?: string[]; horizon?: number }) {
 // (2023–2025 frames), so eras skew to the tightening regime — reported next to N, deflated, default REJECT (D-070).
 async function runFundamentalsIC(params: { horizon?: number }) {
   const HZ = params.horizon ?? 63; // ~1 quarter forward
-  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const fr = await bfetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
   const splits = await getSplits();
   const rows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   // ticker → concept → sorted [{eff(ms), val}]
@@ -242,7 +387,7 @@ async function runFundamentalsIC(params: { horizon?: number }) {
 // tradable edge — most gross ICs die here on turnover (reversal/lottery) or capacity (micro-cap-only).
 async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?: number; liq_min_dvol?: number; n_trials?: number }) {
   const COST_ALL = params.cost_bps_all ?? 0.010, COST_LIQ = params.cost_bps_liq ?? 0.0020, LIQ = params.liq_min_dvol ?? 1e6, HZ = 21;
-  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const fr = await bfetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
   const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
@@ -330,7 +475,7 @@ async function runFactorBacktest(params: { cost_bps_all?: number; cost_bps_liq?:
 async function runFactorBlend(params: { factors?: string[]; oos_frac?: number; cost_bps?: number; liq_min_dvol?: number }) {
   const FACS = params.factors ?? ["mom_12_1", "lowvol_60", "value_bm", "quality_roe"];
   const OOS = params.oos_frac ?? 0.5, COST = params.cost_bps ?? 0.0020, LIQ = params.liq_min_dvol ?? 1e6, HZ = 21;
-  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const fr = await bfetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
   const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
@@ -393,13 +538,13 @@ async function runFactorBlend(params: { factors?: string[]; oos_frac?: number; c
 // sparse for cross-section — honestly excluded, not faked.
 async function runResidualAttribution(params: { horizon?: number }) {
   const HZ = params.horizon ?? 63;
-  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const fr = await bfetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
   const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of frows) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
   for (const m of fund.values()) for (const k in m) m[k].sort((a, b) => a.e - b.e);
-  const ir = await fetch(`${BROKER}?insider_all=1`).then((r) => r.json()).catch(() => null);
+  const ir = await bfetch(`${BROKER}?insider_all=1`).then((r) => r.json()).catch(() => null);
   const insider = new Map<string, { e: number; v: number }[]>();
   for (const r of (ir?.rows ?? []) as { t: string; d: string; v: number }[]) (insider.get(r.t) ?? insider.set(r.t, []).get(r.t)!).push({ e: new Date(r.d).getTime(), v: r.v });
   for (const a of insider.values()) a.sort((x, y) => x.e - y.e);
@@ -458,7 +603,7 @@ async function runResidualAttribution(params: { horizon?: number }) {
 // of many sized positions is real. Output: the current ranked buy-list + composite score + honest breadth-scaled expectation.
 async function runOpportunityScan(params: { top?: number; min_dvol?: number }) {
   const TOP = params.top ?? 40, LIQ = params.min_dvol ?? 5e6;
-  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const fr = await bfetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
   const splits = await getSplits();
   const frows = (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[];
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
@@ -516,7 +661,7 @@ async function runOpportunityScan(params: { top?: number; min_dvol?: number }) {
 // × breadth is the wealth. Honest bound: IC~0.1 → P_up lands ~0.47-0.58, never 0.9.
 async function runProbabilityLadder(params: { horizon?: number; min_dvol?: number; top?: number }) {
   const HZ = params.horizon ?? 21, LIQ = params.min_dvol ?? 5e6, TOP = params.top ?? 50;
-  const fr = await fetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
+  const fr = await bfetch(`${BROKER}?fundamentals=1`).then((r) => r.json()).catch(() => null);
   const splits = await getSplits();
   const fund = new Map<string, Record<string, { e: number; v: number }[]>>();
   for (const r of (fr?.rows ?? []) as { t: string; c: string; e: string; v: number }[]) { const m = fund.get(r.t) ?? fund.set(r.t, {}).get(r.t)!; (m[r.c] ||= []).push({ e: new Date(r.e).getTime(), v: r.v }); }
@@ -591,7 +736,7 @@ async function runProbabilityLadder(params: { horizon?: number; min_dvol?: numbe
 // "extract wealth in a hundred ways, bull or bear" map. Honest: small classes (few instruments) flagged low-power.
 async function runMultiClassLadder(params: { lookback?: number }) {
   const LB = params.lookback ?? 12, HZ = 1;
-  const cr = await fetch(`${BROKER}?allclasses=1`).then((r) => r.json()).catch(() => null);
+  const cr = await bfetch(`${BROKER}?allclasses=1`).then((r) => r.json()).catch(() => null);
   const byCls = new Map<string, string[]>();
   for (const r of (cr?.rows ?? []) as { symbol: string; asset_class: string }[]) (byCls.get(r.asset_class) ?? byCls.set(r.asset_class, []).get(r.asset_class)!).push(r.symbol);
   const TFS: [string, number][] = [["daily", 1], ["weekly", 5], ["monthly", 21]];
@@ -622,7 +767,7 @@ async function runMultiClassLadder(params: { lookback?: number }) {
 // after an open-market insider buy (disclosed_date, knowable), does the stock outperform over the next 21 trading days?
 async function runInsiderIC(params: { limit?: number; horizon?: number; pace_ms?: number; opportunistic?: boolean }) {
   const HZ = params.horizon ?? 21, PACE = params.pace_ms ?? 400;
-  const sr = await fetch(`${BROKER}?insider=${params.limit ?? 300}${params.opportunistic ? "&opp=1" : ""}`).then((r) => r.json()).catch(() => null);
+  const sr = await bfetch(`${BROKER}?insider=${params.limit ?? 300}${params.opportunistic ? "&opp=1" : ""}`).then((r) => r.json()).catch(() => null);
   const sample = (sr?.sample ?? []) as { ticker: string; dates: string[] }[];
   const fwd: number[] = []; let nT = 0, posT = 0, covered = 0;
   const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
@@ -649,11 +794,11 @@ async function runInsiderIC(params: { limit?: number; horizon?: number; pace_ms?
 // This is the substrate that finally lets cross-sectional momentum/value run on hundreds of names instead of ~40.
 async function runPriceAccumulate(params: { batch?: number; pace_ms?: number }) {
   const BATCH = params.batch ?? 250, PACE = params.pace_ms ?? 250;
-  const wl = await fetch(`${BROKER}?worklist=${BATCH}`).then((r) => r.json()).catch(() => null);
+  const wl = await bfetch(`${BROKER}?worklist=${BATCH}`).then((r) => r.json()).catch(() => null);
   const tickers = (wl?.tickers ?? []) as string[];
   const p2 = Math.floor(Date.now() / 1000);
   let stored = 0, empty = 0; const pending: { symbol: string; asset_class: string; bars: number[][] }[] = [];
-  const flush = async () => { if (pending.length) { await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bars_upsert: pending.splice(0) }) }).catch(() => {}); } };
+  const flush = async () => { if (pending.length) { const n = pending.length; await wr(`bars flush ${n} symbol(s)`, bfetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bars_upsert: pending.splice(0) }) })); } };   // plumbing-ok: audited — this write's response IS checked, by wr() which awaits it and logs WRITE-FAILED on a non-ok status or a rejection
   for (const sym of tickers) {
     await new Promise((r) => setTimeout(r, PACE));
     const j = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&period1=0&period2=${p2}`, { headers: { "User-Agent": "Mozilla/5.0" } }).then((r) => r.json()).catch(() => null);
@@ -849,7 +994,7 @@ async function runAttribution(params: { targets: string[]; cluster?: string }) {
 }
 
 async function runOne(): Promise<boolean> {
-  const cl = await fetch(`${BROKER}?claim=1&worker=${encodeURIComponent(WORKER)}`).then((r) => r.json()).catch(() => null);
+  const cl = await bfetch(`${BROKER}?claim=1&worker=${encodeURIComponent(WORKER)}`).then((r) => r.json()).catch(() => null);
   const job = cl?.job; if (!job) return false;
   console.log(`[${WORKER}] claimed job ${job.id} (${job.job_type})`);
   try {
@@ -872,16 +1017,17 @@ async function runOne(): Promise<boolean> {
     else throw new Error(`unknown job_type ${job.job_type}`);
     // durable result write — the shared DB blips under load; retry so a computed result is never lost (D-375)
     { const body = JSON.stringify({ job_id: job.id, status: "done", result: out.result, signals: out.signals, attribution: out.attribution });
-      let wrote = false; for (let att = 0; att < 5 && !wrote; att++) { try { const r = await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body }); if (r.ok) wrote = true; } catch { /* retry */ } if (!wrote) await new Promise((r) => setTimeout(r, 3000 * (att + 1))); }
+      let wrote = false; for (let att = 0; att < 5 && !wrote; att++) { try { const r = await bfetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body }); if (r.ok) wrote = true; } catch { /* retry */ } if (!wrote) await new Promise((r) => setTimeout(r, 3000 * (att + 1))); }
       if (!wrote) console.log(`[${WORKER}] WARN: result write for job ${job.id} failed after retries`); }
     console.log(`[${WORKER}] job ${job.id} done — ${out.signals?.length || 0} signals`, JSON.stringify(out.result).slice(0, 200));
   } catch (e) {
-    await fetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "error", error: String(e).slice(0, 300) }) });
+    await wr(`job ${job.id} status=error`, bfetch(BROKER, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id, status: "error", error: String(e).slice(0, 300) }) }));
     console.error(`[${WORKER}] job ${job.id} error`, String(e).slice(0, 200));
   }
   return true;
 }
 
-console.log(`aegis-worker ${WORKER} → ${BROKER} ${ONCE ? "(--once)" : "(daemon)"}`);
+console.log(`aegis-worker ${WORKER} — MODE ${OWNED_MODE ? `OWNED (direct: ${OWNED}, JWT_SECRET)` : `BROKER (${BROKER})`} ${ONCE ? "(--once)" : "(daemon)"}`);
+if (OWNED_MODE && !SECRET) { console.error("RED: owned mode needs JWT_SECRET (set -a && . ./infra/.env). Refusing to run — an unauthenticated claim returns [] and looks exactly like an empty queue."); Deno.exit(1); }
 if (ONCE) { await runOne(); }
 else { while (true) { const did = await runOne(); if (!did) await new Promise((r) => setTimeout(r, POLL_MS)); } }

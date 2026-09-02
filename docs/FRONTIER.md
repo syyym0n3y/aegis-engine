@@ -33,7 +33,7 @@
 | turn-of-month / calendar timing | already MEASURED: null (D-436) | closed |
 **Continuity without Supabase (operator, same instruction):** worker owned-mode default, an owned-node cockpit
 (`data/cockpit.html`, rendered each runner loop), and a 26th **sovereignty guard** that REDs on any live
-*.supabase.co reference or a stale runner — BUILDING.
+*.supabase.co reference or a stale runner — **DONE (D-759): 26/26 green, worker verified on a real job, cockpit self-contained.**
 
 ## The honest priors, stated before the results
 - Each of the four BUILDING items is a *known* effect in the literature, so the question is not "is it there" but

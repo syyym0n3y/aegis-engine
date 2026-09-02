@@ -9,11 +9,17 @@
 // LAW applied one level down: an unreachable substrate produces UNKNOWN, never a null finding about markets.
 //
 //   deno run -A scripts/infra-guard.ts
-//   AEGIS_RENTED_BASE=http://127.0.0.1:33000 deno run -A scripts/infra-guard.ts   # green-path verification
+//   AEGIS_OWNED_REST=http://127.0.0.1:33000 deno run -A scripts/infra-guard.ts   # green-path verification
 //
 // exit 0 = substrate reachable; exit 1 = RED (engine is down / conclusions are UNKNOWN, not null).
 
-const RENTED = Deno.env.get("AEGIS_RENTED_BASE") || "https://glzzoomuhnugsiichnub.supabase.co";
+// D-751: THE RENTED PROBE IS RETIRED. D-722 re-scoped this guard to the owned node and left the rented host as a
+// warning-only probe, with the note "to silence this warning entirely, retire the rented probe once the CC bridge is
+// repointed at the owned node." The bridge is now repointed — the operator's cockpit is `scripts/cockpit-render.ts`,
+// a file on disk rendered from the owned node — so the last live reference to a *.supabase.co host in any daily path
+// is removed here rather than exempted. The rented project's billing state is an operator matter tracked in STATE.md
+// under "Blocked on operator"; it is not something a daily research guard should reach across the network to learn.
+// Enforced from here by `scripts/sovereignty-guard.ts`, which REDs on a live reference anywhere in the runner's closure.
 const OWNED_REST = Deno.env.get("AEGIS_OWNED_REST") || "http://127.0.0.1:33000";
 const TIMEOUT_MS = Number(Deno.env.get("AEGIS_GUARD_TIMEOUT_MS") || 8000);
 
@@ -43,13 +49,12 @@ async function probe(target: string, url: string): Promise<Probe> {
 // rented outage no longer makes any research conclusion UNKNOWN — it only means the legacy CC oversight bridge is
 // unreachable, which is an operator BILLING matter, not a research-validity one. Gating RED on rented was therefore
 // a FALSE red: it asserted research was down when research runs entirely on an owned node that is up. The COVERAGE
-// LAW is honoured correctly by gating on OWNED (the substrate that actually carries the conclusions); rented-down is
-// reported as a WARNING so the billing issue stays visible without falsely invalidating research.
+// LAW is honoured correctly by gating on OWNED (the substrate that actually carries the conclusions). D-751 finished
+// the job: the rented WARNING probe is gone too, because the oversight surface it existed for now renders locally.
 const results: Probe[] = [];
 results.push(await probe("owned", `${OWNED_REST}/`));
-results.push(await probe("rented", `${RENTED}/rest/v1/`));
-const owned = results[0], rented = results[1];
-for (const p of results) console.log(`${p.ok ? "ok  " : (p.target === "owned" ? "RED " : "warn")} ${p.target.padEnd(7)} ${p.url} -> ${p.detail}`);
+const owned = results[0];
+for (const p of results) console.log(`${p.ok ? "ok  " : "RED "} ${p.target.padEnd(7)} ${p.url} -> ${p.detail}`);
 
 if (!owned.ok) {
   console.log(`
@@ -61,16 +66,5 @@ REMEDIATION: bring the owned node up — infra/scripts/up.sh (docker compose up 
   Deno.exit(1);
 }
 
-if (!rented.ok) {
-  console.log(`
-GREEN (research) — the owned node is serving; every current conclusion is readable and valid.
-WARNING (oversight) — the legacy RENTED project is down: ${rented.detail}. It carries no active research; the only
-effect is that the CC oversight cockpit cannot read via the service-role bridge. This is an operator BILLING matter
-(https://supabase.com/dashboard/org/_/billing), NOT a research-validity one — deliberately NOT a RED, because gating
-research on an abandoned substrate was itself the bug (D-722). To silence this warning entirely, retire the rented
-probe once the CC bridge is repointed at the owned node.`);
-  Deno.exit(0);
-}
-
-console.log("\nGREEN — owned research substrate serving and the rented oversight bridge is reachable.");
+console.log("\nGREEN — the owned research substrate is serving. No rented host is probed: nothing in any daily path\n        depends on one (D-751), so its state cannot make a research conclusion UNKNOWN.");
 Deno.exit(0);

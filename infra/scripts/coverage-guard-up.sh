@@ -275,6 +275,17 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/market-cap-guard.ts; then
     echo "$(date -u +%FT%TZ) MARKET CAP GUARD RED — market caps are mixing two share bases; every mc-derived yield is contaminated"
   fi
+  # SOVEREIGNTY GUARD (D-751): the guard whose subject is WHO OWNS THE ENGINE. The worker DEFAULTED to a CC Supabase
+  # edge function as its job broker and the oversight cockpit WAS a CC edge function — on a project now inactive
+  # behind unpaid invoices. So an unpaid invoice could blind the engine while research kept running, and the worker's
+  # version of that failure was silent (every broker call is .catch(() => null), so a dead broker looks exactly like
+  # an empty queue). This reds on any LIVE *.supabase.co reference in the runner's closure, the daemons' import
+  # closures or the worker's effective default — with a PRINTED allowlist for the legacy migration tooling — and on
+  # continuity (last loop older than 36h, or the owned PostgREST unreachable), because an owned engine that has
+  # stopped is silence, not sovereignty.
+  if ! deno run --allow-read --allow-env --allow-net --allow-run ../scripts/sovereignty-guard.ts; then
+    echo "$(date -u +%FT%TZ) SOVEREIGNTY GUARD RED — a live path depends on a *.supabase.co host, or the owned engine has stopped"
+  fi
   # GAP REGISTER (W2): a gap marked FILLED whose data has gone stale is worse than an unfilled one — it silently
   # licenses conclusions the data no longer supports. Reds only on regressions, reports open engine gaps.
   if ! deno run --allow-net --allow-env ../scripts/gap-register-guard.ts; then
@@ -283,6 +294,15 @@ while true; do
   # D-586: print the cycle summary LAST so the state of the whole suite is the final thing in the log, rather than
   # six RED lines buried mid-file with no reader. This is the line a human actually reads.
   ../scripts/guard-status.sh || true
+  # OWNED COCKPIT (D-751) — THE LAST STEP OF EVERY LOOP, deliberately. The operator's view was an edge function on
+  # the inactive CC project; this renders the same oversight into ONE self-contained file the operator owns
+  # (data/cockpit.html): the guard board just printed above, the forward clocks and their latest marks, the re-test
+  # state, the odds map, the holdability sizer, the driver register line and STATE.md's "Blocked on operator" block.
+  # It runs last so the board it displays is THIS cycle's, and it carries a positive control (live trial count + a
+  # full guard board) that reds rather than rendering a beautiful page from nothing. Read-only; no LLM; owned node only.
+  if ! deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/cockpit-render.ts; then
+    echo "$(date -u +%FT%TZ) COCKPIT RENDER RED — data/cockpit.html failed its positive control; do not read it as oversight"
+  fi
   sleep 86400
 done
 

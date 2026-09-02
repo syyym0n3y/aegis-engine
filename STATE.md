@@ -1,5 +1,16 @@
 # STATE — Aegis (live state)
 
+## 2026-09-02 (LATEST, evening) — CONTINUITY WITHOUT SUPABASE proven (D-759); second frontier wave measured
+- **Supabase is now optional:** worker owned-mode (verified on a real job), owned-node cockpit `data/cockpit.html`
+  (rendered every runner loop; `scripts/cockpit-open.sh`), 26th guard `sovereignty` RED on any live *.supabase.co
+  reference / stale runner / unreachable owned node, self-tested. The paused CC project stays blocked on the
+  operator's unpaid invoices and nothing depends on it.
+- **Second frontier wave, all measured (docs/FRONTIER.md):** CEF tender capture 0.8% of position after proration
+  (D-755); forced-selling absorption null both ways and it exposed the silent-read defect class (D-756 → D-757 rule,
+  404 sites in the backlog); UK rights issues UNTESTED for data reasons, UK wrappers quantified — ISA 0.63–1.45%/yr
+  forecast-free (D-758); SPAC pre-deal trust arbitrage running.
+- Ops: PostgREST OOM-restarts under concurrent reads (restart policy set; colima VM memory bump queued).
+
 ## 2026-09-02 (LATEST) — a UNIT-MISMATCH defect under the whole valuation family (D-747); the frontier opened (docs/FRONTIER.md)
 - **DEFECT, HIGH blast, fix in build:** factory market cap = split-ADJUSTED price × RAW-as-filed shares. Every mc-derived
   yield (B/M, E/P, CFO/FCF/buyback/div/shareholder yield) is wrong for any name with a later split, and the bias is

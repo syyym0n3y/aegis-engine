@@ -15852,3 +15852,27 @@ today's scripts migrated; fx-carry (Sharpe 0.22), cef-discount (t 8.09) and odd-
 headlines exactly on the strict reader. Rule for the ledger: **a read helper that returns an empty result on
 failure manufactures the thing this programme produces most — nulls — and must not exist on a path that reaches a
 verdict.**
+
+## D-759 — CONTINUITY WITHOUT SUPABASE: worker owned-mode, an owned-node cockpit, and a 26th SOVEREIGNTY guard that proves it daily
+Operator: *"make sure you can continue without paying the Supabase."* The paused CC project's restore is blocked by
+unpaid invoices (a payment, the operator's alone) — so the engine must not need it, and must prove it doesn't.
+1. **Worker owned-mode** (`scripts/aegis-worker.ts`): with `AEGIS_BROKER` unset it claims/reads/completes
+   `trd_compute_jobs` directly against the owned PostgREST with the local JWT (a local `ownedBroker()` mirrors
+   `trd-compute` endpoint-for-endpoint), loads splits via the shared `loadSplits`, prints its mode, and refuses to run
+   without `JWT_SECRET` (an unauthenticated claim returns [] — indistinguishable from an empty queue). Verified
+   end-to-end on a real job (claim → data → done; test jobs deleted after). Broker mode remains for a secret-less box.
+   Every write now checks `r.ok` and logs `WRITE-FAILED`; plumbing backlog burned down by one.
+2. **Owned-node cockpit** (`scripts/cockpit-render.ts` → `data/cockpit.html`, `scripts/cockpit-open.sh`): one
+   self-contained page — guard board, 9 forward clocks with latest marks, retest state, queue, driver-register line,
+   sizer table, odds map, and STATE.md's "Blocked on operator" block verbatim; rendered as the LAST step of every
+   runner loop; only outbound URL is localhost. Its positive control (live trial count and every guard on disk shown)
+   caught a real defect during development — a transient PostgREST non-ok collapsed to "0 trials". Reads now retry
+   and report. `supabase/functions/aegis-cockpit` marked SUPERSEDED, kept.
+3. **26th guard `sovereignty-guard.ts`**: scans the runner, its 64 invoked scripts, all SEVEN launchd daemons (the
+   brief said two — hardcoding two would have left five free) and their import closures, plus the worker's effective
+   default as behaviour not grep; REDs on any live *.supabase.co reference, a last loop older than 36h, or an
+   unreachable owned PostgREST; a 4-path allowlist (migration/legacy tooling) printed every run, never silent; the
+   self-test injects a fake runner and script and goes RED (fixtures string-assembled because the guard scans
+   itself — found by the injection test). To make it honestly green the rented probe in `scripts/infra-guard.ts` was
+   RETIRED rather than exempted, as D-722's own note prescribed. Board: **26/26 green.**
+The owned node runs, oversees and operates the engine with no Supabase host; the paused project is now optional.
