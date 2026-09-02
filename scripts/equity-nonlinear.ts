@@ -132,7 +132,12 @@ for(const [k,v] of Object.entries(books)){ if(v.length<36)continue;
   const m=mean(v),sd=sdv(v)||1e-9; let cum=1,peak=1,dd=0,ruined=false;
   for(const x of v){cum*=1+x;if(cum<=0){ruined=true;break;}peak=Math.max(peak,cum);dd=Math.min(dd,cum/peak-1);}
   console.log(`    ${({gbmAll:"GBM decile L/S (ALL)",gbmLiq:"GBM decile L/S (LIQ tercile)",linLiq:"linear L/S (LIQ tercile)"}[k]!).padEnd(28)}${((m*12*100).toFixed(1)+"%").padEnd(10)}${((m/sd)*Math.sqrt(12)).toFixed(2).padEnd(8)}${(m/(sd/Math.sqrt(v.length))).toFixed(2).padEnd(8)}${ruined?"RUINED".padEnd(9):((dd*100).toFixed(0)+"%").padEnd(9)}${v.length}`);}
-console.log(`\n    Deflated ceiling: t ~ 5.34 at N~1.53M. The promotable number is the LIQUID book's, per the Liquidity Law.`);
+{ // LIVE ceiling, never a literal: a hardcoded "5.34 at N~1.53M" survived 1.4M trials of drift (D-747h; the D-459 class).
+  const rc=await fetch(`${OWNED}/trd_trial_counter?select=id`,{headers:{...hdr,Prefer:"count=exact",Range:"0-0"}}).catch(()=>null);
+  const N=Number(rc?.headers.get("content-range")?.split("/")[1]??NaN);
+  const ceil=Number.isFinite(N)&&N>1?Math.sqrt(2*Math.log(N)):NaN;
+  console.log(`\n    Deflated ceiling: t ~ ${Number.isFinite(ceil)?ceil.toFixed(3):"UNREADABLE (trial counter unreachable — no ceiling is claimed)"} at N=${Number.isFinite(N)?N.toLocaleString():"?"} (live). The promotable number is the LIQUID book's, per the Liquidity Law.`);
+}
 // trials: 3 models x 2 universes examined
 {const tw=await fetch(`${OWNED}/trd_trial_counter`,{method:"POST",headers:{...hdr,Prefer:"return=minimal"},
   body:JSON.stringify({family:"adhoc",run_key:`equity-nonlinear-D513`})}).catch(()=>null);

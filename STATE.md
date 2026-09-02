@@ -14,8 +14,8 @@
 - **2026-09-02 late — D-747 became THREE share-base defects, two fixed, one in fix:** split units (fixed, 25th guard);
   ADR ordinary-vs-ADR shares (fixed — 1,192 FPIs flagged, 692 ratios validated, rest excluded, guard set-aside deleted,
   self-test 2 fires); 21 single-point EDGAR share spikes as filed (BTI exactly 1e6× — reader-side filter in build; the
-  guard stays RED visibly until it lands). The value/payout re-run must run once more after the third fix (105 FPIs in
-  the top-1,000 by volume). PostgREST was OOM-killed mid-run; containers now `restart=unless-stopped`; a stale
+  guard stays RED visibly until it lands). All three fixes are in and the value/payout re-run is COMPLETE (D-747h): 0 new survivors; non-linear liquid
+  book t −0.25 — null before and after. PostgREST was OOM-killed mid-run; containers now `restart=unless-stopped`; a stale
   training input was caught and refused (D-747e).
 - **Frontier, all rows now measured or in final build:** lending income UNTESTED-ON-RATE bracket, rounding line on a
   small account (D-752; iBorrowDesk per-name fees found free — ingest in build); prediction markets null where

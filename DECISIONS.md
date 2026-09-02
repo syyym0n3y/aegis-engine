@@ -15767,3 +15767,17 @@ acknowledgement; the survivor guard went RED ("flagged survivor but the ledger d
 guard working exactly as designed, and the third time today the ledger's lack of versioning (D-747d) has cost
 something. The acknowledgement is restored on the row (the claim is not); the factory should carry
 acknowledgements forward on upsert rather than overwrite `note` — recorded as part of the same schema/ledger debt.
+
+## D-747h — the value/payout re-earn COMPLETE on clean caps (all three share-base fixes in): still nothing
+`rerun-v2` (`data/rerun-d747-v2.log`): `PASS=eq` 220 specs, `PASS=pairs` 231 specs, `gbmexport` 273,360 rows × 22
+features (1,192 FPIs: 692 corrected, 500 excluded; 48 spike facts scrubbed), then `equity-nonlinear` on a FRESH
+export (mtime asserted after the run start — the earlier stale-file start was killed, D-747e). Ceiling 5.456 at
+N 2,903,475, unchanged by design (re-runs of the same spec_keys are not new trials). **0 new survivors** in any
+pass; the two "survivors" listed are the frozen books whose FALSE-SURVIVOR acknowledgements were re-stamped
+(D-557b). Non-linear walk-forward 2002–2026, 247 months: GBM decile L/S ALL +2.2%/yr, t 0.44, maxDD −80%; **LIQUID
+tercile −1.1%/yr, t −0.25**; linear liquid −2.2%, t −0.43 — null, as before the fixes. The mixed-unit contamination
+had inflated nothing far enough to change a verdict; the correction was still owed, because a verdict computed on
+wrong inputs is not a verdict. Verified the writes landed via Postgres `xmin` (D-747d). The eight payout forward
+leads are scored by the patched `factory-forward-score.ts` from their next mark. One residual fixed in the same
+commit: `equity-nonlinear.ts` printed a hardcoded ceiling "5.34 at N≈1.53M" — the stale-ceiling class the
+agent-output guard exists for — now read live from the trial counter.
