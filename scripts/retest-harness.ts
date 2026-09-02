@@ -46,6 +46,8 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "short-VIX (A, XIV construction) gross t (ruined, 1.89, D-749; needs ingest-vx-curve refresh)" },
   { name: "cef-discount", args: ["--allow-read", "--allow-write", "scripts/cef-discount.ts"], pick: /EXCESS of widest over the universe\s+-?\d+\.?\d*%\/yr\s+t (-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.5, note: "CEF widest-discount excess-over-universe t (CANDIDATE upper bound, 8.09, D-750; live via refresh-cef)" },
+  { name: "odd-lot", args: ["--allow-read", "scripts/odd-lot-tender.ts"], pick: /ERA 2020\+ \(CLEAN\): n=\d+ \| prem>0 \d+ \((\d+)%\)/i,
+    moved: (p, n) => Math.abs(n - p) > 15, note: "odd-lot tenders 2020+ share priced above market, % (real/retail-only/negligible, 50, D-751; reads cached JSON — refetch is manual)" },
 ];
 
 let state: Record<string, number> = {};

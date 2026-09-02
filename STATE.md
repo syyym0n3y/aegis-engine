@@ -18,7 +18,7 @@
   spread); forward clock `fwd-cef-discount` REGISTERED (promote ≥2.5%/yr AND t≥2 after 24 mo; scorer backdate-
   verified; live refresh). **Attacked (D-750b): hole = 52% of the 2010 universe; clean-window 2019+ ~4–5%/yr at t 3–5;
   pessimistic reinstatement → ~0** — a real ~4%/yr liquid long-only convergence effect over 7 years whose long history
-  cannot be trusted; the clock decides. Odd-lot tenders running. **Value/payout factory families re-running in the
+  cannot be trusted; the clock decides. **Odd-lot tenders MEASURED (D-751): real, retail-only, ~$2k/yr on ~$15k peak capital, ceiling absolute at 99 shares** — the first capacity-INVERTED mechanism. **Value/payout factory families re-running in the
   background on corrected caps** (`data/rerun-d747.log`: PASS=eq → pairs → gbmexport → equity-nonlinear).
 
 ## 2026-09-01 (LATEST) — the free frontier closed as market findings; 24 guards green; the honest wealth path written

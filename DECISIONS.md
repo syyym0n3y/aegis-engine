@@ -15560,3 +15560,27 @@ Honest statement after the attack: a real, placeable, long-only convergence effe
 over the last ~7 years**, whose long history cannot be trusted, and whose forward clock is the only thing that can
 settle it. Lineage `D-750-cef-discount` updated (still monitoring, upper bound). The attack shrank the candidate by
 about a quarter and removed its t 8 — which is what an attack is for.
+
+## D-751 — odd-lot tender priority: real, retail-only, ~$2k/yr — the first mechanism measured here that gets BETTER by being small
+Frontier item "paid for being small." EDGAR full-text "odd lot" in SC TO-I/TO-T 2012–2026: 997 filings, every
+primary document fetched (sequential, 0 failures) → 617 original offers → **odd-lot priority granted in 410** (the
+mechanism is real and common) → 213 with priority + price + ticker → **110 measured** (pre-2020 events are
+DATA-missing, not market-null — the delisted backfill starts ~2020). `scripts/odd-lot-fetch.ts`,
+`scripts/odd-lot-tender.ts`. Entry = first close strictly after the filing (lag-1); the tradeable rule is decided AT
+ENTRY (tender price above that close); Dutch auctions at the LOW end; 99 shares; $25 fee.
+| | pre-2020 (split-exposed) | **2020+ (clean)** |
+|---|---|---|
+| offers priced above market | 77% | **50% — a coin flip; median premium −0.33%** |
+| positive subset, median net | $313/event | **$205/event** |
+| events/yr · $/yr | 5.1 · $3,584 | **5.0 · ~$1,989** |
+| capital | — | ~$9.9k per position, ~$15.4k at peak concurrency (max 4 open) |
+Downside: 9% of positive-premium events fell by more than the premium; 6% repriced by amendment; **termination
+language not parsed — UNTESTED, so the downside is a lower bound.** Capacity: **absolute** — 99 shares × ~5 events;
+tender 100 and you forfeit the priority and join the institutions in proration. More money buys nothing.
+Two defects caught in the first run before recording (PRECONDITION LAW): filings before the panel start silently
+entered at the panel's FIRST bar (a 2012 offer against a 2020 close), and nominal tender prices were compared to
+split-ADJUSTED closes (MicroStrategy "+790%") — the first run's mean profit printed −$5.7×10¹⁰, a one-sided guard.
+Verdict: **real, retail-only, financially negligible** — below the deposit arithmetic (D-746) as a wealth engine,
+but the first measured thing that is capacity-INVERTED. Lineage `D-751-odd-lot-tender`. FRONTIER: MEASURED. The
+pooled pre-2020 number is not the quotable one. The fetch (997 EDGAR documents) is NOT in the daily runner; the
+analysis reads the cached JSON and is retest-wired.
