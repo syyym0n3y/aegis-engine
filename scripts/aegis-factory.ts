@@ -11,7 +11,7 @@
 // Honesty is structural: portfolio_t only (n = rebalances), pre-registered signal SIGNS (a spec tests its documented
 // direction; flipping sign to fit is a different spec and costs another trial), era gate = same net sign in >=3 of 4 eras,
 // survivor = the ledger's GENERATED column, never this script's opinion.
-import { adjShares, loadSplits as loadSplitsShared, splitFactorAfter, type Split } from "../supabase/functions/_shared/shares-adj.ts";
+import { adjShares, loadSplits as loadSplitsShared, scrubShareFacts, splitFactorAfter, type Split } from "../supabase/functions/_shared/shares-adj.ts";
 import { EMPTY_FPI, type FpiTable, loadFpiFlags, mcFpi } from "../supabase/functions/_shared/fpi-adr.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"fac",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
@@ -47,6 +47,13 @@ async function loadFund(){
     if(p.length<10000)break;
   }
   for(const [,m] of fund) for(const [,a] of m) a.sort((x,y)=>x.eff<y.eff?-1:1);
+  // D-747f, the THIRD share-base defect: some EDGAR cover-page share counts are corrupt AS FILED (BTI 2.46e15
+  // between neighbours of 2.46e9 — exactly 1e6, the filer's units error; CCL 9.32e11 between 5.28e8 and 9.86e8).
+  // The stored fact is append-only evidence and is NOT mutated; the correction lives here in the READER, before
+  // asOfRec()/asOf() ever see the series, and every drop is PRINTED so it can never be a silent rewrite.
+  const scrub=scrubShareFacts(fund);
+  await log(scrub.line);
+  for(const d of scrub.drops) await log(`    drop ${d.ticker} ${d.eff} ${d.value.toExponential(3)} — ${d.reason}`);
   await log(`  fundamentals: ${n.toLocaleString()} facts, ${fund.size} tickers`);
 }
 // asOfRec returns the VALUE together with the effective_date it was filed under. The date is not decoration: a raw

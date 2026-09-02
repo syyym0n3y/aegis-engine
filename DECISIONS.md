@@ -15698,3 +15698,18 @@ single-point share-count spikes > 50× two agreeing neighbours (BTI 2.46e15 vs 2
 filed; CLX, SWKS, PKG, HL, FOSL, CCL…). The stored facts are not mutated (append-only evidence); the READER drops a
 lone spike, with tests that keep a genuine 2:1 doubling and a genuine reverse split. The guard stays RED, visibly,
 until that lands — no escape hatch was re-added to make the board green.
+
+## D-747g — the third share-base defect FIXED in the reader: 48 corrupt EDGAR share facts across 46 tickers scrubbed, never mutated; board 25/25 with no escape hatch
+`_shared/shares-adj.ts` gains `cleanShareSeries` / `scrubShareFacts`: an interior point is dropped only when both
+neighbours agree within 3× and the point is > 50× or < 1/50 of both (or an exact 1e3/1e6/1e9 multiple); endpoints
+only past 1,000× against a corroborated, PLAUSIBLE neighbour. **The first live run deleted two true values** (PSKY
+1.07bn, CLUS 434m) because their neighbours were placeholder `1000`/`4399` — a placeholder may never convict a
+neighbour, so `MIN_PLAUSIBLE = 1e5` was added and both are asserted KEPT by name (17 tests: BTI, CCL, a 2:1
+doubling, a 10:1 and a 1-for-500 reverse split all KEPT). Wired at one point each in the factory, the forward
+scorer and the guard via the shared helper. Live: **48 facts dropped across 46 tickers** — the 21 large spikes
+(BTI 1e6×, CCL, CLX, SWKS, PKG ×2, HL, FOSL, WW, SGU, NSP, SHOE…) plus a cohort of placeholder endpoints (`1`, `7`,
+`8`, `24`, `100`, `1000`) that made caps absurdly SMALL. 9 of the 46 are in the liquid top-1,000 (CCL rank 137 at
+$572M/day; HL, BTI, SWKS, SW, PKG, ALK, CROX, BTDR). Full list in the agent log and reproducible from the helper's
+printout. Guard: 2015 15/15, 2021 11/15, 2026 11/15, both self-tests fire, **25/25 green with no escape hatch** —
+a scrubbed point is removed, a surviving cap over $10T still reds. 314 shared tests pass. The value/payout families
+now RE-RUN with all three share-base fixes in (split units, ADR ratio, spike scrub).

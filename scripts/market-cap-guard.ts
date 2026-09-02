@@ -37,7 +37,7 @@
 //   (e) ANY residual cap above $10T, with no set-aside channel at all.
 // The second self-test proves this is not decorative: it recomputes LTM under the PRE-FIX construction (split
 // correction applied, ADR correction absent) and REQUIRES that to go red.
-import { adjShares, splitFactorAfter, type Split } from "../supabase/functions/_shared/shares-adj.ts";
+import { adjShares, cleanShareSeries, splitFactorAfter, type Split } from "../supabase/functions/_shared/shares-adj.ts";
 import { loadFpiFlags, mcFpi } from "../supabase/functions/_shared/fpi-adr.ts";
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -142,6 +142,24 @@ for (let off = 0;; off += 10000) {
   if (p.length < 10000) break;
 }
 for (const a of shares.values()) a.sort((x, y) => x.eff < y.eff ? -1 : 1);
+// THE THIRD SHARE-BASE DEFECT (D-747f). Neither correction above touches a fact that is corrupt AS FILED: CCL's
+// 2021-03-30 filing carries 9.32e11 shares between neighbours of 5.28e8 and 9.86e8, and BTI files 2.46e15 between
+// neighbours of 2.46e9 — exactly 1e6, the filer's units error. Those produced the residual RED this guard carried.
+// The fix is in the READER (the stored fact is append-only evidence and is not mutated), and it is applied here
+// through THE SAME shared helper aegis-factory.ts and factory-forward-score.ts call — a private copy here is how
+// D-747 survived its first fix. This is a correction, NOT an escape hatch: a corrupt point is REMOVED from the
+// series, so if the resulting cap is still impossible the guard still reds on it.
+{
+  let nd = 0; const tk: string[] = [];
+  for (const [sym, a] of shares) {
+    const { kept, dropped } = cleanShareSeries(a.map((x) => ({ eff: x.eff, value: x.v })));
+    if (!dropped.length) continue;
+    nd += dropped.length; tk.push(sym);
+    shares.set(sym, kept.map((x) => ({ eff: x.eff, v: x.value })));
+    for (const d of dropped) console.log(`    scrub ${sym} ${d.eff} ${d.value.toExponential(3)} — ${d.reason}`);
+  }
+  console.log(`    share-fact scrub (D-747f): dropped ${nd} corrupt fact(s) across ${tk.length} ticker(s)${tk.length ? ": " + tk.sort().join(",") : ""}`);
+}
 function sharesAsOf(sym: string, d: string) {
   const a = shares.get(sym); if (!a?.length) return null;
   let lo = 0, hi = a.length - 1, best = -1;

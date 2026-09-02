@@ -6,7 +6,7 @@
 // SELFTEST=1 exercises the ENTIRE path — panel, signals, ranking, L/S computation — on the last completed month and
 // prints what it WOULD write, without writing: the scorer is proven working today, not discovered broken at first use.
 // Registration is the immutable line: a pre-registration month can never be written (guarded twice — in SQL and here).
-import { adjShares, loadSplits } from "../supabase/functions/_shared/shares-adj.ts";
+import { adjShares, loadSplits, scrubShareFacts } from "../supabase/functions/_shared/shares-adj.ts";
 import { loadFpiFlags, mcFpi } from "../supabase/functions/_shared/fpi-adr.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"ffs",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
@@ -66,6 +66,10 @@ for(const c of CONC) for(let off=0;;off+=10000){
   if(p.length<10000)break;
 }
 for(const [,m2] of fund) for(const [,a] of m2) a.sort((x,y)=>x.eff<y.eff?-1:1);
+// D-747f: corrupt EDGAR share counts (BTI 2.46e15, CCL 9.32e11) are dropped by the SAME shared helper the factory
+// calls, so the forward scorer and the factory can never see a different share series. Stored facts are untouched.
+{ const sc=scrubShareFacts(fund); console.log(sc.line);
+  for(const d of sc.drops) console.log(`    drop ${d.ticker} ${d.eff} ${d.value.toExponential(3)} — ${d.reason}`); }
 // asOfRec keeps the effective_date beside the value: a RAW share count can only be restated into today's units by
 // knowing which splits fell after ITS FILING (D-747). asOf is the value-only wrapper, so no other caller changes.
 const asOfRec=(t:string,c:string,d:string)=>{const a=fund.get(t)?.get(c);if(!a?.length)return null;
