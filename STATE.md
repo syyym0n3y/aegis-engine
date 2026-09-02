@@ -1711,6 +1711,13 @@ Wired into the daily board. Standing gaps it prints:
   gamma (all-NULL table), earnings revisions (licensed), delisted price history (27.3% of equity universe — the big
   hole), borrow cost (paid). Crypto options ARE held (Deribit dvol/skew/IV); gold options are not.
 
+## Ops queue (mine, not blocked — needs a quiet moment)
+- **PostgREST (`aegis-rest`) is OOM-killed under concurrent heavy reads** (twice on 2026-09-02: during `gbmexport` and
+  again with five research scripts reading packed bars). `restart=unless-stopped` now brings it back in seconds, and
+  the guards say "cannot reach" honestly rather than certifying on nothing. Root fix: raise the colima VM memory
+  (`colima stop && colima start --memory 8` or higher) — a DB restart, so do it between runs, not during one; and
+  stop reading `select=bars` for the whole panel in scripts that only need a few symbols.
+
 ## Blocked on operator (free actions / config)
 - **CC Supabase project `glzzoomuhnugsiichnub` is INACTIVE and the restore is blocked by UNPAID INVOICES on the
   Supabase organisation `wasnnddzbnjailwhaxyg`** (`restore_project` → PaymentRequiredException, 2026-09-02). Settling
