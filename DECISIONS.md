@@ -15745,3 +15745,18 @@ Currency column is blank on every pre-2018-02 row, so a naive `GBX` filter silen
 and verified against Yahoo's own currency (195 → 271). **Retail split UNTESTED**: no retail/intermediaries-offer
 column; the only proxy survives to n = 1 (BREADTH LAW). Lineage `D-754-ipo-pop` verdict updated: the primary-market
 premium is a fee paid to allocation on both sides of the Atlantic. FRONTIER: MEASURED, both legs, both markets.
+
+## D-752b — borrow FEES measured (iBorrowDesk, keyless): the register's "Paid" row was a lead; lending income on liquid names collapses to 0.14–0.35%/yr on measured fees
+`www.iborrowdesk.com/api/ticker/{SYM}` serves IBKR's per-name daily borrow fee and lendable shares with ~1y of
+history, no key. The bare host drops the connection; the server serves **~100 requests per window and then returns
+HTTP 444 for about an hour regardless of spacing** (verified at 150ms and 1,200ms) — so `scripts/ingest-borrow-fees.ts`
+is a resumable, budgeted daily batch in the runner, not a one-shot. Held so far: **194 symbols, 49,541 daily rows**
+(187 of 3,667 liquid names, 5.1% — the rest are ABSENT, not general collateral). Register: **borrow cost /
+availability blocked-Paid → HELD; 46 HELD / 0 debt / 5 named barriers.**
+Measured fee distribution: median **0.41%/yr**, 75th 0.56, 90th 1.55, 99th 14.9, max 31.7 — 85% GC, 10% warm, 5%
+hot; AAPL 0.25 (control). `scripts/lending-income-measured.ts`: with measured fees (on-loan fraction still assumed)
+the equal-weight liquid single-name bracket is **0.14–0.35%/yr** (liq-high half 0.06–0.15; liq-low 0.22–0.56) — the
+assumed bracket's 4.9% ceiling is refuted on the names measured; a broad ETF is still ~0 to the holder. A rounding
+line by measurement now, not by assumption. `scripts/borrow-fee-conditioning.ts` (high fee → low return) is
+**UNTESTED by its own precondition** — 194 of the 500 rows it requires; it will run itself once the trickle passes
+the floor. P(on loan) is the only unmeasured layer left. Lineage `D-752-lending-income` updated.
