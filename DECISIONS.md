@@ -15876,3 +15876,30 @@ unpaid invoices (a payment, the operator's alone) — so the engine must not nee
    itself — found by the injection test). To make it honestly green the rented probe in `scripts/infra-guard.ts` was
    RETIRED rather than exempted, as D-722's own note prescribed. Board: **26/26 green.**
 The owned node runs, oversees and operates the engine with no Supabase host; the paused project is now optional.
+
+## D-760 — pre-deal SPAC trust arbitrage: real, near-riskless, ~3%/yr over bills — and capacity-bound to ~$1.3k per name
+`scripts/spac-trust.ts`: 424B4 "blank check company" 2017–23 → **1,094 confirmed SPACs** (the bare phrase matched 419
+"blank check preferred stock" prospectuses — discriminant tightened), 663 with a commons series, 15,112 SPAC-months;
+controls 841 boom-era IPOs, CCIV $10.00 / PSTH $20.00 trusts recovered. 83.4% of pre-deal SPAC-months traded below
+trust (median −1.85%); 2022 fires as the control year (96.2% below). Rule — buy every sub-trust SPAC at month-end,
+hold to trust+2% or redemption: **902 positions, median +6.61% (t 11.32, 98.3% positive), ~+3.3%/yr over the bill,
+zero exits more than 10% below trust.** But **median ADV $12.6k/day → ~$1.3k per name, ~$208k across the whole
+market**, and universe sensitivity 9–143%/yr → NOT IDENTIFIED. Three defects fixed before reporting (post-merger
+companies substituted for SPACs by the ticker fallback; an annualised mean of 4.2×10¹⁵⁰% from 1-day holds; a 55%/yr
+rebalancing artifact printed as a reconciliation, not a headline). A T-bill with paperwork and a lottery ticket.
+Lineage `D-760-spac-trust`. FRONTIER: MEASURED.
+
+## D-734b — the de-SPAC completion table FAILED A POSITIVE CONTROL: D-734's "confirmed −40.7%" and its forward clock are SUSPECT pending re-derivation
+Found by the D-760 build, confirmed independently: the `8-K|despac` rows (3,752; 2019–2023) keep the FIRST matching
+8-K per ticker, and for **LCID that is 2020-08-04 — Churchill IV's IPO closing, not the 2021-07-23 Lucid merger**;
+**SOFI 2020-10-14** (IPOE's IPO closing); **OPEN 2020-04-30** (IPOB's IPO); **PSTH, which never merged, carries a
+row.** The full-text phrase ("consummation of the business combination") appears in SPAC IPO-closing 8-Ks too. So
+the 500-day "de-SPAC destruction" was measured, for an unknown fraction of the 204 events, from the SPAC's IPO
+closing — a window that contains the pre-deal flat period and the deal pop. **Recorded as SUSPECT before the fix**
+(the D-747 discipline): the lineage row is annotated, the immutable forward rule `fwd-despac-underperf` stands as
+written but its scorer inherits the same dates and must not be read until a superseding rule on corrected dates is
+registered. Re-derivation dispatched on the definitive marker — **8-K Item 5.06, change in shell company status**
+(with Item 2.01 completion of acquisition), controls LCID 2021-07-26, SOFI 2021-06-01, OPEN 2020-12-21, DKNG
+2020-04-24. Why no guard caught it: every guard inspects a conclusion or a computation; none checks that an EVENT
+DATE is the event it claims to be — a positive control on the event table itself is the missing discipline, and it
+is being added to `despac-event.ts` as part of the fix.
