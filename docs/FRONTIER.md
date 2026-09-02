@@ -21,6 +21,20 @@
 | **Different market altogether** | different participants, different pricing failures (longshot bias) | prediction markets (Kalshi/Polymarket) | **MEASURED (D-753)**: Polymarket favourite leg clustered |t| ≤ 0.3 at every implementable horizon; longshot short LOSES; calibration sign MISSED (underdogs underpriced); Kalshi archive not public (3.1h of data), its t 6.6 same-bar. Null where testable, untested where closed, unplaceable from the UK. Closed. |
 | **Information advantage that is legal and local** | the one edge the base rate does not touch: knowing a sector better than the marginal price-setter | operator domain (media/creator economy) fundamentals | UNMEASURABLE by this engine — it cannot test what it does not hold; noted so it is not mistaken for absence |
 
+## Second wave (2026-09-02 evening) — mechanisms added after the first wave was measured
+| mechanism of payment | why it is different | status |
+|---|---|---|
+| **absorbing FORCED selling** — index demotions (index funds must sell on the effective date); December tax-loss losers | the seller is price-insensitive by mandate or by tax calendar | **BUILDING** (`forced-selling.ts`: S&P removals held; panel held) |
+| **holding cash with an option attached** — pre-deal SPAC shares below trust value | redeemable at trust; the downside is a T-bill, the upside a deal pop | **BUILDING** (`spac-trust.ts` from the 424B4 index) |
+| **patience in a wrapper, second mechanism** — CEF tender offers at 98–100% of NAV | the discount is paid out to holders by the fund itself; often odd-lot priority | **BUILDING** (`cef-tender.ts`: 94 CEF-at-NAV tenders already indexed) |
+| rights issues (UK nil-paid rights) | forced sellers of rights at a discount to theoretical value | UNEXAMINED — LSE RNS text per issuer (host allowlisted) |
+| UK retail-only instruments (NS&I Premium Bonds tax-free prize rate; ISA wrapper) | rates only a retail saver can get | UNEXAMINED — structural, quantify not test |
+| covered-call / put-write (BXM, PUT) | already MEASURED long ago: worse than buy-and-hold (D-116/117) | closed |
+| turn-of-month / calendar timing | already MEASURED: null (D-436) | closed |
+**Continuity without Supabase (operator, same instruction):** worker owned-mode default, an owned-node cockpit
+(`data/cockpit.html`, rendered each runner loop), and a 26th **sovereignty guard** that REDs on any live
+*.supabase.co reference or a stale runner — BUILDING.
+
 ## The honest priors, stated before the results
 - Each of the four BUILDING items is a *known* effect in the literature, so the question is not "is it there" but
   "what is left after cost, tail and capacity, in the placeable form, at small size" — the same four questions that
