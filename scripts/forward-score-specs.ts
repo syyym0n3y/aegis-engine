@@ -155,6 +155,63 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     const win = 100 * exs.filter((x) => x > 0).length / exs.length;
     return { metric: "median_excess_vs_iwm_500d_pp", value: m, n: exs.length, note: `${exs.length} new de-SPACs: median ${m.toFixed(1)}pp, win-rate ${win.toFixed(0)}%. PERSISTS if median<=-10 & win<45; BOOM-ARTIFACT if median>=0 / win>55.` };
   },
+  // Rule (D-750): widest-discount tercile of the LIQUID ($vol > $1m/day) CEF universe, monthly, lag-1, equal-weight,
+  // scored as the EXCESS over the equal-weight LIQUID CEF universe (BENCHMARK LAW — never the wide-minus-narrow
+  // spread). PROMOTE at >=24 scored months with excess >= 2.5%/yr AND t >= 2.0; KILL at >=24 months with excess <= 0
+  // or t <= 0, OR AT ANY n on a single month worse than -8%.
+  //
+  // It reads data/cef-panel.json, the compact monthly panel written by scripts/refresh-cef.ts (wired into the daily
+  // runner) rather than the 160MB bar cache — a scorer that needs 7GB of heap every morning is a scorer that gets
+  // commented out. Universe membership therefore refreshes monthly with the panel, so a fund counts until it stops
+  // trading and the forward window does not inherit the in-sample survivorship hole.
+  "fwd-cef-discount": async (started) => {
+    const M = "excess_ann_pct_vs_liquid_universe";
+    let panel: { rows: { t: string; m: string; apx: number; disc: number; dv: number }[]; built: string };
+    try { panel = JSON.parse(await Deno.readTextFile(new URL("../data/cef-panel.json", import.meta.url).pathname)); }
+    catch { return { metric: M, value: null, n: 0, note: `data/cef-panel.json is ABSENT — scripts/refresh-cef.ts has not run. This is a BROKEN QUESTION, not an accruing clock (D-641): a missing panel and a zero-month clock both report nothing.` }; }
+    const fromM = started.slice(0, 7);
+    const nowM = new Date().toISOString().slice(0, 7);
+    const byT = new Map<string, typeof panel.rows>();
+    for (const r of panel.rows) { const a = byT.get(r.t) ?? []; a.push(r); byT.set(r.t, a); }
+    // forward observations: signal at month-end t, return t -> t+1, consecutive calendar months only
+    const per = new Map<string, { disc: number; dv: number; ret: number }[]>();
+    for (const a of byT.values()) {
+      a.sort((x, y) => x.m < y.m ? -1 : 1);
+      for (let i = 0; i < a.length - 1; i++) {
+        const c = a[i], n = a[i + 1];
+        const dm = (+n.m.slice(0, 4) - +c.m.slice(0, 4)) * 12 + (+n.m.slice(5) - +c.m.slice(5));
+        if (dm !== 1) continue;
+        if (c.m < fromM) continue;              // strictly after the clock start
+        if (n.m >= nowM) continue;              // the RETURN month must be complete; the running month is partial
+        const ret = n.apx / c.apx - 1;
+        if (!Number.isFinite(ret) || Math.abs(ret) > 0.6) continue;
+        const g = per.get(c.m) ?? []; g.push({ disc: c.disc, dv: c.dv, ret }); per.set(c.m, g);
+      }
+    }
+    const ex: number[] = []; const breaches: string[] = [];
+    for (const m of [...per.keys()].sort()) {
+      const liq = per.get(m)!.filter((o) => o.dv > 1_000_000);
+      if (liq.length < 9) continue;             // too thin to form a tercile; the month is not scored, not zero
+      const s = [...liq].sort((x, y) => x.disc - y.disc);
+      const k = Math.floor(s.length / 3);
+      const e = mean(s.slice(0, k).map((o) => o.ret)) - mean(liq.map((o) => o.ret));
+      ex.push(e);
+      if (e < -0.08) breaches.push(`${m} ${(100 * e).toFixed(1)}%`);
+    }
+    const ann = ex.length ? mean(ex) * 12 * 100 : 0;
+    const t = ex.length >= 3 ? mean(ex) / ((sd(ex) || 1e-12) / Math.sqrt(ex.length)) : 0;
+    // The one condition that fires before the horizon: a single month worse than -8% kills regardless of n.
+    if (breaches.length) {
+      return { metric: M, value: ann, n: ex.length,
+        note: `IMMEDIATE KILL CONDITION MET at n=${ex.length} scored month(s): single-month excess below -8% in ${breaches.join(", ")}. Annualised excess so far ${ann.toFixed(2)}%/yr, t ${t.toFixed(2)}. The rule kills on this at ANY n; it does not wait for 24 months.` };
+    }
+    if (ex.length < 24) {
+      return { metric: M, value: null, n: ex.length,
+        note: `${ex.length} scored month(s) since ${fromM}; the rule permits a magnitude decision only at >=24 (~2028-08). ACCRUING — not-yet-computable, NOT inconclusive. Panel built ${panel.built.slice(0, 10)}, ${byT.size} funds. ${ex.length ? `Running excess ${ann.toFixed(2)}%/yr, t ${t.toFixed(2)} — reported for visibility and DECIDES NOTHING; the rule's inconclusive clause forbids reading a short window as evidence either way.` : "No completed forward month yet."}` };
+    }
+    return { metric: M, value: ann, n: ex.length,
+      note: `${ex.length} scored months from ${fromM}: excess ${ann.toFixed(2)}%/yr over the equal-weight liquid CEF universe, portfolio t ${t.toFixed(2)}. PROMOTE if >=2.5%/yr AND t>=2.0; KILL if <=0%/yr OR t<=0; otherwise INCONCLUSIVE. In-sample was +5.54%/yr (t 8.09) and survivorship-inflated, so the bar is deliberately below it.` };
+  },
 };
 
 const rules = await q(`trd_forward_rules?select=id,clock_started,promote_if,kill_if`) as

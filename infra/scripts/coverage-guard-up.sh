@@ -194,6 +194,14 @@ while true; do
   # VIX futures curve (D-749): CBOE per-expiry VX history -> data/vx-contracts.json (gitignored; import.meta-relative path,
   # cwd-safe). Live daily; feeds the vix-roll retest. ~600 sequential CDN fetches at 200ms — a few minutes.
   deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-vx-curve.ts > ../data/vx.log 2>&1 || echo "$(date -u +%FT%TZ) VX CURVE INGEST FAILED"
+  # CEF PANEL REFRESH (D-750): keeps the closed-end-fund price+NAV panel LIVE so the fwd-cef-discount forward clock
+  # scores REAL forward months rather than a frozen 2026-09-02 snapshot (CONTINUITY LAW, D-613 — a stopped ingest
+  # leaves the last good rows in place and every query keeps answering plausibly). Reuses the cached EDGAR N-CEN
+  # universe (REFRESH_UNIVERSE=1 rebuilds it, minutes); re-pulls only the last 90d of bars per fund via
+  # period1/period2 (NEVER range=max — Yahoo silently downgrades that to monthly bars) and merges on date, so a
+  # re-run is a no-op. Writes data/cef-panel.json, the compact panel the scorer reads. GAB+PDI positive control
+  # inside exits non-zero if the panel is stale. ~302 funds x 2 sequential fetches at 250ms — a few minutes.
+  deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read --allow-write ../scripts/refresh-cef.ts > ../data/cef.log 2>&1 || echo "$(date -u +%FT%TZ) CEF PANEL REFRESH FAILED — the fwd-cef-discount clock would score a frozen panel"
   # GLD daily holdings (D-745): issuer archive XLSX, tonnes + shares outstanding, live daily; controls inside.
   deno run --allow-net --allow-env ../scripts/ingest-gld-holdings.ts > ../data/gld.log 2>&1 || echo "$(date -u +%FT%TZ) GLD HOLDINGS INGEST FAILED"
   # EIA weekly inventories (D-743): commercial crude ex-SPR + Lower-48 gas storage, keyless XLS, idempotent, LIVE weekly
