@@ -15725,3 +15725,23 @@ Main-market +63d mean of +73.5% against a 0.37% median — dormant shells (FVV +
 with stale opening prints, untradeable at the open the study claims to buy; a tradability floor removed 50 and a
 trimmed mean now sits beside every raw mean. ROO.L (Deliveroo) is absent because delisted — the survivorship hole
 shown rather than hidden. Retail-offer flag UNTESTED with named blockers. Lineage `D-754-ipo-pop` extended.
+
+## D-754c — UK allocated IPO leg CLOSED: +12.9% mean (t 8.0), 78% of it before the first tradeable print; the retail share UNTESTED; a manufactured null caught
+The LSE workbook was reachable all along — the report component answers only when requested WITH its `tabId`
+(`POST /api/v1/components/refresh`, `parameters: "tabId=…"`); the earlier empty-parameter probe was about our
+request, not the module. One cumulative file: **6,283 admissions 1995–2026** with issue price, currency, TIDM,
+market, issue type, money raised (`data/uk-new-issues.json`). Controls DOCS 370p / RPI 280p exact; the join is on
+TIDM with a 10-day tolerance because the report dates unconditional dealing and Yahoo the conditional first bar —
+an exact-date join would have returned a near-zero false null. `scripts/ipo-pop-uk-allocated.ts`:
+| leg (a), 271 events 2015–2026 | result |
+|---|---|
+| issue → first close (gross) | **+12.86% mean, 10.37% trimmed, 6.27% median, t 8.00, 82.7% positive** — MATCHED |
+| issue → first OPEN | +9.99% (t 9.23) — **78% of the pop is earned before the first tradeable print** |
+| skew · size | top decile 53% of the total; smallest third +20.7% vs largest third +8.7% (size does the liquidity job) |
+| liquidity · market · era | liq-high 13.2 (t 6.1); Main 13.9 vs AIM 11.9; 2015–20 10.5 (t 6.7), 2021–26 15.4 (t 5.4) |
+t 8.00 clears the 5.46 ceiling — and it is an allocation-gated return, not a tradable one. Coverage 271 of 629
+(43.1%): the hole is delisted names Yahoo no longer serves — biased upward, stated. **Manufactured null caught:** the
+Currency column is blank on every pre-2018-02 row, so a naive `GBX` filter silently returned ZERO 2015–17 events; kept
+and verified against Yahoo's own currency (195 → 271). **Retail split UNTESTED**: no retail/intermediaries-offer
+column; the only proxy survives to n = 1 (BREADTH LAW). Lineage `D-754-ipo-pop` verdict updated: the primary-market
+premium is a fee paid to allocation on both sides of the Atlantic. FRONTIER: MEASURED, both legs, both markets.
