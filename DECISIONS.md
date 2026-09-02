@@ -15834,3 +15834,21 @@ live and positive-controlled): Premium Bonds **4.35% tax-free** (2026-09 draw; 2
 an earlier "~3%/yr" was a divide-by-horizon artifact, replaced; LISA £1,000/yr max, age-gated, conditional money.
 Against D-746 the deposit still dominates below ~$60k; but the wrapper's ~1.2%/yr is forecast-free and **larger than
 any edge this engine has promoted, which is zero**. It belongs in WEALTH_PATH P0. Lineage `D-758-uk-retail-structural`.
+
+## D-757 — THE SILENT-READ RULE: a swallowed read is a false null waiting for an infrastructure hiccup; 404 such sites counted, none amnestied
+Origin D-756: a `.catch(() => [])` on a batch read returned an 8,600-symbol universe instead of 15,502 during a
+PostgREST OOM restart, and the run finished with a plausible wrong number. `assertNonEmpty` cannot see a PARTIAL
+universe. Fix, three parts: (1) `mkStrictRead(owned, hdr)` in `_shared/run-preconditions.ts` — `q` retries
+network/5xx/429/408 with backoff and then **throws with the path and status, never returning []**; a 400 throws at
+once (a bad request is not a hiccup); `qAll` refuses a paged read without `order=` and asserts the walked count
+equals the server's own `Content-Range` total, so a partial walk is an exception, not a short universe;
+`assertCoverage` states any shortfall in the caller's units; 9 new tests, 323 pass. (2) plumbing **RULE 6
+silent-read** — flags `.catch(()=>[])`, `.catch(()=>null)`, `r.ok ? r.json() : []` on reads of OUR database only
+(third-party feeds exempt, so the signal is not buried the way RULE 4 nearly was); self-test fires on a synthetic
+line and not on a waived one — and was silent on its first attempt because a two-line lookback tripped the write
+exclusion; narrowed to the statement. The **backlog is 404 sites across 173 files**, added to the ratchet baseline
+(153 → 556) and printed every run; RED on any new site; the baseline ratchets down as files migrate. (3) 16 of
+today's scripts migrated; fx-carry (Sharpe 0.22), cef-discount (t 8.09) and odd-lot (50%) reproduce their ledger
+headlines exactly on the strict reader. Rule for the ledger: **a read helper that returns an empty result on
+failure manufactures the thing this programme produces most — nulls — and must not exist on a path that reaches a
+verdict.**
