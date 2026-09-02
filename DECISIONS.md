@@ -15538,3 +15538,25 @@ correction provably is not the cause) and prints them rather than dropping them.
 `factory-forward-score.ts:93`, WHICH SCORES THE LIVE PAYOUT FORWARD CLOCK. Then the value/payout families
 (`PASS=eq`, `PASS=pairs`, `PASS=gbmexport` → `equity-nonlinear.ts`) must be RE-RUN to re-earn every verdict; price/
 volume and asset-scaled families never touched `mc` and stand. Each re-run spends trials and raises the ceiling.
+
+## D-750b — the CEF survivorship attack: the hole is 52% of the 2010 universe, measured; the clean-window number is ~4–5%/yr at t 3–5, and a coherent pessimistic reinstatement takes the full-sample headline to zero
+`scripts/cef-survivorship.ts`. (1) **The hole, measured not assumed:** of 833 closed-end registrant CIKs identifiable on
+EDGAR in 2010 (N-CSR "closed-end fund" ∪ form N-2), 399 still file an N-CEN in 2019–25 → **coverage 47.9%, missing
+52.1%**; 2015: 60.3% / 39.7%. The selection mechanism is named: funds that stopped filing — liquidated, open-ended,
+merged — which activists trigger on a PERSISTENTLY WIDE discount. The bias runs toward the claim.
+(2) **Clean window, membership frozen at the start:** 2019-10 onward (83 mo) excess **+5.38%/yr, gross t 5.11**,
+NET +4.32, breadth 259; **liquid tercile +4.17%/yr, gross t 3.78**; 2022-01 onward (56 mo) +4.35, t 4.62, liquid
++4.24, t 3.28. The t drops from 8.09 to ~5 on sample length alone. Even this is an upper bound: within-window
+dead-fund retention could not be calibrated (only 8 of 289 stopped-filing CIKs ever carried a listed ticker —
+underpowered, stated rather than read).
+(3) **Reinstatement bracket (ASSUMPTIONS, labelled):** neutral recovers 5.54 by construction; the coherent
+pessimistic case (missing funds at the p10 of fund-mean excess, 2× widest-tercile loading, 52.1% hole) gives
+**−0.36%/yr, t ≈ −0.5 — approximately zero**. The literal p10 fund-MONTH spec gives −29.66%/yr and is economically
+incoherent (reported, flagged, not used).
+(4) **SELECTION LAW:** 14 researcher degrees of freedom in the original construction (MIN_YEARS, discount/return
+clamps, phrase set, sweep window…) against 12 trials recorded — none a "fitted parameter", which is exactly why they
+went uncounted. +2 here.
+Honest statement after the attack: a real, placeable, long-only convergence effect of **~4%/yr in the liquid names
+over the last ~7 years**, whose long history cannot be trusted, and whose forward clock is the only thing that can
+settle it. Lineage `D-750-cef-discount` updated (still monitoring, upper bound). The attack shrank the candidate by
+about a quarter and removed its t 8 — which is what an attack is for.
