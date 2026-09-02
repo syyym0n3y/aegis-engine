@@ -1,5 +1,16 @@
 # STATE — Aegis (live state)
 
+## 2026-09-02 (LATEST) — a UNIT-MISMATCH defect under the whole valuation family (D-747); the frontier opened (docs/FRONTIER.md)
+- **DEFECT, HIGH blast, fix in build:** factory market cap = split-ADJUSTED price × RAW-as-filed shares. Every mc-derived
+  yield (B/M, E/P, CFO/FCF/buyback/div/shareholder yield) is wrong for any name with a later split, and the bias is
+  look-ahead-shaped (later splitters look cheap in the past). Found by the Russell build's positive control (GWAV
+  "$80.7T"). The 8 payout forward leads' HISTORICAL justification must be re-earned; their forward marks are clean.
+  Fix: Yahoo split table → `adjShares()` helper (deno test) → factory patch → 25th guard `market-cap-guard.ts`
+  (self-tested RED on the old construction) → re-run value/payout families.
+- **Frontier (docs/FRONTIER.md):** mechanisms of PAYMENT beyond predict-the-return: VIX-futures roll (in the
+  instrument), closed-end fund discounts, odd-lot tender priority (capacity-inverted), Russell recon (rule-based) —
+  three still running; Russell PROXY-NULL/underpowered (D-748).
+
 ## 2026-09-01 (LATEST) — the free frontier closed as market findings; 24 guards green; the honest wealth path written
 - **Board:** 24 guards, all green, each verified to fail. 2,903,411 trials; 0 promoted of 229 leads; 8 forward clocks,
   0 producing a number yet (spin-off needs ~3–4y to accrue). Retest harness re-runs **10** research verdicts daily

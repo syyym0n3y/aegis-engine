@@ -15434,3 +15434,36 @@ effects: worse with size. Structural compounding: works at every budget and belo
 outweighs any plausible alpha — **it started at the first deposit.** What would change the map: a clock clearing
 (~2029–30), a measured NDF conversion, an EM execution tier under ~50bp, a new effect whose MEAN survives cost.
 Nothing on it is "get more money". Wired into the daily runner; WEALTH_PATH §6 points at it.
+
+## D-747 — MARKET CAP IS SPLIT-INCONSISTENT across the factory (found by the Russell build's positive control); Russell recon itself PROXY-NULL
+The frontier build for Russell reconstitution (`scripts/russell-recon.ts`, D-748 below) needed rank-day market caps and
+applied THE POSITIVE-CONTROL RULE to its ranking: the 2021 top-15 by cap contained **2** mega-caps (GWAV "$80.7T",
+CETX, KXIN, QNRX…) — FAIL. Root cause, verified on live rows: `trd_bars_deep` closes are split-ADJUSTED (today's
+share units) while `EntityCommonStockSharesOutstanding` is RAW as filed (then's units). `px_adj × sh_raw` is wrong by
+the product of every split AFTER the filing date. AAPL on 2021-05-28 is right only because it has not split since.
+**Blast radius is the whole valuation/payout family, not Russell.** `aegis-factory.ts:102` computes `mc` this way
+and feeds `bm, ep, cfo_yield, fcf_yield, buyback_yield, div_yield, shareholder_yield`; 13 other scripts read the same
+shares concept. The bias is not symmetric noise: a name that split LATER carries a tiny adjusted price against
+pre-split shares, so it looks CHEAP in the past — and later forward-splitters are past winners. That is a look-ahead
+leak shaped exactly like "value works", and it sat under every fundamentals cross-section including the eight
+payout leads registered on the forward clock (D-475). Their forward legs are clean (future splits are unknown at the
+mark); their historical justification is not, and must be re-earned.
+Why no guard caught it: coverage/liquidity/breadth/benchmark all inspect CONCLUSIONS; plumbing-guard RULE 4 checks
+that fundamentals are read through `asOf()` — which they were. Nothing checked that two correctly-read inputs were in
+the same UNITS. A unit mismatch between two right numbers is a new defect class for this ledger.
+FIX (in build, D-747 is recorded before the fix lands so the defect cannot be narrated away): split table from
+Yahoo's free `events=splits` for every fundamentals ticker (positive controls AAPL 7:1 2014 / 4:1 2020, GWAV reverse),
+a shared `adjShares()` helper with a `deno test`, the factory patched to `px_adj × sh_raw × F(after filing)`, and a
+25th guard `market-cap-guard.ts` that REDs unless ≥8 of the top-15 caps are known mega-caps on three fixed dates —
+self-tested by proving it goes RED on the OLD construction. Value/payout factory families must then be RE-RUN.
+
+## D-748 — Russell reconstitution predictability: PROXY-NULL, underpowered on years, illiquid-only negative
+With the cap path void, the build ranked by 60-day median dollar volume (split-consistent; its control passes 11/15)
+— a proxy of a proxy, labelled so. Predicted R2000 adds, lag-1 from rank day, excess vs IWM: rank-day→recon
+**−1.68% (gross t −3.14, 40% positive, n 2,037, 2021–2025)** vs same-band incumbents −0.06%; **liquid tercile
++0.09% (t 0.09)**, illiquid −2.83% (t −2.77). The prior "rise into reconstitution" is **MISSED**; the "reversal" is
+down-then-down, not rise-then-reverse, and incumbents are also negative at +21d, leaving ~−1pp add-specific.
+Clustered by year (the honest unit): 5 yearly means, t −2.00. 2010–2020 UNTESTED — the panel never reaches 3,000
+names (pre-2020 survivorship hole). Verdict: PROXY-NULL / UNDERPOWERED-ON-YEARS, explicitly not "no effect" — no
+float adjustment, no share-class aggregation, no eligibility screens, all biasing a true effect toward zero. To be
+re-run on true caps once D-747's fix lands. DESCRIPTIVE ONLY; trials 1.
