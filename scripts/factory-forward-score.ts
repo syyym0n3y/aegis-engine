@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-net --allow-env
+#!/usr/bin/env -S deno run --allow-net --allow-env --allow-read
 // factory-forward-score.ts (D-474) — the MONTHLY FORWARD SCORER for registered factory leads. The trial-free test:
 // each lead is scored ONLY on months whose ENTRY (formation month-end) falls after its registered_at; forward N = the
 // count of registered leads, so the forward ceiling is sqrt(2 ln N) ≈ 2.1 instead of 5.34.
@@ -7,6 +7,7 @@
 // prints what it WOULD write, without writing: the scorer is proven working today, not discovered broken at first use.
 // Registration is the immutable line: a pre-registration month can never be written (guarded twice — in SQL and here).
 import { adjShares, loadSplits } from "../supabase/functions/_shared/shares-adj.ts";
+import { loadFpiFlags, mcFpi } from "../supabase/functions/_shared/fpi-adr.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"ffs",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application/json",Authorization:`Bearer ${t}`,apikey:t};})();
@@ -74,6 +75,14 @@ const asOf=(t:string,c:string,d:string)=>asOfRec(t,c,d)?.v??null;
 // wrong by the product of every split after the filing date, so every yield below was contaminated (D-747).
 const splits=await loadSplits(OWNED,hdr);
 console.log(`  splits: ${[...splits.values()].reduce((n,a)=>n+a.length,0)} events across ${splits.size} symbols`);
+// D-747b, the SECOND share-base defect: a foreign private issuer files ORDINARY shares on the EDGAR cover page
+// while trd_bars_deep carries the ADR price, so px_adr*shares_ordinary overstates the cap by the ADR ratio and no
+// split touches it. Where the ratio is MEASURED it is divided out; where it is not, mc is NULL and the yields go
+// null with it. Kept identical to aegis-factory.ts through one shared module, deliberately: the forward scorer and
+// the factory must never construct a market cap two different ways.
+const fpi=await loadFpiFlags();
+if(!fpi.loaded)console.log(`  !! data/fpi-flags.json NOT FOUND — the ADR correction is a NO-OP here. Run scripts/fpi-flags.ts.`);
+else console.log(`  fpi/adr: ${fpi.fpiCount} foreign private issuers — ${fpi.ratio.size} CORRECTED by a measured ADR ratio, ${fpi.exclude.size} EXCLUDED (mc=null)`);
 const ttm=(t:string,c:string,d:string)=>{const a=fund.get(t)?.get(c);if(!a?.length)return null;
   let hi=-1,lo=0,h2=a.length-1;while(lo<=h2){const m2=(lo+h2)>>1;if(a[m2].eff<=d){hi=m2;lo=m2+1;}else h2=m2-1;}
   return hi<3?null:a[hi].v+a[hi-1].v+a[hi-2].v+a[hi-3].v;};
@@ -99,7 +108,7 @@ const panel:PR[]=[];
         if(!cn||(dv/=cn)<DV_MIN)continue;
         const d=new Date(b[k][0]*1000).toISOString().slice(0,10);
         const shRec=asOfRec(r.symbol,"EntityCommonStockSharesOutstanding",d); const sh=shRec?.v??null;
-        const mc=(sh&&sh>0&&shRec)?px*adjShares(sh,splits.get(r.symbol),shRec.eff):null;
+        const mc=(sh&&sh>0&&shRec)?mcFpi(px,adjShares(sh,splits.get(r.symbol),shRec.eff),r.symbol,fpi):null;
         const ocf=ttm(r.symbol,"NetCashProvidedByUsedInOperatingActivities",d);
         const capex=ttm(r.symbol,"PaymentsToAcquirePropertyPlantAndEquipment",d);
         const bb=ttm(r.symbol,"PaymentsForRepurchaseOfCommonStock",d);

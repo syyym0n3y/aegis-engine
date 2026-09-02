@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-net --allow-env
+#!/usr/bin/env -S deno run --allow-net --allow-env --allow-read
 // market-cap-guard.ts — THE MACHINE GUARD for the share-base defect.
 //
 // THE DEFECT. `trd_bars_deep` closes are SPLIT-ADJUSTED (today's share units); `trd_fundamentals` concept
@@ -23,15 +23,22 @@
 // rankings side by side and exits non-zero if the old construction does NOT go red — so the guard is proven to
 // detect the defect it was written for, rather than merely proven to pass on today's data.
 //
-// SCOPE, STATED SO THE GREEN MEANS SOMETHING. Building this guard surfaced a SECOND, unrelated share-base defect
-// that the split correction cannot touch: foreign private issuers file their ORDINARY share count on the EDGAR
-// cover page while `trd_bars_deep` carries the ADR price. BCH files 101,017,081,114 shares against a ~$30 ADR;
-// BSAC, TM and LTM have the same shape. That is an ADR-RATIO defect, not a split defect, and no ratio in the split
-// table moves it. Following the BENCHMARK-GUARD precedent (D-636), it is REPORTED loudly on every run as a standing
-// backlog rather than amnestied silently — but this guard reds only on what its own correction owns: a cap above
-// $10T for a symbol the split correction actually applied to. A guard that can never go green stops being read,
-// and a guard that quietly drops what it cannot fix is worse.
+// THE SECOND SHARE-BASE DEFECT, NOW ENFORCED RATHER THAN REPORTED (D-747b). Building this guard surfaced a defect
+// the split correction cannot touch: a foreign private issuer files its ORDINARY share count on the EDGAR cover
+// page while `trd_bars_deep` carries the ADR price. BCH files 101,017,081,114 shares against a ~$30 ADR; LTM
+// priced out at $29.05T and BSAC at $6.63T. Until 2026-09-02 that residue was SET ASIDE from the ranking and
+// printed as a standing "ADR-RATIO BACKLOG" — honest, but an escape hatch: a cap above $10T could avoid RED by
+// being attributable to a defect this guard did not own.
+// It is now owned. `scripts/fpi-flags.ts` classifies every ticker from EDGAR submissions (a 20-F/40-F filer is an
+// FPI by definition) and MEASURES the ADR ratio where a free source gives one; `mcFpi()` divides the ratio out,
+// and an FPI with no usable ratio gets mc = NULL — excluded, not guessed (a missing input is not a zero, D-423).
+// So the guard now reds on:
+//   (d) any FPI-without-a-ratio appearing in the top-15 (the exclusion did not actually happen), and
+//   (e) ANY residual cap above $10T, with no set-aside channel at all.
+// The second self-test proves this is not decorative: it recomputes LTM under the PRE-FIX construction (split
+// correction applied, ADR correction absent) and REQUIRES that to go red.
 import { adjShares, splitFactorAfter, type Split } from "../supabase/functions/_shared/shares-adj.ts";
+import { loadFpiFlags, mcFpi } from "../supabase/functions/_shared/fpi-adr.ts";
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -75,6 +82,23 @@ const KNOWN = new Set(["AAPL", "MSFT", "AMZN", "GOOGL", "GOOG", "META", "FB", "N
 const norm = (s: string) => s.toUpperCase().replace(/[^A-Z]/g, "");
 
 console.log("==> MARKET CAP GUARD — is px(split-adjusted) x shares(raw-as-filed) being corrected to one share base?");
+
+// ---------- FPI / ADR flags (D-747b) ----------
+// A guard that cannot READ its own correction has verified nothing (D-584). An absent flags file makes the ADR
+// correction a NO-OP, so it is RED here rather than a quiet pass — the whole point of this change is that the
+// residue can no longer be set aside.
+const fpi = await loadFpiFlags();
+if (!fpi.loaded) {
+  console.error(`  RED  data/fpi-flags.json is MISSING — the ADR-ratio correction is a no-op and every foreign-issuer`);
+  console.error(`       market cap is still px_adr x shares_ordinary. Run scripts/fpi-flags.ts.`);
+  Deno.exit(1);
+}
+console.log(`    fpi/adr: ${fpi.fpiCount} foreign private issuers — ${fpi.ratio.size} with a MEASURED ratio, ${fpi.exclude.size} excluded (mc=null)`);
+if (fpi.fpiCount === 0) {
+  console.error(`  RED  the flags file classifies ZERO foreign private issuers — a classifier that separates nothing`);
+  console.error(`       is indistinguishable from one that never ran (D-641). Re-run scripts/fpi-flags.ts.`);
+  Deno.exit(1);
+}
 
 // ---------- splits ----------
 const splits = new Map<string, Split[]>();
@@ -164,13 +188,20 @@ for (let i = 0; i < SYMS.length; i += 100) {
 // ---------- the ranking, under either construction ----------
 // `mode` is the ONLY difference between the guard's check and its self-test: "corrected" restates the raw filed
 // count into today's share units via the shared helper; "raw" is the defect exactly as aegis-factory.ts had it.
-function topN(d: string, mode: "corrected" | "raw", n = 15) {
+type Mode = "corrected" | "raw" | "nofpi";
+function topN(d: string, mode: Mode, n = 15) {
   const out: { sym: string; mc: number; corrected: boolean; checked: boolean }[] = [];
   for (const [sym, p] of px.get(d)!) {
     const sh = sharesAsOf(sym, d); if (!sh) continue;
     const f = splitFactorAfter(splits.get(sym), sh.eff);
-    const units = mode === "corrected" ? adjShares(sh.v, splits.get(sym), sh.eff) : sh.v;
-    const mc = p * units;
+    // "raw"       = the original D-747 defect: price x shares exactly as filed, no correction at all.
+    // "nofpi"     = the PRE-FIX construction of D-747b: split correction applied, ADR correction absent. This is
+    //               what produced LTM $29.05T, and selftest 2 requires it to go red.
+    // "corrected" = both corrections: split-restated shares, then the measured ADR ratio divided out, and NULL
+    //               (dropped entirely) for a foreign issuer whose ratio is unknown.
+    const units = mode === "raw" ? sh.v : adjShares(sh.v, splits.get(sym), sh.eff);
+    const mc = mode === "corrected" ? mcFpi(p, units, sym, fpi) : p * units;
+    if (mc == null) continue;
     // `corrected` records whether the split correction actually did anything to this name. It is what separates a
     // cap this guard OWNS (the correction applied and the number is still impossible -> RED) from one it cannot
     // reach (factor 1.0, so the remaining error has a different cause -> reported as backlog).
@@ -188,74 +219,101 @@ function anchorsAvailable(d: string): number {
   for (const [sym] of px.get(d)!) if (KNOWN.has(norm(sym)) && sharesAsOf(sym, d)) n++;
   return n;
 }
-// THE ADR-SUSPECT RULE, mechanical and auditable — no hand-written list of foreign issuers, because we hold no
-// form-type or ADR-ratio data and a list I typed would be an opinion the guard could not defend.
-// A name is ADR-SUSPECT on a date when BOTH hold:
-//   (i) it out-caps EVERY recognised anchor on that date — by construction of the anchor set (the largest US
-//       listings) nothing legitimately does, so the units are wrong; and
-//   (ii) the split correction could not have caused it: the symbol was CHECKED and has no post-filing split.
-// Clause (ii) is what stops this becoming an amnesty. A name the split correction APPLIED to, or one never
-// checked, is NEVER excused — it stays RED and this guard owns it. What is set aside is only the residue the
-// correction provably cannot reach: foreign issuers filing ORDINARY share counts against an ADR price
-// (BCH files 101,017,081,114 shares against a ~$30 ADR). That is a DIFFERENT share-base defect, it is unfixed,
-// and it is printed in full on every run rather than quietly dropped — the BENCHMARK-GUARD precedent (D-636).
-function judge(d: string, mode: "corrected" | "raw") {
+// THE ADR RESIDUE IS NO LONGER SET ASIDE (D-747b). The previous version excused a cap above $10T when it
+// out-capped every anchor AND the split correction provably could not have caused it, printing it as a standing
+// "ADR-RATIO BACKLOG". That was honest about the defect and still an escape hatch — a number in impossible units
+// could stay out of RED by being attributed to a defect the guard did not own. Now it is owned: foreign private
+// issuers are classified from EDGAR and either CORRECTED by a measured ADR ratio or EXCLUDED (mc = null), so under
+// "corrected" there is no residue to set aside and no channel through which one could hide.
+// Under "corrected" the guard reds on:
+//   (a) fewer than MIN_KNOWN of the top 15 recognisable,
+//   (b) ANY cap above $10T — no exemption, whatever caused it,
+//   (d) an FPI-without-a-ratio appearing in the top 15, which would mean the exclusion did not actually happen.
+function judge(d: string, mode: Mode) {
   const all = topN(d, mode, 1e9);
-  const anchorMax = Math.max(0, ...all.filter((r) => KNOWN.has(norm(r.sym))).map((r) => r.mc));
-  const adrSuspect = mode === "raw" || anchorMax === 0
-    ? new Set<string>()
-    : new Set(all.filter((r) => r.mc > anchorMax && r.checked && !r.corrected).map((r) => r.sym));
-  const top = all.filter((r) => !adrSuspect.has(r.sym)).slice(0, 15);
+  const top = all.slice(0, 15);
   const known = top.filter((r) => KNOWN.has(norm(r.sym))).length;
   const worst = top.length ? top[0].mc : 0;
+  // (b) EVERY cap above the ceiling is this guard's, in every mode. The old `ownedOver`/`backlogOver` split is
+  // deliberately gone: that split is exactly what let LTM's $29.05T sit green for as long as it did.
   const over = all.filter((r) => r.mc > CAP_MAX);
-  const setAside = all.filter((r) => adrSuspect.has(r.sym));
-  // In "raw" (the self-test) NOTHING has been corrected, so every impossible cap is owned — that is the whole point
-  // of the self-test and it must not be able to escape through the backlog channel.
-  // A cap is this guard's to red on unless it was CHECKED and the split correction provably could not touch it.
-  // Unchecked is not exculpatory: it is an unanswered question, and an unanswered question is RED.
-  const ownedOver = mode === "raw" ? over : over.filter((r) => r.corrected || !r.checked);
-  const backlogOver = mode === "raw" ? [] : over.filter((r) => !r.corrected && r.checked);
-  const ok = top.length > 0 && known >= MIN_KNOWN && ownedOver.length === 0;
+  // (d) the exclusion actually happened. `corrected` mode routes an FPI without a ratio through mcFpi -> null, so
+  // this list must be empty; a non-empty one means the flags were loaded and then not applied.
+  const fpiInTop = mode === "corrected" ? top.filter((r) => fpi.exclude.has(r.sym)) : [];
+  const ok = top.length > 0 && known >= MIN_KNOWN && over.length === 0 && fpiInTop.length === 0;
   const line = top.slice(0, 15).map((r) => `${r.sym} ${fmt(r.mc)}`).join("  ");
-  return { ok, known, worst, line, ownedOver, backlogOver, setAside };
+  return { ok, known, worst, line, over, fpiInTop };
 }
 
-let red = 0, backlog = 0;
+let red = 0;
 for (const d of DATES) {
   const j = judge(d, "corrected");
   if (!j.ok) red++;
   console.log(`  ${j.ok ? "PASS" : "RED "} ${d}  top-15 known mega-caps ${j.known}/15 (floor ${MIN_KNOWN}; ${anchorsAvailable(d)} anchors present in the panel)  largest ${fmt(j.worst)} (cap ${fmt(CAP_MAX)})`);
   console.log(`         ${j.line}`);
-  for (const r of j.ownedOver)
-    console.log(`         RED  ${r.sym} ${fmt(r.mc)} — ${r.checked ? "the split correction APPLIED and the cap is still impossible" : "NEVER CHECKED for splits; run scripts/ingest-splits.ts"}`);
-  if (j.setAside.length) {
-    backlog += j.setAside.length;
-    console.log(`         ADR-RATIO BACKLOG, set aside from the ranking but NOT amnestied (${j.setAside.length}):`);
-    console.log(`           ${j.setAside.map((r) => `${r.sym} ${fmt(r.mc)}`).join(", ")}`);
-    console.log(`           each out-caps every anchor AND was checked with no post-filing split, so the split`);
-    console.log(`           correction cannot be the cause. Foreign issuers file ORDINARY shares against an ADR`);
-    console.log(`           price. A SECOND share-base defect, unfixed by this change, reported every run.`);
-  }
+  for (const r of j.over)
+    console.log(`         RED  ${r.sym} ${fmt(r.mc)} — above the $10T ceiling. ${r.checked ? (r.corrected ? "The split correction APPLIED and the cap is still impossible" : "Checked for splits, none after the filing; and it is not an excluded foreign issuer, so the ADR correction does not explain it either") : "NEVER CHECKED for splits; run scripts/ingest-splits.ts"}`);
+  for (const r of j.fpiInTop)
+    console.log(`         RED  ${r.sym} ${fmt(r.mc)} — a foreign private issuer with NO measured ADR ratio is in the top 15; it should have been excluded (mc=null), so the flags were read and not applied.`);
 }
 
-// ---------- SELF-TEST: prove the guard goes RED on the defect it exists to catch ----------
+// ---------- SELF-TESTS: prove the guard goes RED on both defects it exists to catch ----------
+// A green never made to go red is meaningless (D-641). There are TWO defects here and therefore two self-tests:
+// one per correction. Test 2 exists because test 1 could not have caught D-747b at all — the split construction
+// was already correct for LTM and the guard still let $29.05T through.
 if (SELFTEST) {
-  console.log(`\n  -- SELFTEST: the OLD construction (px_adjusted x shares RAW-as-filed) on 2021-05-28 --`);
+  let stFail = 0;
+  console.log(`\n  -- SELFTEST 1: the ORIGINAL construction (px_adjusted x shares RAW-as-filed) on 2021-05-28 --`);
   const bad = judge("2021-05-28", "raw"), good = judge("2021-05-28", "corrected");
   console.log(`     OLD (raw)       ${bad.ok ? "PASS" : "RED "}  known ${bad.known}/15  largest ${fmt(bad.worst)}`);
   console.log(`                     ${bad.line}`);
   console.log(`     NEW (corrected) ${good.ok ? "PASS" : "RED "}  known ${good.known}/15  largest ${fmt(good.worst)}`);
   console.log(`                     ${good.line}`);
   if (bad.ok) {
-    console.error(`!! SELFTEST FAILED — the guard did NOT go red on the old construction. A green it cannot`);
-    console.error(`   contrast with a red is meaningless; this guard is not verified. RED.`);
-    Deno.exit(1);
+    console.error(`!! SELFTEST 1 FAILED — the guard did NOT go red on the original construction.`);
+    stFail++;
+  } else {
+    // Report what the corrected side ACTUALLY did. The first version of this line printed "corrected PASS"
+    // unconditionally, which was false on any date where a DIFFERENT defect still reds the corrected board —
+    // exactly the narration failure this repo keeps catching, committed inside the guard meant to prevent it.
+    console.log(`     SELFTEST 1 PASSED — the split defect is detected (raw RED; corrected ${good.ok ? "PASS" : "still RED for an unrelated reason, see above"}).`);
   }
-  console.log(`     SELFTEST PASSED — the guard detects the defect (old construction RED, corrected PASS).`);
+
+  // SELFTEST 2 (D-747b). The PRE-FIX construction: split correction fully applied, ADR correction absent. This is
+  // exactly what the guard ran under until today, and it is what printed LTM at $29.05T while passing. The test is
+  // written on LTM by name because LTM is the specific number that motivated the change — an anonymous "some cap
+  // is large" assertion would pass on any noise and prove nothing.
+  console.log(`\n  -- SELFTEST 2: the PRE-FIX construction (split-corrected shares, NO ADR ratio) — LTM --`);
+  const preAll = topN(LATEST, "nofpi", 1e9), postAll = topN(LATEST, "corrected", 1e9);
+  const preLTM = preAll.find((r) => r.sym === "LTM"), postLTM = postAll.find((r) => r.sym === "LTM");
+  const pre = judge(LATEST, "nofpi");
+  console.log(`     PRE  (no ADR fix) ${pre.ok ? "PASS" : "RED "}  LTM ${preLTM ? fmt(preLTM.mc) : "absent"}  largest ${fmt(pre.worst)}  caps over $10T: ${pre.over.length}`);
+  console.log(`                       ${pre.line}`);
+  const post = judge(LATEST, "corrected");
+  console.log(`     POST (ADR fixed)  ${post.ok ? "PASS" : "RED "}  LTM ${postLTM ? fmt(postLTM.mc) : "EXCLUDED (mc=null)"}  largest ${fmt(post.worst)}  caps over $10T: ${post.over.length}`);
+  console.log(`                       ${post.line}`);
+  if (!preLTM) {
+    console.error(`!! SELFTEST 2 INCONCLUSIVE — LTM carries no cap under the pre-fix construction, so the test`);
+    console.error(`   asserted nothing. A test that cannot fire is not a test (D-641).`);
+    stFail++;
+  } else if (preLTM.mc <= CAP_MAX) {
+    console.error(`!! SELFTEST 2 FAILED — LTM prices at ${fmt(preLTM.mc)} pre-fix, under the $10T ceiling, so the`);
+    console.error(`   guard would not have red-ed on the defect this change exists to fix.`);
+    stFail++;
+  } else if (pre.ok) {
+    console.error(`!! SELFTEST 2 FAILED — LTM is ${fmt(preLTM.mc)} pre-fix and the guard still PASSED. The residue`);
+    console.error(`   is escaping the ceiling; the set-aside channel has not actually been closed.`);
+    stFail++;
+  } else if (!post.ok) {
+    console.error(`!! SELFTEST 2 FAILED — the guard is red under the CORRECTED construction too, so the red above`);
+    console.error(`   is not evidence the ADR fix works. A guard that cannot go green after a fix gets ignored.`);
+    stFail++;
+  } else {
+    console.log(`     SELFTEST 2 PASSED — pre-fix RED (LTM ${fmt(preLTM.mc)} > $10T), corrected PASS (LTM ${postLTM ? fmt(postLTM.mc) : "excluded"}).`);
+  }
+  if (stFail) { console.error(`!! ${stFail} selftest(s) failed — this guard is NOT verified. RED.`); Deno.exit(1); }
 }
 
-if (backlog) console.log(`\n  ${backlog} impossible cap(s) remain from the ADR-RATIO defect — a DIFFERENT share-base bug, reported every run.`);
 console.log(`\n  ${red === 0
   ? `market caps are in ONE share base on all ${DATES.length} test dates.`
   : `${red} of ${DATES.length} test dates produce a nonsensical market-cap ranking — the share-base correction is not holding.`}`);

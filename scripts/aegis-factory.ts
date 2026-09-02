@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-net --allow-env
+#!/usr/bin/env -S deno run --allow-net --allow-env --allow-read
 // aegis-factory.ts (D-470) — THE STRATEGY FACTORY. Enumerates the spec grid and pushes every run through the six gates
 // of the trd_factory ledger, incrementing the live trial counter per run so the deflation ceiling rises with the sweep.
 // Three families in this runner:
@@ -12,6 +12,7 @@
 // direction; flipping sign to fit is a different spec and costs another trial), era gate = same net sign in >=3 of 4 eras,
 // survivor = the ledger's GENERATED column, never this script's opinion.
 import { adjShares, loadSplits as loadSplitsShared, splitFactorAfter, type Split } from "../supabase/functions/_shared/shares-adj.ts";
+import { EMPTY_FPI, type FpiTable, loadFpiFlags, mcFpi } from "../supabase/functions/_shared/fpi-adr.ts";
 const OWNED=Deno.env.get("OWNED_REST")||"http://localhost:33000"; const SECRET=Deno.env.get("JWT_SECRET")!;
 async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_");const h=e({alg:"HS256",typ:"JWT"}),b=e({role:"service_role",iss:"fac",exp:4102444800});const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const s=new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(`${h}.${b}`)));return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g,"").replace(/\+/g,"-").replace(/\//g,"_")}`;}
 const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application/json",Authorization:`Bearer ${t}`,apikey:t};})();
@@ -73,6 +74,17 @@ async function loadSplits(){
   await log(`  splits: ${n.toLocaleString()} split events across ${splits.size} symbols`);
   if(n===0)await log(`  !! WARNING: the split table is EMPTY — every market cap below is in mixed share units. See scripts/ingest-splits.ts.`);
 }
+// ---------- FPI / ADR-ratio correction (D-747b, the SECOND share-base defect) ----------
+// A foreign private issuer files ORDINARY shares on the EDGAR cover page while trd_bars_deep carries the ADR
+// price, so px_adr*shares_ordinary overstates the cap by the ADR ratio — LTM "$29.05T", BSAC "$6.63T", untouched
+// by any split. Where the ratio is MEASURED (scripts/fpi-flags.ts) it is divided out; where it is not, mc is NULL
+// and the seven mc-derived yields go null with it. A missing input is not a zero.
+let fpi:FpiTable=EMPTY_FPI;
+async function loadFpi(){
+  fpi=await loadFpiFlags();
+  if(!fpi.loaded){await log(`  !! data/fpi-flags.json NOT FOUND — the ADR correction is a NO-OP and every foreign-issuer market cap below is in mixed share bases. Run scripts/fpi-flags.ts.`);return;}
+  await log(`  fpi/adr: ${fpi.fpiCount} foreign private issuers — ${fpi.ratio.size} CORRECTED by a measured ADR ratio, ${fpi.exclude.size} EXCLUDED (mc=null; no usable ratio)`);
+}
 const backRec=(t:string,c:string,d:string,days:number):FRec|null=>{const x=new Date(d+"T00:00:00Z");x.setUTCDate(x.getUTCDate()-days);return asOfRec(t,c,x.toISOString().slice(0,10));};
 const back=(t:string,c:string,d:string,days:number)=>backRec(t,c,d,days)?.v ?? null;
 // trailing-4-quarter sum for FLOW concepts (quarterly frames)
@@ -123,7 +135,7 @@ async function buildEqPanel(){
         const shRec=asOfRec(r.symbol,"EntityCommonStockSharesOutstanding",d); const sh=shRec?.v??null;
         // px is SPLIT-ADJUSTED; sh is RAW AS FILED. adjShares restates the raw count into today's share units using
         // the splits that occurred after shRec.eff — the FILING date, not the pricing date.
-        const mc=(sh&&sh>0&&shRec)?px*adjShares(sh,splits.get(r.symbol),shRec.eff):null;
+        const mc=(sh&&sh>0&&shRec)?mcFpi(px,adjShares(sh,splits.get(r.symbol),shRec.eff),r.symbol,fpi):null;
         const at=asOf(r.symbol,"Assets",d), eq=asOf(r.symbol,"StockholdersEquity",d);
         const ocf=ttm(r.symbol,"NetCashProvidedByUsedInOperatingActivities",d);
         const capex=ttm(r.symbol,"PaymentsToAcquirePropertyPlantAndEquipment",d);
@@ -177,6 +189,15 @@ async function buildEqPanel(){
       }
     }
     if(i%900===0)await log(`  ..eq panel ${i}/${meta.length} rows=${eqPanel.length}`);
+  }
+  // D-747b summary, panel-scoped rather than table-scoped: the flags file covers every EDGAR ticker, but only the
+  // names that actually reached this liquid panel change any number here. Corrected vs excluded is printed so a
+  // silent no-op (empty flags file, or a ratio pass that found nothing) cannot pass for a fix.
+  {
+    const inPanel=new Set(eqPanel.map(r=>r.sym));
+    let corrected=0,excluded=0;
+    for(const s2 of inPanel){ if(fpi.ratio.has(s2))corrected++; else if(fpi.exclude.has(s2))excluded++; }
+    await log(`  fpi/adr in panel: ${corrected} name(s) CORRECTED by a measured ADR ratio, ${excluded} EXCLUDED (mc=null -> the 7 mc-derived yields are null, not zero), of ${inPanel.size} panel names`);
   }
   await log(`  equity panel: ${eqPanel.length.toLocaleString()} rows`);
 }
@@ -309,7 +330,7 @@ const PASS0=(Deno.env.get("PASS")||"all");
 // panels are only built for the passes that read them — a PASS=french run was rebuilding the 291k-row equity panel
 // (~4 min) just to ignore it.
 // intl (PASS 12) reads only trd_ff_factors — no panel needed
-if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"||PASS0==="hestonsadka"||PASS0==="eqconc"){ await loadFund(); await loadSplits(); await loadFTD(); await buildEqPanel(); }
+if(PASS0==="all"||PASS0==="eq"||PASS0==="pairs"||PASS0==="insider"||PASS0==="shortside"||PASS0==="pead"||PASS0==="nport"||PASS0==="form345"||PASS0==="own13f"||PASS0==="annprem"||PASS0==="darkpool"||PASS0==="nonreliance"||PASS0==="gbmexport"||PASS0==="hestonsadka"||PASS0==="eqconc"){ await loadFund(); await loadSplits(); await loadFpi(); await loadFTD(); await buildEqPanel(); }
 const {N,ceil}=await ceiling();
 await log(`  deflation ceiling at start: ${ceil.toFixed(3)} (N=${N.toLocaleString()})`);
 const PASS=PASS0;

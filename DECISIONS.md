@@ -15677,3 +15677,24 @@ while reporting itself as the post-fix result. Killed before it wrote anything. 
 exactly ("a stale .tsv read after a run wrote nothing"), and the relaunch now refuses to train unless the export's
 mtime post-dates the run start. `aegis-rest` and `aegis-db` had `restart=no`; set to `unless-stopped` so an OOM
 kill no longer takes the owned node down until the runner's next loop. `gbmexport → equity-nonlinear` resumed.
+
+## D-747f — the ADR share-base defect FIXED (1,192 foreign issuers flagged, 692 ratios validated, the rest EXCLUDED not guessed); guard hardened; a THIRD defect found: 21 single-point spikes in EDGAR share facts as filed
+`scripts/fpi-flags.ts`: every fundamentals ticker classified from `data.sec.gov/submissions` — a 20-F/40-F filer is
+a foreign private issuer by definition — **1,192 FPIs**, 0 fetch failures, 7/7 controls (BABA, TM, HSBC, BCH, LTM
+flagged; AAPL, MSFT not). ADR ratios from Yahoo `quoteSummary` (cookie+crumb since 2023 — a dead channel would have
+recorded 1,192 false "unavailable" rows, so an AAPL control aborts the pass if the channel is down): **692 usable,
+364 rejected, 136 unavailable**; accepted only in [0.01, 100] and within 8% of an integer or simple fraction, and
+externally right where checkable (BABA 8, HSBC 5, SIMO 4, PBR 2). FPIs without a usable ratio get **mc = null — a
+missing input is not zero** (D-423). One shared module `_shared/fpi-adr.ts` feeds the factory and the forward scorer
+so they cannot drift. Guard: the "ADR backlog set-aside" is DELETED — any cap over $10T is RED with no escape, an
+FPI-without-ratio in the top-15 is RED, and self-test 2 proves the pre-fix construction goes RED (LTM $29T) and the
+fixed one passes (LTM excluded). The entire reported backlog is gone. A dishonesty in the guard's own self-test 1
+("corrected PASS" printed unconditionally) was fixed as well.
+**The re-run in progress was superseded by this fix and stopped**: 105 FPIs sit in the top-1,000 by dollar volume
+and 235 in the $10M/day universe (ASML, BABA, ARM, SPOT, NXPI, SAP; SHEL/ASX now excluded) — their value/payout
+signals are all mc-derived. The full chain re-runs once the third fix lands.
+**Third defect, distinct, in fix:** the residual RED (CCL "$27T") is **21 corrupt EDGAR facts across 20 tickers** —
+single-point share-count spikes > 50× two agreeing neighbours (BTI 2.46e15 vs 2.46e9 — exactly 1e6, a units error as
+filed; CLX, SWKS, PKG, HL, FOSL, CCL…). The stored facts are not mutated (append-only evidence); the READER drops a
+lone spike, with tests that keep a genuine 2:1 doubling and a genuine reverse split. The guard stays RED, visibly,
+until that lands — no escape hatch was re-added to make the board green.
