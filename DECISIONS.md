@@ -15407,3 +15407,30 @@ Flow is a LAGGING consequence of price, not a driver. The contrarian flip is an 
 (D-511b) and is dead in the modern half regardless. Correct use of the driver: attribution/context, never a signal.
 Lineage `D-745-gld-flow` (measured). Odds-map commodity line and retest harness updated. IAU not ingested (GLD is
 ~2/3 of US gold-ETF holdings). Trials 2.
+
+## D-746 — "at what budget does it start working?" — the budget threshold map, from the ledger's own numbers
+Operator question after the D-736–745 sweep: *"make sure we know exactly when it starts working, at what budget."*
+Budget acts through four measurable channels; `scripts/budget-threshold-map.ts` computes each from cited decisions
+(cost-tier and minimum-account figures are ASSUMPTIONS from public broker schedules, labelled as such, not findings).
+1. **Deposits vs alpha — crossover capital C\* = annual deposits / alpha.** At $1,800/yr and a generous 3% alpha,
+   C\* = **$60,000**: below that, the next $150/mo outweighs any edge this programme could plausibly clear (it has
+   cleared none). At 1% alpha — the realistic ceiling of a cleared spin-off clock at small size — C\* = $180,000.
+2. **Cost break-even = gross / (2 × one-way turnover), per real-but-blocked candidate.** EM large-cap momentum
+   (D-653/654) breaks even at **52bp round-trip** — retail EM single-name execution (~80bp) fails, institutional
+   (~20bp) clears, which is exactly D-654's finding restated as a tier the operator does not have. The 20:00–22:00
+   perp window breaks even at **3.9bp** — below even VIP taker (~4bp), consistent with its 0.87x at taker. Perp
+   order-flow is **negative before cost** (−0.64bp/trade at zero fee): no budget, ever.
+3. **Instrument access.** Factor long-shorts need borrow across thousands of names (portfolio margin ~$110k;
+   prime ~$1M+); EM carry needs NDFs (institutional FX). Budget unlocks the VEHICLE — and every vehicle measured
+   after unlocking was dead (D-556: t 0.35, −93% DD) or unmeasured (D-741 NDF conversion).
+4. **Capacity — the inversion.** De-SPAC destruction and the factor tails live ONLY in illiquid names (liquid
+   tercile flat): **more budget makes them worse**. They are capacity-bound, not budget-gated.
+Structural floors on "daily" (assumed, public): US PDT rule under $25k; UK stamp duty 0.5% one-way on UK shares
+(kills any turnover-heavy approach outright); crypto VIP fee tiers from ~$250M/30-day volume.
+**BOTTOM LINE.** Daily extraction: at **no budget** on anything measured — money lowers fees, it does not create an
+effect where the mean effect is zero; the base rate is not a budget finding. Monthly factor-style: vehicle unlocks at
+~$110k–$1M+, contents dead or unmeasured. Event (spin-off): budget-independent, fits small size, gated by TIME. Illiquid
+effects: worse with size. Structural compounding: works at every budget and below ~$60k of capital the deposit
+outweighs any plausible alpha — **it started at the first deposit.** What would change the map: a clock clearing
+(~2029–30), a measured NDF conversion, an EM execution tier under ~50bp, a new effect whose MEAN survives cost.
+Nothing on it is "get more money". Wired into the daily runner; WEALTH_PATH §6 points at it.

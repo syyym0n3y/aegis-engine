@@ -189,6 +189,8 @@ while true; do
   deno run --allow-net --allow-env ../scripts/ladder-harvester.ts > ../data/harvester.log 2>&1 || echo "$(date -u +%FT%TZ) LADDER HARVESTER FAILED"
   # Holdability sizer (D-744): equity fraction vs drawdown tolerance on the full held history; control vs D-735 inside.
   deno run --allow-net --allow-env ../scripts/holdability-sizer.ts > ../data/sizer.log 2>&1 || echo "$(date -u +%FT%TZ) HOLDABILITY SIZER FAILED"
+  # Budget threshold map (D-746): at what budget / cost tier each real-but-blocked effect would start working.
+  deno run --allow-net --allow-env ../scripts/budget-threshold-map.ts > ../data/budget-map.log 2>&1 || echo "$(date -u +%FT%TZ) BUDGET MAP FAILED"
   # GLD daily holdings (D-745): issuer archive XLSX, tonnes + shares outstanding, live daily; controls inside.
   deno run --allow-net --allow-env ../scripts/ingest-gld-holdings.ts > ../data/gld.log 2>&1 || echo "$(date -u +%FT%TZ) GLD HOLDINGS INGEST FAILED"
   # EIA weekly inventories (D-743): commercial crude ex-SPR + Lower-48 gas storage, keyless XLS, idempotent, LIVE weekly

@@ -93,6 +93,16 @@ now off the "untested" list and on the "measured absent" list, which is the only
 **P3 — Promotion ladder, dormant until a clock clears.** Paper → micro → small with real samples, kill-switch record,
 DSR>0.95 / PBO<0.5 locked. Broker creds NOT provisioned before then.
 
+## 6a. At what budget does it start working? (D-746, `scripts/budget-threshold-map.ts`, daily)
+| channel | threshold, from the ledger |
+|---|---|
+| deposits vs alpha | below **~$60k capital** (at $1,800/yr deposits, 3% alpha) the next deposit beats any plausible edge; at 1% alpha, $180k |
+| cost break-even | EM momentum needs **< 52bp round-trip** (institutional, not retail); the best intraday window needs **< 3.9bp** (below VIP taker); perp flow is negative before cost |
+| instrument access | factor long-shorts ~$110k (portfolio margin) to $1M+ (prime); EM carry needs NDFs — the vehicle unlocks, and every unlocked vehicle measured was dead or unmeasured |
+| capacity | de-SPAC / factor tails exist only in illiquid names — **more budget makes them worse** |
+| daily, structurally | US PDT rule $25k; UK stamp duty 0.5% one-way kills turnover outright; crypto VIP tiers ~$250M/30d |
+**Daily extraction starts working at no budget on anything measured. Structural compounding started at the first deposit.**
+
 ## 6. What would change this answer
 
 - A forward clock clears its pre-registered rule → P3 activates for that spec only.
