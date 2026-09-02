@@ -15,7 +15,11 @@
   dominates (D-749)**. Russell PROXY-NULL/underpowered (D-748). **Closed-end fund discounts: CANDIDATE (D-750)** —
   widest-discount tercile +5.54%/yr excess over the universe, t 8.09, liquid tercile t 6.08, both eras, discount
   convergence not NAV; UPPER BOUND (survivorship toward it — attack running) and NOT IDENTIFIED (1.62× universe
-  spread); forward clock `fwd-cef-discount` in registration. Odd-lot tenders running.
+  spread); forward clock `fwd-cef-discount` REGISTERED (promote ≥2.5%/yr AND t≥2 after 24 mo; scorer backdate-
+  verified; live refresh). **Attacked (D-750b): hole = 52% of the 2010 universe; clean-window 2019+ ~4–5%/yr at t 3–5;
+  pessimistic reinstatement → ~0** — a real ~4%/yr liquid long-only convergence effect over 7 years whose long history
+  cannot be trusted; the clock decides. Odd-lot tenders running. **Value/payout factory families re-running in the
+  background on corrected caps** (`data/rerun-d747.log`: PASS=eq → pairs → gbmexport → equity-nonlinear).
 
 ## 2026-09-01 (LATEST) — the free frontier closed as market findings; 24 guards green; the honest wealth path written
 - **Board:** 24 guards, all green, each verified to fail. 2,903,411 trials; 0 promoted of 229 leads; 8 forward clocks,
@@ -1697,6 +1701,10 @@ Wired into the daily board. Standing gaps it prints:
   hole), borrow cost (paid). Crypto options ARE held (Deribit dvol/skew/IV); gold options are not.
 
 ## Blocked on operator (free actions / config)
+- **Restore the CC Supabase project `glzzoomuhnugsiichnub` (currently INACTIVE/paused)** if the `aegis-worker` path is
+  still wanted: `trd-compute` needs redeploying with the D-747c `?splits=1` endpoint, and the deploy fails against a
+  paused project. Nothing live depends on it — the owned node runs everything — and the worker warns loudly if it
+  ever runs against the old broker. (2026-09-02)
 - ✅ ~~Start Docker~~ — Colima installed + local DB up + `0001` verified.
 - ✅ ~~Allowlist the 4 legal data-source endpoints~~ — added (House/Senate/SEC/Alpaca).
 - **Alpaca paper** account → creds for Vault `cc_trd_alpaca_paper_*` (free, paper only).
