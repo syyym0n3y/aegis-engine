@@ -15903,3 +15903,27 @@ registered. Re-derivation dispatched on the definitive marker — **8-K Item 5.0
 2020-04-24. Why no guard caught it: every guard inspects a conclusion or a computation; none checks that an EVENT
 DATE is the event it claims to be — a positive control on the event table itself is the missing discipline, and it
 is being added to `despac-event.ts` as part of the fix.
+
+## D-734c — de-SPAC underperformance RE-DERIVED on correct dates: CONFIRMED, STRONGER, and now significant in the LIQUID tercile (the old "flat liquid" was the mis-dating)
+The D-734b re-derivation (from Item 5.06 "Change in Shell Company Status" 8-Ks, `data/despac-506-events.json`, 936
+events / 532 tickered; the agent was rate-limited after its controls passed, so I finished the verdict).
+`scripts/despac-event-506.ts` mirrors despac-event.ts exactly — same 60/250/500d windows, same liquid-tercile split,
+same IWM benchmark, same delister-to-last-bar survivorship handling — changing only the event dates, and carrying the
+**event-table positive control** D-734b was missing (LCID 2021-07-26, SOFI 2021-06-04, OPEN 2020-12-18, DKNG
+2020-04-29 pass; PSTH, never merged, absent — RED otherwise).
+| window | OLD (IPO-closing dates) | **CORRECTED (5.06 merger dates), n=407** |
+|---|---|---|
+| 500d ALL | median −40.7%, t −3.63 | median **−78.2%**, mean −44.8%, **t −5.71**, win 15% |
+| 500d LIQUID | median −3.7%, **t 0.08 (flat)** | median **−57.0%**, mean −27.6%, **t −2.88**, win 20% |
+| 250d LIQUID | — | median −41.3%, t −3.23, win 20% |
+**The correction reverses D-734's tradability conclusion.** D-734 said the de-SPAC destruction was real but confined
+to illiquid names (liquid flat), so untradable. On correct dates it is strong in the liquid tercile too — because the
+old clock started at the SPAC's IPO closing, so its 500-day window spanned the pre-deal flat period and the deal-pop
+and netted the collapse away. The distribution is right-skewed the dangerous way (median more negative than mean: the
+typical de-SPAC does worse than the average). What did NOT change: **it is a SHORT**, and a de-SPAC down 57% is the
+definition of hard-to-borrow — so borrow cost (now priceable per-name via the D-752b iBorrowDesk feed, not measured
+here) is the binding constraint, replacing "liquidity" as the reason it is not a free trade. The immutable forward
+clock `fwd-despac-underperf` was registered on the wrong dates; a superseding **v2 on the 5.06 event definition** is
+owed before its scorer is read. Why no guard caught the original: every guard inspects a conclusion or a computation;
+none checks that an EVENT DATE is the event it claims to be — the event-table positive control now in
+`despac-event-506.ts` is that missing discipline.
