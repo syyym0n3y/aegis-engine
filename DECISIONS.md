@@ -15927,3 +15927,15 @@ clock `fwd-despac-underperf` was registered on the wrong dates; a superseding **
 owed before its scorer is read. Why no guard caught the original: every guard inspects a conclusion or a computation;
 none checks that an EVENT DATE is the event it claims to be — the event-table positive control now in
 `despac-event-506.ts` is that missing discipline.
+
+## D-734c (cont.) — the corrected de-SPAC forward clock registered: fwd-despac-underperf-v2
+The wrong-dated `fwd-despac-underperf` is immutable and stays (superseded, not deleted); `fwd-despac-underperf-v2` is
+registered on the correct Item 5.06 event definition (clock 2026-09-02, first possible read ~2028-09 at ≥15 new
+de-SPACs, median≤−10pp & win<45% to confirm persistence / ≥0 or win>55% to call it a boom artifact). Scorer added to
+`forward-score-specs.ts` reading `trd_raw_filings/despac-506`; forward it is not-yet-computable (0 post-clock
+de-SPACs), and BACKDATE=2020-01 exercises the path to a median of −97.5pp on n=61 (no mark written) — the scorer
+reads the phenomenon correctly. 10 forward rules, all two-sided; continuity green. The despac-506 source is refreshed
+by `ingest-despac-506.ts` operator-periodically (post-boom volume is near zero, so it need not run daily and the
+first read is two years out). Note for that refresh: the DB despac-506 table has incomplete ticker resolution vs the
+authoritative `data/despac-506-events.json` (CIK-reorg names with no current ticker) — the scorer skips null tickers,
+which is correct, but a periodic re-run of the ingest should keep resolution current for the forward cohort.
