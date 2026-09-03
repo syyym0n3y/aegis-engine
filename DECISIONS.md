@@ -15996,3 +15996,23 @@ ALL (−1.33%). ILLIQUID 13D targets crater (250d median −30.8%) — a 13D on 
 alpha. Consistent with the base rate for a crowded, well-known catalyst. Lineage `D-762-activist-13d`. FRONTIER:
 MEASURED, closed. This wave (D-734d, D-761, D-762): the de-SPAC short is borrow-dead, the NT-late AVOID is the one
 real candidate (with a clock), and the 13D drift is a tail-mean mirage.
+
+## D-763 — the MTF price-action pivot, first result: prior-session-low sweeps REVERSE (cross-instrument, sign-stable) — a calibrated prior at the cost line
+The operator's methodological pivot (docs/MTF_METHOD.md) made mechanical. `supabase/functions/_shared/mtf-structure.ts`
+(11 tests, no-look-ahead proven: a day's own high never appears as a level intraday; BOS fires on close not wick;
+FVG zone/inversion exact) + `scripts/mtf-liquidity-break.ts` — the central "does a break count, or wait for the
+reversal" question, 864 trials, full grid (SELECTION LAW), crypto 1h + gold/S&P/Nasdaq CFDs, lag-1, cost charged.
+**The one sign-stable fact:** a close below the prior-SESSION low **reverses**. PSL K4 n=3201, break-trade −14.18bp
+net, **t −4.80**, P(continue) 40%; significant even in the directional-volume-agree cell (−13.3bp, t −3.8);
+**8/8 instruments agree** (crypto and indices) at every horizon — the cross-instrument agreement is the anti-overfit
+defense. Upside breaks (PDH/PWH/PSH continuation) are noise. **Cost reconciliation (decisive):** the reversal is
+~7bp gross at K4 and the tradable fade pays its own ~7bp round trip → **nets ≈0 at K4** — real sign, at the cost
+line, the D-426 pattern. At K24 the reversal is larger (~13bp gross → fade ~+6bp) — the one horizon that may clear
+cost, to confirm OOS. **The operator's "wait for the reversal" is validated in sign and in effect size** (wait-1
+roughly doubles the per-trade edge) but not yet in significance (keeps ~29% of events, no |t|≥2). Recorded as a
+**calibrated prior** — don't chase session-low breakdowns, expect the reclaim, place stops accordingly — NOT a
+promoted trade. Lineage `D-763-mtf-liquidity-break` (measured). It is the first cross-instrument sign-stable
+structural regularity in the price-action lens. Refinement dispatched (D-764): the fade measured directly, OOS,
+FX majors added (80k hourly bars each — an earlier ad-hoc probe of mine truncated silently and under-reported them,
+the exact D-757 silent-read failure, using a raw limited fetch not the strict pager), volume/HTF-conditioned, FVG/IFVG
+layer, forward clock if a cell clears cost.
