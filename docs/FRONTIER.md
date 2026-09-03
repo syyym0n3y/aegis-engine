@@ -39,7 +39,7 @@
 | mechanism | why it is different | status |
 |---|---|---|
 | **de-SPAC short, net of borrow** | the corrected underperformance (D-734c: 500d liquid −57%, t −2.88) is real and liquid-significant — the only remaining blocker is borrow cost, now MEASURABLE per-name (D-752b iBorrowDesk). Either the first real edge or confirmed dead-on-cost. | **BUILDING** (`despac-short-net.ts`) |
-| **13D activist filing drift** | a legally-disclosed catalyst (>5% stake WITH intent, filed within 10 days); documented ~7% abnormal return; retail-observable, free | **BUILDING** (`activist-13d.ts` from EDGAR SC 13D) |
+| **13D activist filing drift** | a legally-disclosed catalyst (>5% stake WITH intent, filed within 10 days); documented ~7% abnormal return; retail-observable, free | **MEASURED-NULL (D-762)**: the ~+7% literature drift is a right-skewed mean; median negative at every horizon, win-rate 44-50%, max t 1.73 — does not survive size-matching + liquidity + cost. Closed. |
 | **NT 10-K/10-Q late filing** | a clean distress signal (Rule 12b-25): can't file on time → accounting problem, restatement, delisting; a short/avoid | **MEASURED-CANDIDATE (D-761)**: real distress signal, 250d liquid median −32%, P(<0) 70%, both eras, chronic worse. SHORT is borrow-gated (probably dead, D-734d); the AVOID reading needs no borrow and IS actionable. Forward clock registered. |
 | buyback / ASR announcement | issuer's own capital signalling repurchase | UNEXAMINED — EDGAR 8-K Item 8.01 / press release text |
 | SEC Wells notice / enforcement | a disclosed negative catalyst | UNEXAMINED — mostly 8-K Item 8.01, hard to phrase-match cleanly |

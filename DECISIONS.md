@@ -15980,3 +15980,19 @@ Forward clock `fwd-nt-late-avoid` registered (250d liquid median ≤ −10pp & P
 or P ≤ 50% to call it a 2022-24 small-cap-blowup residue); scorer added, forward not-yet-computable, BACKDATE=2023
 reproduces median −36.9pp (n 379). NT filings accrue ~2000/yr so the clock can mature ~2028 — far faster than the
 de-SPAC clock. 11 forward rules, all two-sided.
+
+## D-762 — Schedule 13D activist filings: the documented drift does NOT survive; the +7% is a tail-carried mean, the median is negative
+Frontier row "a legally-disclosed positive catalyst." `scripts/ingest-13d.ts` (53,819 SC 13D 2015-2026, 35,093
+tickered) + `scripts/activist-13d.ts` (8,072 originals → 3,642 subjects, first per subject, 3,243 usable). SIGN prior
+(positive drift, Brav/Jiang/Partnoy/Thomas 2008 ~+7%) MISSED on the robust read.
+| horizon (LIQUID, net vs IWM) | median | mean | win |
+|---|---|---|---|
+| +21d | −0.31% | 5.88% (t 1.73) | 50% |
+| +63d | −1.88% | 5.78% (t 1.32) | 46% |
+| +250d | −6.05% | 10.75% (t 1.33) | 44% |
+**The literature's +7% is a right-skewed mean** carried by a few successful campaigns — the median is negative at
+every horizon, the win-rate is a coin flip, the mean is insignificant (max t 1.73) and even turns negative at 250d
+ALL (−1.33%). ILLIQUID 13D targets crater (250d median −30.8%) — a 13D on a microcap is a bad hold, not activist
+alpha. Consistent with the base rate for a crowded, well-known catalyst. Lineage `D-762-activist-13d`. FRONTIER:
+MEASURED, closed. This wave (D-734d, D-761, D-762): the de-SPAC short is borrow-dead, the NT-late AVOID is the one
+real candidate (with a clock), and the 13D drift is a tail-mean mirage.
