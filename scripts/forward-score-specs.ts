@@ -181,6 +181,34 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     const win = 100 * exs.filter((x) => x > 0).length / exs.length;
     return { metric: "median_excess_vs_iwm_500d_pp", value: m, n: exs.length, note: `${exs.length} new de-SPACs (5.06): median ${m.toFixed(1)}pp, win-rate ${win.toFixed(0)}%. PERSISTS if median<=-10 & win<45; BOOM-ARTIFACT if median>=0 / win>55.` };
   },
+  // D-761: NT late-filing distress. Every NT (10-K/10-Q/20-F) filed after the clock start, first per ticker, 250d
+  // forward excess vs IWM, LIQUID tercile by pre-event dollar volume. Median + P(excess<0) are the robust read.
+  "fwd-nt-late-avoid": async (started) => {
+    const M = "median_excess_vs_iwm_250d_pp_liquid";
+    const iso = (ts: number) => new Date(ts * 1000).toISOString().slice(0, 10);
+    const barsOf = async (sym: string): Promise<number[][]> => { const raw = await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`); return ((raw?.[0]?.bars) || []).filter((b: number[]) => b[4] > 0); };
+    const evts = (await q(`trd_raw_filings?filing_type=like.%25nt-late%25&ticker=not.is.null&disclosed_date=gt.${started}&select=ticker,disclosed_date&order=disclosed_date`) as { ticker: string; disclosed_date: string }[])
+      .filter((e) => /^[A-Z]{1,5}$/.test(e.ticker) && /^\d{4}-\d\d-\d\d$/.test(e.disclosed_date));
+    const first = new Map<string, string>();
+    for (const e of evts) { const c = first.get(e.ticker); if (!c || e.disclosed_date < c) first.set(e.ticker, e.disclosed_date); }
+    const iwm = new Map((await barsOf("IWM")).map((b) => [iso(b[0]), b[4]]));
+    const rows: { ex: number; dv: number }[] = [];
+    for (const [tk, d] of first) {
+      const b = await barsOf(tk); if (b.length < 40) continue;
+      const dt = b.map((x) => iso(x[0])); const ci = dt.findIndex((x) => x >= d); if (ci < 0) continue;
+      let iT = ci + 250; if (iT >= b.length) { if (dt[dt.length - 1] >= "2026-06-01") continue; iT = b.length - 1; }
+      if (iT <= ci) continue;
+      const p0 = b[ci][4], p1 = b[iT][4], s0 = iwm.get(dt[ci]), s1 = iwm.get(dt[iT]);
+      if (!(p0 > 0 && p1 > 0 && s0 && s1)) continue;
+      const preDV = b.slice(Math.max(0, ci - 60), ci).map((x) => x[4] * x[5]); const medDV = preDV.length ? [...preDV].sort((a, z) => a - z)[preDV.length >> 1] : 0;
+      rows.push({ ex: ((p1 / p0 - 1) - (s1 / s0 - 1)) * 100, dv: medDV });
+    }
+    const liq = rows.sort((a, b) => a.dv - b.dv).slice(Math.floor(rows.length * 2 / 3)).map((x) => x.ex);
+    if (liq.length < 50) return { metric: M, value: null, n: liq.length, note: `${liq.length} new liquid-tercile NT events with 250d since ${started}; rule needs >=50. Accrues ~2000 NT/yr; first read ~2028. not-yet-computable.` };
+    const m = [...liq].sort((a, b) => a - b)[liq.length >> 1];
+    const pNeg = 100 * liq.filter((x) => x < 0).length / liq.length;
+    return { metric: M, value: m, n: liq.length, note: `${liq.length} liquid NT events: median ${m.toFixed(1)}pp, P(excess<0) ${pNeg.toFixed(0)}%. PERSISTS if median<=-10 & P>=60; RESIDUE if median>=0 / P<=50.` };
+  },
   // Rule (D-750): widest-discount tercile of the LIQUID ($vol > $1m/day) CEF universe, monthly, lag-1, equal-weight,
   // scored as the EXCESS over the equal-weight LIQUID CEF universe (BENCHMARK LAW — never the wide-minus-narrow
   // spread). PROMOTE at >=24 scored months with excess >= 2.5%/yr AND t >= 2.0; KILL at >=24 months with excess <= 0

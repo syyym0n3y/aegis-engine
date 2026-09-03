@@ -15959,3 +15959,24 @@ is a real, well-measured MARKET FACT and not a retail trade. Availability looked
 zero-avail days) but the fee is a daily-resettable retail rate subject to recall/spikes, so entry-fee nets (ALL mean
 −42%) understate realised cost. `scripts/despac-short-net.ts`; cache `data/despac-borrow.json` (resumable past the
 iBorrowDesk ban). DESCRIPTIVE ONLY.
+
+## D-761 — Form NT late-filing distress: a REAL, robust negative signal that survives in the liquid tercile; a borrow-gated short but a clean AVOID
+Frontier row "a legally-disclosed distress signal." `scripts/ingest-nt-filings.ts` (32,117 NT 10-K/10-Q/20-F from
+EDGAR 2015-2026, disclosed_date = file date, no lag) + `scripts/late-filing.ts` (17,786 events, 10,393 measurable,
+58.4% coverage, delisters to last bar). SIGN prior MATCHED.
+| horizon (LIQUID tercile, vs IWM) | median | mean | P(excess<0) |
+|---|---|---|---|
+| +63d | −11.2% | −7.4% (t −7.73) | 65% |
+| +250d | **−32.3%** | −20.0% (t −14.25, overlap-inflated) | **70%** |
+Robust across the caveats: at 250d **both eras are strongly negative** (ERA-1 median −31.3%, ERA-2 −44.6%) — the
+era-concentration the raw summary flagged is only at 63d. **Chronic** filers (≥2 late periods) underperform more
+(−39% vs −17% at 250d). **14–16% of late filers stopped trading** before the data edge — the distress reading
+confirmed directly. Coverage 58.4%: the 7,393 unmeasured are the most distressed unpriced small caps, so the effect
+is if anything understated. **Two readings:** the SHORT is borrow-gated in the same hard-to-borrow distressed small
+caps D-734d showed shorts don't survive (borrow unmeasured) — probably dead; the **AVOID** (a holder exits on the
+NT) needs no borrow and is actionable — a held name filing an NT has ~70% odds of underperforming IWM by a median
+32% over the next year. Recorded as a CANDIDATE for the AVOID reading (lineage `D-761-late-filing`, monitoring).
+Forward clock `fwd-nt-late-avoid` registered (250d liquid median ≤ −10pp & P(<0) ≥ 60% to confirm structural; ≥ 0
+or P ≤ 50% to call it a 2022-24 small-cap-blowup residue); scorer added, forward not-yet-computable, BACKDATE=2023
+reproduces median −36.9pp (n 379). NT filings accrue ~2000/yr so the clock can mature ~2028 — far faster than the
+de-SPAC clock. 11 forward rules, all two-sided.
