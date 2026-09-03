@@ -15939,3 +15939,23 @@ by `ingest-despac-506.ts` operator-periodically (post-boom volume is near zero, 
 first read is two years out). Note for that refresh: the DB despac-506 table has incomplete ticker resolution vs the
 authoritative `data/despac-506-events.json` (CIK-reorg names with no current ticker) — the scorer skips null tickers,
 which is correct, but a periodic re-run of the ingest should keep resolution current for the forward cohort.
+
+## D-734d — the de-SPAC short does NOT survive borrow cost, and the honest test is BLOCKED by data span
+The loop-closer on the D-734c correction: the underperformance is real and liquid-significant as a research number,
+but harvesting it is a SHORT, and borrow cost is now measurable per-name (iBorrowDesk, D-752b). `scripts/despac-short-net.ts`.
+Control GLND peak fee **1068.8%/yr** (PASS — the sample genuinely contains hard-to-borrow de-SPACs, not GC).
+| 250d | gross short | borrow drag / hold | NET short |
+|---|---|---|---|
+| ALL | (mirror of −underperf) | median 28.5%, mean **85.9%**, 90th 177% | mean **−13.2%, t −0.50** |
+| LIQUID | median 41.3%, t 3.23, win 80% | median 91.9% | mean 26.5%, **t 1.55** (n 11) |
+The liquid significance (t 2.88/3.23 gross) is **gone** net of borrow. **The decisive finding is COVERAGE, not the
+point estimate:** iBorrowDesk holds ~1 year of fees (2025–26), but de-SPAC completions peak in 2021 whose ~2-year
+windows predate the fee era — so only **32–54 of 733 windows overlap**, and that overlap is late-window,
+survivor-biased (the crowded first post-merger months — deepest drawdown, highest borrow — are unobserved for nearly
+every name, so the measured drag is a **lower bound**). Verdict: **UNTESTED-ON-COST for the windows where the −57%
+was earned, and negative-on-mean where measurable.** The fifth INSTRUMENT-LAW research→placeable conversion failure,
+and consistent with the base rate — this programme's shorts fail on borrow/instrument. The de-SPAC underperformance
+is a real, well-measured MARKET FACT and not a retail trade. Availability looked locatable (median 250k lendable, 0%
+zero-avail days) but the fee is a daily-resettable retail rate subject to recall/spikes, so entry-fee nets (ALL mean
+−42%) understate realised cost. `scripts/despac-short-net.ts`; cache `data/despac-borrow.json` (resumable past the
+iBorrowDesk ban). DESCRIPTIVE ONLY.
