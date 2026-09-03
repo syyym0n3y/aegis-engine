@@ -1,6 +1,14 @@
 # STATE — Aegis (live state)
 
-## 2026-09-02 (LATEST, evening) — CONTINUITY WITHOUT SUPABASE proven (D-759); second frontier wave measured
+## 2026-09-03 (LATEST) — MTF setup battery (D-766) + volume-condition sizing (D-767): 0 new survivors, 2 sub-ceiling volume-conditioned K24 fades, unsizeable to hold
+- **D-766 setup battery** — `scripts/mtf-setup-battery.ts` — 5 additional MTF setups (BOS continuation, equal-highs/lows pool break, retest-hold, day-open reversion, session-open drive) × 5 conditioners × K{4,12,24} = 150 trials on the 12-instrument liquid panel, lag-1, cost charged, train<2023/test>=2023. **0 cells cleared cost OOS with cross-instrument sign.** Bos-cont, retest-hold and sess-drive test as OOS-OPPOSITE at K4 (portfolio-t −4 to −7 in hypothesis direction — market fades every one by 4-8bp per event, GROSS t with cost subtracted per-event from event return). The "fade the structure" pattern from D-763/765 is stable across every setup an SMC/ICT lens markets as continuation. DESCRIPTIVE.
+- **D-767 volume conditions** — `scripts/mtf-volume-conditions.ts` — 5 volume conditions × {fade the D-763 PSL sweep, standalone} × K{4,12,24} = 54 trials. Positive control green (BTC hour-of-day volume max/min ratio 2.77 — rvol measure not flat). **Two SURVIVORS at K24 fade:** rvol-hi (+7.15bp portfolio-t 3.15, 7/12 instruments positive, n 20,427) and dv-persist (+4.05bp t 2.08, 9/12, n 17,985) — both cost-clearing OOS, both sub-ceiling (5.4555). CLV×vol PROXY (no taker delta held), stated explicitly.
+- **D-767 sizer** — `scripts/mtf-sizer.ts` — 102 candidate cells fed in from both dumps; 3 sized (the 2 survivors above plus the unconditioned K24 fade at +2.09bp t 2.09 on the wider 12-instrument panel — down from +6.01bp t 3.18 on the 8-instrument D-764 panel; FX majors dilute). Sizing: full/half-Kelly + vol-target(15%/yr) leverage + block-bootstrap max drawdown + P(DD≤−50%) per event stream. **All three cells: vol-target leverage 0.04–0.08x, chosen conservative 0.10x notional; at that leverage P(DD≤−50%) is 7–47%.** Half-Kelly gives catastrophic p95 drawdowns (−76% to −80%) because the mean is ~100x smaller than per-event sd. Honest answer to "when to place and at what leverage": at these signal qualities the leverage that HOLDS is 0.06–0.10x notional and even then the median 5% drawdown is 20-30%. Real sign, unsizeable to hold.
+- **Not promoted, no forward clocks added.** Lineage rows landed. Board **25/26** — earnings ingest running detached (pre-existing continuity RED at 13.6d vs 13.5d budget, not caused by this work). Benchmark guard tripped and repaired: D-764's per-era t̄-3.2/-4.3 sentences needed a "gross t" marker; appended to verdict, guard green again.
+- Files: `scripts/mtf-setup-battery.ts`, `scripts/mtf-volume-conditions.ts`, `scripts/mtf-sizer.ts`; outputs in `data/mtf-setup-battery.out`, `data/mtf-volume-conditions.out` (git-ignored). `docs/FRONTIER.md` MTF section rewritten.
+- The direction now (the operator's frame): the lens gives sign, not size. Where a real edge would appear next — cross-instrument BOS+FVG COMPOSITE, MTF alignment gates (daily/4h/1h all pointing the same way at a level), or genuine order-flow (which we do not hold intraday).
+
+## 2026-09-02 (evening) — CONTINUITY WITHOUT SUPABASE proven (D-759); second frontier wave measured
 - **Supabase is now optional:** worker owned-mode (verified on a real job), owned-node cockpit `data/cockpit.html`
   (rendered every runner loop; `scripts/cockpit-open.sh`), 26th guard `sovereignty` RED on any live *.supabase.co
   reference / stale runner / unreachable owned node, self-tested. The paused CC project stays blocked on the
@@ -11,7 +19,7 @@
   forecast-free (D-758); SPAC pre-deal trust arbitrage running.
 - Ops: PostgREST OOM-restarts under concurrent reads (restart policy set; colima VM memory bump queued).
 
-## 2026-09-02 (LATEST) — a UNIT-MISMATCH defect under the whole valuation family (D-747); the frontier opened (docs/FRONTIER.md)
+## 2026-09-02 — a UNIT-MISMATCH defect under the whole valuation family (D-747); the frontier opened (docs/FRONTIER.md)
 - **DEFECT, HIGH blast, fix in build:** factory market cap = split-ADJUSTED price × RAW-as-filed shares. Every mc-derived
   yield (B/M, E/P, CFO/FCF/buyback/div/shareholder yield) is wrong for any name with a later split, and the bias is
   look-ahead-shaped (later splitters look cheap in the past). Found by the Russell build's positive control (GWAV

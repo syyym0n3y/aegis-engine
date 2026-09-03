@@ -36,6 +36,7 @@ const K = declareKnobs("mtf-psl-fade", [
   { name: "FX_RT_BP", def: "2", note: "FX major round-trip cost, bp (pessimistic)" },
   { name: "VOL_N", def: "24", note: "trailing window for volume state" },
   { name: "SPLIT", def: "2023-01-01", note: "train (before) / test (on-or-after) boundary — frozen, D-455" },
+  { name: "DUMP", def: "", note: "if set, write every event's per-K net return (symbol, ts, train, cells) to this JSON path for mtf-sizer.ts" },
 ]);
 const MIN_EVENTS = Number(K.MIN_EVENTS), PART_HI = Number(K.PART_HI), VOL_N = Number(K.VOL_N);
 const SPLIT_TS = Math.floor(new Date(K.SPLIT + "T00:00:00Z").getTime() / 1000);
@@ -258,6 +259,19 @@ console.log(`  Frozen cell=${CH.c}, K=${CH.k}: OOS pooled net ${bp(frozenTest.me
 console.log(`  Gate (net>0 & t>=2 & >=6/12 instruments & >=50 events): ${CLEARS ? "MET — clears cost OOS" : "NOT MET"}`);
 console.log(`  TOTAL TRIALS (cells computed): ${TRIALS}`);
 console.log(`  SELECTION LAW: the frozen choice was made on TRAIN only; TABLE 1 is the full grid — any single best cell is in-sample.`);
+
+// ---- DUMP (for mtf-sizer.ts): every event, every K, with its cell membership. The sizer never re-derives the signal;
+//      it sizes exactly what this script measured, so a sizing number can always be traced to a printed cell. ----
+if (K.DUMP) {
+  const cells = CELLS.map((c) => ({
+    cell: `psl-fade/${c}`, rt_bp_by_class: { crypto: Number(K.CRYPTO_RT_BP), idx: Number(K.IDX_RT_BP), fx: Number(K.FX_RT_BP) },
+    K: KSET, frozen: best ? { cell: `psl-fade/${best.c}`, K: best.k } : null,
+    events: insts.flatMap((inst) => evByInst.get(inst.symbol)!.filter((e) => inCell(e, c))
+      .map((e) => ({ symbol: inst.symbol, klass: inst.klass, ts: e.ts, train: e.train, net: e.net }))),
+  }));
+  await Deno.writeTextFile(K.DUMP, JSON.stringify({ source: "mtf-psl-fade.ts", written: new Date().toISOString(), split: K.SPLIT, cells }));
+  console.log(`  DUMP -> ${K.DUMP} (${cells.map((c) => `${c.cell}:${c.events.length}`).join(", ")})`);
+}
 
 // Emit a machine-readable verdict line the writer path / operator can grep.
 console.log(`\nVERDICT_JSON ${JSON.stringify({ clears: CLEARS, cell: CH.c, k: CH.k, oos_net_bp: Number(bp(frozenTest.mean)), oos_t: Number(frozenTest.t.toFixed(2)), oos_n: frozenTest.n, instruments_positive: agreeSign, instruments_tested: tested12 })}`);

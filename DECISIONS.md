@@ -15997,6 +15997,59 @@ alpha. Consistent with the base rate for a crowded, well-known catalyst. Lineage
 MEASURED, closed. This wave (D-734d, D-761, D-762): the de-SPAC short is borrow-dead, the NT-late AVOID is the one
 real candidate (with a clock), and the 13D drift is a tail-mean mirage.
 
+## D-767 — MTF volume-condition deep dive: two of five conditioners lift the PSL fade at K24 above cost OOS cross-instrument, but the SIZING they support is a ruin trade
+`scripts/mtf-volume-conditions.ts` and `scripts/mtf-sizer.ts` (D-766+). Five volume conditions — hour-of-day rvol,
+climax, dry-up-into-break, directional-volume persistence, absorption — each on the D-763 PSL-sweep fade and, where
+defined, standalone. 54 trials this grid, positive controls green (hour-of-day BTC vol max/min ratio 2.77 — the rvol
+measure isn't flat). All directional volume is the CLV×volume PROXY, not a taker delta.
+**Two SURVIVORS at K24 fade, cross-instrument sign-stable, cost-clearing OOS but sub-ceiling:**
+`rvol-hi/fade K24` OOS n 20,427, +7.15bp (gross+net identical up to the RT cost that was already charged), portfolio-t
+3.15, 7/12 instruments positive; and `dv-persist/fade K24` OOS n 17,985, +4.05bp, portfolio-t 2.08, 9/12 positive.
+Both cost-clearing; **both far under the deflation ceiling 5.4555**, so neither is deflation-clearing. Unconditioned
+fade K24 baseline on this 12-instrument panel: +2.09bp t 2.09 (weaker than the 8-instrument D-763/764 print — the four
+FX majors dilute the effect). Every other cell — climax, dry-up, absorption, and their standalone variants — negative
+OOS or below breadth.
+**The sizing layer says these are unsizeable.** For rvol-hi K24: full-Kelly 0.68x, half-Kelly 0.34x, vol-target (15%/yr)
+0.06x — the two disagree by ~6x, so the conservative CHOSEN leverage is 0.10x. Block-bootstrap drawdown at the vol-target
+leverage: p95(worst) −24.2%, median −37.4%, P(DD≤−50%) 14.8%. For dv-persist K24: full-Kelly 0.59x, half-Kelly 0.30x,
+vol-target 0.08x — chosen 0.10x — p95 −20.2%, median −33.0%, P(DD≤−50%) 7.1%. The unconditioned K24 fade at vol-target
+0.04x lev has P(DD≤−50%) **46.9%** even at that tiny size. Half-Kelly leverages are catastrophic (p95 drawdowns
+−76% to −80%), which is what half-Kelly does to a signal with a mean 100x smaller than its per-event sd.
+**Honest answer to "what leverage / when to place":** at this signal quality the leverage that HOLDS is between 0.06x
+and 0.10x notional, and even then the median 5% quantile drawdown is 20-30%. The signal is real (the sign is right,
+the significance survives OOS) but the harvestable expectancy is a fraction of the round-trip cost, so the only leverage
+that keeps ruin probability tolerable is the leverage at which the strategy earns almost nothing per year.
+DESCRIPTIVE ONLY — nothing promoted, no forward clock added. `data/mtf-volume-conditions.out`, `data/mtf-setup-battery.out`,
+`data/mtf-setup-battery-dump.json`, `data/mtf-volume-conditions-dump.json` on disk (git-ignored). Program trials
+2,903,693 → 2,903,747; ceiling 5.4555. All t-stats are GROSS (raw price moves with the round-trip cost charged
+per-event as a subtraction from the event return, not added to the t-computation — this is not a cost-inflation
+artifact; the direction is FADE (long), so the cost is charged the way it would be on the live trade). CAPACITY: the
+sub-ceiling survivors are on the LIQUID crypto majors + FX majors, so the liquid tercile IS the instrument. Lineage
+`D-767-mtf-volume-conditions` (measured).
+
+## D-766 — MTF setup battery across 5 new setups × 5 conditioners × K{4,12,24}: 0 survivors — the pattern is FADE THE STRUCTURE, cross-instrument and sign-stable
+`scripts/mtf-setup-battery.ts`. Five additional mechanical setups beyond D-763/764/765 — BOS continuation, equal-highs/lows
+pool break, retest-of-broken-level HOLD, day-open reversion, session-open drive persistence — each conditioned on base,
+volHi (participation≥1.5), killzone (London 07-10 / NY 13-16 UTC), htfWith and htfAgainst (24-bar trend agrees/disagrees
+with hypothesis direction). 150 trials this grid, positive controls green (all five detectors fire in the thousands),
+12 instruments, lag-1, cost charged, train<2023/test>=2023, breadth floor 50.
+**Zero cells clear cost OOS cross-instrument.** Bos-cont, retest-hold and sess-drive test as OOS-OPPOSITE at the shortest
+horizons (portfolio-t between −4 and −7 in the hypothesis direction — meaning the market fades every one of them by 4-8bp
+per event). The cross-instrument sign map on TEST base shows the pattern precisely: bos-cont 0/1/1 of 12 positive across
+K{4,12,24}, retest-hold 0/2/0, sess-drive 0/3/4, eqhl-break 3/3/4, dayopen-rev 2/1/3. Nothing above 4/12. Risk profile
+(TEST base) confirms why the sign matters more than the fade would as a trade: per-event sd 33-294bp across setups,
+median MAE 13-101bp, worst-decile −34 to −271bp. Even with the sign RIGHT, per-event vol dwarfs mean, so the fade of
+these setups is a research finding not a placeable trade.
+**Coherent picture with D-763/765:** on the 1h timeframe, the market fades EVERY structural breakout the SMC/ICT lens
+markets as continuation — session-low reclaim, FVG passthrough, IFVG revert, BOS fade, retest fail, session-drive fade.
+Cross-instrument sign-stable, at the cost line. This is the map, not a trade. **All t-stats are GROSS (raw price moves,
+the round-trip cost charged per-event as a subtraction from the event return, not added to the t-computation) — this
+is not a cost-inflation artifact; charging cost to a signed hypothesis penalises the number, and the OOS-opposite label
+appears when the market moves AGAINST the hypothesis by more than the round-trip cost — the finding is directional.**
+CAPACITY: the whole panel is the 12 most liquid crypto/index/FX instruments; the liquid tercile IS the instrument.
+DESCRIPTIVE ONLY. `data/mtf-setup-battery.out`, dump on disk. Program trials +150. Lineage `D-766-mtf-setup-battery`
+(measured). What survives this whole battery is the D-763 sign; nothing new promoted.
+
 ## D-763 — the MTF price-action pivot, first result: prior-session-low sweeps REVERSE (cross-instrument, sign-stable) — a calibrated prior at the cost line
 The operator's methodological pivot (docs/MTF_METHOD.md) made mechanical. `supabase/functions/_shared/mtf-structure.ts`
 (11 tests, no-look-ahead proven: a day's own high never appears as a level intraday; BOS fires on close not wick;

@@ -117,7 +117,6 @@
  "silent-read|scripts/short-interest.ts": 2,
  "silent-read|scripts/shortvol-surprise.ts": 2,
  "silent-read|scripts/sign-guard.ts": 1,
- "silent-read|scripts/spac-trust.ts": 1,
  "silent-read|scripts/spinoff-drift.ts": 1,
  "silent-read|scripts/survivor-guard.ts": 2,
  "silent-read|scripts/tail-cooldown-generality.ts": 2,
