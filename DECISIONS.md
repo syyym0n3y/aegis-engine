@@ -16172,3 +16172,51 @@ so ATR-normalising them will more plausibly SHRINK samples into UNTESTED than ch
 kill condition (a majority-negative sign map = the crypto-only carrier failed). Registering it below with numeric
 two-sided rules; scorer to follow. This is the honest read: real taker delta showed the crypto side has more signal
 than the CLV proxy admitted, but not enough to clear the program's own bar. It is a candidate on the clock.
+
+## D-769 (2026-09-03) frontier #4-#10 on the persist(real) K24 fade — nothing clears the ceiling, several fold or refute SMC priors
+
+Continuing the "make sure nothing is unaccounted for" pass. Seven remaining gap-map items (#4-#10 from D-768) measured
+against the strongest carrier: persist(real)+PSL-sweep fade K24 on 5 crypto. Baseline reproduces D-768 exactly (OOS
+57.51bp, t 2.59, n 456, 5/5 crypto positive). Every t below is GROSS t of net-of-cost per-event returns SIGNED in the
+fade direction. Program deflation ceiling remains **5.46 at N ≈ 2.9M trials**; nothing here clears it. But several
+cells produce genuine findings worth recording, and one refutes a widely-cited SMC prior:
+
+| # | cell | lift vs baseline | OOS t | sign | reading |
+|---|---|---|---|---|---|
+| 4 | pwl-confluence (below prior-week low too) | −45.81bp | 0.26 | 3/5 | **refutes the "big-level confluence lifts the trade" SMC prior** |
+| 4 | no-pwl (only PSL, not PWL) | +30.71bp | **4.17** | 5/5 | the D-768 signal LIVES in PSL-only, non-PWL sweeps |
+| 5 | vwapDist < −20bp (entry far below session VWAP) | +29.45bp | **3.20** | 5/5 | mean-reversion character confirmed; the more washed-down at entry, the stronger the bounce |
+| 5 | vwapDist −20..+20bp (near VWAP) | −81.92bp | −0.68 | 1/2 | entries near VWAP have no edge |
+| 6 | usHour 13–15 UTC (US cash / CPI/NFP land) | +13.57bp | 1.78 | 0/0 | too few events (n=34) to conclude — UNTESTED |
+| 6 | non-usHour | −1.09bp | 2.37 | 5/5 | signal is not US-hour-driven |
+| 7 | funding/OI regime | — | — | — | **UNTESTED**: `trd_perp_funding` table absent, `trd_perp_oi` values look mis-scaled (BTC 0.00005 range). COVERAGE LAW: this is data absence, not a market null. |
+| 8 | adaptive ATR exit (−1×ATR stop / +2×ATR target / 48h) | −70.76bp | **−6.63** | 0/5 | **DISASTER**: symmetric stop/target flips the sign to −13.25bp — the very move being faded trips the stop before reverting. Wrong exit topology for a mean-reversion fade. |
+| 9 | asia-early cost raised 2× (00–06 UTC) | −1.27bp | 2.54 | 5/5 | asia-early cost concern is negligible for the strong-signal cell |
+| 9 | exclude asia-early | −25.87bp | 1.34 | 4/5 | dropping asia-early loses events without improving |
+| 10 | sun-early (Sun 00–08 UTC) | +160.70bp | 0.00 | 0/0 | n=1 test — UNTESTED, not "huge edge" |
+| 10 | non-sun-early | −0.35bp | 2.57 | 5/5 | Sun-early carries no material weight in the base |
+
+**Substantive findings, not statistical shrapnel:**
+1. **HTF level confluence HURTS this trade** (#4). The idea that a sweep of TWO levels beats a sweep of one is wrong
+   here: PWL-confluent PSL sweeps produce t 0.26 vs t 4.17 for PSL-only, non-PWL sweeps. The signal lives in the more
+   ordinary event, not the "high-conviction" one. Testing the prior instead of assuming it inverted the answer.
+2. **Session VWAP distance is a real conditioner** (#5). Entries below the session VWAP by more than 20bp carry
+   +86.96bp t 3.20 with 5/5 crypto agreement; entries near VWAP are flat-to-negative. The fade IS mean-reversion in
+   character — the more washed-down the entry, the more it bounces. This is the first cell that gives a specific
+   ENTRY QUALITY criterion beyond "sweep + persist".
+3. **Symmetric ATR stop/target is the wrong exit for a fade** (#8). Time-based K24 close-out at t 2.59 flips to
+   t −6.63 with a 1×ATR stop — the mean-reversion move itself trips the stop before completing. Any future work on
+   adaptive exits for this cell must accept that fixed-time exit dominates every stop tested here; asymmetric or
+   level-based exits would be the next thing to try, but the "give it room" direction is empirical.
+4. **US hours, Asia early, Sunday early** — none carry the signal materially, and the samples in the specific windows
+   are too thin to conclude anything except that the base signal is NOT time-of-day artifact.
+5. **#7 is data debt, not a null.** Funding intraday not held; OI values suspect. Recording per COVERAGE LAW — the
+   ingest is the fix, not the analysis. Deferred, not concluded.
+
+**Disposition.** None of these clear the 5.46 program ceiling; the D-768 forward clock stands as-is. The two useful
+CONDITIONERS (no-pwl, vwapDist<−20bp) are recorded here as the honest characterisation of WHERE the signal lives,
+not as new forward clocks — piling more clocks on the same underlying event is exactly the trial-count inflation the
+ceiling exists to police. If the D-768 clock matures with a signature, THEN the sub-conditioners become worth
+re-registering. Meantime the map of "have we accounted for everything" now says: the strong-signal cell is PSL-only
+mean-reversion, asymmetric ATR stops break it, and time-of-day/weekend effects are not driving it. That is the
+answer to the operator's question, backed by 26 counted trials and the ceiling still uncleared.
