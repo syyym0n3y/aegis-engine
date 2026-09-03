@@ -16031,3 +16031,22 @@ D-765: on the 1h timeframe the market FADES structural breakouts — session-low
 through, IFVG break-throughs revert — cross-instrument and sign-stable, but at/below the cost line.** Two staple
 SMC/ICT teachings (FVG as support, IFVG as continuation) are directionally REFUTED here, which is exactly the value
 of running the lens mechanically. Calibrated prior, not a trade. Lineage `D-765-mtf-fvg` (measured).
+
+## D-764 — the PSL-fade measured directly OOS: clears the cost gate pooled, but fragile on three axes; on a forward clock that will likely KILL
+The make-or-break refinement of D-763. `scripts/mtf-psl-fade.ts`: the fade (long the swept prior-session-low, lag-1,
+its own RT cost), DIRECTION fixed from D-763's 8/8 sign, K + conditioning chosen on train<2023 and frozen to
+test>=2023, 12 instruments incl. the four FX majors (80k hourly bars each — the ones my mis-probe had hidden), 36 trials.
+**Mechanical gate MET:** pooled base K24 OOS 6.01bp net, t 3.18, 11/12 instruments positive, n 18,033.
+**Three independent fragilities that keep it off promotion:**
+1. HORIZON — only K24 clears; K4/K12 are negative OOS.
+2. REGIME — the OOS positive is carried entirely by **2023-24** (K24 15.2bp, t6.1) and **REVERSES in 2025+** at every
+   horizon (K12 −9.2bp, t −4.3). An edge whose most-recent era is negative is arguably already falsified.
+3. EXECUTION — the four FX majors (cleanest sessions, cheapest 2bp cost) are **flat** (EUR +0.09, JPY −1.67bp); the
+   edge lives in crypto/indices, not where it is cheapest to harvest.
+Conditioning on the operator's "liquid state, direction justified" (high directional-volume sweep in a daily uptrend)
+roughly doubles the K24 effect (15.5bp, t2.70 OOS) but thins n and doesn't lift the low horizons. The cross-instrument
+SIGN is robust (8/8 → 11/12); the tradable EXPECTANCY is not. Honest disposition: **forward clock `fwd-psl-fade`**
+(immutable, two-sided — promote ≥+3bp & t≥2 & ≥6/12 after ≥1000 forward events; kill ≤0 or t≤0 or <6/12, the kill
+deliberately fires if 2025+ weakness persists), scorer added, backdate reproduces 6.014bp exactly. Lineage
+`D-764-psl-fade` (monitoring). The stop-placement prior stands; the tradable edge is on probation and will most likely
+resolve KILL. 13 forward rules, all two-sided; benchmark clean after labelling D-763/765 t-stats gross.

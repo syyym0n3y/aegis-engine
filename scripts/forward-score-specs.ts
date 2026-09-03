@@ -10,6 +10,7 @@
 // to compute anything, the scorer says so explicitly — "not yet computable" is a different state from "computed and
 // inconclusive", and conflating them is how a clock quietly stops meaning anything.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { Bar, decodeBar, priorSessionLevels } from "../supabase/functions/_shared/mtf-structure.ts";
 declareKnobs("forward-score-specs", [{ name: "VERBOSE", def: "" }, { name: "BACKDATE", def: "", note: "D-658: score a clock from this date instead of its registered start, to EXERCISE scorer paths that real elapsed time has not yet reached. Verification only — never a way to restate a live clock." }]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -265,6 +266,59 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     }
     return { metric: M, value: ann, n: ex.length,
       note: `${ex.length} scored months from ${fromM}: excess ${ann.toFixed(2)}%/yr over the equal-weight liquid CEF universe, portfolio t ${t.toFixed(2)}. PROMOTE if >=2.5%/yr AND t>=2.0; KILL if <=0%/yr OR t<=0; otherwise INCONCLUSIVE. In-sample was +5.54%/yr (t 8.09) and survivorship-inflated, so the bar is deliberately below it.` };
+  },
+  // D-764: MTF prior-session-low sweep FADE. Every downside PSL sweep (a bar closing below the prior UTC-session low)
+  // AFTER the clock start, across the 12 instruments, entered LONG at the next bar's open (lag-1), exited K=24 bars
+  // later, charged the instrument's own round trip (crypto 7bp / idx-gold 4bp / FX 2bp). Pooled net + portfolio t +
+  // per-instrument sign count are the rule's statistics. Reproduces scripts/mtf-psl-fade.ts on the forward window.
+  "fwd-psl-fade": async (started) => {
+    const M = "pooled_net_bp_K24";
+    const RT: Record<string, number> = {
+      BTCUSDT: 7, ETHUSDT: 7, SOLUSDT: 7, BNBUSDT: 7, XRPUSDT: 7,
+      XAUUSD: 4, USA500IDXUSD: 4, USATECHIDXUSD: 4, EURUSD: 2, GBPUSD: 2, AUDUSD: 2, USDJPY: 2,
+    };
+    const CRYPTO = new Set(["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]);
+    const startTs = Math.floor(Date.parse(started + "T00:00:00Z") / 1000);
+    const KK = 24;
+    async function loadBars(sym: string): Promise<Bar[]> {
+      if (CRYPTO.has(sym)) {
+        const row = (await q(`trd_bars_intraday?symbol=eq.${sym}&tf=eq.1h&select=bars`))?.[0];
+        return ((row?.bars || []) as number[][]).map(decodeBar).sort((a, b) => a.ts - b.ts);
+      }
+      const rows = await q(`trd_fx_hourly?symbol=eq.${sym}&select=ts,o,h,l,c,vol&order=ts.asc`) as
+        { ts: number; o: number; h: number; l: number; c: number; vol: number }[];
+      return rows.filter((r) => r.h !== r.l).map((r) => ({ ts: r.ts, o: r.o, h: r.h, l: r.l, c: r.c, v: r.vol }))
+        .sort((a, b) => a.ts - b.ts);
+    }
+    const pooled: number[] = [];
+    let instPos = 0, instTested = 0;
+    for (const sym of Object.keys(RT)) {
+      const b = await loadBars(sym);
+      if (b.length < 5000) continue;
+      const psl = priorSessionLevels(b);
+      const rt = RT[sym] / 1e4;
+      const per: number[] = [];
+      let firedAt: number | undefined;
+      for (let i = 1; i < b.length - KK - 1; i++) {
+        const lvl = psl[i]?.low;
+        if (lvl === undefined) continue;
+        if (b[i - 1].c >= lvl && b[i].c < lvl && firedAt !== lvl) {
+          firedAt = lvl;
+          if (b[i].ts < startTs) continue;               // forward window only
+          const net = Math.log(b[i + 1 + KK].c / b[i + 1].o) - rt;   // lag-1 long fade, net of RT
+          per.push(net); pooled.push(net);
+        }
+      }
+      if (per.length >= 20) { instTested++; if (mean(per) > 0) instPos++; }
+    }
+    if (pooled.length < 1000) {
+      return { metric: M, value: null, n: pooled.length,
+        note: `${pooled.length} forward PSL-fade events since ${started} across ${instTested} instrument(s) with >=20; rule needs >=1000 pooled (~6 months). not-yet-computable, NOT inconclusive.` };
+    }
+    const mBp = mean(pooled) * 1e4;
+    const tv = mean(pooled) / ((sd(pooled) || 1e-12) / Math.sqrt(pooled.length));
+    return { metric: M, value: mBp, n: pooled.length,
+      note: `${pooled.length} forward PSL-fade events: pooled net ${mBp.toFixed(2)}bp at K=24, portfolio t ${tv.toFixed(2)}, ${instPos}/${instTested} instruments positive. PROMOTE if net>=+3.0bp & t>=2.0 & >=6/12 positive; KILL if net<=0 OR t<=0 OR <6/12 positive; else INCONCLUSIVE. In-sample OOS was 6.01bp (t 3.18, 11/12) but 2025+ was negative.` };
   },
 };
 
