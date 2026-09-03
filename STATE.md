@@ -1612,6 +1612,16 @@ micro. 234 TS + 3 Py tests green. $0 spent this entire arc.
 ## Prior (2026-06-07 (Opus 4.8 [1m]) — D-072 SECOND POND PASS: ~16/16 securities strategies rejected; the real edge is the operator's OWN creator business (Pond H), not a trade. Barbell direction: Ireland-UCITS index core (US-situs estate-tax trap is LETHAL for a SA national) + ISA/SIPP tax wrapper (highest-certainty edge) + tiny finite UK-trust-discount tilt + BUILD the creator substrate (unmonetized on the visa; Graduate Route before 31 Dec 2026, then monetize). Aegis pivots: alpha-finder → folklore-falsifier + core-protector. (D-071: first pass, 3/3 real-data kills incl. 18yr trend.) 42 tests, $0.**
 
 ## Where we are
+- **D-768 (2026-09-03): real taker delta is the biggest signal upgrade this program has produced on the crypto side,
+  and still below the ceiling.** The CLV×volume PROXY that binds every "volume direction" number in D-767 was hiding
+  a real signal: with real Binance taker delta (already ingested via `ingest-perp-flow.ts`, 100% coverage on 5
+  crypto), 3-bar |delta z|>=1.0 persistence into a PSL downside sweep, fade K24 = **OOS 57.51bp t 2.59 n 456, 5/5
+  crypto positive** — a 14x expectancy jump vs the CLV-proxy dv-persist. Conditioning on VIX3M lo (83.63bp t 3.19,
+  5/5) and DXY-proxy down (125.64bp t 3.53, 4/4 tested) lifts it further but thins n. **Descriptive only** — program
+  ceiling is 5.46 at N≈2.9M trials; strongest t here is 3.53. Forward clock `fwd-persist-real-K24` registered
+  (immutable, two-sided: promote net>=+30bp & t>=3.5 & >=4/5 & n>=300; kill net<=0 OR t<=0 OR <=2/5 at n>=200), scorer
+  added, backdate reproduces D-768's 57.51bp on n=456 exactly. **14 forward clocks live**; guard board 25/26 (continuity
+  RED on earnings 13.6d/13.5d budget, refresh in flight).
 - New CC vertical **Aegis**, own repo `/Users/ona/Projects/aegis`. D-070 locked.
   Target re-anchored to "prove a real positive edge net of costs, then scale only
   what's proven" (operator-confirmed).

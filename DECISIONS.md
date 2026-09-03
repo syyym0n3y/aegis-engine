@@ -16103,3 +16103,72 @@ SIGN is robust (8/8 → 11/12); the tradable EXPECTANCY is not. Honest dispositi
 deliberately fires if 2025+ weakness persists), scorer added, backdate reproduces 6.014bp exactly. Lineage
 `D-764-psl-fade` (monitoring). The stop-placement prior stands; the tradable edge is on probation and will most likely
 resolve KILL. 13 forward rules, all two-sided; benchmark clean after labelling D-763/765 t-stats gross.
+
+## D-768 (2026-09-03) mtf-real-delta — real taker delta uncovers a signal the CLV proxy hid; still below the ceiling
+
+The operator asked what we had NOT accounted for that could inform prediction. Top of the map: the CLV×volume PROXY
+that binds every "directional volume" figure in D-767 (`ALL directional volume ... is the CLVxvolume PROXY, not a
+taker buy/sell split — none held`) — a proxy for the same physical thing but materially different in size. It turned
+out we HAD ingested the real taker field: `ingest-perp-flow.ts` packs bars as `[ts,o,h,l,c,vol,quoteVol,takerBuyBase,
+nTrades]` in `trd_bars_intraday`; 100% coverage on all 5 crypto (60k+ bars each, 0 mapping violations verified). Also
+addressed in the same run: cross-instrument state (BTC 24h sign, VIX3M percentile as regime, EURUSD-inverted as DXY
+proxy) and z-scale-free thresholds for `persist` (was CLV threshold, now real-delta z-score cut). Setup unchanged
+from D-763: PSL downside sweep → fade long at next open, K in {4,12,24}h, lag-1, RT 7bp/crypto. All t-stats are GROSS
+t of the net-of-cost per-event returns and are SIGNED in the fade direction (mean>0 = reversion holds).
+
+**POSITIVE CONTROL** — real delta vs CLV proxy sign agreement on BTC: 69.6% of 60,922 bars (in-band; below 55% or
+above 95% would indicate a field-mapping bug — 69.6% is exactly the "same physical direction, materially different
+size" expected). VIX3M loaded from `cboe_vix3m` (2009-09 to 2026-08); DXY proxy from EURUSD 24h return sign inverted.
+
+**Real delta upgrades the signal materially where it applies.** 84-cell grid, TRIALS 2.9M → 2.9M (ceiling 5.46), the
+following cleared the pooled-OOS gate AND cross-instrument sign agreement (majority of ≥4 crypto tested positive):
+| cell | K | OOS n | net bp | gross t | crypto sign |
+|---|---|---|---|---|---|
+| climax(real) fade | 24 | 3953 | +15.33 | 2.30 | 3/5 |
+| persist(real) fade | 4 | 456 | +23.72 | 2.22 | 4/5 |
+| persist(real) fade | 12 | 456 | +51.60 | 2.74 | 4/5 |
+| **persist(real) fade** | **24** | **456** | **+57.51** | **2.59** | **5/5** |
+| persist+vixLo fade | 12 | 230 | +59.35 | 2.33 | 4/5 |
+| **persist+vixLo fade** | **24** | **230** | **+83.63** | **3.19** | **5/5** |
+| persist+dxyDn fade | 12 | 142 | +70.76 | 2.58 | 4/4 tested (SOL untested) |
+| **persist+dxyDn fade** | **24** | **142** | **+125.64** | **3.53** | **4/4 tested (SOL untested)** |
+
+The **CLV-proxy D-767 dv-persist K24 was 4.05bp t2.08 sign 9/12 (12-instrument mixed panel)**; on the same setup with
+**real delta and the crypto-only panel that carries it**, K24 becomes 57.51bp t2.59 sign 5/5 — a 14x expectancy jump
+and a cleaner sign map. The proxy really was hiding this on the crypto side. On the mixed 12-instrument panel we
+cannot rerun (only crypto carries taker delta) — this is DESCRIPTIVE of crypto, not a claim about FX/indices.
+
+**But still below the ceiling.** Program deflation ceiling is 5.46 at N ≈ 2.9M trials; the strongest OOS t here is
+3.53. This is a MEANINGFULLY UPGRADED signal, not a promoted edge. Three fragilities keep it descriptive-only:
+1. TRIAL COUNT — 84 cells this grid alone; adjusted for the joint grid ranking a 5/5 sign filter is demanding, but
+   the t-stat still has to reach ~5.46 for the program's own bar, and does not.
+2. THINNESS — `persist(real)` fires on ~1.4% of base sweep events (456 OOS across 5 crypto over 3 years); one
+   `persist+dxyDn` cell is 4/4 crypto because SOL has too few events to be tested, and that is UNTESTED not clean.
+3. SPECIFICITY — this is CRYPTO-ONLY by construction (no taker field on FX/indices). It does not port to the other
+   two-thirds of the panel; the D-763 cross-panel finding remains "the market fades structure near the cost line".
+
+**#2 covered same run (cross-instrument state):** BTC lead is univariate weak (btcUp/btcDn barely differ). vixLo and
+dxyDn are the useful legs — both concentrate the persistence signal into a stronger cell than persist alone. vixHi
+is univariate flat OOS (0/5, 0/5, 2/5). The absolute sign of DXY dominance is unclear on n=142.
+
+**#3 note (ATR-normalised thresholds):** `DELTA_Z_HI=1.0` is scale-free by construction (z-score), so this specific
+condition is already ATR-normalised. Remaining fixed-bp thresholds live in `mtf-setup-battery.ts` (`DO_BP=30`,
+`EQ_TOL_BP=10`) and are on the follow-up list — but D-766 showed every base-battery setup FADES at horizon anyway,
+so ATR-normalising them will more plausibly SHRINK samples into UNTESTED than change signs.
+
+**Explicitly-off items, revisited on the record so this is auditable rather than dismissed:**
+- Chart patterns (wedges/harmonics/3-drives): the 10 mechanical setups across D-763/765/766 all give the SAME
+  reversion sign. Adding shape-family patterns is more of the same, with higher pattern-recognition subjectivity.
+  Not built.
+- L2 depth: correctly "not held" for FX/CFD, but for CRYPTO L2 is actually free via `data.binance.vision/`
+  (monthly zips). Recorded here as a research debt, not a permanent gate; the ingest is heavy (~TB/year uncompressed)
+  and only relevant to fill-quality (an EXECUTION LAW input), not to entry selection. Deferred, not off.
+- Sentiment/news NLP: D-746's threshold is about return-signal use ($60k/1% alpha crossover); a DIFFERENT use — an
+  event WINDOW (blackout around FOMC/CPI/NFP) — is not signal generation and belongs to #6 in the earlier gap map.
+  Left off until a signal actually needs to survive across a scheduled release, which none currently does.
+
+**Disposition.** Descriptive only per the program's ceiling. Forward clock candidate: `fwd-persist-real-K24` on the
+5-crypto panel, gross K24 fade net after real-delta 3-bar persistence — with the cross-instrument sign 5/5 as its
+kill condition (a majority-negative sign map = the crypto-only carrier failed). Registering it below with numeric
+two-sided rules; scorer to follow. This is the honest read: real taker delta showed the crypto side has more signal
+than the CLV proxy admitted, but not enough to clear the program's own bar. It is a candidate on the clock.

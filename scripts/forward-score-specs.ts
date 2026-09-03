@@ -320,6 +320,56 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: M, value: mBp, n: pooled.length,
       note: `${pooled.length} forward PSL-fade events: pooled net ${mBp.toFixed(2)}bp at K=24, portfolio t ${tv.toFixed(2)}, ${instPos}/${instTested} instruments positive. PROMOTE if net>=+3.0bp & t>=2.0 & >=6/12 positive; KILL if net<=0 OR t<=0 OR <6/12 positive; else INCONCLUSIVE. In-sample OOS was 6.01bp (t 3.18, 11/12) but 2025+ was negative.` };
   },
+
+  // D-768: 5-crypto PSL downside sweep FADE, K=24, RT 7bp, ONLY when the sweep bar and the two prior bars carry
+  // 3-bar same-sign |taker-delta z|>=1.0 persistence (real aggressor imbalance, not the CLV proxy — taker field
+  // is trd_bars_intraday.bars[7], 100% coverage verified). Pooled net + portfolio t + per-crypto sign are the rule.
+  "fwd-persist-real-K24": async (started) => {
+    const M = "pooled_net_bp_K24_persist_real";
+    const CRYPTO = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"];
+    const startTs = Math.floor(Date.parse(started + "T00:00:00Z") / 1000);
+    const KK = 24, CLIMAX_N = 200, PERSIST = 3, DZ_HI = 1.0, RT = 7 / 1e4;
+    const pooled: number[] = [];
+    let instPos = 0, instTested = 0;
+    for (const sym of CRYPTO) {
+      const row = (await q(`trd_bars_intraday?symbol=eq.${sym}&tf=eq.1h&select=bars`))?.[0];
+      const raw: number[][] = row?.bars || [];
+      const bars = raw.filter((b) => Array.isArray(b) && b.length >= 8 && b[5] > 0)
+        .map((b) => ({ ts: b[0], o: b[1], h: b[2], l: b[3], c: b[4], v: b[5], taker: b[7], delta: b[7] - 0.5 * b[5] }))
+        .sort((a, b) => a.ts - b.ts);
+      if (bars.length < CLIMAX_N + 500) continue;
+      // rolling delta z on trailing CLIMAX_N
+      const dz: number[] = new Array(bars.length).fill(0);
+      for (let i = CLIMAX_N; i < bars.length; i++) {
+        let m = 0; for (let j = i - CLIMAX_N; j < i; j++) m += bars[j].delta; m /= CLIMAX_N;
+        let s2 = 0; for (let j = i - CLIMAX_N; j < i; j++) s2 += (bars[j].delta - m) ** 2;
+        const sd_ = Math.sqrt(s2 / (CLIMAX_N - 1));
+        dz[i] = sd_ > 0 ? (bars[i].delta - m) / sd_ : 0;
+      }
+      const psl = priorSessionLevels(bars as Bar[]);
+      const per: number[] = [];
+      for (let i = CLIMAX_N; i < bars.length - KK - 1; i++) {
+        if (bars[i].ts < startTs) continue;
+        const lvlObj = psl[i]; if (!lvlObj || i <= lvlObj.fromLastIndex) continue;
+        if (!(bars[i].c < lvlObj.low)) continue;                     // any bar closing below PSL, matches mtf-real-delta.ts
+        const win = [dz[i - 2], dz[i - 1], dz[i]];
+        const persist = win.every((z) => z >= DZ_HI) || win.every((z) => z <= -DZ_HI);
+        if (!persist) continue;
+        const entry = bars[i + 1].o; if (!(entry > 0)) continue;
+        const net = Math.log(bars[i + 1 + KK].c / entry) - RT;
+        per.push(net); pooled.push(net);
+      }
+      if (per.length >= 20) { instTested++; if (mean(per) > 0) instPos++; }
+    }
+    if (pooled.length < 200) {
+      return { metric: M, value: null, n: pooled.length,
+        note: `${pooled.length} forward persist(real)+PSL-fade events since ${started} across ${instTested} crypto with >=20; rule needs >=200 pooled to compute. not-yet-computable, NOT inconclusive.` };
+    }
+    const mBp = mean(pooled) * 1e4;
+    const tv = mean(pooled) / ((sd(pooled) || 1e-12) / Math.sqrt(pooled.length));
+    return { metric: M, value: mBp, n: pooled.length,
+      note: `${pooled.length} forward persist(real)+PSL-fade events: pooled net ${mBp.toFixed(2)}bp at K=24, portfolio t ${tv.toFixed(2)}, ${instPos}/${instTested} crypto positive. PROMOTE if net>=+30bp & t>=3.5 & >=4/5 positive & n>=300; KILL if net<=0 OR t<=0 OR <=2/5 positive (any) at n>=200; else INCONCLUSIVE. In-sample OOS was 57.51bp (t 2.59, 5/5) — real taker delta, not CLV proxy.` };
+  },
 };
 
 const rules = await q(`trd_forward_rules?select=id,clock_started,promote_if,kill_if`) as
