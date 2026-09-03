@@ -1723,6 +1723,11 @@ Wired into the daily board. Standing gaps it prints:
   hole), borrow cost (paid). Crypto options ARE held (Deribit dvol/skew/IV); gold options are not.
 
 ## Ops queue (mine, not blocked — needs a quiet moment)
+- **crypto-funding + earnings feeds trip continuity ~daily by a hair** (funding 4.6d vs 4.5d budget; earnings 13.6d
+  vs 13.5d). Root cause: `ingest-funding-full.ts` RE-FETCHES all 510 contracts every run, too slow to finish inside
+  the daily loop, so funding perpetually lags its own budget. Real fix = an INCREMENTAL funding ingest (only fetch
+  since the last held ts per contract), not a full backfill; then it fits the loop and continuity stays green.
+  Refreshed manually 2026-09-03 (detached) as a stopgap. (Not caused by the MTF work — pre-existing cadence.)
 - **PostgREST (`aegis-rest`) is OOM-killed under concurrent heavy reads** (twice on 2026-09-02: during `gbmexport` and
   again with five research scripts reading packed bars). `restart=unless-stopped` now brings it back in seconds, and
   the guards say "cannot reach" honestly rather than certifying on nothing. Root fix: raise the colima VM memory
