@@ -16016,3 +16016,18 @@ structural regularity in the price-action lens. Refinement dispatched (D-764): t
 FX majors added (80k hourly bars each — an earlier ad-hoc probe of mine truncated silently and under-reported them,
 the exact D-757 silent-read failure, using a raw limited fetch not the strict pager), volume/HTF-conditioned, FVG/IFVG
 layer, forward clock if a cell clears cost.
+
+## D-765 — fair value gaps and inverse-FVG do NOT predict: price passes through and reverts (12/12 instruments), refuting two SMC staples
+The operator's "check inverse fair value gaps", made mechanical on the tested structure library. `scripts/mtf-fvg.ts`,
+12 instruments (crypto 1h + gold/S&P/Nasdaq CFDs + the four FX majors at ~80k hourly bars each), lag-1, cost charged,
+train<2023/test>=2023, 360 trials. Control: 10,145 FVGs on BTC, unconditional benchmark t −0.04.
+- **FVG RESPECT is rejected** — price passes THROUGH gaps, not bounces: K4 significant 0+/8− of 12 (t̄ −4.14), TEST
+  0+/9− (t̄ −3.64).
+- **IFVG CONTINUATION is false and emphatic** (the specific ask): K4 **0+/12− of 12** (t̄ −7.00), TEST 0+/10−; price
+  snaps back — the SAME sweep-and-reverse sign as D-763.
+The net negatives are mostly the round-trip cost on a near-zero gross; fading the setup doesn't clear cost across a
+majority OOS (the in-sample "tradable" cells collapse on test — SELECTION LAW). **A coherent picture across D-763 +
+D-765: on the 1h timeframe the market FADES structural breakouts — session-low breaks reclaim, FVGs get passed
+through, IFVG break-throughs revert — cross-instrument and sign-stable, but at/below the cost line.** Two staple
+SMC/ICT teachings (FVG as support, IFVG as continuation) are directionally REFUTED here, which is exactly the value
+of running the lens mechanically. Calibrated prior, not a trade. Lineage `D-765-mtf-fvg` (measured).

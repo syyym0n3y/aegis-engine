@@ -55,3 +55,6 @@ converted to a measured net-of-cost number rather than an assumed one — the ex
 - A mechanism that survives is NOT a promotion. It goes on a forward clock like everything else (PRE-COMMITMENT LAW).
 - The deposit arithmetic (D-746) still binds: below ~$60k of capital none of these outweighs the next deposit.
   Their value at this budget is *knowing*, and one or two hundred-dollar mechanisms that are genuinely retail-only.
+
+## MTF price-action lens (D-763/765, the operator's pivot, mechanical)
+The reversion sign is consistent and cross-instrument on 1h: session-low breaks reclaim (D-763, 8/8, t -4.80), FVGs are passed through not respected, IFVG break-throughs revert not continue (D-765, 12/12, t̄ -7.0) — the market FADES structural breakouts. All sit at/below the cost line: calibrated priors, not trades. Two SMC staples (FVG-as-support, IFVG-as-continuation) directionally REFUTED. The PSL-fade OOS + forward-clock decision is the open make-or-break (D-764, running).
