@@ -109,6 +109,7 @@ async function resolveCik(cik: string): Promise<string | null> {
 }
 
 let fetched = 0, written = 0, saturated = 0, origCount = 0, amendCount = 0, resolvedByCik = 0, noTicker = 0;
+const zeroWindows: string[] = []; // a stopword key over a PAST quarter must never yield 0 — that is a broken question
 const perYearOrig = new Map<number, number>(), perYearAmend = new Map<number, number>();
 const activistHits: string[] = []; // POSITIVE CONTROL: known activists must appear among filers
 const ACTIVIST = /\b(ICAHN|ELLIOTT|STARBOARD|ENGINE\s+CAPITAL|TRIAN|VALUEACT|PERSHING\s+SQUARE|THIRD\s+POINT)\b/i;
@@ -187,6 +188,9 @@ for (const [start, end] of QUARTERS) {
     await sleep(SLEEP);
   }
   console.log(`    ${start}..${end}  ${String(total).padStart(6)} hits (13D + 13D/A)`);
+  // A PAST quarter (ended at least ~15 days ago, so EDGAR has indexed it) that returns 0 on a stopword key is a
+  // broken question, not an empty market — the exact 2025 false-zero this ingest was corrected to catch.
+  if (total === 0 && Date.parse(end) < Date.now() - 15 * 86400000) zeroWindows.push(`${start}..${end}`);
   await sleep(SLEEP);
 }
 await flush();
@@ -206,6 +210,13 @@ if (activistHits.length === 0 && !DRY) {
 }
 for (const a of activistHits.slice(0, 8)) console.log(`       ${a}`);
 
+if (zeroWindows.length && !DRY) {
+  console.error(`\n!! FALSE-ZERO GUARD — ${zeroWindows.length} PAST quarter(s) returned 0 on a stopword enumeration key:`);
+  for (const w of zeroWindows) console.error(`     ${w}`);
+  console.error(`   A stopword never legitimately yields zero over a fully-indexed past quarter — the form label or key is`);
+  console.error(`   wrong for that era (this is exactly how 'SC 13D' silently missed all of 2025). Fix FORMS/QKEY, re-run. RED.`);
+  Deno.exit(1);
+}
 if (saturated) console.log(`\n    ${saturated} window(s) SATURATED — coverage of those windows is PARTIAL and must not be read as complete.`);
 if (!DRY) assertNonEmpty("13D rows written or already held", [...seen], 100);
 
@@ -215,6 +226,7 @@ if (failedWindows.length) {
   console.log(`   Re-run to fill them; the ingest is idempotent and will only fetch what is missing.`);
   Deno.exit(2);
 }
-console.log(`\n    COVERAGE NOTE: enumeration key is the cover-page phrase "${QKEY}", present on essentially every`);
-console.log(`    Schedule 13D — a coverage FLOOR (a 13D omitting the exact phrase would be missed), not a certainty.`);
+console.log(`\n    COVERAGE NOTE: enumeration key is the stopword "${QKEY}" over form labels "${FORMS}" — a coverage FLOOR`);
+console.log(`    (a filing with no indexed prose at all would be missed), not a certainty. It was chosen as the maximal-`);
+console.log(`    coverage key on live counts, and the false-zero guard confirmed no past quarter came back empty.`);
 console.log(`    COVERAGE COMPLETE — every window in ${FROM_Y}-${TO_Y} returned a result.`);
