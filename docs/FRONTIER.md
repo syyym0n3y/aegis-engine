@@ -35,6 +35,18 @@
 (`data/cockpit.html`, rendered each runner loop), and a 26th **sovereignty guard** that REDs on any live
 *.supabase.co reference or a stale runner — **DONE (D-759): 26/26 green, worker verified on a real job, cockpit self-contained.**
 
+## Third wave (2026-09-02, after the de-SPAC correction) — legally-disclosed catalysts, and closing the borrow loop
+| mechanism | why it is different | status |
+|---|---|---|
+| **de-SPAC short, net of borrow** | the corrected underperformance (D-734c: 500d liquid −57%, t −2.88) is real and liquid-significant — the only remaining blocker is borrow cost, now MEASURABLE per-name (D-752b iBorrowDesk). Either the first real edge or confirmed dead-on-cost. | **BUILDING** (`despac-short-net.ts`) |
+| **13D activist filing drift** | a legally-disclosed catalyst (>5% stake WITH intent, filed within 10 days); documented ~7% abnormal return; retail-observable, free | **BUILDING** (`activist-13d.ts` from EDGAR SC 13D) |
+| **NT 10-K/10-Q late filing** | a clean distress signal (Rule 12b-25): can't file on time → accounting problem, restatement, delisting; a short/avoid | **BUILDING** (`late-filing.ts` from EDGAR NT forms) |
+| buyback / ASR announcement | issuer's own capital signalling repurchase | UNEXAMINED — EDGAR 8-K Item 8.01 / press release text |
+| SEC Wells notice / enforcement | a disclosed negative catalyst | UNEXAMINED — mostly 8-K Item 8.01, hard to phrase-match cleanly |
+The de-SPAC borrow test is the consequential one: it is the first time a "confirmed but untradable" verdict can be
+converted to a measured net-of-cost number rather than an assumed one — the exact INSTRUMENT/EXECUTION-LAW discipline
+(measure the cost, do not assume it).
+
 ## The honest priors, stated before the results
 - Each of the four BUILDING items is a *known* effect in the literature, so the question is not "is it there" but
   "what is left after cost, tail and capacity, in the placeable form, at small size" — the same four questions that
