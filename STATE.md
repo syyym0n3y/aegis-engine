@@ -1612,6 +1612,16 @@ micro. 234 TS + 3 Py tests green. $0 spent this entire arc.
 ## Prior (2026-06-07 (Opus 4.8 [1m]) — D-072 SECOND POND PASS: ~16/16 securities strategies rejected; the real edge is the operator's OWN creator business (Pond H), not a trade. Barbell direction: Ireland-UCITS index core (US-situs estate-tax trap is LETHAL for a SA national) + ISA/SIPP tax wrapper (highest-certainty edge) + tiny finite UK-trust-discount tilt + BUILD the creator substrate (unmonetized on the visa; Graduate Route before 31 Dec 2026, then monetize). Aegis pivots: alpha-finder → folklore-falsifier + core-protector. (D-071: first pass, 3/3 real-data kills incl. 18yr trend.) 42 tests, $0.**
 
 ## Where we are
+- **D-771 (2026-09-03): the D-768 signal is ASYMMETRIC — corrected narrative.** The mirror test (upside PSL sweep +
+  persist(real) → fade SHORT) LOSES: K4 t −3.02 0/5, K12 t −2.74 0/5. Only the DOWNSIDE fade works (5/5, D-768).
+  So the earlier "market fades structural breaks" characterisation (D-763/765/766) was over-general — this is a
+  specific "buy the capitulation after persistent short-side aggression" pattern, not a symmetric mean-reversion.
+  The forward clock `fwd-persist-real-K24` is downside-only by construction and stands as-registered.
+- **D-770 (2026-09-03): #7 funding regime is now MEASURED (was UNTESTED per D-769).** Funding IS held (in
+  `trd_perp_oi` under `interval='funding'`, 8h cadence from 2021-01; my D-769 read didn't decode the ingest
+  convention). Q5 longs-crowded bucket carries the strongest lift (+126.86bp t 3.15 on n=96, 2/2 tested);
+  contango overall keeps 5/5 crypto positive at +60.12bp t 2.32; backwardation weakens it. Intraday OI remains
+  not held — that gap persists.
 - **D-768 (2026-09-03): real taker delta is the biggest signal upgrade this program has produced on the crypto side,
   and still below the ceiling.** The CLV×volume PROXY that binds every "volume direction" number in D-767 was hiding
   a real signal: with real Binance taker delta (already ingested via `ingest-perp-flow.ts`, 100% coverage on 5

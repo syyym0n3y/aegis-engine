@@ -16220,3 +16220,77 @@ ceiling exists to police. If the D-768 clock matures with a signature, THEN the 
 re-registering. Meantime the map of "have we accounted for everything" now says: the strong-signal cell is PSL-only
 mean-reversion, asymmetric ATR stops break it, and time-of-day/weekend effects are not driving it. That is the
 answer to the operator's question, backed by 26 counted trials and the ceiling still uncleared.
+
+## D-770 (2026-09-03) closing D-769 #7 UNTESTED — funding IS held; result is not what a naive crowding story predicts
+
+D-769 recorded #7 (funding/OI regime) as UNTESTED per COVERAGE LAW. Wrong on funding, correct on intraday OI. Funding
+is held: `ingest-funding-full.ts` writes Binance funding rates into `trd_perp_oi` with `interval='funding'`, 8h
+cadence, from 2021-01-01. The tiny numeric values (BTC 0.00005866) are the actual fractional funding rate per 8h,
+not a broken OI scale. My D-769 debit was that I read the row without decoding the ingest script's convention.
+Corrected here by measuring, positive controls green (BTC 6,215 rows, median gap 8.0h, range −11.9bp to +24.9bp per
+8h — exactly the expected shape for a Binance funding series).
+
+Conditioning the D-768 persist(real) K24 fade on funding regime (asof concurrent 8h period, percentile within
+trailing 90 periods ≈ 30 days), 9 counted trials on OOS test data (n=456 → 456 with funding-covered subset):
+| bucket | test n | mean bp | t | sign +/tested |
+|---|---|---|---|---|
+| Q1 fund≤20pct (shorts crowded) | 132 | +74.60 | 1.58 | 3/4 |
+| Q2 20–40pct | 89 | +70.72 | 1.18 | 2/2 |
+| Q3 40–60pct | 76 | −10.54 | −0.21 | 0/1 |
+| Q4 60–80pct | 63 | −20.52 | −0.59 | 0/0 |
+| **Q5 fund≥80pct (longs crowded)** | **96** | **+126.86** | **3.15** | **2/2 tested** |
+| fundRate<0 (backwardation) | 90 | +46.90 | 1.18 | 1/2 |
+| **fundRate≥0 (contango)** | **366** | **+60.12** | **2.32** | **5/5** |
+| fundRate<−5bp/8h | 1 | — | — | UNTESTED (breadth) |
+| fundRate>+10bp/8h | 3 | — | — | UNTESTED (breadth) |
+
+The naive story ("shorts crowded → fade long is strongest") is not what the data says. The strongest bucket is
+**longs crowded**, not shorts crowded. And backwardation weakens the signal (1/2 crypto positive), while contango
+holds the whole 5/5 signal. Two consistent readings:
+- The fade is stronger in a NORMAL/EUPHORIC funding regime, where a downside sweep is more likely a stop-run /
+  liquidation event that reverts (longs get flushed, then bought back), than in a backwardation regime where the
+  sweep may be a genuine capitulation with follow-through.
+- Neither reading has been pre-registered and neither cleared the ceiling — this is DESCRIPTIVE of the signal's
+  regime dependence, not a promotion.
+
+**#7 status change: UNTESTED → MEASURED (funding).** Intraday OI remains not held (`trd_perp_oi` has only
+`basis_ann` interval populated for BTC's non-funding rows — that gap persists and is real research debt).
+
+## D-771 (2026-09-03) SYMMETRIC-SIDE TEST — the D-768 signal is ASYMMETRIC; the "market fades structure" narrative was over-general
+
+The programme had been characterising D-763/765/766/768 as "the market fades structural breaks, cross-instrument".
+Every one of those measured the DOWNSIDE sweep only. Never tested the mirror. Running it now.
+
+Setup: identical to D-768. PSL upside sweep (close > prior-session HIGH) + 3-bar |taker-delta z|≥1.0 persistence
+→ fade SHORT at next open. K∈{4,12,24}, lag-1, RT 7bp/crypto, 5-crypto panel, train/test split 2023.
+
+| side | K | test n | mean bp | t | sign +/tested |
+|---|---|---|---|---|---|
+| DOWN (fade long — D-768 replication) | 24 | 456 | **+57.51** | **+2.59** | **5/5** |
+| **UP (fade short — the mirror)** | 4 | 312 | **−34.39** | **−3.02** | **0/5** |
+| UP | 12 | 312 | **−44.14** | **−2.74** | **0/5** |
+| UP | 24 | 312 | −24.66 | −0.92 | 3/5 |
+
+**The mirror LOSES.** Upside sweeps CONTINUE at K4 and K12 (fading them is significantly negative, 0/5 crypto);
+K24 is flat-to-slightly-negative. So D-768 is NOT a general fade-of-structure edge — it is specifically a
+"buy the capitulation after persistent short-side aggression" pattern. Fading the UP side does the opposite: the
+market carries continuation, and the fade bleeds cost + carry.
+
+**What this means, honestly:**
+1. **Correct the narrative.** Prior DECISIONS entries (D-763/765/766) generalised from the downside test to "fades
+   structure". That was over-general. The reversion sign is DOWNSIDE-SPECIFIC on this event set. Corrected here on
+   the record — the STATE.md summary is updated in the same commit.
+2. **The mechanism is narrower and more specific.** "Persistent short-side aggression drives price below a level,
+   then buyers step in and reverse." That is a single-sided liquidation-and-fade pattern, not a symmetric
+   mean-reversion. The market-structure literature actually predicts this asymmetry (short liquidations are more
+   forced than long ones on 1h crypto; funding is usually contango; the long-side liquidation cascade is a rarer
+   event with different dynamics).
+3. **The forward clock stands as-registered.** `fwd-persist-real-K24` is downside-only by construction — the
+   asymmetry is baked in. No amendment needed. But it also means the strategy universe is smaller than the
+   original narrative implied: no free symmetric complement.
+4. **No new forward clocks.** Registering the DOWN side alone with a numeric two-sided rule is what D-768 already
+   did. Adding a mirror clock that we know from history LOSES would be trial inflation.
+
+Trials this run: 12 (2 sides × 3 horizons × train/test). Program ceiling still 5.46 at N ≈ 2.9M. The DOWN t 2.59
+is unchanged; the UP finding is a genuine informational upgrade — a bounded universe of setups, not the whole
+"fade structure" universe.
