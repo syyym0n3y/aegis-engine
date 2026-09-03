@@ -16294,3 +16294,72 @@ market carries continuation, and the fade bleeds cost + carry.
 Trials this run: 12 (2 sides × 3 horizons × train/test). Program ceiling still 5.46 at N ≈ 2.9M. The DOWN t 2.59
 is unchanged; the UP finding is a genuine informational upgrade — a bounded universe of setups, not the whole
 "fade structure" universe.
+
+## D-772 (2026-09-03) UNIFIED REFINEMENT across the 10 factors — R2 joint cell reaches t 4.92, closest-to-ceiling result on record
+
+Operator asked for the refinement across all 10 factors on the D-768/771 carrier (downside PSL sweep + persist(real)
+→ fade LONG at K24, 5-crypto). The five measurements:
+
+**R1 — baseline reproduction (D-768):** OOS n 456, +57.51bp, t 2.59, 5/5 crypto. Reproduces D-768's registered
+forward-clock statistic exactly (also verified independently by the scorer at n=456).
+
+**R2 — JOINT REFINED CELL** (all three surviving conditioners AND'd, per D-769/770):
+`no-pwl (D-769 #4) AND vwapDist<−20bp (D-769 #5) AND contango fund≥0 (D-770)` → **OOS n 171, +135.22bp, t 4.92, 5/5 crypto**.
+Approaches but does NOT clear the program deflation ceiling 5.46 at N ≈ 2.9M trials. This is the closest the program
+has ever gotten to a ceiling-clearing single-cell result — and by construction it comes with all the trial-count
+caveats of any ex-post joint (each conditioner was already a counted trial in D-769/770, and combining them adds
+another selection step).
+
+**R3 — one-out ablation on R2** (drop each conditioner, remeasure OOS):
+| dropped | n | mean bp | t | sign |
+|---|---|---|---|---|
+| none (full R2) | 171 | +135.22 | **4.92** | 5/5 |
+| -no-pwl | 271 | +92.68 | 2.89 | 5/5 |
+| -vwapFar | 227 | +102.20 | 4.43 | 5/5 |
+| -contango | 202 | +122.22 | 4.91 | 5/5 |
+
+Attribution reads clearly: **no-pwl carries most of the t-lift** (dropping it collapses t from 4.92 to 2.89 — PWL
+confluence really does hurt, and excluding it is the largest single conditioner effect). **vwapFar contributes
+meaningfully** (t 4.92 → 4.43). **Contango barely contributes at the OOS margin** (t 4.92 → 4.91 — because most
+of the OOS window is already contango, so the filter removes only a few events). The refinement is not driven by
+one filter alone.
+
+**R4 — VWAP-touch exit** (exit LONG when a bar's high touches the concurrent session VWAP, or K24 close if
+untouched) on the R2 cell: OOS n 171, +42.78bp, t 4.39, 5/5. Lower expectancy per event (early exit trims the tail
+of extended reversions) but the t drops from 4.92 to 4.39 too — the K24 fixed-time exit dominates in raw t on this
+cell, so VWAP-touch is NOT the improvement it appeared to be as a hypothesis. Recording the negative result on
+this exit modification. D-769 #8's finding stands: for this mean-reversion cell, TIME exit beats every level or
+stop-based exit tested.
+
+**R5 — SIZING on the R2 cell** (per-event mean 135.22bp, sd 359.40bp, 47.5 events/yr, annualised per-event vol
+24.8%):
+| leverage | context | OOS terminal (~2.75y) | worst DD | P(DD ≥ 50%) via 5000 bootstraps |
+|---|---|---|---|---|
+| L=0.81 | vol-target 20%/yr | 6.47x | 17% | ~0.0% |
+| L=2.62 | Kelly/4 | 425x | 46% | 3.1% |
+| L=5.23 | Kelly/2 | 180,353x | 71% | 57.4% |
+| L=10.47 | full-Kelly | 3.25e10x | 91% | 99.5% |
+
+The vol-target 20%/yr line (L=0.81) is a **holdable** book: 6.47x in 2.75 years = ~93%/yr CAGR at L=0.81 with 17%
+worst DD and ~0% modeled ruin. Kelly/4 is the classical "aggressive-but-survivable" — 425x terminal but 46% worst
+DD (right at the boundary of what a human can hold through). Above Kelly/2 the equity path stops being holdable
+under realistic behaviour; full-Kelly is arithmetically the peak but practically ruined by drawdowns.
+
+**Doctrinal reading — the honest bits, said plainly:**
+1. The refined cell is DESCRIPTIVE. R2 was defined ex post from findings that were themselves ex-post; the
+   trial-count adjustment for ranking joints is not encoded in the ceiling. The 5.46 program ceiling remains
+   the honest bar, and R2's 4.92 does not clear it.
+2. **No new forward clock.** D-768's `fwd-persist-real-K24` is the single registered wager; adding a tighter
+   R2-conditioned clock is exactly the inflation D-769 doctrine warned against. If D-768's clock survives its
+   own kill/promote conditions, the R2 refinement becomes a within-clock characterisation of where the signal
+   was strongest — not a separately-registered edge.
+3. **What R2 changes about the map**: it tells us the D-768 signal is not diffuse across all PSL-persist sweeps
+   but concentrated in ~37% of them (171/456 OOS = 37.5% of the D-768 event population); the other 63% carry
+   modest signal or noise. That is what "refine" produced: a much cleaner subset with the same underlying
+   mechanism.
+4. **What R2 does NOT change**: the asymmetry (D-771 downside-only), the taker-delta dependence (D-768 real vs
+   proxy), and the descriptive-only status all persist. Nothing here is promotable to a live book without the
+   forward clock earning its verdict.
+
+Trials this run: 6 (R1 + R2 + R3's 3 one-out cells + R4). Program ceiling unchanged. Board 25/26 (continuity
+still RED on earnings margin — pre-existing).

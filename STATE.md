@@ -1612,6 +1612,13 @@ micro. 234 TS + 3 Py tests green. $0 spent this entire arc.
 ## Prior (2026-06-07 (Opus 4.8 [1m]) — D-072 SECOND POND PASS: ~16/16 securities strategies rejected; the real edge is the operator's OWN creator business (Pond H), not a trade. Barbell direction: Ireland-UCITS index core (US-situs estate-tax trap is LETHAL for a SA national) + ISA/SIPP tax wrapper (highest-certainty edge) + tiny finite UK-trust-discount tilt + BUILD the creator substrate (unmonetized on the visa; Graduate Route before 31 Dec 2026, then monetize). Aegis pivots: alpha-finder → folklore-falsifier + core-protector. (D-071: first pass, 3/3 real-data kills incl. 18yr trend.) 42 tests, $0.**
 
 ## Where we are
+- **D-772 (2026-09-03): the UNIFIED REFINEMENT** — joint cell (no-pwl AND vwapDist<-20bp AND contango) on the D-768
+  carrier gives OOS n 171, +135.22bp, **t 4.92, 5/5 crypto** — closest-to-ceiling result on record (ceiling 5.46).
+  Attribution: no-pwl carries most of the lift (drop it: t 4.92→2.89), vwapFar contributes (t→4.43), contango
+  barely (most OOS is already contango). VWAP-touch exit LOSES vs K24 fixed (t 4.39 vs 4.92 on same events —
+  time exit dominates for this mean-reversion cell). Sizing at vol-target 20%/yr (L=0.81) is HOLDABLE: OOS
+  6.47x in 2.75y (~93%/yr) with 17% worst DD and ~0% modeled ruin. Descriptive only — R2 was defined ex post,
+  no new forward clock (D-768's `fwd-persist-real-K24` remains the single registered wager per D-769 doctrine).
 - **D-771 (2026-09-03): the D-768 signal is ASYMMETRIC — corrected narrative.** The mirror test (upside PSL sweep +
   persist(real) → fade SHORT) LOSES: K4 t −3.02 0/5, K12 t −2.74 0/5. Only the DOWNSIDE fade works (5/5, D-768).
   So the earlier "market fades structural breaks" characterisation (D-763/765/766) was over-general — this is a
