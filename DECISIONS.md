@@ -16363,3 +16363,47 @@ under realistic behaviour; full-Kelly is arithmetically the peak but practically
 
 Trials this run: 6 (R1 + R2 + R3's 3 one-out cells + R4). Program ceiling unchanged. Board 25/26 (continuity
 still RED on earnings margin — pre-existing).
+
+## D-773 (2026-09-04) BROAD PANEL — D-768 REPLICATES cross-sectionally (10/10 crypto), D-772 R2 REFINEMENT IS SELECTION and is retracted
+
+The operator asked for the overnight elevation of the project. The single most decisive test available was to run
+the D-768/772 findings on a broader crypto panel — 5 → 10 names — using the same event definition, same conditioners,
+same K24 exit. If the D-768 signal is real, it replicates. If the D-772 refinement is real, it also replicates. If
+either fails, we learn something honest before waiting 24 months for a forward clock. Result:
+
+**R1 — D-768 BASELINE (persist(real) + downside PSL sweep + K24) on 10 crypto:**
+- Pooled OOS n 913, +58.13bp, **gross t 2.97, 10/10 crypto positive**.
+- Every single symbol (5 originals + BCH, LINK, ADA, ZEC, DOGE) shows a positive mean, though most individual t's
+  are 0.5–2.6. This is EXACTLY the cross-sectional shape a real signal has: pooled t rises with breadth (2.59 →
+  2.97), per-symbol t's are modest but sign-agreement is complete.
+- The D-768 finding replicates. This is the most cross-sectionally robust result the program has ever produced —
+  10 of 10 crypto positive across the OOS 2023–2026 window, on real Binance taker delta. Still below the 5.46
+  program ceiling; still descriptive; but no longer 5-name-fragile.
+
+**R2 — D-772 REFINED CELL (add no-pwl AND vwapFar AND contango) on 10 crypto:**
+- Pooled OOS n 342, +44.72bp, t 1.64, sign **6/9 positive** (one thin cell untested).
+- Per-symbol: original 5 (BTC/ETH/XRP/BNB/SOL) all positive, four with t≥1.7 — R2 works ON THEM. New 5: **BCH −43.72,
+  LINK −66.32, ZEC −31.69, DOGE −90.59** — four of five new symbols NEGATIVE on the refined cell. ADA +19.09.
+- Verdict: **the D-772 R2 refinement is retracted as an ex-post selection artifact.** The three conditioners
+  (no-pwl, vwapFar, contango) were tuned against the D-769/770 5-name results. On the 5 new symbols the joint
+  refinement OVERFITS: it selects 342 of 913 events (37% of base) but the OOS pooled t COLLAPSES from 2.97 (base)
+  to 1.64 (refined). This is the textbook signature of a good-looking headline number that eats itself on
+  independent replication.
+
+**Doctrinal readings, said plainly:**
+1. The D-768 forward clock `fwd-persist-real-K24` was registered on the 5-crypto panel. This test says the same
+   pattern is genuine at 10-crypto breadth — a real vote of confidence in the pre-registered wager. The clock
+   stands and its evidence base widens.
+2. **D-772 R2's "closest-to-ceiling t 4.92" number is NOT a real edge on the broader panel.** Per SELECTION LAW
+   and the trial-count doctrine, I mark it here as **RETRACTED (selection artifact confirmed on independent
+   breadth expansion)**. STATE.md updated. The R2 sizing/leverage numbers (D-772 §R5) are DESCRIPTIVE of the
+   5-name in-sample-plus-conditioned population, not the broader tradable population — they should NOT be used
+   to justify a deployment.
+3. The right forward wager is D-768's registered clock as-is (persist(real) + downside PSL sweep, K24, unfiltered
+   by pwl/vwap/contango). The broader-panel R1 says this cell is genuinely cross-sectional and worth waiting on.
+4. **Doctrinal use-case for this outcome.** This exact sequence — headline t 4.92 in-sample → t 1.64 on
+   independent breadth — is why THE UNIVERSE LAW and BREADTH LAW exist. They just did their job. The retraction
+   here is a WIN for the engine, not a failure of the research.
+
+Trials this run: 2 (R1 + R2 on the broader panel). Program ceiling unchanged. Board 25/26. Committing and pushing
+so the retraction is on the immutable record before any new work.

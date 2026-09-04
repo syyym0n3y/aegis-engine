@@ -1612,8 +1612,16 @@ micro. 234 TS + 3 Py tests green. $0 spent this entire arc.
 ## Prior (2026-06-07 (Opus 4.8 [1m]) — D-072 SECOND POND PASS: ~16/16 securities strategies rejected; the real edge is the operator's OWN creator business (Pond H), not a trade. Barbell direction: Ireland-UCITS index core (US-situs estate-tax trap is LETHAL for a SA national) + ISA/SIPP tax wrapper (highest-certainty edge) + tiny finite UK-trust-discount tilt + BUILD the creator substrate (unmonetized on the visa; Graduate Route before 31 Dec 2026, then monetize). Aegis pivots: alpha-finder → folklore-falsifier + core-protector. (D-071: first pass, 3/3 real-data kills incl. 18yr trend.) 42 tests, $0.**
 
 ## Where we are
-- **D-772 (2026-09-03): the UNIFIED REFINEMENT** — joint cell (no-pwl AND vwapDist<-20bp AND contango) on the D-768
-  carrier gives OOS n 171, +135.22bp, **t 4.92, 5/5 crypto** — closest-to-ceiling result on record (ceiling 5.46).
+- **D-773 (2026-09-04): BROAD PANEL — D-768 REPLICATES 10/10, D-772 R2 RETRACTED.** On the broader 10-crypto panel
+  (added BCH/LINK/ADA/ZEC/DOGE), D-768 baseline (persist(real) + downside PSL sweep + K24) gives pooled OOS
+  n 913, +58.13bp, **t 2.97, 10/10 crypto positive** — every symbol positive; the signal REPLICATES. D-772's R2
+  refinement (no-pwl+vwapFar+contango) COLLAPSES: BCH/LINK/ZEC/DOGE all NEGATIVE on the refined cell (pooled t
+  1.64, sign 6/9). **R2 is retracted as an ex-post selection artifact.** The R2 sizing numbers in D-772 §R5 are
+  descriptive of the 5-name conditioned population only and should NOT justify a deployment. The forward clock
+  `fwd-persist-real-K24` stands as-registered on the widened evidence base. Textbook UNIVERSE/BREADTH LAW win.
+- **D-772 (2026-09-03) — RETRACTED per D-773.** The refined joint cell reported OOS n 171, +135.22bp, t 4.92, 5/5
+  crypto — the closest-to-ceiling result on record. That number did NOT survive the broader 10-crypto panel test
+  the same doctrine required. Kept on the record as a retracted headline; the R5 sizing must not be quoted.
   Attribution: no-pwl carries most of the lift (drop it: t 4.92→2.89), vwapFar contributes (t→4.43), contango
   barely (most OOS is already contango). VWAP-touch exit LOSES vs K24 fixed (t 4.39 vs 4.92 on same events —
   time exit dominates for this mean-reversion cell). Sizing at vol-target 20%/yr (L=0.81) is HOLDABLE: OOS
