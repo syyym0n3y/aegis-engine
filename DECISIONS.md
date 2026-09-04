@@ -16662,3 +16662,95 @@ confirms the reversal).
 Trials this run: 4. Program ceiling unchanged. **The engine caught three would-be false-positive promotions
 tonight; every one via pre-committed decomposition or independent breadth expansion. That is what "elevating
 the project" actually looks like tonight.**
+
+## D-779 (2026-09-04) OPERATOR ASK — NQ at 10AM ET, MTF analysis on 2,620 bars over 10 years
+
+Operator asked: mark NQ (USATECHIDXUSD, 1h) at 10AM Eastern each trading day and analyse if anything is
+CONSISTENT using MTF context (PDH/PDL + prior-session H/L). 10AM ET handled via US-DST rule (2nd Sun Mar → 1st
+Sun Nov = 14:00 UTC bar in EDT, 15:00 UTC bar in EST). Sample: **2,620 weekday 10AM ET bars, 2016-01 → 2026-08,
+57,929 total 1h bars with h≠l**. All returns log-price, IDX cost 4bp RT charged where a trade hypothesis is stated.
+
+### D1 — the 10AM ET bar itself
+- **52.7% green** (vs 50% random). Mild bullish bias.
+- avg body 34.7bp, upper wick 15.6bp, lower wick 18.0bp. Slightly larger lower wicks — small mean-revert-from-lows tendency.
+
+### D2 — unconditional forward return from 10AM close (gross)
+| horizon | mean bp | t | win% |
+|---|---|---|---|
+| +1h | +1.66 | 2.21 | 56 |
+| +3h | +1.84 | 1.48 | 56 |
+| **+6h ≈ 4PM ET** | **+3.50** | **2.02** | **56** |
+
+There is a **small consistent upward drift** from the 10AM close to the US session close. Meaningful sample
+(n 2,620) but effect size is tiny — 3.5bp over 6h barely covers 1× the round-trip cost (4bp). SUB-FEE on its own.
+
+### D3 — direction of the 10AM bar (does it PERSIST or FADE)
+- After a **green** 10AM bar: +3.24bp 6h fwd, t 1.47 (weak continuation).
+- After a **red** 10AM bar: +3.80bp 6h fwd, t 1.39 (weak REVERSAL — market recovers after red bars).
+- Neither is a clean signal on its own. The 10AM bar's colour doesn't tell you much.
+
+### D4 — POSITION RELATIVE TO PDH/PDL — the standout finding
+| position at 10AM close | n | 6h mean bp | t | win% |
+|---|---|---|---|---|
+| **above PDH (broke it)** | **739** | **+6.49** | **2.37** | **60** |
+| swept PDH & reclaimed (wick above, close back) | 329 | +3.79 | 0.79 | 57 |
+| between PDH and PDL | 859 | +3.75 | 1.15 | 56 |
+| swept PDL & reclaimed | 264 | −6.22 | −1.20 | 49 |
+| below PDL (broke it) | 500 | +3.15 | 0.72 | 54 |
+
+**The consistent, statistically significant pattern at 10AM ET on NQ is: when the 10AM bar CLOSES ABOVE
+the prior-day HIGH, the market continues up (+6.49bp / t 2.37 / 60% win rate) over the next 6 hours.**
+This is CONTINUATION / BREAKOUT — not a fade. Consistent with a bull-biased US equity index breaking to new highs
+during the morning holds those highs into the close. Net of 4bp cost this is +2.5bp mean, +1.5σ — a real but
+small edge; the sign is what's consistent, not the magnitude.
+
+### D5 — sweep-and-fade hypothesis (SMC lore) — REFUTED at 10AM on NQ
+- PDH sweep & reclaim → SHORT 6h: −7.79bp net of cost, t −1.61, win% 40. **Loses.**
+- PDL sweep & reclaim → LONG 6h: −10.22bp net of cost, t −1.96, win% 45. **Loses.**
+The "sweep + reclaim = fade" mechanism from the crypto D-763 finding does NOT translate to NQ at 10AM ET. On the
+contrary the sign is OPPOSITE of a fade — a PDL sweep and reclaim tends to KEEP going down (win% 45 is worse
+than random on the LONG fade). Probably because 10AM ET PDL sweeps are often news-driven (CPI/NFP at 8:30 ET)
+that continue rather than mean-revert.
+
+### D6 — Asia session H/L context at 10AM
+| 10AM close vs asia session | n | 6h mean bp | t | win% |
+|---|---|---|---|---|
+| above asia HIGH | 1004 | +4.79 | 2.02 | 60 |
+| inside asia range | 790 | +6.23 | 1.75 | 54 |
+| below asia LOW | 826 | −0.66 | −0.21 | 54 |
+Similar shape: above-asia-H at 10AM ET = continuation up. Below-asia-L = flat. Reinforces the BREAKOUT
+continuation finding.
+
+### D7 — era stability
+| year | n | mean bp | t |
+|---|---|---|---|
+| 2018 | 242 | −0.47 | −0.07 |
+| 2019 | 258 | +2.37 | 0.68 |
+| 2020 | 258 | +5.68 | 0.71 |
+| 2021 | 258 | +3.54 | 0.78 |
+| 2022 | 256 | −4.38 | −0.56 |
+| **2023** | 256 | **+12.43** | **2.73** |
+| 2024 | 257 | +3.31 | 0.80 |
+| 2025 | 257 | +4.72 | 0.74 |
+| 2026 (partial) | 169 | +2.00 | 0.38 |
+Sign positive in 7/9 years; 2018 and 2022 (both bear-flat regimes) are near zero or negative. 2023 carries
+the pooled t. Not a bulletproof era stability but the SIGN is durable.
+
+### What is CONSISTENT at 10AM ET on NQ — the operator's answer, plainly
+1. **Small upward drift** — 10AM close to 4PM ET averages +3.5bp with 56% win rate. Sub-fee alone.
+2. **The strongest sub-cell is BREAKOUT-CONTINUATION**: if 10AM closes above PDH, the market continues up for the
+   afternoon (+6.49bp t 2.37 60% win over 739 events). Net of cost: +2.5bp / 55.5% win, marginal.
+3. **The SMC "sweep and reclaim = fade" pattern from crypto DOES NOT WORK on NQ at 10AM.** Both fade directions
+   are money-losers net of cost. This is important negative evidence — a common retail trading heuristic that
+   NQ specifically does not honor at this hour.
+4. Asia range context reinforces the breakout picture (above asia-H = continuation up).
+5. Era stability is imperfect (2023 carries the pooled t); the SIGN survives across most years but magnitudes
+   are noisy and 2018/2022 flatten it.
+
+**Doctrinal status:** DESCRIPTIVE ONLY. No forward clock, no promotion. The strongest sub-cell (D4 "above PDH")
+survives cost by 2.5bp — a genuine edge candidate but the effect size is small and 2018/2022 show it can vanish.
+The BREADTH LAW concern is real (1 instrument), and no cross-index replication (S&P/DJ/RUT) was run tonight.
+For a pre-registration to make sense, the operator should approve testing the "above PDH at 10AM ET → long to
+close" hypothesis on S&P 500 (USA500IDXUSD, 80k bars) as a cross-index breadth test first. That's D-780.
+
+Trials this run: 15 (D1-D7 cells). Program ceiling 5.46 at N 2,903,911 (unchanged). Board 25/26.
