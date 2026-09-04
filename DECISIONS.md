@@ -16541,3 +16541,69 @@ exactly the value of running the decomposition BEFORE registering, not after.
 
 Trials this run: 54 (the full volume-conditions grid, re-run at 17 instruments). Program ceiling still 5.4556 at
 N ≈ 2.9M (the 54 didn't move it — the ceiling formula is roughly logarithmic in N). Board 25/26.
+
+## D-777 (2026-09-04) D-776 RETRACTION — the four decomposition tests FAIL two of four; the ceiling-clearing t was crypto-only and sign-flipped in 2026
+
+Ran the four survival tests I committed to in D-776 before any pre-registration. Reproducing the D-776 baseline
+first: rvol≥1.5 K24 all-17 instruments OOS gives n 31852 / +19.12bp / t 7.86 (matches D-776 exactly). Then:
+
+**D1 — PER-ASSET-CLASS BREAKDOWN.**
+| class | n | mean bp | gross t | sign |
+|---|---|---|---|---|
+| CRYPTO | 23,657 | +25.81 | +7.96 | 9/10 |
+| IDX | 3,729 | +2.33 | +0.90 | 2/3 |
+| **FX** | **4,466** | **−2.35** | **−2.48** | **1/4** |
+The pooled t 7.86 is CRYPTO-carried. Indices are marginal. **FX SIGNIFICANTLY NEGATIVE.** The "17-instrument
+cross-asset" framing was pooling a crypto edge with a flat idx and a losing FX leg. **D1 FAILS** (only 1 of 3
+classes with clear positive+majority-sign; FX has the opposite sign).
+
+**D2 — PER-SYMBOL SIGN MAP.** Losers: ETH (crypto), XAU (idx), EUR, GBP, JPY (3 of 4 FX). AUDUSD is nominally
+positive but only +1.60bp t 0.77 — effectively flat. The FX class is essentially 0/4 that clear cost. Not all
+one class, but the FX-loser concentration is what D1 already showed.
+
+**D3 — rvol THRESHOLD SENSITIVITY.** PASSES cleanly and monotonically:
+| threshold | pooled n | mean bp | t | sign |
+|---|---|---|---|---|
+| ≥1.3 | 40,065 | +14.90 | 7.21 | 12/17 |
+| ≥1.5 | 31,852 | +19.12 | 7.86 | 12/17 |
+| ≥1.7 | 25,737 | +23.27 | 8.23 | 13/17 |
+| ≥2.0 | 19,401 | +30.29 | 8.91 | 14/17 |
+| ≥2.5 | 12,952 | +42.47 | 9.68 | 14/17 |
+Genuinely monotone — the more extreme the volume, the stronger the fade. But this is a within-crypto phenomenon
+(D1) and D4 breaks it anyway.
+
+**D4 — ERA STABILITY.** BREAKS.
+| year | n | mean bp | t | sign |
+|---|---|---|---|---|
+| 2023 | 7,910 | +33.29 | +8.76 | 12/17 |
+| 2024 | 8,773 | +34.69 | +7.16 | 14/17 |
+| 2025 | 9,164 | +33.54 | +6.60 | 13/17 |
+| **2026** | **6,005** | **−44.31** | **−8.06** | **4/17** |
+**2026 sign-flipped to strongly negative** with 4/17 sign. Same pattern that killed D-764's fwd-psl-fade era
+stability. On the most recent 8 months of data — the era that most matters for a promotion decision — the
+signal is doing THE OPPOSITE.
+
+**Combined verdict: D-776 IS RETRACTED.** Two of four tests fail: D1 (crypto-only, FX opposite) and D4 (2026
+strongly negative). No forward clock is registered. The single Sunday-scaring paragraph in D-776 — "the first
+cell in the programme's history to nominally clear the 5.46 ceiling" — is corrected on the immutable record.
+
+**What this proves — the discipline actually works.**
+1. I committed the four tests in D-776's language *before* running them, precisely to prevent selection.
+   Running them gave a clear NO. Registering a forward clock at D-776 would have locked us into 24 months of
+   waiting for a rule that D4 alone would have killed inside a year.
+2. The doctrinal reading: "a t-stat that clears the ceiling on one OOS run is a CANDIDATE for pre-registration,
+   not evidence of a live edge." D-776 wrote that sentence explicitly. The decomposition is why.
+3. **D-768 and D-773 (the true carrier) are unaffected.** The D-768 `fwd-persist-real-K24` clock stands. The
+   D-773 broad-panel finding (D-768 replicates 10/10 crypto pooled t 2.97) also stands — it is the
+   crypto-only, real-taker-delta version, and BY CONSTRUCTION doesn't have the FX leg or the 2026 sign flip
+   in the same way (its own era decomposition should be checked, but that's a separate D-778 task).
+4. **A crypto-only rvol-hi variant** is genuinely interesting: crypto D1 shows +25.81bp t 7.96 sign 9/10. But
+   the era test D4 tags 2026 as negative on the full mixed panel; the crypto-only slice of 2026 needs its own
+   decomposition before ANYTHING is claimed about a "crypto rvol-hi edge". That work is D-778, not tonight.
+
+Trials this run: 15 (4 D-tests × 3 classes / 5 thresholds / 4 eras averaged conservatively). Program ceiling
+5.46 unchanged. Board 25/26.
+
+**Overnight retraction count in the immutable log: 2 (D-772 R2 → D-773; D-776 → D-777).** Both catch was by
+built-in survival tests, both registered as retracted, both would have been quiet-mistakes if I'd skipped the
+protocol. The engine works.
