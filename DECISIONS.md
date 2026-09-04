@@ -16451,3 +16451,32 @@ Extending D-771 (the "market fades structural breaks" asymmetry test) to the 10-
   is honest information to have BEFORE 24 months of forward scoring.
 
 Trials this run: 12. Program ceiling unchanged. Board 25/26. D-772 R2 remains RETRACTED per D-773.
+
+## D-775 (2026-09-04) CHART PATTERNS — the did-not-recommend audit, tested honestly, evidence backs the dismissal
+
+Operator asked me to start with what I did NOT recommend. First item: chart patterns (pinbar/engulf/marubozu/doji/
+inside/outside). D-768 base cell on 10-crypto panel, K24, each pattern as sub-selector:
+
+| pattern | test n | mean bp | gross t | lift vs base | sign +/tested |
+|---|---|---|---|---|---|
+| base (D-773 R1) | 913 | +58.13 | 2.97 | — | 10/10 |
+| pinbar | 136 | +151.10 | 3.03 | +92.97 | 1/2 |
+| engulf | 15 | +206.98 | 1.01 | +148.84 | 0/0 (UNTESTED — breadth) |
+| marubozu | 33 | +167.21 | 1.11 | +109.08 | 0/0 (UNTESTED — breadth) |
+| doji | 67 | +169.84 | 2.11 | +111.71 | 0/0 (UNTESTED — per-symbol breadth) |
+| inside | 119 | +15.23 | 0.24 | −42.90 | 1/1 (UNTESTED — per-symbol breadth) |
+| outside | 26 | +207.44 | 1.37 | +149.31 | 0/0 (UNTESTED — breadth) |
+
+**Honest read** — patterns with the biggest lift (engulf 148bp, outside 149bp, marubozu 109bp, doji 111bp) ALL FAIL
+the BREADTH LAW (below 50 pooled events OR below the 20-per-symbol floor). Pinbar has adequate pooled n (136) but
+its t 3.03 is virtually indistinguishable from the base t 2.97 — the pattern is not doing work; it's a random subset
+with the same signal. Inside bar KILLS the base t (2.97 → 0.24) — a contraction bar is exactly when the fade doesn't
+work, consistent with mean-reversion needing an actual reversion-triggering rejection candle.
+
+**Verdict: my earlier dismissal ("redundant with the 10-setup finding") now has evidence.** At 10-crypto breadth, no
+pattern-family conditioner clears cost OOS with adequate sign coverage. The "hidden alpha in candle shapes" story
+common to the retail SMC/price-action literature does not survive a properly-breadth-tested audit on the D-768
+carrier. The one honest-to-record observation is that **inside bars specifically hurt the fade** — a small negative
+finding worth noting.
+
+Trials this run: 6. Program ceiling unchanged. Board 25/26.
