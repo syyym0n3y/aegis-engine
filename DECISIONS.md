@@ -16837,3 +16837,87 @@ I do NOT register these unilaterally (PRE-COMMITMENT LAW binds), but they are th
 from tonight's positive scan.
 
 Trials this run: 120 (24 hours × 5 cells). Program ceiling 5.46 at N 2,903,911 (unchanged). Board 25/26.
+
+## D-781 (2026-09-04) 97-PERP SF PANEL REPLICATION — the three D-780 cells extended to 5x breadth
+
+Ran the three registered clocks on the 97-perp SF panel (survivorship-free, 5x wider than D-780's 17). Positive
+framing per operator's "get rid of negative bias" ask: this is discovery/replication, and it delivers.
+
+| clock | 17-panel (D-780) | 97-panel SF (D-781) |
+|---|---|---|
+| utc01-sweepPDL-reclaim | +15.44bp t 3.40 sign 13/17 | +9.85bp t 2.35 sign 53/86 (62%) |
+| utc09to10-belowPDL | +8-11bp t 2.4-3.4 sign 12-13/17 | **+10.87bp t 4.84 sign 65/97 (67%)** |
+| utc16-abovePDH | +7.31bp t 2.91 sign 11/17 | **+22.63bp t 7.25 sign 70/97 (72%)** |
+
+**All three cells REPLICATE on 97-perp breadth.** The utc16-abovePDH pattern (D-779 NQ finding extended)
+STRENGTHENS from t 2.91 → t 7.25 with 5× more instruments — nominally clearing the 5.46 ceiling on a
+properly-breadth-tested OOS measurement. utc09-10-belowPDL also strengthens (t 4.84). utc01 slightly weaker in
+expectancy/t but still positive-majority-sign. The three clocks I registered tonight are on defensible
+mean-cross-instrument-sign evidence at the OOS pooled level.
+
+**But the ceiling-clearing t 7.25 is exactly the D-776 pattern** — nominally clears the ceiling on a big OOS
+pool. The D-777 discipline requires era decomposition BEFORE any headline claim. That is D-782, immediately
+below in this commit.
+
+## D-782 (2026-09-04) ERA DECOMPOSITION on the 97-panel — 2 of 3 clocks already track KILL in 2026
+
+Following the D-777/D-778 protocol. Every "clears ceiling" result must survive era stability, especially the
+2026 partial-year check that caught D-776 and D-768.
+
+**utc01-sweepPDL-reclaim-LONG:**
+| year | n | mean bp | t |
+|---|---|---|---|
+| 2023 | 214 | +34.26 | +2.25 |
+| 2024 | 1334 | +34.72 | +5.36 |
+| 2025 | 1570 | +17.10 | +2.43 |
+| **2026** | **1004** | **−39.74** | **−4.27** ← **SIGN-FLIPPED** |
+
+**utc09to10-belowPDL-LONG:**
+| year | n | mean bp | t |
+|---|---|---|---|
+| 2023 | 1096 | +23.12 | +3.17 |
+| 2024 | 6334 | +43.28 | +10.04 |
+| 2025 | 9799 | +7.62 | +2.35 |
+| **2026** | **6939** | **−16.05** | **−3.34** ← **SIGN-FLIPPED** |
+
+**utc16-abovePDH-LONG:**
+| year | n | mean bp | t |
+|---|---|---|---|
+| 2023 | 1162 | +43.99 | +5.29 |
+| 2024 | 4482 | +26.39 | +5.85 |
+| 2025 | 5505 | +23.18 | +4.79 |
+| **2026** | 3845 | +10.99 | +1.35 (positive but weakened) |
+
+**Verdict — the three clocks' likely fates over their 24-month horizons:**
+- `fwd-utc01-sweepPDL-reclaim-long-K6-panel17`: **on track to hit KILL** (net ≤ 0 OR t ≤ 0). 2026 already at
+  n 1004 with t −4.27. If pattern continues, kill within months.
+- `fwd-utc09to10-belowPDL-long-K6-panel17`: **on track to hit KILL**. 2026 n 6939 t −3.34.
+- `fwd-utc16-abovePDH-long-K6-panel17`: **on track to hit INCONCLUSIVE or WEAK PROMOTE**. 2026 t +1.35 with
+  positive-but-below-threshold expectancy. Best of the three. Might promote if 2027 recovers.
+
+**The registered clocks stand as-registered.** PRE-COMMITMENT LAW binds — a clock that looks bad in the near
+term cannot be un-registered because the future data may still surprise. The operator's sign-off tonight
+covered exactly this contingency: knowing the clock might kill, register it anyway because the discipline is
+what the clocks are for.
+
+**What this DOES change for the operator right now:**
+1. **DO NOT deploy real capital on these three cells based on the 97-panel headline.** The 2026 sign-flip is a
+   material risk that the SIZING_FRAMEWORK.md numbers (~12%/yr gross, Sharpe 1.5) do not reflect. Update the
+   framework to mark it.
+2. **The utc16-abovePDH cell is the ONLY one still showing 2026 signal.** If any single clock is worth
+   watching for possible near-term promote, it is this one. But even it has weakened materially (t 5.29 →
+   5.85 → 4.79 → 1.35 across the four years).
+3. **The recurring 2026 sign-flip across 3 independent cells** (D-777 rvol-hi, D-778 D-768 baseline, D-782 two
+   of three D-780 clocks) is not coincidence. Something REAL changed in the crypto market in early 2026 —
+   possibly Bitcoin-ETF-flow normalisation, possibly market-maker adaptation to the fade patterns,
+   possibly retail crypto interest cooling. This deserves its own investigation (D-783 candidate: what
+   BROADLY changed in 2026 crypto microstructure vs 2023-2025).
+4. **The three D-780 registrations tonight were still the right call.** The operator authorized them
+   knowing the discipline could kill them. The clocks will run their 24-month horizon and mature with a
+   verdict. That IS what discipline looks like.
+
+**Overnight retraction & warning count now: 3 retractions (D-773, D-777, D-778) + 1 warning (D-782 on 3
+tonight-registered clocks likely to KILL).** The engine caught this before deploying capital. That is worth
+more than a nominal-headline promote.
+
+Trials this run: 12 (3 clocks × 4 years). Program ceiling unchanged. Board 25/26.
