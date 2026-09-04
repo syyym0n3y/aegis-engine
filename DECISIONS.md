@@ -16407,3 +16407,47 @@ either fails, we learn something honest before waiting 24 months for a forward c
 
 Trials this run: 2 (R1 + R2 on the broader panel). Program ceiling unchanged. Board 25/26. Committing and pushing
 so the retraction is on the immutable record before any new work.
+
+## D-774 (2026-09-04) SYMMETRIC-SIDE test on broader 10-crypto panel — asymmetry HOLDS, K12 emerges as stronger horizon than K24
+
+Extending D-771 (the "market fades structural breaks" asymmetry test) to the 10-crypto panel used in D-773. Results:
+
+| side | K | test n | mean bp | gross t | sign +/tested |
+|---|---|---|---|---|---|
+| DOWN (fade long — D-768) | 4 | 913 | +17.67 | 1.52 | 8/10 |
+| **DOWN** | **12** | **913** | **+77.12** | **4.64** | **9/10** |
+| DOWN | 24 | 913 | +58.13 | 2.97 | 10/10 |
+| UP (fade short — mirror) | 4 | 624 | −15.27 | −1.58 | 3/10 |
+| **UP** | **12** | **624** | **−32.51** | **−2.11** | **3/10 (loses)** |
+| UP | 24 | 624 | −17.39 | −0.87 | 5/10 |
+
+**Two findings that matter:**
+
+1. **The asymmetry is genuine at broader breadth.** UP K4/K12 both lose (3/10 crypto positive on the fade
+   direction), DOWN all-horizons show 8–10/10 positive. D-771's "capitulation-fade only, not general
+   fade-of-structure" characterisation is CONFIRMED on the widened evidence base. The programme's earlier
+   D-763/765/766 "fades structure" narrative is definitively wrong; the corrected D-771 story is right.
+
+2. **K12 is the stronger horizon at broader breadth.** On the 5-name panel D-768 measured K4 t 2.22, K12 t 2.74,
+   K24 t 2.59 — K24 registered as the forward clock only because it had the widest sign-agreement (5/5) at that
+   sample. On the 10-name panel K12 gives **t 4.64 with 9/10 sign** vs K24's t 2.97 with 10/10 sign. K12 is
+   substantially stronger in expectancy while barely giving up sign coverage (LINK is the one holdout on K12
+   with n=90 t 0.35 — dead-signal, not sign-flip).
+
+**On the K12 discovery — the doctrine call:**
+- **This is a partial selection question, not a discovery.** Both K12 and K24 were tested in D-768; K24 was
+  chosen ex post because at 5 names K24's 5/5 sign beat K12's 4/5. On the widened panel K12's 9/10 nearly
+  matches K24's 10/10 and its t is 60% stronger. Would K12 have been the right pre-registration if the 10-crypto
+  panel had existed at D-768 time? Almost certainly yes.
+- **The registered clock `fwd-persist-real-K24` is immutable and remains the sole registered wager.** PRE-COMMITMENT
+  LAW binds. I do NOT register a `fwd-persist-real-K12` in this pass because that requires operator sign-off (a
+  new pre-registered rule with a numeric two-sided decision written before its forward data exists) and would
+  double-count the same underlying event population on a horizon that is now known to be better ex post — the
+  exact trial-count inflation D-769 doctrine warns against. Flagging on the record instead: the K12 finding on
+  the widened panel is what would go into a NEW registration if the operator approves it.
+- **What changes about the K24 clock's expected verdict:** if K24 is a slightly-inferior horizon on the true
+  data-generating process (widened breadth suggests this), the K24 clock is more likely to inconclusive-mature
+  than to promote — the effect is real but the specific horizon we locked was not the peak of the effect. That
+  is honest information to have BEFORE 24 months of forward scoring.
+
+Trials this run: 12. Program ceiling unchanged. Board 25/26. D-772 R2 remains RETRACTED per D-773.
