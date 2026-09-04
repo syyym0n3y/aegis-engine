@@ -16607,3 +16607,58 @@ Trials this run: 15 (4 D-tests × 3 classes / 5 thresholds / 4 eras averaged con
 **Overnight retraction count in the immutable log: 2 (D-772 R2 → D-773; D-776 → D-777).** Both catch was by
 built-in survival tests, both registered as retracted, both would have been quiet-mistakes if I'd skipped the
 protocol. The engine works.
+
+## D-778 (2026-09-04) D-768/773 BASELINE ERA STABILITY — 2026 sign-flipped strongly negative on the forward-registered cell
+
+D-777 flagged 2026 sign-flip on the rvol-hi cell. Question: is the D-768/773 baseline (persist(real) + PSL
+downside sweep + K24 on 10 crypto) — the cell the LIVE forward clock scores — showing the same behavior in 2026?
+
+**Answer: YES, more severely than the rvol-hi cell.**
+
+| year | n | mean bp | gross t | sign +/tested |
+|---|---|---|---|---|
+| 2023 | 206 | +60.04 | +2.29 | 3/4 |
+| 2024 | 250 | +83.58 | +1.88 | 5/6 |
+| 2025 | 309 | +112.78 | +2.97 | 9/10 |
+| **2026** | **148** | **−101.62** | **−3.01** | **0/2** |
+
+The signal built for three years (60 → 84 → 113 bp) then SHARPLY REVERSED in 2026 to −102bp with t −3.01 and
+0 of 2 tested crypto positive (the other 8 crypto had too few 2026 events to test individually — pooling likely
+confirms the reversal).
+
+**Consequences for the registered forward clock:**
+- `fwd-persist-real-K24` promote condition: net≥+30bp AND t≥3.5 AND ≥4/5 positive AND n≥300 forward events.
+- `fwd-persist-real-K24` kill condition: net≤0 OR t≤0 OR ≤2/5 positive at n≥200 forward events.
+- If 2026's data pattern continues, the clock is on trajectory to hit the KILL condition (net ≤ 0, t ≤ 0)
+  within a year — well before it could accumulate 300 events to consider promote.
+- This is not a failure of the clock. This is the pre-registration doing exactly what D-571 built it to do:
+  when the data goes against the setup, the two-sided rule kills it without needing anyone to rationalise.
+
+**What this changes about the programme's state:**
+1. The programme's strongest edge candidate is on track to KILL, not promote. Honest reporting for the
+   operator: **no promoted edge remains a strong prospect within the year.** The 24-month horizon for the
+   clock will most likely resolve as KILL before mid-2027.
+2. **D-773's 10/10 replication claim was on the 2023-2026 OOS window pooled — it is TRUE for that window
+   but the within-window era stratification shows the 2026 breakdown.** Pooled OOS obscures within-OOS regime
+   shifts; era stratification catches them. Another argument for making era decomposition a MANDATORY guard
+   check for every reported signal — noting for a possible D-779 guard build.
+3. **What might have caused 2026 to break** — untested hypotheses:
+   - Bitcoin ETF flows normalising volatility structure (post-Jan-2024 launches)
+   - Perp market maturing / market-makers pricing this exact fade
+   - The stop-hunt / capitulation mechanism eroding as more participants defend the sweep level
+   - Sample-driven; 148 events could be a rough patch that recovers
+   Diagnosing which requires further tests I am NOT running tonight to avoid selecting through the noise.
+4. **The doctrinal call:** the D-768/773 finding stays as-reported (a real 2023-2025 signal that is
+   currently weakening) but the WEALTH_PATH.md characterisation of "the strongest MTF candidate on record"
+   should note the 2026 regime risk. Updating STATE.md in the next commit accordingly.
+
+**Retraction score for the overnight session: 3 in the immutable log.**
+- D-772 R2 (5-name refined joint) → D-773 (broad panel: R2 selection artifact)
+- D-776 (17-instrument rvol-hi ceiling-clear) → D-777 (crypto-only + 2026 sign-flip)
+- D-773 R1 partial: the 2023-2026 pooled t 2.97 stands, but its 2026 era is negative — reported here, not
+  retracted; the honest characterisation is "signal for 2023-2025, sign-flipped in 2026, forward clock
+  on kill trajectory."
+
+Trials this run: 4. Program ceiling unchanged. **The engine caught three would-be false-positive promotions
+tonight; every one via pre-committed decomposition or independent breadth expansion. That is what "elevating
+the project" actually looks like tonight.**

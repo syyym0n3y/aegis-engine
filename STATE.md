@@ -1612,6 +1612,15 @@ micro. 234 TS + 3 Py tests green. $0 spent this entire arc.
 ## Prior (2026-06-07 (Opus 4.8 [1m]) — D-072 SECOND POND PASS: ~16/16 securities strategies rejected; the real edge is the operator's OWN creator business (Pond H), not a trade. Barbell direction: Ireland-UCITS index core (US-situs estate-tax trap is LETHAL for a SA national) + ISA/SIPP tax wrapper (highest-certainty edge) + tiny finite UK-trust-discount tilt + BUILD the creator substrate (unmonetized on the visa; Graduate Route before 31 Dec 2026, then monetize). Aegis pivots: alpha-finder → folklore-falsifier + core-protector. (D-071: first pass, 3/3 real-data kills incl. 18yr trend.) 42 tests, $0.**
 
 ## Where we are
+- **D-778 (2026-09-04): D-768/773 baseline sign-flipped in 2026** (mean −101.62bp, t −3.01, sign 0/2). The
+  registered forward clock `fwd-persist-real-K24` is on trajectory to hit its KILL condition (net≤0, t≤0) within
+  the year. This is the pre-registration doing exactly what D-571 built it to do — a two-sided rule that will
+  end the wager when the data goes against it. WEALTH_PATH characterisation of "strongest MTF candidate" carries
+  the 2026 regime-risk caveat.
+- **D-777 (2026-09-04): D-776 RETRACTED.** The 17-instrument rvol-hi/fade K24 "ceiling-clearing t 7.86" failed
+  two of four survival tests I committed to before pre-registering: D1 crypto-only (FX t −2.48 sign 1/4),
+  D4 2026 sign-flipped (t −8.06 sign 4/17). No forward clock registered. Overnight retraction count: 3 in the
+  immutable log — the engine is doing its job (D-772 R2, D-776, and D-773 2026 partial). Descriptive only.
 - **D-773 (2026-09-04): BROAD PANEL — D-768 REPLICATES 10/10, D-772 R2 RETRACTED.** On the broader 10-crypto panel
   (added BCH/LINK/ADA/ZEC/DOGE), D-768 baseline (persist(real) + downside PSL sweep + K24) gives pooled OOS
   n 913, +58.13bp, **t 2.97, 10/10 crypto positive** — every symbol positive; the signal REPLICATES. D-772's R2
