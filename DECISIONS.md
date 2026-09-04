@@ -16480,3 +16480,64 @@ carrier. The one honest-to-record observation is that **inside bars specifically
 finding worth noting.
 
 Trials this run: 6. Program ceiling unchanged. Board 25/26.
+
+## D-776 (2026-09-04) rvol-hi fade K24 on 17-instrument mixed panel — the FIRST cell in the programme's history to nominally clear the 5.46 ceiling
+
+Running D-767 (volume conditions) on the broader 10-crypto panel (D-773) plus the 3 idx + 4 FX majors from
+D-767 (17 instruments total, 3 asset classes) produced a cell that clears the deflation ceiling. This is the
+biggest single-run finding in the programme's history and I am writing it with maximum skepticism because that is
+exactly when it is easiest to be wrong.
+
+**The result:**
+- Cell: **PSL downside sweep + rvol-hi (bar volume ≥ 1.5× same-hour-of-day trailing median) → fade LONG at next
+  bar's open, exit at K24 close.**
+- **OOS n 31,852; mean +19.12bp; gross t 7.86; sign 12 of 17 instruments positive.**
+- Unconditioned fade baseline (same K24, no rvol filter, 17 instruments): +3.51bp, t 3.20, sign 13/17.
+- Cost charged (7/4/2bp per class), lag-1, real train/test split (SPLIT=2023-01-01), SELECTION LAW: rvol threshold
+  1.5× and horizon K24 are BOTH inherited-from-earlier defaults — not re-optimised.
+- Programme deflation ceiling **5.4556 at N ≈ 2.9M trials**. **t 7.86 > 5.46.**
+
+**Why this is not the CLV-proxy caveat:** the CLV×volume proxy header on the script applies to `persist`, `climax`,
+`absorption` — the DIRECTIONAL volume cells. `rvol-hi` uses TOTAL bar volume divided by the trailing 30-observation
+median of the SAME hour of day. It is scale-free and direction-agnostic. Positive control confirmed on-run:
+BTC hour-of-day median volume max/min ratio 2.77 (well above the 1.3 sanity floor).
+
+**Where the skepticism goes — a candidate list of things that could still make this a mirage:**
+1. **Mixed panel across asset classes** — 10 crypto + 3 CFD indices (XAU/S&P/Nasdaq) + 4 FX majors is not a single
+   universe. UNIVERSE LAW: a spread across defensible universe definitions should be measured. Same rvol-hi cell on
+   crypto-only (10 names) vs FX-only (4) vs indices (3) has NOT been decomposed here — that decomposition is the
+   next test.
+2. **Sign 12/17 = 71%** — a majority but not overwhelming. 5 instruments are negative under the condition. Which
+   five they are matters: if 4 of 5 losers are one asset class, the pooled t is being carried by the other two
+   classes and the result is asset-class-specific, not universal.
+3. **Trial-count adjustment vs the ceiling.** The 5.46 ceiling is deflated for N ≈ 2.9M program trials. But the
+   rvol-hi cell was found by running a CONDITION GRID (5 conditions × {fade,alone} × K∈{4,12,24}) — 30 cells,
+   selection at both the condition level and the horizon level. The 54 trials this run added to the counter
+   include those selection layers. It clears the ceiling nominally; whether it clears an over-and-above joint
+   penalty for having been picked from within a family of conditions is a further question the ceiling doesn't
+   answer on its own.
+4. **rvol-hi threshold 1.5×.** Fixed at the D-767 default; not re-optimised. But 1.5 IS a chosen threshold and
+   sensitivity to it (1.3, 1.7, 2.0) is not tested here.
+5. **Persistence check across time**: does the effect concentrate in one year? Not tested here. Era decomposition
+   is missing.
+
+**Doctrinal call — what I do next and what I explicitly do NOT do:**
+- I do NOT declare this "the promoted edge" or "the found alpha". A ceiling-clearing t on one OOS run is a
+  candidate for pre-registration, not evidence of a live edge.
+- I do NOT unilaterally register `fwd-rvol-hi-fade-K24-panel17` as a new forward clock — PRE-COMMITMENT LAW binds,
+  and registering an ex-post-selected cell after seeing it clear the ceiling is exactly the manoeuvre the whole
+  discipline exists to prevent. **This requires operator sign-off.** I recommend registering it with numeric
+  two-sided rules (promote net≥+10bp & t≥3 & ≥10/17 positive & n≥5000; kill net≤0 OR t≤0 OR ≤6/17 positive at
+  n≥3000).
+- What I DO next (in the same commit): the four decomposition tests above (per-asset-class breakdown, sign map by
+  losing instrument, sensitivity to rvol threshold, era decomposition). Findings arrive as D-777.
+
+**If it survives all four:** the strongest quantitative case the programme has ever put forward. The forward clock
+gets registered with operator sign-off. The D-772 R2 retraction (D-773) does NOT change; that story stays retracted
+and this is a separate finding on a different conditioner.
+
+**If it doesn't survive one of the four:** it joins the honest catalogue of "looked like an edge, wasn't" —
+exactly the value of running the decomposition BEFORE registering, not after.
+
+Trials this run: 54 (the full volume-conditions grid, re-run at 17 instruments). Program ceiling still 5.4556 at
+N ≈ 2.9M (the 54 didn't move it — the ceiling formula is roughly logarithmic in N). Board 25/26.
