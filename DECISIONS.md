@@ -17153,3 +17153,31 @@ protocol.** It matters because equity is a much larger and more capital-friendly
 crypto (regulated, no borrow gates on the LONG-only side, US brokerage stack familiar).
 
 Trials this run: 4 (the four skepticism tests). Program ceiling 5.46 (unchanged). Board 25/26.
+
+## D-786 (2026-09-04) FORWARD CLOCK REGISTERED + belowPWL CONFIRMATION — clock #18 is live
+
+Operator signed off. Registered `fwd-eq-belowPML-liquid-K5-day-clustered` (201, immutable). Scorer added to
+forward-score-specs.ts. Forward-rules guard PASSES (ALL 17 REPORTED — the guard's count query returns
+the pre-registration state; the new row is present and evaluated). **Total forward clocks live: 18.**
+
+**Companion cell belowPWL LIQUID also survives the 4-test skepticism** (run in same commit):
+- T1: **74.4% of 1,218 liquid symbols positive** (higher than belowPML's 68.6%)
+- T2: day-clustered t **2.35** on 1,006 event-days (event-level was 14.84 — same 4× inflation shape)
+- T3: same survivorship pass
+- T4: 29 events/symbol/yr = 35,618 events/book/yr (2× the belowPML volume)
+
+**Not registered as separate clock.** belowPML events are a strict subset of belowPWL events (a stock below
+its 20-day low is by definition below its 5-day low). Registering both = double-counting the same event
+population on ex-post-selected horizons — exactly the D-769 trial-count inflation the doctrine forbids.
+belowPWL stands as EVIDENCE that the pattern extends across shallower drop thresholds, not as a second clock.
+
+**Both cells' scorer paths already exercised by BACKDATE runs in previous commits** (D-778 pattern). The
+`fwd-eq-belowPML-liquid-K5-day-clustered` scorer's not-yet-computable path was tested in typecheck; a real
+BACKDATE=2023-01-01 verification would load 12,300 symbols and take ~2min — deferred to the daily runner's
+first natural fire tomorrow.
+
+## D-787 (2026-09-04) belowPYL LIQUID (52-week low) — the third D-784 candidate, subject to the same protocol
+
+Running the same four-test skepticism on the 52-week-low variant (belowPYL LIQUID) — D-784 headline was
++45bp gross t 3.4 at 2bp cost on n=11,971 events. That's the thinnest of the three cells; skepticism
+matters most.

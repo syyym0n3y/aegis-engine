@@ -370,6 +370,82 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: M, value: mBp, n: pooled.length,
       note: `${pooled.length} forward persist(real)+PSL-fade events: pooled net ${mBp.toFixed(2)}bp at K=24, portfolio t ${tv.toFixed(2)}, ${instPos}/${instTested} crypto positive. PROMOTE if net>=+30bp & t>=3.5 & >=4/5 positive & n>=300; KILL if net<=0 OR t<=0 OR <=2/5 positive (any) at n>=200; else INCONCLUSIVE. In-sample OOS was 57.51bp (t 2.59, 5/5) — real taker delta, not CLV proxy.` };
   },
+
+  // D-785 equity liquid-decile below-PML mean-reversion. Universe: trd_bars_deep symbols with n_bars>=500,
+  // top decile by pre-2023 MDV (~1230 symbols, cutoff $7.5M/day). Trigger: close < prior 20-day low. Hold 5 days.
+  // Cost 10bp RT (assumes $100k+ book). Metric: DAY-CLUSTERED mean net (per D-785 T2) — the honest measure
+  // because event-level t was inflated 4x by intra-day correlation on market-wide drop days.
+  "fwd-eq-belowPML-liquid-K5-day-clustered": async (started) => {
+    const M = "day_clustered_net_bp_belowPML_liquid_K5";
+    const KK = 5, N_LEVEL = 20, RT = 10 / 1e4;
+    const SPLIT_TS = Math.floor(Date.parse("2023-01-01T00:00:00Z") / 1000);
+    const startTs = Math.floor(Date.parse(started + "T00:00:00Z") / 1000);
+
+    // rebuild the liquid decile (top 10% by pre-2023 MDV, n_bars>=500)
+    const meta = await q(`trd_bars_deep?n_bars=gte.500&select=symbol,n_bars&order=n_bars.desc`) as
+      { symbol: string; n_bars: number }[];
+    const symMdv: Array<{ sym: string; mdv: number }> = [];
+    // fast path: compute MDV for each symbol from its packed bars (train window only)
+    for (const m of meta) {
+      const row = (await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(m.symbol)}&select=bars`))?.[0];
+      const bars = ((row?.bars || []) as number[][]).filter((b) => Array.isArray(b) && b.length >= 5 && b[4] > 0);
+      const dv: number[] = [];
+      for (const b of bars) { if (b[0] >= SPLIT_TS) break; dv.push(b[4] * (b[5] ?? 0)); }
+      if (!dv.length) continue;
+      const mdv = dv.sort((a, b) => a - b)[Math.floor(dv.length / 2)];
+      symMdv.push({ sym: m.symbol, mdv });
+    }
+    const sortedByMdv = [...symMdv].sort((a, b) => b.mdv - a.mdv);
+    const liqCutoff = Math.floor(sortedByMdv.length * 0.1);
+    const liqSet = new Set(sortedByMdv.slice(0, liqCutoff).map((x) => x.sym));
+
+    // collect forward events (post startTs) per DAY
+    const dayEvents = new Map<string, number[]>();
+    const symPos = new Map<string, { pos: number; n: number }>();
+    for (const sym of liqSet) {
+      const row = (await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`))?.[0];
+      const bars = ((row?.bars || []) as number[][])
+        .filter((b) => Array.isArray(b) && b.length >= 5 && b[4] > 0)
+        .sort((a, b) => a[0] - b[0]);
+      if (bars.length < N_LEVEL + KK + 1) continue;
+      // rolling prior 20d low
+      const lo: number[] = new Array(bars.length).fill(NaN);
+      for (let i = N_LEVEL; i < bars.length; i++) {
+        let mn = Infinity;
+        for (let j = i - N_LEVEL; j < i; j++) if (bars[j][3] < mn) mn = bars[j][3];
+        lo[i] = mn;
+      }
+      for (let i = N_LEVEL; i < bars.length - KK - 1; i++) {
+        const b = bars[i];
+        if (b[0] < startTs) continue;
+        if (!isFinite(lo[i]) || !(b[4] < lo[i])) continue;
+        const net = Math.log(bars[i + KK][4] / b[4]) - RT;
+        const dk = new Date(b[0] * 1000).toISOString().slice(0, 10);
+        if (!dayEvents.has(dk)) dayEvents.set(dk, []);
+        dayEvents.get(dk)!.push(net);
+        const sp = symPos.get(sym) ?? { pos: 0, n: 0 };
+        sp.n++; if (net > 0) sp.pos++;
+        symPos.set(sym, sp);
+      }
+    }
+    // day-clustered mean series
+    const dayMeans: number[] = [];
+    for (const xs of dayEvents.values()) if (xs.length >= 1) dayMeans.push(xs.reduce((a, c) => a + c, 0) / xs.length);
+    // cross-symbol sign
+    let signPos = 0, signN = 0;
+    for (const [_, sp] of symPos) { if (sp.n < 20) continue; signN++; if (sp.pos / sp.n > 0.5) signPos++; }
+    const eventDays = dayMeans.length;
+
+    if (eventDays < 150) {
+      return { metric: M, value: null, n: eventDays,
+        note: `${eventDays} forward event-days since ${started} (rule requires >=150 for kill or >=200 for promote). not-yet-computable.` };
+    }
+    const mBp = mean(dayMeans) * 1e4;
+    const tv = mean(dayMeans) / ((sd(dayMeans) || 1e-12) / Math.sqrt(dayMeans.length));
+    const signPct = signN ? (signPos / signN * 100) : 0;
+    return { metric: M, value: mBp, n: eventDays,
+      note: `${eventDays} forward event-days, day-clustered mean ${mBp.toFixed(2)}bp t ${tv.toFixed(2)}, cross-symbol sign ${signPos}/${signN} = ${signPct.toFixed(0)}%. PROMOTE if net>=+15bp & t>=2.0 & sign>=60% & event-days>=200; KILL if net<=0 OR t<=0 OR sign<=45% at event-days>=150; else INCONCLUSIVE. In-sample OOS was 33.4bp day-clustered t 2.47 with 68.6% cross-symbol sign.` };
+  },
 };
 
 const rules = await q(`trd_forward_rules?select=id,clock_started,promote_if,kill_if`) as
