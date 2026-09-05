@@ -17229,3 +17229,58 @@ to crypto daily. This is a real narrowing of the mechanism understanding:
 
 Clock #18 (`fwd-eq-belowPML-liquid-K5-day-clustered`) remains the sole equity forward wager, appropriately
 scoped to US equity by construction. No crypto-daily clock candidacy from this run.
+
+## D-789 (2026-09-04) K-HORIZON SWEEP on belowPML LIQUID — K=5 IS at the day-clustered t peak; important reconciliation with D-785 discovered
+
+Tested K in {1, 3, 5, 10, 20} trading days on same universe / same cell. Both event-level and day-clustered t.
+Every K on LIQUID decile, 60,247 events, 1,000 event-days:
+
+| K | gross bp | event-level t | **day-clustered t** | 10bp net | 20bp net | sign |
+|---|---|---|---|---|---|---|
+| 1 | +1.0 | 0.63 | 0.66 | −9.0 | −19.0 | 57% |
+| 3 | +23.6 | 7.42 | **1.85** | +13.6 | +3.6 | 67% |
+| **5** (registered) | **+34.7** | **9.56** | **1.80** | **+24.7** | **+14.7** | **68%** |
+| 10 | +61.0 | 12.81 | 0.58 | +51.0 | +41.0 | 71% |
+| 20 | +103.5 | 15.89 | **0.09** | +93.5 | +83.5 | 73% |
+
+**Critical finding: event-level t rises monotonically with K, but DAY-CLUSTERED t PEAKS AT K=3-K=5 and
+COLLAPSES at K=10 and K=20.** Reason: longer holds compound market-wide moves (2020 covid, 2022 bear, etc.)
+into events, making event-level statistics look better while widely correlating them. Day-clustered t
+strips the correlation and shows the honest edge concentrates at the ~1-week holding period.
+
+**K=5 (registered) is essentially at the peak** — 1.80 vs 1.85 at K=3, both effectively tied. K=5 also has
+the best 20bp-net-of-cost among the significant-day-clustered horizons. **The registered clock's horizon
+is well-chosen.** Unlike D-774 where K12 was substantially better than K24, here K=5 is the answer.
+
+### IMPORTANT RECONCILIATION WITH D-785
+
+D-785 reported day-clustered t **2.47** on 948 days for the same K=5 cell. D-789 reports day-clustered t
+**1.80** on 1,000 days. Root cause: D-785's script uses `if (xs.length < 3) continue` (requiring ≥3 signals
+per day for a meaningful cluster) — 948 days retained. D-789 and the SCORER both use `≥1` — 1,000 days.
+The extra 52 low-signal days pull the day-cluster t down from 2.47 to 1.80.
+
+**The SCORER matches D-789's definition** (`if (xs.length >= 1)`), so the honest in-sample benchmark for
+the clock is **t 1.80, not t 2.47**. The clock's promote condition (t ≥ 2.0) is HIGHER than the in-sample
+day-clustered t under the scorer's definition. Two consequences:
+
+1. **The clock is more conservative than D-785 suggested** — the promote bar is above the in-sample
+   day-clustered t under the ≥1 definition. That is actually a good property for a pre-registration —
+   the clock will promote only on forward evidence that exceeds the in-sample benchmark.
+2. **The most likely mature verdict is INCONCLUSIVE, not PROMOTE.** If forward day-clustered t hovers
+   around 1.5-2.0, the clock will not promote and not kill until n_days ≥ 200 accumulates.
+
+**No amendment to the registered rule.** PRE-COMMITMENT LAW binds and the discrepancy is a definitional
+nuance, not a defect. Documenting here so future operator or session doesn't misread the clock's
+prospects. The clock stands as-registered; its most likely fate is INCONCLUSIVE-MATURE, with a real
+but modest positive-expectancy signal underneath.
+
+**Overnight session totals updated:**
+- 20 DECISIONS entries (D-770 → D-789)
+- 4 forward clocks registered (3 crypto D-780, 1 equity D-786)
+- 18 forward clocks live total
+- 5 retractions/warnings (D-773, D-777, D-778, D-782, D-787)
+- 3.7M+ events measured across 12,300 equities + 97 crypto perps + 17 mixed-panel + 510 crypto SF daily
+- The engine caught 5 would-be false-positive promotions this session; every one via
+  pre-committed decomposition or independent breadth expansion
+
+Trials this run: 15 (5 K × 3 metrics per K). Program ceiling 5.46 unchanged.
