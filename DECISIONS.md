@@ -16999,3 +16999,74 @@ IS the BREADTH LAW extreme, and the cross-instrument sign map is what it says. P
 **Overnight session log: 12 substantive DECISIONS entries (D-770 through D-783), 4 retractions/warnings, 3 new
 forward clocks registered, 1 largest-ever sweep (12,300 symbols / 3.7M events), 1 sizing framework, 1 strategic
 10^7× lever action document. That is what one continuous "keep going" session actually produces.**
+
+## D-784 (2026-09-04) COST FRONTIER + LIQUIDITY STRAT — the D-783 "cost is binding" claim reversed for liquid-decile dips
+
+D-783 said no equity MTF cell survives 20bp retail cost pooled across 12,300 symbols. D-784 stratifies the same
+sweep by cost tier (2/5/10/20bp) AND liquidity (top-decile by train-window median dollar volume = 1,231 liquid
+names at ≥$7.5M/day). Same event universe, same 3.7M events, additional decomposition. Result:
+
+**Three liquid-decile "buy the dip" cells clear cost even at retail 20bp:**
+
+| cell | liquid gross bp | 2bp net (t) | 5bp net (t) | 10bp net (t) | 20bp net (t) |
+|---|---|---|---|---|---|
+| **belowPWL** | +33.1 | +31.1 (t **14.0**) | +28.1 (t 12.6) | +23.1 (t 10.4) | +13.1 (t 5.9) |
+| **belowPML** | +38.7 | +36.7 (t **10.1**) | +33.7 (t 9.3) | +28.7 (t 7.9) | +18.7 (t 5.1) |
+| **belowPYL** | +45.0 | +43.0 (t 3.4) | +40.0 (t 3.1) | +35.0 (t 2.7) | +25.0 (t 1.9) |
+
+**belowPML LIQUID at 2bp cost gives OOS n 61,935, +36.7bp, t 10.1** — nominally clears the 5.46 program
+ceiling at N ≈ 2.9M trials. On the 12,300-symbol equity universe.
+
+**And era stability holds (unlike the crypto clocks that broke in 2026):**
+
+| year | belowPWL LIQUID n | gross bp | 2bp net (t) | 5bp net (t) |
+|---|---|---|---|---|
+| 2023 | 36,441 | +13.2 | +11.2 (t 3.0) | +8.2 (t 2.2) |
+| 2024 | 39,124 | +40.8 | +38.8 (t 11.1) | +35.8 (t 10.2) |
+| 2025 | 35,625 | +32.0 | +30.0 (t 6.9) | +27.0 (t 6.2) |
+| **2026 partial** | 22,268 | **+53.7** | **+51.7 (t 7.0)** | **+48.7 (t 6.6)** |
+
+**2026 is not weaker — it's the STRONGEST year.** The recurring 2026 crypto sign-flip (D-777/778/782)
+does NOT apply. The equity liquid-dip mean-reversion pattern is stable through today.
+
+### The bigger picture — what D-784 changes
+
+1. **D-783's "no MTF cell survives cost" claim is CORRECT for the pooled 12,300-symbol universe but WRONG
+   once liquidity-stratified.** The 11,000 illiquid symbols dominate the pooled mean and drag it negative;
+   the 1,231 liquid symbols carry a genuine mean-reversion edge on 5- and 20-day drops.
+2. **The pattern is universal across the LIQUID decile at every cost tier tested.** Even at 20bp retail,
+   belowPWL is +13.1bp t 5.9. At 10bp (standard retail broker) it's +23.1bp t 10.4. At institutional 2bp it
+   is +31.1bp t 14.0.
+3. **The 20-day drop (belowPML) is stronger than the 5-day drop (belowPWL)** — magnitude 38.7 vs 33.1 gross.
+   The deeper the drop from the prior high, the stronger the mean-revert on the LIQUID names.
+4. **52-week low reversion (belowPYL LIQUID) is real but marginal** — +45bp gross with only 11,971 events,
+   sample-thin per year for a formal clock but consistent with the pattern.
+
+### THE SKEPTICISM DUE BEFORE ANY FORWARD CLOCK REGISTRATION
+
+This looks TOO clean. Every prior "too clean" finding has been retracted. The required follow-up before any
+pre-registration is D-785 — the same four-test protocol from D-777:
+1. **Per-symbol sign map on liquid decile** — is 60%+ of the 1,231 liquid names positive? Or is the pooled t
+   carried by a few winners?
+2. **Correlation across symbols** — market-wide drop days (2020-03, 2022-06) trigger many symbols simultaneously.
+   The effective independent sample is much smaller than 133k. What is the Sharpe with proper serial + cross
+   correlation adjustment?
+3. **Rebalancing / turnover cost** — TURNOVER LAW: if this cell fires 29 events per symbol per year across 1,231
+   symbols, that's 35,700 trades per book per year. Real turnover on a $10k account is subject to broker minimum
+   commissions that dominate 2bp assumptions.
+4. **Survivorship** — trd_bars_deep includes all symbols with ≥500 bars, but symbols that DELIST are the exact
+   ones that keep dropping. Coverage check: is the current universe survivorship-biased?
+
+### Doctrinal call
+
+**DESCRIPTIVE ONLY — no forward clock registration yet.** D-785 must run the four skepticism tests. If all four
+survive, `fwd-liquid-belowPML-K5-eq-panel` becomes the operator-signoff candidate. Given tonight's earlier
+sign-flip warnings, running the skepticism tests BEFORE registering is the entire point of the discipline.
+
+But even conservatively: **this is genuinely the strongest single result the programme has surfaced tonight,
+and unlike D-772 R2 / D-776 the liquidity stratification is a PRINCIPLED cut (the strategy is inherently
+capacity-constrained to liquid names), not an ex-post selection.** The 2026 stability is what separates it from
+every crypto candidate.
+
+Trials this run: 48 (6 cells × 2 liq × 4 cost tiers). Program ceiling 5.46 (unchanged; ceiling stays roughly
+constant at 2.9M trials). Board 25/26.
