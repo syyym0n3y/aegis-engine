@@ -17490,3 +17490,37 @@ in both directions. Budgets were NOT loosened; the continuity RED rows are expec
 land (FX → attribution → breadth follow the refresh order). Recorded at commit time as still-running.
 
 Trials: 0. Ceiling unchanged. Clocks live: 18.
+
+## D-794 (2026-09-06) UPLOAD ACCOUNTING — every artifact the operator uploaded traced across the stack; 7 concepts measured in one pass, 0 survivors, 1 useful management answer, 4th confirmation of the crypto-2026 break
+
+Operator: "make sure everything I upload is accounted for across the stack." Register: `docs/UPLOAD_REGISTER.md`.
+
+**A. The drive-download folder (2026-08-05): five MetaTrader 5 `.ex5` binaries, never referenced anywhere in repo,
+docs or memory.** EX5 bodies are encrypted by MetaEditor — `strings` (ASCII + UTF-16LE) returns nothing — and opaque
+downloaded binaries are not executed here. Accounted at the CONCEPT level the filenames declare; exact logic needs the
+`.mq5` source. `Boom1000_Confluence_Alert` is OUT OF SCOPE on purpose (a Deriv synthetic index is a house-generated
+process, not a market; nothing to falsify). `Trade_Assistant` → `docs/SIZING_FRAMEWORK.md` + (g) below.
+`Easy Buy Sell Signal` → untestable without a rule. The other two are measured below.
+
+**B. Nine screenshots (kasen.nq, steel.nq ×3, atraintrades ×4, atraintrading.com ×2).** Already on record: 10AM
+sweep-fade (D-779, loses), FVG/IFVG (D-765), pattern families (D-775), IV range (D-791), dealer positioning feed
+(D-792), AMD/PO3 Asia sweep-reclaim (= clock `fwd-utc01-sweepPDL-reclaim`, D-780/782). Measured tonight:
+
+| concept | source | result (17-inst 1h panel, lag-1, net of class cost, OOS 2023+) | verdict |
+|---|---|---|---|
+| (a) stochastic divergence | `Stochastic Divergence AW.ex5` | bullish→LONG: K6 −0.6bp t −0.3, **K12 +7.2bp t 2.60 sign 13/17**, K24 +1.7bp t 0.4. bearish→SHORT: t −4.2/−5.2/−5.0, sign 0–2/17 | one lone-horizon cell with flat neighbours (D-774 caveat); short side loses — the long-only asymmetry again. Not registrable. |
+| (b) Elder Bull/Bear Power | `Buy and Sell Power.ex5` | LONG t −6.5/−3.8/−1.9; SHORT t −9.9/−8.3/−7.0; sign 0–7/17 | **refuted** — negative-EV net of cost in every cell |
+| (c) SMT divergence NQ↔SPX | steel.nq | 4 cells × 3 K, n 153–192, all |t| < 2, mostly negative | null at 1h (finest held; no 5m index bars — stated) |
+| (d) consequent encroachment vs edge | steel.nq | bull gaps: edge fills 84% → +5.4bp t 3.3; C.E. fills 78% → +6.3bp t 3.6 (sign 10/17 both). bear gaps: t −4.2 / −5.0 | entry depth is a wash (−6pp fill for +0.8bp); DIRECTION is what matters, and only long works |
+| (e) ADR walls (day open ± ADR20) | atraintrades "average ranges" | upper touch→FADE short t −5.7/−6.6/−5.1 (**ceiling-fade is wrong-signed**); upper→CONTINUE long +17/+29/+33bp t 3.5/**4.8**/3.9 sign 13/13/12 — **then day-clustered t −0.58/0.74/0.78**, FX opposite, 2023 day-t −2.21. lower touch→FADE long: day-clustered t 4.5/3.9/3.4 crypto-carried, **2026 −31bp t −2.59 sign 3/16** | upper: correlated-event artifact (touches cluster on trend days), FAILS D-777. lower: the D-768 family, breaks in 2026, FAILS D-777 |
+| (f) 4H PO3 continuation | steel.nq | t −11.3/−6.1/−4.3, sign 0–1/17, n 120k | continuation refuted; implied reversal ≈ 1bp gross = sub-fee (EFFECT-SIZE LAW) |
+| (g) trade management on the registered UTC-01 cell (989 OOS trades, ATR48) | steel.nq B.E/partials/runners/pyramid; `Trade_Assistant` | fixed K6 (clock) **+15.4bp sd 143 t 3.40 win 53% sign 13/17**; break-even after +1 ATR **+17.1bp sd 138 t 3.89 win 49% sign 15/17**; 50% partial at +1 ATR +11.6bp sd 118 t 3.09 win 58%; trail 1 ATR **+0.1bp t 0.03**; pyramid +0.5 ATR **+0.8bp t 0.19**; symmetric 1/2 ATR +7.2bp t 2.03 | **the operator's "how long to hold / when to exit", answered on a live clock cell:** hold the fixed time; break-even after +1 ATR is not worse and more consistent (6 policies on one sample — treat the +1.6bp as within selection noise, not a refinement); partials trade mean for smoothness; **trailing and pyramiding — the "mastered trade management" on screen — destroy the edge**, as the D-769 #8 ATR stop did |
+
+**Meta-finding (stated because it is now robust): the ADR lower-wall fade is the FOURTH independent construction whose
+crypto leg flips negative in 2026** — after rvol-hi (D-777), persist(real) (D-778) and the utc01/utc09 clocks (D-782).
+Four different entry definitions, one regime. Whatever changed in crypto microstructure in early 2026 hit every
+"buy the intraday dip" construction at once; the equity liquid-dip cell (D-785) is the one that did NOT break.
+
+**Disposition:** 0 registrations (nothing clears day-clustered t ≥ 2 with class + era stability). Trials this pass:
+39 + 10 + 28 = 77. Ceiling 5.46 unchanged. Clocks live: 18. Two items remain out of reach with the missing input
+named (LRL → L2 depth; 5m SMT → no 5m index bars). Nothing here required a paid product or an executed binary.
