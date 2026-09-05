@@ -17330,3 +17330,78 @@ D-785 skepticism, D-789 K-horizon, D-790 universe cutoff — all four axes agree
 well-specified).**
 
 Trials this run: 8 (8 cutoff levels). Program ceiling 5.46 unchanged. Board 25/26.
+
+## D-791 (2026-09-06) "IV walls" tested for free on clock #18 — the pitch does not refine the cell, but it exposed a VOLATILITY-REGIME dependence and forces a correction to D-790
+
+Operator shared Instagram screenshots (kasen.nq 10AM sweep-fade; steel.nq AMD/PO3 + SIBI/BISI; atraintrades
+"IV walls / ceiling, 90% chance we stay in range, market-maker positioning", $100/mo). Disposition on the record:
+- 10AM sweep-and-reclaim fade: already measured, D-779 D5 — both directions LOSE net of cost.
+- FVG/imbalance + pattern-family entries: D-765 / D-775 — nothing clears cost at breadth. Two +$269/+$575 prop-account
+  screenshots are n=2 anecdotes.
+- "90% chance we stay inside the IV range": a tautology — IV *is* the market's expected σ; a 1.65σ band contains ~90%
+  by construction. We hold the inputs daily for free (`cboe_vix3m`, `cboe_skew`, `cboe_vvix`).
+- Dealer positioning / gamma: the one real mechanism on screen. Per-strike equity OI is not held (gated); Deribit is the
+  free crypto route. Follow-up, not tonight's test.
+**Nothing here needed a paid product.** The IV-range idea was made falsifiable and run as a conditioner on clock #18.
+
+Setup: clock #18 cell (belowPML, LIQUID top-decile, K=5), OOS 2023+, **net of the 10bp RT the registered rule charges**,
+day-clustered t per D-785. 12 conditioning cells. All t's below are on the net-of-10bp series (cost REDUCES a winning
+claim's t — the conservative direction, not the D-661 artifact); the GROSS day-t of the same event set is 2.09 (D-790).
+
+**Baseline (the cell exactly as the scorer computes it): n 61,815, net +28.8bp, event-t 7.92, day-clustered t 1.40
+(1,020 days), sign 785/1,205 = 65%.**
+
+**CORRECTION TO D-790.** D-790 read the scorer's in-sample benchmark as day-t 2.09 "above the 2.0 promote bar". That
+2.09 was GROSS. The registered rule charges 10bp, and the scorer subtracts it before clustering — the in-sample
+day-clustered t on the series the rule actually scores is **1.40**, below the 2.0 promote threshold. D-789's reading
+("INCONCLUSIVE most likely") was the right one; D-790's upgrade to "PROMOTE or close" is withdrawn. Clock stands
+as-registered (immutable); this only corrects the stated expectation.
+
+**Condition A — drop beyond prior-20d-low in units of IV-implied 5-day σ (the operator's "IV wall" idea):**
+| dropSig | n | net bp | day-t | sign |
+|---|---|---|---|---|
+| < 0.25 | 21,060 | +31.8 | 1.12 | 64% |
+| 0.25–0.5 | 13,512 | +22.9 | −0.66 | 37% |
+| 0.5–1.0 | 13,691 | +31.9 | 1.62 | 41% |
+| ≥ 1.0 (outside IV range) | 13,552 | +26.9 | 2.02 | 47% |
+| ≥ 1.65 (outside 90% band) | 6,501 | +21.2 | 1.84 | 55% |
+Day-t rises with excess drop (1.12 → 2.02) but cross-symbol sign COLLAPSES to 47% — the D-787 bifurcation signature
+(a few large reverters carry the pool; the median name does not revert). **Fails the refinement rule** (day-t up AND
+sign ≥ 60%). The IV wall is not a refinement of this cell.
+
+**Condition B — SKEW percentile (free dealer-short-put proxy):**
+| SKEW pct | n | net bp | day-t | sign | days |
+|---|---|---|---|---|---|
+| < 0.33 | 13,814 | +67.0 | 0.41 | 37% | 202 |
+| 0.33–0.67 | 21,841 | +44.2 | 2.94 | 54% | 306 |
+| **≥ 0.67 (high put demand)** | 25,476 | **−3.2** | 0.05 | 47% | 402 |
+When the market is already pricing heavy downside protection, the dip-buy is DEAD. Mid-SKEW carries the edge but at
+54% sign — a regime characterisation, not a promotable refinement.
+
+**Condition C — VIX3M level. THE finding.**
+| VIX3M | n | net bp | event-t | **day-t** | sign | days |
+|---|---|---|---|---|---|---|
+| < 15 | 3,555 | +25.4 | 2.01 | −0.80 | UNTESTED (0/0 ≥20-evt symbols) | 65 |
+| **15–20** | **31,181** | **−23.2** | **−4.22** | **−1.27** | **46%** | **549** |
+| **20–25** | 22,785 | +64.9 | 11.39 | **3.04** | 58% | 348 |
+| ≥ 25 | 4,294 | +217.5 | 20.49 | 2.91 | UNTESTED (0/0) | 58 |
+**More than half the OOS sample (549 of 1,020 days) sits in the 15–20 regime, and there the cell is NEGATIVE net of
+cost.** The entire edge lives in VIX3M ≥ 20. Economically coherent — mean-reversion strength scales with volatility;
+in calm tape a liquid name making a 20-day low drifts, and 10bp eats the small bounce; in stressed tape the drop is
+liquidity-driven overshoot and snaps back. It also explains D-784's era pattern (2023, the calmest year, was the
+weakest at t 3.0).
+
+**Doctrinal disposition:**
+1. DESCRIPTIVE ONLY. Twelve ex-post cells on a registered clock. **No VIX-conditioned sub-clock is registered** — that
+   is exactly the D-772-R2 move (ex-post joint refinement) that D-773 later retracted on breadth. If a regime clock is
+   ever worth registering, it is registered from a fresh pre-registration with its own forward window, not carved out
+   of this one.
+2. **Clock #18's likely fate is now regime-dependent:** in a calm 24 months (VIX3M mostly 15–20) it will trend toward
+   KILL; in a stressed stretch it can PROMOTE. Neither is a defect — this is the pre-registration doing its job.
+3. **Scorer extension (report-only, no rule change):** the forward scorer should annotate each mark's note with the
+   VIX3M-regime split of the forward event-days, so we learn whether the dependence holds OUT of sample without
+   anyone deciding anything on it. Queued.
+4. The gamma/dealer-positioning thread is the one genuinely new mechanism from the screenshots; it needs per-strike OI,
+   which is free for crypto (Deribit) and gated for equities. Follow-up item, not folded into this decision.
+
+Trials this run: 12. Program ceiling 5.46 (unchanged). Board 25/26.
