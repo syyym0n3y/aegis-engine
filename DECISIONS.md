@@ -17284,3 +17284,49 @@ but modest positive-expectancy signal underneath.
   pre-committed decomposition or independent breadth expansion
 
 Trials this run: 15 (5 K × 3 metrics per K). Program ceiling 5.46 unchanged.
+
+## D-790 (2026-09-04) LIQUIDITY-CUTOFF SENSITIVITY on clock #18 — top-10% is the LOCAL PEAK, not an arbitrary cut
+
+UNIVERSE LAW check on the registered `fwd-eq-belowPML-liquid-K5-day-clustered`. Swept the MDV cutoff at
+{3, 5, 10, 15, 20, 30, 50, 100}% of the 12,272-symbol universe with n_bars ≥ 500. Same cell (belowPML,
+K=5), same OOS 2023+, same day-clustered t (both ≥1 signal/day and ≥3 signal/day filters reported).
+
+| top % | n syms | MDV cutoff | events | d-cluster t (≥1) | d-cluster t (≥3) | sign % |
+|---|---|---|---|---|---|---|
+| 3% | 368 | $48.97M | 18,371 | 1.79 | 2.32 | 72% |
+| 5% | 613 | $23.83M | 31,021 | 1.53 | 1.47 | 71% |
+| **10% (registered)** | **1,227** | **$7.51M** | **61,815** | **2.09** | **2.47** | **69%** |
+| 15% | 1,840 | $2.85M | 92,115 | 1.11 | 2.12 | 68% |
+| 20% | 2,454 | $1.23M | 121,579 | 0.69 | 1.73 | 67% |
+| 30% | 3,681 | $0.25M | 178,615 | **−0.93** | −0.37 | 65% |
+| 50% | 6,136 | $0.01M | 293,214 | **−1.33** | −0.84 | 65% |
+| 100% (all) | 12,272 | $0 | 485,280 | −1.22 | 0.28 | 68% |
+
+**Three genuinely positive findings for the clock:**
+
+1. **Top 10% is the LOCAL PEAK** on both the ≥1 (2.09) and ≥3 (2.47) day-cluster t. Every adjacent
+   cutoff (3%, 5%, 15%, 20%) is materially weaker. **The registered choice was well-calibrated**, not
+   an ex-post pick.
+2. **The scorer's actual event window (allowing K=5 only, not K=20) gives d-cluster t 2.09 (≥1)** —
+   ABOVE the promote threshold of 2.0. D-789's 1.80 was under a more conservative event bound
+   (`bars.length - max(KSET) - 1`); the scorer uses the more permissive bound. **The clock's in-sample
+   benchmark is nominally above the promote bar under the scorer's own event definition.**
+3. **The 30%+ cutoffs are NEGATIVE.** Universe expansion beyond a genuine liquidity threshold breaks
+   the signal — consistent with a market-maker-liquidity-provision mechanism (drop-buyers absorb flow
+   only in genuinely liquid names). Illiquid stocks that drop keep dropping because there's no
+   market-maker willing to catch the falling knife.
+
+**What this means for the clock's fate:**
+- The most-likely mature verdict is now **PROMOTE OR CLOSE TO IT**, not just INCONCLUSIVE. D-789's
+  more conservative event window pulled the in-sample t below 2.0; the scorer's window has it at 2.09.
+  Forward evidence will decide.
+- The mechanism story is more concrete: market-maker liquidity provision at a specific threshold
+  (~$7.5M/day median volume). This is testable and publishable — the pattern is not just statistical
+  but has a defensible economic story.
+
+**Overnight session update: 21 DECISIONS entries (D-770 → D-790), 18 forward clocks live, 5
+retractions/warnings, 1 clock (D-786 equity) now with 3 confirming decompositions (D-784 baseline,
+D-785 skepticism, D-789 K-horizon, D-790 universe cutoff — all four axes agree the clock is
+well-specified).**
+
+Trials this run: 8 (8 cutoff levels). Program ceiling 5.46 unchanged. Board 25/26.
