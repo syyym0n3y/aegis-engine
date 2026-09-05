@@ -32,8 +32,15 @@ declareKnobs("registry-guard", [
   { name: "STATUS", def: "scripts/guard-status.sh", note: "the operator's one-command view" },
 ]);
 
-const RUNNER = Deno.env.get("RUNNER") || "infra/scripts/coverage-guard-up.sh";
-const STATUS = Deno.env.get("STATUS") || "scripts/guard-status.sh";
+// D-793: resolve every path against the REPO, never the cwd. The daily runner executes with cwd=infra and this guard
+// resolved `scripts/` and both inputs against that — it found 0 guards and (correctly) went RED rather than green on
+// nothing. Never seen before tonight: the guard was wired 08-28, AFTER the loop body it lives in had been parsed by
+// the 08-27 bash process, so its first launchd execution was the restarted cycle. An env override may still be given
+// as an absolute path or a repo-relative one.
+const REPO = new URL("..", import.meta.url).pathname;
+const abs = (p: string) => p.startsWith("/") ? p : `${REPO}${p}`;
+const RUNNER = abs(Deno.env.get("RUNNER") || "infra/scripts/coverage-guard-up.sh");
+const STATUS = abs(Deno.env.get("STATUS") || "scripts/guard-status.sh");
 
 // name -> why it is absent from a list. Both fields are required; a bare name would be an unexplained carve-out.
 const EXEMPT: Record<string, { from: string[]; why: string }> = {
@@ -49,7 +56,7 @@ async function read(p: string): Promise<string> {
 }
 
 const onDisk: string[] = [];
-for await (const e of Deno.readDir("scripts")) {
+for await (const e of Deno.readDir(`${REPO}scripts`)) {
   if (e.isFile && e.name.endsWith("-guard.ts")) onDisk.push(e.name.replace(/-guard\.ts$/, ""));
 }
 onDisk.sort();

@@ -39,6 +39,20 @@ function drifted(startEpoch: number, commitEpoch: number, graceSec = 60): boolea
   return commitEpoch - startEpoch > graceSec;
 }
 
+// D-793: SHELL RUNNER LOOPS DRIFT TOO — and they are the worst case. bash parses a `while … done` body ONCE, so a
+// launchd loop started on 08-27 kept executing the 08-27 body while the file grew: the D-715 refresher block (08-29),
+// CBOE, VX, CEF, GLD, EIA, the equity-panel refresh and the Deribit feed were all added later and NONE ever ran
+// under launchd. Every feed they own froze at 08-28 while the loop cycled "successfully" and this guard, which only
+// watched `deno run` processes, stayed GREEN. Pure classifier so the extension is self-tested on sample ps lines
+// rather than trusted (the D-720b lesson: an unverified extension is inert).
+function classify(cmd: string): { kind: "deno" | "shell"; script: string } | null {
+  const sm = /deno run/.test(cmd) ? cmd.match(/scripts\/([a-z0-9-]+\.ts)/) : null;
+  if (sm) return { kind: "deno", script: `scripts/${sm[1]}` };
+  const bm = /\/bin\/(ba)?sh\b/.test(cmd) ? cmd.match(/infra\/scripts\/([a-z0-9-]+\.sh)/) : null;
+  if (bm) return { kind: "shell", script: `infra/scripts/${bm[1]}` };
+  return null;
+}
+
 if ((Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1") {
   const cases: [number, number, boolean][] = [
     [1000, 2000, true],    // started well before the commit -> drift
@@ -48,6 +62,18 @@ if ((Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1") {
   ];
   let ok = true;
   for (const [s, c, want] of cases) { const got = drifted(s, c); if (got !== want) { ok = false; console.error(`  SELFTEST FAIL: drifted(${s},${c}) = ${got}, want ${want}`); } }
+  // D-793: the classifier must see BOTH daemon shapes, and must not misfile one as the other.
+  const cl: [string, { kind: string; script: string } | null][] = [
+    ["/bin/bash /Users/ona/Projects/aegis/infra/scripts/coverage-guard-up.sh", { kind: "shell", script: "infra/scripts/coverage-guard-up.sh" }],
+    ["deno run --allow-net --allow-env ../scripts/aegis-discovery.ts", { kind: "deno", script: "scripts/aegis-discovery.ts" }],
+    ["sleep 86400", null],
+  ];
+  for (const [line, want] of cl) {
+    const got = classify(line);
+    const same = (got === null && want === null) || (got !== null && want !== null && got.kind === want.kind && got.script === want.script);
+    if (!same) { ok = false; console.error(`  SELFTEST FAIL: classify(${JSON.stringify(line)}) = ${JSON.stringify(got)}, want ${JSON.stringify(want)}`); }
+  }
+  if (ok) console.log(`  classifier resolves shell runner loops AND deno daemons, ignores non-daemons`);
   // Closure walk must transitively include a KNOWN cross-directory dependency, or the D-720b extension is inert:
   // aegis-discovery imports ../supabase/functions/_shared/data-version.ts, so that path must appear in its closure.
   const clo = await closure("scripts/aegis-discovery.ts");
@@ -93,18 +119,19 @@ async function newestCommit(paths: string[]): Promise<{ epoch: number; file: str
 const ps = await sh(["ps", "-axo", "pid=,lstart=,command="]);
 const drifts: string[] = [], checked: string[] = [];
 for (const line of ps.split("\n")) {
-  if (!/deno run/.test(line) || !/scripts\/[a-z0-9-]+\.ts/.test(line)) continue;
   if (/daemon-drift-guard\.ts/.test(line)) continue;                       // don't flag this guard's own invocation
   const m = line.match(/^\s*(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+[\d:]+\s+\d{4})\s+(.*)$/);
   if (!m) continue;
   const pid = m[1], lstart = m[2], cmd = m[3];
-  const sm = cmd.match(/scripts\/([a-z0-9-]+\.ts)/);
-  if (!sm) continue;
-  const script = `scripts/${sm[1]}`;
+  const c = classify(cmd);
+  if (!c) continue;
+  const script = c.script;
   const startEpoch = Math.floor(Date.parse(lstart) / 1000);
   if (!Number.isFinite(startEpoch)) continue;
   // Newest commit across the ENTRY script AND its whole local import closure. If nothing is tracked, skip.
-  const clo = await closure(script);
+  // A shell runner has no import closure — its loop BODY is what drifts, so the .sh file alone is the closure; the
+  // deno scripts it invokes start fresh each cycle and are checked (if resident) as their own processes.
+  const clo = c.kind === "shell" ? [script] : await closure(script);
   const newest = await newestCommit(clo);
   if (!newest.epoch) continue;
   const ageMin = (Date.now() / 1000 - startEpoch) / 60;

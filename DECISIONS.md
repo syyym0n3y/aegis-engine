@@ -17440,3 +17440,53 @@ NOT to be fixed by loosening budgets. Tonight's OOS-2023+ research is not materi
 bars, but the guard is doing its job (D-613). Investigation is the next item; fixes land under their own D-numbers.
 
 Trials: 0 (no verdicts). Program ceiling unchanged. Clocks live: 18.
+
+## D-793 (2026-09-06) ROOT CAUSE of the frozen feeds: the daily runner loop was executing a 10-day-old copy of its own body — every refresher added since 08-27 had NEVER run under launchd
+
+Three feeds were RED at the D-792 commit (FX/index hourly, attribution, earnings — all frozen ≈2026-08-28). Diagnosis
+went through three wrong-looking suspects (a wedged loop, a silent refresher, my own concurrent scans) before the
+process table settled it:
+
+- The coverage loop, PID 66072, started **2026-08-27 00:52:31** (`ps -o lstart`).
+- The D-715 refresher block (dukascopy, funding, COT, earnings) entered `coverage-guard-up.sh` on **2026-08-29 22:50**
+  (`git log -S"THE FIVE UNOWNED FEEDS"`). CBOE (D-737), VX (D-749), CEF (D-750), GLD (D-745), EIA (D-743), the
+  equity-panel `refresh-bars.ts` step, the registry guard (08-28) and tonight's Deribit line were all added later still.
+- **bash parses a `while … done` body ONCE.** A launchd loop started on 08-27 kept executing the 08-27 body while the
+  file grew. In the runner's real `../data` directory (repo-root `data/`, not `infra/data/` — my first check looked
+  in the wrong place), the per-step log of EVERY post-08-27 line was MISSING; `attribution.log` (wired before 08-27)
+  was written by the 09-05 cycle at 01:04. Old lines ran; new lines never did. Crypto funding's newest date was
+  09-03 only because I had refreshed it by hand that day.
+- The 09-05 cycle "completed successfully" and printed `1 of 26 guards RED` — the exact D-613 shape: a runner
+  producing the FEELING of a daily refresh while landing nothing, and `daemon-drift-guard` (D-719c) GREEN throughout,
+  because it only watched `deno run … scripts/*.ts` processes. The one process that had drifted was the bash loop.
+
+**Fix (verified live, in this order):**
+1. `ingest-earnings.ts` made INCREMENTAL (default FROM = newest held − 3d; was 2017-01-02, a ~2,200-weekday walk that
+   died at 2019-05 after HTTP 500s on the 09-03 detached run). Loud exit if any write fails or the feed does not
+   advance to within 7d. Verified: 386 rows / 14 days / 0 write failures, newest **2026-08-21 → 2026-09-04**.
+2. `daemon-drift-guard.ts` extended to SHELL RUNNER LOOPS via a pure `classify()` that is self-tested on sample `ps`
+   lines (a `/bin/bash …/infra/scripts/*.sh` process is compared to the newest commit touching that `.sh`; its loop
+   body is the closure). **Verified to fail on the real case before the restart:**
+   `!! infra/scripts/coverage-guard-up.sh: pid 66072 started 239.4h BEFORE its newest source commit` — RED, while
+   `positioning-up.sh`, `crypto-forward-up.sh`, `daily-up.sh` and both deno daemons checked clean.
+3. `launchctl kickstart -k gui/<uid>/io.aegis.coverage` → new PID **87546, started 2026-09-06 00:20:38**; drift guard
+   **GREEN**; the new cycle reached the never-run block within 90s — `data/dukascopy.log` exists for the first time
+   (00:21:59), FX refresh running under launchd.
+
+**Two latent defects the restarted cycle exposed in its first minute — both in lines that had never executed:**
+- PLUMBING GUARD RED on `ingest-earnings.ts:15` — my new `newestHeld()` was a D-757 silent read (`.catch(()=>null)`),
+  and here a failed read would fall back to 2017 and re-create the freeze *quietly*. Fixed with `mkStrictRead` (fail
+  loud). Plumbing back to **555 vs 555, 0 regressions**; earnings re-run on the strict path: 103 rows, feed advanced.
+- REGISTRY GUARD RED — `!! only 0 guard script(s) found under scripts/`. It resolved `scripts/`, RUNNER and STATUS
+  against the cwd, and the runner executes with cwd=infra. First-ever launchd execution (wired 08-28). Its positive
+  control did its job (RED on nothing found, not green). Fixed to resolve from `import.meta.url`; verified
+  **CONSISTENT, 27 guards** from repo root AND from cwd=infra; SELFTEST passes.
+
+**Doctrinal reading.** "Every fix ships a machine guard" was satisfied for deno daemons (D-719c) and the single most
+important daemon was exempt by construction. Five feeds and every guard added in ten days were documentation, not
+enforcement, while the board said 25/26 GREEN. The correction is not "restart after editing the runner" (a habit); it
+is a guard that turns RED whenever the runner file is newer than the process executing it — now in place and proven
+in both directions. Budgets were NOT loosened; the continuity RED rows are expected to clear as this cycle's steps
+land (FX → attribution → breadth follow the refresh order). Recorded at commit time as still-running.
+
+Trials: 0. Ceiling unchanged. Clocks live: 18.
