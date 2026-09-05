@@ -17181,3 +17181,51 @@ first natural fire tomorrow.
 Running the same four-test skepticism on the 52-week-low variant (belowPYL LIQUID) — D-784 headline was
 +45bp gross t 3.4 at 2bp cost on n=11,971 events. That's the thinnest of the three cells; skepticism
 matters most.
+
+## D-787 (2026-09-04) belowPYL LIQUID SKEPTICISM — FAILS 2 of 4 tests, NOT clock-ready
+
+Following D-785 protocol on the 52-week-low variant:
+
+| test | verdict |
+|---|---|
+| T1 per-symbol sign | **FAIL — 88/188 = 46.8% positive** (below the 60% bar AND below random 50%) |
+| T2 day-clustered t | **FAIL — t 1.65** (below the |t|≥2 significance bar) |
+| T3 survivorship | PASS (2,642 delisters in universe) |
+| T4 turnover / cost | 2.6 events/symbol/yr = 3,192 events/book/yr — thin |
+
+**Interpretation:** at the 52-week low, symbols are BIFURCATED — either oversold reverters (top 5:
+JKS +494bp, RGNX +509bp) or genuine falling knives (bot 5: RXT −977bp, OTLY −691bp, AMWL −475bp). The
+pooled positive mean of +45bp per D-784 is carried by a small number of extreme reverters; the median
+liquid stock at a 52-week low DOES NOT revert 5 days later. Very different mechanism from the 5-day
+or 20-day drop where 68-74% of symbols reverted.
+
+**No forward clock registered.** The skepticism protocol worked exactly as designed — D-784's headline
+number was too generous, and the per-symbol reality shows it. 5-day and 20-day drop patterns are
+GENUINE cross-symbol reversion; 52-week low is winner-carries-all noise.
+
+## D-788 (2026-09-04) EXTENDING THE EQUITY PATTERN TO CRYPTO DAILY SF PANEL — 510-symbol independent replication
+
+D-785's belowPML LIQUID cell survives on 12,300 US equities. Question: does the same "below prior 20-day low
+→ 5-day mean-revert on LIQUID names" pattern replicate on the 510-symbol survivorship-free crypto perp DAILY
+panel? Different asset class, different market structure, survivorship-free by construction. If yes:
+independent cross-asset-class evidence. If no: the equity finding is asset-class-specific.
+
+Result for D-788: **NOT REPLICATED.** The equity below-PML LIQUID pattern does not carry over to the crypto
+survivorship-free daily panel:
+- LIQUID pooled net: n 2,516, +15.4bp, t 0.78 (flat, below significance)
+- T1 per-symbol sign: 23/48 = **47.9%** (below random 50%)
+- T2 day-clustered t: **−0.26**
+- Era decomposition: 2023 +24bp, 2024 −68bp, 2025 +46bp, 2026 −62bp — sign flips per year, no stability
+
+**Conclusion: the equity below-PML pattern is US-EQUITY-MICROSTRUCTURE-SPECIFIC.** It does not generalize
+to crypto daily. This is a real narrowing of the mechanism understanding:
+1. The equity signal is NOT a universal "buy the dip on liquid" phenomenon.
+2. The crypto D-780/781 findings (buy-sweep-and-reclaim of PSL at 1h) are a DIFFERENT mechanism —
+   they're hourly, session-based, sweep-and-reclaim rather than daily close-below-level.
+3. The 2026 crypto sign-flip pattern (D-777/778/782) shows here too — 2026 is the worst crypto below-PML
+   year at t −0.66. Consistent with structural change in crypto microstructure in early 2026.
+4. The equity finding's era stability including 2026 (D-785) is thus a genuine feature of US equity
+   market structure, not a coincidence.
+
+Clock #18 (`fwd-eq-belowPML-liquid-K5-day-clustered`) remains the sole equity forward wager, appropriately
+scoped to US equity by construction. No crypto-daily clock candidacy from this run.
