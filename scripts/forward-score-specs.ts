@@ -428,7 +428,7 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
         symPos.set(sym, sp);
       }
     }
-    // day-clustered mean series
+    // day-clustered mean series (the metric the rule scores — unchanged)
     const dayMeans: number[] = [];
     for (const xs of dayEvents.values()) if (xs.length >= 1) dayMeans.push(xs.reduce((a, c) => a + c, 0) / xs.length);
     // cross-symbol sign
@@ -436,15 +436,31 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     for (const [_, sp] of symPos) { if (sp.n < 20) continue; signN++; if (sp.pos / sp.n > 0.5) signPos++; }
     const eventDays = dayMeans.length;
 
+    // D-791 REPORT-ONLY regime split: in-sample the whole edge sat in VIX3M >= 20 (15-20 was NEGATIVE on 549/1020
+    // days). Annotate each mark with the forward split so the dependence is tested OUT of sample by observation —
+    // this changes NOTHING about the metric or the promote/kill rule (PRE-COMMITMENT LAW). asof = previous day's close.
+    let regimeNote = "";
+    try {
+      const vix = await q(`trd_macro_series?series=eq.cboe_vix3m&select=d,v&order=d.asc`) as { d: string; v: number }[];
+      const asofPrev = (d: string) => { let lo = 0, hi = vix.length - 1, best = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (vix[m].d < d) { best = m; lo = m + 1; } else hi = m - 1; } return best < 0 ? null : vix[best].v; };
+      const lowD: number[] = [], highD: number[] = [];
+      for (const [dk, xs] of dayEvents) {
+        const v = asofPrev(dk); if (v === null) continue;
+        (v < 20 ? lowD : highD).push(xs.reduce((a, c) => a + c, 0) / xs.length);
+      }
+      const f = (a: number[]) => a.length ? `${a.length}d ${(mean(a) * 1e4).toFixed(1)}bp` : "0d";
+      regimeNote = ` REGIME(report-only, D-791): VIX3M<20 ${f(lowD)} | VIX3M>=20 ${f(highD)}.`;
+    } catch { regimeNote = " REGIME: vix3m unavailable this run."; }
+
     if (eventDays < 150) {
       return { metric: M, value: null, n: eventDays,
-        note: `${eventDays} forward event-days since ${started} (rule requires >=150 for kill or >=200 for promote). not-yet-computable.` };
+        note: `${eventDays} forward event-days since ${started} (rule requires >=150 for kill or >=200 for promote). not-yet-computable.${regimeNote}` };
     }
     const mBp = mean(dayMeans) * 1e4;
     const tv = mean(dayMeans) / ((sd(dayMeans) || 1e-12) / Math.sqrt(dayMeans.length));
     const signPct = signN ? (signPos / signN * 100) : 0;
     return { metric: M, value: mBp, n: eventDays,
-      note: `${eventDays} forward event-days, day-clustered mean ${mBp.toFixed(2)}bp t ${tv.toFixed(2)}, cross-symbol sign ${signPos}/${signN} = ${signPct.toFixed(0)}%. PROMOTE if net>=+15bp & t>=2.0 & sign>=60% & event-days>=200; KILL if net<=0 OR t<=0 OR sign<=45% at event-days>=150; else INCONCLUSIVE. In-sample OOS was 33.4bp day-clustered t 2.47 with 68.6% cross-symbol sign.` };
+      note: `${eventDays} forward event-days, day-clustered mean ${mBp.toFixed(2)}bp t ${tv.toFixed(2)}, cross-symbol sign ${signPos}/${signN} = ${signPct.toFixed(0)}%. PROMOTE if net>=+15bp & t>=2.0 & sign>=60% & event-days>=200; KILL if net<=0 OR t<=0 OR sign<=45% at event-days>=150; else INCONCLUSIVE. In-sample on THIS scored series (net 10bp, >=1 signal/day) was 28.8bp day-clustered t 1.40, 65% sign (D-791); the 33.4bp/t 2.47 in D-785 used a >=3-signals/day filter.${regimeNote}` };
   },
 };
 

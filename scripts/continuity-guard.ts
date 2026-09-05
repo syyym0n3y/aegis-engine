@@ -49,6 +49,11 @@ const FEEDS: [string, string, string, number, string][] = [
   // fresher than its input. Budget 10d tracks the equity price cadence, not a market feed's; if breadth reads stale
   // it means the PANEL is stale, which is the correct thing to surface. Owner is the recompute wrapper.
   ["trd_macro_series?series=eq.breadth_pct_gt_200dma_surv&select=d&order=d.desc&limit=1", "equity breadth", "d", 10, "refresh-breadth.sh"],
+  // D-792: Deribit option-book snapshot. The book is continuous and the runner snapshots it daily, so the honest
+  // cadence is 1 day; budget 2 (x GRACE) so a single missed run is noise and two is RED. FORWARD-ONLY feed — a stall
+  // here silently freezes the only market-maker-positioning series the programme holds, which is exactly the
+  // "frozen snapshot answering plausibly" failure this guard exists for.
+  ["trd_macro_series?series=eq.deribit_btc_opt_pcr&select=d&order=d.desc&limit=1", "deribit options", "d", 2, "ingest-deribit-options.ts"],
 ];
 
 const today = Date.now();

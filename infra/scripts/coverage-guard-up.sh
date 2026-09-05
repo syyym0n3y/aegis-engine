@@ -209,6 +209,10 @@ while true; do
   deno run --allow-net --allow-env ../scripts/ingest-eia-inventories.ts > ../data/eia-inv.log 2>&1 || echo "$(date -u +%FT%TZ) EIA INVENTORIES INGEST FAILED"
   # CBOE free vol indices (D-737): SKEW/VVIX/VIX3M options-regime, keyless, idempotent.
   deno run --allow-net --allow-env ../scripts/ingest-cboe.ts > ../data/cboe.log 2>&1 || echo "$(date -u +%FT%TZ) CBOE INGEST FAILED"
+  # D-792: Deribit BTC/ETH option-book snapshot (per-strike OI -> PCR, ATM IV, naive GEX). Free, keyless, allowlisted,
+  # 2 sequential fetches. FORWARD-ONLY — Deribit exposes no per-strike history, so this feed only becomes a testable
+  # conditioner once months of daily marks exist. Guarded: a Deribit outage logs and never breaks the loop.
+  deno run --allow-net --allow-env ../scripts/ingest-deribit-options.ts > ../data/deribit-options.log 2>&1 || echo "$(date -u +%FT%TZ) DERIBIT OPTIONS INGEST FAILED"
   # S&P 500 membership changes (D-740): Wikipedia, free, writes data/sp500-changes.json (data/ is gitignored, so the
   # index-inclusion retest depends on this running). Stamps the source actually parsed; TSLA positive control.
   SP500_OUT=../data/sp500-changes.json deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-sp500-changes.ts > ../data/sp500.log 2>&1 || echo "$(date -u +%FT%TZ) SP500 CHANGES INGEST FAILED"

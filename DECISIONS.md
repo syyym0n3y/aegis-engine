@@ -17405,3 +17405,38 @@ weakest at t 3.0).
    which is free for crypto (Deribit) and gated for equities. Follow-up item, not folded into this decision.
 
 Trials this run: 12. Program ceiling 5.46 (unchanged). Board 25/26.
+
+## D-792 (2026-09-06) Deribit option-book feed BUILT + WIRED (forward-only); clock #18 scorer now reports the VIX3M regime split on every mark
+
+Follow-ups from D-791, both verified live.
+
+**1. Scorer regime annotation (report-only).** `fwd-eq-belowPML-liquid-K5-day-clustered` now appends to every mark's
+note the forward event-day split by VIX3M (<20 / ≥20, asof previous close). The METRIC and the promote/kill rule are
+untouched (PRE-COMMITMENT LAW). BACKDATE=2023-01-01 verification reproduces D-791 independently from inside the scorer:
+**VIX3M<20 → 612 days at −28.8bp | VIX3M≥20 → 405 days at +94.4bp**, day-clustered t 1.39 on the scored (net-10bp,
+≥1-signal/day) series — confirming the D-791 correction of D-790. From here the regime dependence is tested OUT of
+sample by observation, with nobody deciding anything on it.
+
+**2. Deribit BTC/ETH option-book snapshot — `scripts/ingest-deribit-options.ts`.** The one genuinely new mechanism in the
+operator's screenshots (market-maker positioning), built from the free, keyless, allowlisted public API. Per UTC day,
+per currency, into `trd_macro_series`: `call_oi`, `put_oi`, `pcr`, `oi_usd`, `atm_iv` (nearest-ATM, 7–45d),
+`naive_gex_usd` (Black-Scholes dollar gamma per 1% move, +calls −puts — **a convention (SpotGamma-style "dealers long
+calls / short puts"), not observed dealer inventory**, labelled as such in the script and here).
+First live snapshot 2026-09-05: **BTC 978 instruments, PCR 0.55, ATM IV 36.4%, naive GEX $257.6M/1%; ETH 854, PCR 0.55,
+ATM IV 48.2%, naive GEX $18.5M/1%.** 12 series landed and READ BACK (assertTouched-style count check; a silent
+non-write exits RED). Four positive controls abort loud: instrument count ≥100, both sides carry OI, spot > 0,
+ATM IV in 10–300.
+**FORWARD-ONLY.** Deribit exposes the current book only — there is no per-strike history, so this feed cannot be
+backtested. It becomes a testable conditioner only after months of daily marks. Recorded now so a future session
+never reads a 30-day series as a tested edge (COVERAGE LAW).
+Wired: runner line mirrors the CBOE pattern (failure-guarded, a Deribit outage logs and never breaks the loop), verified
+in the exact runner form (cwd=infra, relative paths, log redirect) exit 0. Continuity budget 2d in
+`continuity-guard.ts` (row reads `ok`, age 1.0d; the D-715 unwired-feed check sees the script in the runner).
+
+**Board at commit time — recorded, not hidden:** the same continuity run shows THREE feeds RED that were green earlier
+tonight: FX/index hourly (newest 2026-08-28, 8.0d vs 7.5d), attribution engine (9.0d vs 7.5d), earnings (16.0d vs 13.5d;
+the detached refresh launched at session start did not land). These are ingest stalls, not budget mis-sizing, and are
+NOT to be fixed by loosening budgets. Tonight's OOS-2023+ research is not materially affected by 8-day-stale hourly
+bars, but the guard is doing its job (D-613). Investigation is the next item; fixes land under their own D-numbers.
+
+Trials: 0 (no verdicts). Program ceiling unchanged. Clocks live: 18.
