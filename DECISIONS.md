@@ -17524,3 +17524,92 @@ Four different entry definitions, one regime. Whatever changed in crypto microst
 **Disposition:** 0 registrations (nothing clears day-clustered t ≥ 2 with class + era stability). Trials this pass:
 39 + 10 + 28 = 77. Ceiling 5.46 unchanged. Clocks live: 18. Two items remain out of reach with the missing input
 named (LRL → L2 depth; 5m SMT → no 5m index bars). Nothing here required a paid product or an executed binary.
+
+## D-795 (2026-09-06) THE 10^7 LEVER, EXERCISED — every layer gets a running, owned, measured mechanism; and the ledger's first self-test caught a mislabel in WEALTH_PATH
+
+Operator: "make the 10^7 effect real and exercised across the entire stack." Arithmetic unchanged (WEALTH_PATH §3,
+D-746): terminal wealth ≈ deposits × time × (1 − leakage) + alpha, alpha = 0; the lever is income × structure × time.
+"Exercised" means each layer runs, is operator-owned, and is measured — not described. Three layers were documents:
+
+**1. Structural engine → `scripts/wealth-ledger.ts` (wired into the daily runner).** Operator records deposits
+(`ADD_DEPOSIT=150 [ADD_DATE=]`), the wrapper (`SET_WRAPPER=isa|gia`) and measured currency leakage
+(`SET_CCY_LEAK_BP=`) into `trd_macro_series` (no schema change; STRICT reads; every write read back). Daily report:
+adherence to plan, value-to-date, terminal at plan vs at current pace, the ISA's D-758 value, the D-731 leakage cost
+over the horizon. **RED-loud when empty** — the live ledger IS empty tonight, and that line ("the structural engine is
+NOT RUNNING, or is running untracked") is the truest financial statement on the stack.
+**Its self-test caught a real error before shipping:** `fvMonthly(150, 6.8%, 34y) = 228,196`, but the D-735 replay
+terminal is 547,847. WEALTH_PATH quoted "9.04×, 6.8% CAGR" — 6.8% is the LUMP-SUM equivalent of 9.04× over 34y; a
+deposit stream's average dollar is invested ~17y, so the replay's underlying total return is **10.75%/yr** (derived by
+bisection from the anchor; self-test now requires the derived rate to reproduce 547,847 within 0.1% AND the 6.8% label
+to fail by >30%, so the correction cannot silently regress). WEALTH_PATH.md corrected in-place with the note.
+
+**2. Equity clock → money-legible.** Clock #18's scorer appends a REPORT-ONLY line to every mark: forward P&L at a
+$100,000 book (the D-785 capacity floor), 1.0× notional per event-day. Rule untouched. Verified on the BACKDATE path
+(the MONEY line prints alongside the REGIME line; full figure captured with the next scorer run).
+
+**3. Distribution asset → `docs/YGS_FINANCE_EP01.md`.** Full 12-minute script + shot list + six-episode outline, every
+number a D-reference (D-779, D-784/785/791, D-776/777, D-794 (g), D-735/758). No paid-product CTA, ever. Ready for the
+YGS pipeline (~$33, D-050) once the CC Supabase project is restored by the operator.
+
+**4. Tonight's upload pass, dollarized** (the accounting the operator asked for "in a financially beneficial way"),
+on the registered UTC-01 cell's 989 OOS trades at a $10k notional per trade:
+| choice on screen | measured | £/$ effect on 989 trades |
+|---|---|---|
+| hold fixed K6 (the clock) | +15.4bp | +$15,250 |
+| break-even after +1 ATR | +17.1bp | +$16,870 |
+| **trailing stop** ("runners") | +0.1bp | **+$90 — $15,160 of edge forfeited** |
+| **pyramiding** | +0.8bp | **+$800 — $14,450 forfeited** |
+| ADR "ceiling" fade (upper wall → short), 2,792 events | −39bp at K12 | **−$109,000** |
+| the $100/mo "IV walls" subscription | inputs held free | −$1,200/yr = 120bp/yr drag on a $10k book |
+Total cost of following the screenshots as shown, on our own measured cells: **≈ −$140k per $10k-per-trade book.**
+Total cost of tonight's accounting: $0.
+
+Trials: 0 (no verdicts). Clocks live: 18. Runner line for the ledger verified in exact form in the same commit.
+
+## D-796 (2026-09-06) PROP-FIRM EVALUATIONS as the capital-access route — priced as a drawdown-constrained stopping problem on MEASURED returns
+
+Operator: "make it work outside Revitalise income — prop-firm payouts, with creativity in the math and every data
+point we have." The stack's surviving edges are sized for ≥$100k books (D-785, D-746) and prop firms sell $100k books
+for ~$500 — so this is the coherent route, and it is NOT an edge problem: a pass is reaching +TARGET before the max
+drawdown (trailing or static), daily-loss and consistency rules, for a fee; then a payout split on a funded book.
+`scripts/prop-firm-ev.ts` prices that bet by block-bootstrap Monte Carlo (4,000 paths, 5-day blocks) on the
+day-clustered return series the clocks already score, at 0.5–5× notional, against typical published rule-sets
+(knobs — VERIFY before paying any fee), always beside the **no-edge baseline** (same variance, zero drift = what the
+firm prices) and a **2026-only** pessimistic window (the regime that broke four crypto constructions).
+
+**Two hard lines, on the record:** (1) cross-firm hedging to force a pass is ToS fraud and voids payouts — not
+modelled, not recommended; (2) N accounts on ONE signal are ONE bet at N× size (pass outcomes ~perfectly correlated) —
+"every prop firm" scales payouts AND fee losses together; it does not diversify.
+
+**Futures props (Topstep / Apex / Lucid-style; index futures only) — −EV.** The futures-compatible cells (NQ+SPX,
+utc16 abovePDH + the D-779 10AM-ET continuation, 2bp RT) have a NEGATIVE day-clustered mean: −3.6bp/day OOS (414
+days, t −1.25), −1.8bp 2026 (83 days). Hence P(pass) is BELOW the no-edge baseline at every size (topstep 1×: 10% vs
+23%; apex 1×: 15% vs 35%), funded accounts blow at ~100% within 6 months, and the scattered positive "EV per fee $"
+cells (+0.3/+0.8) are early-withdrawal artifacts on tiny pass rates. **The firm's pricing wins; do not pay these fees
+on these cells.**
+
+**CFD two-phase static-DD 100k (FTMO-style; FX/index/crypto CFDs) on the 17-panel utc16 abovePDH cell — +EV on both
+windows, at 0.5–1× only:**
+| window | size | P(pass both) | no-edge P(pass) | fee/pass | funded $/mo | P(blow, 6 mo) | EV per fee $ |
+|---|---|---|---|---|---|---|---|
+| OOS 2023+ (1,079 event-days, +8.4bp/day, day-t 2.15) | 0.5× | **73%** | 38% | $792 | $1,253 | **11%** | **+8.5** |
+| | 1× | 45% | 41% | $1,279 | $1,705 | 69% | +7.0 |
+| | 2× | 34% | 39% | $1,703 | $1,456 | 98% | +4.1 |
+| **2026-only (184 days, +4.2bp/day, day-t 0.51)** | **0.5×** | **48%** | 34% | $1,213 | $970 | **9%** | **+3.8** |
+| | 1× | 51% | 49% | $1,128 | $1,568 | 54% | +7.3 |
+| | 3× | 23% | 36% | $2,502 | $865 | 100% | +1.1 |
+Reading: 0.5× notional is the robust configuration — it turns the eval from a 34–38% coin-flip into a 48–73% pass
+with a single-digit six-month blow-up probability and ~$1,000–1,250/mo of funded income per account, i.e. an expected
+**~+$3–5k over six months per $580 fee** under the point estimates. Above 1× the extra funded income is paid for with
+blow-up rates that make the account a lottery ticket.
+
+**What governs it — said plainly.** This rests on ONE cell: `fwd-utc16-abovePDH-long-K6-panel17`, the only D-780
+clock still positive in 2026 (D-782), whose 2026 day-t is **0.51**. The +EV is a positive expectation with wide error
+bars, not an established edge; the 2026 row is 184 days. The presets are typical terms, not verified terms. Crypto
+dominates the 17-panel's event count, and CFD-prop instrument lists / weekend rules / leverage caps vary by firm.
+
+**Disposition.** No fee is paid by me — a fee is real spend and an operator decision. The honest structure, if the
+operator chooses it: **one** FTMO-style eval at 0.5× as a forward experiment whose stake is the fee, registered as a
+forward clock with numeric pass/kill rules BEFORE the first trade (PRE-COMMITMENT LAW), the funded phase run exactly
+as the clock's rule (utc16 close>PDH → long, K=6, 1.0×/N per day), and the second account only after the first has a
+recorded outcome — because the second is the same bet again, not a new one. 40 counted trials. Clocks live: 18.

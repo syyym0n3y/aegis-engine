@@ -459,8 +459,14 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     const mBp = mean(dayMeans) * 1e4;
     const tv = mean(dayMeans) / ((sd(dayMeans) || 1e-12) / Math.sqrt(dayMeans.length));
     const signPct = signN ? (signPos / signN * 100) : 0;
+    // D-795 REPORT-ONLY money line: what the clock's forward events would have earned at a nominal book, so the clock
+    // is legible in currency, not only in bp. Book 100,000 (the D-785 capacity floor), 1.0x notional split equally
+    // across that day's signals (SIZING_FRAMEWORK), so each event-day risks the whole book once. Not a rule input.
+    const BOOK = 100_000;
+    let pnl = 0; for (const xs of dayEvents.values()) pnl += xs.reduce((a, c) => a + c, 0) / xs.length * BOOK;
+    const moneyNote = ` MONEY(report-only, D-795): at a ${BOOK.toLocaleString()} book, 1.0x notional per event-day, forward P&L to date ${pnl >= 0 ? "+" : ""}${pnl.toFixed(0)} over ${eventDays} event-days (${(pnl / eventDays).toFixed(0)}/day).`;
     return { metric: M, value: mBp, n: eventDays,
-      note: `${eventDays} forward event-days, day-clustered mean ${mBp.toFixed(2)}bp t ${tv.toFixed(2)}, cross-symbol sign ${signPos}/${signN} = ${signPct.toFixed(0)}%. PROMOTE if net>=+15bp & t>=2.0 & sign>=60% & event-days>=200; KILL if net<=0 OR t<=0 OR sign<=45% at event-days>=150; else INCONCLUSIVE. In-sample on THIS scored series (net 10bp, >=1 signal/day) was 28.8bp day-clustered t 1.40, 65% sign (D-791); the 33.4bp/t 2.47 in D-785 used a >=3-signals/day filter.${regimeNote}` };
+      note: `${eventDays} forward event-days, day-clustered mean ${mBp.toFixed(2)}bp t ${tv.toFixed(2)}, cross-symbol sign ${signPos}/${signN} = ${signPct.toFixed(0)}%. PROMOTE if net>=+15bp & t>=2.0 & sign>=60% & event-days>=200; KILL if net<=0 OR t<=0 OR sign<=45% at event-days>=150; else INCONCLUSIVE. In-sample on THIS scored series (net 10bp, >=1 signal/day) was 28.8bp day-clustered t 1.40, 65% sign (D-791); the 33.4bp/t 2.47 in D-785 used a >=3-signals/day filter.${regimeNote}${moneyNote}` };
   },
 };
 

@@ -18,8 +18,13 @@ participant cannot do.** Not "we haven't found it yet" — the shape of every fa
 | timing — "start when odds are good, stop when against" | every timing rule tested COSTS wealth: vol-timing sign-flipped under 1 day of lag (D-498); macro-regime washed out (D-730); trend de-risk gives up 30–37% of terminal wealth (D-735) |
 
 And the single best wealth engine the programme has measured is the one with **zero switches**: buy-and-hold SPY at
-$150/mo → **$547,847 on $60,600 deposited (9.04x, 6.8% CAGR, 34y)**. Every "know when to stop" overlay finished
+$150/mo → **$547,847 on $60,600 deposited (9.04x, 34y)**. Every "know when to stop" overlay finished
 $164k–$205k poorer.
+> **Label corrected 2026-09-06 (D-795):** this line used to say "6.8% CAGR". 6.8% is the lump-sum equivalent of 9.04× over
+> 34 years; a deposit *stream*'s average dollar is invested ~17 years, so the replay's underlying total return is
+> **~10.9%/yr** (`wealth-ledger.ts` derives it from the anchor by bisection; its self-test caught the mislabel —
+> fvMonthly(150, 6.8%, 34y) is 228,196, not 547,847). Every downstream figure quoted in %/yr-alpha-equivalent terms is
+> unaffected; only this label was wrong.
 
 The daily thing the engine should do is **monitor**, not trade: ingest, guard board, retest harness, score the clocks.
 
