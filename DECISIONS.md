@@ -17669,3 +17669,50 @@ instrument lists and weekend rules unmodelled.
 FTMO-style account, the COMBO at the 0.5× label (or equity-alone if a single-digit blow-up matters more than income),
 pre-registered as a forward clock with numeric pass/kill rules BEFORE the first trade, funded phase run exactly as the two
 clocks' rules; a second account only after the first has a recorded outcome. Total trials this family: 60.
+
+## D-798 (2026-09-06) THE FIRST CYCLE THAT RAN ITS OWN BODY — four cwd-class defects surfaced and fixed, every feed green, board all-26 GREEN
+
+Follow-through on D-793 (the loop had been executing a 10-day-old body). The restarted cycle (PID 87546, 00:20:38) ran
+end to end in ~55 min and exposed, in lines that had NEVER executed under launchd, one defect class four times over:
+paths resolved against the cwd, which is `infra/` under the runner and the repo root everywhere I had ever tested.
+
+| # | where | symptom under launchd | fix | verification |
+|---|---|---|---|---|
+| 1 | `registry-guard.ts` (D-793) | "0 guard scripts found" → RED (its positive control fired correctly) | resolve `scripts/`, RUNNER, STATUS from `import.meta.url` | CONSISTENT, 27 guards, from root AND from `infra/`; SELFTEST |
+| 2 | `refresh-bars.ts` | CONSUMER `scripts/aegis-attribution.ts` NotFound → **the equity-panel refresher had never succeeded**; panel froze 08-28; breadth & attribution reported on it | resolve CONSUMER from `import.meta.url` | live, exact runner form: **refreshed 53 / failed 0, all 32 consumer symbols fresh**; attribution → 2026-09-04 (was 08-28); breadth refreshed |
+| 3 | `_shared/fpi-adr.ts` | `data/fpi-flags.json` NotFound → `loaded:false` → **every consumer ran the ADR share-base correction as a silent NO-OP** (factory, forward-score, market-cap guard) while the 1 MB file sat at the repo root | resolve relative paths from `import.meta.url` (3 levels up) at the source | loader from root and `infra/`: loaded, 1,192 FPIs / 692 ratios / 500 excluded; `_shared` tests 334 pass; market-cap guard from `infra/` → stderr 0 bytes |
+| 4 | `ingest-borrow-fees.ts` | STRICT READ FAILED — network error to localhost:33000 at 00:14:49Z | none needed: D-757 failed loud as designed; cause was the REST restart below | idempotent; re-runs next cycle |
+
+**REST incident.** `aegis-rest` restarted at 00:14:48Z (RestartCount 1, **exit code 0 = graceful stop, not OOM**,
+cause not established). It coincided to the second with my `EQUITY=1` prop-firm run loading 12,300 symbols while the
+cycle ran — I likely caused it. Borrow-fees was the only step hit (refresh-bars failed a second later for reason #2, not
+this). Process rule adopted: no heavy panel loads concurrent with a running cycle.
+
+**Agent-output guard: RED on stale stderr → rule fixed.** launchd APPENDS StandardErrorPath across restarts, so the guard
+read 274 bytes from the previous incarnation (defects #1 and #3, both already fixed) as a current problem. The guard now
+applies its own "only the latest run" doctrine to stderr: bytes written before the live process started are reported as a
+note and ignored; no live process / no `--allow-run` → the old strict rule (never silently relax). `stderrIsStale`
+self-tested in three directions; verified live both ways (RED without `--allow-run`, PASS-with-note with it). Runner line
+gains `--allow-run`; the loop was restarted after each runner commit so daemon-drift stayed GREEN (PID 98217, 01:34:56).
+
+**Feeds, before → after this cycle:** crypto funding 09-03 → 09-05 · FX/index hourly 08-28 → 09-04 · earnings 08-21 →
+09-04 (incremental ingest, D-793) · attribution 08-28 → 09-04 · Deribit options first snapshot landed under launchd ·
+equity breadth **still 08-28** (see D-799). **Board: all 26 guards GREEN** (a transient "1 of 26" seconds after the
+kickstart did not reproduce). 18 clocks live. Commits `e28e265`, `d3d3993`, `2c728dc`.
+
+**The doctrinal point.** Everything in this entry was invisible for ten days behind a board that read 25/26 GREEN. Not
+one of the four defects was a reasoning error; all were the D-598 class (the run did not do what was asked), and all
+became visible only because D-793 made the loop execute its own body. "Tested from the repo root" is not "tested as the
+runner runs it" — every future runner-wired script gets its exact-cwd invocation verified in the same commit.
+
+## D-799 (2026-09-06) CANDIDATE — clock #18 has no live input refresher; the broad daily equity panel is frozen at 08-28
+
+`refresh-bars.ts` refreshes the ~53 symbols the attribution engine reads, by design ("refreshing all 4,348 is hours").
+The **12,300-symbol daily panel (`trd_bars_deep`) has no live refresher**, and its newest bar is 2026-08-28. Two things
+sit on it: the equity-breadth continuity row (18-day budget — it will go RED on 09-15) and, critically, **clock #18
+(`fwd-eq-belowPML-liquid-K5-day-clustered`) scores its forward events on this panel**. A frozen panel means the clock
+accrues ZERO forward event-days while its scorer reports "not-yet-computable" — the exact CONTINUITY LAW failure (D-613)
+the clock was registered to avoid. Build: a liquid-decile daily refresher (the 1,226 names clock #18 trades, ~5 min/day at
+250 ms per Yahoo pull, idempotent, period1/period2 never range=max — the D-750 lesson), a continuity row on the liquid
+decile's newest bar with a 3-day budget, runner-wired with its exact-cwd invocation verified. Not built tonight; queued
+first for the next session because the clock's forward record depends on it.
