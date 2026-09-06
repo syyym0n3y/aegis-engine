@@ -189,6 +189,10 @@ while true; do
   deno run --allow-net --allow-env ../scripts/ladder-harvester.ts > ../data/harvester.log 2>&1 || echo "$(date -u +%FT%TZ) LADDER HARVESTER FAILED"
   # Holdability sizer (D-744): equity fraction vs drawdown tolerance on the full held history; control vs D-735 inside.
   deno run --allow-net --allow-env ../scripts/holdability-sizer.ts > ../data/sizer.log 2>&1 || echo "$(date -u +%FT%TZ) HOLDABILITY SIZER FAILED"
+  # WEALTH LEDGER (D-795): the structural engine TRACKED — deposits / wrapper / leakage vs the D-735 plan, rate derived from
+  # the replay anchor (its self-test caught the WEALTH_PATH "6.8%" mislabel). Report-only; RED-loud when nothing is logged,
+  # because an untracked structural engine is the largest financial fact on the stack. Operator records with ADD_DEPOSIT=.
+  deno run --allow-net --allow-env ../scripts/wealth-ledger.ts > ../data/wealth-ledger.log 2>&1 || echo "$(date -u +%FT%TZ) WEALTH LEDGER FAILED"
   # Budget threshold map (D-746): at what budget / cost tier each real-but-blocked effect would start working.
   deno run --allow-net --allow-env ../scripts/budget-threshold-map.ts > ../data/budget-map.log 2>&1 || echo "$(date -u +%FT%TZ) BUDGET MAP FAILED"
   # VIX futures curve (D-749): CBOE per-expiry VX history -> data/vx-contracts.json (gitignored; import.meta-relative path,
