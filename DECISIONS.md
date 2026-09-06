@@ -17861,3 +17861,40 @@ D-804 on must carry `GOLD: <structural|clock|prop|gap|reliability|research|law> 
 missing line, positive control on the parser (0 entries parsed ≥ threshold is RED), self-tested RED/GREEN/exempt,
 wired into the runner and the board. No promotion, no fee, no rule amended.
 GOLD: gap — the register of what was neglected, each item with an owner, plus the guard that stops the next 198 from accumulating unread.
+
+## D-805 (2026-09-06) THE THREE REAL TESTS OF THE FIVE — all NULL, two with the pre-registered sign MISSED; and the register that queued five was wrong about two, found by reading the entries before running anything
+
+**The correction first.** D-804 §2.B listed five "UNTESTED with data already held" items from the mechanical audit's
+keyword extraction (`data/decisions-audit.txt`). Reading the five entries in full before building anything showed two
+were already resolved: **D-612** was TESTED (PEAD by analyst coverage: not supported, monotonicity fails; its only
+open item was a timing ambiguity already decided conservatively), and **D-602** had resolved D-601 at n=53
+("absent, not merely undetected"). The audit's keyword hit on words like "undetected" and "deferred". A register built
+from a lead and not from the source is the leads-not-truth failure of the global contract §2; it was caught by the
+ordinary discipline of reading first, and it is recorded here rather than silently edited out of D-804.
+What was genuinely untested inside the five, and is now tested, one registered construction each:
+
+| test | what D-477/626/476 left open | result (every line an EXCESS vs its universe) | sign | verdict |
+|---|---|---|---|---|
+| **profitability** (Hi OP − Lo OP, French VW deciles, 757 mo, 5bp/mo drag) | column-set ambiguity | spread +2.42%/yr t 1.29; long leg vs market +1.10%/yr t 1.49 | MATCHED | NULL vs ceiling 5.4556 |
+| **investment** (Lo INV − Hi INV) | same | spread +3.31%/yr t 2.12; long leg vs market +2.46%/yr t 2.36; eras 4.8 / 4.7 / **−1.8** %/yr | MATCHED | NULL; dead since 2013 |
+| **short-interest surprise** K=12 settlements, PREREG D-805-si-surprise-K12 | cadence (D-626) | 194 periods, 305,354 events; HIGH-surprise excess +0.103%/20s NW t **0.83**; both liquidity halves positive; level control −0.136% NW t −0.99 | **MISSED** | NULL; ~1,119 periods needed |
+| **insider sells** 3m/dollar-volume, liquid decile, PREREG D-805-insider-sells-3m | side never held (D-476) | 194 months, 471 names/mo; top-quintile excess +0.91%/yr t **0.32**; any-sell −2.73%/yr t −1.14; halves disagree | **MISSED** | NULL; ~7,385 months needed |
+
+Reproduction control on the premia loader: momentum 12-2 t 4.77 on 1,195 months vs D-477's 4.84 on 1,192 — the
+loader is right. The first cut truncated momentum to 756 months by joining on the market factor (held from 1963-07
+only); the spread now runs on the full span and only the benchmark leg on the joined months.
+The sells required an ingest that did not exist: `ingest-form345-sells.ts` pulled 65 EDGAR quarterly sets (2010q1–
+2026q1; 2026q2/q3 not yet published) into `data/insider-sells.jsonl` — **a file, deliberately**, because a column or
+table is a schema change and that is the operator's call. 660,481 ticker × filing rows; positive controls (quarters,
+rows, AAPL) passed; idempotent per quarter.
+Across the stack: both pre-registrations recorded `retracted` with full outcome notes (immutable); three lineage
+rows (`D-805-op-inv-premia`, `D-805-si-surprise`, `D-805-insider-sells`, status rejected) carrying every law
+statement; 6 trials spent (N 2,904,053 → 2,904,057); per-period record `data/si-surprise-periods.tsv`; board re-run
+after the writes. The two era splits that look interesting (investment dead post-2013; sells +4.1%/yr t 2.39 pre-2018)
+are post-hoc and DESCRIPTIVE ONLY. Nothing promoted, no clock started.
+**The board caught two wording defects in my own rows on the first re-run** — the benchmark guard (no gross figure beside
+the "dead since 2013" line: gross t −0.28 vs net t −0.42, so the post-2013 loss is not significant either way) and the
+turnover guard (no turnover statement on two rebalanced rows: French decile turnover is unmeasurable from published
+returns → UNTESTED ON COST; the sells quintile's is moot at a ~zero gross excess). Both rows corrected with the numbers,
+board all 28 green. That is the guards binding the author, which is what they are for.
+GOLD: research — the five-item queue of D-804 is closed: three nulls on held data, two already-resolved items corrected; the base rate held (0/3), and the register now says what the entries say.

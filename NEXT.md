@@ -3,9 +3,9 @@
 
 The live queue is [`docs/GOLD_PATH.md`](./docs/GOLD_PATH.md) §4. Summary:
 
-1. **Five UNTESTED-on-held-data tests** (GOLD_PATH §2.B): D-626 short-interest surprise · D-612 PEAD×coverage ·
-   D-601/602 leverage effect powered up · D-476 tradable insider cut · D-477 classic premia in the placeable instrument.
-   One trial each; BENCHMARK + TURNOVER + INSTRUMENT laws; expected null.
+1. ~~Five UNTESTED-on-held-data tests~~ **DONE 2026-09-06 (D-805)**: short-interest surprise NULL (sign missed), insider
+   sells NULL (sign missed), profitability/investment premia NULL vs ceiling (investment dead post-2013); D-612 and
+   D-601/602 were already resolved and had been misfiled.
 2. **2026 crypto regime break — DESCRIPTIVE-ONLY decomposition** (§3.3). Two live clocks depend on it.
 3. **Reliability debt** (§3.7): cockpit-render positive control · `refresh-bars.ts` metadata columns · post-kickstart transient RED.
 4. **Prop clock** `fwd-prop-ftmo100k-utc16-0p5x-v1` — register ONLY on operator sign-off, then its ledger scorer.

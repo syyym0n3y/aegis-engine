@@ -50,15 +50,15 @@ Everything else on the record is research, and research is not income.
 provisioning, Alpaca ingest, `trd_features`) was superseded by the owned node (D-408→D-729) and `trd_features` holds
 0 rows (D-704). NEXT.md had not been edited since 2026-08-14; it is rewritten tonight to point here.
 
-**B. UNTESTED with data already held, never revisited (0 later mentions) — the actual research queue, one trial each:**
+**B. UNTESTED with data already held, never revisited (0 later mentions) — RUN 2026-09-06 (D-805). CORRECTION: D-612 was TESTED (not supported) and D-601/602 was resolved at n=53 (absent); the audit's keyword extraction misfiled both and I listed them without reading the entries. The three real tests: all NULL, sign MISSED on two.**
 
 | entry | what is untested | input held? |
 |---|---|---|
-| D-626 | short-interest SURPRISE (change vs expectation), decided before the Benchmark Law | FINRA short interest: yes |
-| D-612 | PEAD conditioned on analyst coverage (deferred, "event study not powered") | earnings + coverage proxy: yes |
-| D-601/602 | leverage effect powered up — where the risk actually sits | bars + fundamentals: yes |
-| D-476 | the TRADABLE version of the insider family (278k events swept, tradable cut not run) | Form 4: yes |
-| D-477 | classic premia at maximum honest power — momentum t 4.84 across a century, never taken to the placeable instrument | Ken French + ETF panel: yes |
+| D-626 | short-interest SURPRISE at K=12 settlements — **NULL, sign MISSED (NW t 0.83), D-805** | FINRA short interest: yes |
+| D-612 | ~~PEAD by analyst coverage~~ — **already TESTED at D-612 (not supported); misfiled here** | — |
+| D-601/602 | ~~leverage effect powered up~~ — **already resolved at D-602 (n=53, absent); misfiled here** | — |
+| D-476 | insider SELLS in the tradable slice (side never held; 660k rows ingested) — **NULL, sign MISSED (t 0.32), D-805** | Form 4 sells: now yes (file) |
+| D-477 | profitability + investment premia (column ambiguity) — **NULL vs ceiling: t 1.29 / 2.12, investment dead post-2013, D-805** | Ken French: yes |
 
 Each must be run under BENCHMARK (universe mean + excess), TURNOVER (drag beside gross), INSTRUMENT (placeable or
 proxy, stated), and costs one trial. Expected outcome per base rate: null. They are on the list because an unrun
@@ -100,7 +100,7 @@ not the engine — the engine is on the owned node); capital access beyond the c
 
 ## 4. Order of work (unblocked, $0, in this order)
 
-1. §2.B — the five untested-on-held-data tests, one trial each, laws applied, verdicts to lineage + a DECISIONS entry.
+1. ~~§2.B — the five untested-on-held-data tests~~ DONE (D-805): three run (all NULL), two were already resolved.
 2. §3.3 — the descriptive 2026-break decomposition.
 3. §3.7 — the three reliability items.
 4. §1.3 — register the prop clock ONLY on operator sign-off; then the ledger scorer for it (CONTINUITY LAW).
