@@ -1,6 +1,6 @@
 # PROP-FIRM PLAN — the capital-access route, operationalised (D-796 / D-797)
 
-> Status 2026-09-06: PRICED, NOT EXERCISED. No fee has been paid. Paying one is real spend and the operator's decision.
+> Status 2026-09-06 (D-807): **CLOCK SIGNED AND REGISTERED** (`fwd-prop-ftmo100k-utc16-0p5x-v1`, immutable, operator sign-off). Still NO FEE PAID — the registration is the pre-commitment, the fee is the operator's spend. The clock is scored only from the operator's ledger: `scripts/prop-ledger.ts` (`SET_FEE=…`, then `ADD=1 DATE=… PHASE=eval1|eval2|funded EQUITY=… [PAYOUT=…] [BREACH=1]` per statement day). Empty ledger = not-yet-computable, never inconclusive.
 > This document exists so that decision can be made with the rule written first (PRE-COMMITMENT LAW, D-571) and the
 > verification done before money moves (PRECONDITION LAW, D-598). Everything below is reproducible from
 > `scripts/prop-firm-ev.ts` (`EQUITY=1`), 4,000-path block bootstrap on the day-clustered series the live clocks score.
@@ -55,9 +55,9 @@ NOT evidence against: a fail on a single market-wide drawdown day IS a fail (rul
                the edge — the no-edge baseline already fails 54–56% of the time; the informative number is the
                funded-phase day-clustered mean vs the +8.4bp/day (OOS) / +4.2bp/day (2026) priced for utc16 alone.
 ```
-Register via the same `trd_forward_rules` POST used for clocks 15–18 (see D-786), then add a scorer that reads the
-firm's statement export (or a manually-kept `data/prop-ledger.json`) — the scorer is the ONLY way this clock ever
-gets a mark; without it the experiment is an anecdote (CONTINUITY LAW, D-613).
+REGISTERED 2026-09-06 (D-807) with `clock_started` = registration date; the first-trade date is the ledger's first entry.
+Scorer: `forward-score-specs.ts` → `fwd-prop-ftmo100k-utc16-0p5x-v1` reads `data/prop-ledger.json` only; horizon 365 days in
+`forward-scorer.ts`. Without ledger entries the clock reports not-yet-computable (CONTINUITY LAW, D-613).
 
 ## 4. Sequencing — why one account, not "every prop firm"
 

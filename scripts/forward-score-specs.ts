@@ -11,7 +11,7 @@
 // inconclusive", and conflating them is how a clock quietly stops meaning anything.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
 import { Bar, decodeBar, priorSessionLevels } from "../supabase/functions/_shared/mtf-structure.ts";
-declareKnobs("forward-score-specs", [{ name: "VERBOSE", def: "" }, { name: "BACKDATE", def: "", note: "D-658: score a clock from this date instead of its registered start, to EXERCISE scorer paths that real elapsed time has not yet reached. Verification only — never a way to restate a live clock." }]);
+declareKnobs("forward-score-specs", [{ name: "VERBOSE", def: "" }, { name: "PROP_LEDGER", def: "", note: "D-807: override the prop ledger path — ONLY with BACKDATE (no marks written) to exercise the scorer on a synthetic ledger" }, { name: "BACKDATE", def: "", note: "D-658: score a clock from this date instead of its registered start, to EXERCISE scorer paths that real elapsed time has not yet reached. Verification only — never a way to restate a live clock." }]);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -375,6 +375,35 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
   // top decile by pre-2023 MDV (~1230 symbols, cutoff $7.5M/day). Trigger: close < prior 20-day low. Hold 5 days.
   // Cost 10bp RT (assumes $100k+ book). Metric: DAY-CLUSTERED mean net (per D-785 T2) — the honest measure
   // because event-level t was inflated 4x by intra-day correlation on market-wide drop days.
+  // D-807: the prop-firm clock is scored ONLY from the operator's append-only ledger (data/prop-ledger.json, written by
+  // scripts/prop-ledger.ts). Rule (PROP_FIRM_PLAN §3): PROMOTE if evaluation PASSED and funded payouts over 6 months >= 3x fee
+  // and funded day-clustered mean >= +5bp/day and 0 breaches; KILL if evaluation FAILED or funded max-DD breach or payouts
+  // over 6 funded months < 1x fee; else inconclusive. Value = payouts / fee (the metric the rule names). No entries = no number.
+  "fwd-prop-ftmo100k-utc16-0p5x-v1": async (started) => {
+    const M = "funded_payouts_over_fee";
+    let L: { fee_usd: number | null; entries: { date: string; phase: string; equity_usd: number; payout_usd: number; breach: boolean; note: string }[] };
+    const lp = Deno.env.get("PROP_LEDGER"); if (lp && !Deno.env.get("BACKDATE")) throw new Error("PROP_LEDGER override is only allowed under BACKDATE (marks must never come from a synthetic ledger)");
+    try { L = JSON.parse(await Deno.readTextFile(lp || new URL("../data/prop-ledger.json", import.meta.url).pathname)); }
+    catch (e) { if (e instanceof Deno.errors.NotFound) L = { fee_usd: null, entries: [] }; else throw e; }
+    if (!L.entries.length) return { metric: M, value: null, n: 0, note: `ledger empty since registration ${started}: fee unpaid, no evaluation started. not-yet-computable, NOT inconclusive.` };
+    const fee = L.fee_usd, pay = L.entries.reduce((s, e) => s + e.payout_usd, 0);
+    const funded = L.entries.filter((e) => e.phase === "funded").sort((a, b) => a.date < b.date ? -1 : 1);
+    const evalBreach = L.entries.some((e) => e.phase !== "funded" && e.breach), fundedBreach = funded.some((e) => e.breach);
+    const dayRets: number[] = []; for (let i = 1; i < funded.length; i++) if (funded[i - 1].equity_usd > 0) dayRets.push(funded[i].equity_usd / funded[i - 1].equity_usd - 1);
+    const mBp = dayRets.length ? mean(dayRets) * 1e4 : NaN, tv = dayRets.length > 1 ? mean(dayRets) / ((sd(dayRets) || 1e-12) / Math.sqrt(dayRets.length)) : NaN;
+    const fundedDays = funded.length ? Math.round((Date.parse(funded[funded.length - 1].date) - Date.parse(funded[0].date)) / 86400000) : 0;
+    const firstTrade = L.entries[0].date;
+    let verdictNote = "";
+    if (evalBreach) verdictNote = "KILL condition met: evaluation FAILED (breach in eval phase).";
+    else if (fundedBreach) verdictNote = "KILL condition met: funded account breached max DD.";
+    else if (!funded.length) verdictNote = "in evaluation; funded phase not started.";
+    else if (fee == null) verdictNote = "funded, but fee UNSET in the ledger — payouts/fee cannot be computed (set SET_FEE).";
+    else if (fundedDays < 180) verdictNote = `funded ${fundedDays}/180 days; payouts ${pay.toFixed(0)} = ${(pay / fee).toFixed(2)}x fee so far; inconclusive until 6 funded months.`;
+    else if (pay / fee >= 3 && mBp >= 5) verdictNote = `PROMOTE condition met: ${(pay / fee).toFixed(2)}x fee, funded mean ${mBp.toFixed(1)}bp/day t ${tv.toFixed(2)}, 0 breaches.`;
+    else if (pay / fee < 1) verdictNote = `KILL condition met: payouts ${(pay / fee).toFixed(2)}x fee over ${fundedDays} funded days.`;
+    else verdictNote = `inconclusive: payouts ${(pay / fee).toFixed(2)}x fee (rule needs >= 3x) or funded mean ${mBp.toFixed(1)}bp/day (needs >= 5).`;
+    return { metric: M, value: fee != null ? pay / fee : null, n: L.entries.length, note: `first trade ${firstTrade}; ${L.entries.length} ledger entries, ${funded.length} funded days, day-clustered mean ${Number.isFinite(mBp) ? mBp.toFixed(1) + "bp/day t " + tv.toFixed(2) : "n/a"}; ${verdictNote}` };
+  },
   "fwd-eq-belowPML-liquid-K5-day-clustered": async (started) => {
     const M = "day_clustered_net_bp_belowPML_liquid_K5";
     const KK = 5, N_LEVEL = 20, RT = 10 / 1e4;

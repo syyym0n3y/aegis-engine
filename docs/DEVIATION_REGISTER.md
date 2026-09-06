@@ -38,7 +38,7 @@
 | 2 | every clock pre-horizon | BY DESIGN — 17 clocks, scorer daily, continuity guard reds on lapse |
 | 3 | 2026 crypto regime break unexplained | **DESCRIBED TONIGHT** (`crypto-2026-break.ts`, D-806): the flip is PANEL-WIDE — all 4 constructions, every tier, both funding signs, both BTC-prior signs — and the raw hour-of-day drift profile reshuffles every year (20:00 UTC: +13.7bp t 18 in 2024, −2.1 in 2025, +4.2 in 2026; 21:00 + → −; 01:00 + → −). The clocks were registered on a seasonality that was already unstable between 2024 and 2025. DESCRIPTIVE ONLY; no mechanism claimed |
 | 4 | clock #18 weak in calm regimes | BY DESIGN — immutable rule; v2 only after this clock ends |
-| 5 | prop decision | OPERATOR — clock ready to sign |
+| 5 | prop decision | CLOCK SIGNED + REGISTERED (D-807); the FEE remains OPERATOR |
 | 6 | dark data spaces | **MOSTLY UNBLOCKED** — see §3 |
 | 7 | reliability debt | **CLOSED** — see §4 |
 | 8 | decisions drifting to research-for-its-own-sake | DONE — decisions guard (D-804) |
@@ -70,7 +70,7 @@
 
 ## 5. Still open, and whose it is
 
-- **OPERATOR:** prop fee (one account, utc16 alone, clock first) · three ledger rows · CC Supabase invoices (cockpit/platform only) · capital beyond the current budget.
+- **OPERATOR:** the prop FEE (clock registered D-807; ledger via `scripts/prop-ledger.ts`) · three wealth-ledger rows · CC Supabase invoices (cockpit/platform only) · capital beyond the current budget.
 - **BLOCKED — paid:** tick-level CVD/OI for equities · full options surface · earnings revisions · gold options.
 - **BLOCKED — no source found:** pre-2016 delisted equity history.
 - **BY DESIGN:** real-money bridge · clock rules · the calm-regime weakness of clock #18.

@@ -17939,3 +17939,19 @@ were HELD all along (iBorrowDesk, 212 names, fresh to 09-04) — my memory note 
 right and the note was stale, now corrected. Congressional trades: tested and REJECTED in the D-070 era (sector beta),
 which is why the Stage-1 ingest was never built.
 GOLD: gap — the register of deviations with a verified disposition each; two barriers moved from blocked to held, one cohort closed, and the open list now names its owner.
+
+## D-807 (2026-09-06) THE PROP CLOCK SIGNED — `fwd-prop-ftmo100k-utc16-0p5x-v1` registered immutably on operator sign-off; no fee paid; scored only from an operator-owned append-only ledger
+
+Operator instruction: "sign the prop clock and register it." Registered in `trd_forward_rules` exactly as written in
+`docs/PROP_FIRM_PLAN.md §3` (D-802: utc16 ALONE at 0.5×, one account, no discretion, no cross-firm positions):
+PROMOTE if evaluation PASSED and funded payouts over 6 months ≥ 3× fee and funded day-clustered mean ≥ +5bp/day and
+0 breaches; KILL if evaluation FAILED or a funded max-DD breach or payouts < 1× fee over 6 funded months; else
+inconclusive, with the no-edge baseline (52–66% fail) named as what is NOT evidence against. Immutability verified by
+attempting an UPDATE (refused). `clock_started` is the registration date; the first-trade date is the first ledger
+entry. **No fee has been paid** — the registration is the pre-commitment (D-571), the fee is the operator's spend.
+CONTINUITY LAW (D-613): a clock nobody can score is an anecdote, so the scorer exists at registration —
+`forward-score-specs.ts` reads `data/prop-ledger.json` and nothing else; `forward-scorer.ts` carries a 365-day horizon
+(≤6 months evaluation + 6 funded months). The ledger is the operator's: `scripts/prop-ledger.ts` (`SET_FEE` once;
+`ADD=1 DATE PHASE EQUITY [PAYOUT] [BREACH] [NOTE]` per statement day; append-only, chronological, a correction is a new
+entry). Empty ledger → not-yet-computable, deliberately distinguished from inconclusive. Clocks: 18.
+GOLD: prop — the conditional capital-access route now has its rule written before its data exists; what remains is the operator's fee and the ledger entries.

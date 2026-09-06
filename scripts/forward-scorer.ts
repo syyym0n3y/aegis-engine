@@ -50,6 +50,7 @@ const HORIZON: Record<string, number> = {
   "fwd-crypto-lit5": 365,              // "daily marks; earliest meaning" — a year
   "fwd-residual-follow": 183,          // "first read at >=6 months"
   "fwd-hedging-pressure-flip": 104 * 7, // "104 forward weeks minimum in EACH universe"
+  "fwd-prop-ftmo100k-utc16-0p5x-v1": 365,  // D-807: evaluation (max 6 months) + 6 funded months
 };
 
 const rules = await mustFetch(`${OWNED}/trd_forward_rules?select=id,clock_started,horizon_desc,promote_if,kill_if`, "trd_forward_rules") as
