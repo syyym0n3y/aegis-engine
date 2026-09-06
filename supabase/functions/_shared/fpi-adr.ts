@@ -44,9 +44,16 @@ export const EMPTY_FPI: FpiTable = { ratio: new Map(), exclude: new Set(), fpiCo
 
 /** Read data/fpi-flags.json. Returns an EMPTY table (loaded:false) when the file is absent — never throws, but the
  * caller is expected to PRINT that the correction did nothing rather than let a silent no-op pass as a fix. */
+// D-798: resolve a relative path against the REPO, never the cwd. Under launchd the runner's cwd is infra/, so the default
+// "data/fpi-flags.json" became infra/data/… → NotFound → loaded:false → every consumer (factory, forward-score, market-cap
+// guard) ran the ADR share-base correction as a silent NO-OP while the file sat 1 MB large at the repo root. Fourth cwd
+// defect exposed tonight (registry-guard, refresh-bars, borrow adjacency, this) — all found because D-793 made the loop
+// execute its own body. This file lives at supabase/functions/_shared/, three levels below the repo root.
+const FPI_REPO = new URL("../../../", import.meta.url).pathname;
 export async function loadFpiFlags(path = "data/fpi-flags.json"): Promise<FpiTable> {
+  const p = path.startsWith("/") ? path : `${FPI_REPO}${path}`;
   let raw: string;
-  try { raw = await Deno.readTextFile(path); } catch { return { ...EMPTY_FPI, ratio: new Map(), exclude: new Set() }; }
+  try { raw = await Deno.readTextFile(p); } catch { return { ...EMPTY_FPI, ratio: new Map(), exclude: new Set() }; }
   let j: Record<string, FpiFlag>;
   try { j = JSON.parse(raw); } catch { return { ...EMPTY_FPI, ratio: new Map(), exclude: new Set() }; }
   const ratio = new Map<string, number>(), exclude = new Set<string>();
