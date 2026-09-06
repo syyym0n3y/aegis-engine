@@ -17768,3 +17768,44 @@ modestly better; the honest path is a REPORT-ONLY equity-only split on the score
 new clock on the same events (D-769 doctrine). The prop-firm EQUITY set (D-796 addendum, D-797) was priced on the
 unfiltered, pre-refresh universe — its numbers are now known to be upper-biased on both counts and get re-run on the
 equity-only refreshed universe before any fee decision leans on them. Trials this run: 3. Clocks live: 18.
+
+## D-801 (2026-09-06) a guard RED inside the loop and GREEN on the board — a missing `--allow-read`, and a loader that let a permission error impersonate a data gap
+
+Second cycle on the current body: agent-output RED on FRESH stderr (456 bytes, mtime after the restart) — a second
+copy of `data/fpi-flags.json is MISSING`, written by `market-cap-guard.ts` at 01:38:12Z, one hour after D-798 had fixed
+the loader's path and I had verified it "from cwd=infra". Cause: runner line 290 invoked the guard with
+`--allow-net --allow-env` and **no `--allow-read`**; `Deno.readTextFile` threw PermissionDenied; `loadFpiFlags()`'s
+catch returned the documented "absent file" empty table; the guard printed RED and exited 1 in the loop — while
+`guard-status.sh` (which grants `--allow-read`) ran the same guard GREEN on the board. My verification had used `-A`.
+Two invocations, two permission sets, two answers; the board was the wrong one. Fixes, both verified: the runner line
+gains `--allow-read` (exact runner form → GREEN, stderr 0 bytes); the loader rethrows anything that is not
+`Deno.errors.NotFound` (the old form now fails loud: `NotCapable: Requires read access` — never "MISSING"). `_shared`
+334 pass. Lesson added to the D-798 rule: **verify a runner-wired script with the runner's exact permission flags, not
+`-A`.** The D-798 note that market-cap-guard "printed RED yet exited 0" was wrong — it exited 1; the `|| echo` guard
+logged it and the cycle continued. Board after restart: all 26 GREEN (the 456 stale bytes now predate the live process).
+
+## D-802 (2026-09-06) PROP-FIRM RE-PRICE on the equity-only, refreshed universe — the equity claim of the D-796 addendum is RETRACTED; the combo is downgraded; utc16 alone is the best single configuration
+
+D-800 flagged the D-796-addendum / D-797 equity numbers as upper-biased on two counts (111 non-equity members; the
+pre-refresh panel that stopped before the late-August losses). Re-priced with `EQUITY=1 EQ_EQUITY_ONLY=1` on the
+refreshed panel (12,076 equities → 1,207 liquid → 61,231 events → 916 event-days; combo cross-stream r = 0.042):
+
+| configuration (FTMO-style 100k, 0.5×) | window | P(pass) | no-edge | funded $/mo | P(blow, 6 mo) | EV per fee $ | was (D-796/797) |
+|---|---|---|---|---|---|---|---|
+| equity dips alone, EQUITY-ONLY | OOS 2023+ (+9.2bp/day, day-t 0.72) | 21% | 18% | $659 | 2% | **+0.43** | +2.0 |
+| | **2026-only (−1.8bp/day, day-t −0.06)** | **8%** | **19%** | $535 | 4% | **−0.57** | **+9.3, "80% pass"** |
+| combo utc16 + equity-only dips | OOS 2023+ (+9.0bp/day, day-t 2.19) | 72% | 44% | $1,380 | 17% | +9.3 | +10.1 |
+| | 2026-only (+3.4bp/day, day-t 0.40) | 44% | 39% | $997 | 18% | **+3.5** | +11.5 |
+| utc16 alone (unchanged — not an equity set) | 2026-only | 48% | 34% | $970 | 9% | **+3.8** | +3.8 |
+
+**Retraction.** The D-796-addendum sentence "the most robust configuration in the evaluator — 80% pass in 2026 on the one
+construction that strengthened in 2026" was an artifact: the equity-only, refreshed series is **negative in 2026** and
+its 0.5× evaluation passes LESS often than a no-edge trader. Two things made the earlier number: crypto/ETF/index
+members carrying part of the 2026 mean, and a panel that ended before Aug 24–27 (day-means −85 to −562bp). Retracted on
+the immutable record; `PROP_FIRM_PLAN.md` revised.
+**Downgrade.** The combo's 2026 EV falls from +11.5 to +3.5 with a 44%-vs-39% lift over no-edge — real but thin — at
+roughly double utc16-alone's blow-up. **utc16 alone is now the best single configuration** (EV +3.8, 9% blow-up), and it
+rests on a clock (D-782) whose own 2026 day-t is 0.51.
+**Disposition (unchanged in form, sharpened in content):** no fee paid; if the operator exercises this, ONE account on
+utc16 alone at 0.5× — not the combo, not equity — registered as a forward clock before the first trade. The equity
+route is not a candidate until clock #18's forward record says otherwise. Trials this family: 60. Clocks live: 18.

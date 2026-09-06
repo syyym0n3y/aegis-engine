@@ -5,6 +5,8 @@
 > verification done before money moves (PRECONDITION LAW, D-598). Everything below is reproducible from
 > `scripts/prop-firm-ev.ts` (`EQUITY=1`), 4,000-path block bootstrap on the day-clustered series the live clocks score.
 
+> **REVISED 2026-09-06 (D-802) — read this before §1.** The equity rows below were priced on the unfiltered (9% non-equity), pre-refresh panel and are RETRACTED: on the equity-only, refreshed universe the equity route is **−EV in 2026** (0.5×: P(pass) 8% vs 19% no-edge, EV −0.57). The combo is downgraded (2026: EV +3.5, 44% vs 39% no-edge, 18% blow-up). **utc16 alone at 0.5× is the best single configuration (2026: EV +3.8, 48% vs 34%, 9% blow-up).** If exercised: one account, utc16 alone, clock-registered first. Futures props remain −EV.
+
 ## 1. What the math says (all at the "0.5×" label, FTMO-style 100k, two phases, 10% static DD, 5% daily, 80% split)
 
 | configuration | P(pass) OOS / 2026 | no-edge | funded $/mo | P(blow, 6 mo) | EV per fee $ | day-t OOS / 2026 |
