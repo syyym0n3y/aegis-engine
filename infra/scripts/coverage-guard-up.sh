@@ -287,7 +287,7 @@ while true; do
   # toward "value works", from a units bug rather than a market. This ranks the top-15 by the CORRECTED cap on
   # three fixed dates and reds if the ranking stops being recognisable, if any cap exceeds $10T, or if the split
   # table has gone empty (which would silently turn the correction back into a no-op).
-  if ! deno run --allow-net --allow-env ../scripts/market-cap-guard.ts; then
+  if ! deno run --allow-net --allow-env --allow-read ../scripts/market-cap-guard.ts; then   # --allow-read: D-801 — without it loadFpiFlags() hit PermissionDenied, the loader swallowed it as "absent", and this guard was RED in the loop while GREEN on the board
     echo "$(date -u +%FT%TZ) MARKET CAP GUARD RED — market caps are mixing two share bases; every mc-derived yield is contaminated"
   fi
   # SOVEREIGNTY GUARD (D-751): the guard whose subject is WHO OWNS THE ENGINE. The worker DEFAULTED to a CC Supabase

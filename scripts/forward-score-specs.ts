@@ -382,8 +382,9 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     const startTs = Math.floor(Date.parse(started + "T00:00:00Z") / 1000);
 
     // rebuild the liquid decile (top 10% by pre-2023 MDV, n_bars>=500)
-    const meta = await q(`trd_bars_deep?n_bars=gte.500&select=symbol,n_bars&order=n_bars.desc`) as
-      { symbol: string; n_bars: number }[];
+    const meta = await q(`trd_bars_deep?n_bars=gte.500&select=symbol,n_bars,asset_class&order=n_bars.desc`) as
+      { symbol: string; n_bars: number; asset_class: string }[];
+    const clsOf = new Map(meta.map((m) => [m.symbol, m.asset_class]));   // D-800 report-only split (rule untouched)
     const symMdv: Array<{ sym: string; mdv: number }> = [];
     // fast path: compute MDV for each symbol from its packed bars (train window only)
     for (const m of meta) {
@@ -401,6 +402,7 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
 
     // collect forward events (post startTs) per DAY
     const dayEvents = new Map<string, number[]>();
+    const dayEventsEq = new Map<string, number[]>();   // D-800: equity-only view, REPORT-ONLY (the rule scores dayEvents)
     const symPos = new Map<string, { pos: number; n: number }>();
     for (const sym of liqSet) {
       const row = (await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`))?.[0];
@@ -423,6 +425,7 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
         const dk = new Date(b[0] * 1000).toISOString().slice(0, 10);
         if (!dayEvents.has(dk)) dayEvents.set(dk, []);
         dayEvents.get(dk)!.push(net);
+        if (clsOf.get(sym) === "equity") { if (!dayEventsEq.has(dk)) dayEventsEq.set(dk, []); dayEventsEq.get(dk)!.push(net); }
         const sp = symPos.get(sym) ?? { pos: 0, n: 0 };
         sp.n++; if (net > 0) sp.pos++;
         symPos.set(sym, sp);
@@ -451,6 +454,11 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
       const f = (a: number[]) => a.length ? `${a.length}d ${(mean(a) * 1e4).toFixed(1)}bp` : "0d";
       regimeNote = ` REGIME(report-only, D-791): VIX3M<20 ${f(lowD)} | VIX3M>=20 ${f(highD)}.`;
     } catch { regimeNote = " REGIME: vix3m unavailable this run."; }
+    // D-800 REPORT-ONLY: the registered spec says "US equity"; the decile the code computes is 9% crypto/ETF/indices. Show
+    // the equity-only day-clustered figure beside the scored one so the mismatch is observed forward, never decided on.
+    { const eqM: number[] = []; for (const xs of dayEventsEq.values()) eqM.push(xs.reduce((a, c) => a + c, 0) / xs.length);
+      const t = eqM.length > 1 ? mean(eqM) / ((sd(eqM) || 1e-12) / Math.sqrt(eqM.length)) : 0;
+      regimeNote += ` EQUITY-ONLY(report-only, D-800): ${eqM.length}d ${eqM.length ? (mean(eqM) * 1e4).toFixed(1) : "0"}bp t ${t.toFixed(2)} vs the scored unfiltered series.`; }
 
     if (eventDays < 150) {
       return { metric: M, value: null, n: eventDays,

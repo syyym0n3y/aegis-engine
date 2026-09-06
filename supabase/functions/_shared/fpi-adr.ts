@@ -53,7 +53,12 @@ const FPI_REPO = new URL("../../../", import.meta.url).pathname;
 export async function loadFpiFlags(path = "data/fpi-flags.json"): Promise<FpiTable> {
   const p = path.startsWith("/") ? path : `${FPI_REPO}${path}`;
   let raw: string;
-  try { raw = await Deno.readTextFile(p); } catch { return { ...EMPTY_FPI, ratio: new Map(), exclude: new Set() }; }
+  // D-801: only a genuinely ABSENT file yields the documented empty table. Any other failure (PermissionDenied when a caller
+  // forgot --allow-read, EISDIR, I/O) is rethrown — the runner invoked market-cap-guard without --allow-read for weeks,
+  // this catch reported the file "MISSING", and the guard was RED in the loop while GREEN on the board (guard-status grants
+  // read). A permission problem must never impersonate a data gap.
+  try { raw = await Deno.readTextFile(p); }
+  catch (e) { if (e instanceof Deno.errors.NotFound) return { ...EMPTY_FPI, ratio: new Map(), exclude: new Set() }; throw e; }
   let j: Record<string, FpiFlag>;
   try { j = JSON.parse(raw); } catch { return { ...EMPTY_FPI, ratio: new Map(), exclude: new Set() }; }
   const ratio = new Map<string, number>(), exclude = new Set<string>();

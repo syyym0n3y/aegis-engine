@@ -31,6 +31,7 @@ const K = declareKnobs("prop-firm-ev", [
   { name: "EQUITY", def: "0", note: "1 = also price the D-785 equity liquid-decile belowPML K5 cell against stock-CFD prop terms (loads 12,300 symbols, ~3 min)" },
   { name: "EQ_RT_BP", def: "15", note: "stock-CFD prop round trip incl. spread+commission (pessimistic; swaps on a 5-day hold NOT modelled — stated)" },
   { name: "EQ_MIN_BARS", def: "500" },
+  { name: "EQ_EQUITY_ONLY", def: "0", note: "1 = build the equity set from asset_class=equity only (D-800: the unfiltered decile carries 111 non-equity names; spec read literally)" },
 ]);
 const SPLIT_TS = Math.floor(Date.parse(K.SPLIT + "T00:00:00Z") / 1000), PATHS = Number(K.PATHS), BLOCK = Number(K.BLOCK);
 const SIZES = K.SIZES.split(",").map(Number), FUNDED_MONTHS = Number(K.FUNDED_MONTHS);
@@ -91,7 +92,11 @@ const SETS: Record<string, DayRet[]> = { "FUTURES NQ+SPX (utc16 + 10AM-ET aboveP
 // chosen size) and books each event-day's 5-day return on its entry day — conservative on DD timing, stated as such.
 if (K.EQUITY === "1") {
   const EQ_RT = Number(K.EQ_RT_BP) / 1e4, MINB = Number(K.EQ_MIN_BARS);
-  const meta = await q(`trd_bars_deep?n_bars=gte.${MINB}&select=symbol,n_bars&order=n_bars.desc`) as { symbol: string; n_bars: number }[];
+  const metaAll = await q(`trd_bars_deep?n_bars=gte.${MINB}&select=symbol,n_bars,asset_class&order=n_bars.desc`) as { symbol: string; n_bars: number; asset_class: string }[];
+  // D-800: the unfiltered decile is 9% crypto/ETF/indices (incl. 4 bare indices). EQ_EQUITY_ONLY=1 re-ranks within equities
+  // — the registered spec's words — which measured modestly better and removes the weekend single-signal outliers.
+  const meta = K.EQ_EQUITY_ONLY === "1" ? metaAll.filter((m) => m.asset_class === "equity") : metaAll;
+  console.error(`  equity set universe: ${meta.length} symbols (${K.EQ_EQUITY_ONLY === "1" ? "asset_class=equity only" : "unfiltered, as the scorer"})`);
   const per: { sym: string; mdv: number; evs: DayRet[] }[] = []; let loaded = 0;
   for (const m of meta) {
     const row = (await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(m.symbol)}&select=bars`))?.[0];
@@ -112,13 +117,14 @@ if (K.EQUITY === "1") {
   per.sort((a, c) => c.mdv - a.mdv);
   const liq = per.slice(0, Math.floor(per.length * 0.1));
   const eqEv: DayRet[] = []; for (const p of liq) eqEv.push(...p.evs);
-  SETS[`EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`] = dayMeans(eqEv);
-  console.log(`  equity set: ${loaded} symbols loaded, liquid decile ${liq.length}, ${eqEv.length} events -> ${SETS[`EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`].length} event-days`);
+  const eqName = `EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5${K.EQ_EQUITY_ONLY === "1" ? ", EQUITY-ONLY" : ", unfiltered"})`;
+  SETS[eqName] = dayMeans(eqEv);
+  console.log(`  equity set: ${loaded} symbols loaded, liquid decile ${liq.length}, ${eqEv.length} events -> ${SETS[eqName].length} event-days`);
 
   // D-797 COMBO: one funded book running BOTH streams — utc16 index/crypto (hourly, 1x per event-day) + equity dips (daily
   // close, exposure/5). Summed by calendar day; on a day with both, concurrent exposure at "1x" is 1.5x book. The
   // "weakly correlated" claim is MEASURED here (Pearson r on overlapping days) — if r is high the combo is just one bet twice.
-  const eqName = `EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`, cfdName = "CFD 17-panel utc16 abovePDH";
+  const cfdName = "CFD 17-panel utc16 abovePDH";   // eqName is defined above, suffix-aware (the old duplicate here crashed the EQUITY-ONLY run: undefined.length)
   const A = new Map(SETS[cfdName].map((d) => [d.day, d.ret])), B = new Map(SETS[eqName].map((d) => [d.day, d.ret / 5]));
   const days = [...new Set([...A.keys(), ...B.keys()])].sort();
   const both = days.filter((d) => A.has(d) && B.has(d));
