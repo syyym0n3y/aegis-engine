@@ -102,7 +102,7 @@ while true; do
   if ! deno run --allow-net --allow-env ../scripts/universe-guard.ts; then
     echo "$(date -u +%FT%TZ) UNIVERSE GUARD RED — a promoted cross-sectional claim does not state its universe sensitivity"
   fi
-  if ! deno run --allow-read --allow-env ../scripts/plumbing-guard.ts; then
+  if ! deno run --allow-read --allow-env ../scripts/plumbing-guard.ts; then   # perms-ok: net/write are pattern literals inside its own rules + the BASELINE_UPDATE path; verified GREEN under exact flags (D-803)
     echo "$(date -u +%FT%TZ) PLUMBING GUARD RED — a new instance of a known defect class entered the codebase"
   fi
   # TYPECHECK THE WHOLE SCRIPTS TREE (D-693). `recover-delisted-perps.ts` had a `// plumbing-ok:` waiver written
@@ -137,8 +137,15 @@ while true; do
   # code the repo no longer contains — the exact condition that made the discovery daemon print two already-fixed
   # write-failures for an hour (D-719b). The agent-output guard reads LOG age; this reads CODE age. RED lists the pid
   # to kill (launchd KeepAlive respawns it on current source).
-  if ! deno run --allow-run --allow-env ../scripts/daemon-drift-guard.ts; then
+  if ! deno run --allow-run --allow-env --allow-read ../scripts/daemon-drift-guard.ts; then
     echo "$(date -u +%FT%TZ) DAEMON DRIFT GUARD RED — a daemon is running stale code; restart the pid(s) it names"
+  fi
+  # PERMISSIONS GUARD (D-803): every `deno run` line above and below must grant what its script (and its local import
+  # closure) actually calls — read/write/run/net/env. D-801: market-cap-guard was RED in this loop and GREEN on the board
+  # because this runner omitted --allow-read while guard-status grants it. Function-level attribution; `# perms-ok: <reason>`
+  # waivers are reported every run. Verified RED on the literal pre-D-801 runner before it was trusted.
+  if ! deno run --allow-read --allow-env ../scripts/permissions-guard.ts; then
+    echo "$(date -u +%FT%TZ) PERMISSIONS GUARD RED — a runner line grants less than its script needs; it fails in the loop and can pass on the board"
   fi
   # TRIAL IDEMPOTENCY GUARD (D-681): a clock inside run_key defeats the unique constraint that makes the trial counter
   # idempotent, so a daemon recomputing one identical answer forever also grows the ceiling every result must clear.
@@ -148,7 +155,7 @@ while true; do
   # FORWARD SCORER (D-474): scores registered factory leads on completed post-registration months. Exits in ~1s unless a
   # new month needs scoring (~monthly work on a daily cadence). Prints FORWARD STATUS every run so the accrual is visible
   # in this log; WRITE-FAILED markers here page via the agent-output guard. Selftest-verified end-to-end before wiring.
-  deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env ../scripts/factory-forward-score.ts || echo "$(date -u +%FT%TZ) FORWARD SCORER FAILED"
+  deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read ../scripts/factory-forward-score.ts || echo "$(date -u +%FT%TZ) FORWARD SCORER FAILED"
   # BASIS WATCH (D-432): the quarterly carry is real, needs no forecast, and has decayed to ~0 — but it is CONDITIONAL, not
   # dead. A filed-away research verdict would never notice it returning. DORMANT: surfaces only, nothing armed.
   deno run --allow-net --allow-env ../scripts/basis-watch.ts || true
@@ -205,7 +212,7 @@ while true; do
   # period1/period2 (NEVER range=max — Yahoo silently downgrades that to monthly bars) and merges on date, so a
   # re-run is a no-op. Writes data/cef-panel.json, the compact panel the scorer reads. GAB+PDI positive control
   # inside exits non-zero if the panel is stale. ~302 funds x 2 sequential fetches at 250ms — a few minutes.
-  deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read --allow-write ../scripts/refresh-cef.ts > ../data/cef.log 2>&1 || echo "$(date -u +%FT%TZ) CEF PANEL REFRESH FAILED — the fwd-cef-discount clock would score a frozen panel"
+  deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/refresh-cef.ts > ../data/cef.log 2>&1 || echo "$(date -u +%FT%TZ) CEF PANEL REFRESH FAILED — the fwd-cef-discount clock would score a frozen panel"
   # GLD daily holdings (D-745): issuer archive XLSX, tonnes + shares outstanding, live daily; controls inside.
   deno run --allow-net --allow-env ../scripts/ingest-gld-holdings.ts > ../data/gld.log 2>&1 || echo "$(date -u +%FT%TZ) GLD HOLDINGS INGEST FAILED"
   # EIA weekly inventories (D-743): commercial crude ex-SPR + Lower-48 gas storage, keyless XLS, idempotent, LIVE weekly
@@ -298,7 +305,7 @@ while true; do
   # closures or the worker's effective default — with a PRINTED allowlist for the legacy migration tooling — and on
   # continuity (last loop older than 36h, or the owned PostgREST unreachable), because an owned engine that has
   # stopped is silence, not sovereignty.
-  if ! deno run --allow-read --allow-env --allow-net --allow-run ../scripts/sovereignty-guard.ts; then
+  if ! deno run --allow-read --allow-env --allow-net --allow-run ../scripts/sovereignty-guard.ts; then   # perms-ok: the writeTextFile is a self-test tmp harness; verified GREEN under exact flags (D-803)
     echo "$(date -u +%FT%TZ) SOVEREIGNTY GUARD RED — a live path depends on a *.supabase.co host, or the owned engine has stopped"
   fi
   # GAP REGISTER (W2): a gap marked FILLED whose data has gone stale is worse than an unfilled one — it silently
