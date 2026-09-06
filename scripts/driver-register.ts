@@ -87,6 +87,9 @@ const REG: Driver[] = [
   { cls: "equity-index", name: "dealer gamma / positioning", use: "condition",
     probe: "trd_perp_oi?venue=eq.cboe&interval=eq.naive_gex_usd&select=ts&limit=1",
     proxy: "NAIVE gamma exposure per underlying (D-806): Black-Scholes gamma x OI x 100 x spot^2 x 1%, calls +, puts - (the D-792 Deribit convention), from CBOE free delayed chains for 20 underlyings (SPX, SPY, QQQ, IWM, TLT, GLD, HYG, EEM, XLE, XLF + 10 single names), daily via collect-us-options.ts. A CONVENTION, not a measured dealer book. trd_gex_state (one all-NULL row, D-704) remains an advertised-but-empty schema and is NOT the source." },
+  { cls: "equity-index", name: "options pressure history (CBOE daily put/call ratios)", use: "condition",
+    probe: "trd_macro_series?series=eq.cboe_pc_index&select=d&limit=1",
+    proxy: "HELD (D-809): index / total / equity / VIX put-call ratios daily from cdn.cboe.com (2020 ->), ingest-cboe-putcall.ts in the runner. Tested on the SPX value-area composite (D-809b)." },
   { cls: "equity-index", name: "earnings revisions", use: "condition",
     proxy: "trd_earnings holds report dates", blocked: "Estimate REVISIONS need an analyst-estimate feed; none is held and the free sources are licensed." },
   // ---- FX ------------------------------------------------------------------------------------------------------
@@ -111,7 +114,11 @@ const REG: Driver[] = [
   { cls: "crypto", name: "open interest", use: "condition", probe: "trd_perp_oi?select=ts&limit=1" },
   { cls: "crypto", name: "on-chain activity", use: "condition", probe: "trd_perp_oi?venue=eq.blockchain.info&select=ts&limit=1" },
   { cls: "crypto", name: "order-book depth / aggressor flow", use: "predict",
-    proxy: "taker-buy volume is held in the kline payload", blocked: "Full book depth is not stored; only the aggregated aggressor split." },
+    probe: "trd_macro_series?series=eq.binance_mirror_bookDepth_BTCUSDT&select=d&limit=1",
+    proxy: "L2 SUMMARY held (D-808/809): per-minute notional at +/-1..5% of mid, both sides, BTC/ETH/SOL 2023-01 -> (Binance public mirror, data/binance-mirror/bookDepth), aggregated hourly. Tested: depth imbalance -> next hour is significant and 0.1-0.2x the fee (SUB-FEE, D-808). Full order-book levels are NOT stored; the mirror publishes bands, not the book." },
+  { cls: "crypto", name: "positioning / flow metrics (top-trader L/S, taker buy/sell ratio, 5-min footprint)", use: "predict",
+    probe: "trd_macro_series?series=eq.binance_mirror_metrics_BTCUSDT&select=d&limit=1",
+    proxy: "HELD (D-808/809): Binance 5-minute metrics (OI, top-trader long/short account + position ratios, taker buy/sell volume ratio) and 5-minute klines with taker volume, BTC/ETH/SOL 2023-01 ->, in data/binance-mirror. Tested: all SUB-FEE (largest 0.18x fee); footprint proxy adds < 2bp/sd over plain delta (D-808)." },
   { cls: "crypto", name: "options surface (Deribit DVOL/skew/IV)", use: "condition", probe: "trd_perp_oi?venue=eq.deribit&interval=eq.dvol&select=ts&limit=1" },
   // ---- SINGLE-NAME EQUITY --------------------------------------------------------------------------------------
   { cls: "equity-single", name: "price + volume panel", use: "predict", probe: "trd_bars_deep?asset_class=eq.equity&select=symbol&limit=1" },

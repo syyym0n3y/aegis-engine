@@ -54,6 +54,7 @@ const FEEDS: [string, string, string, number, string][] = [
   // here silently freezes the only market-maker-positioning series the programme holds, which is exactly the
   // "frozen snapshot answering plausibly" failure this guard exists for.
   ["trd_macro_series?series=eq.deribit_btc_opt_pcr&select=d&order=d.desc&limit=1", "deribit options", "d", 2, "ingest-deribit-options.ts"],
+  ["trd_macro_series?series=eq.cboe_pc_index&select=d&order=d.desc&limit=1", "cboe daily put/call ratios (D-809)", "d", 4, "ingest-cboe-putcall.ts"],
   // D-799: the liquid-decile daily equity panel — clock #18's INPUT. The breadth row above watches the same panel with an
   // 18-day budget (fine for a derived breadth series, fatal for a live clock: a frozen panel accrues zero forward
   // event-days while the scorer says "not-yet-computable"). The refresher writes this mark only after its own positive

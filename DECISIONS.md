@@ -17955,3 +17955,80 @@ CONTINUITY LAW (D-613): a clock nobody can score is an anecdote, so the scorer e
 `ADD=1 DATE PHASE EQUITY [PAYOUT] [BREACH] [NOTE]` per statement day; append-only, chronological, a correction is a new
 entry). Empty ledger → not-yet-computable, deliberately distinguished from inconclusive. Clocks: 18.
 GOLD: prop — the conditional capital-access route now has its rule written before its data exists; what remains is the operator's fee and the ledger entries.
+
+## D-808 (2026-09-06) THE OPERATOR'S ORDER-FLOW STACK, PRE-REGISTERED AND MEASURED — value-area levels, quarter levels, order-book depth, positioning/flow metrics and a 5-minute footprint proxy: four claims, four retractions, and the crypto L2 barrier closed for free
+
+Operator instruction: trade daily with L2, volume footprint, session volume profiles, q-levels and order flow across all
+instruments. "Trade daily" stays behind the gates until a clock matures (none has; the prop clock D-807 is the one
+capital-access lane). Each named tool became a pre-registered claim with a numeric two-sided rule written before its data
+was touched (`trd_prereg` D-808-*). Data: crypto L2 and flow are FREE on Binance's public mirror — per-minute book depth at
+±1–5% (2023→), 5-minute positioning/OI/taker ratios (2020→), 5-minute klines with taker volume — ingested for BTC/ETH/SOL
+(`ingest-binance-mirror.ts`, files under `data/binance-mirror`, continuity marks in the DB, register probes). FX tick data
+is reachable (Dukascopy, D-504) so an FX footprint is buildable, not built. Equity L2/footprint/flow: no free source — BLOCKED, paid.
+| claim | universe | result | verdict |
+|---|---|---|---|
+| prior-session VA edges (POC/VAH/VAL) reverse at first touch more than random levels | 105 hourly instruments, 4.38M touches | reversal net VAH −7.1bp t −6.0, VAL −8.5 t −7.0, POC −2.3 t −2.2; EXCESS over random −7.9 / −9.6 / −3.2bp, t −6.7 / −7.9 / −3.1; agree 26–34/105 | **SIGN MISSED** (t −10.2) |
+| quarter levels (big-figure/4) reverse at first touch | 104 instruments, 1.93M touches | excess −0.7bp t −1.6 (.00/.50), −1.0 t −2.3 (.25/.75); indistinguishable | **SIGN MISSED / NULL** |
+| depth imbalance (±1%, ±5%) → next hour, mean effect ≥ 1× fee | BTC/ETH/SOL, ~31k hours each | ±5%: +0.79bp/sd t 3.24, +0.43 t 1.35, +1.37 t 2.99 — sign MATCHED, **0.1–0.2× the 7bp fee** | **SUB-FEE** (the D-426 shape) |
+| flow metrics + footprint proxy → next hour | same | largest 1.24bp/sd (0.18× fee), signs mixed; footprint excess over plain delta +0.14 / +0.24 / +1.58bp/sd (< +2) | **SUB-FEE / NULL** |
+The level result is the record's shape again: price CONTINUES through value-area edges relative to random levels, but the
+absolute move is ~0bp gross after the class round trip, so neither the fade nor the breakout is tradable — the same
+as PDH/PDL on the same bars (PDL reversal −7.1bp net). The continuation direction is an unregistered flip, not claimable
+(D-511b). Depth imbalance is statistically real on two of three symbols and worth a fifth of the fee: real and useless.
+All four pre-registrations recorded `retracted` with full notes; four lineage rows rejected; trials 10 + 15. Nothing promoted.
+GOLD: gap — the L2/flow barrier for crypto is closed with free data and the tools the operator named are measured, not believed; equities stay blocked-paid, stated.
+
+## D-810 (2026-09-06) THE SUBSTRATE RESTARTS AND NOTHING SAYS SO — PostgREST has restarted 15 times; a restart mid-cycle turns fail-closed guards RED with the board green; the 30th guard names the cause
+
+Found while the D-808 tests ran: the coverage loop's 10:09:40Z cycle reported 27/28 with `MARKET CAP GUARD RED — market
+caps are mixing two share bases`, and the board run a minute later was green for that guard — the D-801 shape (RED in
+the loop, GREEN on the board). This time the permission flags were right. The cause: `docker logs aegis-rest` shows
+PostgREST starting at **10:09:38Z**, two seconds before the guard's RED, and the database log shows at that second
+`could not receive data from client: Connection reset by peer / unexpected EOF on client connection with an open
+transaction` — the client that vanished was PostgREST. The guard's stderr read `cannot reach equity bars: error sending
+request … localhost:33000`. It failed CLOSED on an unreachable database, which is correct, and reported it in the
+vocabulary of its own subject, which is not.
+What is established: the container has **15 "Starting PostgREST" lines** since creation (RestartCount 2 by policy; the
+rest manual/recreate); the database container never restarted (up since 2026-08-19, RestartCount 0); `healthcheck.sh`
+(which would restart the DB) is NOT scheduled (no crontab, no plist); OOMKilled=false, ExitCode 0, no memory limit; at
+least two restarts coincide with research scripts pulling whole panels through REST (D-798's restart during the 12,300-
+symbol equity run; today's during `levels-reaction.ts` loading 105 instruments). **The cause is not established** — an
+exit code of 0 mid-query is not an OOM kill and not a healthcheck; it is recorded as unexplained, with the correlation.
+The fix I can make: `scripts/rest-restart-guard.ts` counts starts in the container log and goes RED when the count rose
+since the last cycle, printing the new start timestamps and saying plainly that every fail-closed RED in that cycle may be
+the substrate; it advances its baseline so it goes GREEN next cycle (a guard that cannot go green gets ignored, D-586).
+Self-tested (RED on a new start, GREEN unchanged), baseline set at 15, falsified by lowering the baseline (RED) and
+recovered (GREEN), wired into the runner after the decisions guard and into the board; registry CONSISTENT at **30**.
+Its first board run threw: the board grants no `--allow-write` and the guard persists a baseline — RED on the board,
+GREEN in the loop, the D-801 shape mirrored, caught within the hour by running the board. A read-only run now returns
+the verdict against the persisted baseline and says it did not advance it; verified under both flag sets.
+Standing rule restated from D-798: no whole-panel REST reads while a cycle is running; page small and pace.
+GOLD: reliability — a substrate restart now names itself on the board instead of impersonating a data defect.
+
+## D-809 (2026-09-06) THE CONFLUENCE, PRE-REGISTERED — POC × futures pressure × delta reversal on crypto, and POC × options pressure on the index: both NULL; and the objective the operator named ("high win rate") is the wrong one, measured
+
+Operator instruction: culminate all factors — point of control, options/futures positioning ("where the pressure lies"),
+delta reversals on the footprint — into levels and exact entries for a high win rate. Two corrections stated before any
+data: (1) win rate is a property of the target-to-stop geometry, not of an entry — so every management here reports win
+rate BESIDE its 2:1 payoff, where 33.3% is breakeven before fees; (2) a confluence assembled after looking is in-sample
+(SELECTION LAW), so the composite was registered first and held to BEATING ITS OWN COMPONENTS by ≥ 5bp with ≥ 200 trades.
+**D-809-poc-pressure-delta-composite** (BTC/ETH/SOL, 5-minute, 2023-01→2026-08, net 7bp; level = first touch of the
+prior-session VA edge; P = open interest rose over 4h while price moved into the level AND the top-trader long/short
+ratio turned; D = last-15-minute taker delta reverses the preceding 45 minutes toward the level):
+| ablation | n | M1 6h net | t | M2 2:1 win | M2 net |
+|---|---|---|---|---|---|
+| level only | 4,915 | −9.2bp | −3.71 | 32.0% | −7.0bp |
+| level + pressure | 1,306 | −14.8bp | −2.94 | 32.5% | −7.0bp |
+| level + delta reversal | 417 | −6.6bp | −0.90 | 34.8% | −1.8bp |
+| **composite** | **85** | −7.5bp | −0.40 | 32.9% | −7.5bp |
+| control: delta reversal at random levels | 238 | −14.0bp | −1.47 | | |
+The pressure filter selects MORE continuation (an unregistered flip, not claimable); the delta filter thins the sample to
+85 and adds nothing beyond random levels; every win rate sits at or below the 33.3% breakeven of its own geometry.
+**D-809b-spx-poc-options-pressure** (USA500IDXUSD hourly, prior-day CBOE index put/call z60 ≥ +1 / ≤ −1, net 4bp; the
+put/call HISTORY was ingested for this: `ingest-cboe-putcall.ts`, 2020→, daily in the runner with a continuity budget):
+level-only n 2,201 −3.2bp t −2.76 (28% win at 2:1); level+put/call n 374 −2.7bp t −0.83; VIX3M-conditioned control −1.0bp;
+Nasdaq replication the same shape. Options pressure does not change what the level does, which is nothing tradable.
+**Options × futures relation, honestly:** per-strike index positioning (naive GEX, D-806) has ~15 daily points and Deribit
+2 — UNTESTED by data; registered as a forward test at ≥ 250 points inside the D-809 pre-registration, not a claim.
+Both pre-registrations `retracted` with full notes; two lineage rows rejected; trials 18 + 8. Nothing promoted.
+GOLD: research — the operator's confluence is measured against its own parts and against random levels, and loses to both; the register's crypto L2/flow and index options-pressure inputs are now HELD (50 held / 3 blocked) for whatever is registered next.

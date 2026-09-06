@@ -49,10 +49,10 @@
 |---|---|---|
 | borrow fee / availability | "IBKR FTP blocked" (my memory note) | **HELD** — iBorrowDesk, 212 names, 113k rows, fresh to 09-04, in the runner (the register was right; the note was stale — corrected) |
 | dealer gamma | "all-NULL table" | **UNBLOCKED TONIGHT** — naive gamma exposure per underlying from CBOE free chains, 20 underlyings daily (`trd_perp_oi` venue cboe, interval `naive_gex_usd`; SPX $30.7bn per 1% move); register 47 HELD / 4 blocked (was 45 / 6) |
-| per-strike equity option OI | "gap" | HELD for 20 underlyings (the collector reads full chains daily; only aggregates are stored) — a full-universe surface stays BLOCKED — paid |
+| per-strike equity option OI | "gap" | HELD for 20 underlyings (aggregates + naive GEX daily); options-pressure HISTORY now HELD: CBOE daily put/call ratios 2020→ (`ingest-cboe-putcall.ts`, D-809); full-universe surface BLOCKED — paid |
 | delisted equity cohort | "27.3% missing" | FILLED to IEX's limit (D-723/724); pre-2016 delistings BLOCKED — no free source found |
 | crypto delisted cohort | "no reachable endpoint enumerates it" (D-639) | **UNBLOCKED TONIGHT** — `data.binance.vision` allowlisted (operator-authorized free host): 874 USDT-M contracts ever = 510 held + 352 currently listed under the 400-day threshold + **12 delisted**; 2 had usable history and are ingested (BLUEBIRD, FOOTBALL), 10 have <400 usable bars (recorded, not written). The cohort is CLOSED with a coverage statement |
-| L2 order-book depth | OFF | OPERATOR's explicit exclusion |
+| L2 order-book depth | OFF (2026-09-05) → requested (2026-09-06) | **CRYPTO HELD** (D-808): Binance mirror per-minute depth bands ±1–5%, positioning/OI/taker metrics, 5-min taker klines, BTC/ETH/SOL 2023→; tested SUB-FEE. **Equities/FX L2: BLOCKED — paid** (FX tick data reachable via Dukascopy; footprint buildable, not built) |
 | earnings revisions | licensed | BLOCKED — paid |
 | central-bank reserves | quarterly, lagged | BLOCKED — cadence (explanatory only) |
 | gold options surface | paid | BLOCKED — paid |
@@ -63,7 +63,8 @@
 |---|---|
 | cockpit-render positive control | PASSES under the runner's exact line (28/28 shown, 29 on disk with 1 declared exemption, live trial count) — the earlier failure was the board-count mismatch of the night the 28th guard landed |
 | `refresh-bars.ts` writes bars only | FIXED (writes first/last_date, n_bars, updated_at) + `backfill-bars-metadata.ts` corrected 32 stale consumer rows (SPY last_date 08-28 → 09-04). Non-consumer, non-decile names keep stale metadata; scope stated, no consumer reads it |
-| transient RED ~1 min after kickstart | NOT REPRODUCED in two controlled attempts tonight (board green at +2s and +62s); recorded as unreproduced, not fixed |
+| transient RED ~1 min after kickstart | NOT REPRODUCED in two controlled attempts; recorded as unreproduced |
+| PostgREST restarts under panel reads (15 starts; RED-in-loop/GREEN-on-board) | CAUSE NOT ESTABLISHED (exit 0, no OOM, DB never restarted, healthcheck unscheduled); `rest-restart-guard.ts` (D-810) now names a restart on the board; rule: no whole-panel REST reads during a cycle |
 | `wealth-ledger.ts` "18 clocks" literal | FIXED (live count, D-804) |
 | permissions class (D-801) | GUARDED (D-803) |
 | decisions without a mechanism line | GUARDED (D-804) |
@@ -74,4 +75,4 @@
 - **BLOCKED — paid:** tick-level CVD/OI for equities · full options surface · earnings revisions · gold options.
 - **BLOCKED — no source found:** pre-2016 delisted equity history.
 - **BY DESIGN:** real-money bridge · clock rules · the calm-regime weakness of clock #18.
-- **RESEARCH (unblocked, $0):** nothing queued — the D-804 queue is closed (D-805) and the break is described (D-806). New leads enter only with a PREREG.
+- **RESEARCH (unblocked, $0):** nothing queued — the D-804 queue is closed (D-805), the break is described (D-806), and the operator's order-flow/confluence stack is measured (D-808/809: 7 pre-registrations, 7 retractions). Registered forward test: index/Deribit options positioning at ≥ 250 daily points. New leads enter only with a PREREG.

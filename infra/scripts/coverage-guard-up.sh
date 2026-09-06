@@ -153,6 +153,11 @@ while true; do
   if ! deno run --allow-read --allow-env ../scripts/decisions-guard.ts; then
     echo "$(date -u +%FT%TZ) DECISIONS GUARD RED — a decision entry >= D-804 does not name the mechanism it feeds"
   fi
+  # REST RESTART GUARD (D-810): PostgREST restarted 15 times since creation, two coinciding with research panel reads; a
+  # restart mid-cycle turns every fail-closed guard RED and nothing named the cause. RED when the start count rose.
+  if ! deno run --allow-env --allow-read --allow-write --allow-run ../scripts/rest-restart-guard.ts; then
+    echo "$(date -u +%FT%TZ) REST RESTART GUARD RED — PostgREST restarted since the last cycle; guard REDs in this cycle may be the substrate, not data"
+  fi
   # TRIAL IDEMPOTENCY GUARD (D-681): a clock inside run_key defeats the unique constraint that makes the trial counter
   # idempotent, so a daemon recomputing one identical answer forever also grows the ceiling every result must clear.
   if ! deno run --allow-net --allow-env --allow-read ../scripts/trial-idempotency-guard.ts; then
@@ -226,6 +231,9 @@ while true; do
   deno run --allow-net --allow-env ../scripts/ingest-eia-inventories.ts > ../data/eia-inv.log 2>&1 || echo "$(date -u +%FT%TZ) EIA INVENTORIES INGEST FAILED"
   # CBOE free vol indices (D-737): SKEW/VVIX/VIX3M options-regime, keyless, idempotent.
   deno run --allow-net --allow-env ../scripts/ingest-cboe.ts > ../data/cboe.log 2>&1 || echo "$(date -u +%FT%TZ) CBOE INGEST FAILED"
+  # CBOE DAILY PUT/CALL RATIOS (D-809): index/total/equity/VIX put-call history from cdn.cboe.com daily JSON (2020->), the
+  # options-pressure input for the SPX composite and the forward options-positioning test. Incremental, sequential, paced.
+  deno run --allow-net --allow-env ../scripts/ingest-cboe-putcall.ts > ../data/cboe-putcall.log 2>&1 || echo "$(date -u +%FT%TZ) CBOE PUT/CALL INGEST FAILED"
   # D-792: Deribit BTC/ETH option-book snapshot (per-strike OI -> PCR, ATM IV, naive GEX). Free, keyless, allowlisted,
   # 2 sequential fetches. FORWARD-ONLY — Deribit exposes no per-strike history, so this feed only becomes a testable
   # conditioner once months of daily marks exist. Guarded: a Deribit outage logs and never breaks the loop.
