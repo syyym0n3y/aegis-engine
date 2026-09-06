@@ -42,7 +42,7 @@ while true; do
   # inspected what the agents actually compute and print, and three real defects sat in production while all seven were
   # green (autopilot surfacing a false positive off a ceiling 1,530x too low; positioning claiming "validated edges"
   # against its own stored caveat; discovery ranking a bankrupt strategy by its Sharpe). This one reads the logs.
-  if ! deno run --allow-net --allow-env --allow-read ../scripts/agent-output-guard.ts; then
+  if ! deno run --allow-net --allow-env --allow-read --allow-run ../scripts/agent-output-guard.ts; then   # --allow-run: D-798 stale-stderr rule reads ps
     echo "$(date -u +%FT%TZ) AGENT OUTPUT GUARD RED — a live agent is printing an impossible value or an unsupported claim"
   fi
   # PLUMBING GUARD (D-467): static lint over the repo's own TypeScript — the defect classes that silently distorted

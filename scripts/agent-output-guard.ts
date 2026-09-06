@@ -41,6 +41,19 @@ type Finding={agent:string;what:string};
 const bad:Finding[]=[];
 // dedupe: one distinct problem per agent, however many lines exhibit it
 const push=(f:Finding)=>{ if(!bad.some(b=>b.agent===f.agent&&b.what===f.what)) bad.push(f); };
+// D-798 helpers. stderr written strictly before the live process started (60s grace for a restart racing a write) is stale.
+function stderrIsStale(errMtimeMs:number,procStartMs:number,graceMs=60_000):boolean{ return errMtimeMs < procStartMs - graceMs; }
+// Start time of the agent's LIVE process, from ps (macOS lstart). Shell loops are `<agent>-up.sh` (coverage-guard-up.sh for
+// "coverage"); deno daemons are `scripts/aegis-<agent>.ts`. null when not found or when --allow-run is absent.
+async function procStartMs(agent:string):Promise<number|null>{
+  try{
+    const p=new Deno.Command("ps",{args:["-axo","lstart=,command="],stdout:"piped",stderr:"null"}); const out=new TextDecoder().decode((await p.output()).stdout);
+    const pats=[agent==="coverage"?/coverage-guard-up\.sh/:new RegExp(`${agent}-up\\.sh`), new RegExp(`scripts/aegis-${agent}\\.ts`)];
+    for(const line of out.split("\n")){ if(!pats.some(r=>r.test(line))||/agent-output-guard/.test(line))continue;
+      const m=line.match(/^\s*(\w{3}\s+\w{3}\s+\d+\s+[\d:]+\s+\d{4})\s/); if(!m)continue; const t=Date.parse(m[1]); if(Number.isFinite(t))return t; }
+    return null;
+  }catch{ return null; }
+}
 const check=(agent:string,text:string,ageH:number|null,errBytes:number)=>{
   // 1. RUIN reported as an ordinary drawdown
   for(const m of text.matchAll(/maxDD\s*(-?\d+(?:\.\d+)?)%/gi)){ const v=Math.abs(+m[1]);
@@ -71,12 +84,25 @@ for(const a of AGENTS){
     push({agent:a,what:"log file missing"});
     console.log(`  RED  ${a.padEnd(13)} ${"".padEnd(9)}log file missing`);
     continue; }
-  try{ errB=(await Deno.stat(`${DIR}${a}.err`)).size; }catch{ /* no err file is fine */ }
+  // D-798: ONLY THE LATEST RUN applies to stderr too. launchd APPENDS to StandardErrorPath across restarts, so after the
+  // D-793 restart the guard read two lines from the PREVIOUS incarnation (both root causes already fixed and verified)
+  // as a current problem. Rule: stderr counts only if it was written at or after the agent's live process started; older
+  // bytes are a record of what WAS wrong. If no live process is found (a batch agent) or `ps` is unavailable, the old
+  // rule stands — never silently relax. Pure comparison `stderrIsStale` is self-tested below.
+  let errNote="";
+  try{ const est=await Deno.stat(`${DIR}${a}.err`); errB=est.size;
+    const ps=await procStartMs(a);
+    if(errB>0&&ps!==null&&stderrIsStale(est.mtime?.getTime()??0,ps)){ errNote=` (stale stderr: ${errB} bytes written before the live process started ${new Date(ps).toISOString().slice(11,19)}Z — previous incarnation, ignored)`; errB=0; }
+  }catch{ /* no err file is fine */ }
   check(a,text,ageH,errB);
+  if(errNote) console.log(`  note ${a.padEnd(13)}${errNote}`);
   const mine=bad.filter(b=>b.agent===a);
   console.log(`  ${mine.length?"RED ":"PASS"} ${a.padEnd(13)} ${ageH!==null?`${ageH.toFixed(0)}h old`.padEnd(9):"".padEnd(9)} ${mine.length?mine.map(m=>m.what).join(" | "):"output consistent"}`);
 }
 if(SELFTEST){
+  // D-798: the stale-stderr comparison must be right in all three directions, or a guard that ignores stderr is worse than one that over-flags.
+  const st:[number,number,boolean][]=[[1000,200_000,true],[199_000,200_000,false],[300_000,200_000,false]];   // long before -> stale; within grace -> current; after -> current
+  for(const [e,p,want] of st){ const got=stderrIsStale(e,p); console.log(`  stderrIsStale(err=${e},proc=${p}) = ${got} ${got===want?"OK":"FAIL"}`); if(got!==want)Deno.exit(2); }
   // Prove every branch fires. Synthetic text, never written to disk.
   console.log(`\n  SELFTEST — synthetic agent output, all branches:`);
   const before=bad.length;
