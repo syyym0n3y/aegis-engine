@@ -30,6 +30,14 @@ const K = declareKnobs("refresh-bars", [
   { name: "STALE_D", def: "3", note: "only refetch symbols whose newest bar is older than this" },
 ]);
 
+// D-798: resolve CONSUMER against the REPO, not the cwd. The daily runner executes with cwd=infra; the default
+// "scripts/aegis-attribution.ts" became "infra/scripts/…" → NotFound → this refresher has NEVER succeeded under launchd
+// since it was wired (the equity panel it owns froze at 08-28 while breadth/attribution reported on it). Third instance
+// of the same defect class tonight (registry-guard D-793, borrow/refresh adjacency), found only because D-793 made the
+// loop execute its own body. An env override may be absolute or repo-relative.
+const REPO = new URL("..", import.meta.url).pathname;
+const CONSUMER = K.CONSUMER.startsWith("/") ? K.CONSUMER : `${REPO}${K.CONSUMER}`;
+
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() {
@@ -51,7 +59,7 @@ const EXTRA = ["LQD", "IEF", "JNK", "IWD", "MTUM", "QUAL", "USMV", "VLUE",
 
 // Parse the consumer's own lists rather than restating them. A restated list is a second thing to remember, and this
 // whole defect is what happens when a second thing to remember is not remembered.
-const src = await Deno.readTextFile(K.CONSUMER);
+const src = await Deno.readTextFile(CONSUMER);
 const m = src.match(/const\s+UNIVERSE\s*=\s*\[([^\]]*)\]/);
 if (!m) { console.error(`!! cannot parse a UNIVERSE array out of ${K.CONSUMER} — refusing to guess at what must stay fresh. RED.`); Deno.exit(1); }
 const consumerUniverse = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
