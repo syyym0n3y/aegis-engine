@@ -28,6 +28,9 @@ const K = declareKnobs("prop-firm-ev", [
   { name: "FUT_RT_BP", def: "2" }, { name: "CFD_RT_BP", def: "4" }, { name: "CRYPTO_RT_BP", def: "7" }, { name: "FX_RT_BP", def: "2" },
   { name: "FUNDED_MONTHS", def: "6", note: "months of funded trading simulated after a pass" },
   { name: "SEED", def: "7" },
+  { name: "EQUITY", def: "0", note: "1 = also price the D-785 equity liquid-decile belowPML K5 cell against stock-CFD prop terms (loads 12,300 symbols, ~3 min)" },
+  { name: "EQ_RT_BP", def: "15", note: "stock-CFD prop round trip incl. spread+commission (pessimistic; swaps on a 5-day hold NOT modelled — stated)" },
+  { name: "EQ_MIN_BARS", def: "500" },
 ]);
 const SPLIT_TS = Math.floor(Date.parse(K.SPLIT + "T00:00:00Z") / 1000), PATHS = Number(K.PATHS), BLOCK = Number(K.BLOCK);
 const SIZES = K.SIZES.split(",").map(Number), FUNDED_MONTHS = Number(K.FUNDED_MONTHS);
@@ -82,6 +85,37 @@ for (const s of ["BTCUSDT", "ETHUSDT", "BCHUSDT", "XRPUSDT", "LINKUSDT", "ADAUSD
 for (const s of ["XAUUSD", "USA500IDXUSD", "USATECHIDXUSD"]) cfdEv.push(...eventsAbovePDH(await loadFx(s), (ts) => new Date(ts * 1000).getUTCHours() === 16, CFD_RT));
 for (const s of ["EURUSD", "GBPUSD", "AUDUSD", "USDJPY"]) cfdEv.push(...eventsAbovePDH(await loadFx(s), (ts) => new Date(ts * 1000).getUTCHours() === 16, FX_RT));
 const SETS: Record<string, DayRet[]> = { "FUTURES NQ+SPX (utc16 + 10AM-ET abovePDH)": dayMeans(futEv), "CFD 17-panel utc16 abovePDH": dayMeans(cfdEv) };
+// EQUITY set (opt-in): the D-785 clock-#18 cell — liquid top-decile US equities, close < prior 20-day low -> long, K=5 DAYS.
+// The only construction that did NOT break in 2026 (D-784/785). Priced against stock-CFD prop terms at EQ_RT_BP. A 5-day
+// hold means up to 5 overlapping positions per name-day, so the sim divides notional by 5 (concurrent exposure ≈ the
+// chosen size) and books each event-day's 5-day return on its entry day — conservative on DD timing, stated as such.
+if (K.EQUITY === "1") {
+  const EQ_RT = Number(K.EQ_RT_BP) / 1e4, MINB = Number(K.EQ_MIN_BARS);
+  const meta = await q(`trd_bars_deep?n_bars=gte.${MINB}&select=symbol,n_bars&order=n_bars.desc`) as { symbol: string; n_bars: number }[];
+  const per: { sym: string; mdv: number; evs: DayRet[] }[] = []; let loaded = 0;
+  for (const m of meta) {
+    const row = (await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(m.symbol)}&select=bars`))?.[0];
+    const b = ((row?.bars || []) as number[][]).filter((x) => Array.isArray(x) && x.length >= 5 && x[4] > 0).sort((a, c) => a[0] - c[0]);
+    if (b.length < MINB + 6) continue;
+    const dv: number[] = []; for (const x of b) { if (x[0] >= SPLIT_TS) break; dv.push(x[4] * (x[5] ?? 0)); }
+    const mdv = dv.length ? dv.sort((a, c) => a - c)[Math.floor(dv.length / 2)] : 0;
+    const evs: DayRet[] = [];
+    for (let i = 20; i < b.length - 6; i++) {
+      if (b[i][0] < SPLIT_TS) continue;
+      let lo = Infinity; for (let j = i - 20; j < i; j++) if (b[j][3] < lo) lo = b[j][3];
+      if (!(b[i][4] < lo)) continue;
+      evs.push({ day: new Date(b[i][0] * 1000).toISOString().slice(0, 10), ret: Math.log(b[i + 5][4] / b[i][4]) - EQ_RT });
+    }
+    per.push({ sym: m.symbol, mdv, evs }); loaded++;
+    if (loaded % 2000 === 0) console.error(`  equity: loaded ${loaded}/${meta.length}`);
+  }
+  per.sort((a, c) => c.mdv - a.mdv);
+  const liq = per.slice(0, Math.floor(per.length * 0.1));
+  const eqEv: DayRet[] = []; for (const p of liq) eqEv.push(...p.evs);
+  SETS[`EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`] = dayMeans(eqEv);
+  console.log(`  equity set: ${loaded} symbols loaded, liquid decile ${liq.length}, ${eqEv.length} events -> ${SETS[`EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`].length} event-days`);
+}
+const exposureDiv = (setName: string) => setName.startsWith("EQUITY") ? 5 : 1;
 function stats(xs: number[]) { const n = xs.length; if (!n) return { n: 0, mean: 0, sd: 0, t: 0 }; const m = xs.reduce((a, c) => a + c, 0) / n; const sd = Math.sqrt(n > 1 ? xs.reduce((a, c) => a + (c - m) ** 2, 0) / (n - 1) : 0); return { n, mean: m, sd, t: sd > 0 ? m / (sd / Math.sqrt(n)) : 0 }; }
 const bp = (x: number) => (x * 1e4).toFixed(1);
 
@@ -140,7 +174,7 @@ for (const [setName, all] of Object.entries(SETS)) {
       console.log(`       size   P(pass)  med days  P(fail)  P(consist.)  fee/pass   funded $/mo  P(blow, ${FUNDED_MONTHS}mo)   EV per fee $   | NO-EDGE P(pass)`);
       for (const sz of SIZES) {
         TRIALS++;
-        const notional = sz * R.book;
+        const notional = sz * R.book / exposureDiv(setName);   // equity: 5 overlapping 5-day positions -> concurrent exposure ≈ sz
         let sim = simulate(xs, R, notional, false, R.target);
         if (R.phase2Target && Number.isFinite(sim.pPass)) { const s2 = simulate(xs, R, notional, false, R.phase2Target); sim = { ...sim, pPass: sim.pPass * s2.pPass, medDays: sim.medDays + s2.medDays }; }
         const ne = simulate(xs, R, notional, true, R.target);

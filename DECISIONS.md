@@ -17613,3 +17613,27 @@ operator chooses it: **one** FTMO-style eval at 0.5× as a forward experiment wh
 forward clock with numeric pass/kill rules BEFORE the first trade (PRE-COMMITMENT LAW), the funded phase run exactly
 as the clock's rule (utc16 close>PDH → long, K=6, 1.0×/N per day), and the second account only after the first has a
 recorded outcome — because the second is the same bet again, not a new one. 40 counted trials. Clocks live: 18.
+
+**D-795 addendum (same night) — the money line, captured:** BACKDATE=2023-01-01 on clock #18 → `MONEY(report-only): at a
+100,000 book, 1.0x notional per event-day, forward P&L to date +206,077 over 1,017 event-days (203/day)`. In-sample-
+equivalent, already net of the rule's 10bp, flat-sized (no compounding), and — per D-791 — made on the 405 VIX3M≥20
+days while the 612 calm days lost money. It is a description of the past window in currency; the forward clock decides.
+
+**D-796 addendum (same night) — the EQUITY cell priced against stock-CFD prop terms (`EQUITY=1`).** Clock #18's cell
+(liquid top-decile, close < prior 20-day low → long, K=5 DAYS) at 15bp RT, notional ÷5 for the five overlapping
+positions, 12,261 symbols loaded → 1,226 liquid → 61,779 events → 1,020 event-days:
+| window | size | P(pass both) | no-edge | fee/pass | funded $/mo | P(blow, 6 mo) | EV per fee $ |
+|---|---|---|---|---|---|---|---|
+| OOS 2023+ (+15.2bp/day, day-t 1.05) | 0.5× | 36% | 26% | $1,611 | $799 | **5%** | +2.0 |
+| | 1× | 46% | 44% | $1,267 | $1,375 | 47% | +5.5 |
+| **2026-only (+46.0bp/day, day-t 1.11)** | **0.5×** | **80%** | 35% | $723 | $1,240 | **4%** | **+9.3** |
+| | 1× | 72% | 50% | $805 | $2,193 | 39% | +15.4 |
+**This is the most robust configuration in the evaluator** — +EV on both windows with a 4–5% six-month blow-up at
+0.5×, on the one construction that STRENGTHENED in 2026 (D-784/791: the vol-regime dependence cuts the other way for
+equities). Its limits, stated: day-clustered t ≈ 1.1 at prop costs (a positive expectation, not a significant one);
+CFD props list ~100–500 large-cap stock CFDs, not 1,226 names — the tradable subset is the top of the decile and was
+not isolated; overnight swaps on 5-day holds and single-name gap tails are not modelled; the ÷5 exposure treatment books
+each 5-day return on its entry day (conservative on P&L timing, optimistic on DD path). 50 counted trials in total.
+**Next (D-797 candidate):** a two-stream funded book — equity dips (daily close) + utc16 index/crypto (hourly) — under one
+fee: different instruments, different hours, different 2026 behaviour, so their day-P&L should be weakly correlated;
+the evaluator needs a COMBO series (sum of the two day-means, each at its own exposure) to price it honestly.
