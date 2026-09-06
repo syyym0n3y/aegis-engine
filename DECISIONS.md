@@ -17637,3 +17637,35 @@ each 5-day return on its entry day (conservative on P&L timing, optimistic on DD
 **Next (D-797 candidate):** a two-stream funded book — equity dips (daily close) + utc16 index/crypto (hourly) — under one
 fee: different instruments, different hours, different 2026 behaviour, so their day-P&L should be weakly correlated;
 the evaluator needs a COMBO series (sum of the two day-means, each at its own exposure) to price it honestly.
+
+## D-797 (2026-09-06) TWO-STREAM FUNDED BOOK — utc16 index/crypto (hourly) + equity liquid-dips (daily) under one fee; correlation MEASURED
+
+The D-796 candidate: run both surviving cells on ONE prop account. The premise ("weakly correlated") was tested, not
+assumed: on 851 calendar days where both streams fired, **Pearson r = 0.083** between their day-P&L. Different asset
+classes, different hours, different 2026 behaviour — genuine diversification. Combo series = utc16 day-mean (1×) +
+equity day-mean (÷5 for the five overlapping 5-day positions), summed by day; on a both-stream day concurrent
+exposure at the "0.5×" label is 0.75× book (utc16 0.5× + equity 0.25×) — stated.
+
+| window | size | P(pass both) | no-edge | fee/pass | funded $/mo | P(blow, 6 mo) | EV per fee $ |
+|---|---|---|---|---|---|---|---|
+| OOS 2023+ (1,248 days, +9.7bp/day, **day-t 2.30**) | **0.5×** | **74%** | 44% | $786 | $1,454 | **19%** | **+10.1** |
+| | 1× | 46% | 43% | $1,267 | $1,853 | 76% | +7.8 |
+| 2026-only (228 days, +11.0bp/day, day-t 1.11) | **0.5×** | **78%** | 46% | $742 | $1,548 | **15%** | **+11.5** |
+| | 1× | 61% | 48% | $951 | $2,408 | 59% | +14.2 |
+
+**Reading, beside the single streams (all at the 0.5× label, FTMO-style 100k):**
+| configuration | P(pass) OOS/2026 | funded $/mo | P(blow, 6 mo) | EV per fee $ |
+|---|---|---|---|---|
+| equity dips alone (safest) | 36% / 80% | $800 / $1,240 | **4–5%** | +2.0 / +9.3 |
+| utc16 alone | 73% / 48% | $1,250 / $970 | 9–11% | +8.5 / +3.8 |
+| **combo (best EV)** | **74% / 78%** | **$1,450 / $1,550** | 15–19% | **+10.1 / +11.5** |
+Diversification does what it should — the combo's day-t (2.30) is the only ≥2 figure across all three on the full OOS,
+and it is the only configuration +EV above +10 on BOTH windows — but it buys that with ~3× the blow-up of equity-alone,
+partly because the label understates exposure. Nothing here changes the governing caveat: both streams' 2026 day-t is
+~1.1; these are positive expectations with wide error bars, priced on typical (unverified) terms, with swaps, gap tails,
+instrument lists and weekend rules unmodelled.
+
+**Disposition (unchanged from D-796, sharpened):** no fee paid by me. If the operator chooses to exercise this: ONE
+FTMO-style account, the COMBO at the 0.5× label (or equity-alone if a single-digit blow-up matters more than income),
+pre-registered as a forward clock with numeric pass/kill rules BEFORE the first trade, funded phase run exactly as the two
+clocks' rules; a second account only after the first has a recorded outcome. Total trials this family: 60.

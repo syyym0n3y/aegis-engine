@@ -114,6 +114,20 @@ if (K.EQUITY === "1") {
   const eqEv: DayRet[] = []; for (const p of liq) eqEv.push(...p.evs);
   SETS[`EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`] = dayMeans(eqEv);
   console.log(`  equity set: ${loaded} symbols loaded, liquid decile ${liq.length}, ${eqEv.length} events -> ${SETS[`EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`].length} event-days`);
+
+  // D-797 COMBO: one funded book running BOTH streams — utc16 index/crypto (hourly, 1x per event-day) + equity dips (daily
+  // close, exposure/5). Summed by calendar day; on a day with both, concurrent exposure at "1x" is 1.5x book. The
+  // "weakly correlated" claim is MEASURED here (Pearson r on overlapping days) — if r is high the combo is just one bet twice.
+  const eqName = `EQUITY liquid-decile belowPML K5 (stock-CFD prop, ${K.EQ_RT_BP}bp, exposure/5)`, cfdName = "CFD 17-panel utc16 abovePDH";
+  const A = new Map(SETS[cfdName].map((d) => [d.day, d.ret])), B = new Map(SETS[eqName].map((d) => [d.day, d.ret / 5]));
+  const days = [...new Set([...A.keys(), ...B.keys()])].sort();
+  const both = days.filter((d) => A.has(d) && B.has(d));
+  const xa = both.map((d) => A.get(d)!), xb = both.map((d) => B.get(d)!);
+  const ma = xa.reduce((s, v) => s + v, 0) / Math.max(1, xa.length), mb = xb.reduce((s, v) => s + v, 0) / Math.max(1, xb.length);
+  let cov = 0, va = 0, vb = 0; for (let i = 0; i < both.length; i++) { cov += (xa[i] - ma) * (xb[i] - mb); va += (xa[i] - ma) ** 2; vb += (xb[i] - mb) ** 2; }
+  const r = va > 0 && vb > 0 ? cov / Math.sqrt(va * vb) : NaN;
+  SETS[`COMBO utc16 (1x) + equity dips (/5) — one book`] = days.map((d) => ({ day: d, ret: (A.get(d) ?? 0) + (B.get(d) ?? 0) }));
+  console.log(`  combo: ${days.length} calendar days (${both.length} with BOTH streams); cross-stream day-P&L correlation r = ${Number.isFinite(r) ? r.toFixed(3) : "n/a"} on overlapping days ${Number.isFinite(r) && Math.abs(r) < 0.3 ? "(weak — the streams diversify)" : Number.isFinite(r) ? "(NOT weak — largely one bet)" : ""}`);
 }
 const exposureDiv = (setName: string) => setName.startsWith("EQUITY") ? 5 : 1;
 function stats(xs: number[]) { const n = xs.length; if (!n) return { n: 0, mean: 0, sd: 0, t: 0 }; const m = xs.reduce((a, c) => a + c, 0) / n; const sd = Math.sqrt(n > 1 ? xs.reduce((a, c) => a + (c - m) ** 2, 0) / (n - 1) : 0); return { n, mean: m, sd, t: sd > 0 ? m / (sd / Math.sqrt(n)) : 0 }; }
