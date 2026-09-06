@@ -17705,7 +17705,7 @@ one of the four defects was a reasoning error; all were the D-598 class (the run
 became visible only because D-793 made the loop execute its own body. "Tested from the repo root" is not "tested as the
 runner runs it" — every future runner-wired script gets its exact-cwd invocation verified in the same commit.
 
-## D-799 (2026-09-06) CANDIDATE — clock #18 has no live input refresher; the broad daily equity panel is frozen at 08-28
+## D-799 (2026-09-06) clock #18 had no live input refresher — BUILT, VERIFIED, WIRED (originally logged as a candidate; resolved the same night, see the addendum below)
 
 `refresh-bars.ts` refreshes the ~53 symbols the attribution engine reads, by design ("refreshing all 4,348 is hours").
 The **12,300-symbol daily panel (`trd_bars_deep`) has no live refresher**, and its newest bar is 2026-08-28. Two things
@@ -17716,3 +17716,55 @@ the clock was registered to avoid. Build: a liquid-decile daily refresher (the 1
 250 ms per Yahoo pull, idempotent, period1/period2 never range=max — the D-750 lesson), a continuity row on the liquid
 decile's newest bar with a 3-day budget, runner-wired with its exact-cwd invocation verified. Not built tonight; queued
 first for the next session because the clock's forward record depends on it.
+
+**D-799 addendum — done.** `scripts/refresh-liquid-panel.ts`: refreshes the 1,230-name liquid decile (SAME pre-2023 MDV
+definition as the scorer; list cached, rebuilt weekly), incremental `period1/period2` (never `range=max`) with an OVERLAP
+CHECK — if held vs incoming closes disagree >0.5% on an overlapping date the adjustment basis moved and that symbol gets a
+full pull under the D-687 recycling refusal — sequential 250 ms, idempotent, paths from `import.meta.url`. Three defects
+caught by its own bounded verification before the full run: (i) it dropped zero-MDV symbols from the DENOMINATOR (1,088
+of 10,888 at $9.2M — a strict subset of the scorer's decile; fixed, now 1,230 of 12,300 at $7.49M, matching D-790's
+$7.51M), (ii) a sentinel outside the bounded slice was a false RED, (iii) the sentinel read `last_date` — a metadata
+column that is NOT trigger-maintained and that `refresh-bars.ts` never writes either, so it said 08-21 after the bars had
+advanced to 09-04; freshness now reads the bars and the upsert writes `first_date/last_date/n_bars/updated_at`. Fourth,
+after the full run: a "refreshed/due ≥90%" control failed on a denominator of 27 permanently-unavailable tickers
+(delisted/renamed — ATVI, TWTR, PXD, SIVBQ, SQ, COUP, SPLK, FLT, synthetic `-EX` pairs; AVB refused on a 27-bar vendor
+series) — replaced by "≥95% of the DECILE fresh", dead names listed by name every run. **Full run: 1,156 of 1,183 due
+refreshed (75 basis-moved full pulls); decile 1,203 of 1,230 fresh (97.8%); AAPL/MSFT/NVDA bars 08-21 → 2026-09-04;**
+merge integrity spot-checked on 8 names (monotone, no duplicate days, uniform session timestamps, no spurious jumps).
+Continuity row `liquid equity panel (clock #18 input)` (3-day budget) reads ok; runner line wired after the Deribit
+snapshot; loop restarted (PID 2783, 01:54:55); drift GREEN, registry CONSISTENT, **CONTINUITY GREEN — every feed owned;
+board all 26 GREEN.** Clock #18 now accrues forward event-days on a live input. Commit `37b0c5f`. Known limits: metadata
+of symbols skipped as fresh catches up on their next refresh; `refresh-bars.ts` still writes bars only (same treatment
+queued); the 27 dead names are the panel's survivorship-correct history and produce no forward events.
+
+## D-800 (2026-09-06) clock #18's spec says "US equity", its code does not filter — measured: real but cosmetic; and the refreshed data moved the in-sample benchmark
+
+**The mismatch.** The refresher's decile audit: **111 of 1,230 (9%) of the registered "US equity liquid-decile" are not
+US equities** — 37 crypto, 33 ETFs, 14 international indices, 13 sector ETFs, 5 commodity futures, 5 synthetic `-EX`
+crypto pairs, and 4 bare indices (`^GSPC ^DJI ^RUT ^IXIC`) that are not tradeable at all. Neither the scorer nor any
+in-sample benchmark (D-784/785/789/790/791) nor the prop-firm EQUITY set (D-796 addendum) filters on `asset_class`.
+
+**Measured on the refreshed panel** (`scripts/eq-decile-asset-class.ts`, net 10bp, day-clustered ≥1, OOS 2023+):
+| population | symbols | event-days | day-clustered net | day-t | sign |
+|---|---|---|---|---|---|
+| A unfiltered decile (as the scorer computes it) | 1,227 (111 non-eq) | 1,027 | +12.2bp | 0.85 | 65.1% |
+| B same decile, non-equity removed | 1,116 | 916 | +14.5bp | 1.11 | 63.7% |
+| C re-ranked within equity only (spec read literally) | 1,208 | 916 | +14.4bp | 1.12 | 63.1% |
+| the 111 non-equity members alone | 111 | 838 | −0.2bp | −0.01 | 79.6% |
+The non-equity members contribute nothing on average and add ~110 weekend event-days (crypto trades seven days) whose
+single-signal means are outliers (e.g. 2026-08-16: 3 signals, +2,599bp) — they DRAG the pooled day-t by ~0.27. Reading
+the spec literally is modestly better and cleaner. **Real, cosmetic in magnitude, not the cause of the next item.**
+
+**The benchmark moved — because the data did.** D-791 measured the identical unfiltered series at 28.8bp event-mean,
+**day-t 1.40** on 1,020 days; the same script on the refreshed panel gives 23.1bp, **day-t 0.85** on 1,027 days. The ~10
+newly-completed event-days did it: **Aug 24–27 day-means −85 / −387 / −562 / −184bp on 45 / 32 / 17 / 47 signals while SPY
+rose 763 → 771** — names breaking to 20-day lows kept falling as the index climbed (dispersion, not a crash), the regime
+in which dip-buying fails. Merge integrity was verified before attributing this to the data. **Clock #18's in-sample
+benchmark on the scored series is now day-t 0.85**, and its promote bar (t ≥ 2.0) is further away than D-791 stated;
+the registered rule is unchanged and the most likely mature verdict remains INCONCLUSIVE, KILL if late-August repeats.
+
+**Disposition.** No amendment (PRE-COMMITMENT LAW). The equity-only reading is what the spec's words say and is
+modestly better; the honest path is a REPORT-ONLY equity-only split on the scorer's note (like the VIX3M split), not a
+new clock on the same events (D-769 doctrine). The prop-firm EQUITY set (D-796 addendum, D-797) was priced on the
+unfiltered, pre-refresh universe — its numbers are now known to be upper-biased on both counts and get re-run on the
+equity-only refreshed universe before any fee decision leans on them. Trials this run: 3. Clocks live: 18.
