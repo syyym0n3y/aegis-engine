@@ -17809,3 +17809,55 @@ rests on a clock (D-782) whose own 2026 day-t is 0.51.
 **Disposition (unchanged in form, sharpened in content):** no fee paid; if the operator exercises this, ONE account on
 utc16 alone at 0.5× — not the combo, not equity — registered as a forward clock before the first trade. The equity
 route is not a candidate until clock #18's forward record says otherwise. Trials this family: 60. Clocks live: 18.
+
+## D-803 (2026-09-06) PERMISSIONS GUARD — the D-801 class made mechanical: a runner line that grants less than its script needs is now RED before it can fail in the loop and pass on the board
+
+D-801 was a permission defect hidden by my own verification: `market-cap-guard` ran under the runner without
+`--allow-read`, the FPI loader swallowed `PermissionDenied` as "file absent", and the guard was RED in the loop while
+GREEN on the board — because `guard-status.sh` grants read and I had verified with `-A`. `scripts/permissions-guard.ts`
+parses every `deno run <flags> ../scripts/X.ts` line in `infra/scripts/coverage-guard-up.sh` and compares the flags
+granted against what the script and its imports need (read/write/run/net/env by regex, attributed at FUNCTION level:
+the entry file counts everything; an imported module counts its top-level plus the imported names plus same-module
+callees; `import *` counts all). Naive file-level attribution flagged 22 lines; function-level flagged 5, and each of
+the 5 was verified empirically with the runner's exact cwd (`infra/`) and exact flags, never `-A`:
+- daemon-drift line 140: inert (closure 1 file vs 3) — attribution artifact; passes under exact flags.
+- factory-forward-score line 151: genuinely needed `--allow-read` — added.
+- refresh-cef line 208: genuinely needed `--allow-run` — added.
+- plumbing line 105 and sovereignty line 308: run GREEN under exact flags; waived with `# perms-ok: <reason>` —
+  waivers are REPORTED every run so a silent exemption cannot accumulate.
+Self-test carries a positive control (market-cap-guard must need read via fpi-adr) and an attribution control
+(ingest-cboe must NOT need read); RED if fewer than 20 runner lines parse. Verified RED on the literal pre-D-801
+runner before it was trusted; live GREEN with 2 waivers. Wired into the runner (after daemon-drift) and
+`guard-status.sh`; registry CONSISTENT at 28 guards; board all 27 green; committed `cf92a9c`; loop restarted on the
+new body (PID 12950, 03:58:42Z), drift NO DRIFT.
+GOLD: reliability — a guard that is RED in the loop and GREEN on the board is a guard nobody sees; this closes the class.
+
+## D-804 (2026-09-06) THE GOLD PATH — all 580 decisions read; "extract wealth every day regardless of instrument" translated into the three mechanisms that actually run daily; the neglected-gap register; what stands in the way, with a disposition each; and a guard so future decisions must say what they feed
+
+Full text: `docs/GOLD_PATH.md`. NEXT.md rewritten (it had not changed since 2026-08-14 and still queued Supabase
+provisioning, Alpaca ingest and `trd_features` — superseded by the owned node; `trd_features` holds 0 rows, D-704).
+Measured state, re-read live tonight: 580 entries (343 mention KILL, 70 RETRACT); **17 forward clocks, 316 marks,
+0 computable on their forward window, 0 verdicts, 0 promoted**; ceiling 5.4555; wealth ledger EMPTY; 28 guards green.
+"Regardless of instrument" fails on the evidence and the failure is specific: the sign maps disagree by asset class
+(dip-buy US-equity-specific; breakout continuation weak and regime-dependent; every crypto construction flipped in
+2026; trailing/pyramiding destroy what fixed-K keeps). D-780 hunted for survivors with the negative bias removed and
+found only these. What runs daily with positive expectation: (1) the structural rate — D-735's 10.75%/yr anchor,
+ISA 0.63–1.45%/yr, currency leak 130bp/yr default, next deposit beats a 3% alpha below ~$60k — the whole in-market
+10^7 lever and its ledger is empty; (2) the 17 clocks, the only pipeline that can EARN a daily-trading mechanism;
+(3) the prop route, conditional and unpaid — utc16 alone at 0.5× is the only 2026-positive configuration.
+Neglected gaps, classified: (A) superseded — the 33-trigger grammar lane (drained D-342, 0/1,023) and the Stage-1
+queue; (B) **UNTESTED on held data with zero later mentions — the real research queue**: D-626 short-interest
+surprise, D-612 PEAD×coverage, D-601/602 leverage effect powered up, D-476 tradable insider cut, D-477 classic premia
+in the placeable instrument — one trial each, laws applied, expected null; (C) blocked with a named barrier —
+per-strike equity OI / dealer gamma, borrow fee, L2 (OFF by operator), intraday equity OI, earnings revisions,
+central-bank reserves, the 27.3% delisted cohort; (D) operator-only — the prop fee, the three ledger rows, CC
+invoices, capital. Obstacles and dispositions in §3 of the doc; the two that matter most: the 2026 crypto regime
+break is unexplained and two live clocks depend on it (a DESCRIPTIVE-ONLY decomposition is queued, no story without
+a PREREG); and clock #18 is calm-regime-weak (VIX3M<20 −39.1bp/day over 619 days vs ≥20 +92.2bp over 405) — its rule
+is immutable, a conditional v2 is a new registration only after it ends. One defect found and fixed while writing:
+`wealth-ledger.ts` printed "18 clocks live" as a literal while the table held 17 — now a live count, UNREADABLE
+rather than a guess if the table cannot be read. **Machine guard:** `scripts/decisions-guard.ts` — every entry from
+D-804 on must carry `GOLD: <structural|clock|prop|gap|reliability|research|law> — <what it changes>`; RED on a
+missing line, positive control on the parser (0 entries parsed ≥ threshold is RED), self-tested RED/GREEN/exempt,
+wired into the runner and the board. No promotion, no fee, no rule amended.
+GOLD: gap — the register of what was neglected, each item with an owner, plus the guard that stops the next 198 from accumulating unread.

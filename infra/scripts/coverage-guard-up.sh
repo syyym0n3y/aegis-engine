@@ -147,6 +147,12 @@ while true; do
   if ! deno run --allow-read --allow-env ../scripts/permissions-guard.ts; then
     echo "$(date -u +%FT%TZ) PERMISSIONS GUARD RED — a runner line grants less than its script needs; it fails in the loop and can pass on the board"
   fi
+  # DECISIONS GUARD (D-804): every DECISIONS entry from D-804 on must carry a `GOLD: <mechanism> — <what it changes>` line
+  # naming the daily mechanism it feeds (structural|clock|prop|gap|reliability|research|law). 198 of 580 entries carried
+  # open-item language that was never revisited; a decision that does not say what it feeds is how research drifts.
+  if ! deno run --allow-read --allow-env ../scripts/decisions-guard.ts; then
+    echo "$(date -u +%FT%TZ) DECISIONS GUARD RED — a decision entry >= D-804 does not name the mechanism it feeds"
+  fi
   # TRIAL IDEMPOTENCY GUARD (D-681): a clock inside run_key defeats the unique constraint that makes the trial counter
   # idempotent, so a daemon recomputing one identical answer forever also grows the ceiling every result must clear.
   if ! deno run --allow-net --allow-env --allow-read ../scripts/trial-idempotency-guard.ts; then

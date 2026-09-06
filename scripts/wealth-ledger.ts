@@ -114,4 +114,8 @@ if (!deps.length) {
 const isa = wrapRows[0]?.v; const leakBp = leakRows[0]?.v ?? 130;
 console.log(`  wrapper: ${isa === undefined ? "NOT RECORDED (set SET_WRAPPER=isa|gia) — D-758 values the ISA at 0.63–1.45%/yr alpha-equivalent, more than any promoted edge" : isa ? "ISA (D-758: worth 0.63–1.45%/yr, forecast-free)" : "GIA — the D-758 0.63–1.45%/yr is being LEFT ON THE TABLE"}`);
 console.log(`  currency-of-account leakage: ${leakRows.length ? `${leakBp} bp/yr recorded` : `${leakBp} bp/yr (D-731 default, NOT yet measured on the live account — set SET_CCY_LEAK_BP)`} — over ${HY}y at ${(CAGR * 100).toFixed(1)}% that is ~${((1 - Math.pow((1 + CAGR - leakBp / 1e4) / (1 + CAGR), HY)) * 100).toFixed(0)}% of terminal wealth`);
-console.log(`  alpha: 0 promoted (18 clocks live). This report is the whole of the 10^7 lever that is inside the market; the rest is income (Revitalise) and time.`);
+// D-804: the clock count was a printed literal ("18") while the table held 17 — a number that is not measured is the class this
+// programme exists to kill. Read it live; print UNREADABLE rather than a guess if the table cannot be read.
+const rc = await fetch(`${OWNED}/trd_forward_rules?select=id`, { headers: { ...hdr, Prefer: "count=exact" } });
+const nClocks = rc.ok ? (rc.headers.get("content-range")?.split("/")[1] ?? "?") : "UNREADABLE";
+console.log(`  alpha: 0 promoted (${nClocks} clocks live). This report is the whole of the 10^7 lever that is inside the market; the rest is income (Revitalise) and time.`);
