@@ -217,6 +217,13 @@ while true; do
   # 2 sequential fetches. FORWARD-ONLY — Deribit exposes no per-strike history, so this feed only becomes a testable
   # conditioner once months of daily marks exist. Guarded: a Deribit outage logs and never breaks the loop.
   deno run --allow-net --allow-env ../scripts/ingest-deribit-options.ts > ../data/deribit-options.log 2>&1 || echo "$(date -u +%FT%TZ) DERIBIT OPTIONS INGEST FAILED"
+  # D-799: LIQUID-DECILE DAILY EQUITY PANEL — clock #18's input. refresh-bars.ts (below) keeps ~53 attribution symbols
+  # fresh by design; nothing refreshed the 12,300-symbol panel, which froze at 08-28 while the clock accrued nothing.
+  # Refreshes the 1,230 names the clock trades (same MDV definition as the scorer), incremental period1/period2 with an
+  # overlap check (basis moved -> full pull + D-687 recycling refusal), sequential at 250 ms (~10 min), idempotent.
+  # Writes the `liquid_panel_refresh` continuity mark only after its own positive controls pass. Paths import.meta-
+  # relative (D-798). Verified in this exact form before wiring.
+  deno run --allow-net --allow-env --allow-read --allow-write ../scripts/refresh-liquid-panel.ts > ../data/refresh-liquid-panel.log 2> ../data/refresh-liquid-panel.err || echo "$(date -u +%FT%TZ) LIQUID PANEL REFRESH FAILED — clock #18 is scoring a frozen input"
   # S&P 500 membership changes (D-740): Wikipedia, free, writes data/sp500-changes.json (data/ is gitignored, so the
   # index-inclusion retest depends on this running). Stamps the source actually parsed; TSLA positive control.
   SP500_OUT=../data/sp500-changes.json deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-sp500-changes.ts > ../data/sp500.log 2>&1 || echo "$(date -u +%FT%TZ) SP500 CHANGES INGEST FAILED"
