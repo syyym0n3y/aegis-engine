@@ -85,7 +85,8 @@ const REG: Driver[] = [
     probe: "trd_macro_series?series=eq.cboe_skew&select=d&limit=1",
     proxy: "CBOE free index-level daily indices (D-737); tested NULL as a conditioner (D-739). The per-strike SURFACE is still paid and not held." },
   { cls: "equity-index", name: "dealer gamma / positioning", use: "condition",
-    blocked: "trd_gex_state holds ONE row with every field NULL (D-704). The capability is advertised by the schema and does not exist." },
+    probe: "trd_perp_oi?venue=eq.cboe&interval=eq.naive_gex_usd&select=ts&limit=1",
+    proxy: "NAIVE gamma exposure per underlying (D-806): Black-Scholes gamma x OI x 100 x spot^2 x 1%, calls +, puts - (the D-792 Deribit convention), from CBOE free delayed chains for 20 underlyings (SPX, SPY, QQQ, IWM, TLT, GLD, HYG, EEM, XLE, XLF + 10 single names), daily via collect-us-options.ts. A CONVENTION, not a measured dealer book. trd_gex_state (one all-NULL row, D-704) remains an advertised-but-empty schema and is NOT the source." },
   { cls: "equity-index", name: "earnings revisions", use: "condition",
     proxy: "trd_earnings holds report dates", blocked: "Estimate REVISIONS need an analyst-estimate feed; none is held and the free sources are licensed." },
   // ---- FX ------------------------------------------------------------------------------------------------------

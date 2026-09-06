@@ -37,11 +37,22 @@ for(const u of UNDER){
   const farT=tenors.filter(t=>t>near+40).sort((a,b)=>a-b)[0];
   const atmF=farT?opts.filter(o=>Math.round(o.days)===farT).sort((a,b)=>Math.abs(a.strike-spot)-Math.abs(b.strike-spot))[0]:null;
   const putOI=opts.reduce((s,o)=>s+(o.call?0:o.oi),0), callOI=opts.reduce((s,o)=>s+(o.call?o.oi:0),0);
+  // D-806: NAIVE gamma exposure from the same chain — Black-Scholes gamma per contract (r=0, q=0) x OI x 100 x spot^2 x 1%,
+  // calls +, puts - (the D-792 Deribit convention: dealers assumed short puts / long calls). A CONVENTION, not a measured
+  // dealer book — labelled naive for that reason. Closes the register's "dealer gamma: all-NULL table" barrier in naive form.
+  const nCdf=(x:number)=>{const t=1/(1+0.2316419*Math.abs(x));const d=0.3989422804014327*Math.exp(-x*x/2);const p=d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));return x>=0?1-p:p;};
+  let gex=0, gexN=0;
+  for(const o of opts){ if(!(o.oi>0))continue; const T=o.days/365, sig=o.iv/100; if(!(T>0&&sig>0))continue;
+    const d1=(Math.log(spot/o.strike)+0.5*sig*sig*T)/(sig*Math.sqrt(T)); const pdf=Math.exp(-d1*d1/2)/Math.sqrt(2*Math.PI);
+    const gamma=pdf/(spot*sig*Math.sqrt(T)); if(!Number.isFinite(gamma))continue;
+    gex+=(o.call?1:-1)*gamma*o.oi*100*spot*spot*0.01; gexN++; }
+  void nCdf;
   const sym=u.replace(/^_/,"");
   if(atm) rows.push({symbol:sym,venue:"cboe",interval:"atm_iv_near",ts:today,open_interest:atm.iv});
   if(put&&call) rows.push({symbol:sym,venue:"cboe",interval:"skew25",ts:today,open_interest:put.iv-call.iv});
   if(atm&&atmF) rows.push({symbol:sym,venue:"cboe",interval:"term",ts:today,open_interest:atmF.iv-atm.iv});
   if(callOI>0) rows.push({symbol:sym,venue:"cboe",interval:"pc_oi",ts:today,open_interest:putOI/callOI});
+  if(gexN>=20) rows.push({symbol:sym,venue:"cboe",interval:"naive_gex_usd",ts:today,open_interest:gex});
   console.log(`  ${sym.padEnd(5)} spot ${spot.toFixed(0)}  ${near}d: ATM ${atm?.iv.toFixed(1)}  skew ${put&&call?(put.iv-call.iv).toFixed(2):"-"}  term ${atm&&atmF?(atmF.iv-atm.iv).toFixed(2):"-"}  P/C-OI ${(putOI/Math.max(1,callOI)).toFixed(2)}`);
 }
 if(!rows.length){console.error("!! nothing collected");Deno.exit(1);}

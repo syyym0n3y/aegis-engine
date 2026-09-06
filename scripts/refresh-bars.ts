@@ -151,7 +151,9 @@ for (const sym of due) {
   // file and in check-voltiming-survivor.ts, by comments that were correct and merely in the wrong place.
   const wres = await fetch(`${OWNED}/trd_bars_deep?on_conflict=symbol`, { method: "POST",
     headers: { ...hdr, Prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify({ symbol: sym, bars }) }).catch(() => null);
+    // D-806: write the metadata columns WITH the bars (first_date/last_date/n_bars/updated_at are not trigger-maintained;
+    // the liquid refresher already does this — a bars-only write leaves a stale last_date for every consumer that trusts it).
+    body: JSON.stringify({ symbol: sym, bars, first_date: new Date(bars[0][0] * 1000).toISOString().slice(0, 10), last_date: new Date(bars[bars.length - 1][0] * 1000).toISOString().slice(0, 10), n_bars: bars.length, updated_at: new Date().toISOString() }) }).catch(() => null);
   if (!wres || !wres.ok) { failed.push(`${sym}(write ${wres ? wres.status : "net"})`); continue; }
   ok++;
   const last = new Date(bars[bars.length - 1][0] * 1000).toISOString().slice(0, 10);

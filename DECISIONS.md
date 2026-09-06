@@ -17898,3 +17898,44 @@ turnover guard (no turnover statement on two rebalanced rows: French decile turn
 returns → UNTESTED ON COST; the sells quintile's is moot at a ~zero gross excess). Both rows corrected with the numbers,
 board all 28 green. That is the guards binding the author, which is what they are for.
 GOLD: research — the five-item queue of D-804 is closed: three nulls on held data, two already-resolved items corrected; the base rate held (0/3), and the register now says what the entries say.
+
+## D-806 (2026-09-06) THE DEVIATION REGISTER — every planned, queued, or open item verified against live state and given a disposition; two barriers unblocked, the crypto delisted cohort closed, the 2026 break described panel-wide, refresh-bars metadata fixed, and one stale note in my own memory corrected
+
+Full table: `docs/DEVIATION_REGISTER.md`. Method: each row checked against a query, a run under the runner's exact
+cwd and flags, or the entry's own text — never a doc. The old NEXT.md (2026-08-14) and the Stage-1 spec steps 2–9 are
+all DONE, DONE-IN-OTHER-FORM, BY DESIGN, or OPERATOR; none is silently abandoned. Three things moved tonight:
+**(1) Crypto delisted cohort — CLOSED.** D-639 recorded that the one source enumerating every contract that ever had
+futures data (`data.binance.vision`) was off the allowlist. Allowlisted under the operator's free-host authorization
+(the S3 listing host, not the HTML front, which has no listing API). Enumerated 874 USDT-M contracts ever: 510 held,
+352 currently listed but under the 400-day threshold (D-646's point — a threshold, not a hole), **12 absent from
+exchangeInfo = the delisted cohort**. `ingest-delisted-perps.ts` ingested the 2 with usable history (BLUEBIRDUSDT 511
+bars, FOOTBALLUSDT 573; each with 63 zero-volume placeholders dropped — LENDUSDT's entire post-delisting "history" is
+such placeholders and would pass a close>0 check) and recorded 10 below the threshold. Coverage statement written.
+**(2) Dealer gamma — UNBLOCKED in naive form.** `collect-us-options.ts` already read full CBOE delayed chains for 20
+underlyings daily and stored only aggregates. It now computes naive gamma exposure (Black-Scholes gamma × OI × 100 ×
+spot² × 1%, calls +, puts −, the D-792 Deribit convention) per underlying: `trd_perp_oi` venue cboe interval
+`naive_gex_usd`, 20 rows landed (SPX $30.7bn per 1% move). The register's dealer-gamma entry carries a probe on it;
+`trd_gex_state` (one all-NULL row, D-704) is named as NOT the source. Register: **47 HELD / 0 debt / 4 blocked**.
+**(3) The 2026 break — DESCRIBED.** `crypto-2026-break.ts` reproduces the four registered constructions on the
+97-perp panel (45,981 events, 2024–25 vs 2026) and splits by tier, funding sign, realized-vol tercile, BTC prior-24h
+sign, plus the raw hour-of-day drift profile:
+| construction | 2024 | 2025 | 2026 |
+|---|---|---|---|
+| utc16 abovePDH long K6 | +26.3bp t 5.82 | +23.2 t 4.79 | +9.0 t 1.14 |
+| utc01 sweepPDL reclaim long | +34.7 t 5.36 | +17.1 t 2.43 | **−39.3 t −4.22** |
+| utc09-10 belowPDL long | +43.3 t 10.04 | +7.6 t 2.35 | **−16.7 t −3.46** |
+| persist-real K24 PSL-fade | −9.8 t −0.47 | +20.5 t 1.28 | **−169.8 t −5.00** |
+The flip is PANEL-WIDE: negative in every tier (BTC/ETH, top-10, rest), under both funding signs, under both BTC-prior
+signs; the largest single cell is persist-real in rv-high (−626bp, n 365). And the unconditional hourly drift itself
+reshuffles year to year — 20:00 UTC +13.7bp t 18.2 (2024) → −2.1 (2025) → +4.2 (2026); 21:00 +7.5 → +5.6 → −4.4;
+01:00 +0.4 → +4.5 → −5.1; 23:00 −0.7 → −11.1 → +8.0. **The clocks were registered on an intraday seasonality that was
+already unstable between 2024 and 2025.** DESCRIPTIVE ONLY: no mechanism is claimed and none is pre-registered; the
+two live clocks tracking KILL are scored by their own rules, not by this. 20 trials spent.
+Also: `refresh-bars.ts` now writes first/last_date, n_bars, updated_at with the bars (it wrote bars only, leaving SPY's
+last_date at 08-28 while its bars reached 09-04); `backfill-bars-metadata.ts` corrected 32 consumer rows using the
+consumer file's own two arrays. Cockpit-render PASSES its positive control under the runner's exact line. The
+post-kickstart transient RED did not reproduce in two controlled attempts and is recorded as unreproduced. Borrow fees
+were HELD all along (iBorrowDesk, 212 names, fresh to 09-04) — my memory note said "IBKR FTP blocked"; the register was
+right and the note was stale, now corrected. Congressional trades: tested and REJECTED in the D-070 era (sector beta),
+which is why the Stage-1 ingest was never built.
+GOLD: gap — the register of deviations with a verified disposition each; two barriers moved from blocked to held, one cohort closed, and the open list now names its owner.

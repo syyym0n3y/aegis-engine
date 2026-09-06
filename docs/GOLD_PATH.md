@@ -101,8 +101,8 @@ not the engine — the engine is on the owned node); capital access beyond the c
 ## 4. Order of work (unblocked, $0, in this order)
 
 1. ~~§2.B — the five untested-on-held-data tests~~ DONE (D-805): three run (all NULL), two were already resolved.
-2. §3.3 — the descriptive 2026-break decomposition.
-3. §3.7 — the three reliability items.
+2. ~~§3.3 — the descriptive 2026-break decomposition~~ DONE (D-806): panel-wide, seasonality unstable yearly.
+3. ~~§3.7 — the three reliability items~~ CLOSED (D-806). Dispositions for everything else: `docs/DEVIATION_REGISTER.md`.
 4. §1.3 — register the prop clock ONLY on operator sign-off; then the ledger scorer for it (CONTINUITY LAW).
 
 ## 5. Deliberately NOT on the list
