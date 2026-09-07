@@ -28,3 +28,4 @@ data/
 scratchpad/
 *.bin
 .venv-models/
+__pycache__/
