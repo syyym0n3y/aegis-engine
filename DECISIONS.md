@@ -18032,3 +18032,26 @@ Nasdaq replication the same shape. Options pressure does not change what the lev
 2 — UNTESTED by data; registered as a forward test at ≥ 250 points inside the D-809 pre-registration, not a claim.
 Both pre-registrations `retracted` with full notes; two lineage rows rejected; trials 18 + 8. Nothing promoted.
 GOLD: research — the operator's confluence is measured against its own parts and against random levels, and loses to both; the register's crypto L2/flow and index options-pressure inputs are now HELD (50 held / 3 blocked) for whatever is registered next.
+
+## D-812 (2026-09-07) THE RESTART CAUSE ESTABLISHED — memory pressure in a 3.8GB Docker VM carrying two idle Supabase stacks; a whole-panel query got its Postgres backend killed by signal 9; the legacy aegis stack is stopped (−940MB); the guard now names the killed statement
+
+D-810 left the cause open. Reproduced under measurement: one request for the whole 97-perp hourly panel
+(`trd_bars_intraday?tf=eq.1hSF&select=symbol,bars`) returned **503 in 1.8s** with PostgREST's memory flat at 454MB and no
+restart — and the database log at that second reads `server process (PID 579701) was terminated by signal 9: Killed /
+Failed process was running: WITH pgrst_source AS ( SELECT … trd_bars_intraday …)`. The kernel's OOM killer took the
+backend building the jsonb response; the postmaster then rolled back and exited every backend ("another server process
+exited abnormally"); PostgREST reconnected and reloaded its schema cache (two "Config reloaded" lines at 00:17:23), and
+requests during the reload get 503. The 10:09Z incident was the other face of the same pressure: the DB saw its CLIENT
+vanish (`unexpected EOF on client connection`) — PostgREST itself was killed, and its container restarted.
+The pressure: `docker info` — **3.813GiB total** for the VM; containers summed to **~2.84GB**, of which the Supabase CLI
+stack for THIS project (`supabase_*_aegis`: Studio, Kong, Realtime, Storage, pg_meta, a second Postgres holding only
+Stage-1-era tables — trd_price_bars 194k, trd_features 184k) held ~940MB and the YGS stack (`supabase_*_ygs-sovereign`,
+another project) ~1.15GB. Nothing live references the aegis stack (three Stage-1 scripts default to its port 54322 and
+have been superseded since D-408/D-729). **Stopped** (`docker stop` of its nine containers; volumes retained; restart
+with `supabase start` in the repo). VM use **2.84GB → 1.90GB**; the owned node answers 200. The YGS stack is not mine to
+touch here and is reported, not stopped. Backend kills in 14 days: exactly one — tonight's, deliberate. So the whole-
+panel query is the reliable trigger and the rule from D-798 stands with its mechanism: page small, never a whole panel.
+`rest-restart-guard.ts` now also reads the database log for `terminated by signal 9` / `Failed process was running` in
+the last 25h and prints the killed statement beside its verdict, so the next incident names its query. Self-tested and
+run live (prints tonight's kill, GREEN on the start count).
+GOLD: reliability — the substrate's failure mode has a mechanism, a measured mitigation, and a guard that names the culprit.
