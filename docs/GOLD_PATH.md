@@ -9,14 +9,14 @@
 
 | quantity | value | source |
 |---|---|---|
-| decision entries | 580 (D-331…D-803) | `data/decisions-audit.txt` |
+| decision entries | 590 (D-331…D-813) | `data/decisions-audit.txt` + DECISIONS.md |
 | entries mentioning KILL / RETRACT | 343 / 70 | grep of DECISIONS.md |
-| forward clocks registered / marks recorded | **17 / 316** | `trd_forward_rules`, `trd_forward_marks` (live) |
+| forward clocks registered / marks recorded | **18 / 600+** (prop clock signed D-807; every clock has live inputs and a scorer since D-813) | `trd_forward_rules`, `trd_forward_marks` (live) |
 | clocks computable on their forward window / verdicts | **0 / 0** | latest mark per clock, 2026-09-06 |
 | lineage rows in a promoted state | **0** | liquidity-guard, every run |
 | deflation ceiling every result must clear | 5.4555 | STATE.md |
 | wealth ledger | **EMPTY** (no deposit, wrapper, or currency-leak row) | `wealth-ledger.ts` |
-| machine guards on the board | 28 on disk, all green | `guard-status.sh`, registry CONSISTENT |
+| machine guards on the board | 30 on disk, all green (decisions, REST-restart guards added D-804/810) | `guard-status.sh`, registry CONSISTENT |
 
 ## 1. The phrase, translated into mechanisms that actually run daily
 
@@ -104,6 +104,15 @@ not the engine — the engine is on the owned node); capital access beyond the c
 2. ~~§3.3 — the descriptive 2026-break decomposition~~ DONE (D-806): panel-wide, seasonality unstable yearly.
 3. ~~§3.7 — the three reliability items~~ CLOSED (D-806). Dispositions for everything else: `docs/DEVIATION_REGISTER.md`.
 4. §1.3 — register the prop clock ONLY on operator sign-off; then the ledger scorer for it (CONTINUITY LAW).
+
+## 4b. What happened after this was written (2026-09-06/07)
+
+- D-805: the five-item queue closed — three real nulls, two items were already resolved (misfiled by the keyword audit).
+- D-806: the deviation register; dealer gamma (naive) and the crypto delisted cohort unblocked; the 2026 break described as panel-wide.
+- D-807: the prop clock signed and registered, scored only from the operator's ledger; fee unpaid.
+- D-808/809/811: the operator's order-flow stack measured on every free source — 8 pre-registrations, 8 retractions; crypto L2/flow, index put/call history and FX tick footprint now HELD (register 50 / 3).
+- D-810/812: PostgREST restart cause established (OOM in a 3.8GB VM at 2.84GB); legacy stack stopped; guard names the killed statement.
+- D-813: three perp panels had frozen and three clocks had no scorer — fixed on Monday before the first bar; continuity GREEN.
 
 ## 5. Deliberately NOT on the list
 
