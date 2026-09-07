@@ -176,7 +176,7 @@ while true; do
   deno run --allow-net --allow-env ../scripts/collect-option-skew.ts || true
   # US OPTIONS SURFACE (D-469): CBOE free delayed chains — ATM IV / skew / term / P/C-OI for SPX+majors. Same start-the-
   # clock rationale as the Deribit collector; no free US chain history exists either.
-  deno run --allow-net --allow-env ../scripts/collect-us-options.ts || true
+  WIDE=1 deno run --allow-net --allow-env --allow-read ../scripts/collect-us-options.ts > ../data/collect-us-options.log 2>&1 || true
   # VX CURVE COLLECTOR (D-487): settlement endpoint serves only ~current-year, so the curve accrues from 2026-08-23.
   deno run --allow-net --allow-env ../scripts/collect-vx-curve.ts || true
   # BINANCE SENTIMENT COLLECTOR (D-502b): API serves ~30d only — the series accrues from 2026-08-23.
@@ -234,6 +234,14 @@ while true; do
   # CBOE DAILY PUT/CALL RATIOS (D-809): index/total/equity/VIX put-call history from cdn.cboe.com daily JSON (2020->), the
   # options-pressure input for the SPX composite and the forward options-positioning test. Incremental, sequential, paced.
   deno run --allow-net --allow-env ../scripts/ingest-cboe-putcall.ts > ../data/cboe-putcall.log 2>&1 || echo "$(date -u +%FT%TZ) CBOE PUT/CALL INGEST FAILED"
+  # FREE KEYLESS OPTIONS-POSITIONING HISTORY (D-817): SqueezeMetrics SPX GEX/DIX daily 2011-> (one CSV); Deribit DVOL BTC/ETH daily
+  # 2021-> (incremental); Nasdaq analyst consensus + 4-week revision counts (forward snapshot, 150 names, ~6 min).
+  deno run --allow-net --allow-env ../scripts/ingest-squeezemetrics.ts > ../data/squeezemetrics.log 2>&1 || echo "$(date -u +%FT%TZ) SQUEEZEMETRICS INGEST FAILED"
+  deno run --allow-net --allow-env ../scripts/ingest-deribit-dvol.ts > ../data/deribit-dvol.log 2>&1 || echo "$(date -u +%FT%TZ) DVOL INGEST FAILED"
+  deno run --allow-net --allow-env --allow-read ../scripts/collect-nasdaq-revisions.ts > ../data/nasdaq-revisions.log 2>&1 || echo "$(date -u +%FT%TZ) NASDAQ REVISIONS SNAPSHOT FAILED"
+  # ESTIMATE REVISIONS (D-817): keyless Yahoo earningsTrend snapshots (consensus now vs 7/30/60/90d ago, up/down counts) for the
+  # liquid decile, Nasdaq analyst endpoint as the cross-source control. The "licensed" driver, free. Sequential, paced.
+  deno run --allow-net --allow-env --allow-read ../scripts/ingest-estimate-revisions.ts > ../data/estimate-revisions.log 2>&1 || echo "$(date -u +%FT%TZ) ESTIMATE REVISIONS INGEST FAILED"
   # D-792: Deribit BTC/ETH option-book snapshot (per-strike OI -> PCR, ATM IV, naive GEX). Free, keyless, allowlisted,
   # 2 sequential fetches. FORWARD-ONLY — Deribit exposes no per-strike history, so this feed only becomes a testable
   # conditioner once months of daily marks exist. Guarded: a Deribit outage logs and never breaks the loop.

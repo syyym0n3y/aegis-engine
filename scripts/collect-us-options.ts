@@ -1,4 +1,5 @@
 #!/usr/bin/env -S deno run --allow-net --allow-env
+import { mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 // collect-us-options.ts (D-469) — daily snapshot of the US option surface from CBOE's free delayed chains.
 // Twin of collect-option-skew.ts (Deribit): no free historical chains exist for US options either, so the honest
 // response is the same — start the clock. Per underlying, per day: ATM IV at the ~30d tenor, 25-delta-proxy skew
@@ -9,14 +10,36 @@ const hdr=await(async()=>{const t=await jwt();return{"Content-Type":"application
 const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
 // D-487b: widened — every daily snapshot is a forward series that costs one request; single names give idiosyncratic
 // skew/IV, the index complex gives the market surface.
-const UNDER=["_SPX","SPY","QQQ","IWM","TLT","GLD","HYG","EEM","XLE","XLF","AAPL","MSFT","NVDA","AMZN","META","GOOGL","TSLA","AMD","JPM","XOM"];
+const CORE=["_SPX","SPY","QQQ","IWM","TLT","GLD","HYG","EEM","XLE","XLF","AAPL","MSFT","NVDA","AMZN","META","GOOGL","TSLA","AMD","JPM","XOM"];
+// D-817: WIDE=1 (runner default) appends every liquid-decile equity — CBOE's delayed chains answer for any underlying with
+// open_interest and iv per strike, so the per-name surface (ATM IV, skew, term, P/C OI, naive GEX) becomes a daily forward
+// series across ~1,100 names instead of 20. There is no free keyless per-strike HISTORY (probed: OCC = market totals only,
+// Massive = key + current OI only, OptionsDX = checkout, OptionCharts = no endpoint); the snapshot IS the free route.
+const WIDE=(Deno.env.get("WIDE")??"0")==="1";
+let UNDER=[...CORE];
+if(WIDE){ try{ const dec=JSON.parse(await Deno.readTextFile(new URL("../data/liquid-decile.json",import.meta.url).pathname)) as {symbols:string[]}; const extra=dec.symbols.filter(x=>/^[A-Z]{1,5}$/.test(x)&&!CORE.includes(x)); UNDER=[...CORE,...extra]; }catch(e){ if(!(e instanceof Deno.errors.NotFound)) throw e; console.error("  WIDE=1 but data/liquid-decile.json is missing — collecting the core 20 only"); } }
+console.log(`  underlyings: ${UNDER.length} (${WIDE?"wide":"core"})`);
 const today=Math.floor(Date.now()/86400000)*86400;
+let throttled=0, noOptions=0;
+const doneToday=new Set<string>();
+if(WIDE){ // strict read: a transport failure must be LOUD, never an empty resume set (silent-read class); ordered + paged (truncation class)
+  const { q: qs } = mkStrictRead(OWNED, hdr);
+  for(let off=0;;off+=1000){ const dt=await qs(`trd_perp_oi?venue=eq.cboe&interval=eq.atm_iv_near&ts=eq.${today}&select=symbol&order=symbol&offset=${off}&limit=1000`) as {symbol:string}[]; for(const r of dt) doneToday.add(r.symbol); if(dt.length<1000) break; }
+  console.log(`  already collected today: ${doneToday.size}`); }
 type Opt={exp:string;days:number;strike:number;call:boolean;iv:number;oi:number};
 const rows:{symbol:string;venue:string;interval:string;ts:number;open_interest:number}[]=[];
 for(const u of UNDER){
-  const j=await fetch(`https://cdn.cboe.com/api/global/delayed_quotes/options/${u}.json`).then(r=>r.json()).catch(()=>null) as
-    {data?:{current_price?:number;options?:{option:string;iv:number;open_interest:number}[]}}|null;
-  await sleep(400);
+  if(WIDE&&doneToday.has(u.replace(/^_/,""))) continue;   // D-817: idempotent within the day (a relaunch resumes)
+  // D-817: CBOE throttles sustained requests with 429 — back off (10s, 30s, 90s) and retry; a 429 must never read as
+  // "chain unavailable" (565 names were skipped that way on the first wide run). Wide pace 1.2s/name.
+  let j:{data?:{current_price?:number;options?:{option:string;iv:number;open_interest:number}[]}}|null=null;
+  for(let attempt=0;attempt<4;attempt++){
+    const r=await fetch(`https://cdn.cboe.com/api/global/delayed_quotes/options/${u}.json`).catch(()=>null);
+    if(r&&r.status===429){ await r.body?.cancel(); throttled++; await sleep([10000,30000,90000,90000][attempt]); continue; }
+    if(r&&r.status===404){ await r.body?.cancel(); j=null; noOptions++; break; }
+    j=r&&r.ok? await r.json().catch(()=>null):null; break;
+  }
+  await sleep(WIDE?1200:400);
   const spot=j?.data?.current_price, list=j?.data?.options;
   if(!spot||!Array.isArray(list)||!list.length){console.error(`  ${u}: chain unavailable — recording NOTHING`);continue;}
   const opts:Opt[]=[];
@@ -28,7 +51,8 @@ for(const u of UNDER){
     const days=(Date.parse(exp)-Date.now())/86400000; if(days<5||days>200)continue;
     opts.push({exp,days,strike:+m[4]/1000,call:m[3]==="C",iv:iv*100,oi:+o.open_interest||0});
   }
-  if(opts.length<40){console.error(`  ${u}: only ${opts.length} usable strikes — skipping`);continue;}
+  const MIN_STRIKES=WIDE&&!CORE.includes(u)?20:40;   // D-817: 40 was set for the core 20; mid-liquid names carry fewer usable strikes and 20 still supports ATM IV and P/C OI
+  if(opts.length<MIN_STRIKES){console.error(`  ${u}: only ${opts.length} usable strikes — skipping`);continue;}
   const tenors=[...new Set(opts.map(o=>Math.round(o.days)))].sort((a,b)=>Math.abs(a-30)-Math.abs(b-30));
   const near=tenors[0], slice=opts.filter(o=>Math.round(o.days)===near);
   const atm=slice.slice().sort((a,b)=>Math.abs(a.strike-spot)-Math.abs(b.strike-spot))[0];
@@ -55,7 +79,9 @@ for(const u of UNDER){
   if(gexN>=20) rows.push({symbol:sym,venue:"cboe",interval:"naive_gex_usd",ts:today,open_interest:gex});
   console.log(`  ${sym.padEnd(5)} spot ${spot.toFixed(0)}  ${near}d: ATM ${atm?.iv.toFixed(1)}  skew ${put&&call?(put.iv-call.iv).toFixed(2):"-"}  term ${atm&&atmF?(atmF.iv-atm.iv).toFixed(2):"-"}  P/C-OI ${(putOI/Math.max(1,callOI)).toFixed(2)}`);
 }
+console.log(`  throttled (429, retried) ${throttled} | no options listed (404) ${noOptions}`);
 if(!rows.length){console.error("!! nothing collected");Deno.exit(1);}
+const namesToday=new Set(rows.map(r=>r.symbol)).size; rows.push({symbol:"_WIDE",venue:"cboe",interval:"names_collected",ts:today,open_interest:namesToday});
 const res=await fetch(`${OWNED}/trd_perp_oi?on_conflict=symbol,venue,interval,ts`,{method:"POST",
   headers:{...hdr,Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)}).catch(()=>null);
 if(!res||!res.ok){console.error(`WRITE-FAILED trd_perp_oi(cboe) ${res?res.status:"network"}`);Deno.exit(1);}

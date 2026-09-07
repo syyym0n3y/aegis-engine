@@ -58,6 +58,11 @@ const FEEDS: [string, string, string, number, string][] = [
   // "frozen snapshot answering plausibly" failure this guard exists for.
   ["trd_macro_series?series=eq.deribit_btc_opt_pcr&select=d&order=d.desc&limit=1", "deribit options", "d", 2, "ingest-deribit-options.ts"],
   ["trd_macro_series?series=eq.cboe_pc_index&select=d&order=d.desc&limit=1", "cboe daily put/call ratios (D-809)", "d", 4, "ingest-cboe-putcall.ts"],
+  ["trd_macro_series?series=eq.sqm_gex&select=d&order=d.desc&limit=1", "SqueezeMetrics SPX GEX/DIX (D-817)", "d", 4, "ingest-squeezemetrics.ts"],
+  ["trd_macro_series?series=eq.deribit_btc_dvol&select=d&order=d.desc&limit=1", "Deribit DVOL BTC/ETH (D-817)", "d", 2, "ingest-deribit-dvol.ts"],
+  ["trd_macro_series?series=eq.nq_revup_AAPL&select=d&order=d.desc&limit=1", "Nasdaq analyst revisions snapshot (D-817)", "d", 4, "collect-nasdaq-revisions.ts"],
+  ["trd_macro_series?series=eq.est_rev90_0q:AAPL&select=d&order=d.desc&limit=1", "estimate revisions, liquid decile (D-817)", "d", 4, "ingest-estimate-revisions.ts"],
+  ["trd_perp_oi?venue=eq.cboe&interval=eq.names_collected&symbol=eq._WIDE&select=ts&order=ts.desc&limit=1", "wide options surface snapshot, ~1,100 names (D-817)", "ts", 4, "collect-us-options.ts"],
   // D-799: the liquid-decile daily equity panel — clock #18's INPUT. The breadth row above watches the same panel with an
   // 18-day budget (fine for a derived breadth series, fatal for a live clock: a frozen panel accrues zero forward
   // event-days while the scorer says "not-yet-computable"). The refresher writes this mark only after its own positive
