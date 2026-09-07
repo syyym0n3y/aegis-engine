@@ -18165,3 +18165,26 @@ own pattern for the third time tonight: a trailing `//` comment appended to a so
 it (the `.env` `TO` line, then this test's result push) — the first run reported "results: got 0" and was read as a
 defect, not a finding, before anything was recorded.
 GOLD: gap — the equity L2 barrier is measured with paid data for $95.52 of a free credit; the remaining $29 and the Theta/EODHD options stay the operator's.
+
+## D-818 (2026-09-07) FREE, KEYLESS ROUTES PAST THE PAID BARRIERS — fifteen years of SPX dealer gamma, five of crypto implied vol, and a forward revisions feed, all $0; two pre-registered tests, both NULL by rule, one measurement confirmed
+
+Operator instruction: find other free keyless solutions for what the Theta tier and the revisions feed would buy.
+Probed, not assumed (OPERATING_DOCTRINE: research before you defer):
+| need | free keyless source | verified | held now |
+|---|---|---|---|
+| dealer positioning history (SPX) | **SqueezeMetrics** `monitor/static/DIX.csv` — daily GEX ($) + DIX + SPX since 2011-05 | 200, 3,861 rows, current to Friday | `sqm_gex`, `sqm_dix`, `sqm_spx`; daily in the runner, continuity 4d |
+| options implied vol history (crypto) | **Deribit DVOL** `get_volatility_index_data` — BTC/ETH daily since 2021-03, hourly live | 200, 1,994 days each | `deribit_btc_dvol`, `deribit_eth_dvol`; incremental daily, continuity 2d |
+| earnings estimate revisions | **Nasdaq** `api/analyst/<sym>/earnings-forecast` — consensus, estimate count, 4-week up/down revisions (browser UA) | 200, 1–3 s per name | `nq_eps/nest/revup/revdn_<SYM>`, 150 names daily (~6 min); no history exists free — a clock, started today |
+| US per-strike options history | OptionsDX (406), Yahoo estimates (crumb-gated) | not keyless | stays PAID (Theta $40/mo) |
+Pre-registered before analysis and measured (the pre-registration ids carry `D-817-` because a SECOND session was concurrently working under D-817 — its estimate-revisions and wide-options entries came first, so this entry is D-818; ids in `trd_prereg` are immutable and stay as written): **D-817-spx-gex-dix — NULL on all three claims**: GEX adds −0.005…+0.004
+OOS R² to a HAR+VIX3M |return| forecast (0/8 years), GEX→next-day return +0.4 / −2.0bp per sd (NW t 0.2 / −0.6 by era),
+DIX→20-day return +10 / +19bp per sd at NW t 0.6 / 0.8. Fifteen years of dealer gamma carry nothing the VIX regime does
+not. **D-817-dvol-vrp — NULL by its both-currency rule, with BTC stated**: the variance premium is CONFIRMED on BTC as
+a measurement (DVOL² − RV30²: +951 var-pts, NW t 4.39, 74% of months positive; ETH t 0.97 fails); DVOL improves the
+30-day vol forecast on BTC in 4/4 years (ETH 3/4; the log-space HAR baseline is weak, stated); the DVOL-level return
+effect is +11.4bp per sd on BTC (1.63× fee) at t 2.13 and +10.1 (1.45×) at t 1.44 on ETH — above the fee, below the bar,
+recorded and not claimable. Trials 12. Register: dealer gamma now carries a 15-year probe, crypto IV is HELD, earnings
+revisions move from "licensed" to HELD-FORWARD; **52 HELD / 0 debt / 2 blocked** (gold options surface, US per-strike
+options history). Three runner lines, three continuity rows, permissions green.
+**CONCURRENCY NOTE:** two Claude Code sessions edited this repo at the same time on 2026-09-07 evening; the other session's D-817 work (Yahoo earningsTrend revisions with a crumb, `collect-us-options.ts WIDE=1`, register entries) is left intact and not re-described here. Shared files were committed in their union state after `deno check` and a green board.
+GOLD: gap — three paid barriers reduced to two for $0; what remains paid is exactly one: a per-strike US options surface with history.

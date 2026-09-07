@@ -14,11 +14,17 @@
 | equity NBBO quotes only | consolidated quotes, no depth | Massive (ex-Polygon) Stocks Advanced | $199/mo | not recommended: quotes are not depth |
 | equity trades only | tick trades, no quotes | Massive Stocks Developer | $79/mo | superseded by Databento credit |
 | real-time OPRA + unlimited calls | live options feed | Alpaca Algo Trader Plus | $99/mo | not needed for research |
-| **Earnings estimate revisions** (analyst estimates) | the licensed driver in the register | **EODHD Fundamentals feed** (analyst ratings; estimates coverage not itemised) or ALL-IN-ONE | **€59.99/mo** (all-in €99.99) | FMP's own pages refuse automated reads (403/429) — its Starter tier is reputedly the cheapest ($19–29/mo range, UNVERIFIED); check by hand |
+| **Earnings estimate revisions** (analyst estimates) | the licensed driver in the register | **NO LONGER PAID (D-817):** Yahoo `earningsTrend` (keyless, cookie+crumb) gives consensus now vs 7/30/60/90 days ago plus up/down revision counts per name; Nasdaq's analyst endpoint (keyless) cross-checks it. Daily snapshots for the liquid decile are in the runner. | **$0** | history before 2026-09-07 does not exist free; the forward series starts now (EODHD €59.99 remains the paid route to a backfill) |
 
 **Minimum spend to open every barrier for research:** **$40/mo** (Theta Options Value) + **$0** (Databento credit for
 equity depth and a bounded options pull) + **€59.99/mo** (EODHD fundamentals, optional) ≈ **$40–105/month**. Nothing
 here requires an annual contract.
+
+## 1b. What was found free and keyless instead (D-817, probed 2026-09-07)
+
+- **Revisions: solved free.** Yahoo `earningsTrend` + Nasdaq analyst API (see the table). No vendor needed unless a pre-2026 backfill is wanted.
+- **Options surface, forward: solved free.** CBOE's delayed chains answer for ANY underlying with per-strike open interest and IV; `collect-us-options.ts WIDE=1` now snapshots the whole liquid decile daily (P/C OI, ATM IV, skew, term, naive GEX per name).
+- **Options surface, HISTORY: no free keyless source exists.** Probed: OCC daily open interest = market-wide totals only (calls/puts by equity/index, one row per day, back to 2021+); Massive/Polygon = 401 without a key, and even keyed it carries current OI only; OptionsDX = free datasets require a checkout with an email and the free set is unspecified; OptionCharts = charts, no data endpoint; HistoricalData.net = a 2013 sample. The accumulating snapshot is the free route; Theta Options Value ($40/mo) is the only priced route to 4 years of history.
 
 ## 2. Sequencing (one purchase, one measurement, then the next)
 
@@ -36,6 +42,13 @@ here requires an annual contract.
 - strike-level index positioning (put/call at strike, naive GEX with history) × value-area edge (mirror of D-809b)
 - estimate-revision drift, liquid decile, benchmark-law excess, ≥ 120 months
 - crypto/index variance risk premium in the placeable instrument with a real surface (D-574's retest)
+
+## 3b. Free keyless substitutes found afterwards (D-818)
+
+- **Dealer positioning history:** SqueezeMetrics GEX/DIX daily since 2011 — held, tested NULL.
+- **Crypto options IV history:** Deribit DVOL BTC/ETH daily since 2021 — held; BTC variance premium confirmed as a measurement.
+- **Estimate revisions:** Nasdaq analyst endpoint, daily snapshot of consensus + 4-week revision counts for 150 names — held forward; EODHD is no longer needed unless history is required.
+- Still paid: a per-strike US options surface with history (Theta Options Value, $40/mo).
 
 ## 4. What this does NOT change
 

@@ -53,9 +53,9 @@
 | delisted equity cohort | "27.3% missing" | FILLED to IEX's limit (D-723/724); pre-2016 delistings BLOCKED — no free source found |
 | crypto delisted cohort | "no reachable endpoint enumerates it" (D-639) | **UNBLOCKED TONIGHT** — `data.binance.vision` allowlisted (operator-authorized free host): 874 USDT-M contracts ever = 510 held + 352 currently listed under the 400-day threshold + **12 delisted**; 2 had usable history and are ingested (BLUEBIRD, FOOTBALL), 10 have <400 usable bars (recorded, not written). The cohort is CLOSED with a coverage statement |
 | L2 order-book depth | OFF (2026-09-05) → requested (2026-09-06) | **CRYPTO HELD** (D-808): Binance mirror per-minute depth bands ±1–5%, positioning/OI/taker metrics, 5-min taker klines, BTC/ETH/SOL 2023→; tested SUB-FEE. **FX footprint: BUILT (D-811)** from Dukascopy tick side-volume, EURUSD/XAUUSD 2026-03→, pre-registered. **Equities L2: MEASURED (D-816)** — 20 names × 5 months of TotalView TBBO on the Databento credit, sub-fee on every signal |
-| earnings revisions | licensed | BLOCKED — paid |
+| earnings revisions | licensed | **UNBLOCKED FREE (D-817)** — Yahoo earningsTrend (90-day consensus trend + revision counts) with Nasdaq as the cross-source control; daily snapshots for the liquid decile; forward test registered |
 | central-bank reserves | quarterly, lagged | BLOCKED — cadence (explanatory only) |
-| gold options surface | paid | BLOCKED — paid |
+| gold options surface | paid | BLOCKED — paid (GLD is inside the widened daily CBOE snapshot, D-817, forward only) |
 
 ## 4. Reliability debt — closed or honestly left
 
@@ -72,7 +72,7 @@
 ## 5. Still open, and whose it is
 
 - **OPERATOR:** the prop FEE (clock registered D-807; ledger via `scripts/prop-ledger.ts`) · three wealth-ledger rows · CC Supabase invoices (cockpit/platform only) · capital beyond the current budget.
-- **BLOCKED — paid, now PRICED (D-815, `docs/PAID_DATA_PLAN.md`):** equity tick/L2 (Databento $125 free credit, then per GB) · options surface (Theta Options Value $40/mo) · earnings revisions (EODHD €59.99/mo) · gold options (inside the options surface). Operator's purchase; tests pre-registered before the first byte.
+- **BLOCKED — paid (after D-816/817):** a per-strike US options surface WITH history (Theta Options Value $40/mo; gold options inside it). Equity L2 was MEASURED on the Databento credit (D-816); dealer-gamma history (SqueezeMetrics), crypto IV history (Deribit DVOL) and a forward revisions feed (Nasdaq) are HELD free (D-818).
 - **BLOCKED — no source found:** pre-2016 delisted equity history.
 - **BY DESIGN:** real-money bridge · clock rules · the calm-regime weakness of clock #18.
 - **RESEARCH (unblocked, $0):** nothing queued — the D-804 queue is closed (D-805), the break is described (D-806), and the operator's order-flow/confluence stack is measured (D-808/809: 7 pre-registrations, 7 retractions). Registered forward test: index/Deribit options positioning at ≥ 250 daily points. New leads enter only with a PREREG.
