@@ -18188,3 +18188,35 @@ revisions move from "licensed" to HELD-FORWARD; **52 HELD / 0 debt / 2 blocked**
 options history). Three runner lines, three continuity rows, permissions green.
 **CONCURRENCY NOTE:** two Claude Code sessions edited this repo at the same time on 2026-09-07 evening; the other session's D-817 work (Yahoo earningsTrend revisions with a crumb, `collect-us-options.ts WIDE=1`, register entries) is left intact and not re-described here. Shared files were committed in their union state after `deno check` and a green board.
 GOLD: gap — three paid barriers reduced to two for $0; what remains paid is exactly one: a per-strike US options surface with history.
+
+## D-817 (2026-09-07) FREE AND KEYLESS PAST TWO PAID BARRIERS — estimate revisions solved (Yahoo earningsTrend + Nasdaq as the control), the options surface solved FORWARD (CBOE chains answer for any underlying; the daily snapshot now covers the liquid decile), and per-strike options HISTORY confirmed to have no free keyless source
+
+Operator instruction: find free keyless solutions for the Theta options surface and the EODHD revisions. Probed, not
+assumed (OPERATING DOCTRINE: research before you defer):
+| candidate | probe | verdict |
+|---|---|---|
+| Yahoo `quoteSummary?modules=earningsTrend` (cookie+crumb, the fpi-flags method) | AAPL: consensus EPS now / 7 / 30 / 60 / 90 days ago for 0q, +1q, 0y, +1y; analysts; up/down revisions over 7 and 30 days | **REVISIONS SOLVED** — a 90-day revision history per snapshot, keyless |
+| Nasdaq `api.nasdaq.com/api/analyst/<SYM>/estimate-momentum` and `/earnings-forecast` | keyless with a browser UA: consensus now vs 1 week vs 1 month, revisions up/down over 4 weeks | second source; used as the cross-source control (AAPL 0q 1.980 vs Yahoo 1.978) |
+| CBOE `cdn.cboe.com/.../delayed_quotes/options/<SYM>.json` for arbitrary names (HOOD, XLK, RBLX, KO) | 200, 986–2,336 strikes each, `open_interest` and `iv` present | **SURFACE SOLVED FORWARD** — any underlying, per strike |
+| OCC `marketdata.theocc.com/daily-open-interest` (keyless CSV per date, 2021→) | market-wide totals only (equity/index calls/puts per day) | not per strike; a free aggregate series, noted |
+| Massive (ex-Polygon) "Basic, no key" | 401 without a key; keyed Basic = current OI only, 2y aggregates | not keyless; no OI history |
+| OptionsDX free datasets | require a checkout with an email; the free set is unspecified on the page | not keyless; unverified |
+| OptionCharts, HistoricalData.net | charts / a 2013 sample | no history endpoint |
+**Built:** `ingest-estimate-revisions.ts` — daily snapshots for the liquid decile: `est_rev90_0q/0y:<SYM>`,
+`est_up30`, `est_down30`, `est_n_0q`; positive controls (≥ 80% coverage, AAPL present, Yahoo-vs-Nasdaq within 5%).
+First run: **1,061 of 1,119 names**, controls passed. Wired into the runner with a 4-day continuity budget; register
+entry flipped from "licensed" to HELD with a live probe. `collect-us-options.ts WIDE=1` — the per-name surface (ATM IV,
+25-delta skew proxy, term, P/C OI, naive GEX) for every liquid-decile equity daily, with a `_WIDE names_collected`
+coverage row, a continuity row, and a register entry; first full wide run (the runner's own, after the peer's loop restart): **1,102 names, 5,478 surface points, 3 throttles retried, 0 without options**, ~25 minutes at 1.2s per name. A second start of the collector now refuses while one runs (`assertSingleInstance`, D-818b) — two ran at once tonight and throttled each other.
+**Found while building, both mine:** (1) CBOE throttles sustained requests with HTTP 429 — the first wide run read
+565 throttled names as "chain unavailable" and skipped them; the collector now backs off 10/30/90s, counts 404 as
+no-options, resumes within the day, and paces 1.2s per name. (2) The first descriptive read of the revision cross-section
+showed the registered ratio construction (current / 90d ago − 1) blowing up on near-zero bases (HCAT +12,370%, IPI
++8,140%, PLCE −858%), which a quintile rank would seat at the extremes arbitrarily — so `D-817-estimate-revisions-forward`
+was retracted the same day, before any forward return existed, and superseded by **v2** (EPS-change divided by price,
+$0.05 base floor, 1/99 winsorisation, ≥ 5 analysts); the wide-options forward test `D-817-wide-options-positioning-
+forward` is registered alongside. Descriptive, today's snapshot (1,031 names): median 90-day current-quarter revision
+−0.1%, 48% positive; 30-day revision breadth 51% up (4,659 up vs 4,542 down); median 11 analysts.
+**What stays paid:** per-strike options HISTORY (Theta Options Value, $40/mo, 4 years) — the free route is the snapshot
+accumulating from today. EODHD is no longer needed. A peer session works the same tree tonight (its entries are D-818).
+GOLD: gap — two of the three paid barriers now have a free keyless feed with a forward test registered; the third is priced and its free substitute is accruing daily.

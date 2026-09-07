@@ -1,5 +1,8 @@
 #!/usr/bin/env -S deno run --allow-net --allow-env
-import { mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
+import { mkStrictRead, assertSingleInstance } from "../supabase/functions/_shared/run-preconditions.ts";
+// D-817b: two wide snapshots ran at once tonight (a manual run + the runner's after a loop restart) and throttled each other at
+// CBOE; a second instance of this script now exits with a printed reason (needs --allow-run; without it, proceeds and says so).
+await assertSingleInstance(import.meta.url);
 // collect-us-options.ts (D-469) — daily snapshot of the US option surface from CBOE's free delayed chains.
 // Twin of collect-option-skew.ts (Deribit): no free historical chains exist for US options either, so the honest
 // response is the same — start the clock. Per underlying, per day: ATM IV at the ~30d tenor, 25-delta-proxy skew
