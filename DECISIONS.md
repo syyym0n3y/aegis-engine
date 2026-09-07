@@ -18105,3 +18105,38 @@ restart and decisions guards ran, 29/29 green. One artifact surfaced there: `ref
 STALE — Friday-stamped futures bars are 3.2 calendar days old at 05Z Monday. Staleness now counts TRADING days (weekends
 excluded), verified GREEN under the runner's line: 32/32 consumer symbols fresh.
 GOLD: clock — four clocks read live data again and three of them can produce a number for the first time; the panels are watched.
+
+## D-814 (2026-09-07) THE MISSING MODEL CLASSES, RUN — additive shrunk combination, HAR-RV, Markov regime/duration, gradient boosting, meta-labeling: five pre-registrations, one confirmed (variance is forecastable), four retracted (returns are not, by any combinator)
+
+Operator instruction: make sure all the quant model classes are run. Pre-registered (D-814-*) with fixed constructions,
+one feature stack per instrument exported to files (`export-feature-stack.ts`, 3 crypto with flow features, 8 FX/index),
+yearly walk-forward with every choice made on the train window (SELECTION LAW), trials recorded through the same ledger
+(`spend-trials.ts`, 48 trials), scripts under `scripts/models/`.
+| class | claim | result | verdict |
+|---|---|---|---|
+| additive shrunk (ridge) | sum of weak signals ≥ 1× fee | +1.06bp/sd t 3.92 (0.15× fee); decile L/S −4.9bp | **SUB-FEE** |
+| HAR-RV variance | OOS R² gain ≥ 0.05 on ≥ 8/11 | **+0.12…+0.30 on 11/11**; naive mean negative on 10/11 | **CONFIRMED (sizing)** |
+| Markov regime + duration | low-vol-only trend beats unconditional by ≥ 0.15 SR | SR −0.07 → −0.24; vol-target −0.10 | **NULL** |
+| gradient boosting (fixed HP) | interactions clear fee, +2bp over ridge | +1.10bp/sd; +0.04 over ridge | **SUB-FEE** |
+| meta-labeling (utc16 base) | filter adds ≥ 5bp with ≥ 200 trades | +5.5 vs +8.3bp; gain −2.8; 2026 amplified | **NULL** |
+The picture is consistent across combinators: a linear sum, a tree ensemble and a secondary classifier all extract the
+same ~1bp per standard deviation from the hourly crypto feature stack, and the dominant weight is always the previous
+window's hour-of-day mean — the seasonality D-806 showed reshuffling yearly. **Variance is forecastable on every
+instrument; direction is not, at any horizon or by any model here.** The regime model's durations are the honest
+answer to "how long": days in crypto, weeks in FX and indices, and not usable as a filter. Meta-labeling carried one
+stated deviation (leaf floor 200 → 50, or no split is possible on 188–648 pooled events); the registered floor gives
+the same NULL identically. Nothing promoted.
+GOLD: research — the model-class inventory of the gold path is closed with measurements: one sizing model confirmed, no direction model at any level of nonlinearity.
+
+## D-815 (2026-09-07) PAID DATA PRICED — the cheapest route past each remaining barrier, with the test each purchase would feed; nothing bought
+
+Operator instruction: get the cheapest paid option to overcome the bottleneck. Priced from vendor pages
+(`docs/PAID_DATA_PLAN.md`): options surface history — Theta Data Options Value **$40/mo** (4y, 1-min, OI/IV/greeks per
+the product page; tier gating unconfirmed until the purchase screen); equity L2/tick — **Databento on its $125 free
+historical credit** (Nasdaq TotalView MBP-10/TBBO/trades, pay-per-GB after; a bounded 20-name × 1-year pull and a
+2-year SPX/SPY option-chain pull are the right first use, likely $0); estimate revisions — EODHD fundamentals
+**€59.99/mo** (FMP's pages refuse automated reads; its cheaper tier is unverified). Not recommended: Massive/Polygon
+Advanced $199 (quotes, no depth), Alpaca $99 (live, not history). Minimum to open every barrier ≈ **$40–105/month**, no
+annual contract. Sequenced one purchase → one measurement → next; the tests are listed and will be pre-registered
+before the first byte. Paying is the operator's act; the base rate is unchanged by the data.
+GOLD: gap — the three paid barriers now have a price, a first free step, and a registered use each; the spend decision is the operator's with the rule written first.

@@ -72,7 +72,7 @@
 ## 5. Still open, and whose it is
 
 - **OPERATOR:** the prop FEE (clock registered D-807; ledger via `scripts/prop-ledger.ts`) · three wealth-ledger rows · CC Supabase invoices (cockpit/platform only) · capital beyond the current budget.
-- **BLOCKED — paid:** tick-level CVD/OI for equities · full options surface · earnings revisions · gold options.
+- **BLOCKED — paid, now PRICED (D-815, `docs/PAID_DATA_PLAN.md`):** equity tick/L2 (Databento $125 free credit, then per GB) · options surface (Theta Options Value $40/mo) · earnings revisions (EODHD €59.99/mo) · gold options (inside the options surface). Operator's purchase; tests pre-registered before the first byte.
 - **BLOCKED — no source found:** pre-2016 delisted equity history.
 - **BY DESIGN:** real-money bridge · clock rules · the calm-regime weakness of clock #18.
 - **RESEARCH (unblocked, $0):** nothing queued — the D-804 queue is closed (D-805), the break is described (D-806), and the operator's order-flow/confluence stack is measured (D-808/809: 7 pre-registrations, 7 retractions). Registered forward test: index/Deribit options positioning at ≥ 250 daily points. New leads enter only with a PREREG.

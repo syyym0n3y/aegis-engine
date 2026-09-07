@@ -27,3 +27,4 @@ data/edgar/
 data/
 scratchpad/
 *.bin
+.venv-models/
