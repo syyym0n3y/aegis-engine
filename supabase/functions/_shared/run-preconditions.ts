@@ -244,7 +244,8 @@ export async function assertSingleInstance(scriptFile: string): Promise<void> {
   try {
     const out = await new Deno.Command("ps", { args: ["-eo", "pid,command"], stdout: "piped" }).output();
     const me = String(Deno.pid);
-    const others = new TextDecoder().decode(out.stdout).split("\n").filter((l) => l.includes(name) && /deno run/.test(l) && !l.trim().startsWith(me + " "));
+    // only REAL deno processes: a `bash -c "… deno run … <name>"` wrapper carries the same words in its argv and must not count
+    const others = new TextDecoder().decode(out.stdout).split("\n").filter((l) => /^\s*\d+\s+(\S*\/)?deno\s+run\b/.test(l) && l.includes(name) && !l.trim().startsWith(me + " "));
     if (others.length) { console.error(`!! ${name}: ${others.length} other instance(s) already running (${others.map((l) => l.trim().split(/\s+/)[0]).join(", ")}) — refusing to start a second stream against the same host. Exit 0: not a failure of the step, a refusal to double it.`); Deno.exit(0); }
   } catch (e) {
     if (e instanceof Deno.errors.NotCapable || e instanceof Deno.errors.PermissionDenied) { console.log(`  (single-instance check skipped: no --allow-run)`); return; }
