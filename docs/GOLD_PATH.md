@@ -113,6 +113,9 @@ not the engine — the engine is on the owned node); capital access beyond the c
 - D-808/809/811: the operator's order-flow stack measured on every free source — 8 pre-registrations, 8 retractions; crypto L2/flow, index put/call history and FX tick footprint now HELD (register 50 / 3).
 - D-810/812: PostgREST restart cause established (OOM in a 3.8GB VM at 2.84GB); legacy stack stopped; guard names the killed statement.
 - D-813: three perp panels had frozen and three clocks had no scorer — fixed on Monday before the first bar; continuity GREEN.
+- D-814: the missing model classes run — ridge, boosting, meta-labeling and regime conditioning all sub-fee or worse; HAR-RV variance forecasting CONFIRMED on 11/11 (the per-instrument model with skill: how far and how long, never which way).
+- D-815/816: paid data priced; the equity L2 barrier measured on the operator's Databento credit ($95.52) — sub-fee on all 20 names.
+- D-817/818: two of the three paid barriers opened free and keyless (estimate revisions; the per-name options surface, forward); a peer session added SqueezeMetrics GEX/DIX history, Deribit DVOL and a Nasdaq revisions feed (D-818, both its tests retracted). Register 56 held / 2 blocked, both paid.
 
 ## 5. Deliberately NOT on the list
 

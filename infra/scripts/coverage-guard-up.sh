@@ -242,6 +242,9 @@ while true; do
   # ESTIMATE REVISIONS (D-817): keyless Yahoo earningsTrend snapshots (consensus now vs 7/30/60/90d ago, up/down counts) for the
   # liquid decile, Nasdaq analyst endpoint as the cross-source control. The "licensed" driver, free. Sequential, paced.
   deno run --allow-net --allow-env --allow-read ../scripts/ingest-estimate-revisions.ts > ../data/estimate-revisions.log 2>&1 || echo "$(date -u +%FT%TZ) ESTIMATE REVISIONS INGEST FAILED"
+  # HAR-RV DAILY (D-819): the one model class that passed (D-814) as a live input — next-day vol forecast per instrument
+  # (harrv_vol_1d:<SYM>), the "how far / how long" number for SIZING_FRAMEWORK.md. One symbol per read.
+  deno run --allow-net --allow-env ../scripts/harrv-daily.ts > ../data/harrv-daily.log 2>&1 || echo "$(date -u +%FT%TZ) HAR-RV DAILY FAILED"
   # D-792: Deribit BTC/ETH option-book snapshot (per-strike OI -> PCR, ATM IV, naive GEX). Free, keyless, allowlisted,
   # 2 sequential fetches. FORWARD-ONLY — Deribit exposes no per-strike history, so this feed only becomes a testable
   # conditioner once months of daily marks exist. Guarded: a Deribit outage logs and never breaks the loop.

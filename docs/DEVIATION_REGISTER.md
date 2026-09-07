@@ -73,7 +73,7 @@
 ## 5. Still open, and whose it is
 
 - **OPERATOR:** the prop FEE (clock registered D-807; ledger via `scripts/prop-ledger.ts`) · three wealth-ledger rows · CC Supabase invoices (cockpit/platform only) · capital beyond the current budget.
-- **BLOCKED — paid (after D-816/817):** a per-strike US options surface WITH history (Theta Options Value $40/mo; gold options inside it). Equity L2 was MEASURED on the Databento credit (D-816); dealer-gamma history (SqueezeMetrics), crypto IV history (Deribit DVOL) and a forward revisions feed (Nasdaq) are HELD free (D-818).
+- **Paid barriers after D-816/817/818:** equity L2 — MEASURED on the Databento credit (sub-fee); earnings revisions — FREE (Yahoo/Nasdaq, D-817); options surface — FREE forward (wide CBOE snapshot) but per-strike HISTORY stays paid (Theta Options Value $40/mo, or ~$5/month of SPX open-interest history per month on the remaining Databento credit); gold options — inside the same surface. The only remaining purchase decision buys history, not a different answer.
 - **BLOCKED — no source found:** pre-2016 delisted equity history.
 - **BY DESIGN:** real-money bridge · clock rules · the calm-regime weakness of clock #18.
 - **RESEARCH (unblocked, $0):** nothing queued — the D-804 queue is closed (D-805), the break is described (D-806), and the operator's order-flow/confluence stack is measured (D-808/809: 7 pre-registrations, 7 retractions). Registered forward test: index/Deribit options positioning at ≥ 250 daily points. New leads enter only with a PREREG.

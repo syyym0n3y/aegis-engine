@@ -18220,3 +18220,21 @@ forward` is registered alongside. Descriptive, today's snapshot (1,031 names): m
 **What stays paid:** per-strike options HISTORY (Theta Options Value, $40/mo, 4 years) — the free route is the snapshot
 accumulating from today. EODHD is no longer needed. A peer session works the same tree tonight (its entries are D-818).
 GOLD: gap — two of the three paid barriers now have a free keyless feed with a forward test registered; the third is priced and its free substitute is accruing daily.
+
+## D-819 (2026-09-07) THE MODEL THAT PASSED, MADE LIVE — HAR-RV next-day volatility forecasts per instrument as a daily runner step and register driver; and the options-history barrier priced against the remaining Databento credit
+
+Built ≠ wired ≠ done: D-814 confirmed HAR-RV out of sample on 11/11 instruments and left it as a test script.
+`harrv-daily.ts` now writes `harrv_vol_1d:<SYM>` (annualised %) and `harrv_logrv_1d:<SYM>` daily for BTC/ETH/SOL
+and EURUSD/GBPUSD/USDJPY/AUDUSD/XAUUSD/SPX/NDX/Brent, fit on the trailing 730 days exactly as registered (log RV on lags
+1/5/22), one symbol per read, with positive controls (≥ 10 instruments; BTC forecast within 0.3×–3× its trailing-22d
+realised vol; read-back). First run: BTC 27.2% vs 44.6% trailing, ETH 40.1% vs 60.5%, SOL 57.0% vs 68.5%, EURUSD
+3.6%, GBPUSD 4.4%, USDJPY 6.7%, AUDUSD 5.4%, XAUUSD 22.7%, SPX 7.4% vs 9.3%, NDX 11.4% vs 16.8%, Brent 44.9% — the
+forecast sits below the trailing realised on every instrument tonight, i.e. the model expects the recent burst to fade.
+Wired into the runner after the revisions ingest, continuity budget 2 days, register entry (57 HELD). This is the
+"how far / how long" number `docs/SIZING_FRAMEWORK.md` consumes; it is not a direction and not a strategy.
+Databento, free cost endpoint against the ~$29 credit remaining after D-816: SPY OPRA `statistics` (per-contract open
+interest etc.) 3 months = $48.03; SPY daily option OHLCV 3 months = $72.88; **SPXW statistics 1 month = $5.26** — so
+about five months of SPX per-strike OI history fit the remaining credit. Not pulled: a new metered use of the credit is
+the operator's decision (the D-816 arming covered the equity tests only). If armed, the test is already registered in
+spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
+GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.

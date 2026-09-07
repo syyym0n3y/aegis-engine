@@ -62,6 +62,7 @@ const FEEDS: [string, string, string, number, string][] = [
   ["trd_macro_series?series=eq.deribit_btc_dvol&select=d&order=d.desc&limit=1", "Deribit DVOL BTC/ETH (D-817)", "d", 2, "ingest-deribit-dvol.ts"],
   ["trd_macro_series?series=eq.nq_revup_AAPL&select=d&order=d.desc&limit=1", "Nasdaq analyst revisions snapshot (D-817)", "d", 4, "collect-nasdaq-revisions.ts"],
   ["trd_macro_series?series=eq.est_rev90_0q:AAPL&select=d&order=d.desc&limit=1", "estimate revisions, liquid decile (D-817)", "d", 4, "ingest-estimate-revisions.ts"],
+  ["trd_macro_series?series=eq.harrv_vol_1d:BTCUSDT&select=d&order=d.desc&limit=1", "HAR-RV daily vol forecast (D-819)", "d", 2, "harrv-daily.ts"],
   ["trd_perp_oi?venue=eq.cboe&interval=eq.names_collected&symbol=eq._WIDE&select=ts&order=ts.desc&limit=1", "wide options surface snapshot, ~1,100 names (D-817)", "ts", 4, "collect-us-options.ts"],
   // D-799: the liquid-decile daily equity panel — clock #18's INPUT. The breadth row above watches the same panel with an
   // 18-day budget (fine for a derived breadth series, fatal for a live clock: a frozen panel accrues zero forward
