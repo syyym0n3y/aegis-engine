@@ -379,6 +379,41 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
   // scripts/prop-ledger.ts). Rule (PROP_FIRM_PLAN §3): PROMOTE if evaluation PASSED and funded payouts over 6 months >= 3x fee
   // and funded day-clustered mean >= +5bp/day and 0 breaches; KILL if evaluation FAILED or funded max-DD breach or payouts
   // over 6 funded months < 1x fee; else inconclusive. Value = payouts / fee (the metric the rule names). No entries = no number.
+  // D-813: the three panel-17 hourly-sweep clocks (D-786) had NO scorer — only elapsed-day marks — so they could have reached
+  // maturity without a number (CONTINUITY LAW). Same constructions as mtf-panel97-era.ts CELLS, on the registered 17-panel:
+  // 10 crypto perps (tf=1hSF) + 3 CFD indices + 4 FX majors (trd_fx_hourly). Event = the cell's bar closed at/after
+  // clock_started; net = fwd K=6h log return - class RT (7/4/2bp); metric = pooled net bp; note carries gross t,
+  // instruments positive of 17 and n. Below 30 events: not-yet-computable. The rule's decision floors are 250/400.
+  ...(() => {
+    const CELLS: Record<string, (h: number, b: { h: number; l: number; c: number }, pdh: number, pdl: number) => boolean> = {
+      "fwd-utc01-sweepPDL-reclaim-long-K6-panel17": (h, b, _pdh, pdl) => h === 1 && b.l < pdl && b.c >= pdl,
+      "fwd-utc09to10-belowPDL-long-K6-panel17": (h, b, _pdh, pdl) => (h === 9 || h === 10) && b.c < pdl,
+      "fwd-utc16-abovePDH-long-K6-panel17": (h, b, pdh, _pdl) => h === 16 && b.c > pdh,
+    };
+    const CRYPTO = ["BTCUSDT", "ETHUSDT", "BCHUSDT", "XRPUSDT", "LINKUSDT", "ADAUSDT", "ZECUSDT", "BNBUSDT", "DOGEUSDT", "SOLUSDT"];
+    const IDX = ["XAUUSD", "USA500IDXUSD", "USATECHIDXUSD"], FX = ["EURUSD", "GBPUSD", "AUDUSD", "USDJPY"];
+    const dayKey = (ts: number) => new Date(ts * 1000).toISOString().slice(0, 10);
+    const prevDay = (k: string) => { const d = new Date(k + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); };
+    const out: Record<string, (started: string) => Promise<Score>> = {};
+    for (const id of Object.keys(CELLS)) out[id] = async (started) => {
+      const M = "pooled_net_bp_K6_panel17"; const startTs = Math.floor(Date.parse(started + "T00:00:00Z") / 1000); const KK = 6;
+      const pooled: number[] = [], gross: number[] = []; const perInst = new Map<string, number[]>();
+      const loadBars = async (sym: string, cls: "crypto" | "idx" | "fx") => {
+        if (cls === "crypto") { const row = (await q(`trd_bars_intraday?symbol=eq.${sym}&tf=eq.1hSF&select=bars`))?.[0]; return ((row?.bars || []) as number[][]).filter((b) => b.length >= 6 && b[5] > 0).map((b) => ({ ts: b[0], h: b[2], l: b[3], c: b[4] })); }
+        const rows: { ts: number; h: number; l: number; c: number }[] = []; for (let off = 0; ; off += 50000) { const p = await q(`trd_fx_hourly?symbol=eq.${sym}&select=ts,h,l,c&order=ts.asc&offset=${off}&limit=50000`) as { ts: number; h: number; l: number; c: number }[]; if (!Array.isArray(p)) break; for (const r of p) if (r.c > 0) rows.push(r); if (p.length < 50000) break; } return rows;
+      };
+      for (const [cls, syms, rt] of [["crypto", CRYPTO, 7e-4], ["idx", IDX, 4e-4], ["fx", FX, 2e-4]] as ["crypto" | "idx" | "fx", string[], number][]) for (const sym of syms) {
+        const bars = await loadBars(sym, cls); if (bars.length < 100) continue; bars.sort((a, b) => a.ts - b.ts);
+        const dl = new Map<string, { hi: number; lo: number }>(); for (const b of bars) { const k = dayKey(b.ts); const c = dl.get(k); if (!c) dl.set(k, { hi: b.h, lo: b.l }); else { c.hi = Math.max(c.hi, b.h); c.lo = Math.min(c.lo, b.l); } }
+        for (let i = 25; i < bars.length - KK; i++) { const b = bars[i]; if (b.ts < startTs) continue; const pd = dl.get(prevDay(dayKey(b.ts))); if (!pd) continue; const h = new Date(b.ts * 1000).getUTCHours(); if (!CELLS[id](h, b, pd.hi, pd.lo)) continue; const g = Math.log(bars[i + KK].c / b.c); gross.push(g); pooled.push(g - rt); (perInst.get(sym) ?? perInst.set(sym, []).get(sym)!).push(g - rt); }
+      }
+      if (pooled.length < 30) return { metric: M, value: null, n: pooled.length, note: `${pooled.length} forward events since ${started} on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, promote at n>=400).` };
+      const pos = [...perInst.values()].filter((v) => v.length && mean(v) > 0).length, tested = perInst.size;
+      const tg = mean(gross) / ((sd(gross) || 1e-12) / Math.sqrt(gross.length));
+      return { metric: M, value: mean(pooled) * 1e4, n: pooled.length, note: `${pooled.length} forward events since ${started}: pooled net ${(mean(pooled) * 1e4).toFixed(2)}bp, gross t ${tg.toFixed(2)}, ${pos}/${tested} instruments positive (of 17). ${pooled.length < 250 ? "below the 250-event decision floor" : "decision-grade n"}.` };
+    };
+    return out;
+  })(),
   "fwd-prop-ftmo100k-utc16-0p5x-v1": async (started) => {
     const M = "funded_payouts_over_fee";
     let L: { fee_usd: number | null; entries: { date: string; phase: string; equity_usd: number; payout_usd: number; breach: boolean; note: string }[] };

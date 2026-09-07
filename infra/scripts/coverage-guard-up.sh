@@ -274,6 +274,9 @@ while true; do
   # 27 clean rows dated a week earlier while its log said "27 attribution rows written". Fetches only what is stale
   # (~13s when due, ~2s when not), sequentially, from an allowlisted keyless endpoint, and exits RED if any symbol
   # the engine reads is still stale afterwards — success is "the consumer's data is fresh", not "the fetches 200'd".
+  # PERP PANEL REFRESH (D-813): incremental daily refresh of tf=1dSF / 1hSF / 1h — four registered clocks read these and
+  # their writers were invoked by nothing (1h stopped 08-21, 1hSF 08-29, 1dSF 08-27, found on Monday 09-07). One symbol per read.
+  deno run --allow-net --allow-env ../scripts/refresh-perp-panels.ts > ../data/refresh-perp-panels.log 2>&1 || echo "$(date -u +%FT%TZ) PERP PANEL REFRESH RED — a forward clock is reading a frozen panel"
   deno run --allow-net --allow-env --allow-read ../scripts/refresh-bars.ts > ../data/refresh-bars.log 2> ../data/refresh-bars.err \
     || echo "$(date -u +%FT%TZ) BAR REFRESH RED — the attribution universe is stale; today's decomposition describes a frozen market"
   # CAUSAL ATTRIBUTION ENGINE (D-520 P3): daily force decomposition + measured ignorance per instrument.

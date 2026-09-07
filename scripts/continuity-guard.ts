@@ -43,6 +43,9 @@ const FEEDS: [string, string, string, number, string][] = [
   ["trd_cot_disagg?select=report_date&order=report_date.desc&limit=1", "CFTC disaggregated", "report_date", 7, "ingest-cot-disagg.sh"],
   ["trd_cot_tff?select=report_date&order=report_date.desc&limit=1", "CFTC financial (TFF)", "report_date", 7, "ingest-cot-tff.sh"],
   ["trd_fx_hourly?select=ts&order=ts.desc&limit=1", "FX/index hourly", "ts", 3, "ingest-dukascopy.py"],
+  ["trd_bars_intraday?tf=eq.1hSF&last_ts=not.is.null&select=last_ts&order=last_ts.desc&limit=1", "perp hourly panel 1hSF (3 panel-17 clocks)", "last_ts", 2, "refresh-perp-panels.ts"],
+  ["trd_bars_intraday?tf=eq.1h&last_ts=not.is.null&select=last_ts&order=last_ts.desc&limit=1", "perp hourly taker panel 1h (persist-real clock)", "last_ts", 2, "refresh-perp-panels.ts"],
+  ["trd_bars_intraday?tf=eq.1dSF&last_ts=not.is.null&select=last_ts&order=last_ts.desc&limit=1", "perp daily survivor-free panel 1dSF", "last_ts", 2, "refresh-perp-panels.ts"],
   ["trd_attribution?select=asof&order=asof.desc&limit=1", "attribution engine", "asof", 3, "aegis-attribution.ts"],
   ["trd_earnings?select=report_date&order=report_date.desc&limit=1", "earnings", "report_date", 7, "ingest-earnings.ts"],
   // Breadth (D-717) is DERIVED from the equity panel, so its newest date is the panel's newest bar — it can never be

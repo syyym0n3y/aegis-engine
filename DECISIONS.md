@@ -18077,3 +18077,26 @@ competing explanation, so a null here bounds the free data, not FX order flow in
 source: crypto L2/flow/footprint, index put/call, FX tick footprint — eight pre-registrations, eight retractions.**
 Equity L2 and footprint remain BLOCKED — paid.
 GOLD: research — the last free-data leg of the order-flow stack is measured, not assumed; what is left unmeasured is paid.
+
+## D-813 (2026-09-07, Monday) THE CLOCKS WERE NOT GOING TO FIRE — three perp panels had stopped (08-21, 08-27, 08-29) with no job writing them and no continuity row watching them, and three registered clocks had no scorer at all; both fixed before the week's first bar
+
+Operator instruction: make sure the clocks fire, it's Monday. Checked clock by clock against live tables. FX/index hourly
+fresh to 2026-09-06 23:00Z; equities fresh to 09-04; marks written for all 18 clocks daily (300 since 09-06). And:
+| panel | clocks that read it | newest bar found | writer | invoked by | watched by |
+|---|---|---|---|---|---|
+| tf=1h (25 perps, taker) | fwd-persist-real-K24 | **2026-08-21** | ingest-crypto-hourly.ts | nothing | nothing |
+| tf=1hSF (97 perps) | the 3 panel-17 sweep clocks | **2026-08-29** | ingest-crypto-hourly.ts | nothing | nothing |
+| tf=1dSF (512 contracts) | the 97-panel era checks, universe | **2026-08-27** | ingest-perp-survivorfree.ts | nothing | nothing |
+This is the CONTINUITY LAW's named failure (D-613): "a dataset that silently stops arriving … every query keeps
+answering plausibly from a frozen snapshot." Four clocks would have accumulated elapsed-day marks against frozen data
+until maturity. Worse: `fwd-utc01-sweepPDL-reclaim-long-K6-panel17`, `fwd-utc09to10-belowPDL-long-K6-panel17` and
+`fwd-utc16-abovePDH-long-K6-panel17` (D-786) had **no scorer** — only the tracker's elapsed-day marks — so they could
+never have produced the number their rules name.
+Fixed: `refresh-perp-panels.ts` — incremental (from each symbol's true newest bar, one symbol per read, D-812), all three
+panels, TRADING-status aware (a delisted contract is counted as expected-stale, never as a failure), 9-tuple layout
+preserved, positive control ≥ 90% of trading symbols fresh per panel. First run: 1dSF 374/374 trading refreshed,
+1hSF 87/87, 1h 25/25, 0 failed. Wired into the runner before refresh-bars; three continuity rows (budget 2 days);
+permissions guard green. Scorers for the three panel-17 clocks added to `forward-score-specs.ts` (the D-782 cell
+definitions on the registered 17 instruments, class costs 7/4/2bp, gross t and instruments-positive in the note;
+below 30 events not-yet-computable; decision floors 250/400 stated) and proven under BACKDATE before the first live mark.
+GOLD: clock — four clocks read live data again and three of them can produce a number for the first time; the panels are watched.
