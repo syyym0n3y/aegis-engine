@@ -22,7 +22,7 @@ function zs(x: number[], W: number) { const out = new Array(x.length).fill(NaN);
 type B5 = { t: number; o: number; h: number; l: number; c: number; v: number; d: number };
 const res: { sym: string; sig: string; bpPerSd: number; t: number; ic: number; n: number }[] = []; const trades: { sym: string; abl: string; r: number }[] = [];
 for (const sym of K.SYMBOLS.split(",")) {
-  const fee = FEE[sym] ?? 3; const recs = (await Deno.readTextFile(`${DIR}/${sym}-5m.jsonl`)).split("\n").filter(Boolean).map((l) => JSON.parse(l)).filter((r) => !r.missing) as { d: string; bars: number[][] }[];
+  const fee = FEE[sym] ?? 3; const recs = (await Deno.readTextFile(`${DIR}/${sym}-5m.jsonl`)).split("\n").filter(Boolean).map((l) => JSON.parse(l)).filter((r) => !r.missing).filter((r, i, a) => a.findIndex((x) => x.d === r.d) === i) as { d: string; bars: number[][] }[];   // dedupe by day (a concurrent writer once overlapped)
   assertNonEmpty(`${sym} days with ticks`, recs, 150);
   const bars: B5[] = recs.flatMap((r) => r.bars).map((b) => ({ t: b[0], o: b[1], h: b[2], l: b[3], c: b[4], v: b[5], d: b[6] })).sort((a, b) => a.t - b.t);
   // hourly aggregates

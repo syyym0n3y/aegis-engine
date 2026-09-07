@@ -18055,3 +18055,25 @@ panel query is the reliable trigger and the rule from D-798 stands with its mech
 the last 25h and prints the killed statement beside its verdict, so the next incident names its query. Self-tested and
 run live (prints tonight's kill, GREEN on the start count).
 GOLD: reliability — the substrate's failure mode has a mechanism, a measured mitigation, and a guard that names the culprit.
+
+## D-811 (2026-09-07) THE FX FOOTPRINT, FROM REAL TICK SIDE-VOLUME — built and measured: SUB-FEE; the last buildable item of the order-flow request is closed
+
+D-808 recorded that an FX footprint was buildable from Dukascopy ticks (ask-side and bid-side volume per tick, a real
+delta rather than a proxy) and not built. Built: `ingest-dukascopy-ticks.py` (hourly `.bi5` LZMA tick files, 20-byte
+records, aggregated to 5-minute bars with delta = askVol − bidVol; idempotent per day; some hour files never answer, so
+the span was pulled in from the registered year to six months as a stated coverage choice, 12-second bound per dead
+hour). Held: EURUSD 178 days with ticks, XAUUSD 161 (2026-03-01→2026-09-04). Pre-registered before the data
+(`D-811-fx-footprint-ticks`), measured by `fx-footprint-test.ts`:
+| | EURUSD | XAUUSD |
+|---|---|---|
+| plain hourly delta → next hour | +0.07bp/sd t 0.64 (0.04× fee) | −1.24bp/sd t −1.55 (0.31× fee, wrong sign) |
+| 5-min footprint proxy → next hour | +0.09bp/sd t 0.78 | +0.17bp/sd t 0.21 |
+| VA-edge fade, level only (K6 net) | n 150, −4.33bp t −2.67 | n 127, −2.68bp t −0.34 |
+| VA-edge + delta reversal | n 26, +0.21bp | n 23, −11.92bp |
+The same shape as crypto (D-808/809): nothing near the fee, the level loses, the delta filter thins the sample to
+under 30 trades and adds nothing. One liquidity provider's tick volume is not the interbank market — stated as the
+competing explanation, so a null here bounds the free data, not FX order flow in general. Pre-registration
+`retracted`; lineage row rejected; trials 6. **The operator's order-flow request is now fully measured on every free
+source: crypto L2/flow/footprint, index put/call, FX tick footprint — eight pre-registrations, eight retractions.**
+Equity L2 and footprint remain BLOCKED — paid.
+GOLD: research — the last free-data leg of the order-flow stack is measured, not assumed; what is left unmeasured is paid.

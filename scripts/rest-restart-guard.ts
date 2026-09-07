@@ -39,6 +39,6 @@ try { await Deno.writeTextFile(base, JSON.stringify({ count: r.count, checked_at
 catch (e) { if (e instanceof Deno.errors.NotCapable || e instanceof Deno.errors.PermissionDenied) persisted = false; else throw e; }
 if (!persisted) console.log("  (read-only run: baseline not advanced — the runner's line writes it)");
 if (prev < 0) { console.log(`  REST RESTART GUARD — baseline set: ${r.count} start(s) in the container log (first run, no verdict)`); Deno.exit(0); }
-if (kills.length) console.error(`  DB-SIDE: ${kills.length / 2 | 0 || 1} backend kill(s) in the last 25h — the killed statement(s):\n    ${kills.join("\n    ")}`);
+if (kills.length) console.log(`  DB-SIDE: ${kills.length / 2 | 0 || 1} backend kill(s) in the last 25h — the killed statement(s):\n    ${kills.join("\n    ")}`);
 if (r.count > prev) { console.error(`  REST RESTART GUARD RED — PostgREST restarted ${r.count - prev} time(s) since the last cycle: ${r.fresh.join(", ")}. Every fail-closed guard RED in this cycle may be this, not data.`); Deno.exit(1); }
 console.log(`  REST RESTART GUARD GREEN — no PostgREST restart since the last cycle (${r.count} start(s) on record)`);

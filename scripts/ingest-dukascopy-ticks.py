@@ -13,7 +13,7 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "du
 SCALE = {"XAUUSD": 1e3, "USDJPY": 1e3}   # Dukascopy price scale: 1e5 for most pairs, 1e3 for JPY pairs and metals
 CONN = [None]
 def conn():
-    if CONN[0] is None: CONN[0] = http.client.HTTPSConnection("datafeed.dukascopy.com", timeout=30)
+    if CONN[0] is None: CONN[0] = http.client.HTTPSConnection("datafeed.dukascopy.com", timeout=12)   # some hour files never answer; 12s bounds a dead hour
     return CONN[0]
 def fetch(path):
     for attempt in range(2):   # a dead hour costs seconds, not a minute
