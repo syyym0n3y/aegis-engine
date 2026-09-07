@@ -82,6 +82,11 @@ console.log(`    forces: ${forceTickers.join(" ")}`);
 // Current watermark per symbol, so an already-fresh symbol costs nothing.
 const now = Date.now();
 const staleMs = Number(K.STALE_D) * 864e5;
+// D-813b: staleness in TRADING days, not calendar days. On Monday 05Z a Friday-stamped futures bar (ZW=F, KC=F, stamped at
+// midnight) is 3.2 calendar days old and was flagged STILL STALE while SPY (stamped at the open) passed — a weekend
+// artifact that would RED the attribution refresh every Monday morning. Weekend days do not count toward staleness.
+const weekendMsBetween = (a: number, b: number) => { let n = 0; const d = new Date(a); d.setUTCHours(0, 0, 0, 0); for (; d.getTime() < b; d.setUTCDate(d.getUTCDate() + 1)) { const w = d.getUTCDay(); if (w === 0 || w === 6) n++; } return n * 864e5; };
+const tradingAgeMs = (wm: number, now: number) => (now - wm) - weekendMsBetween(wm, now);
 const watermark = new Map<string, number>();
 for (const sym of TARGETS) {
   const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr }).catch(() => null);
@@ -91,7 +96,7 @@ for (const sym of TARGETS) {
   if (Array.isArray(bars) && bars.length) watermark.set(sym, bars[bars.length - 1][0] * 1000);
 }
 
-const due = TARGETS.filter((s) => (now - (watermark.get(s) ?? 0)) > staleMs);
+const due = TARGETS.filter((s) => tradingAgeMs(watermark.get(s) ?? 0, now) > staleMs);
 console.log(`    ${watermark.size} of ${TARGETS.length} already present; ${due.length} stale beyond ${K.STALE_D}d and due for refresh`);
 if (!due.length) {
   console.log(`\n  ALL FRESH — nothing older than ${K.STALE_D} days. No fetches made.`);
@@ -170,7 +175,7 @@ for (const sym of REQUIRED) {
   const j = r && r.ok ? await r.json().catch(() => null) as { bars: number[][] }[] | null : null;
   const bars = j?.[0]?.bars;
   const wm = Array.isArray(bars) && bars.length ? bars[bars.length - 1][0] * 1000 : 0;
-  if ((now - wm) > staleMs) stillStale.push(`${sym}@${wm ? new Date(wm).toISOString().slice(0, 10) : "ABSENT"}`);
+  if (tradingAgeMs(wm, now) > staleMs) stillStale.push(`${sym}@${wm ? new Date(wm).toISOString().slice(0, 10) : "ABSENT"}`);
 }
 if (stillStale.length) {
   // The denominator is REQUIRED, not consumerUniverse: the loop above checks targets AND forces, and printing the

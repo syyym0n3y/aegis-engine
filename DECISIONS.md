@@ -18099,4 +18099,9 @@ preserved, positive control ≥ 90% of trading symbols fresh per panel. First ru
 permissions guard green. Scorers for the three panel-17 clocks added to `forward-score-specs.ts` (the D-782 cell
 definitions on the registered 17 instruments, class costs 7/4/2bp, gross t and instruments-positive in the note;
 below 30 events not-yet-computable; decision floors 250/400 stated) and proven under BACKDATE before the first live mark.
+**Verified in the loop's OWN Monday cycle (05:40Z), not by my hand:** the panel refresh ran (87 hourly + 25 taker perps picked up
+the new hour), the put/call ingest ran incrementally (nothing newer than Friday, correct), the panel-17 scorers marked, the
+restart and decisions guards ran, 29/29 green. One artifact surfaced there: `refresh-bars.ts` flagged ZW=F and KC=F STILL
+STALE — Friday-stamped futures bars are 3.2 calendar days old at 05Z Monday. Staleness now counts TRADING days (weekends
+excluded), verified GREEN under the runner's line: 32/32 consumer symbols fresh.
 GOLD: clock — four clocks read live data again and three of them can produce a number for the first time; the panels are watched.
