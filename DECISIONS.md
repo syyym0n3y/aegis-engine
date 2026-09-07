@@ -18140,3 +18140,28 @@ Advanced $199 (quotes, no depth), Alpaca $99 (live, not history). Minimum to ope
 annual contract. Sequenced one purchase → one measurement → next; the tests are listed and will be pre-registered
 before the first byte. Paying is the operator's act; the base rate is unchanged by the data.
 GOLD: gap — the three paid barriers now have a price, a first free step, and a registered use each; the spend decision is the operator's with the rule written first.
+
+## D-816 (2026-09-07) THE EQUITY L2 BARRIER, BOUGHT AND MEASURED — Nasdaq TotalView trades-with-book for the 20 most liquid names on the operator's Databento credit: order flow is sub-fee on equities exactly as on crypto
+
+Operator instruction: sign up for the Databento free credit and run the equity tests. The account and key are the
+operator's (I may not create accounts or handle credentials); the key line arrived with the placeholder's angle
+brackets and no quoting, which broke `.env` parsing and Databento's auth — repaired as formatting, never entered.
+Pre-registered first (`D-816-equity-depth-flow`). COST DISCIPLINE: `ingest-databento-tbbo.ts` calls the free cost
+endpoint for exactly the planned pull and refuses to fetch above a $100 cap of the $125 credit. The full year for 20
+names priced at **$245.05**; 8 names $171.66; 6 names $139.77 — the most active names carry the cost. The registered
+fallback (cut names) would have left four names and made the rule's "14 of 20" clause unattainable, so the SPAN was cut
+instead — **a stated deviation**: 2026-04-01→2026-09-04, **$95.52 metered**, 120 symbol-months streamed line by line
+(a month of TSLA is gigabytes of CSV; the first cut of the puller read whole bodies into memory and was rewritten).
+| signal (→ next regular-session hour, 433h per name) | median bp per 1 sd | × 5bp fee | names clearing at t ≥ 2.5 |
+|---|---|---|---|
+| top-of-book size imbalance | −1.31 | −0.26× | 0/20 |
+| aggressor delta (buy − sell initiated) | +1.05 | 0.21× | 0/20 |
+| 5-minute footprint proxy | +0.57 | 0.11× | 0/20 |
+Largest single names: AMAT delta +11.8bp/sd t 2.34, TSLA delta +6.7 t 1.98, GS imbalance +5.1 t 2.10 — none at the
+bar, and their signs disagree across names. Rank IC within ±0.14. **The D-808 crypto shape reproduces on equities with
+real depth data: statistically ordinary, economically empty.** Pre-registration `retracted`, lineage row rejected,
+60 trials, continuity marks written for the 20 files, register entry with a live probe. One test defect on the way, my
+own pattern for the third time tonight: a trailing `//` comment appended to a source line swallowed the statement after
+it (the `.env` `TO` line, then this test's result push) — the first run reported "results: got 0" and was read as a
+defect, not a finding, before anything was recorded.
+GOLD: gap — the equity L2 barrier is measured with paid data for $95.52 of a free credit; the remaining $29 and the Theta/EODHD options stay the operator's.

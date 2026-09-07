@@ -1,6 +1,6 @@
 # PAID DATA PLAN — the cheapest route past each remaining data barrier (D-815, 2026-09-07)
 
-> Status: PRICED, NOT PURCHASED. Every price below was read from the vendor's own page on 2026-09-07 unless marked;
+> Status 2026-09-07 (D-816): Databento account created by the operator; **$95.52 of the $125 credit spent** on the equity L2 test (SUB-FEE on all 20 names). Options (Theta) and revisions (EODHD) remain PRICED, NOT PURCHASED. Every price below was read from the vendor's own page on 2026-09-07 unless marked;
 > paying is the operator's act (I never enter payment details), and nothing that spends runs until armed. Each purchase
 > is paired with the pre-registered test that would run on it, so the spend has a rule before it happens.
 

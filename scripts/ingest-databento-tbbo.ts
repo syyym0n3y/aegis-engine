@@ -50,14 +50,20 @@ for (const sym of SYMS) {
     const body = new URLSearchParams({ dataset: K.DATASET, symbols: sym, schema: "tbbo", start: s, end: e, encoding: "csv", compression: "none", stype_in: "raw_symbol", pretty_px: "true", pretty_ts: "true" });
     const r = await fetch(`${BASE}/timeseries.get_range`, { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/x-www-form-urlencoded" }, body });
     if (!r.ok) { console.error(`  ${sym} ${s}: HTTP ${r.status} ${(await r.text()).slice(0, 160)}`); continue; }
-    const csv = await r.text(); const lines = csv.split("\n"); const hd = lines[0].split(","); const ix = (n: string) => hd.indexOf(n);
-    const iTs = ix("ts_recv") >= 0 ? ix("ts_recv") : ix("ts_event"), iPx = ix("price"), iSz = ix("size"), iSide = ix("side"), iBs = ix("bid_sz_00"), iAs = ix("ask_sz_00");
-    if ([iTs, iPx, iSz, iSide, iBs, iAs].some((i) => i < 0)) { console.error(`  ${sym} ${s}: unexpected columns ${hd.slice(0, 10).join(",")}`); continue; }
-    const bars = new Map<number, number[]>(); const imbs = new Map<number, number[]>();
-    for (const ln of lines.slice(1)) { if (!ln) continue; const p = ln.split(","); const t = Math.floor(Date.parse(p[iTs]) / 1000); if (!Number.isFinite(t)) continue; const px = +p[iPx], sz = +p[iSz]; if (!(px > 0 && sz > 0)) continue; const t5 = Math.floor(t / 300) * 300; const b = bars.get(t5); const d = side(p[iSide]) * sz; if (!b) bars.set(t5, [t5, px, px, px, px, sz, d]); else { b[2] = Math.max(b[2], px); b[3] = Math.min(b[3], px); b[4] = px; b[5] += sz; b[6] += d; } const bs = +p[iBs], as = +p[iAs]; if (bs + as > 0) (imbs.get(t5) ?? imbs.set(t5, []).get(t5)!).push((bs - as) / (bs + as)); }
+    // STREAM the body line by line (a month of TBBO for one active name is gigabytes of CSV; never a whole body in memory)
+    const bars = new Map<number, number[]>(); const imbs = new Map<number, number[]>(); let hd: string[] | null = null, iTs = -1, iPx = -1, iSz = -1, iSide = -1, iBs = -1, iAs = -1, nTrades = 0, rest = "";
+    const reader = r.body!.pipeThrough(new TextDecoderStream()).getReader();
+    const handle = (ln: string) => {
+      if (!hd) { hd = ln.split(","); const ix = (n: string) => hd!.indexOf(n); iTs = ix("ts_recv") >= 0 ? ix("ts_recv") : ix("ts_event"); iPx = ix("price"); iSz = ix("size"); iSide = ix("side"); iBs = ix("bid_sz_00"); iAs = ix("ask_sz_00"); if ([iTs, iPx, iSz, iSide, iBs, iAs].some((i) => i < 0)) throw new Error(`${sym} ${s}: unexpected columns ${hd.slice(0, 10).join(",")}`); return; }
+      if (!ln) return; const p = ln.split(","); const t = Math.floor(Date.parse(p[iTs]) / 1000); if (!Number.isFinite(t)) return; const px = +p[iPx], sz = +p[iSz]; if (!(px > 0 && sz > 0)) return; nTrades++;
+      const t5 = Math.floor(t / 300) * 300; const b = bars.get(t5); const d = side(p[iSide]) * sz; if (!b) bars.set(t5, [t5, px, px, px, px, sz, d]); else { b[2] = Math.max(b[2], px); b[3] = Math.min(b[3], px); b[4] = px; b[5] += sz; b[6] += d; }
+      const bs = +p[iBs], as = +p[iAs]; if (bs + as > 0) (imbs.get(t5) ?? imbs.set(t5, []).get(t5)!).push((bs - as) / (bs + as));
+    };
+    while (true) { const { value, done } = await reader.read(); if (done) break; rest += value; let nl; while ((nl = rest.indexOf("\n")) >= 0) { handle(rest.slice(0, nl)); rest = rest.slice(nl + 1); } }
+    if (rest) handle(rest);
     const byDay = new Map<string, number[][]>(); for (const [t5, b] of [...bars.entries()].sort((a, c) => a[0] - c[0])) { const im = imbs.get(t5); b.push(im?.length ? im.reduce((a, x) => a + x, 0) / im.length : 0); const d = new Date(t5 * 1000).toISOString().slice(0, 10); (byDay.get(d) ?? byDay.set(d, []).get(d)!).push(b); }
     let out = ""; for (const [d, bs] of [...byDay.entries()].sort()) out += JSON.stringify({ d, bars: bs }) + "\n"; await Deno.writeTextFile(file, out, { append: true });
-    spent += costs[s] / SYMS.length; console.log(`  ${sym} ${s}: ${lines.length - 1} trades -> ${bars.size} 5m bars, ${byDay.size} days (running cost ~$${spent.toFixed(2)})`);
+    spent += costs[s] / SYMS.length; console.log(`  ${sym} ${s}: ${nTrades.toLocaleString()} trades -> ${bars.size} 5m bars, ${byDay.size} days (running cost ~$${spent.toFixed(2)})`);
     await new Promise((x) => setTimeout(x, 200));
   }
 }

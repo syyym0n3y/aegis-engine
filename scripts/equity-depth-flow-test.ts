@@ -25,7 +25,7 @@ for (const sym of files) {
   const ts = [...hours.keys()].sort((a, b) => a - b); const ret = new Map<number, number>(); for (let i = 1; i < ts.length; i++) if (ts[i] - ts[i - 1] === 3600) ret.set(ts[i - 1], Math.log(hours.get(ts[i])!.c / hours.get(ts[i - 1])!.c) * 1e4);
   for (const [name, f] of [["top-of-book imbalance", (t: number) => hours.get(t)!.imb], ["aggressor delta", (t: number) => hours.get(t)!.delta], ["footprint proxy (top-bottom third)", (t: number) => hours.get(t)!.fp]] as [string, (t: number) => number][]) {
     const xs = ts.map(f), z = zs(xs, W); const X: number[] = [], Y: number[] = []; for (let i = 0; i < ts.length; i++) { const y = ret.get(ts[i]); if (y == null || !Number.isFinite(z[i])) continue; if (K.EXCLUDE_AUCTION_HOURS === "1") { const et = hours.get(ts[i])!.et; if (et === 9 || et === 15) continue; } X.push(z[i]); Y.push(y); }
-    if (X.length < 500) { console.log(`  ${sym} ${name}: UNTESTED (n ${X.length})`); continue; } const o = ols(X, Y); res.push({ sym, sig: name, bpPerSd: o.b, t: o.t, ic: rankIC(X, Y), n: o.n });
+    if (X.length < 300) { console.log(`  ${sym} ${name}: UNTESTED (n ${X.length})`); continue; } /* floor 300: 5-month cap-fitted span, ~700 session hours minus the 250h z warm-up */ const o = ols(X, Y); res.push({ sym, sig: name, bpPerSd: o.b, t: o.t, ic: rankIC(X, Y), n: o.n });
   }
 }
 assertNonEmpty("results", res, 5);
