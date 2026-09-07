@@ -8,13 +8,14 @@
 // Stored as FILES (data/binance-mirror/<ds>/<SYM>.jsonl, one line per day) — no schema change. Idempotent per day
 // (a day already present is skipped). Sequential, paced. Positive controls: every symbol x dataset gets >= 90% of
 // its requested days, or the run is RED (a missing day is 404-listed, never silently absent).
-import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { declareKnobs, assertSingleInstance } from "../supabase/functions/_shared/run-preconditions.ts";
 const K = declareKnobs("ingest-binance-mirror", [
   { name: "SYMBOLS", def: "BTCUSDT,ETHUSDT,SOLUSDT" },
   { name: "DATASETS", def: "klines5m,metrics,bookDepth", note: "5m first so the composite can run before depth lands" },
   { name: "FROM_DEPTH", def: "2023-01-01", note: "bookDepth + 5m start" }, { name: "FROM_METRICS", def: "2023-01-01", note: "aligned with depth (metrics exist from 2020-09; a coverage choice, stated in D-808)" },
   { name: "TO", def: "2026-09-04" }, { name: "PAUSE_MS", def: "0", note: "sequential already paces at one request in flight" }, { name: "OUT", def: "data/binance-mirror" },
 ]);
+await assertSingleInstance(import.meta.url);
 const REPO = new URL("..", import.meta.url).pathname; const OUT = K.OUT.startsWith("/") ? K.OUT : `${REPO}${K.OUT}`;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const days = (from: string, to: string) => { const out: string[] = []; const d = new Date(from + "T00:00:00Z"); const e = new Date(to + "T00:00:00Z"); while (d <= e) { out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 1); } return out; };

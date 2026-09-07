@@ -238,7 +238,7 @@ while true; do
   # 2021-> (incremental); Nasdaq analyst consensus + 4-week revision counts (forward snapshot, 150 names, ~6 min).
   deno run --allow-net --allow-env ../scripts/ingest-squeezemetrics.ts > ../data/squeezemetrics.log 2>&1 || echo "$(date -u +%FT%TZ) SQUEEZEMETRICS INGEST FAILED"
   deno run --allow-net --allow-env ../scripts/ingest-deribit-dvol.ts > ../data/deribit-dvol.log 2>&1 || echo "$(date -u +%FT%TZ) DVOL INGEST FAILED"
-  deno run --allow-net --allow-env --allow-read ../scripts/collect-nasdaq-revisions.ts > ../data/nasdaq-revisions.log 2>&1 || echo "$(date -u +%FT%TZ) NASDAQ REVISIONS SNAPSHOT FAILED"
+  deno run --allow-net --allow-env --allow-read --allow-run ../scripts/collect-nasdaq-revisions.ts > ../data/nasdaq-revisions.log 2>&1 || echo "$(date -u +%FT%TZ) NASDAQ REVISIONS SNAPSHOT FAILED"
   # ESTIMATE REVISIONS (D-817): keyless Yahoo earningsTrend snapshots (consensus now vs 7/30/60/90d ago, up/down counts) for the
   # liquid decile, Nasdaq analyst endpoint as the cross-source control. The "licensed" driver, free. Sequential, paced.
   deno run --allow-net --allow-env --allow-read ../scripts/ingest-estimate-revisions.ts > ../data/estimate-revisions.log 2>&1 || echo "$(date -u +%FT%TZ) ESTIMATE REVISIONS INGEST FAILED"

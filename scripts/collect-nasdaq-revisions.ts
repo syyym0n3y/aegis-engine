@@ -3,8 +3,9 @@
 // name from Nasdaq's keyless analyst endpoint (browser UA). No history exists free; this is a FORWARD series (the same
 // honest response as the options collectors: start the clock). Universe: the top N liquid-decile equities by 2025 dollar
 // volume. Series per name (next fiscal quarter): nq_eps_<SYM>, nq_nest_<SYM>, nq_revup_<SYM>, nq_revdn_<SYM>. Idempotent by day.
-import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
+import { declareKnobs, mkStrictRead, assertNonEmpty, assertSingleInstance } from "../supabase/functions/_shared/run-preconditions.ts";
 const K = declareKnobs("collect-nasdaq-revisions", [{ name: "N_NAMES", def: "150", note: "the endpoint answers in 1-3s; 150 names ~ 6 min daily" }, { name: "PAUSE_MS", def: "100" }]);
+await assertSingleInstance(import.meta.url);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "nqr", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const hdr = await (async () => { const t = await jwt(); return { "Content-Type": "application/json", Authorization: `Bearer ${t}`, apikey: t }; })();

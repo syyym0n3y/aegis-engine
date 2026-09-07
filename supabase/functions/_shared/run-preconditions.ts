@@ -232,3 +232,22 @@ export function assertCoverage(label: string, got: number, requested: number, mi
     );
   }
 }
+
+/**
+ * assertSingleInstance (D-818) — refuse to start when another instance of THIS script is already running. Origin: a coverage-loop
+ * restart began the wide options snapshot while another session's instance of the same step was mid-run, so two processes hit
+ * a rate-limited host (CBOE, 429) at once — the sequential rule broken by orchestration rather than by code. Needs
+ * --allow-run to inspect `ps`; without it the check is SKIPPED with a printed note (never a false RED).
+ */
+export async function assertSingleInstance(scriptFile: string): Promise<void> {
+  const name = scriptFile.split("/").pop() ?? scriptFile;
+  try {
+    const out = await new Deno.Command("ps", { args: ["-eo", "pid,command"], stdout: "piped" }).output();
+    const me = String(Deno.pid);
+    const others = new TextDecoder().decode(out.stdout).split("\n").filter((l) => l.includes(name) && /deno run/.test(l) && !l.trim().startsWith(me + " "));
+    if (others.length) { console.error(`!! ${name}: ${others.length} other instance(s) already running (${others.map((l) => l.trim().split(/\s+/)[0]).join(", ")}) — refusing to start a second stream against the same host. Exit 0: not a failure of the step, a refusal to double it.`); Deno.exit(0); }
+  } catch (e) {
+    if (e instanceof Deno.errors.NotCapable || e instanceof Deno.errors.PermissionDenied) { console.log(`  (single-instance check skipped: no --allow-run)`); return; }
+    throw e;
+  }
+}
