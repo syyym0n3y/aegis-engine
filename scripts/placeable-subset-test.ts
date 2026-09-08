@@ -43,8 +43,13 @@ for (const sym of Object.keys(VENUE_BP)) {
   for (const x of b) { const h = new Date(x.ts * 1000).getUTCHours(); (hourVol.get(h) ?? hourVol.set(h, []).get(h)!).push(x.v); }
   let firedAt: number | undefined;
   for (let i = 1; i < b.length - KK - 1; i++) {
-    /* BENCHMARK: the unconditional K-bar forward return from every bar, the universe mean this rule must beat */
-    uncond.push(Math.log(b[i + 1 + KK].c / b[i + 1].o));
+    /* BENCHMARK: the unconditional K-bar forward return from every bar — the universe mean this rule must beat.
+       D-826b: it must be measured OVER THE SAME PERIOD as the events it is compared against (THE BENCHMARK LAW says
+       "over the same periods"). The first version collected it over ALL bars, 2016-2026, and compared it to OOS-only
+       events from 2023 — a window mismatch that flattered the result, because 2023-2026 drifted up harder than the
+       full history. Caught when the forward scorer, which restricts the benchmark correctly, returned an excess of the
+       opposite sign. */
+    if (b[i].ts >= SPLIT) uncond.push(Math.log(b[i + 1 + KK].c / b[i + 1].o));
     const lvl = psl[i]?.low; if (lvl === undefined) continue;
     if (!(b[i - 1].c >= lvl && b[i].c < lvl) || firedAt === lvl) continue;
     firedAt = lvl;

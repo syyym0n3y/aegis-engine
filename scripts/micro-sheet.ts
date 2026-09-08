@@ -31,8 +31,8 @@ const CRYPTO = new Set(["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]);
    measured venue cost, from scripts/placeable-subset-test.ts. These replace the 12-instrument pooled figures for those
    three, and they carry the finding that matters for a fill: the rvol-hi conditioner FAILS on this subset (pooled
    t 0.92; gold outright negative at -1.36bp), so the UNCONDITIONED fade is the variant with the measured number. */
-const D825: Record<string, { net: number; t: number }> = {
-  XAUUSD: { net: 4.72, t: 1.27 }, USA500IDXUSD: { net: 5.64, t: 1.90 }, USATECHIDXUSD: { net: 8.22, t: 2.10 },
+const D825: Record<string, { net: number; t: number; excess: number }> = {
+  XAUUSD: { net: 4.72, t: 1.27, excess: -3.14 }, USA500IDXUSD: { net: 5.64, t: 1.90, excess: 0.00 }, USATECHIDXUSD: { net: 8.22, t: 2.10, excess: -1.03 },
 };
 const UK_PLACEABLE: Record<string, string> = {
   BTCUSDT: "NO — FCA COBS 22.6 bans crypto derivatives for UK retail (spot is a different instrument)",
@@ -54,8 +54,8 @@ async function loadBars(sym: string): Promise<Bar[]> {
 const SRC = new Map<string, string>();
 const now = Math.floor(Date.now() / 1000);
 console.log(`==> MICRO SHEET ${new Date().toISOString().slice(0, 16)}Z — rule micro-psl-fade-k24 (D-763/764/767, admitted D-823). Fills are yours, by hand; this prints.`);
-console.log(`    expectancy WHERE IT CAN BE PLACED (D-825, OOS >= 2023, net of measured venue cost): XAUUSD 4.72bp t 1.27 | USA500 5.64bp t 1.90 | USATECH 8.22bp t 2.10 | pooled 6.24bp t 3.04 vs a pre-registered bar of 2.95.`);
-console.log(`    READ THE CAVEATS BEFORE SIZING: it FAILS at the conservative 4bp cost model (t 2.19); ~76% of the gross is drift these instruments deliver anyway (excess +2.05bp of 8.50bp); the rvol-hi conditioner FAILS on this subset (t 0.92); 63 days is the longest stretch underwater. This is information to buy, not an edge worth size.`);
+console.log(`    THERE IS NO MEASURED EDGE ON THE PLACEABLE INSTRUMENTS (D-825 retracted same-day by D-826b). Pooled gross 8.50bp against an unconditional 24h hold of 9.85bp over the SAME period = excess -1.35bp; per instrument XAUUSD -3.14bp, USA500 0.00bp, USATECH -1.03bp. The rule UNDERPERFORMS simply holding for 24 hours on all three.`);
+console.log(`    So a fill here buys EXECUTION INFORMATION (spread, slippage, platform, your own behaviour) at a small negative expected return. That can be worth paying for; it is not a trade with an edge, and it must be sized as a cost, not as a position.`);
 console.log(`    12-instrument pooled model, for context only: rvol-hi K24 +7.15bp t 3.15 (D-767); unconditioned +2.09bp t 2.09. REGIME PRIOR: 2025+ negative at every horizon (D-764); FX majors flat.`);
 console.log(budget > 0 ? `    budget $${budget.toLocaleString()} -> max notional per position $${(0.10 * budget).toFixed(0)} (0.10x, D-767 sizer); P(DD<=-50% of budget) 7-47% at that size - the budget must be losable.` : `    MICRO_BUDGET unset: sizing not printed (MICRO_BUDGET=<usd> to size at 0.10x per position).`);
 console.log(`    ${"instrument".padEnd(14)} ${"last bar (UTC)".padEnd(17)} ${"age".padStart(6)}  ${"PSL".padStart(11)}  ${"close".padStart(11)}  ${"rvol".padStart(5)}  state`);
@@ -76,7 +76,7 @@ for (const sym of Object.keys(RT)) {
     /* D-764: the four FX majors were FLAT in the OOS measurement (EUR +0.09bp, JPY -1.67bp); the edge lived in crypto/indices. Said on the line, not hidden. */
     const m = D825[sym];
     const expect = m
-      ? `- MEASURED here (D-825): ${m.net.toFixed(2)}bp/event net, t ${m.t.toFixed(2)} OOS${cond ? " - and the rvol-hi conditioner does NOT help on this subset (pooled t 0.92), so this is the unconditioned number either way" : ""}`
+      ? `- NO MEASURED EDGE HERE (D-825 RETRACTED, D-826b): ${m.net.toFixed(2)}bp/event net looks positive but the excess over simply holding 24h in the same period is ${m.excess.toFixed(2)}bp - this instrument's fade UNDERPERFORMS a random hold${cond ? "; the rvol-hi conditioner does not help either (pooled t 0.92)" : ""}`
       : (cond ? "- rvol-hi MET (+7.15bp, 12-instrument pooled model)" : (rvol > 0 ? "- unconditioned (+2.09bp, 12-instrument pooled model)" : "- rvol n/a on this feed (no volume): unconditioned"));
     state = `CANDIDATE: LONG at next open, exit close +24 bars, RT ${RT[sym]}bp ${expect}${fx ? " - FX MAJOR: measured FLAT in D-764, expectancy ~0 here" : ""}${budget > 0 ? `, notional <= $${(0.10 * budget).toFixed(0)}` : ""}`;
     candidates++; ok++;
@@ -95,7 +95,7 @@ for (const sym of Object.keys(RT)) {
    charged once per 10pm UK crossing - a K24 hold crosses it once. Benchmark ASSUMED 4%/yr here; the first real statement replaces it. */
 const BENCH = 0.04; const fundIdx = (BENCH + 0.03) / 365 * 1e4, fundFx = (BENCH + 0.015) / 365 * 1e4;
 console.log(`\n  venue cost reference (IG UK published, 2026-09-08; benchmark assumed ${(BENCH * 100).toFixed(0)}%/yr): US500 spread ~${(0.4 / 7700 * 1e4).toFixed(1)}bp + funding ~${fundIdx.toFixed(1)}bp/day = ~${(0.4 / 7700 * 1e4 + fundIdx).toFixed(1)}bp per K24 (model RT 4bp); gold ~${(0.3 / 4400 * 1e4).toFixed(2)}bp + ${fundFx.toFixed(1)}bp = ~${(0.3 / 4400 * 1e4 + fundFx).toFixed(1)}bp (model 4bp); EURUSD ~${(0.6 / 1.16 / 1e4 * 1e4).toFixed(1)}bp + ${fundFx.toFixed(1)}bp = ~${(0.6 / 1.16 / 1e4 * 1e4 + fundFx).toFixed(1)}bp (model 2bp: AT-FEE on FX). Crypto perps are not open to UK retail; spot crypto RT is venue-specific.`);
-console.log(`\n  UK retail placeability (D-823f): the 5 perps are NOT placeable (FCA COBS 22.6, crypto derivatives banned for retail); gold + 2 indices + 4 FX are, at spread-bet minimums only. D-764 measured the FX majors FLAT, so the instruments where this rule has BOTH a measured expectancy AND a UK retail route are GOLD and the TWO INDICES — 3 of 12.`);
+console.log(`\n  UK retail placeability (D-823f): the 5 perps are NOT placeable (FCA COBS 22.6, crypto derivatives banned for retail); gold + 2 indices + 4 FX are, at spread-bet minimums only. D-764 measured the FX majors FLAT and D-825/826b measured the other three as BELOW an unconditional 24h hold — so on this rule there is currently NO placeable instrument with a measured edge.`);
 console.log(`\n  ${candidates} candidate(s); ${stale} instrument(s) STALE; ${ok} instruments live. Record every fill: scripts/micro-ledger.ts. Kill-switch account 'micro' must read armed before any fill.`);
 const ks = (await q(`trd_kill_switch?account=eq.micro&select=state`) as { state: string }[])[0]; console.log(`  kill-switch micro: ${ks?.state ?? "MISSING"}`);
 if (!ks) Deno.exit(1);

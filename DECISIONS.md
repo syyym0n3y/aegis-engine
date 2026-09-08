@@ -18239,6 +18239,45 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-826b (2026-09-08) D-825 RETRACTED FORTY MINUTES AFTER IT WAS RECORDED — the benchmark was measured over the wrong window, and corrected, the rule UNDERPERFORMS simply holding for 24 hours on all three placeable instruments
+
+The programme's first SUPPORTED result lasted about forty minutes. **THE BENCHMARK LAW requires the universe mean "over
+the same periods" as the returns compared against it.** `placeable-subset-test.ts` collected the unconditional 24-hour
+return over ALL bars (2016-2026) and compared it against OOS-only events (>= 2023). 2023-2026 drifted up harder than the
+full history, so the benchmark was too low and the excess was flattered by exactly the window mismatch the law names.
+| corrected, same period | gross | unconditional 24h hold | excess |
+|---|---|---|---|
+| XAUUSD | 6.92bp | 10.06bp | **−3.14bp** |
+| USA500IDXUSD | 8.04bp | 8.04bp | **0.00bp** |
+| USATECHIDXUSD | 10.42bp | 11.45bp | **−1.03bp** |
+| **pooled** | **8.50bp** | **9.85bp** | **−1.35bp** |
+**VERDICT: NULL, by D-825's own kill clause** ("NULL if ... the excess over the unconditional forward return is <= 0").
+The net 6.24bp and event t 3.04 are arithmetically unchanged and now mean nothing about edge: they are drift these
+instruments delivered anyway, minus a small shortfall. The rule does slightly WORSE than a random 24-hour hold.
+**How it was caught, and the control worth keeping.** The scorer for the new forward clock was written independently
+against the same rule. On a BACKDATE run it reproduced net, n and t EXACTLY (6.236bp, 3,893, 3.04) and returned an
+excess of the OPPOSITE SIGN (−1.35 vs +2.05). **Two implementations of one statistic disagreeing is what exposed it; a
+single implementation would have shipped, and I had already reported the result to the operator.** The cheap general
+control is: when a number decides something, compute it twice by different code paths and compare — the agreement on
+net/n/t is what made the disagreement on the excess unmistakable rather than ambiguous.
+**The label could not be corrected, and that is by design.** `trd_prereg`'s immutability trigger refused to change the
+outcome from `SUPPORTED-THIN`; it was built (D-571/D-631) so a retraction can never be softened into a win, and it
+symmetrically blocks hardening a win into a retraction. The retraction is APPENDED to `outcome_note`, which is
+append-only and is where the content lives, and the note now states in its first line that **the note is authoritative
+and the label is not.** A reader who trusts the one-word label over the note will be wrong on this row.
+**Consequences, applied not just noted.** The lineage row is `rejected`. A ladder amendment records that **no micro fill
+is admitted on expectancy grounds** — the rung stays PREP, and anything placed is execution learning at a small NEGATIVE
+expected return, to be sized as the cost of information rather than as a position. The operator-facing sheet no longer
+prints a per-instrument expectancy; it prints the shortfall against an unconditional hold, per instrument, on every run.
+The forward clock `fwd-placeable-psl-fade-k24` stands as registered — immutable, forward-only, and its promote clause
+requires a positive excess, so on this evidence it is expected to KILL. That is the clock doing its job.
+**What I got wrong in reporting, stated plainly:** I told the operator this was a pass, thin but real, with the caveat
+that 76% of the gross was drift. The correct figure was 116% — the drift was larger than the gross. The caveat was
+pointing at the right defect and understating it.
+GOLD: research — the first SUPPORTED result retracted the same day on its own registered clause, with the consequence
+applied to the ladder, the sheet and the gate rather than only to the log.
+ACTS-ON: position — it withdraws the expectancy basis for the first fill; the rung stays PREP.
+
 ## D-826 (2026-09-08) "OLD" IS NOT "STALE" — my own daily-refresh change would have reported a false RED on every market holiday, and the first fix for it was wrong too
 
 D-822 set the attribution refresher to a 1-day staleness budget so `fwd-residual-follow` could accrue at the cadence its
