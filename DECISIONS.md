@@ -18239,6 +18239,23 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-823b (2026-09-08) THE MICRO SHEET COULD NOT GO LIVE ON SEVEN OF TWELVE INSTRUMENTS — the FX/index/gold bars come from day-files that exist only after the day closes; fixed with a keyless intraday series under its own symbol names
+
+Found by running the new hourly job (`io.aegis.micro`) on its first interval: 7 instruments STALE every hour, because
+`trd_fx_hourly` is built from Dukascopy m1 candle DAY-FILES, published after the day closes — the research series is
+correct and a day behind by construction, so a rule that fires on an hourly close could never print a live candidate on
+FX, the two indices or gold. A sheet that can only ever go live on the five perps is not the sheet the rung was prepped on.
+Fix, no schema change, no research: `scripts/refresh-fx-live.ts` pulls Yahoo's 60-minute chart (keyless, on the existing
+allowlist, sequential, 3 months so the level and rvol floors are met), writes COMPLETED hours only under symbols suffixed
+`.yh1h` (EURUSD.yh1h …), so provenance is in the name and nothing reading the Dukascopy series can pick them up; the sheet
+reads the live series first and tags each row with its source. Proxies stated on the sheet: gold = GC=F futures (not
+spot), S&P/Nasdaq = ES=F/NQ=F (they trade ~23h like the CFDs the rule was tested on). Positive control: 7/7 fresh within
+3h and a read-back, RED below 5 on a weekday. First live sheet: 12/12 instruments live, 3 candidates — all three on FX
+majors, and the sheet now says on the line what D-764 measured: the FX majors were FLAT out of sample (EUR +0.09bp, JPY
+−1.67bp), and the FX feed carries no volume so the rvol conditioner cannot be met there. A candidate the record calls
+flat is printed as flat, not hidden.
+GOLD: gap — the micro rung's inputs made intraday for all 12 instruments; the sheet is honest about the FX half.
+
 ## D-823 (2026-09-08) THE FIVE — research freeze, the ceiling split, the MICRO rung prepped, the prop route parked behind real fills, and a new session exit condition
 
 Operator instruction, after the assessment of why ten weeks produced 590 entries, 2.9M trials, 30 guards, 18 clocks and

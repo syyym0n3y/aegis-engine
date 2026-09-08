@@ -23,9 +23,13 @@ const budget = +K.MICRO_BUDGET, RVOL_HI = +K.RVOL_HI, STALE_S = +K.STALE_H * 360
 const median = (a: number[]) => { const b = [...a].sort((x, y) => x - y); return b.length ? (b.length % 2 ? b[(b.length - 1) / 2] : (b[b.length / 2 - 1] + b[b.length / 2]) / 2) : NaN; };
 async function loadBars(sym: string): Promise<Bar[]> {
   if (CRYPTO.has(sym)) { const row = (await q(`trd_bars_intraday?symbol=eq.${sym}&tf=eq.1h&select=bars`) as { bars: number[][] }[])[0]; return ((row?.bars ?? []) as number[][]).map(decodeBar).sort((a, b) => a.ts - b.ts).slice(-2500); }
-  const rows = await q(`trd_fx_hourly?symbol=eq.${sym}&select=ts,o,h,l,c,vol&order=ts.desc&limit=2500`) as { ts: number; o: number; h: number; l: number; c: number; vol: number }[];
+  /* D-823b: the live intraday series (Yahoo 60m, symbol.yh1h) first; the Dukascopy research series is a day behind by construction */
+  const live = await q(`trd_fx_hourly?symbol=eq.${sym}.yh1h&select=ts,o,h,l,c,vol&order=ts.desc&limit=2500`) as { ts: number; o: number; h: number; l: number; c: number; vol: number }[];
+  const rows = live.length >= 100 ? live : await q(`trd_fx_hourly?symbol=eq.${sym}&select=ts,o,h,l,c,vol&order=ts.desc&limit=2500`) as { ts: number; o: number; h: number; l: number; c: number; vol: number }[];
+  SRC.set(sym, live.length >= 100 ? "yahoo60m" : "dukascopy(day-file, lags)");
   return rows.filter((r) => r.h !== r.l).map((r) => ({ ts: r.ts, o: r.o, h: r.h, l: r.l, c: r.c, v: r.vol })).sort((a, b) => a.ts - b.ts);
 }
+const SRC = new Map<string, string>();
 const now = Math.floor(Date.now() / 1000);
 console.log(`==> MICRO SHEET ${new Date().toISOString().slice(0, 16)}Z — rule micro-psl-fade-k24 (D-763/764/767, admitted D-823). Fills are yours, by hand; this prints.`);
 console.log(`    model expectancy (per event, net of RT): rvol-hi K24 +7.15bp t 3.15 OOS (7/12 instruments); unconditioned +2.09bp t 2.09 (12-panel). REGIME PRIOR: 2025+ negative at every horizon (D-764); FX majors flat.`);
@@ -43,9 +47,14 @@ for (const sym of Object.keys(RT)) {
   const isStale = age > STALE_S;
   let state: string;
   if (isStale) { state = `STALE (${ageH} > ${K.STALE_H}h) - no candidate on frozen bars`; stale++; }
-  else if (sweep) { const cond = Number.isFinite(rvol) && rvol >= RVOL_HI; state = `CANDIDATE: LONG at next open, exit close +24 bars, RT ${RT[sym]}bp ${cond ? "- rvol-hi MET (+7.15bp model)" : "- unconditioned (+2.09bp model, weaker)"}${budget > 0 ? `, notional <= $${(0.10 * budget).toFixed(0)}` : ""}`; candidates++; ok++; }
+  else if (sweep) {
+    const cond = Number.isFinite(rvol) && rvol > 0 && rvol >= RVOL_HI; const fx = RT[sym] === 2;
+    /* D-764: the four FX majors were FLAT in the OOS measurement (EUR +0.09bp, JPY -1.67bp); the edge lived in crypto/indices. Said on the line, not hidden. */
+    state = `CANDIDATE: LONG at next open, exit close +24 bars, RT ${RT[sym]}bp ${cond ? "- rvol-hi MET (+7.15bp model)" : (rvol > 0 ? "- unconditioned (+2.09bp model, weaker)" : "- rvol n/a on this feed (no volume): unconditioned")}${fx ? " - FX MAJOR: measured FLAT in D-764, expectancy ~0 here" : ""}${budget > 0 ? `, notional <= $${(0.10 * budget).toFixed(0)}` : ""}`;
+    candidates++; ok++;
+  }
   else { state = "no setup"; ok++; }
-  console.log(`    ${sym.padEnd(14)} ${new Date(b[i].ts * 1000).toISOString().slice(0, 16).padEnd(17)} ${ageH.padStart(6)}  ${(lvl ?? NaN).toFixed(lvl && lvl > 100 ? 2 : 5).padStart(11)}  ${b[i].c.toFixed(b[i].c > 100 ? 2 : 5).padStart(11)}  ${Number.isFinite(rvol) ? rvol.toFixed(2).padStart(5) : "  n/a"}  ${state}`);
+  console.log(`    ${sym.padEnd(14)} ${new Date(b[i].ts * 1000).toISOString().slice(0, 16).padEnd(17)} ${ageH.padStart(6)}  ${(lvl ?? NaN).toFixed(lvl && lvl > 100 ? 2 : 5).padStart(11)}  ${b[i].c.toFixed(b[i].c > 100 ? 2 : 5).padStart(11)}  ${Number.isFinite(rvol) ? rvol.toFixed(2).padStart(5) : "  n/a"}  ${state}${SRC.has(sym) ? ` [${SRC.get(sym)}]` : ""}`);
   if (!isStale) {
     const recent: string[] = [];
     for (let j = Math.max(1, i - LOOK); j < i; j++) { const L = psl[j]?.low; if (L !== undefined && b[j - 1].c >= L && b[j].c < L) recent.push(`${new Date(b[j].ts * 1000).toISOString().slice(5, 16)} (${i - j}h ago${i - j <= 24 ? ", position would still be OPEN" : ""})`); }
