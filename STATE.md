@@ -5,6 +5,7 @@
 - **The split admits nothing today:** 22 of 41 pre-registered rows clear their bar; all are retracted (wrong-direction or sub-fee t) or confirmed measurements of the fails family already verdicted as drift. Report: `scripts/prereg-ceiling.ts` (cockpit).
 - **Micro tooling:** `scripts/micro-sheet.ts` (hourly via `io.aegis.micro`; STALE bars print no candidate; **D-823b:** FX/index/gold now intraday via `refresh-fx-live.ts` → `*.yh1h`, 12/12 live; FX candidates carry the D-764 FLAT warning), `scripts/micro-ledger.ts` (fills in `trd_manual_trades`, TRIP/ARM), cockpit sections. First sheet: 0 candidates.
 - **Guard:** decisions-guard RED on post-D-823 `GOLD: research` without `ACTS-ON:`; continuity guard registers io.aegis.micro.
+- **D-823f placeability (verified):** the 5 crypto perps are NOT placeable by UK retail (FCA COBS 22.6 bans crypto derivatives, still in force); FX/index/gold are, at SPREAD-BET minimums only (IG's FX CFD minimum is ~100x the intended £100 position). With D-764's flat FX result, the rule's tradable-with-expectancy set is **gold + the two indices, 3 of 12** — printed on every sheet.
 - **Operator (the only items that move money):** `MICRO_BUDGET` and the first fill; the three wealth-ledger rows (commands below); the prop fee stays parked until 30 real fills.
 
 

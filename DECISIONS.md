@@ -18239,6 +18239,33 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-823f (2026-09-08) CAN THE OPERATOR ACTUALLY PLACE THIS? — the crypto half of the micro rule is illegal to sell to UK retail, the CFD minimum is ~100x the intended size, and the tradable-with-expectancy set is 3 of 12
+
+The rung was prepped on 12 instruments without anyone asking whether a UK retail client can place them. Two facts, read
+from the regulator and the venue on 2026-09-08, and both decisive:
+1. **The five perps are not placeable.** FCA handbook **COBS 22.6** prohibits the marketing, distribution and sale of
+   cryptoasset DERIVATIVES — CFDs, options and futures — to retail clients by firms acting in or from the UK, in force
+   since 2021-01-06 and explicitly RETAINED when the FCA opened retail access to crypto ETNs. Spot crypto on an exchange
+   is not a derivative, but it is also not the perp this rule's 7bp round trip was measured on (D-763/764/767), so
+   substituting it is a different instrument and would need its own measurement (THE INSTRUMENT LAW).
+2. **Size selects the product, and it is not the CFD.** IG's FX CFD minimum is one mini contract = 10,000 units of the
+   base currency, roughly **100x** the £100 per position a £1,000 micro budget allows at the D-767 sizer's 0.10x. The
+   spread bet does support it: from **1p per point** (~£5 to open on major markets), which puts US 500 at ~£77 notional
+   per 1p/point, gold ~£44 and US Tech ~£295. Spread bets and CFDs are different products with different treatment; that
+   is the operator's to verify, and I am not a licensed adviser.
+**The honest arithmetic of what is left.** 12 instruments − 5 unplaceable (crypto) = 7; of those, D-764 measured the four
+FX majors FLAT out of sample (EUR +0.09bp, JPY −1.67bp). So the set where this rule has BOTH a measured expectancy AND a
+UK retail route is **gold and the two indices — 3 of 12**, and the sheet now says exactly that on every run, with the
+per-instrument verdict printed under any candidate. The costs already measured against IG's published charges (D-823d)
+sit comfortably inside the model's assumption on all three (US500 ~2.4bp vs 4bp; gold ~2.2bp vs 4bp).
+**A tension worth naming rather than smoothing.** The operator wants returns held outside the UK; a UK spread-betting
+account holds them with a UK broker. The prop route satisfies the destination requirement (payouts including crypto,
+D-823c/d) but requires passing an evaluation whose daily-loss rule would likely end a regime-negative rule before it
+produced 30 fills. Those two requirements pull opposite ways, and the sequencing decision (retail micro first for the
+fills, prop afterwards) is the operator's, now made with the constraint visible instead of assumed away.
+GOLD: prop — placeability verified against the regulator and the venue before a fee or a fill, narrowing the rung to the
+3 instruments that are both measurable and legal to place here.
+
 ## D-823e (2026-09-08) THE HOURLY JOB I ADDED WAS COMPETING WITH THE DAILY ONE FOR THE SAME NODE — scoped, made load-aware, and its health check given the positive control it was missing
 
 Found by checking the background tasks rather than by a guard: a one-row query took **33 seconds** while the daily

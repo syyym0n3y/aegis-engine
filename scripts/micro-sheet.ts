@@ -19,6 +19,21 @@ const hdr = await (async () => { const t = await jwt(); return { Authorization: 
 const { q } = mkStrictRead(OWNED, hdr);
 const RT: Record<string, number> = { BTCUSDT: 7, ETHUSDT: 7, SOLUSDT: 7, BNBUSDT: 7, XRPUSDT: 7, XAUUSD: 4, USA500IDXUSD: 4, USATECHIDXUSD: 4, EURUSD: 2, GBPUSD: 2, AUDUSD: 2, USDJPY: 2 };
 const CRYPTO = new Set(["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]);
+/* D-823f — CAN A UK RETAIL OPERATOR ACTUALLY PLACE THIS? Verified from the FCA handbook and IG's own pages, 2026-09-08.
+   NO for every crypto perp: COBS 22.6 bans the sale/marketing/distribution of cryptoasset DERIVATIVES (CFDs, options,
+   futures) to UK retail clients, in force since 2021-01-06 and explicitly retained when crypto ETNs were opened up.
+   Spot crypto on an exchange is not a derivative and is a different instrument from the perp this rule was measured on.
+   YES for gold, the two index proxies and the FX majors — but the SIZE only works on a spread bet (from 1p/point, ~£5
+   to open), not a CFD: IG's FX CFD minimum is one mini contract = 10,000 base currency, ~100x the £100 a £1,000 budget
+   allows per position. Spread bets and CFDs are different products with different treatment; that is the operator's to
+   verify, not mine to advise on. */
+const UK_PLACEABLE: Record<string, string> = {
+  BTCUSDT: "NO — FCA COBS 22.6 bans crypto derivatives for UK retail (spot is a different instrument)",
+  ETHUSDT: "NO — FCA COBS 22.6", SOLUSDT: "NO — FCA COBS 22.6", BNBUSDT: "NO — FCA COBS 22.6", XRPUSDT: "NO — FCA COBS 22.6",
+  XAUUSD: "yes, spread bet from 1p/pt (~£44 notional)", USA500IDXUSD: "yes, spread bet from 1p/pt (~£77 notional)",
+  USATECHIDXUSD: "yes, spread bet from 1p/pt (~£295 notional)", EURUSD: "yes, spread bet (CFD min ~100x too big)",
+  GBPUSD: "yes, spread bet (CFD min ~100x too big)", AUDUSD: "yes, spread bet (CFD min ~100x too big)", USDJPY: "yes, spread bet (CFD min ~100x too big)",
+};
 const budget = +K.MICRO_BUDGET, RVOL_HI = +K.RVOL_HI, STALE_S = +K.STALE_H * 3600, LOOK = +K.LOOKBACK_H;
 const median = (a: number[]) => { const b = [...a].sort((x, y) => x - y); return b.length ? (b.length % 2 ? b[(b.length - 1) / 2] : (b[b.length / 2 - 1] + b[b.length / 2]) / 2) : NaN; };
 async function loadBars(sym: string): Promise<Bar[]> {
@@ -55,6 +70,7 @@ for (const sym of Object.keys(RT)) {
   }
   else { state = "no setup"; ok++; }
   console.log(`    ${sym.padEnd(14)} ${new Date(b[i].ts * 1000).toISOString().slice(0, 16).padEnd(17)} ${ageH.padStart(6)}  ${(lvl ?? NaN).toFixed(lvl && lvl > 100 ? 2 : 5).padStart(11)}  ${b[i].c.toFixed(b[i].c > 100 ? 2 : 5).padStart(11)}  ${Number.isFinite(rvol) ? rvol.toFixed(2).padStart(5) : "  n/a"}  ${state}${SRC.has(sym) ? ` [${SRC.get(sym)}]` : ""}`);
+  if (!isStale && sweep) console.log(`    ${"".padEnd(14)} UK retail: ${UK_PLACEABLE[sym]}`);
   if (!isStale) {
     const recent: string[] = [];
     for (let j = Math.max(1, i - LOOK); j < i; j++) { const L = psl[j]?.low; if (L !== undefined && b[j - 1].c >= L && b[j].c < L) recent.push(`${new Date(b[j].ts * 1000).toISOString().slice(5, 16)} (${i - j}h ago${i - j <= 24 ? ", position would still be OPEN" : ""})`); }
@@ -66,6 +82,7 @@ for (const sym of Object.keys(RT)) {
    charged once per 10pm UK crossing - a K24 hold crosses it once. Benchmark ASSUMED 4%/yr here; the first real statement replaces it. */
 const BENCH = 0.04; const fundIdx = (BENCH + 0.03) / 365 * 1e4, fundFx = (BENCH + 0.015) / 365 * 1e4;
 console.log(`\n  venue cost reference (IG UK published, 2026-09-08; benchmark assumed ${(BENCH * 100).toFixed(0)}%/yr): US500 spread ~${(0.4 / 7700 * 1e4).toFixed(1)}bp + funding ~${fundIdx.toFixed(1)}bp/day = ~${(0.4 / 7700 * 1e4 + fundIdx).toFixed(1)}bp per K24 (model RT 4bp); gold ~${(0.3 / 4400 * 1e4).toFixed(2)}bp + ${fundFx.toFixed(1)}bp = ~${(0.3 / 4400 * 1e4 + fundFx).toFixed(1)}bp (model 4bp); EURUSD ~${(0.6 / 1.16 / 1e4 * 1e4).toFixed(1)}bp + ${fundFx.toFixed(1)}bp = ~${(0.6 / 1.16 / 1e4 * 1e4 + fundFx).toFixed(1)}bp (model 2bp: AT-FEE on FX). Crypto perps are not open to UK retail; spot crypto RT is venue-specific.`);
+console.log(`\n  UK retail placeability (D-823f): the 5 perps are NOT placeable (FCA COBS 22.6, crypto derivatives banned for retail); gold + 2 indices + 4 FX are, at spread-bet minimums only. D-764 measured the FX majors FLAT, so the instruments where this rule has BOTH a measured expectancy AND a UK retail route are GOLD and the TWO INDICES — 3 of 12.`);
 console.log(`\n  ${candidates} candidate(s); ${stale} instrument(s) STALE; ${ok} instruments live. Record every fill: scripts/micro-ledger.ts. Kill-switch account 'micro' must read armed before any fill.`);
 const ks = (await q(`trd_kill_switch?account=eq.micro&select=state`) as { state: string }[])[0]; console.log(`  kill-switch micro: ${ks?.state ?? "MISSING"}`);
 if (!ks) Deno.exit(1);
