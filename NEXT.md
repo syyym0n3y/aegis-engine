@@ -13,4 +13,4 @@ The live queue is [`docs/GOLD_PATH.md`](./docs/GOLD_PATH.md) §4. Summary:
 **Operator-only:** log deposits / wrapper / currency leak into the wealth ledger (it is EMPTY and is the whole in-market
 10^7 lever today); decide the one prop fee; CC Supabase invoices (cockpit only).
 
-**Standing:** 18 forward clocks (prop clock D-807 signed, fee unpaid, ledger via `scripts/prop-ledger.ts`), 0 computable yet, 0 promoted; 30 guards, board green; nothing trades. Operator's order-flow stack measured (D-808/809): all NULL/SUB-FEE. Full open list with owners: [`docs/DEVIATION_REGISTER.md`](./docs/DEVIATION_REGISTER.md) §5.
+**Standing (D-822):** `fwd-residual-follow` now stamps daily and its scorer computes the rule's own statistic (BACKDATE-verified). 18 forward clocks (prop clock D-807 signed, fee unpaid, ledger via `scripts/prop-ledger.ts`), 0 computable yet, 0 promoted; 30 guards, board green; nothing trades. Operator's order-flow stack measured (D-808/809): all NULL/SUB-FEE. Full open list with owners: [`docs/DEVIATION_REGISTER.md`](./docs/DEVIATION_REGISTER.md) §5.

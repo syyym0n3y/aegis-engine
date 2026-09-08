@@ -70,10 +70,43 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     const MIN_OBS = 20;
     if (days < MIN_OBS) {
       return { metric: "portfolio_t", value: null, n: days,
-        note: `${days} attribution stamp(s) since the clock start. UNDERPOWERED BY CONSTRUCTION, not merely early: the rule asks for >=126 forward DAYS, but attribution stamps at a ~31-day cadence, so the rule's own horizon yields ~4 observations. ${MIN_OBS} stamps (~${Math.round(MIN_OBS * 31 / 30.44)} months) are needed before a portfolio t means anything. Gate selects <5 instruments on ${thin}/${days} day(s) — the rule's KILL clause.` };
+        note: `${days} attribution stamp(s) since the clock start. UNDERPOWERED BY CONSTRUCTION until the stamps are daily: the rule asks for >=126 forward DAYS; the engine stamped at a ~31-day cadence historically and WEEKLY until D-822 (refresh-bars STALE_D=1 makes the attribution universe, and so the stamps, daily). Below ${MIN_OBS} stamps no t is reported.` };
     }
-    return { metric: "portfolio_t", value: null, n: days,
-      note: `${days} attribution stamp(s); gate selects <5 instruments on ${thin}/${days} — the rule's KILL clause.` };
+    // D-822: the statistic the rule names, computed rather than tracked. Residual-FOLLOW = on each stamp, in every
+    // instrument the gate admits (adjR2 0.15-0.95, era stability >= 0.4), hold sign(residual) for the NEXT bar, equal
+    // weight across admitted instruments, 10bp round trip charged per position-day (equity ETF cost; FX/futures are
+    // cheaper, crypto dearer - one flat figure, stated). Portfolio t on the per-stamp series (n = stamps with a
+    // next bar). Gross mean is reported beside net (D-661/662).
+    const FEE = 10 / 1e4;
+    const syms = [...new Set(rows.map((r) => r.symbol))];
+    const closes = new Map<string, { d: string; c: number }[]>();
+    for (const sym of syms) {
+      const b = ((await q(`trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`) as { bars: number[][] }[])[0]?.bars ?? []) as number[][];
+      closes.set(sym, b.filter((x) => x[4] > 0).map((x) => ({ d: new Date(x[0] * 1000).toISOString().slice(0, 10), c: x[4] })));
+    }
+    const nextRet = (sym: string, asof: string): number | null => {
+      const cs = closes.get(sym) ?? []; let i = -1;
+      for (let k = cs.length - 1; k >= 0; k--) if (cs[k].d <= asof) { i = k; break; }
+      if (i < 0 || i + 1 >= cs.length) return null;
+      return cs[i + 1].c / cs[i].c - 1;
+    };
+    const byStamp = new Map<string, { net: number[]; gross: number[] }>();
+    for (const r of rows) {
+      const ok = +r.adj_r2 >= 0.15 && +r.adj_r2 <= 0.95 && +r.era_stability >= 0.4;
+      if (!ok || !Number.isFinite(+r.residual) || +r.residual === 0) continue;
+      const ret = nextRet(r.symbol, r.asof); if (ret === null) continue;
+      const g = Math.sign(+r.residual) * ret; const e = byStamp.get(r.asof) ?? { net: [], gross: [] };
+      e.gross.push(g); e.net.push(g - FEE); byStamp.set(r.asof, e);
+    }
+    const stamps = [...byStamp.keys()].sort();
+    const net = stamps.map((d) => mean(byStamp.get(d)!.net)), gross = stamps.map((d) => mean(byStamp.get(d)!.gross));
+    if (net.length < MIN_OBS) {
+      return { metric: "portfolio_t", value: null, n: net.length,
+        note: `${days} stamp(s) but only ${net.length} with an admitted instrument AND a next bar; below ${MIN_OBS} no t is reported. Gate selects <5 instruments on ${thin}/${days} stamps (the rule's KILL clause).` };
+    }
+    const tN = mean(net) / (sd(net) || 1e-9) * Math.sqrt(net.length), tG = mean(gross) / (sd(gross) || 1e-9) * Math.sqrt(gross.length);
+    return { metric: "portfolio_t", value: tN, n: net.length,
+      note: `residual-follow over ${net.length} stamp(s): net ${(mean(net) * 1e4).toFixed(2)}bp/stamp t ${tN.toFixed(2)} (gross ${(mean(gross) * 1e4).toFixed(2)}bp, gross t ${tG.toFixed(2)}; 10bp round trip charged per position-day). Gate selects <5 instruments on ${thin}/${days} stamps (KILL clause if a majority). Rule: promote if net > 0 and t >= 2.0 over >= 126 forward days; kill if negative over >= 126 days.` };
   },
   // Rule: >=250 forward trading days, realised Sharpe >= 0.60.
   "fwd-crypto-lit5": async (started) => {

@@ -18239,6 +18239,59 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-822 (2026-09-08) WHAT THE RECORD WAS MISSING — a clock unscorable by our own refresh cadence, the confirmed model with no consumer and no surface, and a "strong" number that was a cost artifact; the one options test the vol forecast can feed is NULL
+
+Operator instruction: analyse what we have been missing and keep the process going. Gap analysis against LIVE state (board 29
+green; register 58 HELD / 2 blocked; 18 clocks, 0 computable; ceiling re-derived: documented baseline 1,530,000 + counter
+1,374,266 = 2,904,266 → sqrt(2 ln N) = 5.4556, consistent with what the agents print) and a keyword sweep of the named anomaly
+classes against the 590 entries — turn-of-month, OPEX, pre-FOMC drift, overnight, lead-lag (daily and hourly), PEAD, dividends,
+seasonality, basis carry, VRP, low-vol, quality, accruals, insider, 13F, retail flow, ETF flow: every one already carries a
+verdict. The zero-hit classes are OFF by operator instruction (sentiment, options flow) or have no free input. What WAS missing
+is not an untested anomaly; it is three instances of built ≠ wired and narrated ≠ measured:
+
+**1. `fwd-residual-follow` could never have produced its own statistic.** Its rule says "daily attribution rows"; the stamps
+were arriving WEEKLY (08-21, 08-28, 09-04) because `refresh-bars.ts` runs with a 3-day staleness budget and the attribution
+engine stamps `asof` = last available price date — and the scorer returned null even above its 20-stamp floor: it tracked the
+clock and never computed the rule's number. Both fixed: `STALE_D=1` on the runner line (~13s/day, sequential, keyless), and the
+scorer now computes residual-follow — sign of the residual held for the NEXT bar in every gate-admitted instrument (adjR² 0.15–
+0.95, stability ≥ 0.4), equal weight, 10bp charged per position-day, portfolio t on the per-stamp series, gross beside net.
+Verified the way the CONTINUITY LAW demands (a scorer that has only ever said "no data" is unverified): `BACKDATE=2024-01-01`
+on the historical stamps returns **34 stamps, net −7.15bp/stamp t −0.77, gross +2.85bp t 0.31** — a number, no mark written.
+The registered rule is untouched; the clock now accrues at the cadence it was registered on.
+
+**2. HAR-RV — the only confirmed model class (D-814/819) — had no consumer and no operator surface.**
+(a) The one options-side question it can feed, pre-registered before the data was touched (`D-822-vrp-conditional-harrv`):
+sell the modelled BTC 30-day straddle (the D-574 model: Black–Scholes at DVOL, 3.3% of premium round trip measured in D-573,
+9bp per daily hedge step) ONLY when DVOL exceeds the causal HAR forecast of the next 30 days' realised vol; theta = median of
+the spread over prior windows, re-fixed yearly from 2023 (no search); judged against the unconditional seller AND a
+DVOL-level control (z over 250 days). BTC decides, ETH replicates. 58 non-overlapping windows 2021-11→2026-08, 44 OOS.
+| BTC, delta-hedged, per unit spot notional | n | net %/mo | SR | t | gross %/mo (t) | worst |
+|---|---|---|---|---|---|---|
+| unconditional seller (universe mean) | 44 | −0.37 | −0.08 | −0.14 | +0.16 (0.06) | −49.7% |
+| spread ≥ theta (HAR forecast) | 18 | +0.09 | 0.02 | 0.02 | +0.68 (0.14) | −49.7% |
+| DVOL z ≥ theta (level control) | 29 | −0.15 | −0.03 | −0.05 | +0.42 (0.12) | −49.7% |
+**NULL by the registered FORECAST-ADDS-NOTHING clause**: the level control sits within 0.15 SR of the spread rule, the selected
+windows' t is 0.02, and no selection avoids the crash month. The modelled seller itself has been flat-to-negative since 2023
+net of measured costs. Naked variant reported (SR 0.29 / 0.32 / 0.38), never decides. ETH INCONCLUSIVE (spread SR 0.11 vs
+−0.13, t 0.15; level control −0.32). SIGN prior MATCHED in sign, absent in magnitude. A MODEL of the placeable instrument, not
+option data (stated on the row). Retracted; lineage rejected; 8 trials.
+(b) The cockpit gains **"Today's range per instrument"** — the 11 live next-day vol forecasts as a 1-day 1σ move (BTC 29.0%/yr
+→ 1.52%/day on 09-07), labelled HOW FAR, never which way, and explicitly not a sizing overlay (D-821). Positive control: 11
+rows rendered under the runner's exact line.
+
+**3. D-820's prose overstated its own result.** "The one strong number is the wrong sign" — the −4.62 was the NET t of a
+−1.12bp/day gross loss under a 4bp fee; the gross t is ≈ −1.0. That is the D-661/662 cost-inflation shape exactly, and the
+lineage row stated the gross t while the entry did not. Corrected inline in D-820. Second correction, INSTRUMENT LAW: the 4bp
+round trip is the CFD's; in ES futures (~1bp), the instrument the operator would hold, the unregistered flip is AT-FEE (≈1.1×),
+not sub-fee — and still an unregistered flip on 120 days, testable only on data it has not seen.
+
+Re-verified and NOT missing: the runner (daily loop at 22:39Z, last cycle clean, board green in-loop and on the board); the
+two blocked register entries (gold options surface — paid; central-bank reserves — cadence); the ceiling arithmetic. The
+known-unexplored list stays open (D-475): no completeness is declared.
+GOLD: clock — one of 18 clocks made scorable at its registered cadence (the rule untouched); research — the vol forecast's one
+options use measured NULL, pre-registered; reliability — a cost-inflated t corrected in the narrative and the confirmed model
+given an operator surface.
+
 ## D-821 (2026-09-08) "LOWEST-RISK ENTRY" AS SIZING, ON THE FULL HISTORY — inverse-vol sizing of the registered rules halves the drawdown and halves the Sharpe: these rules earn in high-vol regimes, and vol targeting sells the regime that pays
 
 Operator instruction: use all the history, now, to find the lowest-risk entries with the highest win rate. Sizing is
@@ -18277,7 +18330,14 @@ Pre-registered (`D-820-spx-oi-levels`), SPX proxied by the USA500IDXUSD hourly C
 | toward-pin trade 15:00 ET → close | **−5.12bp/day net, t −4.62, 29% wins, n 120** | **SIGN MISSED** — the last hour leaves the max-OI strike |
 | **gamma walls** — first touch of top-3 OI strikes reverses | 12 touches in 120 sessions; −5.2bp t −1.2 vs random +1.3bp | underpowered, NULL |
 The one strong number is the wrong sign, and the reverse of it (trade away from max-OI) is an unregistered flip that
-would earn +1.1bp gross and lose 2.9bp net of the 4bp round trip: **SUB-FEE either way.** So the positioning-defined
+would earn +1.1bp gross and lose 2.9bp net of the 4bp round trip: **SUB-FEE either way.**
+**CORRECTED 2026-09-08 (D-822): "the one strong number" was a cost-inflated t.** The −4.62 is the NET t; the gross t is
+≈ −1.0 (gross −1.12bp/day), exactly the D-661/662 shape — a constant 4bp fee shifts the mean and leaves the variance alone,
+so the significance of the loss was bought by the assumed cost. The lineage row stated the gross t; this prose did not. The
+sign is still MISSED (gross negative), but it is a weak miss on 120 days, not a strong one. Second correction: the 4bp round
+trip is the CFD's; in the instrument the operator would actually hold (ES futures, ~1bp round trip) the unregistered flip is
+AT-FEE (≈1.1×), not sub-fee — still an unregistered flip on the same 120 days, so it can only be tested on data it has not
+seen (forward, or purchased history). So the positioning-defined
 level gives the same answer as the price-defined ones — nothing above cost — with one descriptive fact worth keeping:
 on 0DTE expiries the close is repelled from, not attracted to, the max-OI strike. Retracted; lineage row rejected; 4
 trials; holding registered with a probe (`databento_spxw_oi_days`).

@@ -35,7 +35,7 @@
 | # | obstacle | disposition |
 |---|---|---|
 | 1 | wealth ledger EMPTY | OPERATOR — three rows (`ADD_DEPOSIT`, `SET_WRAPPER`, `SET_CCY_LEAK_BP`); nothing more to build |
-| 2 | every clock pre-horizon | BY DESIGN — 17 clocks, scorer daily, continuity guard reds on lapse |
+| 2 | every clock pre-horizon | BY DESIGN — 18 clocks, scorer daily, continuity guard reds on lapse. **D-822:** `fwd-residual-follow` was accruing WEEKLY stamps against a rule that says daily (refresh budget), and its scorer never computed — both fixed, rule untouched, BACKDATE-verified |
 | 3 | 2026 crypto regime break unexplained | **DESCRIBED TONIGHT** (`crypto-2026-break.ts`, D-806): the flip is PANEL-WIDE — all 4 constructions, every tier, both funding signs, both BTC-prior signs — and the raw hour-of-day drift profile reshuffles every year (20:00 UTC: +13.7bp t 18 in 2024, −2.1 in 2025, +4.2 in 2026; 21:00 + → −; 01:00 + → −). The clocks were registered on a seasonality that was already unstable between 2024 and 2025. DESCRIPTIVE ONLY; no mechanism claimed |
 | 4 | clock #18 weak in calm regimes | BY DESIGN — immutable rule; v2 only after this clock ends |
 | 5 | prop decision | CLOCK SIGNED + REGISTERED (D-807); the FEE remains OPERATOR |
@@ -76,4 +76,4 @@
 - **Paid barriers after D-816/817/818:** equity L2 — MEASURED on the Databento credit (sub-fee); earnings revisions — FREE (Yahoo/Nasdaq, D-817); options surface — FREE forward (wide CBOE snapshot); per-strike HISTORY: 5 months of SPX bought and MEASURED (D-820: no pin, sub-fee), longer history stays paid (Theta $40/mo); gold options — inside the same surface. The only remaining purchase decision buys history, not a different answer.
 - **BLOCKED — no source found:** pre-2016 delisted equity history.
 - **BY DESIGN:** real-money bridge · clock rules · the calm-regime weakness of clock #18.
-- **RESEARCH (unblocked, $0):** nothing queued — the D-804 queue is closed (D-805), the break is described (D-806), and the operator's order-flow/confluence stack is measured (D-808/809: 7 pre-registrations, 7 retractions). Registered forward test: index/Deribit options positioning at ≥ 250 daily points. New leads enter only with a PREREG.
+- **RESEARCH (unblocked, $0):** D-822 conditional VRP (HAR forecast as the straddle-selling key) measured NULL — the vol forecast's one options-side use is closed; nothing queued — the D-804 queue is closed (D-805), the break is described (D-806), and the operator's order-flow/confluence stack is measured (D-808/809: 7 pre-registrations, 7 retractions). Registered forward test: index/Deribit options positioning at ≥ 250 daily points. New leads enter only with a PREREG.

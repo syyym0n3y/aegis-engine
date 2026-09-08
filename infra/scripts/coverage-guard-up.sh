@@ -288,7 +288,10 @@ while true; do
   # PERP PANEL REFRESH (D-813): incremental daily refresh of tf=1dSF / 1hSF / 1h — four registered clocks read these and
   # their writers were invoked by nothing (1h stopped 08-21, 1hSF 08-29, 1dSF 08-27, found on Monday 09-07). One symbol per read.
   deno run --allow-net --allow-env ../scripts/refresh-perp-panels.ts > ../data/refresh-perp-panels.log 2>&1 || echo "$(date -u +%FT%TZ) PERP PANEL REFRESH RED — a forward clock is reading a frozen panel"
-  deno run --allow-net --allow-env --allow-read ../scripts/refresh-bars.ts > ../data/refresh-bars.log 2> ../data/refresh-bars.err \
+  # D-822: STALE_D=1 — the attribution engine stamps asof = last available price date, so with the default 3-day budget the
+  # forward clock fwd-residual-follow (rule text: "daily attribution rows") was accruing WEEKLY stamps (08-21, 08-28, 09-04).
+  # A daily refresh is ~13s sequential from the allowlisted keyless source and makes the clock scorable at its own cadence.
+  STALE_D=1 deno run --allow-net --allow-env --allow-read ../scripts/refresh-bars.ts > ../data/refresh-bars.log 2> ../data/refresh-bars.err \
     || echo "$(date -u +%FT%TZ) BAR REFRESH RED — the attribution universe is stale; today's decomposition describes a frozen market"
   # CAUSAL ATTRIBUTION ENGINE (D-520 P3): daily force decomposition + measured ignorance per instrument.
   deno run --allow-net --allow-env ../scripts/aegis-attribution.ts > ../data/attribution.log 2> ../data/attribution.err || true

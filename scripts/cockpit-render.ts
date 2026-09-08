@@ -129,6 +129,14 @@ async function report(script: string, logFile: string, args: string[] = []): Pro
 }
 const odds = await report("market-odds-map.ts", "data/odds-map.log");
 const sizer = await report("holdability-sizer.ts", "data/sizer.log");
+// D-822: the one model class confirmed out of sample (HAR-RV, D-814/819) had no operator surface — a forecast nobody
+// reads is built, not wired. Latest next-day vol forecast per instrument, as a 1-day 1-sigma range.
+const harRows = await q("trd_macro_series?series=like.harrv_vol_1d:*&select=series,d,v&order=d.desc&limit=400") as { series: string; d: string; v: number }[];
+const harLatest = new Map<string, { d: string; v: number }>();
+for (const r of harRows) if (!harLatest.has(r.series)) harLatest.set(r.series, { d: r.d, v: +r.v });
+const harText = [...harLatest.entries()].sort((a, b) => a[0] < b[0] ? -1 : 1)
+  .map(([k, x]) => `${k.slice("harrv_vol_1d:".length).padEnd(14)} as of ${x.d}   vol ${x.v.toFixed(1).padStart(6)}%/yr   1-day 1-sigma move ${(x.v / Math.sqrt(365)).toFixed(2).padStart(5)}%`)
+  .join("\n") || "(no HAR-RV rows yet - harrv-daily.ts writes them in the daily loop)";
 const drv = await run([DENO, "run", "--allow-net", "--allow-env", P("scripts/driver-register.ts")]);
 const drvLine = drv.out.split("\n").find((l) => /HELD\s+\|/.test(l))?.trim() ?? "(driver register produced no summary line)";
 
@@ -243,6 +251,9 @@ ${Object.entries(retest).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></t
 
 <h2>Holdability sizer</h2>
 <div class="card"><pre>${esc(sizer.text)}</pre><div class="note" style="margin-top:8px">source: ${esc(sizer.src)}</div></div>
+
+<h2>Today's range per instrument (HAR-RV, D-819)</h2>
+<div class="card"><pre>${esc(harText)}</pre><div class="note" style="margin-top:8px">The only model class confirmed out of sample here (D-814, 11 of 11 instruments): a next-day realised-vol forecast. It says HOW FAR, never which way, and it is not a sizing overlay for the registered rules (D-821). Rows: ${harLatest.size} instrument(s).</div></div>
 
 <h2>Market odds map</h2>
 <div class="card"><pre>${esc(odds.text)}</pre><div class="note" style="margin-top:8px">source: ${esc(odds.src)}</div></div>
