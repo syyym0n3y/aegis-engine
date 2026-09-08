@@ -18239,6 +18239,32 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-833 (2026-09-08) TODAY'S VERDICTS MADE SELF-CHECKING — and one of the three picks was watching the wrong number
+
+Six verdicts landed today (D-825 retracted; D-827, D-829, D-830 killed). A verdict trusted once and never re-read is
+the D-613 failure in a different costume, so the three that re-run cheaply are now in the daily retest harness, each
+keyed on the ONE number that would have to move for its verdict to change, with the sensitivity set at roughly the
+width that would flip a clause of its own pre-registration rather than at an arbitrary threshold:
+`mtf-trend-progression` on the K24 aligned net (−1.69bp; a move past zero reopens the operator's claim),
+`range-exhaustion` on the threshold-1.0/K4 fade net (−6.44bp), `forecast-vs-implied` on the non-overlapping slope t
+(1.57 against a registered bar of 2.5).
+**Verified by running each regex against live output, and one of the three was wrong.** The range-exhaustion pick had
+no section anchor and matched the first row in the file — the **TRAIN** row (−7.57) rather than the deciding **TEST**
+row (−6.44). It would have monitored the wrong number indefinitely and never fired: the silent-pass class, where a
+harness entry that cannot fire is worse than no entry because the board stays green while nothing is watched. Anchored
+on the TEST section and re-verified; all three now pick their deciding number exactly.
+**A second process failure in the same commit, recorded rather than tidied away:** the script that was to write this
+entry and update NEXT.md asserted on a stale anchor and died halfway, so the harness change and the GOLD_PATH rewrite
+were committed (8282a9e) WITHOUT this entry — and the decisions guard passed precisely because the entry did not exist
+to be checked. The guard cannot flag an absence it was never told to expect. Completed in the following commit; the
+lesson is that a multi-part edit which can fail halfway must be verified by reading the result, not by the exit code of
+the tool that wrote it.
+**The general rule, this being the fourth instance today of one shape** (a sheet advertising a disproved conditioner, a
+benchmark on the wrong window, a pick on the wrong row, an entry that never got written): **when something automatic is
+going to read a number or a file, check once, against the real artifact, that it is reading what you think it is.**
+GOLD: reliability — today's verdicts made self-checking, with the pick that would never have fired caught by testing it
+against live output, and the half-failed commit that hid this entry recorded instead of quietly fixed.
+
 ## D-832 (2026-09-08) HOW MANY TRADES WOULD IT TAKE TO KNOW? — the gates are written in trades, the effects are written in basis points, and nobody had ever put those two facts in the same sentence
 
 No new data and no new hypothesis: arithmetic on numbers already in the ledger. The live stream has a per-event standard
