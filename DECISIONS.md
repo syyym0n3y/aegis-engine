@@ -18244,7 +18244,7 @@ GOLD: structural — the sizing input exists daily now; the direction side is wh
 Operator instruction: look beyond what I think I know; a lot happens daily, understand it and find what can be exploited.
 Fair challenge — every test on this record asks *which way will it go*, in a different costume each time.
 
-### D-828 — THE ATLAS (`scripts/daily-behaviour-atlas.ts`, DESCRIPTIVE ONLY, no hypothesis, nothing promoted)
+### The atlas — D-828 (`scripts/daily-behaviour-atlas.ts`, DESCRIPTIVE ONLY, no hypothesis, nothing promoted)
 24 instruments, 51,325 days, split train/test so any regularity can be checked for stability BEFORE anything is built on
 it. What is stable, and what is not, is the whole point:
 | statistic | TRAIN | TEST | drift |
@@ -18264,7 +18264,7 @@ and for EURUSD/GBPUSD/XAUUSD/Brent (35–38%), and 00:00–06:00 UTC for every c
 ~40% of the day's range for crypto but only ~21% for the index proxies; and the placeable instruments have the HIGHEST
 first-to-rest range correlation (XAUUSD 0.615, Brent 0.593, USA500 0.564).
 
-### D-829 — THE TEST THAT FOLLOWED, AND IT IS NULL
+### The test that followed — D-829, and it is NULL
 Pre-registered before any return was read: if range is predictable and most travel is given back (body/range 0.43), then
 price should REVERT once a day has travelled its causally-forecast range and sits at the extreme. 105,286 events;
 expected range = median true range of the prior 20 completed days, unfitted.
