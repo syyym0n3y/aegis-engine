@@ -34,6 +34,11 @@ dataset, not a profit engine.
 positive. Fail any ⇒ REJECT/demote.
 
 ## Stage 2 — MICRO-LIVE  (real money, MANUAL only — Claude never executes)
+**D-823 entry route (2026-09-08, gate row `micro_entry`):** the PAPER→MICRO floor above binds the PAPER book. The R&D
+route this stage already describes — capped, fully-losable, manual — admits a rule that is cost-clearing OOS pooled with
+cross-instrument sign ≥ 6 of 12 (D-764/767) or a pre-registered result clearing the split ceiling (`deflation_split`) in
+its registered direction; size ≤ 0.10× the micro budget per position; kill-switch account `micro`; review at 30 real
+fills. First admitted: `micro-psl-fade-k24` (`scripts/micro-sheet.ts`, `scripts/micro-ledger.ts`, `io.aegis.micro`).
 **Goal:** smallest tradeable real size, fills the operator places themselves.
 Capture the live-vs-backtest gap: true slippage, fills, borrow, psychology. This
 is the operator's "small manual trades to document the real success rate" phase,

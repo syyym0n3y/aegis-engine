@@ -129,6 +129,10 @@ async function report(script: string, logFile: string, args: string[] = []): Pro
 }
 const odds = await report("market-odds-map.ts", "data/odds-map.log");
 const sizer = await report("holdability-sizer.ts", "data/sizer.log");
+// D-823: the micro rung (stage 2, manual fills) and the split ceiling — both operator-facing every day.
+const micro = await report("micro-sheet.ts", "data/micro-sheet.log");
+const mledger = await report("micro-ledger.ts", "data/micro-ledger.log");
+const pbar = await report("prereg-ceiling.ts", "data/prereg-ceiling.log");
 // D-822: the one model class confirmed out of sample (HAR-RV, D-814/819) had no operator surface — a forecast nobody
 // reads is built, not wired. Latest next-day vol forecast per instrument, as a 1-day 1-sigma range.
 const harRows = await q("trd_macro_series?series=like.harrv_vol_1d:*&select=series,d,v&order=d.desc&limit=400") as { series: string; d: string; v: number }[];
@@ -251,6 +255,13 @@ ${Object.entries(retest).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></t
 
 <h2>Holdability sizer</h2>
 <div class="card"><pre>${esc(sizer.text)}</pre><div class="note" style="margin-top:8px">source: ${esc(sizer.src)}</div></div>
+
+<h2>Micro rung — today's sheet (D-823, stage 2: fills are yours, by hand)</h2>
+<div class="card"><pre>${esc(micro.text)}</pre><div class="note" style="margin-top:8px">source: ${esc(micro.src)} · refreshed hourly by io.aegis.micro · record fills with <code>scripts/micro-ledger.ts</code></div></div>
+<div class="card"><pre>${esc(mledger.text)}</pre><div class="note" style="margin-top:8px">source: ${esc(mledger.src)}</div></div>
+
+<h2>The pre-registered bar (D-823 split ceiling, report only)</h2>
+<div class="card"><pre>${esc(pbar.text)}</pre><div class="note" style="margin-top:8px">source: ${esc(pbar.src)} · clearing this bar is necessary, not sufficient; the outcome label says which way the number went</div></div>
 
 <h2>Today's range per instrument (HAR-RV, D-819)</h2>
 <div class="card"><pre>${esc(harText)}</pre><div class="note" style="margin-top:8px">The only model class confirmed out of sample here (D-814, 11 of 11 instruments): a next-day realised-vol forecast. It says HOW FAR, never which way, and it is not a sizing overlay for the registered rules (D-821). Rows: ${harLatest.size} instrument(s).</div></div>

@@ -116,6 +116,7 @@ not the engine — the engine is on the owned node); capital access beyond the c
 - D-814: the missing model classes run — ridge, boosting, meta-labeling and regime conditioning all sub-fee or worse; HAR-RV variance forecasting CONFIRMED on 11/11 (the per-instrument model with skill: how far and how long, never which way).
 - D-815/816: paid data priced; the equity L2 barrier measured on the operator's Databento credit ($95.52) — sub-fee on all 20 names.
 - D-819/820/821: HAR-RV live daily; SPX per-strike OI bought and measured (no pin; the flip at-fee on ES costs, unregistered); vol-sizing of the registered rules costs return.
+- D-823: THE FIVE — research frozen (guard), ceiling split by provenance (admits nothing today), MICRO rung prepped (hourly sheet, ledger, kill-switch; live on the first hand-placed fill), prop parked behind 30 real fills, session exit condition written.
 - D-822: gap analysis — residual-follow clock made scorable at its registered cadence; conditional VRP on the HAR forecast NULL; D-820's cost-inflated t corrected; HAR-RV on the cockpit.
 - D-817/818: two of the three paid barriers opened free and keyless (estimate revisions; the per-name options surface, forward); a peer session added SqueezeMetrics GEX/DIX history, Deribit DVOL and a Nasdaq revisions feed (D-818, both its tests retracted). Register 56 held / 2 blocked, both paid.
 

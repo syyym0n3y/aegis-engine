@@ -494,3 +494,18 @@ series is reported as net-of-assumption, never as evidence about the market; (3)
 than ~2x, the cost model is doing the work and must be justified independently; (4) what saved the fails analysis was
 an accident of construction worth copying — the absolute diagnostic computes bucket returns BEFORE cost, so its
 excess figure is gross and every conclusion built on it survived while the headline did not.
+
+
+## SESSION EXIT CONDITION + RESEARCH FREEZE (2026-09-08, D-823) — binds every session from here
+**A session ends when a POSITION, a LEDGER ROW, a GATE or a CLOCK VERDICT has changed. A decision entry alone is not an
+exit, and "keep going" means move one of those four, not produce more verdicts.**
+Origin: ten weeks, 590 entries, 2.9M trials, 30 guards, 18 clocks, zero trades, zero real fills, an empty wealth ledger.
+Research is free, so it never stopped on its own; the success metric had become verdict count. The mined deflation
+ceiling was applied to pre-registered tests it did not govern, which guaranteed nothing could clear; cost-clearing OOS
+survivors (D-764/767) were shelved to multi-year clocks instead of a capped MICRO rung; the certain money (deposits ×
+wrapper, D-735/746/758) sat unlogged because it was boring.
+Rules: (1) from D-823 a `GOLD: research` entry must carry `ACTS-ON: <position|ledger|gate|clock>` (decisions-guard, RED
+otherwise); (2) the ceiling is split by provenance — mined results keep sqrt(2 ln N_all); pre-registered results are bound
+by sqrt(2 ln (trials under the id + all registrations)) — gate row `deflation_split`; (3) the MICRO rung is the place a
+cost-clearing rule goes next, not a clock — gate row `micro_entry`, manual fills only, Claude never executes; (4) the
+session recap names which of the four moved, or says plainly that none did and why.

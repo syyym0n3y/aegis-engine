@@ -1,5 +1,13 @@
 # STATE — Aegis (live state)
 
+## 2026-09-08 (LATEST) — THE FIVE (D-823): research freeze enforced; ceiling split (mined 5.4556 / pre-registered 2.89); MICRO rung prepped and hourly; prop parked behind 30 real fills; session exit condition
+- **Gate rows (insert-only, D-823):** `deflation_split`, `micro_entry`. Kill-switch `micro` armed. `trd_strategy_specs` micro-psl-fade-k24 frozen; `trd_ladder_state` rung MICRO (PREP until the first hand-placed fill).
+- **The split admits nothing today:** 22 of 41 pre-registered rows clear their bar; all are retracted (wrong-direction or sub-fee t) or confirmed measurements of the fails family already verdicted as drift. Report: `scripts/prereg-ceiling.ts` (cockpit).
+- **Micro tooling:** `scripts/micro-sheet.ts` (hourly via `io.aegis.micro`; STALE bars print no candidate), `scripts/micro-ledger.ts` (fills in `trd_manual_trades`, TRIP/ARM), cockpit sections. First sheet: 0 candidates.
+- **Guard:** decisions-guard RED on post-D-823 `GOLD: research` without `ACTS-ON:`; continuity guard registers io.aegis.micro.
+- **Operator (the only items that move money):** `MICRO_BUDGET` and the first fill; the three wealth-ledger rows (commands below); the prop fee stays parked until 30 real fills.
+
+
 ## 2026-09-08 (LATEST) — gap analysis (D-822): residual-follow clock made scorable at its own cadence; conditional VRP NULL; D-820 narrative corrected; HAR-RV on the cockpit
 - **Missing, now fixed:** `fwd-residual-follow` stamped weekly (refresh budget 3d) against a rule that says daily, and its scorer never computed a number — `STALE_D=1` in the runner + a real scorer (BACKDATE-verified: 34 stamps, net −7.15bp t −0.77, gross +2.85bp t 0.31). HAR-RV had no consumer/surface — cockpit section "Today's range per instrument" (11 rows). D-820 prose called a cost-inflated net t "strong" — corrected (gross t ≈ −1.0; at ES costs the flip is at-fee, unregistered).
 - **Research (pre-registered, NULL):** conditional variance premium — selling the modelled BTC straddle only when DVOL > HAR forecast: spread rule SR 0.02 vs unconditional −0.08 vs DVOL-level control −0.03 (t 0.02) → FORECAST-ADDS-NOTHING; ETH inconclusive. 8 trials.
@@ -1818,6 +1826,11 @@ Wired into the daily board. Standing gaps it prints:
   stop reading `select=bars` for the whole panel in scripts that only need a few symbols.
 
 ## Blocked on operator (free actions / config)
+- **D-823 — the two things only you can do this week:** (1) set the micro budget and place the first fill by hand from the
+  hourly sheet (`data/micro-sheet.log` / cockpit), then record it:
+  `ADD=1 SYM=<sym> SIDE=long QTY=<qty> INTENDED=<sheet price> FILL=<actual> FEES=<usd> deno run --allow-net --allow-env scripts/micro-ledger.ts`;
+  (2) the three wealth-ledger facts: `ADD_DEPOSIT=<amount> ADD_DATE=YYYY-MM-DD CCY=GBP`, `SET_WRAPPER=isa|gia`,
+  `SET_CCY_LEAK_BP=<measured>` — each `deno run --allow-net --allow-env scripts/wealth-ledger.ts`.
 - **CC Supabase project `glzzoomuhnugsiichnub` is INACTIVE and the restore is blocked by UNPAID INVOICES on the
   Supabase organisation `wasnnddzbnjailwhaxyg`** (`restore_project` → PaymentRequiredException, 2026-09-02). Settling
   that is a payment action only the operator can take. Once restored: `supabase functions deploy trd-compute

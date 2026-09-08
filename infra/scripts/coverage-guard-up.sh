@@ -353,6 +353,10 @@ while true; do
   # state, the odds map, the holdability sizer, the driver register line and STATE.md's "Blocked on operator" block.
   # It runs last so the board it displays is THIS cycle's, and it carries a positive control (live trial count + a
   # full guard board) that reds rather than rendering a beautiful page from nothing. Read-only; no LLM; owned node only.
+  # D-823: the pre-registered bar (report only) and the micro-rung sheet, both rendered on the cockpit. The sheet also
+  # refreshes HOURLY under io.aegis.micro (infra/scripts/micro-hourly.sh) because the admitted rule is hourly.
+  deno run --allow-net --allow-env ../scripts/prereg-ceiling.ts > ../data/prereg-ceiling.log 2>&1 || echo "$(date -u +%FT%TZ) PREREG CEILING REPORT FAILED"
+  deno run --allow-net --allow-env ../scripts/micro-sheet.ts > ../data/micro-sheet.log 2>&1 || echo "$(date -u +%FT%TZ) MICRO SHEET FAILED"
   if ! deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/cockpit-render.ts; then
     echo "$(date -u +%FT%TZ) COCKPIT RENDER RED — data/cockpit.html failed its positive control; do not read it as oversight"
   fi

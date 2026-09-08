@@ -70,6 +70,15 @@
 | permissions class (D-801) | GUARDED (D-803) |
 | decisions without a mechanism line | GUARDED (D-804) |
 
+## 5b. THE FIVE (D-823, 2026-09-08) — the loop named and broken
+| item | disposition |
+|---|---|
+| research freeze | ENFORCED — decisions-guard: `GOLD: research` needs `ACTS-ON:` from D-823 |
+| ceiling split | DONE — gate row `deflation_split`; pre-registered bar 2.89 today; admits nothing (all clearing rows are retracted or drift measurements) |
+| MICRO rung | PREPPED — gate row `micro_entry`, spec frozen, ladder row MICRO (PREP), kill-switch armed, hourly sheet + ledger + `io.aegis.micro`; LIVE on the operator's first hand-placed fill |
+| prop + ledger | prop PARKED until 30 real fills; ledger rows OPERATOR (commands in STATE.md) |
+| exit condition | WRITTEN into CLAUDE.md |
+
 ## 5. Still open, and whose it is
 
 - **OPERATOR:** the prop FEE (clock registered D-807; ledger via `scripts/prop-ledger.ts`) · three wealth-ledger rows · CC Supabase invoices (cockpit/platform only) · capital beyond the current budget.

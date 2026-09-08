@@ -18239,6 +18239,61 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-823 (2026-09-08) THE FIVE — research freeze, the ceiling split, the MICRO rung prepped, the prop route parked behind real fills, and a new session exit condition
+
+Operator instruction, after the assessment of why ten weeks produced 590 entries, 2.9M trials, 30 guards, 18 clocks and
+zero trades: "do all five, split the ceiling and prep the micro rung." Every item below is live; nothing here places a
+trade (Claude never executes) and nothing spends.
+
+**1. Research freeze — enforced, not announced.** From this entry, a DECISIONS entry whose `GOLD:` line says `research`
+must also carry `ACTS-ON: <position|ledger|gate|clock> — …`, or `scripts/decisions-guard.ts` goes RED (self-tested:
+RED on a post-freeze research entry without it, GREEN with it, pre-freeze exempt). Research that does not act on a
+position, a ledger row, a gate or a clock verdict is research for its own sake, and the guard refuses it.
+
+**2. The ceiling split — a new gate row, decision-locked.** `trd_gate_thresholds` row `deflation_split` (insert-only
+table; this entry is its `decision_ref`): the MINED ceiling sqrt(2 ln N_all) keeps binding every result found by a sweep;
+a result whose `trd_prereg` row was registered BEFORE its data was touched is bound instead by sqrt(2 ln (trials counted
+under its id + every registration ever made)). The second term is the anti-farming clause: every registration raises the
+bar for all pre-registered tests, so a variant is never a free re-roll. Today: 65 registrations → bar **2.89** (2.91–2.92
+where trials are counted under the id; older runs were counted under family names, so for them it is a floor).
+`preregCeiling()` in the shared trial ledger; `scripts/prereg-ceiling.ts` reports it daily on the cockpit.
+**What the split admits today: nothing.** 22 of 41 rows stating a t clear their own bar — and every one is either
+`retracted` (a strong t in the WRONG direction, or on a sub-fee/null measurement: D-820's −4.62 is on the list) or a
+`confirmed` MEASUREMENT of the settlement-fails family (D-608/610/616/622/623/625) whose lineage verdicts are drift and
+cost-inflation (D-627/630/661). The bar is necessary, not sufficient; instrument, cost, turnover, holdability, sign and the
+sample floors still bind. Recording that the split changes the rule and not the answer is the point of recording it.
+
+**3. The MICRO rung prepped — LADDER stage 2 as written, capped, fully-losable, manual.** Gate row `micro_entry`
+(D-823): admits a rule that is cost-clearing OOS pooled with cross-instrument sign ≥ 6 of 12, or a pre-registered result
+clearing the prereg bar in its registered direction; size ≤ 0.10× the micro budget per position (D-767's sizer: the
+leverage that holds is 0.06–0.10×, and at that size P(DD ≤ −50% of budget) is 7–47% — the budget must be losable);
+kill-switch account `micro` armed (durable row); review at 30 real fills; MICRO→SMALL unchanged at 50.
+Admitted: `micro-psl-fade-k24` (`trd_strategy_specs`, frozen tonight; `trd_ladder_state` rung MICRO, evidence says PREP —
+not live until the first hand-placed fill): lag-1 LONG at the open after an hourly close below the prior-session low,
+exit at the close 24 bars later, rvol-hi conditioner (D-767: +7.15bp net, t 3.15, OOS n 20,427, 7/12; base +2.09bp
+t 2.09 on the 12-panel). The regime prior is printed on every sheet: 2025+ negative at every horizon (D-764); FX majors
+flat; the forward clock is expected to KILL. That is exactly why it goes to MICRO and not to SMALL.
+Tools the operator owns: `scripts/micro-sheet.ts` (candidates per instrument from the last completed hour; STALE bars
+print no candidate; `MICRO_BUDGET=<usd>` sizes at 0.10×), `scripts/micro-ledger.ts` (opens/closes in
+`trd_manual_trades`, slippage measured against the sheet's intended price, `TRIP=1`/`ARM=1` for the kill-switch;
+refuses an open while tripped), and `infra/scripts/micro-hourly.sh` under **`io.aegis.micro` (hourly)** — the rule is
+hourly, so its inputs refresh hourly (crypto 1h panel + the 8 Dukascopy hourly series, skipping a step the daily loop is
+already running); registered with the continuity guard. Both the sheet and the ledger render on the cockpit.
+
+**4. Prop route parked; ledger commands surfaced.** The prop clock `fwd-prop-ftmo100k-utc16-0p5x-v1` stays registered
+and unpaid: on the same signals a prop account is one bet at N×, and the micro rung will produce the first 30 real fills
+that the prop decision should be made on. Decision: revisit at 30 fills, not before. The wealth ledger stays EMPTY
+because its three rows are facts only the operator holds (deposit amount/date, wrapper, measured currency leak) — the
+exact commands are at the top of STATE.md's operator section.
+
+**5. Session exit condition — written into the project CLAUDE.md.** A session ends when a position, a ledger row, a
+gate or a clock verdict has changed; a decision entry alone is not an exit. Operating consequence for me: "keep going"
+now means "move one of those four", not "produce more verdicts".
+
+GOLD: law — the deflation ceiling split by provenance (mined vs pre-registered), the micro_entry gate written, the MICRO
+rung prepped with its sheet, ledger, hourly job and kill-switch; the research freeze enforced by the decisions guard.
+ACTS-ON: gate — deflation_split + micro_entry rows; ledger — trd_manual_trades is the live record from the first fill.
+
 ## D-822 (2026-09-08) WHAT THE RECORD WAS MISSING — a clock unscorable by our own refresh cadence, the confirmed model with no consumer and no surface, and a "strong" number that was a cost artifact; the one options test the vol forecast can feed is NULL
 
 Operator instruction: analyse what we have been missing and keep the process going. Gap analysis against LIVE state (board 29

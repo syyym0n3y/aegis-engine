@@ -110,3 +110,28 @@ export async function currentCeiling(rest: string, headers: Record<string, strin
   const N = baseline + n;
   return { N, ceiling: Math.sqrt(2 * Math.log(Math.max(2, N))) };
 }
+
+/**
+ * D-823 — THE SPLIT CEILING. `spendTrials` returns the MINED ceiling: sqrt(2 ln N_all), the expected maximum of every
+ * trial ever counted plus the documented baseline. That is the right bar for anything found by a sweep. It is the WRONG
+ * bar for a hypothesis registered in `trd_prereg` BEFORE its data was touched: that test did not draw from 2.9M trials.
+ * Its family is (a) the trials counted under its own prereg id and (b) every pre-registration ever made — (b) is the
+ * anti-farming term: each registration raises the bar for all, so registering variants is not a free re-roll.
+ * Necessary, not sufficient: clearing this bar admits a result to the ladder; instrument, cost, turnover, holdability,
+ * sign and the sample floors still bind. Gate row `deflation_split` (trd_gate_thresholds, D-823) is the authority.
+ */
+export async function preregCeiling(opts: { rest: string; headers: Record<string, string>; preregId: string }):
+  Promise<{ N: number; spentHere: number; preregs: number; ceiling: number }> {
+  const count = async (path: string): Promise<number> => {
+    const r = await fetch(`${opts.rest}/${path}`, { headers: { ...opts.headers, Prefer: "count=exact", Range: "0-0" } });
+    if (!r.ok) throw new Error(`preregCeiling: cannot read ${path} (HTTP ${r.status}) — refusing to invent a ceiling`);
+    const n = Number(r.headers.get("content-range")?.split("/")[1] ?? NaN);
+    if (!Number.isFinite(n)) throw new Error(`preregCeiling: no total for ${path}`);
+    return n;
+  };
+  const spentHere = await count(`trd_trial_counter?select=id&run_key=like.${encodeURIComponent(opts.preregId)}*`);
+  const preregs = await count(`trd_prereg?select=id`);
+  if (preregs < 1) throw new Error("preregCeiling: trd_prereg is empty — the anti-farming term cannot be zero");
+  const N = spentHere + preregs;
+  return { N, spentHere, preregs, ceiling: Math.sqrt(2 * Math.log(Math.max(2, N))) };
+}

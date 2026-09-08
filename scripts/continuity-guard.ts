@@ -101,7 +101,7 @@ for (const [path, label, col, everyDays, refresher] of FEEDS) {
 console.log("");
 try {
   const out = new TextDecoder().decode((await new Deno.Command("launchctl", { args: ["list"] }).output()).stdout);
-  const want = ["io.aegis.coverage", "io.aegis.daily", "io.aegis.paper"];
+  const want = ["io.aegis.coverage", "io.aegis.daily", "io.aegis.paper", "io.aegis.micro"];   // io.aegis.micro: D-823 hourly micro-rung sheet
   for (const j of want) {
     const line = out.split("\n").find((l) => l.includes(j));
     if (!line) { red++; console.log(`  RED  job ${j.padEnd(24)} NOT REGISTERED`); }

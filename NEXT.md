@@ -1,16 +1,13 @@
-# NEXT — work queue (rewritten 2026-09-06, D-804; the previous version had not changed since 2026-08-14 and still queued
-# Supabase provisioning, Alpaca ingest and `trd_features` — all superseded by the owned node, D-408→D-729/D-704)
+# NEXT — work queue (rewritten 2026-09-08, D-823: THE FIVE)
 
-The live queue is [`docs/GOLD_PATH.md`](./docs/GOLD_PATH.md) §4. Summary:
+The research loop is FROZEN (decisions-guard: `GOLD: research` needs `ACTS-ON:` from D-823). The queue is now four things
+that move money or the right to trade it, and nothing else:
 
-1. ~~Five UNTESTED-on-held-data tests~~ **DONE 2026-09-06 (D-805)**: short-interest surprise NULL (sign missed), insider
-   sells NULL (sign missed), profitability/investment premia NULL vs ceiling (investment dead post-2013); D-612 and
-   D-601/602 were already resolved and had been misfiled.
-2. ~~2026 crypto regime break decomposition~~ **DONE (D-806)**: panel-wide flip, hourly seasonality unstable year to year; descriptive only.
-3. ~~Reliability debt~~ **CLOSED (D-806)**: cockpit passes; refresh-bars metadata fixed + backfilled; transient RED unreproduced in 2 controlled attempts.
-4. **Prop clock** `fwd-prop-ftmo100k-utc16-0p5x-v1` — register ONLY on operator sign-off, then its ledger scorer.
+1. **MICRO rung (operator):** set `MICRO_BUDGET`, read the hourly sheet (`data/micro-sheet.log` / cockpit), place the first
+   fill by hand, record it with `scripts/micro-ledger.ts`. Review at 30 real fills (live vs model). Rule: micro-psl-fade-k24.
+2. **Wealth ledger (operator):** three rows — deposit, wrapper, measured currency leak (`scripts/wealth-ledger.ts`).
+3. **Prop route:** parked until 30 real micro fills; the clock stays registered and unpaid.
+4. **Clocks:** 18 registered, scored daily; a matured verdict is the only thing that reopens research on a rule.
 
-**Operator-only:** log deposits / wrapper / currency leak into the wealth ledger (it is EMPTY and is the whole in-market
-10^7 lever today); decide the one prop fee; CC Supabase invoices (cockpit only).
-
-**Standing (D-822):** `fwd-residual-follow` now stamps daily and its scorer computes the rule's own statistic (BACKDATE-verified). 18 forward clocks (prop clock D-807 signed, fee unpaid, ledger via `scripts/prop-ledger.ts`), 0 computable yet, 0 promoted; 30 guards, board green; nothing trades. Operator's order-flow stack measured (D-808/809): all NULL/SUB-FEE. Full open list with owners: [`docs/DEVIATION_REGISTER.md`](./docs/DEVIATION_REGISTER.md) §5.
+Standing: 30 guards; ceiling split (mined 5.4556 / pre-registered 2.89, admits nothing today); 0 promoted; nothing trades
+until the operator places it. Full open list: [`docs/DEVIATION_REGISTER.md`](./docs/DEVIATION_REGISTER.md) §5.
