@@ -18239,6 +18239,62 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-828/829 (2026-09-08) THE DAILY BEHAVIOUR ATLAS — the first description of what these instruments actually DO, and the test it implied, which is NULL and refutes my own inference
+
+Operator instruction: look beyond what I think I know; a lot happens daily, understand it and find what can be exploited.
+Fair challenge — every test on this record asks *which way will it go*, in a different costume each time.
+
+### D-828 — THE ATLAS (`scripts/daily-behaviour-atlas.ts`, DESCRIPTIVE ONLY, no hypothesis, nothing promoted)
+24 instruments, 51,325 days, split train/test so any regularity can be checked for stability BEFORE anything is built on
+it. What is stable, and what is not, is the whole point:
+| statistic | TRAIN | TEST | drift |
+|---|---|---|---|
+| **corr(first 4h range, rest-of-day range)** | 0.605 | 0.596 | **−0.009** |
+| **body / range (how much of the travel is kept)** | 0.448 | 0.434 | **−0.014** |
+| **corr(day range, prior-day range)** | 0.640 | 0.612 | −0.028 |
+| up-day share % | 51.7 | 50.1 | −1.6 |
+| trend days % (body/range > 0.6) | 31.2 | 28.8 | −2.4 |
+| close in top/bottom 20% of range % | 42.1 | 37.5 | −4.6 |
+| median day range % | 2.25 | 4.11 | +1.85 (a vol LEVEL, not a relationship) |
+**The single cleanest statement this programme has produced: range is predictable and direction is not.** The two range
+correlations move by less than 0.03 across a three-year regime change; the up-day share is 50.1%. That is the same fact
+HAR-RV found (D-814, 11/11) arriving from a completely different direction.
+Per-instrument structure worth having: the day's extremes concentrate 12:00–18:00 UTC for the two index proxies (37–40%)
+and for EURUSD/GBPUSD/XAUUSD/Brent (35–38%), and 00:00–06:00 UTC for every crypto perp (32–39%); the first 4 hours carry
+~40% of the day's range for crypto but only ~21% for the index proxies; and the placeable instruments have the HIGHEST
+first-to-rest range correlation (XAUUSD 0.615, Brent 0.593, USA500 0.564).
+
+### D-829 — THE TEST THAT FOLLOWED, AND IT IS NULL
+Pre-registered before any return was read: if range is predictable and most travel is given back (body/range 0.43), then
+price should REVERT once a day has travelled its causally-forecast range and sits at the extreme. 105,286 events;
+expected range = median true range of the prior 20 completed days, unfitted.
+| TEST | net | t | gross | instruments + |
+|---|---|---|---|---|
+| ext ≥ 1.0, K4 | −6.44bp | −6.61 | −0.90bp | 1/24 |
+| ext ≥ 1.0, K8 | −9.98bp | −7.95 | −4.43bp | 3/24 |
+| ext ≥ 1.5, K4 | −8.78bp | −2.13 | −3.12bp | 7/24 |
+| ext ≥ 1.5, K8 | −13.44bp | −2.56 | −7.78bp | 6/24 |
+**NULL at every cell, in train and test.** And the correction matters more than the verdict: **my inference from the
+atlas was wrong.** Body/range 0.43 describes the WHOLE day measured at its close; it says nothing about what happens
+AFTER an extreme is reached. Measured directly, price CONTINUES — worst of all on trend days, where the fade loses
+−50bp to −104bp, which are exactly the days on which an exhausted range signals strength rather than exhaustion.
+**The reverse is not the answer either, and the benchmark is why.** Trading WITH the extension earns +0.90 to +7.78bp
+gross against a ~5.5bp round trip — marginal, and an unregistered flip. Decisively: the unconditional forward return
+FOLLOWING high-extension bars is **+8.86bp (K4) and +14.77bp (K8)** versus +1.13/+2.06bp for all bars, so the
+with-the-extension trade underperforms simply holding after the same moments by 8–10bp. Whatever happens after range
+exhaustion is drift concentrated in high-volatility periods, not a side anyone can take.
+**Descriptive, not claimable:** high-extension moments are followed by returns ~7x the unconditional average on this
+universe and window. That shape is exactly what manufactures false edges when compared against the wrong benchmark —
+which is why the high-extension benchmark, not the all-bar one, decided this test. Two hours after D-826b was retracted
+for a window mismatch, that control is why this one did not repeat it.
+**What the pair establishes.** The predictable quantity here is RANGE. Two attempts to convert it into a return
+(D-822 conditional variance selling on crypto, D-829 intraday reversion) are both null. Range predictability is real and
+has so far resisted conversion into a return at every horizon tried — which is a sharper and more useful statement than
+"no edge found", because it says exactly where to look next: instruments where range is priced directly, not inferred.
+GOLD: research — the first description of what these instruments do daily, and the test it implied, with my own faulty
+inference from it corrected by measurement rather than argument.
+ACTS-ON: position — closes intraday reversion as a micro-rung candidate; the rung still has no admitted rule.
+
 ## D-827 (2026-09-08) MULTI-TIMEFRAME TREND PROGRESSION AS THE GATE ON BREAKOUTS — NULL both ways on 110,746 events, and the in-sample audit that says why this was always the likely answer
 
 Operator instruction: build trend progression across timeframes, track highs and lows on every instrument, use the
