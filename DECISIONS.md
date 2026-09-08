@@ -18239,6 +18239,59 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-837/838 (2026-09-08) THE SEARCH SPACE DERIVED INSTEAD OF REMEMBERED — capacity inversion has eight generators, and the first one tested is NULL on size after my own defect flipped its verdict
+
+D-836 concluded that widening what we ask beats tightening how we test, and D-834 found the reason: the only mechanisms
+surviving ten weeks are ones institutions structurally cannot do, both found by accident. So the class was searched
+systematically instead of stumbled upon.
+
+### D-838 — the generators (`docs/CAPACITY_INVERSION.md`)
+Eight structural reasons a mechanism can pay a small holder and not a large one: a rule granting priority to small
+holders (G1); a hard cap on participation (G2); whole-market capacity below an institutional minimum ticket (G3);
+fixed per-event costs that make small events uneconomic for anyone with institutional overheads (G4); regulatory access
+asymmetry (G5); customer-acquisition subsidies (G6); rounding rules applied per holder (G7); attention cost nobody will
+pay for a small sum (G8). **Three are already measured real** (odd-lot tenders, the wrapper, pre-deal SPAC trust).
+**Four have never been tested here**, and G6 and G8 are not market-data questions at all — which is exactly why a
+market-data engine never asked them.
+**The pattern across every surviving mechanism, stated as a rule:** they pay a FIXED AMOUNT PER HOLDER OR PER EVENT,
+not a rate on capital. That is the mathematical signature of capacity inversion. It is why they cannot be scaled, why
+they are worth more to a small account than a large one — and why, honestly, a bounded count of fixed amounts does not
+compound into 10^7 on its own.
+
+### D-837 — G4 tested: reverse-split round-ups
+When a company reverse-splits 1-for-N, a holder of fewer than N shares owns a fraction, and many issuers round UP to a
+whole share. One share becomes one share worth ~N times as much — a mechanism that works only at one-share size.
+3,075 reverse splits 1981–2026; 2,525 usable after a positive control rejected 97 whose observed price lift was not
+within 10x of their own split ratio. 2,117 events since 2015 = **176/yr**, median ratio 1-for-14, median raw pre-split
+price $0.30.
+| commission per trade | median net per event | % positive |
+|---|---|---|
+| $0 | $3.63 | 99% |
+| **$1** | **$1.63** | 75% |
+| $5 | −$6.37 | 10% |
+**NULL** against a registered bar of $5. The ROI on the single share is large (112% at $1 commission) and the gain
+survives a 5-day exit almost unchanged — so realisability is not the problem, **size** is. The entire population is
+worth low hundreds of dollars a year, before two facts we cannot see: the round-up provision is issuer-specific (many
+reverse splits CASH OUT fractions instead) and broker treatment of street-name holdings is unverified. Both can only
+reduce it.
+**THE FIRST RUN SAID SUPPORTED AND WAS WRONG — flaw C1 of the register I wrote an hour earlier.** An adjusted price is
+the raw price divided by the product of EVERY split ratio after it, not just the next one; I de-adjusted for the split
+under study and ignored later ones, so any symbol that reverse-split twice carried the second ratio too. The signature
+was a **mean of $4,866,721,539,844 against a median of $8** — a number no market produces, which is why this programme
+reports the mean beside the median. Corrected, the median fell from $6.02 to $1.63 and the verdict flipped. **Third
+time today that fixing my own defect changed a conclusion**, and the second time a section-C flaw was confirmed within
+an hour of being named.
+### The queue this leaves, in evidence order
+1. **The broker question** — does a UK retail broker pass tender offers through and give access to US SPAC commons
+   without fees that eat the return? It gates BOTH measured-real mechanisms and is answerable by asking two brokers.
+   **It is the highest-value open item on the record**, and it is not a backtest.
+2. G7 merger odd-lot and rounding provisions (same data path, plausibly far larger per event, since merger
+   consideration settles in cash at a stated price). 3. G6 acquisition subsidies. 4. G8 attention-cost claims.
+GOLD: gap — the capacity-inverted class turned from a list of remembered items into eight generators with a queue, and
+the first generator tested and closed on measurement.
+ACTS-ON: ledger — it identifies the one question that decides whether any measured-real mechanism is reachable, and
+closes one candidate that is not.
+
 ## D-835/836 (2026-09-08) EVERY TEST MADE FINDABLE, EVERY METHODOLOGY FLAW NAMED — and the first flaw named by reasoning was confirmed the same hour: 5 of 30 guards cannot be shown able to refuse anything
 
 Operator instruction: make every verdict and test far easier to reach, keep the context available as the hunt
