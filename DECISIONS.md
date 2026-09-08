@@ -18239,6 +18239,39 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-826c (2026-09-08) THE DEFECT THAT KILLED D-825, HUNTED THROUGH THE REST OF THE CODEBASE — one more instance found, no recorded verdict moves, and the benchmark guard now says what its green does NOT cover
+
+D-826b's window mismatch was mine and an hour old, which makes it the cheapest possible moment to ask whether anything
+else carries it. Audited every script that computes an unconditional benchmark AND has a train/test split (44 files
+matched the coarse filter; the ones that actually compute an excess were read line by line, not grepped).
+**Clean, verified by reading the code:** `bond-carry.ts`, `breadth-conditioning.ts` and `macro-regime-conditioning.ts`
+all compute `uncond` on the TEST slice; `options-regime.ts` builds its benchmark inside each train/test/full block, so
+each bucket meets its own window; `ftd-persistence.ts` and `shortvol-surprise.ts` build a per-period universe mean by
+construction; `vrp-conditional-harrv.ts` (yesterday's) benchmarks against the OOS windows it selects from.
+**One more instance, and not mine:** `seasonality.ts` computed `base` over the full history and used it for the TRAIN
+and TEST columns as well as the full-sample one. Fixed to per-window bases (TRAIN 3.06bp, TEST 4.63bp — the halves
+differ by 1.6bp/day of drift, which is exactly the size of the effects being measured). What moved:
+| bucket, TEST column | before | after |
+|---|---|---|
+| turn-of-month | +0.56bp (t 0.46) | **−0.27bp (t −0.22)** — sign flip |
+| Monday | +2.28bp (t 1.90) | +1.45bp (t 1.21) |
+| Wednesday | +5.42bp (t 4.87) | +4.59bp (t 4.12) |
+| Thursday | −5.27bp (t −4.82) | **−6.10bp (t −5.58)** |
+**No recorded verdict moves**, and I checked rather than assumed: D-503 killed the seasonality family on a different
+comparison — every calendar rule losing to buy-and-hold on all 7 instruments — not on these columns. The full-sample
+excess column was always correct (bucket and base shared a window). So this is a defect fixed before it was used, which
+is the only cheap kind.
+**The guard now states its own scope.** `benchmark-guard.ts` checks that a row STATES a universe mean and an excess; it
+cannot see the window they were measured over. D-825 satisfied it completely and was still wrong. Its green output now
+says so in five lines, naming D-825 as the case it would not have caught, because a guard whose limits are unstated gets
+read as covering more than it does — the D-631 lesson ("the correct question is never 'is there a guard' but 'what
+exactly does it refuse'").
+**The control that actually worked, stated as a rule worth reusing:** when a number decides something, compute it twice
+by different code paths and compare. Exact agreement on net, n and t is what made a single disagreement on the excess
+unmistakable instead of arguable.
+GOLD: reliability — the window-mismatch class hunted through the codebase, one instance fixed, and the guard that could
+not see it made to say so.
+
 ## D-826b (2026-09-08) D-825 RETRACTED FORTY MINUTES AFTER IT WAS RECORDED — the benchmark was measured over the wrong window, and corrected, the rule UNDERPERFORMS simply holding for 24 hours on all three placeable instruments
 
 The programme's first SUPPORTED result lasted about forty minutes. **THE BENCHMARK LAW requires the universe mean "over

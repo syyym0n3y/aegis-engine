@@ -244,4 +244,9 @@ if (Deno.env.get("SELFTEST") === "1") {
 console.log(`\n  ${red === 0
   ? "NO POST-ADOPTION VIOLATIONS — every return claimed since " + ADOPTED + " states what it is a return ABOVE."
   : `${red} POST-ADOPTION VIOLATION(S) — a spread was reported as a return without subtracting its universe.`}`);
+console.log("  WHAT THIS GREEN DOES NOT COVER (D-826b/c): it verifies that a row STATES a universe mean and an excess.");
+console.log("  It does NOT verify the WINDOW they were measured over. D-825 stated both and was still wrong: its benchmark");
+console.log("  spanned 2016-2026 while its events were 2023+, and corrected to the same period the excess flipped sign and");
+console.log("  the result was retracted the same day. seasonality.ts carried the same mismatch in its train/test columns.");
+console.log("  What caught it was computing the number twice by different code paths and comparing - not this guard.");
 if (red > 0) Deno.exit(1);

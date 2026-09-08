@@ -23,13 +23,20 @@ console.log(`==> SEASONALITY: ${rows.length} instruments, ${all.length} instrume
 const mean=(a:number[])=>a.reduce((s,x)=>s+x,0)/a.length;
 const tst=(a:number[])=>{const m=mean(a);const sd=Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1));return sd>0?m/(sd/Math.sqrt(a.length)):0;};
 const base=mean(all.map(r=>r.ret));
+// D-826c: THE BENCHMARK MUST BE MEASURED OVER THE SAME PERIOD AS THE BUCKET IT JUDGES. The TRAIN/TEST columns below
+// compared a sub-window's bucket against `base`, the FULL-history unconditional mean, which is the window mismatch that
+// killed D-825 the same day (it flattered a rule by comparing 2023-2026 events to a 2016-2026 benchmark). Where drift
+// differs between the halves - and it does, these are mostly rising assets - that mismatch moves the excess by the
+// difference in drift, not by anything the calendar effect did. Per-window bases:
 console.log(`  unconditional mean daily return: ${(base*1e4).toFixed(2)}bp\n`);
 const cut=new Date(Date.UTC(2016,0,1));   // train pre-2016, test post (calendar effects decay; the OOS half is the real test)
+const baseTr=mean(all.filter(r=>r.date<cut).map(r=>r.ret)), baseTe=mean(all.filter(r=>r.date>=cut).map(r=>r.ret));
+console.log(`  unconditional mean by window: TRAIN ${(baseTr*1e4).toFixed(2)}bp | TEST ${(baseTe*1e4).toFixed(2)}bp  (each bucket is judged against its OWN window - D-826c)\n`);
 const rep=(nm:string,sel:(r:R)=>boolean)=>{
   const s=all.filter(sel); if(s.length<500){console.log(`  ${nm.padEnd(26)} n=${s.length} (thin)`);return;}
   const tr=s.filter(r=>r.date<cut).map(r=>r.ret), te=s.filter(r=>r.date>=cut).map(r=>r.ret);
-  const ex=(a:number[])=>a.length>200?`${((mean(a)-base)*1e4).toFixed(2)}bp (t ${tst(a.map(x=>x-base)).toFixed(2)})`:"thin";
-  console.log(`  ${nm.padEnd(26)} n=${String(s.length).padStart(7)}  excess ${((mean(s.map(r=>r.ret))-base)*1e4).toFixed(2)}bp (t ${tst(s.map(r=>r.ret-base)).toFixed(2)})  | TRAIN ${ex(tr)} | TEST ${ex(te)}`);
+  const ex=(a:number[],bs:number)=>a.length>200?`${((mean(a)-bs)*1e4).toFixed(2)}bp (t ${tst(a.map(x=>x-bs)).toFixed(2)})`:"thin";
+  console.log(`  ${nm.padEnd(26)} n=${String(s.length).padStart(7)}  excess ${((mean(s.map(r=>r.ret))-base)*1e4).toFixed(2)}bp (t ${tst(s.map(r=>r.ret-base)).toFixed(2)})  | TRAIN ${ex(tr,baseTr)} | TEST ${ex(te,baseTe)}`);
 };
 console.log("  TURN OF MONTH (last day + first 3 days is the documented window):");
 rep("  turn-of-month window",r=>{const d=r.date.getUTCDate(); const dim=new Date(Date.UTC(r.date.getUTCFullYear(),r.date.getUTCMonth()+1,0)).getUTCDate(); return d<=3||d>=dim-1;});
