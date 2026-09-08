@@ -18253,7 +18253,7 @@ figure stands from D-796).
 (2026-09-08): spreads US 500 0.4pt, spot gold 0.3pt, EUR/USD 0.6pt (minimums); overnight funding = benchmark + 3%/yr
 admin on indices, tom-next + 1.5%/yr on FX and metals, charged once per 10pm UK crossing — a K24 hold crosses it once.
 With the benchmark ASSUMED at 4%/yr (the first real statement replaces it): US500 ≈ 0.5bp spread + 1.9bp funding ≈
-2.4bp per K24 against the model's 4bp (conservative); gold ≈ 0.07 + 1.5 ≈ 1.6bp against 4bp; EUR/USD ≈ 0.5 + 1.5 ≈
+2.4bp per K24 against the model's 4bp (conservative); gold ≈ 0.7 + 1.5 ≈ 2.2bp against 4bp (CORRECTED minutes after writing: the first draft said 0.07 + 1.5 ≈ 1.6 — an arithmetic slip; the sheet computed 0.68bp correctly and the commit message carried the wrong figure); EUR/USD ≈ 0.5 + 1.5 ≈
 2.0bp against the model's 2bp — **AT-FEE on FX, which is where all three of tonight's candidates were, and where D-764
 measured the rule flat.** Crypto perps are not open to UK retail; spot crypto costs are venue-specific and unmeasured.
 The sheet prints this reference on every run, labelled with its source, date and the assumed benchmark.
