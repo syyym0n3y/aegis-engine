@@ -6,7 +6,7 @@
     <string>/bin/bash</string><string>/Users/ona/Projects/aegis/infra/scripts/micro-hourly.sh</string>
   </array>
   <key>RunAtLoad</key><true/>
-  <key>StartInterval</key><integer>3600</integer>
+  <key>StartCalendarInterval</key><dict><key>Minute</key><integer>3</integer></dict>
   <key>StandardOutPath</key><string>/Users/ona/Projects/aegis/infra/data/micro-hourly.log</string>
   <key>StandardErrorPath</key><string>/Users/ona/Projects/aegis/infra/data/micro-hourly.err</string>
   <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/Users/ona/.deno/bin</string></dict>

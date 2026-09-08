@@ -18257,6 +18257,7 @@ With the benchmark ASSUMED at 4%/yr (the first real statement replaces it): US50
 2.0bp against the model's 2bp — **AT-FEE on FX, which is where all three of tonight's candidates were, and where D-764
 measured the rule flat.** Crypto perps are not open to UK retail; spot crypto costs are venue-specific and unmeasured.
 The sheet prints this reference on every run, labelled with its source, date and the assumed benchmark.
+**Timing fix (same hour):** the hourly job was on a 3,600s interval anchored at 06:36, so a sweep on the :00 close printed at :36 — after the "next open" a manual operator needs. `io.aegis.micro` now runs at minute 3 of every hour (StartCalendarInterval), inside the entry bar.
 GOLD: prop — items 6 and 7 verified where the vendor states them and marked LIKELY/OPEN where it does not; the position
 path's costs tied to a real venue instead of a guess.
 
