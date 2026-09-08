@@ -18239,6 +18239,47 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-825 (2026-09-08) THE FIRST SUPPORTED RESULT IN THE PROGRAMME'S HISTORY, AND IT IS THIN — the micro rule measured only where it can legally be placed passes by 0.09 of a t, at the cheaper of two cost models, with three-quarters of its gross return being drift
+
+The rung was prepped on 12 instruments and D-823f established that only 3 are both placeable by UK retail and carry a
+measured expectancy. Nobody had measured the rule on those 3 alone. Pre-registered first
+(`D-825-placeable-subset-psl-fade`), with the subset declared as fixed by an EXTERNAL criterion — FCA COBS 22.6 and the
+venue's minimum size — plus one prior registered exclusion (D-764's flat FX), so the selection is not a performance pick.
+| OOS (>= 2023-01-01), K24 fade, lag-1 | n | net | event t | gross | universe mean | excess |
+|---|---|---|---|---|---|---|
+| XAUUSD | 1,243 | 4.72bp | 1.27 | 6.92bp | 5.56bp | +1.36bp |
+| USA500IDXUSD | 1,310 | 5.64bp | 1.90 | 8.04bp | 5.75bp | +2.29bp |
+| USATECHIDXUSD | 1,340 | 8.22bp | 2.10 | 10.42bp | 8.11bp | +2.31bp |
+| **pooled, measured venue cost** | **3,893** | **6.24bp** | **3.04** | 8.50bp | 6.45bp | **+2.05bp** |
+| pooled, model 4bp cost | 3,893 | 4.50bp | **2.19** | — | — | — |
+**Verdict: SUPPORTED on the letter of the rule, and thin enough that the caveats are the finding.**
+- The pre-registered bar for this id is **2.95** (12 trials + 66 registrations, D-823's split ceiling). The event t of
+  3.04 clears it **by 0.09** — at the measured venue cost only. At the model's conservative 4bp the same test gives
+  2.19 and **fails**. A result that depends on which of two defensible cost models is used is not a strong result.
+- **~76% of the gross is drift.** Gross 8.50bp against an unconditional 24-hour return of 6.45bp on the same
+  instruments over the same period: the signal is the 2.05bp excess, not the 8.50bp. THE BENCHMARK LAW, doing its job.
+- **The D-767 survivor does not survive here.** The rvol-hi conditioner — the thing that carried the earlier headline
+  at +7.15bp t 3.15 — gives t 0.92 on this subset and is outright negative on gold (−1.36bp). What passes is the
+  UNCONDITIONED fade.
+- No single instrument clears t 2.0 on its own except US Tech (2.10).
+- **Holdability: 63 calendar days underwater** (2025-10-07 → 2025-12-09), deepest drawdown 1,981bp of cumulative
+  day-level return.
+**A mislabel I caught in my own output before reporting it.** I added a day-clustered statistic as an adversarial check,
+expecting it to be stricter, and it came back at 19.11bp/day and t 5.82 — three times the event mean and a HIGHER t. That
+is not a stricter statistic; equal-weighting days upweights days carrying few simultaneous sweeps, which is a SIZING
+choice. I had written the word "STRICTER" into the script and had to correct it. The event-level number stays the
+headline; the day-level one is reported beside it as what an equal-capital-per-day book would have done.
+**DESCRIPTIVE ONLY, post-hoc, not claimable (MECHANISM LAW):** net by the number of simultaneous sweeps that day is
+monotone — 1 sweep +54.17bp (93 days), 2 +41.23, 3 +38.31, 4 +14.97, 5 +25.73, **6+ −22.32 (235 days)**. A broad
+sweep day is a selloff that continues; an isolated one bounces. Acting on that needs its own pre-registration and
+held-out data; it is recorded here so a later session does not rediscover it and believe it.
+**What this admits, precisely.** The first MICRO fill on these three instruments, under the D-823 `micro_entry` gate, at
+≤ 0.10x notional, placed by hand. That is a decision to buy execution information with a small measured positive
+expectation — **not an edge worth size, and not a promotion**: no gate is cleared, no clock is short-circuited, and the
+mined ceiling (5.4556) is untouched and irrelevant to a pre-registered test by construction (D-823).
+GOLD: research — the rule measured where it can actually be placed, which is the number the first fill depends on.
+ACTS-ON: position — it is the go/no-go for the first micro fill, and it says GO SMALL, for the information, not for the edge.
+
 ## D-823f (2026-09-08) CAN THE OPERATOR ACTUALLY PLACE THIS? — the crypto half of the micro rule is illegal to sell to UK retail, the CFD minimum is ~100x the intended size, and the tradable-with-expectancy set is 3 of 12
 
 The rung was prepped on 12 instruments without anyone asking whether a UK retail client can place them. Two facts, read
