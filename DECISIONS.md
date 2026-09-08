@@ -18239,6 +18239,64 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-827 (2026-09-08) MULTI-TIMEFRAME TREND PROGRESSION AS THE GATE ON BREAKOUTS — NULL both ways on 110,746 events, and the in-sample audit that says why this was always the likely answer
+
+Operator instruction: build trend progression across timeframes, track highs and lows on every instrument, use the
+overall picture to farm breakouts — and audit which previously in-sample-successful principles are reusable. Both were
+done, and the audit is reported FIRST because it predicts the test's outcome.
+
+### A. THE IN-SAMPLE AUDIT — 1,059 factory specs, which gate kills what
+| gate | specs failing |
+|---|---|
+| deflation (mined ceiling) | **1,042 of 1,059 (98.4%)** |
+| **benchmark (beats its own universe)** | **920 (86.9%)** |
+| era (same sign in >= 3 of 4 eras) | 738 (69.7%) |
+| effect size vs cost | 169 |
+| breadth | 41 |
+| ruined (equity < 0) | 5 |
+The strongest in-sample specs and what they cost: `szbivar|smallstrev|h1` t **11.77**, +22.7%/yr, **−43.6% drawdown**,
+not a survivor; `frenchdec|mom10|Hilong|h1` t 4.82, **−96.0% drawdown**; `szbivar|smallmom|h1` t 4.64, **−93.0%**;
+`weekly|rev|all|k10` t 4.30, −51.8%. **The only in-sample survivors are BOOKS, not signals** — `book|p2|volmanaged`
+(t 7.09, −17.1% drawdown) and `book|p1|core` (t 6.21, −25.1%). Three principles fall out, and they are the answer to
+"which of those principles can we use":
+1. **A large in-sample t is not the scarce thing; surviving the BENCHMARK is.** 87% of specs die because their bucket
+   does not beat the universe they were drawn from. Anything built next must state its same-window excess from the
+   first run, not as an afterthought — which is exactly what D-826b retracted a result for, hours earlier today.
+2. **Single specs with the biggest t carry −43% to −96% drawdowns.** Every one of them is unholdable, so the t was
+   never the binding constraint.
+3. **Diversification and vol management, not signal selection, produced the only things that held in sample.** That is
+   a construction principle, not a signal principle, and it is the one thing on this list worth carrying forward.
+
+### B. THE TEST — trend progression, built and run
+`scripts/mtf-trend-progression.ts`. Higher timeframes (4h, 1d, 1w) are AGGREGATED from the same hourly bars, so there is
+no second data source and no cross-source alignment error. Each timeframe is classified from its last two CONFIRMED
+swings (HH+HL = up, LH+LL = down, else range) with the confirmation lag respected. ALIGNMENT = the sum of those three
+states, −3..+3, distribution non-degenerate (−3:2% −2:9% −1:21% 0:28% +1:24% +2:13% +3:3%). EVENT = a 1h close beyond a
+confirmed 1h swing level; entry lag-1 at the next open; hold 6 or 24 hours. 24 instruments, 110,746 events.
+| TEST (decides) | net | event t | gross | same-window uncond | excess | instruments + |
+|---|---|---|---|---|---|---|
+| K24 **ALIGNED** | −1.69bp | −0.35 | 4.11bp | 5.18bp | **−1.06bp** | 11/24 |
+| K24 NEUTRAL | −9.22bp | −4.38 | −3.40bp | 5.18bp | −8.58bp | 1/24 |
+| K24 OPPOSED | −12.20bp | −2.70 | −6.39bp | 5.18bp | −11.57bp | 10/24 |
+**The operator's claim is NULL at both horizons.** Aligned breakouts lose net, and even GROSS they return 4.11bp against
+an unconditional 5.18bp over the same window — a breakout with the whole higher-timeframe structure behind it does worse
+than simply being long for a day. Prior sign POSITIVE: **MISSED**.
+**The fade form is NULL too, and my own registered clause for it was contaminated.** I keyed it on the NET t of the
+with-the-break trade, which the COST-INFLATION COROLLARY says is bought by charging a flat fee to a losing book: at K6
+net t −3.25 but **GROSS t −0.88**; at K24 −2.70 versus −1.42. Priced properly — reversing the trade earns −gross and
+still pays the round trip — the fade nets **−3.65bp (K6) and +0.58bp (K24)** against a 5.81bp round trip. Sub-fee both
+ways. The flawed clause is recorded, not quietly re-specified.
+**What IS real, and is descriptive only:** at K24 alignment ORDERS the outcomes monotonically — ALIGNED −1.69 >
+NEUTRAL −9.22 > OPPOSED −12.20 — and does the same in TRAIN (+2.03 / −8.14 / −28.04), so it is not a test-window
+accident. **Multi-timeframe trend alignment genuinely predicts the DEGREE of breakout failure. It ranks losses; it does
+not produce a gain.** At K6 the ordering does not hold.
+**Scope stated rather than implied:** we hold no 1-minute bars, so the 1m leg of the request was not tested; the base is
+hourly and the higher frames are built from it. 16 of the 24 instruments are perps a UK retail client cannot place.
+GOLD: research — the MTF alignment gate that D-767 named as the next place an edge could appear is now measured and
+does not exist at these horizons; the in-sample audit names the three principles that survive.
+ACTS-ON: position — it closes breakout continuation as a candidate for the micro rung and leaves the rung with no
+admitted rule.
+
 ## D-826c (2026-09-08) THE DEFECT THAT KILLED D-825, HUNTED THROUGH THE REST OF THE CODEBASE — one more instance found, no recorded verdict moves, and the benchmark guard now says what its green does NOT cover
 
 D-826b's window mismatch was mine and an hour old, which makes it the cheapest possible moment to ask whether anything
