@@ -43,3 +43,34 @@ CONCEPT level the filenames declare. To test the exact logic, supply the `.mq5` 
 - 2 are stated as out of reach with the exact missing input named (LRL → L2; 5m SMT → no 5m index bars).
 - 1 is deliberately out of scope with the reason on record (Deriv synthetic index).
 - 5 binaries are recorded as opaque; the path to exact-logic testing is the `.mq5` source.
+
+## C. Trading literature named by the operator 2026-09-08 (D-831)
+
+Mark Douglas, *Trading in the Zone* and *The Disciplined Trader*; Jack Schwager, *Market Wizards*.
+
+**On obtaining them:** all three are in copyright. Free full-text copies circulating online are unauthorised, so this
+stack does not hold or quote them. Legitimate routes: UK public library apps (Libby / BorrowBox — all three are
+commonly stocked), Internet Archive controlled lending, or purchase at roughly £10–15. **Nothing below quotes or
+reproduces any of them.** Ideas are not copyrightable; what follows is each work's testable propositions restated in
+my own words, which is the only form this engine can use anyway — a proposition it cannot measure is not usable here.
+
+**Why this section differs from sections A and B.** Those were SIGNAL folklore (entry patterns), and the engine
+measured them one by one. Douglas and Schwager are overwhelmingly about PROCESS: how a person converts an edge into
+money, or fails to. That class has never been measured on this stack, and it is the class that matters most right now,
+because the micro rung is about to put fills in the operator's own hands.
+
+| # | proposition, restated | class | stack status |
+|---|---|---|---|
+| 1 | Any single trade's outcome is essentially random; an edge only appears over a series, so the sample a trader judges themselves on is far larger than the one they feel | process | **MEASURED and already load-bearing** — every gate here is a sample-size gate (paper→micro ≥30, micro→small ≥50); D-520 measured the same shape: 62% of months but **96.8% of rolling 3-year windows** positive |
+| 2 | **Inconsistent execution destroys an edge**; discipline is the mechanism that converts expectancy into money | process | **UNTESTED until D-831** — 15 mentions of discretion in the record, never a measurement. Tested below |
+| 3 | A trader will fool themselves by remembering selected trades; the felt track record is not the real one | process | **UNTESTED until D-831** — this is the measurable half of proposition 2, and the more dangerous one for us |
+| 4 | Expectancy, not win rate, is what pays | arithmetic | **MEASURED, repeatedly** — D-742's uploaded strategy claimed 76.5% win rate, measured 44.1%, expectancy −0.118R at ZERO cost (D-77x); D-154 "R:R is decisive"; D-520 win rate is an aggregation property, not a per-trade promise |
+| 5 | Risk a small fixed fraction per trade; survival first | sizing | **MEASURED and enforced** — `RISK_POLICY.md` (0.5%/trade, 2% daily kill), the D-744 holdability sizer (a 30% drawdown ceiling costs 59% of terminal wealth), D-767's finding that the leverage that HOLDS is 0.06–0.10× |
+| 6 | Cut losses; let winners run (asymmetric payoff) | signal-adjacent | **MEASURED and REFUTED on our data** — D-787: trailing stops and pyramiding destroy what fixed-K holding keeps; stop geometry became a grammar axis at D-305 and no geometry cleared |
+| 7 | Most of Schwager's interviewees were trend followers or global macro | selection | **NOT A CLAIM — it is survivorship**. The book interviews winners; the base rate of the strategies they used is absent by construction. Recorded as unmeasurable in principle from the source |
+| 8 | Trade your own system, not someone else's | process | **STRUCTURAL** — the whole pre-registration + immutable-clock apparatus is this proposition mechanised |
+
+**The honest summary of what this literature adds to this stack:** propositions 1, 4, 5, 6 and 8 are already measured
+or enforced here, and where the data disagreed (6) the data won. Proposition 7 is survivorship and cannot be tested
+from the source. Propositions **2 and 3 are the genuinely new ones**, and they are measured in D-831.
+

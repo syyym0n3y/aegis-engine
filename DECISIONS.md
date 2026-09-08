@@ -18239,6 +18239,55 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-831 (2026-09-08) THE DOUGLAS/SCHWAGER LITERATURE, ACCOUNTED FOR — five of eight propositions were already measured here, one is refuted by our data, and the two that were never tested are now numbers
+
+Operator asked for free copies of *Trading in the Zone*, *The Disciplined Trader* and *Market Wizards*. **All three are
+in copyright and I did not obtain unauthorised copies; nothing in this stack quotes or reproduces them.** Legitimate
+routes are recorded in `docs/UPLOAD_REGISTER.md` §C (UK library apps, Internet Archive lending, purchase ~£10–15). Ideas
+are not copyrightable, so the register restates each work's testable propositions in my own words — which is the only
+form this engine could use anyway, since a proposition it cannot measure is not usable here.
+
+**The accounting (full table in the register).** Of eight propositions: **five are already measured or enforced** —
+sample-size gates (D-520: 62% of months but 96.8% of rolling 3-year windows positive), expectancy over win rate
+(D-742's uploaded strategy claimed 76.5% and measured 44.1%), small fixed risk and survival (RISK_POLICY, the D-744
+holdability sizer, D-767's 0.06–0.10× holdable leverage), and trade-your-own-system (the whole pre-registration
+apparatus). **One is REFUTED on our data**: cut-losses-let-winners-run — D-787 measured trailing stops and pyramiding
+destroying what fixed-K holding keeps. **One is unmeasurable in principle**: "most Wizards were trend followers" is
+survivorship — the book interviews winners, and the base rate of everyone who used those strategies is absent by
+construction. **Two had never been tested here**, and they are the ones that matter with the micro rung about to put
+fills in the operator's hands.
+
+### What discretion actually does — measured, not asserted
+`scripts/discretion-cost.ts`, on the 3,893-event D-825 stream. **Control added after my first run overstated it:** that
+stream carries +6.24bp of drift (its excess over an unconditional hold is −1.35bp), so "most random subsets look
+profitable" would have measured the drift. The deciding series is the DEMEANED stream — exactly zero edge by
+construction — with the raw one beside it as the real-world case where drift and selection compound.
+| take rate | median trader | p95 | % who look PROFITABLE | % reaching t ≥ 2 |
+|---|---|---|---|---|
+| **zero-edge stream**, 10% of signals (389 trades) | **−1.34bp** | +8.36bp | 42.1% | **1.2%** |
+| zero-edge, 25% (973 trades) | −0.68bp | +3.51bp | 39.9% | 0.0% |
+| **raw stream (with drift)**, 10% | +4.90bp | +14.59bp | **79.9%** | 10.1% |
+| raw stream, 50% | +5.25bp | +8.72bp | **97.7%** | 41.0% |
+**Three findings, none of them advice:**
+1. **On a zero-edge, fat-tailed stream the MEDIAN trader loses while the mean is exactly zero.** Most people lose and a
+   few win large — that asymmetry is the shape of the outcome distribution, not a statement about skill.
+2. **One trader in twenty shows +8.36bp per trade on pure noise, and about one in eighty produces a "statistically
+   significant" record over ~389 trades.** That is what a convincing track record looks like when nothing is there.
+3. **The drift trap, which is the one that will bite here:** on the RAW stream 80–98% of zero-skill traders look
+   profitable. That is beta from a rising market being read as evidence about oneself, and it is exactly how a first
+   live run in these instruments would be misread.
+### And what selective memory does
+Remembering only the better half of one's own trades inflates the apparent record by **≈87bp per trade** on a zero-edge
+stream — against a 6bp scale for anything this programme has ever measured as an edge. **A 14x distortion, from memory
+alone, with no dishonesty required.** That is Douglas's proposition as a number.
+**Why this belongs in the engine rather than in a reading list:** it sets the prior for reading the operator's own first
+fills. The micro rung's review clause is 30 trades; these numbers say 30 trades cannot distinguish skill from noise in
+either direction, which is why the gate is what it is.
+GOLD: research — the operator's named literature accounted for proposition by proposition, with the two never-tested
+ones measured on our own event stream.
+ACTS-ON: position — it sets the reading prior for the first micro fills: at the sample sizes involved, a profitable
+start is not evidence, and the drift in these instruments makes a false positive the LIKELY outcome.
+
 ## D-830 (2026-09-08) THE INSTRUMENT WHERE RANGE IS PRICED DIRECTLY — our forecast beats the market's by 26% over 36 years and cannot be monetised, because implied is not a forecast
 
 Operator instruction: look at instruments where range is priced directly. That is the option surface, and its price is
