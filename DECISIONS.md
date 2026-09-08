@@ -18238,3 +18238,49 @@ about five months of SPX per-strike OI history fit the remaining credit. Not pul
 the operator's decision (the D-816 arming covered the equity tests only). If armed, the test is already registered in
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
+
+## D-821 (2026-09-08) "LOWEST-RISK ENTRY" AS SIZING, ON THE FULL HISTORY — inverse-vol sizing of the registered rules halves the drawdown and halves the Sharpe: these rules earn in high-vol regimes, and vol targeting sells the regime that pays
+
+Operator instruction: use all the history, now, to find the lowest-risk entries with the highest win rate. Sizing is
+where "lowest risk" actually lives (entry timing is measured everywhere: it does not exist above cost), and the one
+model that passed (HAR-RV, D-814/819) is the natural risk input. Pre-registered (`D-821-harrv-sizing-overlay`) and run
+on the registered constructions' own history, 2024-01→2026-09, 7,796 events: utc16/utc09-10/utc01 on the 17-panel,
+persist-real K24 on the crypto panel. Each event sized min(3, 0.20 / HAR forecast at the prior close, 730-day causal
+fit) versus constant size; control: the same scaling by trailing-22d realised vol.
+| construction | constant SR | HAR-scaled SR | trailing-vol SR | drawdown (units) const → HAR |
+|---|---|---|---|---|
+| utc16 abovePDH | 0.89 | **−0.04** | 0.15 | −81 → −55 |
+| utc09-10 belowPDL | 1.01 | 0.42 | 0.59 | −204 → −101 |
+| utc01 sweep-reclaim | 0.66 | 0.27 | 0.61 | −57 → −27 |
+| persist-real K24 | 1.53 | 1.45 | 1.35 | −110 → −38 |
+| **pooled** | **1.17** | **0.48** | 0.66 | −293 → −128 |
+Drawdown halves under either scaling; Sharpe falls on every construction, and HAR loses to the naive trailing
+control. The mechanism is plain: these rules pay more per unit when volatility is high, so inverse-vol sizing
+under-weights exactly the events that carry the return. Retracted; lineage row rejected; 8 trials. The daily HAR-RV
+forecast stays live as a range/horizon input (D-819); it is not a position-sizing overlay for these rules.
+GOLD: research — the "lowest-risk entry" framing measured as sizing on full history: it costs return here, stated with the mechanism.
+
+## D-820 (2026-09-08) LEVELS DEFINED BY POSITIONING — five months of per-strike SPX open interest bought on the last of the credit: the index does not pin; the last hour moves AWAY from the max-open-interest strike, and even that reverse is sub-fee
+
+Operator instruction: search where a different answer could exist, on history, now. Every level family tested so far was
+price-defined (prior highs and lows, value areas, quarter levels, all D-808). Positioning-defined levels — where the
+open interest sits — were untested for want of history. Bought: SPXW per-strike daily statistics from Databento OPRA,
+2026-03-15→09-04, **$26.06** metered against the free credit (cost-checked first; ~$3.40 remains), 39.7M rows, 5.7GB
+raw kept on disk, 2.32M open-interest rows → 120 daily expiries. Two defects of mine on the way: `ts_ref` renders empty
+for OI rows and my first pass keyed every day onto one date (the pull's own control went RED, the rebuild on `ts_event`
+fixed it — OI publishes ~10:30Z and is the prior close, i.e. the pre-session snapshot the pre-registration names); and
+the 25-point round-strike control was uninformative as built (the close is near a round strike by construction).
+Pre-registered (`D-820-spx-oi-levels`), SPX proxied by the USA500IDXUSD hourly CFD:
+| claim | result | verdict |
+|---|---|---|
+| **pinning** — close nearer max-OI than a random strike | ratio median 0.70 but mean **2.32** (t vs 1.0: +3.02): a heavy tail of days far from max-OI | not pinned on the registered statistic |
+| toward-pin trade 15:00 ET → close | **−5.12bp/day net, t −4.62, 29% wins, n 120** | **SIGN MISSED** — the last hour leaves the max-OI strike |
+| **gamma walls** — first touch of top-3 OI strikes reverses | 12 touches in 120 sessions; −5.2bp t −1.2 vs random +1.3bp | underpowered, NULL |
+The one strong number is the wrong sign, and the reverse of it (trade away from max-OI) is an unregistered flip that
+would earn +1.1bp gross and lose 2.9bp net of the 4bp round trip: **SUB-FEE either way.** So the positioning-defined
+level gives the same answer as the price-defined ones — nothing above cost — with one descriptive fact worth keeping:
+on 0DTE expiries the close is repelled from, not attracted to, the max-OI strike. Retracted; lineage row rejected; 4
+trials; holding registered with a probe (`databento_spxw_oi_days`).
+Credit accounting: $95.52 (D-816) + $26.06 (D-820) = **$121.58 of $125**. Extending this history is Theta at $40/month;
+D-821's sizing result and D-820's sign both say a longer history would refine the number, not change the sign.
+GOLD: gap — the positioning-level family is measured on real per-strike history; the free credit is spent to $3.40 with two nulls and one retraction to show for it, each pre-registered.
