@@ -1840,6 +1840,11 @@ operator facts.
   stop reading `select=bars` for the whole panel in scripts that only need a few symbols.
 
 ## Blocked on operator (free actions / config)
+- **Operator facts recorded 2026-09-08 (D-823c):** no deposits yet; no trading or investment account yet; base currency GBP,
+  trading currency USD (conversion needed); intended route = a prop firm chosen for payout speed; payouts to be held in a
+  non-UK account. Ledger: wrapper = NONE (recorded), deposits = none, currency leak = 130bp default (unmeasured; the
+  GBP→USD conversion cost is the number to measure on the first conversion). Consequence stated in D-823c: the empty-ledger
+  lever (deposits × compounding × wrapper) has no vehicle until an investment account exists; a prop payout is not one.
 - **D-823 — the two things only you can do this week:** (1) set the micro budget and place the first fill by hand from the
   hourly sheet (`data/micro-sheet.log` / cockpit), then record it:
   `ADD=1 SYM=<sym> SIDE=long QTY=<qty> INTENDED=<sheet price> FILL=<actual> FEES=<usd> deno run --allow-net --allow-env scripts/micro-ledger.ts`;

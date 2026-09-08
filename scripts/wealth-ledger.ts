@@ -14,7 +14,7 @@ const K = declareKnobs("wealth-ledger", [
   { name: "ADD_DEPOSIT", def: "", note: "amount to record as a deposit (positive number); empty = report only" },
   { name: "ADD_DATE", def: "", note: "YYYY-MM-DD for the deposit; empty = today UTC" },
   { name: "CCY", def: "GBP", note: "ledger currency (UK operator, D-731/D-758)" },
-  { name: "SET_WRAPPER", def: "", note: "isa | gia — records the tax-wrapper choice as a fact (D-758)" },
+  { name: "SET_WRAPPER", def: "", note: "isa | gia | none — records the tax-wrapper choice as a fact (D-758); none = no investment account exists yet (D-823c)" },
   { name: "SET_CCY_LEAK_BP", def: "", note: "measured currency-of-account leakage in bp/yr (D-731 default 130 if unset)" },
   { name: "PLAN_MONTHLY", def: "150", note: "the plan's monthly deposit (D-735 replay used 150/mo)" },
   { name: "ANCHOR_TERMINAL", def: "547847", note: "D-735 replay terminal on 150/mo over 34y — the annual return is DERIVED from this, not typed" },
@@ -88,7 +88,7 @@ if (K.ADD_DEPOSIT) {
   await put([{ series: DEP, d, v: (ex[0]?.v ?? 0) + v }]);
   console.log(`  recorded deposit ${CCY} ${v} on ${d}${ex.length ? ` (added to existing ${ex[0].v})` : ""}`);
 }
-if (K.SET_WRAPPER) { const isa = K.SET_WRAPPER.toLowerCase() === "isa" ? 1 : 0; await put([{ series: WRAP, d: today, v: isa }]); console.log(`  recorded wrapper = ${isa ? "ISA" : "GIA"} as of ${today}`); }
+if (K.SET_WRAPPER) { const w = K.SET_WRAPPER.toLowerCase(); if (!["isa", "gia", "none"].includes(w)) { console.error("!! SET_WRAPPER must be isa | gia | none"); Deno.exit(1); } const isa = w === "isa" ? 1 : w === "gia" ? 0 : -1; await put([{ series: WRAP, d: today, v: isa }]); console.log(`  recorded wrapper = ${isa === 1 ? "ISA" : isa === 0 ? "GIA" : "NONE (no investment account yet)"} as of ${today}`); }
 if (K.SET_CCY_LEAK_BP) { await put([{ series: LEAK, d: today, v: Number(K.SET_CCY_LEAK_BP) }]); console.log(`  recorded currency-of-account leakage = ${K.SET_CCY_LEAK_BP} bp/yr as of ${today}`); }
 
 // ---- report ----
@@ -112,7 +112,7 @@ if (!deps.length) {
   console.log(`  terminal at ${HY}y: plan ${termPlan.toFixed(0)} | at current pace ${termPace.toFixed(0)} | gap ${(termPace - termPlan).toFixed(0)} (linear in the deposit — D-746)`);
 }
 const isa = wrapRows[0]?.v; const leakBp = leakRows[0]?.v ?? 130;
-console.log(`  wrapper: ${isa === undefined ? "NOT RECORDED (set SET_WRAPPER=isa|gia) — D-758 values the ISA at 0.63–1.45%/yr alpha-equivalent, more than any promoted edge" : isa ? "ISA (D-758: worth 0.63–1.45%/yr, forecast-free)" : "GIA — the D-758 0.63–1.45%/yr is being LEFT ON THE TABLE"}`);
+console.log(`  wrapper: ${isa === undefined ? "NOT RECORDED (set SET_WRAPPER=isa|gia|none) — D-758 values the ISA at 0.63–1.45%/yr alpha-equivalent, more than any promoted edge" : isa === -1 ? "NONE — no investment account exists yet (recorded D-823c); the D-758 wrapper value (0.63–1.45%/yr) is NOT being captured and a prop payout is not a wrapper" : isa ? "ISA (D-758: worth 0.63–1.45%/yr, forecast-free)" : "GIA — the D-758 0.63–1.45%/yr is being LEFT ON THE TABLE"}`);
 console.log(`  currency-of-account leakage: ${leakRows.length ? `${leakBp} bp/yr recorded` : `${leakBp} bp/yr (D-731 default, NOT yet measured on the live account — set SET_CCY_LEAK_BP)`} — over ${HY}y at ${(CAGR * 100).toFixed(1)}% that is ~${((1 - Math.pow((1 + CAGR - leakBp / 1e4) / (1 + CAGR), HY)) * 100).toFixed(0)}% of terminal wealth`);
 // D-804: the clock count was a printed literal ("18") while the table held 17 — a number that is not measured is the class this
 // programme exists to kill. Read it live; print UNREADABLE rather than a guess if the table cannot be read.

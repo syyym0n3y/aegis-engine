@@ -18239,6 +18239,40 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-823c (2026-09-08) THE OPERATOR'S FACTS RECORDED — no deposits, no account, GBP base / USD trading, a prop firm chosen for payout speed, payouts to sit outside the UK; what that does to the levers
+
+Facts as given (2026-09-08): no deposits yet; no trading or investment account yet; trades in GBP and will need to
+convert to USD; the likely route is a prop firm "with the fastest payouts"; returns and withdrawals are to sit in an
+account outside the UK. Ledger: wrapper recorded as **NONE** (`wealth-ledger.ts` now accepts `none`, reported as "the
+D-758 wrapper value is not being captured"); deposits none; currency leak stays the 130bp default, unmeasured — the
+GBP→USD conversion cost on the first real conversion is the number that replaces it.
+**Consequences, stated rather than softened.** (1) The largest measured lever on the record — deposits × compounding ×
+wrapper (D-735/746/758) — has NO VEHICLE: a prop evaluation is a fee paid for a conditional claim on payouts, not an
+account that compounds, and its payouts are not a wrapper. That lever stays at zero until an investment account exists,
+whatever the prop route does. (2) "Fastest payouts" is the wrong selection criterion on this record: the futures props
+are −EV on every cell (D-796/797) and the only positive configuration is one FTMO-style CFD account trading utc16 alone
+at 0.5× (2026 day-t 0.51, wide error bars); payout speed is worth nothing on an account that never gets funded, and
+the evaluation rules (daily loss, static vs trailing drawdown, consistency, time limit) decide P(pass), not the payout
+schedule. The checklist in `docs/PROP_FIRM_PLAN.md` §2 stands: exact terms first, then the fee. (3) The micro rung has
+no venue either: micro fills need an account. The cheapest honest venue is a small retail account (index/FX CFDs and
+spot crypto are open to UK retail; perp futures are not), because a prop evaluation's daily-loss rule would kill a
+rule the record already calls regime-negative before it produced its 30 fills — paying a fee to be stopped out buys no
+information. Recommendation: retail micro first, prop after 30 real fills (D-823 §4 unchanged).
+**Vendor terms read from FTMO's own pages (2026-09-08), for the firm the clock is already written on:** reward claim on
+the 14th day or any day after the first trade on the account (the plan's "14 days" is confirmed; a custom profit-split day
+is described on one page and not the other — confirm in the dashboard); methods bank wire, Visa Direct / Mastercard Send
+(≤ $20k), Skrill (≤ $3k), crypto (BTC/ETH/LTC/USDC-ERC20/USDT-TRC20; ≥ $50); review 1–2 business days, then payment
+1–2 business days; split 80% on the 2-step evaluation rising to 90%, 90% on the 1-step. **NOT stated on those pages and
+NOT verified: the payout currency, and any residency or destination-country restriction.** Those two are exactly the
+operator's requirements (GBP→USD, non-UK destination), so they go on the checklist as items 6 and 7 and must be read
+from the firm's terms or support before any fee. Crypto payout (USDC/USDT) is the one method on the page that is
+currency- and country-agnostic by construction, and it is stated here as an observation, not a recommendation.
+**Not advice, and one factual note:** I am not a licensed adviser. Where money is held does not change who is taxed on
+it; a UK tax resident is taxed on worldwide income, and the record values the ISA precisely because it changes that
+arithmetic where a foreign account does not. Decisions on residency, wrappers and destinations are the operator's.
+GOLD: prop — the route's real prerequisites named (terms, payout currency, destination restrictions, a venue for micro
+fills) and the empty-ledger lever shown to have no vehicle yet.
+
 ## D-823b (2026-09-08) THE MICRO SHEET COULD NOT GO LIVE ON SEVEN OF TWELVE INSTRUMENTS — the FX/index/gold bars come from day-files that exist only after the day closes; fixed with a keyless intraday series under its own symbol names
 
 Found by running the new hourly job (`io.aegis.micro`) on its first interval: 7 instruments STALE every hour, because

@@ -35,6 +35,8 @@
 2. **Instrument list intersection.** Equity stream: which of the ~1,226 liquid-decile names are offered as stock CFDs (typically 100–500 large caps)? Re-run the D-785 cell on THAT list only before trusting the equity row. utc16 stream: which of the 10 crypto perps / 3 indices / 4 FX are offered, at what hours, with what weekend rules?
 3. **Costs as charged**: spread + commission per instrument class, **overnight swaps** on the 5-day equity hold (unmodelled — could remove several bp/trade), crypto weekend swaps.
 4. **Rules that void payouts**: news-trading windows, max lot/position, "gambling" clauses, copy-trading across firms (**not doing this — cross-firm hedging is ToS fraud**), account-count caps.
+6. **Payout currency and rails** (D-823c): the operator's base is GBP, trading is USD, payouts must land outside the UK. FTMO's pages state methods (wire, Visa Direct/Mastercard Send ≤ $20k, Skrill ≤ $3k, crypto USDC/USDT ≥ $50) and the 14-day reward claim, but NOT the payout currency — read it from the terms or support, and measure the GBP→USD conversion cost (it replaces the ledger's 130bp default).
+7. **Residency and destination restrictions** (D-823c): FTMO's payout pages state none; the firm's terms of service must be read for restricted countries on BOTH the trader's residency and the payout destination before a fee.
 5. **Sizing sanity**: at the 0.5× label the combo runs 0.75× book on both-stream days; confirm the daily-loss rule (5%) is not reachable by a single crypto gap at that exposure — if it is, drop utc16 to 0.25×.
 6. **The clock exists first** (§3), so the outcome cannot be narrated afterwards.
 
