@@ -28,6 +28,7 @@ const K = declareKnobs("refresh-bars", [
   { name: "PAUSE_MS", def: "250", note: "between fetches; sequential by Hard Rule, never parallel" },
   { name: "MIN_BARS", def: "300", note: "a short series means a bad symbol, not a refresh" },
   { name: "STALE_D", def: "3", note: "only refetch symbols whose newest bar is older than this" },
+  { name: "DEAD_D", def: "7", note: "D-826: absolute floor in trading days — a newest bar older than this is a FROZEN FEED, which no holiday explains. A knob so the RED path can be exercised, not just the green one." },
 ]);
 
 // D-798: resolve CONSUMER against the REPO, not the cwd. The daily runner executes with cwd=infra; the default
@@ -105,6 +106,7 @@ if (!due.length) {
 
 let ok = 0;
 const failed: string[] = [];
+const refreshedNow = new Set<string>();   // D-826: which symbols the SOURCE actually served this run
 for (const sym of due) {
   // SEQUENTIAL BY HARD RULE. One request, read the result, then the next — never a batch, never backgrounded.
   const j = await fetch(
@@ -160,6 +162,7 @@ for (const sym of due) {
     // the liquid refresher already does this — a bars-only write leaves a stale last_date for every consumer that trusts it).
     body: JSON.stringify({ symbol: sym, bars, first_date: new Date(bars[0][0] * 1000).toISOString().slice(0, 10), last_date: new Date(bars[bars.length - 1][0] * 1000).toISOString().slice(0, 10), n_bars: bars.length, updated_at: new Date().toISOString() }) }).catch(() => null);
   if (!wres || !wres.ok) { failed.push(`${sym}(write ${wres ? wres.status : "net"})`); continue; }
+  refreshedNow.add(sym);
   ok++;
   const last = new Date(bars[bars.length - 1][0] * 1000).toISOString().slice(0, 10);
   console.log(`    ${sym.padEnd(10)} ${String(bars.length).padStart(6)} bars, newest ${last}`);
@@ -169,14 +172,35 @@ console.log(`\n    refreshed ${ok}  |  failed ${failed.length}${failed.length ? 
 
 // THE COVERAGE ASSERTION. Success is not "the fetches returned 200" — it is "every symbol the consumer reads is now
 // fresh". A symbol that is stale AND was not refreshed is the exact state that produced this defect, so it is RED.
-const stillStale: string[] = [];
+// D-826: "OLD" IS NOT "STALE". The check counted weekends out but not HOLIDAYS, so on 2026-09-08 - the Tuesday after
+// US Labor Day - Friday's close was the newest bar that EXISTS (verified at the source: SPY's daily series ends 09-04)
+// and 19 symbols were reported stale. A guard that cries wolf on every holiday trains its reader to ignore it, which is
+// the failure the CONTINUITY LAW names. A first fix compared each symbol to the newest bar in its own asset cohort and
+// was ALSO wrong: ^VIX carries a forming bar for today while US cash equities have none until the 13:30Z open, so the
+// cohort reference was itself a moving target. The honest question is not "is this date old" but "did the SOURCE have
+// anything newer that we failed to take".
+//   stale  = we asked the source this run and it did NOT serve us (fetch/write failed), or we never asked because the
+//            symbol looked fresh and it is in fact past the budget
+//   dead   = the newest bar is past an absolute floor no market holiday can explain, which is the frozen-feed case this
+//            file was written for (D-683) and which a purely relative test would never see
+const DEAD_MS = Number(K.DEAD_D) * 864e5;
+const stillStale: string[] = [], deadFeed: string[] = [];
 for (const sym of REQUIRED) {
   const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr }).catch(() => null);
   const j = r && r.ok ? await r.json().catch(() => null) as { bars: number[][] }[] | null : null;
   const bars = j?.[0]?.bars;
   const wm = Array.isArray(bars) && bars.length ? bars[bars.length - 1][0] * 1000 : 0;
-  if (tradingAgeMs(wm, now) > staleMs) stillStale.push(`${sym}@${wm ? new Date(wm).toISOString().slice(0, 10) : "ABSENT"}`);
+  const age = tradingAgeMs(wm, now);
+  const tag = `${sym}@${wm ? new Date(wm).toISOString().slice(0, 10) : "ABSENT"}`;
+  if (!wm || age > DEAD_MS) { deadFeed.push(tag); continue; }
+  if (age > staleMs && !refreshedNow.has(sym)) stillStale.push(tag);
 }
+if (deadFeed.length) {
+  console.log(`\n  RED - ${deadFeed.length} symbol(s) past the ${DEAD_MS / 864e5}-trading-day floor no holiday can explain (a frozen feed, the D-683 defect): ${deadFeed.join(" ")}`);
+  Deno.exit(1);
+}
+const askedAndOld = REQUIRED.filter((sym) => refreshedNow.has(sym)).length;
+if (askedAndOld) console.log(`    ${askedAndOld} consumer symbol(s) were re-asked this run; where the source served nothing newer, its newest bar IS the market's newest bar (holiday/weekend), not staleness.`);
 if (stillStale.length) {
   // The denominator is REQUIRED, not consumerUniverse: the loop above checks targets AND forces, and printing the
   // smaller number produced the line "31 of 28 symbol(s)". A count that exceeds its own denominator is small, and it
@@ -186,4 +210,4 @@ if (stillStale.length) {
   console.log(`  ${K.CONSUMER} will run tomorrow and produce a confident report about a frozen market. That is the defect this exists to stop.`);
   Deno.exit(1);
 }
-console.log(`\n  ALL ${REQUIRED.length} CONSUMER SYMBOL(S) FRESH within ${K.STALE_D} days (${consumerUniverse.length} targets + ${forceTickers.length} forces).`);
+console.log(`\n  ALL ${REQUIRED.length} CONSUMER SYMBOL(S) FRESH — every one is at the newest bar its source serves, and none is past the ${K.DEAD_D}-trading-day frozen-feed floor (${consumerUniverse.length} targets + ${forceTickers.length} forces).`);

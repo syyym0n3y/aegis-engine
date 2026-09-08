@@ -27,6 +27,13 @@ const CRYPTO = new Set(["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]);
    to open), not a CFD: IG's FX CFD minimum is one mini contract = 10,000 base currency, ~100x the £100 a £1,000 budget
    allows per position. Spread bets and CFDs are different products with different treatment; that is the operator's to
    verify, not mine to advise on. */
+/* D-825 — MEASURED expectancy on the three instruments that can actually be placed here, OOS >= 2023, net of the
+   measured venue cost, from scripts/placeable-subset-test.ts. These replace the 12-instrument pooled figures for those
+   three, and they carry the finding that matters for a fill: the rvol-hi conditioner FAILS on this subset (pooled
+   t 0.92; gold outright negative at -1.36bp), so the UNCONDITIONED fade is the variant with the measured number. */
+const D825: Record<string, { net: number; t: number }> = {
+  XAUUSD: { net: 4.72, t: 1.27 }, USA500IDXUSD: { net: 5.64, t: 1.90 }, USATECHIDXUSD: { net: 8.22, t: 2.10 },
+};
 const UK_PLACEABLE: Record<string, string> = {
   BTCUSDT: "NO — FCA COBS 22.6 bans crypto derivatives for UK retail (spot is a different instrument)",
   ETHUSDT: "NO — FCA COBS 22.6", SOLUSDT: "NO — FCA COBS 22.6", BNBUSDT: "NO — FCA COBS 22.6", XRPUSDT: "NO — FCA COBS 22.6",
@@ -47,7 +54,9 @@ async function loadBars(sym: string): Promise<Bar[]> {
 const SRC = new Map<string, string>();
 const now = Math.floor(Date.now() / 1000);
 console.log(`==> MICRO SHEET ${new Date().toISOString().slice(0, 16)}Z — rule micro-psl-fade-k24 (D-763/764/767, admitted D-823). Fills are yours, by hand; this prints.`);
-console.log(`    model expectancy (per event, net of RT): rvol-hi K24 +7.15bp t 3.15 OOS (7/12 instruments); unconditioned +2.09bp t 2.09 (12-panel). REGIME PRIOR: 2025+ negative at every horizon (D-764); FX majors flat.`);
+console.log(`    expectancy WHERE IT CAN BE PLACED (D-825, OOS >= 2023, net of measured venue cost): XAUUSD 4.72bp t 1.27 | USA500 5.64bp t 1.90 | USATECH 8.22bp t 2.10 | pooled 6.24bp t 3.04 vs a pre-registered bar of 2.95.`);
+console.log(`    READ THE CAVEATS BEFORE SIZING: it FAILS at the conservative 4bp cost model (t 2.19); ~76% of the gross is drift these instruments deliver anyway (excess +2.05bp of 8.50bp); the rvol-hi conditioner FAILS on this subset (t 0.92); 63 days is the longest stretch underwater. This is information to buy, not an edge worth size.`);
+console.log(`    12-instrument pooled model, for context only: rvol-hi K24 +7.15bp t 3.15 (D-767); unconditioned +2.09bp t 2.09. REGIME PRIOR: 2025+ negative at every horizon (D-764); FX majors flat.`);
 console.log(budget > 0 ? `    budget $${budget.toLocaleString()} -> max notional per position $${(0.10 * budget).toFixed(0)} (0.10x, D-767 sizer); P(DD<=-50% of budget) 7-47% at that size - the budget must be losable.` : `    MICRO_BUDGET unset: sizing not printed (MICRO_BUDGET=<usd> to size at 0.10x per position).`);
 console.log(`    ${"instrument".padEnd(14)} ${"last bar (UTC)".padEnd(17)} ${"age".padStart(6)}  ${"PSL".padStart(11)}  ${"close".padStart(11)}  ${"rvol".padStart(5)}  state`);
 let candidates = 0, stale = 0, ok = 0;
@@ -65,7 +74,11 @@ for (const sym of Object.keys(RT)) {
   else if (sweep) {
     const cond = Number.isFinite(rvol) && rvol > 0 && rvol >= RVOL_HI; const fx = RT[sym] === 2;
     /* D-764: the four FX majors were FLAT in the OOS measurement (EUR +0.09bp, JPY -1.67bp); the edge lived in crypto/indices. Said on the line, not hidden. */
-    state = `CANDIDATE: LONG at next open, exit close +24 bars, RT ${RT[sym]}bp ${cond ? "- rvol-hi MET (+7.15bp model)" : (rvol > 0 ? "- unconditioned (+2.09bp model, weaker)" : "- rvol n/a on this feed (no volume): unconditioned")}${fx ? " - FX MAJOR: measured FLAT in D-764, expectancy ~0 here" : ""}${budget > 0 ? `, notional <= $${(0.10 * budget).toFixed(0)}` : ""}`;
+    const m = D825[sym];
+    const expect = m
+      ? `- MEASURED here (D-825): ${m.net.toFixed(2)}bp/event net, t ${m.t.toFixed(2)} OOS${cond ? " - and the rvol-hi conditioner does NOT help on this subset (pooled t 0.92), so this is the unconditioned number either way" : ""}`
+      : (cond ? "- rvol-hi MET (+7.15bp, 12-instrument pooled model)" : (rvol > 0 ? "- unconditioned (+2.09bp, 12-instrument pooled model)" : "- rvol n/a on this feed (no volume): unconditioned"));
+    state = `CANDIDATE: LONG at next open, exit close +24 bars, RT ${RT[sym]}bp ${expect}${fx ? " - FX MAJOR: measured FLAT in D-764, expectancy ~0 here" : ""}${budget > 0 ? `, notional <= $${(0.10 * budget).toFixed(0)}` : ""}`;
     candidates++; ok++;
   }
   else { state = "no setup"; ok++; }

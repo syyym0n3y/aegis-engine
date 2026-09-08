@@ -108,6 +108,43 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: "portfolio_t", value: tN, n: net.length,
       note: `residual-follow over ${net.length} stamp(s): net ${(mean(net) * 1e4).toFixed(2)}bp/stamp t ${tN.toFixed(2)} (gross ${(mean(gross) * 1e4).toFixed(2)}bp, gross t ${tG.toFixed(2)}; 10bp round trip charged per position-day). Gate selects <5 instruments on ${thin}/${days} stamps (KILL clause if a majority). Rule: promote if net > 0 and t >= 2.0 over >= 126 forward days; kill if negative over >= 126 days.` };
   },
+  // Rule (D-825): >=400 pooled forward events on the 3 placeable instruments, net > 0 at the measured venue cost with
+  // event t >= 2.0, >=2 of 3 positive at n>=50, and a positive excess over the unconditional 24h return.
+  "fwd-placeable-psl-fade-k24": async (started) => {
+    const M = "pooled_net_bp_venue_cost";
+    const VENUE: Record<string, number> = { XAUUSD: 2.2, USA500IDXUSD: 2.4, USATECHIDXUSD: 2.2 };
+    const startTs = Math.floor(Date.parse(started + "T00:00:00Z") / 1000), KK = 24;
+    const nets: number[] = [], grosses: number[] = [], unconds: number[] = [];
+    const perInst: Record<string, number[]> = {};
+    for (const sym of Object.keys(VENUE)) {
+      const rows = await q(`trd_fx_hourly?symbol=eq.${sym}&select=ts,o,h,l,c,vol&order=ts.asc`) as
+        { ts: number; o: number; h: number; l: number; c: number; vol: number }[];
+      if (!rows.length) continue;
+      const b: Bar[] = rows.filter((r) => r.h !== r.l).map((r) => ({ ts: r.ts, o: r.o, h: r.h, l: r.l, c: r.c, v: r.vol }));
+      const psl = priorSessionLevels(b); const rt = VENUE[sym] / 1e4; const per: number[] = [];
+      let firedAt: number | undefined;
+      for (let i = 1; i < b.length - KK - 1; i++) {
+        if (b[i].ts >= startTs) unconds.push(Math.log(b[i + 1 + KK].c / b[i + 1].o));
+        const lvl = psl[i]?.low; if (lvl === undefined) continue;
+        if (!(b[i - 1].c >= lvl && b[i].c < lvl) || firedAt === lvl) continue;
+        firedAt = lvl;
+        if (b[i].ts < startTs) continue;                      // forward window only
+        const g = Math.log(b[i + 1 + KK].c / b[i + 1].o);
+        grosses.push(g); nets.push(g - rt); per.push(g - rt);
+      }
+      perInst[sym] = per;
+    }
+    if (nets.length < 250) {
+      return { metric: M, value: null, n: nets.length,
+        note: `${nets.length} forward event(s) since ${started} across ${Object.keys(perInst).length} placeable instrument(s); the rule's first read is at 250 and its decision at 400 (~4-5 months at the historical ~3/day). not-yet-computable, NOT inconclusive.` };
+    }
+    const m = mean(nets), t = m / ((sd(nets) || 1e-9) / Math.sqrt(nets.length));
+    const pos = Object.values(perInst).filter((v) => v.length >= 50 && mean(v) > 0).length;
+    const tested = Object.values(perInst).filter((v) => v.length >= 50).length;
+    const excess = mean(grosses) - (unconds.length ? mean(unconds) : 0);
+    return { metric: M, value: m * 1e4, n: nets.length,
+      note: `forward net ${(m * 1e4).toFixed(2)}bp/event, event t ${t.toFixed(2)}, ${pos}/${tested} instrument(s) positive at n>=50, excess over the unconditional 24h return ${(excess * 1e4).toFixed(2)}bp (gross ${(mean(grosses) * 1e4).toFixed(2)}bp). Rule: promote at >=400 events with net>0, t>=2.0, >=2/3 positive and excess>0; kill at >=250 with net<=0 or t<=0.` };
+  },
   // Rule: >=250 forward trading days, realised Sharpe >= 0.60.
   "fwd-crypto-lit5": async (started) => {
     const rows = await q(`trd_crypto_forward?select=d&order=d.desc&limit=1`) as { d: string }[];

@@ -18239,6 +18239,32 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-826 (2026-09-08) "OLD" IS NOT "STALE" — my own daily-refresh change would have reported a false RED on every market holiday, and the first fix for it was wrong too
+
+D-822 set the attribution refresher to a 1-day staleness budget so `fwd-residual-follow` could accrue at the cadence its
+rule names. Verifying that directly (the daily cycle has not reached the line in 2.5 hours, so the loop has still not
+proven it) surfaced the cost: **today is the Tuesday after US Labor Day**, Friday's close is the newest US equity bar
+that EXISTS — confirmed at the source, SPY's daily series ends 2026-09-04 — and the check reported **19 of 32 consumer
+symbols stale**. The data was right and the alarm was wrong. THE CONTINUITY LAW names this exact failure: a budget that
+cries wolf trains everyone to ignore the alarm.
+**The first fix was also wrong, and that is the more useful half.** I made staleness relative to the newest bar in each
+symbol's own asset cohort (equity / fx / futures / crypto keep different sessions). It went RED on 20 instead of 19,
+because **^VIX carries a forming bar stamped today while US cash equities have none until the 13:30Z open** — the
+reference was itself a moving target. Comparing against a moving reference is not more correct than comparing against
+the calendar, only differently wrong.
+**What is actually being asked.** Not "is this date old" but "did the SOURCE have something newer that we failed to
+take". So: a symbol is STALE if the refresher asked the source this run and was not served (fetch or write failed), or
+it was never asked and is past the budget; and separately a symbol is a FROZEN FEED if its newest bar is past an
+absolute floor (`DEAD_D`, 7 trading days) that no holiday explains — which is the D-683 defect this file was written
+for, and which a purely relative test would never see. The floor is a knob precisely so its RED path can be exercised.
+Verified in three directions rather than one: STALE_D=1 on the post-holiday Tuesday is **GREEN** (40 re-asked, source
+served nothing newer, correctly not an alarm); **DEAD_D=1 REDs** on the frozen-feed path naming all 19 symbols; the
+runner's default STALE_D=3 is unchanged ("ALL FRESH, no fetches made").
+The wider point, since this is the second time today: a check that has only ever been made to pass is not a check. The
+first version passed its author's intent and would have fired on Thanksgiving, Christmas and every long weekend.
+GOLD: reliability — the daily attribution refresh made holiday-aware, its frozen-feed alarm made absolute and testable,
+and both directions exercised.
+
 ## D-825 (2026-09-08) THE FIRST SUPPORTED RESULT IN THE PROGRAMME'S HISTORY, AND IT IS THIN — the micro rule measured only where it can legally be placed passes by 0.09 of a t, at the cheaper of two cost models, with three-quarters of its gross return being drift
 
 The rung was prepped on 12 instruments and D-823f established that only 3 are both placeable by UK retail and carry a
