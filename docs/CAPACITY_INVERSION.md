@@ -35,10 +35,27 @@ bounded number, and no amount of it compounds into 10^7 on its own.
 
 ## The queue, in the order the evidence justifies
 
-1. **Answer the broker question** — the single unanswered fact gating G1 and G3, the two measured-real mechanisms.
-   Does a UK retail broker pass tender offers through, and give access to US SPAC commons, without fees that consume
-   the return? This is a question for two brokers, not for a backtest, and it decides whether ten weeks of measurement
-   has any placeable output at all. **It is the highest-value open item on the entire record.**
+1. **The broker question — PARTLY ANSWERED FROM PUBLISHED SOURCES, 2026-09-08 (D-839), and much narrower now.**
+   - **Pass-through exists and is self-service.** Interactive Brokers' own documentation states the Corporate Action
+     Manager lets a client "review information on upcoming mandatory and voluntary corporate actions relating to
+     positions held in the account, and submit elections to IB for voluntary offers." **No fee is stated for an on-time
+     election**; a late/after-deadline request carries a fee (AUD 100 quoted). Instructions are due ~5 days before
+     expiry. So "does a broker pass tender offers through" is answered: at IBKR, documented as yes.
+   - **Odd-lot priority explicitly covers BENEFICIAL owners, not just record holders.** The standard offer language
+     across SEC tender filings grants priority to "any person who owns **beneficially or of record** an aggregate of
+     fewer than 100 shares **and so certifies** in the appropriate place on the Letter of Transmittal." A street-name
+     holder therefore qualifies **by the terms of the offer itself** — which was the thing this record had been
+     treating as unknown.
+   - **Two operational constraints that came with it, and they bind.** The holder must tender **ALL** shares owned (no
+     tendering 99 of 150), and ownership is **aggregated across accounts** — the priority "is not available to partial
+     tenders or to beneficial or record holders of an aggregate of 100 or more shares, even if these holders have
+     separate accounts."
+   - **WHAT IS STILL GENUINELY OPEN, and it is now one precise question:** does the broker's election tool **transmit
+     the odd-lot certification** on the client's behalf? The entitlement exists; whether the plumbing carries it is not
+     in any published document I could find. That is a support-ticket question with a yes/no answer.
+   - **US SPAC commons (G3):** PRIIPs/KID blocks US-domiciled **ETFs** for UK retail, but PRIIPs governs *packaged*
+     products and ordinary shares are not packaged — so SPAC **commons** should be reachable while **units and
+     warrants** may not be. **NOT confirmed from a primary source**; recorded as likely, not established.
 2. **G7 — merger odd-lot and rounding provisions.** Same data path as D-837, and the per-event value is plausibly far
    larger because merger considerations are settled in cash at a stated price.
 3. **G6 — acquisition subsidies.** Not a market test. For an account of a few thousand pounds these are large,

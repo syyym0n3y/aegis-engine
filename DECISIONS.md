@@ -18239,6 +18239,41 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-839 (2026-09-08) THE HIGHEST-VALUE OPEN ITEM, NARROWED FROM PUBLISHED SOURCES — the entitlement exists for street-name holders; only the plumbing is unknown
+
+D-838 left the broker question at the head of the queue and called it a matter for two brokers rather than a backtest.
+Half of it turns out to be answerable from published documents, and the half that remains is now one precise question
+instead of a vague doubt.
+**Pass-through exists and is self-service.** Interactive Brokers' own documentation describes a Corporate Action
+Manager that lets a client review voluntary corporate actions on positions held and "submit elections to IB for
+voluntary offers". **No fee is stated for an on-time election**; a late or after-deadline request carries a fee (AUD
+100 quoted). Instructions are due roughly five days before expiry. So the first clause of the question — does a UK-
+accessible broker pass tender offers through to retail at all — is documented as YES.
+**And the entitlement itself covers street-name holders, which is what the record had been treating as unknown.** The
+standard language across SEC tender-offer filings grants odd-lot priority to *any person who owns **beneficially or of
+record** an aggregate of fewer than 100 shares and **so certifies** on the Letter of Transmittal*. A beneficial owner
+holding in street name therefore qualifies **by the terms of the offer**, not by a broker's favour.
+**Two operational constraints arrived with it, and both bind the mechanism's size:** the holder must tender **ALL**
+shares owned — no tendering 99 of 150 — and ownership is **aggregated across accounts**, since the priority "is not
+available to partial tenders or to beneficial or record holders of an aggregate of 100 or more shares, even if these
+holders have separate accounts". That forecloses the obvious scaling trick and is exactly why the mechanism stays
+capacity-inverted.
+**WHAT REMAINS OPEN IS NOW ONE QUESTION:** does the broker's election tool **transmit the odd-lot certification** on
+the client's behalf? The entitlement exists; whether the plumbing carries it appears in no published document I could
+find. That is a support ticket with a yes/no answer, and it is the last thing standing between D-834's best-measured
+mechanism and a real test.
+**On the second mechanism (G3, pre-deal SPAC trust):** PRIIPs/KID blocks US-domiciled **ETFs** for UK retail, but
+PRIIPs governs *packaged* products and ordinary shares are not packaged — so SPAC **commons** should be reachable while
+**units and warrants** may not be. **Not confirmed from a primary source**, so it is recorded as likely rather than
+established; asserting it would be exactly the INSTRUMENT LAW failure this programme has made four times.
+**Method note worth keeping:** I had recorded this as operator-only and unanswerable without them. Most of it was in
+published broker documentation and in the offer documents themselves. **"Only the operator can answer this" deserves
+the same scepticism as "this cannot be done" — both are claims about the world that can be checked**, and the global
+contract already says an asserted limitation is the more dangerous lie because it stops the work.
+GOLD: gap — the record's highest-value open item reduced from an unknown to a single yes/no support question, using
+sources that were public the whole time.
+ACTS-ON: ledger — it removes the main doubt over the two measured-real mechanisms, leaving one confirmable fact each.
+
 ## D-837/838 (2026-09-08) THE SEARCH SPACE DERIVED INSTEAD OF REMEMBERED — capacity inversion has eight generators, and the first one tested is NULL on size after my own defect flipped its verdict
 
 D-836 concluded that widening what we ask beats tightening how we test, and D-834 found the reason: the only mechanisms
