@@ -18239,6 +18239,41 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-832 (2026-09-08) HOW MANY TRADES WOULD IT TAKE TO KNOW? — the gates are written in trades, the effects are written in basis points, and nobody had ever put those two facts in the same sentence
+
+No new data and no new hypothesis: arithmetic on numbers already in the ledger. The live stream has a per-event standard
+deviation of **128bp** at 2.90 events/day across the three placeable instruments. The sample needed to separate an edge
+from zero at t = 2 is n = (2·sd/edge)².
+| claimed edge | trades needed | at the observed rate | taking 1 in 4 | what in the record is this size |
+|---|---|---|---|---|
+| 7.15bp | **1,285** | 1.2 yr | 4.8 yr | D-767 rvol-hi K24 — the best conditioned cell ever measured here |
+| 6.24bp | 1,687 | 1.6 yr | 6.4 yr | D-825 as first reported, before its benchmark was corrected |
+| 2.09bp | 15,032 | 14.2 yr | 56.7 yr | D-764 unconditioned fade, 12-instrument panel |
+| 1.35bp | 36,027 | 34.0 yr | 136 yr | D-826b — what D-825 actually was, sign flipped: a SHORTFALL |
+| 20.0bp | 165 | 57 d | 227 d | a hypothetical edge 3x anything ever measured here |
+**Read the ladder's own gate against that arithmetic:** at 30 trades the smallest edge distinguishable from zero is
+**46.8bp — seven times the best cell this programme has ever produced.** At 50 trades, 36.2bp. At 100, 25.6bp.
+**So the 30-fill review cannot detect any edge this stack is capable of finding, in either direction.** That is not a
+criticism of the gate; it is a correction to what the gate was being read as. Gate row `micro_review_is_operational`
+(D-832) records it: the fill counts are unchanged, and what those fills establish is **operational** — real fills
+against the sheet's intended price, measured slippage, real costs, the kill-switch honoured, and the operator's own
+behaviour under live money. Those are worth buying. **What they cannot establish is expectancy**, and D-831 measured
+what happens when someone reads them that way: on a zero-edge stream one trader in twenty shows +8.36bp per trade and
+selective memory inflates a record by ~87bp per trade.
+**The consequence for the programme, stated plainly.** An edge of the size this engine can actually measure — single
+basis points — is not verifiable by trading it at retail scale within a human timeframe. Expectancy has to be decided
+where the sample sizes exist, which is history and the forward clocks; live fills are for the plumbing and for the
+operator. Any future plan that proposes to "find out by trading it" now has a number attached to how long that takes.
+**Not tested, and named rather than left implicit:** the volatility TERM STRUCTURE (VIX vs VIX3M, 4,267 days from 2009)
+as the relative-value form where the premium largely hedges out — the open thread D-830 left. It is ~67 non-overlapping
+quarterly windows, which is thin for a decision, and its natural expression (the VIX-futures roll) is already measured
+as ruined (D-749). Recorded as the next candidate with its power limit stated in advance rather than discovered after.
+GOLD: law — the micro review clause reframed from an expectancy test it cannot perform into the operational test it
+can, with the detectability arithmetic that forces the change. (Written first as `GOLD: gate`, which the guard rejected
+because `gate` is not in its vocabulary — the same slip as D-823, caught the same way; the vocabulary is
+structural|clock|prop|gap|reliability|research|law and a gate-threshold change is a rule change.)
+ACTS-ON: gate — `micro_review_is_operational` (D-832) inserted; the fill counts stand, their interpretation does not.
+
 ## D-831 (2026-09-08) THE DOUGLAS/SCHWAGER LITERATURE, ACCOUNTED FOR — five of eight propositions were already measured here, one is refuted by our data, and the two that were never tested are now numbers
 
 Operator asked for free copies of *Trading in the Zone*, *The Disciplined Trader* and *Market Wizards*. **All three are
