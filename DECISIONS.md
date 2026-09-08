@@ -18399,3 +18399,57 @@ trials; holding registered with a probe (`databento_spxw_oi_days`).
 Credit accounting: $95.52 (D-816) + $26.06 (D-820) = **$121.58 of $125**. Extending this history is Theta at $40/month;
 D-821's sizing result and D-820's sign both say a longer history would refine the number, not change the sign.
 GOLD: gap — the positioning-level family is measured on real per-strike history; the free credit is spent to $3.40 with two nulls and one retraction to show for it, each pre-registered.
+
+## D-824 (2026-09-08) Drift made self-correcting — a `while true` daemon now execs its own new source, and the guard requires it
+
+**What was actually wrong today.** The board opened 28/29 with `daemon-drift` RED: `coverage-guard-up.sh`, pid 99880,
+started 0.3h before its newest source commit. Reading what that daemon was writing found THREE separate REDs, once per
+cycle, into `infra/data/` where nothing reads them:
+
+| RED in the daemon's log | truth |
+|---|---|
+| `registry-guard`: "only 0 guard script(s) found under scripts/ — the search is broken" | current source resolves against the repo (D-793); from `cwd=infra` it now finds all 30 and exits 0 |
+| `data/fpi-flags.json is MISSING — the ADR-ratio correction is a no-op` | the file is present (1.08 MB, 09-02); the loader is repo-relative (D-798) |
+| `micro-sheet` / `refresh-perp-panels`: `Module not found …/infra/scripts/…` | current source calls `../scripts/…`; the stale body called `scripts/…` |
+
+**Not one was a real finding.** All three were a daemon executing a body bash parsed before those fixes existed. Killing
+99880 (launchd KeepAlive respawned it) cleared every one — verified: `registry-guard` run with `cwd=infra` now prints
+"REGISTRY CONSISTENT — all 30 guards are invoked daily and visible to the operator", exit 0.
+
+**Why the existing guard was not enough, stated plainly.** `daemon-drift-guard.ts` DETECTS this and it did its job. But
+detection only helps on the cycle a human reads the board; in between, the daemon writes fresh logs full of already-fixed
+failures — which is the exact hour D-719/719b lost, and the exact shape of all three REDs above. This programme has now
+paid for the same defect three times (D-793: eight refresher blocks added over two days, none ever executed under
+launchd; D-798: the FPI path fixed in source while the running loop still reported the correction as a no-op; today).
+Three occurrences of one mechanism is the point at which the fix stops being a restart.
+
+**The correction.** `infra/scripts/_self-restart.sh`: a resident loop hashes its own file each cycle and `exec`s the
+current source when it changes. One `shasum` per cycle; `exec` preserves the pid, the launchd job and the
+StandardOut/StandardError paths, so nothing downstream observes a restart. An unreadable or mid-write file yields an
+empty hash and is skipped rather than exec'd, so a transient read failure cannot become a restart loop. Wired into the
+four resident shell loops — `coverage-guard-up.sh`, `daily-up.sh`, `positioning-up.sh`, `crypto-forward-up.sh` (the
+other three `*-up.sh` files `exec` a deno process or are one-shot; they re-read their source every run and cannot drift
+this way). **Verified on a live loop, not asserted:** a harness daemon printing `VERSION=ONE` was edited mid-run and
+printed `VERSION=TWO` on the next cycle **under the same pid 20533**, with the self-restart line between them.
+
+**Made mandatory, not documented.** `daemon-drift-guard.ts` RULE 2: every `infra/scripts/*.sh` containing a `while true`
+loop must source the helper and call `self_restart_if_changed` **inside** that loop — a call placed above the loop runs
+once and heals nothing, so position is checked, not just presence. Scanned on DISK rather than in `ps` on purpose: the
+daemon that is merely stopped today is the one started tomorrow that then runs a parse-once body for three weeks. A
+positive control (D-641) reds if the scan finds zero looping daemons, so the rule cannot pass vacuously; it finds four.
+Self-tested in four directions (compliant loop, loop with no call, call misplaced above the loop, one-shot with no loop)
+and exit-code-checked on a REAL daemon file: removing the call from `daily-up.sh` exits 1 with the file named, restoring
+it exits 0.
+
+**Cost of the diagnosis, honestly.** The three REDs were investigated as if they were real before the drifted daemon was
+identified as their common cause — the same wasted motion D-719b recorded. That is what this entry removes.
+
+**What did NOT move.** None of the four exit conditions (D-823). No position: the MICRO sheet is live and printed one
+candidate this cycle, but fills are the operator's by hand. No ledger row: `wealth-ledger.ts` still needs the three
+operator facts (deposit, wrapper, measured FX leak) and `micro-ledger.ts` still needs a real fill. No clock verdict: the
+forward scorer ran and **0 of 18 clocks currently produce a number**, each stating why not — the nearest are
+`fwd-psl-fade` (33 of ~1000 pooled events) and `fwd-utc16-abovePDH-long-K6-panel17` (10 of 30). No gate row. This entry
+is reliability, not research, and it is not an exit.
+
+GOLD: reliability — a defect class that has cost this programme three separate diagnoses is converted from detected to
+self-correcting, and the conversion is enforced on disk for every daemon written from here.

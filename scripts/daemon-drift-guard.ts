@@ -53,6 +53,22 @@ function classify(cmd: string): { kind: "deno" | "shell"; script: string } | nul
   return null;
 }
 
+// D-824: DETECTION IS NOT CORRECTION. Everything above catches a drifted daemon only on the cycle a human reads the
+// board; between the commit and that read the daemon keeps writing fresh logs full of already-fixed failures. On
+// 2026-09-08 `coverage-guard-up.sh`, up 1.2h on pre-commit source, emitted THREE REDs per cycle (registry-guard
+// "only 0 guard script(s) found", the FPI/ADR no-op, a broken micro-sheet path) and every one vanished on restart —
+// not one was a real finding. The durable form is `infra/scripts/_self-restart.sh`: the loop hashes its own file each
+// cycle and execs the current source. This rule makes that mandatory, so a NEW resident loop that forgets it is RED
+// rather than silently parse-once. Pure so it is self-tested both ways (the D-720b lesson: an unverified extension
+// is inert) — and the call must sit INSIDE the loop, since one placed above it runs exactly once and heals nothing.
+function selfHealing(src: string): boolean {
+  const loop = src.indexOf("while true; do");
+  if (loop < 0) return true;                       // not a resident loop — a one-shot re-reads its source every run
+  if (!src.includes("_self-restart.sh")) return false;
+  const call = src.search(/^\s*self_restart_if_changed\b/m);
+  return call > loop;
+}
+
 if ((Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1") {
   const cases: [number, number, boolean][] = [
     [1000, 2000, true],    // started well before the commit -> drift
@@ -80,7 +96,23 @@ if ((Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1") {
   const hasDep = clo.some((f) => f.includes("data-version.ts"));
   if (!hasDep) { ok = false; console.error(`  SELFTEST FAIL: closure did not resolve the data-version.ts dependency (got ${clo.join(", ")})`); }
   else console.log(`  closure walk resolved ${clo.length} files incl. the cross-directory dependency`);
-  console.log(ok ? "  SELFTEST OK — drift comparison correct in all 4 directions, closure walk resolves dependencies" : "  SELFTEST FAILED");
+  // D-824: the self-healing rule, exercised in all four directions on synthetic daemons.
+  const SRC_OK = 'SELF=x; . "$(dirname "$SELF")/_self-restart.sh"\nwhile true; do\n  self_restart_if_changed\n  work\ndone\n';
+  const SRC_NOCALL = 'SELF=x; . "$(dirname "$SELF")/_self-restart.sh"\nwhile true; do\n  work\ndone\n';
+  const SRC_BEFORE = 'SELF=x; . "$(dirname "$SELF")/_self-restart.sh"\nself_restart_if_changed\nwhile true; do\n  work\ndone\n';
+  const SRC_ONESHOT = 'set -e\nexec deno run x.ts\n';
+  const heal: [string, string, boolean][] = [
+    ["compliant loop", SRC_OK, true],
+    ["loop that never calls it", SRC_NOCALL, false],
+    ["call placed ABOVE the loop (runs once, heals nothing)", SRC_BEFORE, false],
+    ["one-shot with no loop", SRC_ONESHOT, true],
+  ];
+  for (const [label, src, want] of heal) {
+    const got = selfHealing(src);
+    if (got !== want) { ok = false; console.error(`  SELFTEST FAIL: selfHealing(${label}) = ${got}, want ${want}`); }
+  }
+  if (ok) console.log(`  self-healing rule accepts a compliant loop and rejects both the missing call and the misplaced one`);
+  console.log(ok ? "  SELFTEST OK — drift comparison correct in all 4 directions, closure walk resolves dependencies, self-healing rule correct in all 4" : "  SELFTEST FAILED");
   Deno.exit(ok ? 0 : 2);
 }
 
@@ -149,7 +181,26 @@ for (const line of ps.split("\n")) {
   }
 }
 
-console.log(`==> DAEMON DRIFT GUARD — ${checked.length} running deno daemon(s) checked against their source`);
+// RULE 2 (D-824) — every resident shell loop ON DISK must be self-healing, whether or not it is running right now.
+// Checked against the repo rather than against `ps` on purpose: a daemon that is merely stopped today is exactly the
+// one that gets started tomorrow and runs a parse-once body for the next three weeks.
+const notHealing: string[] = [];
+let shellLoops = 0;
+for await (const e of Deno.readDir(`${REPO}infra/scripts`)) {
+  if (!e.isFile || !e.name.endsWith(".sh") || e.name.startsWith("_")) continue;
+  let src = "";
+  try { src = await Deno.readTextFile(`${REPO}infra/scripts/${e.name}`); } catch { continue; }
+  if (!src.includes("while true; do")) continue;
+  shellLoops++;
+  if (!selfHealing(src)) {
+    notHealing.push(`infra/scripts/${e.name}: a \`while true\` loop that never calls self_restart_if_changed — bash parsed this body once, so every later commit to it is dead code until someone restarts the process by hand. Source infra/scripts/_self-restart.sh and call it as the first statement in the loop.`);
+  }
+}
+// POSITIVE CONTROL (D-641): finding zero looping daemons would make this rule vacuously green. There are four.
+if (shellLoops < 1) { console.error(`!! found 0 resident shell loops under infra/scripts — the scan is broken, not the repo. RED.`); Deno.exit(1); }
+for (const n of notHealing) drifts.push(n);
+
+console.log(`==> DAEMON DRIFT GUARD — ${checked.length} running daemon(s) checked against their source; ${shellLoops} resident shell loop(s) checked for self-healing`);
 for (const c of checked) console.log(`    ${c}`);
 if (drifts.length) {
   console.log(`\n  ${drifts.length} DRIFTED DAEMON(S) — RED:`);

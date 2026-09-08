@@ -1813,6 +1813,20 @@ Wired into the daily board. Standing gaps it prints:
   gamma (all-NULL table), earnings revisions (licensed), delisted price history (27.3% of equity universe — the big
   hole), borrow cost (paid). Crypto options ARE held (Deribit dvol/skew/IV); gold options are not.
 
+## 2026-09-08 — daemon drift made SELF-CORRECTING (D-824)
+Board opened 28/29: `coverage-guard-up.sh` drifted (pid 99880, started before its own newest commit). It was writing
+THREE REDs per cycle into `infra/data/` — registry-guard "only 0 guard script(s) found", the FPI/ADR no-op, and a
+`Module not found` on micro-sheet/perp-refresh. **None was real**; all three were a bash body parsed before those fixes
+existed, and all three cleared on the restart. Third occurrence of the same mechanism (D-793, D-798, today), so the fix
+is now structural: `infra/scripts/_self-restart.sh` — a resident loop hashes its own file each cycle and `exec`s the
+current source (pid, launchd job and log paths preserved; verified on a live harness loop, same pid, ONE -> TWO). Wired
+into the four `while true` daemons; `daemon-drift-guard.ts` RULE 2 reds any `infra/scripts/*.sh` loop that omits it or
+places the call above the loop, with a positive control against a vacuous green, self-tested 4 ways and exit-code-checked
+on a real daemon file. **The three long-running daemons (daily 462h, crypto-forward 446h, positioning 415h) were
+restarted to pick up the self-healing body.** Nothing of the four D-823 exit conditions moved: 0 of 18 clocks produce a
+number, the MICRO sheet printed a candidate but fills are the operator's, the wealth ledger still needs its three
+operator facts.
+
 ## Ops queue (mine, not blocked — needs a quiet moment)
 - **crypto-funding + earnings feeds trip continuity ~daily by a hair** (funding 4.6d vs 4.5d budget; earnings 13.6d
   vs 13.5d). Root cause: `ingest-funding-full.ts` RE-FETCHES all 510 contracts every run, too slow to finish inside
