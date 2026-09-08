@@ -18239,6 +18239,38 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-840 (2026-09-08) THE FEE WAS THE ENTIRE SOURCE OF LOSSES — re-measuring the best mechanism on the record with the fee D-839 documented, and the honest ceiling that survives it
+
+D-839 established from IBKR's own documentation that **no fee is stated for an on-time voluntary election** (the AUD
+100 charge is for late requests). D-751 had assumed **$25 per tender** as a pessimistic default. That is an input to
+the load-bearing measurement, so it was re-measured across $0 / $25 / $50 rather than argued about.
+| tender fee | median profit per event | events losing money |
+|---|---|---|
+| **$0 (documented for on-time elections)** | **$257.44** | **0 of 68** |
+| $25 (D-751's pessimistic default) | $232.44 | 11 of 68 |
+| $50 | $207.44 | 13 of 68 |
+**The fee was responsible for every single losing event.** On the 68-event tradeable subset — those where the tender
+price exceeded the post-filing close, a condition knowable at entry — a zero on-time fee leaves **no losers at all**.
+**The modern-era figures that should be quoted, not the pooled ones** (2020+, n=62, after the panel's clean-data
+start): 31 of 62 offers priced above market, median premium −0.33%, and on the above-market subset **$229.55 per event
+at 5.0 events/yr = ~$2,113/yr** for one account taking every one. Capital: ~$2,856 per position, at most 4 concurrent,
+**~$15,417 at peak** — about **13.7%/yr on capital employed**, which is the D-834 figure confirmed rather than revised.
+**Three things this does NOT become, stated because a favourable correction is exactly when overclaiming starts.**
+(1) **It still does not scale by one dollar.** 99 shares × ~5 events/yr is the entire opportunity; tendering 100 or
+more forfeits the priority and puts you into proration with the institutions. A second account is a second $2,113 and
+a separate legal person, not leverage. (2) **The median offer is priced AT the market** (−0.33%), so this is a
+selection rule applied to a coin flip, not a premium the mechanism pays by itself — half the offers are worth taking
+and the skill is entirely in the entry condition. (3) **Offer-termination language was never parsed**, so the measured
+downside (6 of 68 where the stock fell more than the premium) is a LOWER bound on the real risk.
+**And the constraint that matters most for this operator:** at ~$2,856 per position, an account of a few thousand
+pounds holds one position at a time, which is one or two events a year, not five — so the honest expectation scales
+down to a few hundred pounds a year until the capital exists. The percentage is good; the absolute is small; the
+ceiling is hard.
+GOLD: gap — the record's best-measured mechanism re-measured against a documented fee rather than a pessimistic
+guess, with the losses it removes and the ceiling it does not.
+ACTS-ON: ledger — it fixes the expected yield of the mechanism the ledger would fund first, and states what it becomes
+at the capital that actually exists.
+
 ## D-839 (2026-09-08) THE HIGHEST-VALUE OPEN ITEM, NARROWED FROM PUBLISHED SOURCES — the entitlement exists for street-name holders; only the plumbing is unknown
 
 D-838 left the broker question at the head of the queue and called it a matter for two brokers rather than a backtest.
