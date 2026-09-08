@@ -18239,6 +18239,36 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-834 (2026-09-08) THE MECHANISMS THIS RECORD MEASURED AS REAL, ASSEMBLED — each was dismissed for being small, and the account is small
+
+`docs/SMALL_CAPITAL_MECHANISMS.md`. No new measurement: every number cites the entry that produced it. What is new is
+that they are in one place, and that they are read against **this** account rather than a large one.
+**The category that survived.** Of everything on this record, the mechanisms measured REAL and not competed away share
+one property: they pay for a STRUCTURAL reason rather than for being right about direction.
+- **Odd-lot tender priority (D-751):** ~$2,000/yr on ~$15,000 of peak tied-up capital — **~13%/yr on capital
+  employed**. 410 of 617 offers grant the priority, and the benefit caps absolutely at 99 shares, so no institution can
+  scale into it. It is **capacity-INVERTED**: it exists because it is too small to be worth competing away.
+- **Pre-deal SPAC trust (D-760):** ~3%/yr over bills per position, **98% of positions positive**, no exit worse than
+  −10%, with total capacity of a few hundred thousand dollars **across the whole market** — below an institutional
+  minimum ticket.
+- **The wrapper (D-758):** 0.6–1.5%/yr with certainty, legislated, larger than anything this programme has measured as
+  a forecasting edge.
+**Why this was missed rather than hidden.** Each was measured, written down, and dismissed with the word "negligible"
+— a judgement made against a large account. D-751's own verdict says "REAL, RETAIL-ONLY, FINANCIALLY NEGLIGIBLE", and
+D-679 already recorded the general form: *the research has been aimed at a capital regime the account is not in.*
+The engine hunted forecasting edges for 2.9M trials and found none; the things it found real, it found while looking
+elsewhere, and then filed under too-small.
+**What it does NOT say, stated as plainly as the rest.** These do not add up to a living: at the capital they require,
+section 1 is low thousands per year at best. And both viable mechanisms hinge on an unanswered question — whether a UK
+retail brokerage passes tender offers through and gives access to US SPAC commons without fees that consume the return.
+**That question is the one action this justifies**, and it is a question about a brokerage account, not about markets.
+Until it is answered these are research-space findings exactly like every other one here, and THE INSTRUMENT LAW's four
+consecutive failures were all precisely this gap — assuming a conversion that had never been measured.
+GOLD: gap — the mechanisms measured real over ten weeks assembled against the account that actually exists, with the
+single broker question that decides them named instead of assumed.
+ACTS-ON: ledger — it identifies the two mechanisms that could put a return on a small account, and the one check that
+must precede either.
+
 ## D-833 (2026-09-08) TODAY'S VERDICTS MADE SELF-CHECKING — and one of the three picks was watching the wrong number
 
 Six verdicts landed today (D-825 retracted; D-827, D-829, D-830 killed). A verdict trusted once and never re-read is
