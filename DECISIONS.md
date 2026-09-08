@@ -18239,6 +18239,51 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-830 (2026-09-08) THE INSTRUMENT WHERE RANGE IS PRICED DIRECTLY — our forecast beats the market's by 26% over 36 years and cannot be monetised, because implied is not a forecast
+
+Operator instruction: look at instruments where range is priced directly. That is the option surface, and its price is
+implied volatility. We hold **9,240 VIX closes since 1990-01-02** against the S&P since 1970 — the deepest series in the
+programme. Pre-registered before any return was read, decided on **432 NON-OVERLAPPING** 21-day windows.
+
+**The skill is real.** Mean absolute error against subsequent realised volatility over 36 years: **HAR 4.43 vol points,
+VIX 5.97** — our forecast is 26% closer than the market's price. D-814's confirmation reappearing on the deepest data
+we own.
+
+**And it is worthless in this instrument, for a reason worth stating precisely: VIX is not a forecast.** The
+unconditional (realised − implied) is **−4.02 vol points** — implied exceeds realised by four points on average because
+it is a price with an insurance premium in it. VIX being the worse *forecast* is by design, not by error.
+
+**The decisive number is one I did not anticipate: our forecast exceeds VIX in 14 of 432 windows — 3%.** The long-volatility
+side, the one with bounded loss, barely exists. The market essentially never prices range below what we forecast.
+
+| | result |
+|---|---|
+| slope of (realised − implied) on (HAR − implied) | 0.134, **non-overlapping t 1.57** (rule needed 2.5) |
+| the same regression on overlapping daily data | **t 14.99 — a ten-fold inflation**, shown only to name the D-416 trap |
+| VIX's own z-score as competing predictor | t 0.87 |
+| quintiles of the spread | −6.06 / −4.04 / −3.79 / −2.34 / −3.90 — **not monotone** |
+| decade slopes | +0.376 / +0.082 / +0.332 / **−0.276** (sign fails in the current decade) |
+| short side, 418 windows | excess over the premium **+0.01 vol points, t 0.04**, 17% positive |
+
+**On the short side the spread carries no timing information at all.** Selling volatility when our forecast sits far
+below VIX is no better than selling it always — and selling it always is the trade D-404 measured losing 83% in a
+single day. The money in this instrument is the premium; our forecast adds nothing to harvesting it.
+
+**What this closes, and why it is worth more than another null.** Range predictability is confirmed on both asset
+classes: on crypto DVOL beat our forecast and conditional straddle selling was null (D-822); on equities our forecast
+beats the market's price and still cannot be monetised, because the price carries a premium our forecast almost never
+exceeds. **The one thing this programme can predict has now resisted conversion into a return in the instrument where
+that thing is priced directly.** That is a reason, not a shrug — and it says the remaining question is not "can we
+forecast range" (yes) or "is it priced" (yes, with a premium) but whether any accessible instrument pays for the
+FORECAST rather than for the PREMIUM.
+**RESEARCH SPACE, stated as loudly as the result:** VIX is an index, not a security. No tradable return is claimed and
+no conversion to VIX futures, SPX options or a UK spread bet is assumed — the four consecutive failures of exactly that
+assumption are D-575.
+GOLD: research — the confirmed forecast tested against the market's own price of the same quantity, on the deepest
+series held, with the reason it cannot be monetised measured rather than guessed.
+ACTS-ON: gate — it closes the range-to-return conversion route on both asset classes, which is the route the micro_entry
+gate would otherwise have been asked to admit next.
+
 ## D-828/829 (2026-09-08) THE DAILY BEHAVIOUR ATLAS — the first description of what these instruments actually DO, and the test it implied, which is NULL and refutes my own inference
 
 Operator instruction: look beyond what I think I know; a lot happens daily, understand it and find what can be exploited.
