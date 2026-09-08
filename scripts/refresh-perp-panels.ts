@@ -12,6 +12,7 @@
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 const K = declareKnobs("refresh-perp-panels", [
   { name: "PANELS", def: "1dSF:1d,1hSF:1h,1h:1h", note: "tf:interval pairs" }, { name: "PAUSE_MS", def: "120" },
+  { name: "SYMBOLS", def: "", note: "D-823e: comma list to refresh ONLY those symbols (empty = the whole panel, the runner default). The hourly micro job needs 5 of 25; refreshing 25 every hour piles avoidable load on a DB the daily cycle is already using." },
   { name: "MAX_PAGES", def: "40", note: "1500 bars per page; 40 pages covers ~2.5 months of hourly or ~160 years of daily" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -24,8 +25,15 @@ const trading = new Set(info.symbols.filter((s) => s.status === "TRADING").map((
 const SEC: Record<string, number> = { "1d": 86400, "1h": 3600 }; let red = false; const nowS = Math.floor(Date.now() / 1000);
 for (const pair of K.PANELS.split(",")) {
   const [tf, interval] = pair.split(":"); const step = SEC[interval];
-  const meta = await q(`trd_bars_intraday?tf=eq.${tf}&select=symbol,last_ts,n_bars&order=symbol`) as { symbol: string; last_ts: number | null; n_bars: number }[];
+  let meta = await q(`trd_bars_intraday?tf=eq.${tf}&select=symbol,last_ts,n_bars&order=symbol`) as { symbol: string; last_ts: number | null; n_bars: number }[];
   assertNonEmpty(`${tf} symbols`, meta, 10);
+  /* D-823e: an explicit subset narrows the work; a filter matching NOTHING is a mistake, not an empty panel (PRECONDITION LAW). */
+  if (K.SYMBOLS) {
+    const want = new Set(K.SYMBOLS.split(",").map((x) => x.trim()).filter(Boolean));
+    const before = meta.length; meta = meta.filter((m) => want.has(m.symbol));
+    if (!meta.length) { console.error(`  RED — SYMBOLS matched 0 of ${before} rows in ${tf}: UNTESTED, not an empty panel`); Deno.exit(1); }
+    console.log(`    ${tf}: SYMBOLS filter -> ${meta.length} of ${before}`);
+  }
   let fresh = 0, refreshed = 0, skippedDelisted = 0, failed: string[] = [], tradingN = 0;
   for (const m of meta) {
     const isTrading = trading.has(m.symbol); if (isTrading) tradingN++;

@@ -18239,6 +18239,36 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-823e (2026-09-08) THE HOURLY JOB I ADDED WAS COMPETING WITH THE DAILY ONE FOR THE SAME NODE — scoped, made load-aware, and its health check given the positive control it was missing
+
+Found by checking the background tasks rather than by a guard: a one-row query took **33 seconds** while the daily
+cycle's liquid-panel step (1,230 symbols) and my new hourly micro job ran together, with docker at **2.77GB of 3.9GB** —
+inside reach of the OOM that killed a Postgres backend in D-812. Neither job was wrong; the pair was. Three fixes, each
+verified:
+1. **Scope.** `refresh-perp-panels.ts` gains an optional `SYMBOLS` knob (empty = the whole panel, so the runner is
+   unchanged); the hourly job passes the **5 perps the sheet trades instead of all 25**. A filter matching nothing exits
+   RED as UNTESTED rather than refreshing an empty panel (PRECONDITION LAW) — verified: `SYMBOLS=NOSUCHPAIR` prints
+   "matched 0 of 25 rows".
+2. **Waste.** The live FX/index refresher ran at `RANGE=3mo` every hour, re-upserting ~1,570 bars per symbol for the
+   sake of the newest one or two. The hourly job now passes `RANGE=5d` (**68 bars**, measured) and 3mo stays the default
+   for a first backfill.
+3. **Back off when the node is busy.** The job times a trivial read and, above budget, skips both ingests and prints the
+   stored sheet — bar age is already on every row, so stale is visible rather than hidden.
+**The health check shipped with the exact defect this programme has a rule for, and the rule caught it.** A failed token
+or an unreachable node makes the request return FAST, which a naive timer reads as "not busy" — the false-zero class of
+THE POSITIVE-CONTROL RULE. It now requires HTTP 200, and anything else counts as busy. Verified in three directions: a
+live node reads 200 and ingests (5 symbols, 68 bars); a **dead port** reads HTTP 000 → BUSY; a **rejected token** reads
+401 → BUSY. The first version also died on an unbound `OWNED_REST` (the daily runner exports it, this job did not), which
+is why the 09:03Z run skipped its ingests reporting HTTP 000 — a fail-safe firing for the wrong reason, fixed and now
+covered by the same check.
+**Two facts about the loop, recorded because they look like faults and are not.** The daily runner restarted at 07:39Z
+because a PEER SESSION's D-824 landed (`_self-restart.sh`: a `while true` loop now execs its own changed source) — the
+mechanism working, not drift. And the guard board has not been written since 22:39Z yesterday because each cycle is
+longer than the gaps between the source edits that restart it; the board run on demand is green, and the cockpit labels
+which cycle it is showing.
+GOLD: reliability — the hourly position-sheet job made a good neighbour of the daily one, and its own health check given
+a control that can fail.
+
 ## D-823d (2026-09-08) THE TWO OPEN PROP ITEMS READ FROM THE VENDOR, AND THE SHEET'S COSTS PINNED TO A REAL UK VENUE
 
 Checklist items 6 and 7 of `docs/PROP_FIRM_PLAN.md` (payout currency; residency/destination restrictions), read from FTMO's
