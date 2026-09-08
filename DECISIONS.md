@@ -18239,6 +18239,27 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-823d (2026-09-08) THE TWO OPEN PROP ITEMS READ FROM THE VENDOR, AND THE SHEET'S COSTS PINNED TO A REAL UK VENUE
+
+Checklist items 6 and 7 of `docs/PROP_FIRM_PLAN.md` (payout currency; residency/destination restrictions), read from FTMO's
+own pages on 2026-09-08: restrictions are on nationality/residency (four absolute exclusions and a business-risk list);
+**the UK is not on either list**; no payout-destination restriction is stated. Account currencies: rollover minimums are
+quoted in €/$/£/AUD/CAD/CHF/CZK on the withdrawal page, which implies GBP and USD accounts exist and rewards are
+processed in the account currency — recorded as LIKELY, to be confirmed at checkout, not asserted. Crypto (USDC/USDT) is
+the one payout method on the page that is currency- and destination-agnostic by construction; an observation, not a
+recommendation. The pricelist page returned 404, so the 100k fee in GBP/USD was not re-read tonight (the plan's priced
+figure stands from D-796).
+**The micro sheet's cost line was an assumption; it is now pinned to a published UK retail venue.** IG's charges page
+(2026-09-08): spreads US 500 0.4pt, spot gold 0.3pt, EUR/USD 0.6pt (minimums); overnight funding = benchmark + 3%/yr
+admin on indices, tom-next + 1.5%/yr on FX and metals, charged once per 10pm UK crossing — a K24 hold crosses it once.
+With the benchmark ASSUMED at 4%/yr (the first real statement replaces it): US500 ≈ 0.5bp spread + 1.9bp funding ≈
+2.4bp per K24 against the model's 4bp (conservative); gold ≈ 0.07 + 1.5 ≈ 1.6bp against 4bp; EUR/USD ≈ 0.5 + 1.5 ≈
+2.0bp against the model's 2bp — **AT-FEE on FX, which is where all three of tonight's candidates were, and where D-764
+measured the rule flat.** Crypto perps are not open to UK retail; spot crypto costs are venue-specific and unmeasured.
+The sheet prints this reference on every run, labelled with its source, date and the assumed benchmark.
+GOLD: prop — items 6 and 7 verified where the vendor states them and marked LIKELY/OPEN where it does not; the position
+path's costs tied to a real venue instead of a guess.
+
 ## D-823c (2026-09-08) THE OPERATOR'S FACTS RECORDED — no deposits, no account, GBP base / USD trading, a prop firm chosen for payout speed, payouts to sit outside the UK; what that does to the levers
 
 Facts as given (2026-09-08): no deposits yet; no trading or investment account yet; trades in GBP and will need to

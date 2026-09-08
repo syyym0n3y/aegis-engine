@@ -61,6 +61,11 @@ for (const sym of Object.keys(RT)) {
     if (recent.length) console.log(`    ${"".padEnd(14)} recent sweeps: ${recent.join("; ")}`);
   }
 }
+/* D-823d: a UK retail CFD venue's PUBLISHED costs as the reference for the sheet's RT assumptions (IG, read 2026-09-08): spreads US 500 0.4pt,
+   spot gold 0.3pt, EUR/USD 0.6pt (minimums); overnight funding = benchmark rate + 3%/yr admin (indices) or tom-next + 1.5%/yr (FX, metals),
+   charged once per 10pm UK crossing - a K24 hold crosses it once. Benchmark ASSUMED 4%/yr here; the first real statement replaces it. */
+const BENCH = 0.04; const fundIdx = (BENCH + 0.03) / 365 * 1e4, fundFx = (BENCH + 0.015) / 365 * 1e4;
+console.log(`\n  venue cost reference (IG UK published, 2026-09-08; benchmark assumed ${(BENCH * 100).toFixed(0)}%/yr): US500 spread ~${(0.4 / 7700 * 1e4).toFixed(1)}bp + funding ~${fundIdx.toFixed(1)}bp/day = ~${(0.4 / 7700 * 1e4 + fundIdx).toFixed(1)}bp per K24 (model RT 4bp); gold ~${(0.3 / 4400 * 1e4).toFixed(2)}bp + ${fundFx.toFixed(1)}bp = ~${(0.3 / 4400 * 1e4 + fundFx).toFixed(1)}bp (model 4bp); EURUSD ~${(0.6 / 1.16 / 1e4 * 1e4).toFixed(1)}bp + ${fundFx.toFixed(1)}bp = ~${(0.6 / 1.16 / 1e4 * 1e4 + fundFx).toFixed(1)}bp (model 2bp: AT-FEE on FX). Crypto perps are not open to UK retail; spot crypto RT is venue-specific.`);
 console.log(`\n  ${candidates} candidate(s); ${stale} instrument(s) STALE; ${ok} instruments live. Record every fill: scripts/micro-ledger.ts. Kill-switch account 'micro' must read armed before any fill.`);
 const ks = (await q(`trd_kill_switch?account=eq.micro&select=state`) as { state: string }[])[0]; console.log(`  kill-switch micro: ${ks?.state ?? "MISSING"}`);
 if (!ks) Deno.exit(1);
