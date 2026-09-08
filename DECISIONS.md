@@ -18239,6 +18239,50 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-835/836 (2026-09-08) EVERY TEST MADE FINDABLE, EVERY METHODOLOGY FLAW NAMED — and the first flaw named by reasoning was confirmed the same hour: 5 of 30 guards cannot be shown able to refuse anything
+
+Operator instruction: make every verdict and test far easier to reach, keep the context available as the hunt
+continues, and understand every flaw in our methodology across the board.
+
+### D-835 — the catalogue
+`scripts/catalogue.ts` generates `docs/CATALOGUE.md` from `trd_lineage` + `trd_prereg` + `trd_forward_rules`, in the
+daily runner, **never edited by hand so it cannot drift from the ledger it describes**. **276 tests across 77
+families**, each with what was claimed, what decided it, the verdict, and — for 69 of them — **what would reverse it**,
+taken from the pre-registration's own kill condition. All 19 forward clocks are listed with their promote/kill
+conditions. Positive control: it exits RED below 100 rows or 5 families rather than writing a thin file that reads as
+complete. Status counts: killed 97 · monitoring 54 · fixed 54 · measured 37 · rejected 21 · **promoted 0**.
+
+### D-836 — the methodology flaw register, and the test that came out of it
+`docs/METHODOLOGY_FLAWS.md`. **Section A**: the 30 flaws found and guarded. **Section B**: five found and NOT guarded,
+with today's exposure named — the benchmark WINDOW (B1, flipped a verdict this morning), t-statistics on OVERLAPPING
+windows (B2, a measured **ten-fold** inflation in D-830), a monitor reading the wrong number (B3), a multi-part write
+failing halfway (B4), our own tooling's parse errors (B5). **Section C**: eight flaws identified by REASONING with no
+evidence behind them, which is stated rather than hidden — adjusted-price LEVELS not being what traded (C1), the UTC
+day boundary as an arbitrary choice the crypto results may depend on (C2), costs held constant across 36 years when the
+only positive decade in D-830 is the 1990s (C3), guards never re-verified (C4), every guard threshold being itself an
+unregistered choice (C5), **the hypothesis set being supplied by one operator and one model** (C6), inconsistent
+post-publication decay (C7), survivorship in the data SOURCE (C8).
+**C4 was tested immediately and is CONFIRMED.** `scripts/guard-selftest-all.ts` runs every guard's own self-test and
+asserts it visibly exercises its red branch. **25 of 27 do. Two do not** — `coverage-guard`, whose "self-test" is a
+STRICT mode that never exercises a synthetic subject, and `market-cap-guard`, which exits 0 without declaring a pass
+(the D-659 silent shape) — **and three have no self-test at all** (`continuity`, `gap-register`, `infra`). So **5 of 30
+guards cannot currently be shown able to refuse anything**, while the board reports them green.
+**The meta-guard needed correcting twice, both times by the record's own laws.** Its first run returned 0 of 27, which
+was my defect: it set BOTH `SELFTEST` and `GUARD_SELFTEST`, and `declareKnobs` near-miss refusal rejected every script —
+the PRECONDITION LAW's worked example, firing on the tool written to audit the guards. Its second run failed 25 healthy
+guards because I demanded exit 0, when most guards INJECT synthetic rows and exit 1 **because they correctly refused
+one** — a non-zero exit IS the red branch working. Both corrections are in the source rather than tidied away.
+### On 10^7, answered honestly in the register's section E
+No fix in sections A–C produces it. Better methodology makes the nulls more reliable; it does not create a return. The
+three candidates of that order are the structural lane (certain, linear in capital, slow), the capacity-inverted
+mechanisms of D-834 (real, small, UK access unverified), and **something not yet in the search space — which C6 argues
+is where it most likely lives, since the two real mechanisms this programme found were found by accident while looking
+elsewhere.** A 10^7 outcome is far more likely to come from widening what we ask than from tightening how we test.
+GOLD: reliability — 276 tests made findable and self-regenerating, every methodology flaw named including eight nobody
+has hit, and the first of those confirmed within the hour.
+ACTS-ON: gate — the board's green is now qualified: 5 of 30 guards are of unproven strength, and the meta-guard reds in
+the daily runner until each is fixed.
+
 ## D-834 (2026-09-08) THE MECHANISMS THIS RECORD MEASURED AS REAL, ASSEMBLED — each was dismissed for being small, and the account is small
 
 `docs/SMALL_CAPITAL_MECHANISMS.md`. No new measurement: every number cites the entry that produced it. What is new is

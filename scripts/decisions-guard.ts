@@ -27,10 +27,16 @@ const ACTS = /^\s*ACTS-ON:\s*(position|ledger|gate|clock)\b.{0,3}\S+/m;
 
 export function audit(text: string, fromD: number, fromActs = Number.MAX_SAFE_INTEGER): { checked: number; missing: string[] } {
   const lines = text.split("\n");
-  const entries: { id: string; n: number; body: string[] }[] = [];
+  const entries: { id: string; n: number; body: string[]; lvl: number }[] = [];
   for (const l of lines) {
     const m = HEAD.exec(l);
-    if (m) entries.push({ id: `D-${m[1]}`, n: Number(m[1]), body: [l] });
+    // D-836: a DEEPER heading inside an entry is a subheading, not a new entry. Three times now an entry written with
+    // `### D-NNN — part one` / `### D-NNN — part two` sections was split into pieces, and the piece without the GOLD:
+    // line was reported missing — a false RED that costs exactly as much trust as a false green. An entry starts only
+    // at a heading whose level is at or above (i.e. hash-count at or below) the current entry's.
+    const lvl = m ? (l.match(/^#+/)?.[0].length ?? 2) : 0;
+    const cur = entries[entries.length - 1];
+    if (m && (!cur || lvl <= cur.lvl)) entries.push({ id: `D-${m[1]}`, n: Number(m[1]), body: [l], lvl });
     else if (entries.length) entries[entries.length - 1].body.push(l);
   }
   const missing: string[] = []; let checked = 0;
@@ -53,6 +59,12 @@ if (K.SELFTEST === "1") {
   if (b.missing.length) { console.error("SELFTEST FAIL: compliant entry flagged", b); Deno.exit(1); }
   const c = audit("## D-1 old entry\nno line\n", 900);
   if (c.checked !== 0) { console.error("SELFTEST FAIL: pre-threshold entry checked", c); Deno.exit(1); }
+  // D-836: a deeper heading must NOT split its parent entry (three false REDs before this was fixed).
+  const nested = "## D-960 (2026-01-01) — parent\n### D-960 — part one\nbody\n### D-961 — part two\nbody\nGOLD: law — x\n";
+  const nn = audit(nested, 900);
+  if (nn.checked !== 1 || nn.missing.length) { console.error("SELFTEST FAIL: subheadings split the entry", nn); Deno.exit(1); }
+  const twoTop = audit("## D-970 (2026-01-01) — a\nGOLD: law — x\n## D-971 (2026-01-01) — b\nbody\n", 900);
+  if (twoTop.checked !== 2 || twoTop.missing.join() !== "D-971") { console.error("SELFTEST FAIL: same-level entries must still split", twoTop); Deno.exit(1); }
   const rNo = "## D-950 (2026-01-01) — r\nbody\nGOLD: research — a null\n", rYes = "## D-951 (2026-01-01) — r\nbody\nGOLD: research — a null\nACTS-ON: gate — feeds the micro_entry review\n";
   const d = audit(rNo + rYes, 900, 950);
   if (d.missing.join() !== "D-950 (research without ACTS-ON)") { console.error("SELFTEST FAIL: research freeze — expected D-950 flagged only, got", d); Deno.exit(1); }

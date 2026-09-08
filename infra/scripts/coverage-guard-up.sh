@@ -357,6 +357,10 @@ while true; do
   # full guard board) that reds rather than rendering a beautiful page from nothing. Read-only; no LLM; owned node only.
   # D-823: the pre-registered bar (report only) and the micro-rung sheet, both rendered on the cockpit. The sheet also
   # refreshes HOURLY under io.aegis.micro (infra/scripts/micro-hourly.sh) because the admitted rule is hourly.
+  # D-835/836: the CATALOGUE (every test, generated from the ledger so it cannot drift) and the META-GUARD (can each
+  # guard still FAIL? four have been found broken AFTER shipping; registry-guard only checks one EXISTS).
+  deno run --allow-net --allow-env --allow-write ../scripts/catalogue.ts > ../data/catalogue.log 2>&1 || echo "$(date -u +%FT%TZ) CATALOGUE FAILED"
+  deno run --allow-net --allow-env --allow-read --allow-run --allow-write ../scripts/guard-selftest-all.ts > ../data/guard-selftest-all.log 2>&1 || echo "$(date -u +%FT%TZ) META-GUARD RED — a guard cannot be shown able to refuse; see data/guard-selftest-all.log"
   deno run --allow-net --allow-env ../scripts/prereg-ceiling.ts > ../data/prereg-ceiling.log 2>&1 || echo "$(date -u +%FT%TZ) PREREG CEILING REPORT FAILED"
   deno run --allow-net --allow-env ../scripts/micro-sheet.ts > ../data/micro-sheet.log 2>&1 || echo "$(date -u +%FT%TZ) MICRO SHEET FAILED"
   if ! deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/cockpit-render.ts; then
