@@ -117,6 +117,36 @@ not the engine — the engine is on the owned node); capital access beyond the c
 - D-815/816: paid data priced; the equity L2 barrier measured on the operator's Databento credit ($95.52) — sub-fee on all 20 names.
 - D-819/820/821: HAR-RV live daily; SPX per-strike OI bought and measured (no pin; the flip at-fee on ES costs, unregistered); vol-sizing of the registered rules costs return.
 - D-823: THE FIVE — research frozen (guard), ceiling split by provenance (admits nothing today), MICRO rung prepped (hourly sheet, ledger, kill-switch; live on the first hand-placed fill), prop parked behind 30 real fills, session exit condition written.
+- D-823b-f: the sheet made live on all 12 instruments; **placeability verified — FCA COBS 22.6 bans crypto derivatives for UK retail, and the CFD minimum is ~100x the intended size, so the product is a spread bet and the tradable set was 3 of 12**.
+- D-825/826b: the first SUPPORTED result, **retracted 40 minutes later** — its benchmark spanned the full history while its events were out-of-sample; corrected, the rule underperforms an unconditional 24h hold on all three placeable instruments. Caught by a second implementation disagreeing on one number.
+- D-827: multi-timeframe trend alignment as a breakout gate — **NULL both ways on 110,746 events**. Alignment orders the DEGREE of breakout failure (monotone at K24, train and test) without producing a gain.
+- D-828/829: the daily behaviour atlas — **range is predictable (corr 0.60, stable across a regime change), direction is a coin flip (50.1%)** — and the reversion test it implied is NULL; after an exhausted range price CONTINUES, and the reverse underperforms simply holding.
+- D-830: **our forecast beats the market's price of range by 26% over 36 years and cannot be monetised** — implied is not a forecast but a price carrying a 4-vol-point premium, and our forecast exceeds it in only 14 of 432 windows.
+- D-831: the Douglas/Schwager literature accounted for; on a zero-edge stream 1 trader in 20 shows +8.36bp/trade and selective memory inflates a record by ~87bp/trade.
+- D-832: **at 30 fills the smallest detectable edge is 46.8bp — 7x anything this programme has produced.** The micro review is an OPERATIONAL test, never an expectancy test (gate row `micro_review_is_operational`).
+
+## 6. WHERE THIS LEAVES THE GOLD PATH (rewritten 2026-09-08 after D-823→D-832)
+
+**What is now closed, with reasons rather than shrugs.** Direction is not predictable on this universe (2.9M trials, and
+D-828's 50.1% up-day share arriving independently). Breakouts, levels, order flow and multi-timeframe structure are all
+measured and dead. **Range IS predictable — that is real and confirmed twice by different methods — and it has now
+resisted conversion into a return on both asset classes, including in the instrument where range is priced directly.**
+The literature the operator named is accounted for proposition by proposition; where it disagreed with our data, the
+data won.
+
+**What that means for the four levers.**
+1. **Structural (deposits × compounding × wrapper).** Still the only mechanism on this record with certain positive
+   expectancy, and today's work strengthens that by elimination rather than weakening it. It has **no vehicle**: no
+   account exists (D-823c). This is the binding constraint on everything else.
+2. **Position (the micro rung).** Prepped, hourly sheet live, kill-switch armed — and **no admitted rule**, since D-825
+   was retracted. D-832 settles what its first fills can and cannot establish: plumbing yes, expectancy no.
+3. **Prop.** Parked behind 30 real fills, priced, terms verified, UK not restricted.
+4. **Clocks.** 19 registered, scored daily, none matured.
+
+**The one-line honest statement of the programme's position:** the engine can forecast how far, not which way; the
+market prices how far with a premium our forecast almost never beats; and the operator's binding constraint is not the
+absence of an edge but the absence of an account. Every hour spent on the first two is worth less than the hour spent
+on the third.
 - D-822: gap analysis — residual-follow clock made scorable at its registered cadence; conditional VRP on the HAR forecast NULL; D-820's cost-inflated t corrected; HAR-RV on the cockpit.
 - D-817/818: two of the three paid barriers opened free and keyless (estimate revisions; the per-name options surface, forward); a peer session added SqueezeMetrics GEX/DIX history, Deribit DVOL and a Nasdaq revisions feed (D-818, both its tests retracted). Register 56 held / 2 blocked, both paid.
 

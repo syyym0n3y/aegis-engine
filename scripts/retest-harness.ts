@@ -44,6 +44,15 @@ const TESTS: Test[] = [
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "GLD flow -> gold sign-conditioned gross t (prior backwards, -1.88, D-745; live daily feed)" },
   { name: "vix-roll", args: ["--allow-read", "scripts/vix-roll.ts"], pick: /STRATEGY A[\s\S]*?gross t (-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.0, note: "short-VIX (A, XIV construction) gross t (ruined, 1.89, D-749; needs ingest-vx-curve refresh)" },
+  // D-833: today's verdicts (D-827/829/830) enter the harness so they are re-checked daily rather than trusted once.
+  // Each pick is the ONE number that would have to move for the verdict to change, and the `moved` threshold is set at
+  // roughly the width that would flip a clause of its own pre-registration — not at an arbitrary sensitivity.
+  { name: "mtf-trend-progression", args: ["scripts/mtf-trend-progression.ts"], pick: /K24 OPERATOR'S CLAIM[\s\S]*?ALIGNED (-?\d+\.?\d*)bp/i,
+    moved: (p, n) => Math.abs(n - p) > 3, note: "D-827 aligned-continuation net at K24 (was -1.69bp; a move past 0 would reopen the operator's claim)" },
+  { name: "range-exhaustion", args: ["scripts/range-exhaustion-reversion.ts"], pick: /TEST \(decides\)[\s\S]*?^\s+1\s+4\s+\d+\s+(-?\d+\.?\d*)/m,
+    moved: (p, n) => Math.abs(n - p) > 3, note: "D-829 fade net at threshold 1.0 / K4, TEST window (was -6.44bp; positive would reopen the reversion claim). The first version anchored on nothing and picked the TRAIN row -7.57 — a pick that monitors the wrong number is a guard that cannot fire." },
+  { name: "forecast-vs-implied", args: ["scripts/forecast-vs-implied.ts"], pick: /on \(HAR - VIX\):\s+slope -?\d+\.?\d*\s+t (-?\d+\.?\d*)/i,
+    moved: (p, n) => Math.abs(n - p) > 0.8, note: "D-830 non-overlapping slope t (was 1.57; the registered bar is 2.5)" },
   { name: "cef-discount", args: ["--allow-read", "--allow-write", "scripts/cef-discount.ts"], pick: /EXCESS of widest over the universe\s+-?\d+\.?\d*%\/yr\s+t (-?\d+\.?\d*)/i,
     moved: (p, n) => Math.abs(n - p) > 1.5, note: "CEF widest-discount excess-over-universe t (CANDIDATE upper bound, 8.09, D-750; live via refresh-cef)" },
   { name: "odd-lot", args: ["--allow-read", "scripts/odd-lot-tender.ts"], pick: /ERA 2020\+ \(CLEAN\): n=\d+ \| prem>0 \d+ \((\d+)%\)/i,
