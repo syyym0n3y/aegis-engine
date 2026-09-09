@@ -18239,6 +18239,96 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-843 (2026-09-09) THE COST OF TRADING FELL 19x AND WE CHARGED ONE NUMBER FOR SIXTY YEARS — flaw C3 tested, NULL on the rule I wrote, and the decay story does not survive it
+
+Flaw C3 of `docs/METHODOLOGY_FLAWS.md`, named by reasoning yesterday: **we charge one flat modern cost across spans
+reaching back to the 1960s.** Fixed commissions ran until May 1975, eighths until June 1997, sixteenths until April
+2001, decimals after. A long backtest costed at modern rates flatters its early era — and the early era is where
+several of this record's surviving numbers sit. Pre-registered as `D-843-era-cost` before the data was touched.
+
+### The instrument, and the one I had to throw away
+The obvious tool is **Corwin & Schultz (JF 2012)**, the standard high-low spread estimator. It failed, and it is kept
+in the script and reported rather than deleted: it returns **~39bp for the 1970s and ~46bp for 2015+** — a 0.94x curve
+across a span where the truth moved 19x. Its identification is the excess of the two-day range over the one-day range,
+and once the spread sits far below daily volatility that excess is noise. **The estimator has a floor and the floor is
+near the modern answer.** Its own positive control is what exposed it; a first run also reported 0.0–0.3bp spreads
+because I took a MEDIAN of a distribution that Corwin-Schultz floor at zero and 46.7% of which is zero.
+
+What replaced it needs no estimator: **the minimum tick, read straight off the price lattice.** A quoted spread cannot
+be narrower than one tick, so tick/price is a hard **lower bound** on round-trip cost. And it is immune to our own
+**flaw C1** — split and dividend adjustment multiply price and price-increment by the same factor, so the ratio is
+invariant and the unknown adjustment factor cancels exactly. Verified against arithmetic nobody could tune: CAT 1995
+measures 21.5bp against ⅛ on a $58 stock = 21.6bp; CAT 1999 measures 11.2bp against ¹⁄₁₆ on $55 = 11.4bp.
+
+**POSITIVE CONTROL (D-641) — the measurement finds two regulatory events that are nowhere in the code:**
+
+| event | before | after | fall | predicted |
+|---|---|---|---|---|
+| **sixteenths** (Jun 1997) | 28.5bp (95–96) | 14.9bp (98–99) | **47.6%** | ⅛→¹⁄₁₆ predicts ~50% |
+| **decimalisation** (Apr 2001) | 16.1bp (99–00) | 4.4bp (01–02) | **72.7%** | ≥20% required |
+
+### The curve, 140 US equities holding pre-1990 history, 57 years priced
+| era | tick bp | × vs 2015+ | *Corwin-Schultz, for contrast* |
+|---|---|---|---|
+| 1970s | **51.8** | **19.23** | *39.5* |
+| 1980s | 38.7 | 14.38 | *43.3* |
+| 1990–96 | 33.9 | 12.59 | *40.3* |
+| 1997–2000 | 16.1 | 6.00 | *60.6* |
+| 2001–09 | 3.7 | 1.36 | *53.8* |
+| 2010–14 | 3.1 | 1.15 | *40.4* |
+| 2015+ | **2.7** | 1.00 | *46.2* |
+
+### D-655 re-costed — same gross, same turnover, only the cost changes
+D-655 recorded post-publication **DECAY as SUPPORTED** on pre-1990 4.30%/yr against post-1990 2.07%/yr, both gross,
+both then costed at one flat 20bp with turnover of 33.5% one-way monthly (D-654). Holding turnover fixed:
+
+| | gross %/yr | cost bp | drag %/yr | **NET %/yr** |
+|---|---|---|---|---|
+| flat 20bp, pre-1990 | 4.30 | 20.0 | 1.61 | **+2.69** |
+| flat 20bp, post-1990 | 2.07 | 20.0 | 1.61 | **+0.46** |
+| **era's own tick, pre-1990** | 4.30 | 43.7 | 3.51 | **+0.79** |
+| **era's own tick, post-1990** | 2.07 | 3.4 | 0.27 | **+1.80** |
+| mean-of-years, pre-1990 | 4.30 | 43.1 | 3.47 | +0.83 |
+| mean-of-years, post-1990 | 2.07 | 10.2 | 0.82 | +1.25 |
+
+### VERDICT: NULL on the stated rule — and I am not re-cutting the rule to reach the other answer
+Condition (a) passed decisively (14.4x against a 2.5x bar). **Condition (b) failed: the pre-1990 net is +0.79%/yr and
+my rule required it to be at or below zero.** Both were required. So this is a NULL, and the interesting half is
+recorded as a measurement rather than a win.
+
+**The measurement: the decay ORDERING reverses.** At flat cost D-655 reads 2.69 → 0.46, which is what "the anomaly
+decayed" looks like. At the cost each era actually carried it reads **0.79 → 1.80** (median-of-years) or 0.83 → 1.25
+(mean-of-years). **The gross premium halved while the net rose, because the cost of harvesting it fell faster than the
+premium did.** The flat-cost decay is not visible once cost is allowed to vary. That is half of the registered claim,
+and half a claim is not a claim — this is the mirror of D-655's own error, where I wrote a gate too WEAK to fail;
+here I wrote one conjunct too strict to pass, and both times the discipline is to say so rather than to adjust.
+
+**The breakeven the floor leaves open, stated because the floor is a floor:** 9.8bp of commission and impact above the
+tick would zero the pre-1990 net (22.4bp post-1990). Pre-May-1975 NYSE commissions were fixed and are not in these
+numbers. Whether they exceed 9.8bp is a judgement the pre-registration did not license and this entry does not make.
+
+**Three reasons every figure understates the early cost, so +0.79%/yr is an UPPER bound on the pre-1990 net:** the
+tick is the floor of the spread, not the spread; commissions and impact are excluded entirely; and it is measured on
+140 large survivors while D-655 trades French value-weighted deciles containing far smaller names.
+
+### The defect I walked into, and the guard it ships
+I registered the pre-registration with `outcome: "open"`. **The immutability trigger treats any non-null outcome as
+already recorded**, so the label is frozen at a value that is wrong and can never be corrected — UPDATE raises and so
+does DELETE, both verified against this very row. An open pre-registration must be registered with outcome NULL; 4 of
+71 rows are correctly NULL and this is the only "open". The verdict survives only because `outcome_note` is
+append-only and authoritative (D-631).
+
+`mechanism-guard.ts` now reds on any placeholder outcome (`open|pending|tbd|todo|running|in progress|unknown|n/a`).
+Because the row cannot be repaired, the guard needed a green path or it would become a permanent red nobody reads —
+the agent-output-guard lesson. The path is a literal `LABEL-IS-WRONG: <verdict>` stamp in the append-only note, so a
+frozen label must still state what the verdict actually was. Verified in both directions: it refuses an injected
+unstamped row (exit 1) and accepts an injected stamped one.
+
+GOLD: research — a self-attack on a named flaw that measured a real 19x change in a quantity this programme had been
+treating as a constant, using an instrument verified against two regulatory events it was never told about.
+ACTS-ON: gate — it changes what the `micro_entry` gate should accept as a costed long-span result: a flat cost across
+eras is now a stated deficiency, not a conservative default.
+
 ## D-842 (2026-09-09) THE DAY BOUNDARY WAS MY CHOICE, AND IT MOVES THE STATISTIC TEN TIMES MORE THAN THE REGIME DOES — the atlas finding survives, its stability claim does not
 
 Flaw C2 of `docs/METHODOLOGY_FLAWS.md`, identified by reasoning yesterday and tested today: "a day" for a 24-hour

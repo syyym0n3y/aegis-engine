@@ -57,7 +57,7 @@ const DISAGG = /(disaggregat|by geometry|by stratum|by symbol|by era|excluding|e
 
 const rows = await mustFetch(`${OWNED}/trd_lineage?select=id,name,family,status,key_metric,verdict,updated_at`, "trd_lineage") as
   { id: string; name: string; family: string; status: string; key_metric: string | null; verdict: string | null; updated_at: string | null }[];
-const pregs = await mustFetch(`${OWNED}/trd_prereg?select=id,outcome`, "trd_prereg") as { id: string; outcome: string | null }[];
+const pregs = await mustFetch(`${OWNED}/trd_prereg?select=id,outcome,outcome_note`, "trd_prereg") as { id: string; outcome: string | null; outcome_note: string | null }[];
 const pregIds = new Set(pregs.map((p) => p.id));
 
 // Fixtures prove BOTH branches reachable: an unregistered mechanism claim must fail, a registered one and a
@@ -110,5 +110,33 @@ console.log(`\n  ${checked} row(s) in scope since ${EFFECTIVE_FROM} (${skippedOl
 // which is its own way of leaving the rabbit hole open.
 const open = pregs.filter((p) => !p.outcome && p.id !== "SELFTEST-IMMUT");
 if (open.length) console.log(`  NOTE: ${open.length} pre-registration(s) with no recorded outcome: ${open.map((p) => p.id).join(", ")}`);
+// D-843: a PLACEHOLDER outcome is worse than an absent one. The immutability trigger treats ANY non-null `outcome` as
+// already recorded and refuses to rewrite it, so registering a still-running test as "open"/"pending"/"tbd" FREEZES the
+// label at a value that can never be corrected to the real verdict. An open pre-registration must be registered with
+// outcome NULL. Found by walking into it: D-843-era-cost is stuck at "open" and its true verdict (NULL on the stated
+// rule) survives only in the append-only note.
+// The row cannot be fixed: UPDATE of the label raises, and so does DELETE (both verified against this very row). The
+// only remediation left is the one field that is still writable and still immutable-in-substance — the append-only
+// note — so a frozen row goes GREEN only when it carries the literal stamp `LABEL-IS-WRONG: <verdict>`. A guard with
+// no green path is a guard that gets ignored (the agent-output-guard lesson), and a placeholder with no stated true
+// verdict is exactly the silent discretion THE PRE-COMMITMENT LAW exists to remove.
+const PLACEHOLDER = /^(open|pending|tbd|todo|running|in.?progress|unknown|n\/a)$/i;
+const STAMP = /LABEL-IS-WRONG:\s*(confirmed|null|inconclusive|retracted|killed|untested)\b/i;
+const frozen = [...pregs, ...(SELFTEST
+  ? [{ id: "SELFTEST-PLACEHOLDER", outcome: "pending", outcome_note: "no stamp here" },
+     { id: "SELFTEST-PLACEHOLDER-OK", outcome: "pending", outcome_note: "LABEL-IS-WRONG: null — verdict recorded in the note" }]
+  : [])].filter((p) => p.outcome && PLACEHOLDER.test(p.outcome.trim()));
+let frozenRed = 0;
+for (const p of frozen) {
+  if (STAMP.test(p.outcome_note ?? "")) { console.log(`  PASS ${p.id.padEnd(28)} label frozen at "${p.outcome}" but the note carries LABEL-IS-WRONG with the true verdict`); continue; }
+  red++; frozenRed++;
+  console.log(`  RED  ${p.id.padEnd(28)} outcome="${p.outcome}" is a PLACEHOLDER — the trigger froze this label; append \`LABEL-IS-WRONG: <verdict>\` to the note`);
+}
+if (SELFTEST) {
+  const bad = frozen.find((p) => p.id === "SELFTEST-PLACEHOLDER"), ok = frozen.find((p) => p.id === "SELFTEST-PLACEHOLDER-OK");
+  if (!bad || STAMP.test(bad.outcome_note ?? "")) { console.error("!! SELFTEST: the unstamped placeholder was not refused — RED."); Deno.exit(1); }
+  if (!ok || !STAMP.test(ok.outcome_note ?? "")) { console.error("!! SELFTEST: the stamped placeholder was not accepted — RED."); Deno.exit(1); }
+  console.log(`  SELFTEST: placeholder rule refused the unstamped row and passed the stamped one (${frozenRed} red).`);
+}
 console.log(`  ${red === 0 ? "NO UNREGISTERED MECHANISM CLAIMS." : `${red} ROW(S) RED — an unregistered story is how a false win survives to be reported.`}`);
 if (red > 0) Deno.exit(1);
