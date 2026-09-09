@@ -41,7 +41,11 @@ for (const g of withSelf) {
      The honest criterion is evidence in the OUTPUT that the guard exercised a synthetic subject: it must mention its
      self-test AND either declare a pass or visibly refuse. Silence still counts as failure (D-659). */
   const mentions = /selftest|self-test/i.test(out);
-  const declared = /SELFTEST\s*[- ]?(PASS|OK)|SELF-TEST\s+PASS/i.test(out);
+  /* CORRECTED again (D-841): this regex allowed only a space or hyphen between the word and PASS, so
+     "SELFTEST 1 PASSED" — market-cap-guard's actual output — did not match, and the guard was reported broken when it
+     was not. Two of D-836's five "unverified" guards were THIS DETECTOR, not the guards. Now: any SELFTEST/SELF-TEST
+     token followed within a few words by PASS/OK/PASSED counts as a declaration. */
+  const declared = /SELF-?TEST\b[^\n]{0,24}?\b(PASS(ED)?|OK)\b/i.test(out);
   const refused = code !== 0 && /RED|refus|violat/i.test(out);
   const ok = mentions && (declared || refused);
   const how = declared ? "declares PASS" : refused ? `refused a synthetic row (exit ${code}) — the red branch works` : "";

@@ -13,7 +13,10 @@
 // Checks, each with a staleness budget matched to how often the source ACTUALLY publishes — a weekly dataset is not
 // stale at 3 days, and treating it as such would train everyone to ignore this.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
-declareKnobs("continuity-guard", [{ name: "GRACE", def: "1.5", note: "multiple of the publish interval before RED" }]);
+declareKnobs("continuity-guard", [{ name: "GRACE", def: "1.5", note: "multiple of the publish interval before RED" }, { name: "SELFTEST", def: "0", note: "D-841: 1 = inject a feed that CANNOT be fresh and a job that cannot exist, and prove this guard refuses both" }]);
+// D-841: this guard enforces THE CONTINUITY LAW and had NO self-test — it had never been shown able to refuse
+// anything, which is the D-584 shape it exists to prevent, sitting inside the guard itself.
+const SELFTEST = (Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1";
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -72,6 +75,7 @@ const FEEDS: [string, string, string, number, string][] = [
 ];
 
 const today = Date.now();
+if (SELFTEST) console.log("  SELFTEST MODE — a feed that cannot return rows and a job that cannot be registered are injected; this run MUST exit RED.");
 
 // D-715: EVERY WATCHED FEED MUST HAVE A REFRESHER THE RUNNER ACTUALLY INVOKES. Read the daily runner once, up front,
 // so an unwired feed is caught the moment it is added rather than three weeks later when its data has frozen.
@@ -84,7 +88,10 @@ let red = 0;
 console.log("==> CONTINUITY GUARD — is the data still arriving, and are the clocks still turning?");
 console.log("    a stopped ingest fails SILENTLY: old rows stay, queries keep answering, everything is stale.\n");
 
-for (const [path, label, col, everyDays, refresher] of FEEDS) {
+const SYNTH: [string, string, string, number, string][] = SELFTEST
+  ? [["trd_macro_series?series=eq.__selftest_absent_series__&select=d&order=d.desc&limit=1", "SELFTEST absent feed", "d", 1, "ingest-funding-full.ts"]]
+  : [];
+for (const [path, label, col, everyDays, refresher] of [...FEEDS, ...SYNTH]) {
   const rows = await fetch(`${OWNED}/${path}`, { headers: hdr }).then((r) => r.ok ? r.json() : null).catch(() => null);
   if (!Array.isArray(rows) || !rows.length) { red++; console.log(`  RED  ${label.padEnd(22)} unreadable or empty`); continue; }
   const raw = (rows[0] as Record<string, unknown>)[col];
@@ -101,7 +108,7 @@ for (const [path, label, col, everyDays, refresher] of FEEDS) {
 console.log("");
 try {
   const out = new TextDecoder().decode((await new Deno.Command("launchctl", { args: ["list"] }).output()).stdout);
-  const want = ["io.aegis.coverage", "io.aegis.daily", "io.aegis.paper", "io.aegis.micro"];   // io.aegis.micro: D-823 hourly micro-rung sheet
+  const want = ["io.aegis.coverage", "io.aegis.daily", "io.aegis.paper", "io.aegis.micro", ...(SELFTEST ? ["io.aegis.__selftest_absent_job__"] : [])];   // io.aegis.micro: D-823 hourly micro-rung sheet
   for (const j of want) {
     const line = out.split("\n").find((l) => l.includes(j));
     if (!line) { red++; console.log(`  RED  job ${j.padEnd(24)} NOT REGISTERED`); }
@@ -196,4 +203,8 @@ if (unwired.length) {
 
 console.log(`\n  ${red === 0 ? "CONTINUITY GREEN — data arriving, jobs registered, clocks turning, every feed owned."
   : `${red} CONTINUITY FAILURE(S) — research run against this state may be reading a frozen snapshot.`}`);
+if (SELFTEST) {
+  if (red >= 2) { console.log("  CONTINUITY GUARD SELFTEST PASSED — both injected subjects were refused (absent feed + unregistered job)."); Deno.exit(0); }
+  console.error(`!! CONTINUITY GUARD SELFTEST FAILED — only ${red} red(s); the injected feed and job should BOTH have tripped it.`); Deno.exit(1);
+}
 if (red > 0) Deno.exit(1);

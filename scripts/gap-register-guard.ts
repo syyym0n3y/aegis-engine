@@ -16,7 +16,9 @@
 //   - a substantial table held in the database that appears nowhere in the register (drift the other way)
 // WHAT IT ONLY REPORTS: engine-actionable gaps still unfilled. Those are work to schedule, not failures to flag.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
-declareKnobs("gap-register-guard", [{ name: "STALE_D", def: "45", note: "days before a filled gap counts as stale" }]);
+declareKnobs("gap-register-guard", [{ name: "STALE_D", def: "45", note: "days before a filled gap counts as stale" }, { name: "SELFTEST", def: "0", note: "D-841: 1 = inject a gap marked FILLED whose backing cannot exist, and prove this guard refuses it" }]);
+// D-841: this guard had NO self-test and had never been shown able to refuse anything.
+const SELFTEST = (Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1";
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
 const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -58,7 +60,11 @@ const BACKING: Record<string, [string, string]> = {
 
 let red = 0;
 console.log(`==> GAP REGISTER GUARD — ${gaps.length} gaps recorded`);
-for (const g of gaps) {
+if (SELFTEST) console.log("  SELFTEST MODE — a gap marked FILLED with a backing table that cannot exist is injected; this run MUST refuse it.");
+const SYNTH = SELFTEST
+  ? [{ id: "__selftest_unbacked__", dataset: "synthetic", status: "filled", blocks: "nothing", actionable_by: "engine" }]
+  : [];
+for (const g of [...gaps, ...SYNTH]) {
   if (g.status === "filled") {
     const b = BACKING[g.id];
     if (!b) { red++; console.log(`  RED  ${g.id.padEnd(22)} marked FILLED but names no backing table — unverifiable`); continue; }
@@ -81,4 +87,8 @@ console.log(`\n  engine-actionable gaps still open: ${gaps.filter((g) => g.actio
 console.log(`  operator-actionable: ${gaps.filter((g) => g.actionable_by === "operator").length}  |  structural (nobody): ${gaps.filter((g) => g.actionable_by === "nobody").length}`);
 console.log(`\n  ${red === 0 ? "REGISTER CONSISTENT — every filled gap has live backing data."
   : `${red} REGISTER FAILURE(S) — a gap marked filled is empty or stale, which licenses conclusions the data no longer supports.`}`);
+if (SELFTEST) {
+  if (red >= 1) { console.log("  GAP REGISTER GUARD SELFTEST PASSED — the injected unbacked FILLED gap was refused."); Deno.exit(0); }
+  console.error("!! GAP REGISTER GUARD SELFTEST FAILED — the injected unbacked gap did NOT trip it."); Deno.exit(1);
+}
 if (red > 0) Deno.exit(1);

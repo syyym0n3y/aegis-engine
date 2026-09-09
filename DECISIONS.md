@@ -18239,6 +18239,35 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-841 (2026-09-09) THE BOARD'S GREEN IS NOW MEASURED RATHER THAN ASSUMED — 30 of 30 guards demonstrate a working red branch, and 2 of the 5 I reported broken were my own detector
+
+D-836 built the meta-guard, confirmed flaw C4, and reported **5 of 30 guards cannot be shown able to refuse anything**.
+Leaving that open while starting new tests would have been exactly the pattern this record criticises, so it was closed
+first. The closing found the report was partly wrong, in a way worth keeping.
+**Two of the five were the DETECTOR, not the guards.**
+- `coverage-guard` **did** refuse: under `GUARD_SELFTEST` it injects an impossible coverage floor plus a deliberately
+  UNFETCHED concept and **exits 1** (verified: selftest exit 1, normal exit 0). It simply never printed that it was
+  self-testing, so the meta-guard could not tell a demonstrated refusal from a guard that happened to be red. Fixed by
+  making it say so out loud — a check whose exercise is invisible is not auditable.
+- `market-cap-guard` prints **"SELFTEST 1 PASSED"**, and my regex allowed only a space or hyphen between the word and
+  PASS. The guard was fine; the pattern was wrong. **That is the third time in two days that this meta-guard's own
+  criterion, not its subjects, produced the failure** (first the near-miss refusal, then demanding exit 0 from guards
+  that correctly exit 1, now the pass-line regex).
+**Three were real, and all three were load-bearing.** None had any self-test; each now injects a subject that MUST be
+refused, verified in both directions:
+| guard | injected subject | result |
+|---|---|---|
+| `continuity-guard` (THE CONTINUITY LAW) | a feed that cannot return rows **and** a job that cannot be registered | both refused; normal run unaffected (exit 0) |
+| `gap-register-guard` | a gap marked FILLED whose backing table cannot exist | refused; normal run exit 0 |
+| `infra-guard` (the substrate guard) | a probe of a dead local port | refused — the RED remediation path is reachable and fires |
+**Result: 30 guards, 30 with a self-test, 30 demonstrating a working red branch, meta-guard exit 0.** The board's green
+was the single most load-bearing claim in the programme and it had never been measured; it is now.
+**The honest correction to D-836:** its headline number was 5 and the true number was 3. The register is updated rather
+than quietly amended, because a wrong count in the direction of alarm is still a wrong count, and this record's whole
+method is that a stated number must survive being checked.
+GOLD: reliability — every guard on the board now proven able to refuse, the three genuine gaps closed, and the
+meta-guard's own third false alarm recorded beside them.
+
 ## D-840 (2026-09-08) THE FEE WAS THE ENTIRE SOURCE OF LOSSES — re-measuring the best mechanism on the record with the fee D-839 documented, and the honest ceiling that survives it
 
 D-839 established from IBKR's own documentation that **no fee is stated for an on-time voluntary election** (the AUD

@@ -20,7 +20,11 @@
 // is removed here rather than exempted. The rented project's billing state is an operator matter tracked in STATE.md
 // under "Blocked on operator"; it is not something a daily research guard should reach across the network to learn.
 // Enforced from here by `scripts/sovereignty-guard.ts`, which REDs on a live reference anywhere in the runner's closure.
-const OWNED_REST = Deno.env.get("AEGIS_OWNED_REST") || "http://127.0.0.1:33000";
+// D-841: this guard had NO self-test. It is the substrate guard — the one that turns a dead node into UNKNOWN rather
+// than a false null — and it had never been shown able to refuse. Under SELFTEST it probes a dead local port, which
+// must produce the RED path; anything else means the remediation branch is unreachable.
+const SELFTEST = (Deno.env.get("SELFTEST") || Deno.env.get("GUARD_SELFTEST")) === "1";
+const OWNED_REST = SELFTEST ? "http://127.0.0.1:1" : (Deno.env.get("AEGIS_OWNED_REST") || "http://127.0.0.1:33000");
 const TIMEOUT_MS = Number(Deno.env.get("AEGIS_GUARD_TIMEOUT_MS") || 8000);
 
 type Probe = { target: string; url: string; ok: boolean; detail: string };
@@ -56,6 +60,10 @@ results.push(await probe("owned", `${OWNED_REST}/`));
 const owned = results[0];
 for (const p of results) console.log(`${p.ok ? "ok  " : "RED "} ${p.target.padEnd(7)} ${p.url} -> ${p.detail}`);
 
+if (SELFTEST) {
+  if (!owned.ok) { console.log("\n  INFRA GUARD SELFTEST PASSED — a dead substrate was refused (the RED path is reachable and fires)."); Deno.exit(0); }
+  console.error("!! INFRA GUARD SELFTEST FAILED — a dead port at 127.0.0.1:1 was reported reachable."); Deno.exit(1);
+}
 if (!owned.ok) {
   console.log(`
 RED — THE OWNED RESEARCH SUBSTRATE IS DOWN (${OWNED_REST}). Every current table and every daily agent lives here;

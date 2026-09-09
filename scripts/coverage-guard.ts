@@ -10,6 +10,10 @@ const H=async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:
 const hdr=await H();
 // each family: the concepts/tables it REQUIRES and the minimum coverage for a verdict to be about the MARKET
 const STRICT=Deno.env.get("GUARD_SELFTEST")==="1";
+// D-841: the guard DID exercise a synthetic subject under STRICT (an impossible minTickers plus an UNFETCHED concept)
+// and exited 1 — but it never said so, and the meta-guard cannot distinguish a self-test that refused from a guard
+// that happened to be red. A check whose exercise is invisible is not auditable; say it out loud.
+if (STRICT) console.log("  SELFTEST MODE — an impossible coverage floor and a deliberately UNFETCHED concept are injected below; this run MUST exit RED.");
 const FAMILIES:{name:string;concepts?:string[];table?:string;minTickers:number;note:string}[]=[
   {name:"value / earnings-yield",concepts:["StockholdersEquity","NetIncomeLoss","EntityCommonStockSharesOutstanding"],minTickers:STRICT?99999:1000,note:"book/mktcap, E/P"},
   {name:"ACCRUALS (Sloan)",concepts:["AssetsCurrent","LiabilitiesCurrent","CashAndCashEquivalentsAtCarryingValue","Assets"],minTickers:1000,note:"working-capital accruals"},
@@ -45,4 +49,6 @@ for(const f of FAMILIES){
 }
 console.log(`\n  ${red===0?"ALL FAMILIES ADEQUATELY COVERED — a null here is evidence about the MARKET."
   :`${red} FAMILY(S) RED — a null in those is evidence about OUR DATA, not the market. Report them as UNTESTED, not NULL.`}`);
+if(STRICT && red>0) console.log("  COVERAGE GUARD SELFTEST PASSED — the injected impossible floor and unfetched concept were both refused.");
+if(STRICT && red===0){ console.error("!! COVERAGE GUARD SELFTEST FAILED — the injected subjects did NOT trip it."); Deno.exit(1); }
 if(red>0) Deno.exit(1);
