@@ -18239,6 +18239,37 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-842 (2026-09-09) THE DAY BOUNDARY WAS MY CHOICE, AND IT MOVES THE STATISTIC TEN TIMES MORE THAN THE REGIME DOES — the atlas finding survives, its stability claim does not
+
+Flaw C2 of `docs/METHODOLOGY_FLAWS.md`, identified by reasoning yesterday and tested today: "a day" for a 24-hour
+instrument is a CONVENTION, and this programme picked 00:00 UTC without ever asking whether its results depend on the
+pick. D-828's two correlations were the evidence for **"range is predictable, direction is not"**, which motivated
+D-829, D-830 and the reading of D-814. All of them inherit that boundary. `scripts/boundary-robustness.ts`, 24
+instruments, 26,300 days per boundary, DESCRIPTIVE ONLY.
+| day starts at | corr(first 4h, rest of day) | corr(range, prior-day range) | body/range |
+|---|---|---|---|
+| **00:00 UTC** (every prior result) | 0.596 | 0.599 | 0.434 |
+| 06:00 | 0.582 | 0.567 | 0.428 |
+| 12:00 | **0.639** | 0.557 | 0.423 |
+| 18:00 | **0.546** | 0.612 | 0.440 |
+**THE SUBSTANCE SURVIVES.** Range is predictable at every boundary — 0.55 to 0.64 for the first-hours correlation, 0.56
+to 0.61 for the prior-day one. There is no boundary at which the finding disappears, so "range is predictable and
+direction is not" stands as a statement about these instruments.
+**THE STABILITY CLAIM DOES NOT, and it was mine.** D-828 reported a train→test drift of **0.009** on the first-hours
+correlation and offered it as evidence the relationship barely moves. The **boundary spread is 0.093 — ten times
+larger.** A convention I chose arbitrarily moves the statistic an order of magnitude more than three years of regime
+change did. The sentence "drifts by less than 0.01 across a regime change" was true and misleading in the same breath:
+it measured stability against TIME while ignoring stability against MY OWN CONVENTION, and I presented the first as if
+it settled the second.
+The prior-day correlation spreads 0.055 against a 0.028 drift (about 2x — mostly structure, but the boundary is not
+free) and body/range spreads 0.017 against 0.014 (essentially stable).
+**The discipline this earns, stated narrowly rather than inflated into a law:** any conclusion resting on a UTC day
+reports its **boundary sensitivity beside its train/test drift**. The two answer different questions — "does time move
+it" and "does my convention move it" — and this programme has been answering only the first for every intraday result
+it has ever produced.
+GOLD: reliability — a flaw named by reasoning and tested the next day, finding the recorded finding sound and the
+precision I claimed for it overstated by an order of magnitude.
+
 ## D-841 (2026-09-09) THE BOARD'S GREEN IS NOW MEASURED RATHER THAN ASSUMED — 30 of 30 guards demonstrate a working red branch, and 2 of the 5 I reported broken were my own detector
 
 D-836 built the meta-guard, confirmed flaw C4, and reported **5 of 30 guards cannot be shown able to refuse anything**.
