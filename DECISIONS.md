@@ -18239,6 +18239,92 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-844 (2026-09-10) FLAW C8 TESTED — the hourly panel holds no dead contracts, and while checking that I found D-828's headline is a pooling artifact
+
+Flaw C8: **survivorship in the DATA SOURCE, not the universe.** D-639/645 repaired the equity delisting hole and
+D-645/646 built a survivor-free daily perp panel. Nobody ever asked whether the **hourly** panel got the same
+treatment — and D-827, D-828, D-829 and D-842, every intraday conclusion of the last fortnight, read it.
+Pre-registered as `D-844-panel-survivorship`, this time with `outcome` NULL rather than the placeholder that froze
+D-843's label.
+
+### Half (a): the hole is real, and it is exactly where it hurts
+Liveness read from the venue's own status list — 897 contracts listed, **766 TRADING** — never inferred from staleness.
+
+| panel | symbols | dead held | dead % |
+|---|---|---|---|
+| **tf=1h** (what D-827/828/829/842 read) | 25 | **0** | **0.0** |
+| tf=1hSF | 97 | 10 | 10.3 |
+| **tf=1dSF** (built survivor-free by D-645/646) | 512 | **138** | **27.0** |
+| tf=1dSPOT | 400 | 61 | 15.3 |
+| tf=1dBYBIT | 483 | 51 | 10.6 |
+
+**136 contracts traded for 300+ days and then stopped, and not one is in the panel every intraday result reads.**
+The repair was done on the daily panel and never propagated to the hourly one.
+
+### Half (b): on the evidence, it does not move the statistic — reported as description, not as a verdict
+Dead contracts are shorter-lived by construction, so an unmatched alive-vs-dead comparison measures **youth, not
+death** — the D-590 shape. Matched on history depth, per contract:
+
+| depth (daily bars) | alive n | alive corr | dead n | dead corr | gap |
+|---|---|---|---|---|---|
+| 300–599 | 99 | 0.395 | 52 | 0.367 | 0.028 |
+| 600–1199 | 145 | 0.364 | 41 | 0.363 | 0.000 |
+| 1200+ | 130 | 0.443 | 20 | 0.452 | −0.009 |
+| **depth-matched** | | | | | **0.014** |
+
+0.014 against a 0.093 bar. Body/range 0.426 alive versus 0.423 dead.
+
+### VERDICT: UNTESTED — the registered control failed and I am not moving the threshold
+The control required mature live contracts to reproduce D-828's **0.612** within 0.15. They give **0.443**, off by
+0.169. By the rule I wrote, that makes the cohort comparison invalid and the verdict UNTESTED, so half (b) above is
+recorded as description rather than as the NULL it would otherwise have been.
+
+**The estimator was repaired mid-run and the repair is declared, not hidden.** The first version pooled every day of
+every contract into one correlation: **0.096 across 512 contracts, 0.498 across the 60 deepest.** The control caught
+it. I changed to per-contract with depth matching and did **not** touch the decision rule or the cohort definition.
+
+GOLD: research — a named flaw tested to an honest UNTESTED rather than to the NULL its own numbers would have given,
+because the registered control failed and thresholds are not moved after the data arrives.
+ACTS-ON: gate — a panel holding zero dead instruments is now a stated deficiency at the `micro_entry` gate rather than
+a clean universe, and the four intraday entries that read `tf=1h` carry a narrowed universe statement.
+
+---
+
+## D-844b (2026-09-10) WHY THE CONTROL FAILED — 0.612 is a pooling artifact, and I pooled it again eight days ago in the self-attack on the same statistic — DESCRIPTIVE ONLY
+
+The rule read a control failure as "the daily panel measures something else". **It does not.** D-828's own 16 perps,
+under D-828's own recipe, give a per-instrument median of 0.373 and a pooled 0.498. The panels agree. **The reference
+value is what does not reproduce.**
+
+| D-828's exact recipe (2023+, hourly-aggregated UTC days) | pooled | per-instrument median |
+|---|---|---|
+| **ALL 24 — what D-828 reported** | **0.599** | **0.378** |
+| the 16 crypto perps | 0.498 | 0.373 |
+| the 8 FX / index / commodity | 0.710 | 0.457 |
+
+Two controls on the decomposition itself: **the bar source is irrelevant** (hourly-aggregated days 0.497 versus venue
+daily bars 0.497 on the same 16 perps) and **the window is nearly irrelevant** (full history 0.497 versus 2023+ 0.499).
+So the entire gap is the estimator.
+
+**The pooling inflation is 0.221 — 2.4× the 0.093 boundary spread D-842 called this statistic's precision floor — and
+the pooled figure exceeds EVERY constituent instrument's own median.** That is arithmetic, not coincidence: pooling
+instruments whose volatility *levels* differ by an order of magnitude manufactures correlation, because a
+high-volatility instrument has a large range on both days.
+
+**What survives:** a per-instrument median of 0.378 is real persistence, and the direction half is untouched at 50.1%.
+**"Range is predictable and direction is not" stands.** What does not survive is the magnitude — 0.60 describes
+neither asset class (0.498 crypto, 0.710 FX/index) — and the confidence built on it.
+
+**This is the D-415 shape and it is THE BREADTH LAW's own rule (4).** The uncomfortable part is the date: I wrote
+D-842 eight days ago as a self-attack on this exact statistic, and pooled it there too. A self-attack that inherits
+the defect it is auditing tests the assumption it should be questioning. **D-842's 0.093 boundary spread was measured
+on the pooled statistic, so whether the per-instrument statistic is more or less boundary-sensitive is UNTESTED.**
+
+GOLD: research — a named flaw tested to an honest UNTESTED, and a load-bearing headline of the last fortnight
+corrected from 0.60 to 0.378 by the control that the test was required to carry.
+ACTS-ON: gate — the `micro_entry` gate must read range predictability at its per-instrument value, not its pooled
+one, and must treat a panel with zero dead instruments as a stated deficiency rather than a clean universe.
+
 ## D-843 (2026-09-09) THE COST OF TRADING FELL 19x AND WE CHARGED ONE NUMBER FOR SIXTY YEARS — flaw C3 tested, NULL on the rule I wrote, and the decay story does not survive it
 
 Flaw C3 of `docs/METHODOLOGY_FLAWS.md`, named by reasoning yesterday: **we charge one flat modern cost across spans
