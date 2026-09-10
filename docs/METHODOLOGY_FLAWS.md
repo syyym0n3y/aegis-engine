@@ -66,7 +66,7 @@ is not in.
 The operator's standard is a 10^7 effect. Stated honestly against this record: **no fix in sections A–C produces it.**
 Better methodology makes the nulls more reliable; it does not create a return. The three things on this record with any
 claim to that order of magnitude are (1) the structural lane — deposits × compounding × wrapper, certain but linear in
-capital and slow; (2) the capacity-inverted mechanisms of D-834, which are real, small, and unverified for UK access;
+capital and slow; (2) the capacity-inverted mechanisms of D-834, which are real, small, and unverified for UK access — **now with one measured per-head number: the reachable venue sign-up set is ~£150–£400 once (D-851), 5–15% of the account, non-compounding**;
 and (3) something not yet in the search space, which section C6 argues is the most likely place it lives. **A
 10^7 outcome is far more likely to come from widening what we ask than from tightening how we test.** That is the
 uncomfortable conclusion of a register of methodology flaws, and it is the honest one.

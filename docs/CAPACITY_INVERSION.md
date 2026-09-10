@@ -19,7 +19,7 @@
 | **G5** | **Regulatory access asymmetry** | some products are retail-only; some are institution-only | retail-only platforms; and the INVERSE — UK retail is banned from crypto derivatives (D-823f), which removes 5 of 12 instruments from our own micro rung | partly mapped |
 | **G6** | **Customer-acquisition subsidies** | a firm pays to acquire a person, not capital; it cannot pay a fund the same way | current-account switching incentives; broker sign-up offers; introductory rates | **NOT TESTED — and not market data.** These are certain, retail-only, and for a small account can exceed every edge in this record. Arithmetic, verifiable only against live offers |
 | **G7** | **Rounding rules that favour the small holder** | rounding is applied per holder, so the benefit is fixed per person rather than per pound | merger odd-lot provisions; fractional round-ups; minimum allocations | **UNTESTED (D-849) — and the 'same data path as D-837' note was WRONG.** No table holds merger consideration, and the going-private cash-out cohort is absent from a today-serving source: 1:500+ reverse splits show a 0-1% delisting signature, i.e. only the survivors are held. Needs a filing-text ingest (DEFM14A / SC TO-T), not a price series |
-| **G8** | **Attention cost nobody will pay for a small sum** | the claim is free but must be made by a person | class-action settlement claims on shares held; unclaimed corporate-action elections | **QUEUED** — not measurable from price data; needs a holdings list |
+| **G8** | **Attention cost nobody will pay for a small sum** | the claim is free but must be made by a person | class-action settlement claims on shares held; unclaimed corporate-action elections | **MEASURED FROM PUBLISHED TERMS (D-852) — and NOT capacity-inverted for an investor:** securities settlements pay pro rata to LOSS (~25% of eligible file, 44–52% of damages approved), so a small holder gets a small share; only consumer settlements pay per head (~$30). Operating rule: file every notice |
 
 ## What the generators say once assembled
 
@@ -59,9 +59,8 @@ bounded number, and no amount of it compounds into 10^7 on its own.
 2. **G7 — merger odd-lot and rounding provisions.** ~~Same data path as D-837~~ **Corrected D-849: not the same data
    path.** The cash-out cohort went private and the source does not serve it; testing G7 needs DEFM14A / SC TO-T
    filing text joined to pre-announcement prices. Per-event value still plausibly larger, and still unmeasured.
-3. **G6 — acquisition subsidies.** Not a market test. For an account of a few thousand pounds these are large,
-   certain and retail-only, and the record has never counted them because they are not in a price series.
-4. **G8 — attention-cost claims.** Requires a holdings list, so it follows an account rather than preceding one.
+3. ~~**G6 — acquisition subsidies.**~~ **Quantified, D-851:** ~£150–£400 once at this scale, the largest single-year effect on the record and non-compounding. Now an operator action, not a research item.
+4. ~~**G8 — attention-cost claims.**~~ **Quantified, D-852:** not capacity-inverted for an investor (pro rata to loss). Reduces to an operating rule — file every settlement notice on any US-listed position.
 
 ## What this document does not claim
 
