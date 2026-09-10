@@ -372,6 +372,10 @@ while true; do
   if ! deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/cockpit-render.ts; then
     echo "$(date -u +%FT%TZ) COCKPIT RENDER RED — data/cockpit.html failed its positive control; do not read it as oversight"
   fi
+  # D-855: the cycle regenerates docs/CATALOGUE.md, docs/SEARCH_SPACE.md and docs/OPERATOR_QUEUE.md every day; left
+  # uncommitted they sit as tree noise until a session commits them, which is a prompt in disguise. Paths-restricted,
+  # local only (never pushes), no-op when nothing changed.
+  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
   sleep 86400
 done
 

@@ -1,9 +1,9 @@
-# OPERATOR QUEUE — regenerated 2026-09-10T15:35Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-09-10T17:45Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — all green (31 guards, board logged 0.0h ago)
-- nothing to fix. A red here that persists two cycles is the one time a session is worth starting; the guard's own output names the fix.
+## Board — **1 RED** (31 guards, board logged 0.0h ago)
+- RED   log-triage     RED — 1 NEW error class(es) since the baseline. Read eac
 
 ## Micro rung — live feed and sheet
 - hourly FX/index feed: **7/7 fresh within 3h** · sheet: **0 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
@@ -29,15 +29,15 @@
 | fwd-hedging-pressure-flip | 2026-08-26 | not yet computable | 15 | 15 day(s) of the 728 required. Scored by scripts/cot-crosssectional.ts and tff-crosssectional.ts with FROM_D s |
 | fwd-nt-late-avoid | 2026-09-02 | not yet computable | 0 | 0 new liquid-tercile NT events with 250d since 2026-09-02; rule needs >=50. Accrues ~2000 NT/yr; first read ~2 |
 | fwd-payout-8 | 2026-08-22 | not yet computable | 19 | 19 day(s) elapsed; rule needs >=12 scored months (~365d) |
-| fwd-persist-real-K24 | 2026-09-03 | not yet computable | 0 | 0 forward persist(real)+PSL-fade events since 2026-09-03 across 0 crypto with >=20; rule needs >=200 pooled to |
+| fwd-persist-real-K24 | 2026-09-03 | not yet computable | 1 | 1 forward persist(real)+PSL-fade events since 2026-09-03 across 0 crypto with >=20; rule needs >=200 pooled to |
 | fwd-placeable-psl-fade-k24 | 2026-09-08 | not yet computable | 6 | 6 forward event(s) since 2026-09-08 across 3 placeable instrument(s); the rule's first read is at 250 and its  |
 | fwd-prop-ftmo100k-utc16-0p5x-v1 | 2026-09-06 | not yet computable | 0 | ledger empty since registration 2026-09-06: fee unpaid, no evaluation started. not-yet-computable, NOT inconcl |
-| fwd-psl-fade | 2026-09-03 | not yet computable | 74 | 74 forward PSL-fade events since 2026-09-03 across 0 instrument(s) with >=20; rule needs >=1000 pooled (~6 mon |
-| fwd-residual-follow | 2026-08-24 | not yet computable | 4 | 4 attribution stamp(s) since the clock start. UNDERPOWERED BY CONSTRUCTION until the stamps are daily: the rul |
+| fwd-psl-fade | 2026-09-03 | not yet computable | 77 | 77 forward PSL-fade events since 2026-09-03 across 0 instrument(s) with >=20; rule needs >=1000 pooled (~6 mon |
+| fwd-residual-follow | 2026-08-24 | not yet computable | 5 | 5 attribution stamp(s) since the clock start. UNDERPOWERED BY CONSTRUCTION until the stamps are daily: the rul |
 | fwd-spinoff-premium | 2026-08-31 | not yet computable | 0 | 0 new liquid spincos with full 500d forward data since 2026-08-31; rule needs >=20 (~3-4y to accrue). not-yet- |
-| fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | not yet computable | 3 | 3 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250,  |
-| fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | not yet computable | 13 | 13 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, |
-| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | not yet computable | 11 | 11 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, |
+| fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | not yet computable | 5 | 5 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250,  |
+| fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | not yet computable | 16 | 16 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, |
+| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | not yet computable | 12 | 12 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, |
 
 ## If you want the sessions to run without you
 A session's job is now: read this page, fix any RED the guard output names, commit, regenerate. That is a routine, not a conversation. To arm it (it spends, so it is not created for you): in Claude Code run `/schedule` and give it — *"In /Users/ona/Projects/aegis: run `bash scripts/guard-status.sh` and `deno run --allow-net --allow-env --allow-read --allow-write --allow-run scripts/log-triage-guard.ts`; for every RED, read the guard's own output, fix the cause, verify the guard green, commit with a D-entry; then regenerate docs/OPERATOR_QUEUE.md. Never open accounts, deposit, or place orders. Stop when the board is green."* — daily, after the 02:00 UTC cycle.

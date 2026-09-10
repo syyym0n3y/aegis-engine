@@ -1,11 +1,12 @@
 {
   "classes": {
-    "postgrest|500 /trd_fx_hourly": 72,
-    "postgres|ON CONFLICT DO UPDATE command cannot affect row a second time": 72,
+    "postgrest|500 /trd_fx_hourly": 54,
+    "postgres|ON CONFLICT DO UPDATE command cannot affect row a second time": 54,
     "postgres|column trd_bars_intraday.first_date does not exist at character N": 1,
-    "postgres|column trd_crypto_forward.d does not exist at character N": 3,
-    "postgres|column trd_prereg.created_at does not exist at character N": 1
+    "postgres|column trd_crypto_forward.d does not exist at character N": 2,
+    "postgres|column trd_prereg.created_at does not exist at character N": 1,
+    "postgres|permission denied for table trd_pnl_snapshot": 2
   },
-  "set": "2026-09-10T15:32:14.010Z",
+  "set": "2026-09-10T21:40:25.610Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }

@@ -18239,6 +18239,24 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-855 (2026-09-10) THE CYCLE COMMITS ITS OWN DOCS, AND THE FIRST NEW ERROR CLASS THE LOG GUARD CAUGHT WAS THE SYSTEM WORKING
+
+Two small things, both in service of the same directive: no prompt should be needed to keep the record current.
+
+**1. The runner commits what it regenerates.** `docs/CATALOGUE.md`, `docs/SEARCH_SPACE.md` and `docs/OPERATOR_QUEUE.md`
+are rebuilt every cycle and were sitting uncommitted until a session noticed — a prompt in disguise. The runner now
+commits exactly those three paths at the end of each cycle, locally, under its own author name, no-op when nothing
+changed, and never pushes. A failure prints `CYCLE DOCS COMMIT FAILED` where the log-triage guard reads it.
+
+**2. The log-triage guard's first live catch after its baseline was waived, with the reason recorded here.**
+`permission denied for table trd_pnl_snapshot`, twice, 15:36–15:37 UTC: two PostgREST SELECTs that arrived without a
+service-role token and so ran as `anon`, which correctly holds no grant on that table. Both came from the first
+version of the peer session's `operator-queue.ts`, since rewritten; the current script does not touch the table.
+The refusal is the permission model doing its job. Accepted into the baseline; if it recurs it will be NEW again.
+
+GOLD: reliability — the record keeps itself current, and the guard's first catch was read rather than silenced.
+ACTS-ON: gate — the board is the operator's only required read; nothing on it now waits on a session to commit.
+
 ## D-854 (2026-09-10) THE OPERATOR MUST NEVER HAVE TO ASK — the logs nobody read are now board state, and a red board now reaches a person without a session
 
 Operator directive: "make sure I don't ever have to prompt you again." Read literally and against the record: every
