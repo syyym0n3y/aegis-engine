@@ -18239,6 +18239,56 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-851/852 (2026-09-10) THE TWO CELLS NEVER ASKED, ANSWERED FROM PUBLISHED TERMS — one confirms the capacity-inversion rule exactly, the other turns out not to be capacity-inverted for an investor at all
+
+D-850's map had two cells with no row. Both are non-market-data questions, which is why a market-data engine never
+asked them, and both were answerable the way D-839 answered the broker question: from published sources, in an hour,
+instead of being filed as operator-only. Neither needed a pre-registration — they are censuses of terms, not tests.
+
+### D-851 — E1 / G6: venues pay per head, and at this account's scale it is the largest single-year effect on the record
+UK offers, September 2026, split by what a few-thousand-pound account can actually reach:
+
+| reachable (minimum under £1,000) | value | condition |
+|---|---|---|
+| IG bonus shares | £50–£1,000 | £500 deposit, hold to 31 Dec 2026 |
+| IG cashback | up to £250 | £200, hold to 30 Nov 2026 |
+| InvestEngine | £20–£100 | £100, hold 12 months |
+| Trading 212 free share | up to £100 | £1 deposit, saleable after 3 days |
+| Freetrade | £10–£100 | £50 |
+| trading.com / ii free trades | £50 / £150 | — |
+
+The draws are weighted to the bottom, so the realistic sum is **roughly £150–£400 once, upper bound ~£1,600**, on about
+£1,000 of deposits held one to twelve months. **On a few thousand pounds that is 5–15% of the account in a year — larger
+than any edge this programme has measured — and it does not compound: it is a one-time transfer from an acquisition
+budget.** The £20,000-minimum tier (ii £100–£3,000, Charles Stanley £300–£1,500, Fidelity £250–£2,500 at £40k, Lloyds
+£250–£5,000) is unreachable until the account is ten times larger, at which point it is worth 0.5–1.5% once. **That is
+the inversion in one number, and it is the D-834 rule exactly: a fixed amount per head, gated by a minimum and a hold.**
+Operator action only — accounts and deposits are the operator's, never mine.
+
+### D-852 — E2 / G8: claims administrators pay per claimant — but a securities claim scales with loss, not with heads
+Published statistics: about **25% of eligible investors file**; approved claims run **44% (median) / 52% (mean)** of
+plaintiff-style damages across 350+ settlements 2015–2024; recovery as a share of loss 12–191%; per-claimant averages in
+named cases $1,889 to $50,754, **dominated by institutional positions**. Morrison v. NAB (secondary source) covers any
+purchaser of a US-listed security, so a UK holder is eligible.
+
+**E2 is capacity-inverted only in the form that is not an investment.** A securities payment is pro rata to recognised
+loss, so a small holder recovers a small holder's share — tens to low hundreds of pounds per event. The genuinely
+per-head form is the consumer settlement (Facebook, ~28m claims at ~$30) — real, capital-free, trivial. UK unclaimed
+assets (~£3bn) are the recovery of one's own money. **What it does change is an operating rule, not a mechanism: 75% of
+eligible investors never file, so every settlement notice on any US-listed position is free money with a deadline.**
+Whether a UK nominee passes those notices to the beneficial holder is the D-839 street-name question, still open.
+
+**What the pair says about the map.** The two cells the outside-in taxonomy flagged were both real, both reachable from
+published sources, and only one of them was what the capacity document assumed. That is the map doing its job:
+20 of 20 cells now carry at least one row, and the honest next widening is a second taxonomy on a different axis,
+not a deeper search of these twenty.
+
+GOLD: research — two never-asked cells measured from primary-adjacent sources rather than deferred to the operator,
+one confirming the capacity-inversion rule and one refuting its assumed application.
+ACTS-ON: gate — G6 and G8 leave the capacity queue as quantified; the search-space map has no empty cell, so the
+`micro_entry` queue's front is now the operator-only items (broker ticket, first hand-placed fill, the reachable
+sign-up set) rather than any further research.
+
 ## D-849/850 (2026-09-10) G7 IS NOT IN THE SOURCE, AND THE MAP OF WHAT WAS NEVER ASKED — drawn from outside the record for the first time
 
 ### D-849 — G7 merger odd-lot provisions: UNTESTED, and the queue note was wrong
