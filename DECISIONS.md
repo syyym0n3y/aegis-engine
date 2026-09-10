@@ -18239,6 +18239,124 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-845/846/847/848 (2026-09-10) THE REST OF THE FLAW REGISTER, TESTED — one confirmed, one refuted, one untestable, and a hole in the detector that certifies every guard
+
+Four remaining section-C flaws, tested in one pass on the operator's instruction to stop checkpointing. Each was named
+by reasoning eight days ago with no evidence behind it. Three now have evidence; one turned out to be unmeasurable as
+the record stands, which is itself the finding.
+
+### D-845 — closing what D-844b opened, and it is a NON-correction
+D-844b showed the statistic D-842 audited is itself pooled, so D-842's 0.093 boundary spread was a pooled quantity.
+`boundary-robustness.ts` now reports both estimators side by side; **the original pooled columns are unchanged, so
+D-842's recorded numbers still reproduce.**
+
+| | pooled | per-instrument | relative to own level |
+|---|---|---|---|
+| corr(first 4h, rest) spread | 0.093 | 0.058 | 15.7% vs **15.2%** |
+| corr(range, prior) spread | 0.055 | 0.029 | 9.3% vs **8.0%** |
+
+Read as absolute points, the per-instrument statistic looks *less* boundary-sensitive — a reprieve. **Relative to each
+estimator's own level the two are nearly identical.** The boundary still moves the statistic by the same fraction of
+itself. What shrank is the number of correlation points, because the level it was measured against was inflated by the
+same pooling. **D-842 stands unchanged**, and the thread D-844b opened is closed: pooling was not masking instability.
+
+### D-846/846b — flaw C1: the price we store for a 1980s session is 96% away from the price that traded
+Nominal price is **reconstructed, not assumed.** Adjusted price = nominal × f, and because f scales every price in a
+session equally it scales the *increment* too — and the nominal increment is the regulated tick, all three regimes of
+which D-843 measured off this same panel. So f = measured tick / regulated tick.
+
+D-846 **failed its own lattice control at 61.6% against an 80% bar**, and the failure was not uniform: **82.7%
+on-lattice under eighths, 63.6% under sixteenths, 42.4% under decimals.** A tick is recoverable only while a one-tick
+day is common, and it stops being common once the tick is a cent on a $66 stock — **the same resolution floor that
+killed Corwin–Schultz in D-843.** Rather than move the threshold after seeing it fail, the era where the instrument
+demonstrably works was **re-registered as D-846b** and run there. It is SUPPORTED:
+
+| decade | median stored | median traded | distortion |
+|---|---|---|---|
+| 1970s | $0.72 | **$24.76** | 0.974 |
+| 1980s | $1.95 | **$30.50** | 0.940 |
+| 1990–97 | $5.04 | **$34.87** | 0.864 |
+
+Made concrete: a rule firing "within 5 cents of a whole dollar" fires on **14.50%** of bars in nominal space and
+**8.99%** in the space we store — **1.61×. The same rule is a different rule depending on which series it reads.**
+
+**Scope, as loud as the result.** Adjusted *returns* remain correct and every return-based result on this board is
+untouched. This invalidates rules keyed to an **absolute** level. **Relative** level rules — a break of the prior
+session's low, a swing high — compare prices days apart over which f barely moves and are largely safe; their exposure
+is confined to comparisons spanning an adjustment event, which stays UNTESTED. **The decimal era is unmeasured** and
+nothing about it may be read off the pre-1997 figure. The intraday work is FX and crypto and is unaffected — luck.
+
+### D-847 — flaw C5: 84% of guard thresholds cite a decision, and that is not the same as being justified
+25 deciding thresholds across 31 guards; **21 traceable, 4 not.** Better than assumed. But **traceable is not
+justified**, and each load-bearing threshold traces only to the entry that *coined* it:
+
+- **t ≥ 2.0** — conventional; never compared against 2.5 or 3.0 on this programme's own trial count.
+- **50-name breadth floor** — D-443 collapsed at **14** names; 50 is a round number above it.
+- **1.5× universe spread** — D-535 had just measured **2.1×**, and the bar was set below it. **Fitted to the
+  observation that created it.**
+
+**How much the convention decides**, over 801 t-statistics in 170 rows: 54.6% clear 2.0, 36.1% clear 2.95, 18.1% clear
+the 5.4556 mined ceiling. **19.0% sit in the 2.0–3.0 band where moving the bar changes the answer.**
+
+**The asymmetry:** promotion gates are insert-only and cite a decision, so a motivated operator cannot loosen one
+quietly. **Nothing stops them loosening a guard.** Shipped as a **ratchet** — `threshold-guard.ts` freezes today's 4,
+reds on a new one, and only ever ratchets down. A guard demanding retroactive cleanup gets switched off.
+
+*Two defects in my own scanner, both caught by its selftest: reading only literals found 13 thresholds across 31
+guards (guards name their numbers), and after the rename it scanned itself and reported 11 untraceable instead of 4.*
+
+### D-847b — the meta-guard certified a guard whose self-test THROWS
+While fixing a false positive in `benchmark-guard` — its loss-detector read **"post-2001" as t = −2001** and reddened
+D-846, a row claiming no return at all — I left a regex block-scoped. The self-test threw a ReferenceError.
+**`guard-selftest-all` reported: "PASS — refused a synthetic row (exit 1) — the red branch works." 31 of 31. Board
+all-green.**
+
+Its criterion was `code !== 0 && /RED|refus|violat/`. **A crash also exits 1, and a stack trace contains none of the
+disqualifying words.** Fixed: an uncaught throw is now disqualifying, because a guard that crashes has demonstrated
+nothing about whether it can refuse. Verified by deliberately breaking `benchmark-guard` and confirming the meta-guard
+goes RED, then restoring it.
+
+**This is D-841's finding repeating in the same place for the fourth time.** Every failure this meta-guard has produced
+has been its own criterion, not its subjects. The lesson is not about this guard: **a detector is a subject too, and
+"has anyone made it go red for the RIGHT reason" is a different question from "has anyone made it go red."**
+
+### D-848 — flaws C6 and C7: the search is self-referential, and C6's own evidence is wrong
+284 rows classified by stated origin. *The first run left 81% unclassified — a defect, not a finding: the classifiers
+looked for the language of an external source while most rows cite a prior D-NNN of this programme's own.*
+
+| origin | rows | share | survival vs 37.0% base rate |
+|---|---|---|---|
+| **follow-on — generated by a previous entry of this programme** | **182** | **64.1%** | 1.03× |
+| literature | 33 | 11.6% | 1.23× |
+| enumeration | 16 | 5.6% | **1.35×** |
+| self-attack | 7 | 2.5% | **1.55×** |
+| accident | 5 | 1.8% | **0.54×** |
+| **operator** | **4** | **1.4%** | 0.00× |
+
+**C6 is confirmed in a different shape than it was written.** The search is not shaped by the operator and it is barely
+systematic. **It is self-referential: 64.1% of questions were generated by this programme's own previous answers.** A
+search that mostly asks what its last answer suggested explores a neighbourhood, not a space.
+
+**And C6's stated evidence is refuted.** The register argued the surviving mechanisms were found *accidentally*, and
+that this proved the search space was the binding constraint. **Accidental rows survive at 0.54× the base rate —
+below average.** The two highest-yielding origins are the two most deliberate: self-attack at 1.55× and systematic
+enumeration at 1.35×. *Caveat, load-bearing: "survivor" here is a status of monitoring/watched/measured/confirmed,
+which includes descriptive rows and is a weak stand-in for "a real mechanism".*
+
+**C7 is not testable as the record stands.** Only **5 of 33** literature-derived rows (15%) carry a publication date
+distinguishable from a data-span date. Without one, a null on a published anomaly cannot be read as "it stopped
+working" rather than "it never worked" — and this record has been making that reading selectively. The fix is
+metadata, not analysis. D-843 sharpened the same point from the cost side.
+
+**What none of this can measure** is the questions never asked, which is C6's real claim and is unmeasurable by
+construction. If 64% of the search is its own echo, the way out is not a better test — it is a question from outside.
+
+GOLD: research — the last four flaws in the register tested in one pass, producing one confirmation, one refutation of
+my own stated evidence, one untestable-as-recorded, and a real hole in the detector that certifies every other guard.
+ACTS-ON: gate — three consequences bind the `micro_entry` gate: an absolute-level rule on the equity panel is
+inadmissible, a threshold with no cited decision cannot be introduced silently, and a t-statistic between 2.0 and 3.0
+is now explicitly inside the band where the unregistered convention decides.
+
 ## D-844 (2026-09-10) FLAW C8 TESTED — the hourly panel holds no dead contracts, and while checking that I found D-828's headline is a pooling artifact
 
 Flaw C8: **survivorship in the DATA SOURCE, not the universe.** D-639/645 repaired the equity delisting hole and

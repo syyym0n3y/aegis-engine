@@ -96,8 +96,18 @@ for (const x of redRows) console.log(`  RED  ${x} — claims a return with no un
 //   COT commodities        gross t -0.95  reported t -4.15   mean ratio 4.40 / t ratio 4.37
 // A row asserting that something SIGNIFICANTLY LOSES must therefore carry its gross figure, because the net one can
 // be manufactured at will by raising the assumed fee.
+// \bt, not bare t: without the boundary this matched "post-2001" and "pre-2005" as t-statistics of minus two thousand,
+// and it flagged D-846 — a row that claims no return at all — on the strength of a hyphenated year. A guard that reads
+// a date as a test statistic is the B5 class: it goes red, but wrongly, and that is how a guard stops being read.
+// Module-scoped so the selftest can exercise it; block-scoped it typechecked and then threw at runtime, which is how
+// this guard's selftest came to be broken while the board read all-green.
+const CLAIMS_SIG_LOSS = /(\bt\s*[-–]\s?[2-9]\d?(\.\d+)?\b)|(portfolio t\s*[-–]\s?[2-9])|(significantly (loses|negative))/i;
 {
-  const CLAIMS_SIG_LOSS = /(t\s*-[2-9]\d*(\.\d+)?)|(portfolio t\s*-[2-9])|(significantly (loses|negative))/i;
+  // \bt, not bare t: without the boundary this matched "post-2001" and "pre-2005" as t-statistics of minus two
+  // thousand, and it flagged D-846 — a row that claims no return at all — on the strength of a hyphenated year.
+  // A guard that reads a date as a test statistic is the B5 class: it goes red, but wrongly, and that is how a guard
+  // stops being read. Also bounded to |t| < 100, since no honest t-statistic is four digits.
+  // (regex hoisted to module scope so the selftest can exercise it — see CLAIMS_SIG_LOSS above)
   const HAS_GROSS = /gross t|GROSS \(|gross of|COST_BP=0|before cost|gross portfolio t|pre-cost/i;
   let lossRed = 0, lossOk = 0, lossBacklog = 0;
   for (const r of rows) {
@@ -233,11 +243,16 @@ if (Deno.env.get("SELFTEST") === "1") {
   // carries a return and a decomposition must be COMPLIANT, never exempt.
   const desc = "BOOK -9.56%/yr t -7.80; universe mean +0.353%; excess vs universe -0.138% | DESCRIPTIVE ONLY";
   const c4 = CLAIMS_RETURN.test(desc) && HAS_ABSOLUTE.test(desc) && !EXEMPT_TEXT.test(desc);
+  // D-847: the hyphenated-year false positive, now permanently covered. "post-2001" is not a t-statistic.
+  const year = "nothing about the post-2001 era or the pre-2005 span may be inferred; no return is claimed";
+  const realLoss = "the book loses: portfolio t -7.80 over 137 weeks";
+  const c5 = !CLAIMS_SIG_LOSS.test(year) && CLAIMS_SIG_LOSS.test(realLoss);
   console.log(`    flags a bare spread ...................... ${c1 ? "YES" : "NO"}`);
   console.log(`    passes one with a universe decomposition . ${c2 ? "YES" : "NO"}`);
   console.log(`    ignores a row claiming no return ......... ${c3 ? "YES" : "NO"}  (the negation case both the execution and selection guards got wrong)`);
   console.log(`    does NOT exempt a DESCRIPTIVE-ONLY row that claims a return ... ${c4 ? "YES" : "NO"}  (the exemption bug this guard shipped with)`);
-  if (!c1 || !c2 || !c3 || !c4) { console.log(`    SELFTEST FAILED — guard does not discriminate. RED.`); Deno.exit(1); }
+  console.log(`    reads "post-2001" as a YEAR, not as t = -2001 ......... ${c5 ? "YES" : "NO"}  (D-847: it did not, and falsely reddened D-846)`);
+  if (!c1 || !c2 || !c3 || !c4 || !c5) { console.log(`    SELFTEST FAILED — guard does not discriminate. RED.`); Deno.exit(1); }
   console.log(`    SELFTEST PASSED.`);
 }
 

@@ -39,10 +39,17 @@ const bars = new Map<string, Bar[]>();
 for (const sym of UNIVERSE) { const b = await loadBars(sym); if (b.length >= 8000) bars.set(sym, b); }
 assertNonEmpty("instruments loaded", [...bars.keys()], 15);
 console.log(`  ${"boundary".padStart(9)} ${"days".padStart(8)} ${"corr(first" + FH + "h, rest)".padStart(22)} ${"corr(range, prior range)".padStart(25)} ${"body/range".padStart(11)} ${"median day range %".padStart(19)}`);
-const out: Record<number, { c1: number; c2: number; body: number; rng: number; n: number }> = {};
+// D-845: EXTENDED after D-844b showed the statistic this script audits is itself POOLED. The original run reported
+// pooled correlations only, so its 0.093 boundary spread was a pooled quantity and said nothing about whether the
+// per-instrument statistic — the honest one, at 0.378 rather than 0.60 — is more or less sensitive to the boundary.
+// A self-attack that inherits its target's defect tests the assumption it should be questioning. Both are now
+// reported side by side; the ORIGINAL POOLED COLUMNS ARE UNCHANGED so D-842's recorded numbers still reproduce.
+const out: Record<number, { c1: number; c2: number; body: number; rng: number; n: number; c1m: number; c2m: number; nInst: number }> = {};
 for (const shift of SHIFTS) {
   const firstRng: number[] = [], restRng: number[] = [], rngSeq: number[] = [], prevSeq: number[] = [], bodies: number[] = [], ranges: number[] = [];
+  const perC1: number[] = [], perC2: number[] = [];
   for (const [, b] of bars) {
+    const iF: number[] = [], iR: number[] = [], iSeq: number[] = [], iPrev: number[] = [];
     const key = (ts: number) => Math.floor((ts - shift * 3600) / 86400);
     const days = new Map<number, Bar[]>();
     for (const x of b) { if (x.ts < SPLIT) continue; const k = key(x.ts); (days.get(k) ?? days.set(k, []).get(k)!).push(x); }
@@ -56,20 +63,40 @@ for (const shift of SHIFTS) {
       let fh = -Infinity, fl = Infinity; for (const x of d.slice(0, FH)) { fh = Math.max(fh, x.h); fl = Math.min(fl, x.l); }
       let rh = -Infinity, rl = Infinity; for (const x of d.slice(FH)) { rh = Math.max(rh, x.h); rl = Math.min(rl, x.l); }
       firstRng.push((fh - fl) / o); restRng.push(d.length > FH ? (rh - rl) / o : 0);
+      iF.push((fh - fl) / o); iR.push(d.length > FH ? (rh - rl) / o : 0);
       bodies.push(Math.abs(d[d.length - 1].c - o) / o / rng); ranges.push(rng);
-      if (prevR !== null) { rngSeq.push(rng); prevSeq.push(prevR); }
+      if (prevR !== null) { rngSeq.push(rng); prevSeq.push(prevR); iSeq.push(rng); iPrev.push(prevR); }
       prevR = rng;
     }
+    if (iF.length >= 100) perC1.push(corr(iF, iR));
+    if (iSeq.length >= 100) perC2.push(corr(iPrev, iSeq));
   }
-  out[shift] = { c1: corr(firstRng, restRng), c2: corr(prevSeq, rngSeq), body: mean(bodies), rng: 100 * med(ranges), n: ranges.length };
-  console.log(`  ${(shift + "h").padStart(9)} ${String(out[shift].n).padStart(8)} ${out[shift].c1.toFixed(3).padStart(22)} ${out[shift].c2.toFixed(3).padStart(25)} ${out[shift].body.toFixed(3).padStart(11)} ${out[shift].rng.toFixed(2).padStart(19)}`);
+  out[shift] = { c1: corr(firstRng, restRng), c2: corr(prevSeq, rngSeq), body: mean(bodies), rng: 100 * med(ranges), n: ranges.length, c1m: med(perC1), c2m: med(perC2), nInst: perC2.length };
+  console.log(`  ${(shift + "h").padStart(9)} ${String(out[shift].n).padStart(8)} ${out[shift].c1.toFixed(3).padStart(22)} ${out[shift].c2.toFixed(3).padStart(25)} ${out[shift].body.toFixed(3).padStart(11)} ${out[shift].rng.toFixed(2).padStart(19)}   | per-instrument median: first-vs-rest ${out[shift].c1m.toFixed(3)}  prior-day ${out[shift].c2m.toFixed(3)}  (${out[shift].nInst} instruments)`);
 }
 const c1s = SHIFTS.map((s) => out[s].c1), c2s = SHIFTS.map((s) => out[s].c2), bodies = SHIFTS.map((s) => out[s].body);
+const c1ms = SHIFTS.map((s) => out[s].c1m), c2ms = SHIFTS.map((s) => out[s].c2m);
 const spread = (a: number[]) => Math.max(...a) - Math.min(...a);
 console.log(`\n  SPREAD ACROSS BOUNDARIES (the number that decides):`);
 console.log(`    corr(first${FH}h, rest-of-day) ... ${Math.min(...c1s).toFixed(3)} .. ${Math.max(...c1s).toFixed(3)}   spread ${spread(c1s).toFixed(3)}`);
 console.log(`    corr(range, prior range) ....... ${Math.min(...c2s).toFixed(3)} .. ${Math.max(...c2s).toFixed(3)}   spread ${spread(c2s).toFixed(3)}`);
 console.log(`    body/range ..................... ${Math.min(...bodies).toFixed(3)} .. ${Math.max(...bodies).toFixed(3)}   spread ${spread(bodies).toFixed(3)}`);
+console.log(`\n  THE SAME SPREAD ON THE PER-INSTRUMENT STATISTIC (D-845) — the pooled figures above are inflated by`);
+console.log(`  cross-instrument volatility differences (D-844b: pooled 0.599 vs per-instrument median 0.378 on this panel).`);
+console.log(`    per-instrument corr(first${FH}h, rest) ... ${Math.min(...c1ms).toFixed(3)} .. ${Math.max(...c1ms).toFixed(3)}   spread ${spread(c1ms).toFixed(3)}   [pooled spread ${spread(c1s).toFixed(3)}]`);
+console.log(`    per-instrument corr(range, prior) ..... ${Math.min(...c2ms).toFixed(3)} .. ${Math.max(...c2ms).toFixed(3)}   spread ${spread(c2ms).toFixed(3)}   [pooled spread ${spread(c2s).toFixed(3)}]`);
+console.log(`    Which estimator is more boundary-sensitive is the question D-844b left open, and it is answered here:`);
+console.log(`    ${spread(c2ms) > spread(c2s) ? "the per-instrument statistic is MORE boundary-sensitive — pooling was masking the instability, not creating it" : "the per-instrument statistic is LESS boundary-sensitive in ABSOLUTE terms — the pooled spread overstated how many points the convention moves"}.`);
+// But absolute spreads are not comparable across estimators with different LEVELS, and reading them as if they were
+// would turn this into a false reprieve. Relative to each estimator's own level the sensitivity is nearly identical,
+// so D-842's qualitative conclusion survives intact — only its arithmetic shrinks with the level it was measured on.
+const rel = (sp: number, lvl: number[]) => 100 * sp / (lvl.reduce((a, b) => a + b, 0) / lvl.length);
+console.log(`    RELATIVE TO EACH ESTIMATOR'S OWN LEVEL, which is the only fair comparison:`);
+console.log(`      corr(first${FH}h, rest): pooled ${rel(spread(c1s), c1s).toFixed(1)}% of its level, per-instrument ${rel(spread(c1ms), c1ms).toFixed(1)}%`);
+console.log(`      corr(range, prior):     pooled ${rel(spread(c2s), c2s).toFixed(1)}% of its level, per-instrument ${rel(spread(c2ms), c2ms).toFixed(1)}%`);
+console.log(`    D-842's conclusion is therefore UNCHANGED in substance: the boundary I chose still moves the statistic`);
+console.log(`    by a similar FRACTION of itself on either estimator. What shrank is the number of correlation points,`);
+console.log(`    because the level it was measured against was inflated by the same pooling (D-844b).`);
 /* The comparator is D-828's own train->test drift, which is what the atlas offered as evidence of stability:
    0.009 for the first-hours correlation and 0.028 for the prior-day one. A boundary spread materially LARGER than
    that means the choice of boundary moves the statistic more than three years of regime change did. */

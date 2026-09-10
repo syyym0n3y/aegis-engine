@@ -46,10 +46,17 @@ for (const g of withSelf) {
      was not. Two of D-836's five "unverified" guards were THIS DETECTOR, not the guards. Now: any SELFTEST/SELF-TEST
      token followed within a few words by PASS/OK/PASSED counts as a declaration. */
   const declared = /SELF-?TEST\b[^\n]{0,24}?\b(PASS(ED)?|OK)\b/i.test(out);
-  const refused = code !== 0 && /RED|refus|violat/i.test(out);
+  // A CRASH ALSO EXITS 1, and until D-847 this treated the two as the same thing: benchmark-guard's self-test was
+  // deliberately broken with an undefined identifier and this meta-guard reported "refused a synthetic row (exit 1) —
+  // the red branch works". It threw a ReferenceError. That is D-841's finding repeating in the detector rather than
+  // the subject, for the third time: the criterion, not the guards. An uncaught throw is now disqualifying, because a
+  // guard that crashes has demonstrated nothing about whether it can refuse.
+  const crashed = /Uncaught|ReferenceError|TypeError:|SyntaxError|Deno\.errors|at file:\/\/\/|PermissionDenied|NotFound: No such file/i.test(out);
+  const refused = code !== 0 && !crashed && /RED|refus|violat/i.test(out);
   const ok = mentions && (declared || refused);
-  const how = declared ? "declares PASS" : refused ? `refused a synthetic row (exit ${code}) — the red branch works` : "";
+  const how = declared && !crashed ? "declares PASS" : refused ? `refused a synthetic row (exit ${code}) — the red branch works` : "";
   if (ok) { pass.push(g); console.log(`    PASS  ${g.padEnd(30)} ${secs}s  ${how}`); }
+  else if (crashed) { fail.push(`${g} (CRASHED during self-test)`); console.log(`    FAIL  ${g.padEnd(30)} ${secs}s  exit ${code} — THREW during its self-test; a crash is not a refusal (D-847)`); }
   else { fail.push(`${g} (exit ${code}${mentions ? "" : ", output never mentions its self-test"})`); console.log(`    FAIL  ${g.padEnd(30)} ${secs}s  exit ${code} — ${mentions ? "mentions a self-test but neither declared a pass nor visibly refused" : "output never mentions its self-test: indistinguishable from a check that did nothing (D-659)"}`); }
 }
 console.log(`\n  ${pass.length} of ${withSelf.length} self-tests exercised their red branch and said so.`);
