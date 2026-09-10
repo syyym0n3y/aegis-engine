@@ -34,3 +34,6 @@ fi
 [ "$LAT" -ge 5 ] || RANGE=5d deno run --allow-net --allow-env ../scripts/refresh-fx-live.ts > ../data/micro-fx-live.log 2>&1 || echo "$T0 MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)"
 deno run --allow-net --allow-env ../scripts/micro-sheet.ts > ../data/micro-sheet.log 2>&1 || echo "$T0 MICRO HOURLY: sheet FAILED"
 echo "$T0 MICRO HOURLY done: $(grep -o '[0-9]* candidate(s); [0-9]* instrument(s) STALE' ../data/micro-sheet.log)"
+# D-854: the hourly job's own FAILED lines must reach the operator, not just its log.
+FAILS="$(grep -c "FAILED" ../data/micro-fx-live.log ../data/micro-sheet.log 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')"
+[ "${FAILS:-0}" -gt 0 ] && "$(dirname "$0")/_notify.sh" "AEGIS MICRO HOURLY" "$FAILS FAILED line(s) in the hourly refresh/sheet logs" || true

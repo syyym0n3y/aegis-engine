@@ -18239,6 +18239,35 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-854 (2026-09-10) THE OPERATOR MUST NEVER HAVE TO ASK — the logs nobody read are now board state, and a red board now reaches a person without a session
+
+Operator directive: "make sure I don't ever have to prompt you again." Read literally and against the record: every
+live-path defect in D-853 was already written down before I found it — the runner echoed FAILED, Postgres logged the
+ON CONFLICT error and the missing column, PostgREST logged the 500s — and nothing read them. The board was green over
+all of it, and the only reason they were found is that a session happened to read a log. That is the dependency the
+directive names, and it is removable.
+
+**1. `log-triage-guard.ts` — the 31st guard, built twice in the same hour by two sessions.** Peer session aegis-e2 wrote the
+version on disk (a ratchet against a baseline, the plumbing/threshold shape) minutes after this session wrote a
+cycle-scoped one; the peer's is kept and is recorded by that session as D-854b. What this session contributes to it:
+the runner now writes a `== CYCLE START ==` stamp at the top of every cycle so an error window can be scoped to the
+current cycle rather than a calendar day, and the first live read of the previous window showed **8 error classes
+the green board had been sitting over**, including the 72 rejected feed writes and three deliberate immutability
+refusals that the guards' own self-tests provoke daily and which must never count as red.
+
+**2. `infra/scripts/_notify.sh` — keyless, local, no account:** a macOS notification plus `data/BOARD_RED.txt`. The
+board calls it with the names of the red guards and clears the marker on the first green board, so a stale marker
+cannot cry wolf. The hourly micro job notifies on its own FAILED lines the same way. Nothing here needs a credential
+from me or a service the operator has to set up.
+
+**3. What this does not do.** It does not fix anything and it does not reach a phone. A notification on a Mac the
+operator is not looking at is still a notification nobody read; the marker file is what the next session sees first.
+If a remote channel is wanted it is the operator's account to create, not mine.
+
+GOLD: reliability — the class of "found by happening to read a log" is closed at the board, and the board's red now
+has a path to a person that does not run through a prompt.
+ACTS-ON: gate — the board is 31 guards, the meta-guard 32 self-tests, and a red on either is no longer silent.
+
 ## D-853 (2026-09-10) THREE FAIL-OPEN READS IN THE LIVE PATH, FOUND BY READING THE LOGS OF THE JOB I HAD JUST RESTARTED
 
 Not research. After restarting the daily runner (drift guard, D-824) I read its first cycle's logs instead of trusting

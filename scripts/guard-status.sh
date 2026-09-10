@@ -25,7 +25,7 @@ if [ "${1:-}" = "--log" ]; then
 fi
 
 echo "== AEGIS GUARD STATUS — live, $(date -u +%FT%TZ) =="
-RED=0; N=0
+RED=0; N=0; REDS=""
 # D-682: this list had drifted to 17 while the daily runner invoked 21 and 24 existed on disk, so benchmark,
 # turnover, schema-honesty and trial-ledger could go RED every cycle without ever appearing in the view built
 # precisely so a RED would reach a human. `registry-guard.ts` now checks this list against the disk mechanically —
@@ -33,18 +33,22 @@ RED=0; N=0
 for g in coverage liquidity effect-size breadth execution selection universe sign survivor \
          holdability instrument mechanism gap-register agent-output plumbing forward-rules continuity \
          benchmark turnover schema-honesty trial-ledger trial-idempotency daemon-drift infra market-cap \
-         sovereignty permissions decisions rest-restart threshold; do
+         sovereignty permissions decisions rest-restart threshold log-triage; do
   [ -f "scripts/${g}-guard.ts" ] || continue
   N=$((N+1))
   out=$($DENO run --allow-net --allow-env --allow-read --allow-run "scripts/${g}-guard.ts" 2>&1); c=$?
   if [ $c -eq 0 ]; then
     printf "  GREEN %-14s %s\n" "$g" "$(echo "$out" | tail -1 | sed 's/^ *//' | cut -c1-58)"
   else
-    RED=$((RED+1))
+    RED=$((RED+1)); REDS="$REDS $g"
     printf "  RED   %-14s %s\n" "$g" "$(echo "$out" | tail -1 | sed 's/^ *//' | cut -c1-58)"
     echo "$out" | grep -E "^\s+RED " | sed 's/^/          /' | head -6
   fi
 done
 echo
 if [ "$RED" -eq 0 ]; then echo "-- all $N guards green"; else echo "-- $RED of $N guards RED"; fi
+# D-854: a RED must reach the operator without a session. Keyless macOS notification + data/BOARD_RED.txt marker;
+# cleared on the first green board so a stale marker cannot cry wolf.
+NOTIFY="$(dirname "$0")/../infra/scripts/_notify.sh"
+if [ "$RED" -gt 0 ]; then "$NOTIFY" "AEGIS BOARD RED" "$RED of $N guards RED:$REDS"; else "$NOTIFY" --clear; fi
 [ "$RED" -gt 0 ] && exit 1 || exit 0

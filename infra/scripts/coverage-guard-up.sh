@@ -7,6 +7,7 @@ command -v colima >/dev/null && (colima status >/dev/null 2>&1 || colima start) 
 docker start aegis-db aegis-rest >/dev/null 2>&1 || true
 export OWNED_REST="http://localhost:${REST_PORT:-33000}"
 while true; do
+  echo "$(date -u +%FT%TZ) == CYCLE START == (D-854: log-triage-guard scopes the error window from this stamp)"
   self_restart_if_changed
   if ! deno run --allow-net --allow-env ../scripts/coverage-guard.ts; then
     echo "$(date -u +%FT%TZ) COVERAGE GUARD RED — a factor family lacks adequate data; nulls there are UNTESTED, not NULL"
@@ -362,6 +363,9 @@ while true; do
   deno run --allow-net --allow-env --allow-write ../scripts/catalogue.ts > ../data/catalogue.log 2>&1 || echo "$(date -u +%FT%TZ) CATALOGUE FAILED"
   # D-850: the outside-in map of who-pays-and-why, matched to the ledger daily so UNTESTED cells cannot drift stale
   deno run --allow-net --allow-env --allow-read --allow-write ../scripts/search-space.ts > ../data/search-space.log 2>&1 || echo "$(date -u +%FT%TZ) SEARCH-SPACE MAP FAILED"
+  # D-854: read the error stream the board never read (the D-853 class), then write the operator's one page LAST so it reflects this cycle
+  deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/log-triage-guard.ts > ../data/log-triage.log 2>&1 || echo "$(date -u +%FT%TZ) LOG TRIAGE RED — new error class(es); see data/log-triage.log"
+  deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/operator-queue.ts > ../data/operator-queue.log 2>&1 || echo "$(date -u +%FT%TZ) OPERATOR QUEUE FAILED"
   deno run --allow-net --allow-env --allow-read --allow-run --allow-write ../scripts/guard-selftest-all.ts > ../data/guard-selftest-all.log 2>&1 || echo "$(date -u +%FT%TZ) META-GUARD RED — a guard cannot be shown able to refuse; see data/guard-selftest-all.log"
   deno run --allow-net --allow-env ../scripts/prereg-ceiling.ts > ../data/prereg-ceiling.log 2>&1 || echo "$(date -u +%FT%TZ) PREREG CEILING REPORT FAILED"
   deno run --allow-net --allow-env ../scripts/micro-sheet.ts > ../data/micro-sheet.log 2>&1 || echo "$(date -u +%FT%TZ) MICRO SHEET FAILED"
