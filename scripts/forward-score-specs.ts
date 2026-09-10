@@ -293,7 +293,7 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     const M = "excess_ann_pct_vs_liquid_universe";
     let panel: { rows: { t: string; m: string; apx: number; disc: number; dv: number }[]; built: string };
     try { panel = JSON.parse(await Deno.readTextFile(new URL("../data/cef-panel.json", import.meta.url).pathname)); }
-    catch { return { metric: M, value: null, n: 0, note: `data/cef-panel.json is ABSENT — scripts/refresh-cef.ts has not run. This is a BROKEN QUESTION, not an accruing clock (D-641): a missing panel and a zero-month clock both report nothing.` }; }
+    catch (e) { const perm = e instanceof Deno.errors.NotCapable || /NotCapable|allow-read/.test(String(e)); return { metric: M, value: null, n: 0, note: perm ? `data/cef-panel.json could not be READ — the scorer was run without --allow-read; this says nothing about whether the panel exists (D-848: a permission error reported as absence is a false zero)` : `data/cef-panel.json is ABSENT — scripts/refresh-cef.ts has not run. This is a BROKEN QUESTION, not an accruing clock (D-641): a missing panel and a zero-month clock both report nothing.` }; }
     const fromM = started.slice(0, 7);
     const nowM = new Date().toISOString().slice(0, 7);
     const byT = new Map<string, typeof panel.rows>();
