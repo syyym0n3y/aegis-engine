@@ -130,7 +130,7 @@ else {
 // HTTP error into an empty table and narrate it as an accruing clock (the lit5 read asked for a column that did not
 // exist for weeks). The scorer now writes metric_name "scorer-error"; this makes that RED on the board, per rule.
 {
-  const recent = await fetch(`${OWNED}/trd_forward_marks?select=rule_id,metric_name,marked_at&order=marked_at.desc&limit=400`, { headers: hdr })
+  const recent = await fetch(`${OWNED}/trd_forward_marks?select=rule_id,metric_name,marked_at&order=marked_at.desc&limit=400`, { headers: hdr })   // plumbing-ok: transport failure becomes null and null is RED on the next line — this read fails CLOSED, it does not become []
     .then((r) => r.ok ? r.json() : null).catch(() => null) as { rule_id: string; metric_name: string; marked_at: string }[] | null;
   if (!Array.isArray(recent)) { red++; console.log(`  RED  cannot read forward marks to check for scorer errors`); }
   else {
