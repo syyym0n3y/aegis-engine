@@ -9,7 +9,7 @@
 // Each rule gets a measurement that returns its own promote/kill statistic. Where the forward window is too short
 // to compute anything, the scorer says so explicitly — "not yet computable" is a different state from "computed and
 // inconclusive", and conflating them is how a clock quietly stops meaning anything.
-import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
+import { declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 import { Bar, decodeBar, priorSessionLevels } from "../supabase/functions/_shared/mtf-structure.ts";
 declareKnobs("forward-score-specs", [{ name: "VERBOSE", def: "" }, { name: "PROP_LEDGER", def: "", note: "D-807: override the prop ledger path — ONLY with BACKDATE (no marks written) to exercise the scorer on a synthetic ledger" }, { name: "BACKDATE", def: "", note: "D-658: score a clock from this date instead of its registered start, to EXERCISE scorer paths that real elapsed time has not yet reached. Verification only — never a way to restate a live clock." }]);
 
@@ -26,7 +26,11 @@ const hdr = await (async () => { const t = await jwt(); return { "Content-Type":
 
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 const sd = (a: number[]) => { const m = mean(a); return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / Math.max(1, a.length - 1)); };
-const q = async (path: string) => await fetch(`${OWNED}/${path}`, { headers: hdr }).then((r) => r.ok ? r.json() : []).catch(() => []);
+// D-853: this used to be `r.ok ? r.json() : []` — every HTTP error became an empty table, and an empty table was
+// narrated as an accruing clock ("no forward table rows yet"). The lit5 clock read a column that did not exist for
+// weeks and nobody could tell. Strict reads throw; the loop below catches PER CLOCK so one broken read is reported as
+// scorer-error for that clock instead of silently zeroing it or aborting every other clock's mark.
+const { q } = mkStrictRead(OWNED, hdr);
 
 interface Score { metric: string; value: number | null; n: number; note: string }
 
@@ -147,10 +151,13 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
   },
   // Rule: >=250 forward trading days, realised Sharpe >= 0.60.
   "fwd-crypto-lit5": async (started) => {
-    const rows = await q(`trd_crypto_forward?select=d&order=d.desc&limit=1`) as { d: string }[];
+    // D-853: this read asked for a column `d` that trd_crypto_forward does not have (its date column is `asof`), so it
+    // had raised "column trd_crypto_forward.d does not exist" on every cycle and the clock reported "no forward table
+    // rows yet" — a permission/schema error narrated as an empty table, the false-zero class (D-641).
+    const rows = await q(`trd_crypto_forward?select=asof&order=asof.desc&limit=1`) as { asof: string }[];
     const el = Math.floor((Date.now() - Date.parse(started + "T00:00:00Z")) / 86400000);
     return { metric: "realised_sharpe", value: null, n: el,
-      note: `${el} calendar day(s) elapsed of the 250 TRADING days the rule requires${rows.length ? "" : "; no forward table rows yet"}` };
+      note: `${el} calendar day(s) elapsed of the 250 TRADING days the rule requires${rows.length ? `; forward table last stamped ${String(rows[0].asof).slice(0, 10)}` : "; no forward table rows yet"}` };
   },
   // Rule: forward t >= 2.04 over >=12 scored months.
   "fwd-payout-8": async (started) => {
@@ -616,15 +623,22 @@ const rules = await q(`trd_forward_rules?select=id,clock_started,promote_if,kill
   { id: string; clock_started: string; promote_if: string; kill_if: string }[];
 
 console.log(`==> FORWARD SPEC SCORING — ${rules.length} clock(s)\n`);
-let computable = 0;
+let computable = 0, scorerErrors = 0;
 for (const r of rules.sort((a, b) => a.id < b.id ? -1 : 1)) {
   const fn = SCORERS[r.id];
   if (!fn) { console.log(`  NO SCORER  ${r.id} — a clock with no measurement is a flag, not a test`); continue; }
   // D-658: a scorer path that has never executed is unverified (D-613). BACKDATE exercises the paths real time has
   // not yet reached. It changes what is SCORED, never what was REGISTERED — the rule itself remains immutable.
   const started = Deno.env.get("BACKDATE") || r.clock_started;
-  const s = await fn(started);
-  const val = s.value === null ? "not-yet-computable" : s.value.toFixed(3);
+  let s: { metric: string; value: number | null; n: number; note: string };
+  try {
+    if (Deno.env.get("BREAK_ID") === r.id) throw new Error("BREAK_ID injected failure — verifies the scorer-error path (D-853)");
+    s = await fn(started);
+  } catch (e) {
+    scorerErrors++;
+    s = { metric: "scorer-error", value: null, n: 0, note: `SCORER-ERROR: ${String(e instanceof Error ? e.message : e).split("\n")[0].slice(0, 220)} — this clock was NOT scored; that is a broken read, not an empty clock (D-853)` };
+  }
+  const val = s.value === null ? (s.metric === "scorer-error" ? "SCORER-ERROR" : "not-yet-computable") : s.value.toFixed(3);
   if (s.value !== null) computable++;
   console.log(`  ${r.id.padEnd(28)} ${s.metric.padEnd(26)} ${val.padStart(18)}  n=${s.n}`);
   console.log(`      ${s.note}`);
@@ -639,5 +653,7 @@ for (const r of rules.sort((a, b) => a.id < b.id ? -1 : 1)) {
   }).then((res) => { if (!res.ok) console.log(`      WRITE-FAILED mark ${res.status}`); }).catch(() => console.log(`      WRITE-FAILED mark (network)`));
 }
 console.log(`\n  ${computable} of ${rules.length} clock(s) currently produce a number; the rest state why not.`);
+if (scorerErrors) { console.error(`  RED — ${scorerErrors} clock(s) could not be READ this run (scorer-error above). A clock that cannot be read is not accruing; it is broken.`); }
 console.log(`  "not-yet-computable" is deliberately distinct from "computed and inconclusive" — conflating them is`);
 console.log(`  how a forward clock quietly stops meaning anything.`);
+if (scorerErrors) Deno.exit(1);

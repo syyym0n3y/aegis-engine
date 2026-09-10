@@ -18239,6 +18239,37 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-853 (2026-09-10) THREE FAIL-OPEN READS IN THE LIVE PATH, FOUND BY READING THE LOGS OF THE JOB I HAD JUST RESTARTED
+
+Not research. After restarting the daily runner (drift guard, D-824) I read its first cycle's logs instead of trusting
+the green board, and the micro rung's hourly job — the one thing on this record that touches a possible real fill —
+had been reporting fresh data it had not written.
+
+**1. The index feed had been dead since 03:00 UTC and the log said "write 500".** Yahoo's 60-minute *futures* feed
+(ES=F, NQ=F, GC=F) returns duplicate timestamps at the session roll; FX does not. Two rows with the same (symbol, ts)
+in one upsert make Postgres raise `ON CONFLICT DO UPDATE command cannot affect row a second time`, PostgREST returns
+500 for the whole batch, and `refresh-fx-live.ts` printed the status code as if it were a result. **The chain
+downstream worked** — the refresh counted 4/7 fresh and went RED, the sheet printed STALE and no candidate — which is
+why this is a defect note and not a retraction. Fixed: dedupe by timestamp keeping the last bar; a failed write now
+says `WRITE FAILED HTTP n — nothing landed`. Verified: 7/7 fresh, all three index series stamped 13:00 UTC in the DB.
+
+**2. The crypto lit5 clock had been asking for a column that does not exist.** `trd_crypto_forward` has `asof`, the
+scorer asked for `d`, Postgres raised on every cycle, and the clock reported *"no forward table rows yet"*. Fixed;
+it now reads *"forward table last stamped 2026-09-10"*.
+
+**3. Why nobody saw #2: the scorer's read is fail-open.** `forward-score-specs.ts` fetches with
+`r.ok ? r.json() : []` — every HTTP error becomes an empty table, and an empty table is narrated as an accruing clock.
+This is the D-584 class (five guards certifying green while reading nothing) inside the one script the CONTINUITY
+LAW exists to keep honest. Fixed in this entry's commit: strict reads, and a read that throws is reported as
+`scorer-error` for that clock — distinct from not-yet-computable and from inconclusive — while the other clocks
+still score.
+
+**Also corrected in passing:** the CEF clock reported its panel *ABSENT* when the scorer had merely been run without
+`--allow-read`; a permission error is now distinguished from a missing file.
+
+GOLD: reliability — three false zeros in the live path, all of the same shape: an error narrated as an absence.
+ACTS-ON: clock — the lit5 clock's read is real for the first time, and every clock's read now fails closed.
+
 ## D-851/852 (2026-09-10) THE TWO CELLS NEVER ASKED, ANSWERED FROM PUBLISHED TERMS — one confirms the capacity-inversion rule exactly, the other turns out not to be capacity-inverted for an investor at all
 
 D-850's map had two cells with no row. Both are non-market-data questions, which is why a market-data engine never

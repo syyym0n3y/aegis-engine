@@ -26,10 +26,19 @@ for (const [sym, ysym] of Object.entries(MAP)) {
     const o = qd.open[i], h = qd.high[i], l = qd.low[i], c = qd.close[i]; if (![o, h, l, c].every((v) => typeof v === "number" && v > 0)) continue;
     rows.push({ symbol: `${sym}.yh1h`, ts, o, h, l, c, vol: +(qd.volume?.[i] ?? 0) });
   }
-  const w = await fetch(`${OWNED}/trd_fx_hourly?on_conflict=symbol,ts`, { method: "POST", headers: { ...hdr, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) });
-  const last = rows.at(-1); const ageH = last ? (Date.now() / 1000 - last.ts - 3600) / 3600 : NaN;
+  // D-853: Yahoo's 60m FUTURES feed (ES=F, NQ=F, GC=F) returns DUPLICATE timestamps at the session roll; FX does not.
+  // Two rows with the same (symbol, ts) in one upsert make Postgres raise "ON CONFLICT DO UPDATE command cannot affect
+  // row a second time" and PostgREST returns 500 for the WHOLE batch — so the three index series silently stopped at
+  // 03:00 UTC while FX kept landing, the refresh printed "write 500" as if it were a status, and the sheet read them
+  // STALE an hour after the log said they were fresh. Dedupe keeping the LAST bar for a timestamp (the later Yahoo
+  // row is the completed one), and say a failed write is a failure.
+  const byTs = new Map<number, typeof rows[number]>(); for (const r of rows) byTs.set(r.ts, r);
+  const dupes = rows.length - byTs.size; const uniq = [...byTs.values()].sort((a, b) => a.ts - b.ts);
+  const w = await fetch(`${OWNED}/trd_fx_hourly?on_conflict=symbol,ts`, { method: "POST", headers: { ...hdr, Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(uniq) });
+  const last = uniq.at(-1); const ageH = last ? (Date.now() / 1000 - last.ts - 3600) / 3600 : NaN;
   if (w.ok && last && ageH <= 3) fresh++;
-  report.push(`${sym.padEnd(14)} <- ${ysym.padEnd(9)} ${rows.length} completed bars, last ${last ? new Date(last.ts * 1000).toISOString().slice(0, 16) : "none"} (age ${ageH.toFixed(1)}h) write ${w.status}`);
+  const wtxt = w.ok ? `write ${w.status}` : `WRITE FAILED HTTP ${w.status} — nothing landed for this symbol`;
+  report.push(`${sym.padEnd(14)} <- ${ysym.padEnd(9)} ${uniq.length} completed bars${dupes ? ` (${dupes} duplicate ts dropped)` : ""}, last ${last ? new Date(last.ts * 1000).toISOString().slice(0, 16) : "none"} (age ${ageH.toFixed(1)}h) ${wtxt}`);
   await new Promise((z) => setTimeout(z, +K.PAUSE_MS));
 }
 console.log(`==> FX/INDEX LIVE HOURLY (Yahoo 60m -> trd_fx_hourly *.yh1h): ${fresh}/${Object.keys(MAP).length} fresh within 3h`); for (const l of report) console.log("    " + l);

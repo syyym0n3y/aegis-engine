@@ -126,6 +126,23 @@ else {
   if (!ok) red++;
   console.log(`\n  ${ok ? "ok  " : "RED "} forward scorer last mark ${age.toFixed(1)}d ago`);
 }
+// D-853: a clock whose LATEST mark is a scorer-error was not scored — its read threw. The scorer used to turn every
+// HTTP error into an empty table and narrate it as an accruing clock (the lit5 read asked for a column that did not
+// exist for weeks). The scorer now writes metric_name "scorer-error"; this makes that RED on the board, per rule.
+{
+  const recent = await fetch(`${OWNED}/trd_forward_marks?select=rule_id,metric_name,marked_at&order=marked_at.desc&limit=400`, { headers: hdr })
+    .then((r) => r.ok ? r.json() : null).catch(() => null) as { rule_id: string; metric_name: string; marked_at: string }[] | null;
+  if (!Array.isArray(recent)) { red++; console.log(`  RED  cannot read forward marks to check for scorer errors`); }
+  else {
+    const latest = new Map<string, string>();
+    for (const m of recent) if (!latest.has(m.rule_id)) latest.set(m.rule_id, m.metric_name);
+    if (SELFTEST) latest.set("SELFTEST-broken-clock", "scorer-error");
+    const broken = [...latest.entries()].filter(([, m]) => m === "scorer-error").map(([id]) => id);
+    for (const id of broken) { red++; console.log(`  RED  ${id}: latest forward mark is a SCORER-ERROR — the clock's read threw; it is not accruing, it is broken (D-853)`); }
+    if (!broken.length) console.log(`  ok   no clock's latest mark is a scorer-error (${latest.size} clocks checked)`);
+    if (SELFTEST && !broken.includes("SELFTEST-broken-clock")) { console.error("!! SELFTEST: injected scorer-error mark was not refused — RED."); Deno.exit(1); }
+  }
+}
 
 // D-658: A RULE THAT CANNOT BE SATISFIED BY ITS OWN ENGINE. The CONTINUITY LAW asks whether a matured clock has
 // been SCORED. It never asked whether the rule could be SATISFIED — and fwd-residual-follow asks for ">=126 forward
