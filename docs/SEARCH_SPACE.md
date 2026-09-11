@@ -2,7 +2,7 @@
 
 > Regenerated daily by `scripts/search-space.ts`. D-848 measured the search as 64.1% self-referential; this map is drawn from OUTSIDE the ledger — by counterparty, not by asset class or signal — and then matched to it. The taxonomy is the author's enumeration, not a citation, and is kept open. **A cell reading UNTESTED is a question this programme has never asked, not a market that has been shown efficient.**
 
-**20 cells: 20 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 10 (7 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 6 (1 live) · B4 tested 13 (4 live) · C1 tested 20 (8 live) · C2 tested 10 (7 live) · C3 tested 3 (3 live) · D1 tested 16 (7 live) · D2 tested 14 (5 live) · D3 tested 12 (4 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 7 (6 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
+**20 cells: 20 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 6 (1 live) · B4 tested 13 (4 live) · C1 tested 20 (8 live) · C2 tested 10 (7 live) · C3 tested 3 (3 live) · D1 tested 16 (7 live) · D2 tested 14 (5 live) · D3 tested 12 (4 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 7 (6 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
 
 ## A1 — index funds: must trade at rebalance regardless of price
 examples: index inclusion/deletion, close auction imbalance, month-end
@@ -44,6 +44,7 @@ examples: odd-lot tender, reverse-split round-up, SPAC trust, rights, spin-offs
 | D734-despac | SPAC / de-SPAC | measured |
 | D-837-reverse-split-roundup | structural | killed |
 | D-849-g7-merger-oddlot | structural | untested |
+| D-856-g7-merger-roundup-population | structural | measured |
 
 ## A5 — regulated / mandated flows: rule requires the trade
 examples: settlement fails, buy-ins, tax-loss selling, window dressing, dividend capture by constrained funds
