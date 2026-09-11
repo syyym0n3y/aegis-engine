@@ -18239,6 +18239,31 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-856 (2026-09-11) G7 MEASURED BY POPULATION — the filing-text ingest D-849 asked for, done at the level that settles it
+
+D-849 left merger odd-lot and round-up provisions UNTESTED because a today-serving price source cannot hold the
+cash-out cohort, and said a filing-text ingest was needed. EDGAR full-text search is keyless; the question is
+answerable at the population level without a backtest, so that is where it was answered.
+
+| provision | form | filings, 10y | per year |
+|---|---|---|---|
+| "odd lot" | DEFM14A | 25 | ~2.5 |
+| "odd lot" | SC TO-T | 18 | ~1.8 |
+| **"rounded up to the nearest whole share"** | DEFM14A | 239 | **~24** (42 in the last 24 months) |
+| "cash in lieu" of fractional (the default) | DEFM14A | 254 in 24 months | pays only the fraction |
+
+The 42 recent round-up deals joined to our own bars (35 of 40 targets priced): **median target price $10.54**
+(p25 $5.18, p75 $17.67). A round-up pays a holder **less than one whole share**, so that is a hard per-event ceiling.
+**~21 deals a year at under $10.54 each is a ceiling of ~$221/yr — for a holder positioned in every target before
+every deal is announced, bearing full pre-deal market risk for a sub-$11 payment.** The odd-lot merger clause, at
+~4 filings a year, is too thin to be a mechanism at any per-event value. **G7 is NULL by size**, the D-837 shape:
+a fixed, tiny amount per event. The capacity queue now holds no unmeasured market-data generator.
+
+GOLD: research — the last untested capacity-inverted generator measured from primary filings at the level that
+decides it, with the per-event ceiling read off our own price panel rather than assumed.
+ACTS-ON: gate — G7 leaves the capacity queue; every remaining item on `docs/OPERATOR_QUEUE.md` is an act only the
+operator can perform.
+
 ## D-855 (2026-09-10) THE CYCLE COMMITS ITS OWN DOCS, AND THE FIRST NEW ERROR CLASS THE LOG GUARD CAUGHT WAS THE SYSTEM WORKING
 
 Two small things, both in service of the same directive: no prompt should be needed to keep the record current.
