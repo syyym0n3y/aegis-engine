@@ -18239,6 +18239,31 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-875/876 (2026-09-13) IS THE PAIR A KNIFE-EDGE, AND DOES IT REPLICATE? — robust across 36 cells with the registered cell mid-grid; the Bybit "replication" is the same measurement
+
+### D-875 — parameter sensitivity, 36 counted cells
+Lookback sets × rebalance frequency × vol window on the ISA sleeve, crypto leg frozen at D-874's survivor-free series:
+
+| | pair Sharpe | maxDD at 10% vol |
+|---|---|---|
+| best cell (1/3/6/12m, fortnightly, 120d) | 1.45 | −14% |
+| **registered cell (1/3/6/12m, weekly, 60d)** — rank **15 of 36** | **1.29** | −17% |
+| worst cell (6/12m, monthly, 20d) | 0.92 | −22% |
+
+Min/max 0.63 against a 0.6 bar; worst drawdown −24.3% against −25%. **SUPPORTED.** The one parameter that matters is
+rebalance frequency, and monthly is the *worst* third — the opposite of the turnover worry. Nothing is re-picked; the
+forward rule keeps its registered parameters, now shown to be neither fragile nor optimised. **Descriptive, quoted
+beside the headline wherever it appears: without 2020–21 the pair is 0.90** (crypto leg 0.37) — a third of the number
+is two years of crypto bull.
+
+### D-876 — the Bybit panel
+370 contracts, history from September 2024: Sharpe 0.54, maxDD −4%, hold basket −0.57 with −28%. Passes the registered
+rule and **correlates 0.982 with the Binance sleeve** over the shared days — the venues list the same contracts. One
+measurement seen twice, recorded so nobody counts it as two.
+
+GOLD: research — the two questions a sceptic asks first about the headline, answered before the operator had to ask.
+ACTS-ON: gate — `fwd-isa-crypto-parity` keeps its registered parameters; the ledger carries 1.29 and 0.90 together.
+
 ## D-874 / D-873b (2026-09-13) THE LARGEST CAVEAT MEASURED — the crypto leg survives the survivorship repair, and the pair's headline is 1.29, not 1.40
 
 The crypto sleeve behind D-871/873 was 27 coins Yahoo still serves. The same long-only trend switch on the

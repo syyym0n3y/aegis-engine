@@ -34,7 +34,8 @@ record; NULL by one registered clause, so it rides the D-868 clock rather than i
 **Sharpe 1.29 with the survivor-free crypto leg** (D-874: 469 contracts incl. 138 dead; 1.40 on survivors), t above the
 ceiling, 12.9%/yr at 10% vol, positive in all seven years 2020–26; **at 20% vol ~26%/yr, −33%, 9.7 years to 10×** — the
 first book here for which tenfold inside a decade is arithmetic at a drawdown some people survive. NULL by its drawdown
-clause; on a forward clock from today; nothing forward-tested yet. **Without 2020–21 (the crypto bull) the pair is 0.90, not 1.29** — a third of the headline is two years. If you choose it, size it
+clause; on a forward clock from today; nothing forward-tested yet. **Without 2020–21 (the crypto bull) the pair is 0.90, not 1.29** — a third of the headline is two years. Across 36 parameter
+cells it ranges 0.92–1.45 with the registered cell mid-grid (D-875): not a knife-edge, not a pick; monthly rebalancing is worst. If you choose it, size it
 at 20% vol at most and expect the −33%.
 
 ## 3. What NOT to hold, measured
