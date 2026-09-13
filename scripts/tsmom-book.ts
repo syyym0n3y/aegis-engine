@@ -17,6 +17,7 @@ const K = declareKnobs("tsmom-book", [
   { name: "CRYPTO_ONLY", def: "0", note: "1 = D-871: the crypto-with->=8y subset, long-only timed, 20bp spot cost" },
   { name: "ALWAYS_LONG", def: "0", note: "1 = timing OFF in LONG_ONLY mode (the untimed comparator for D-870)" },
   { name: "VOL_OVERLAY", def: "0", note: "1 = D-872: halve every position the day after a close where ^VIX is above its trailing 252-day 80th percentile (term-structure series not held; registered fallback), lag-1" },
+  { name: "DUMP", def: "", note: "if set, write the combo book's daily OOS series {date: ret} to this JSON path (for D-873 blends)" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -118,4 +119,5 @@ const R = res["combo"]; const classes = Object.values(byCls).filter((v) => mean(
 const ok = comboIS.sr > 0.4 && R.sr >= 0.5 && R.t >= ceilInfo.ceiling && posA / Math.max(1, nA) >= 0.6 && classes >= 3 && ex.mu > 0 && ex.t >= 2;
 console.log(`\n  ceiling for this id ${ceilInfo.ceiling.toFixed(3)}`);
 console.log(`  VERDICT (D-863 rule): ${comboIS.sr <= 0.4 ? "UNTESTED — positive control failed (in-sample era does not reproduce)" : ok ? "SUPPORTED" : `NULL — ${[R.sr < 0.5 && `OOS Sharpe ${R.sr.toFixed(2)} < 0.5`, R.t < ceilInfo.ceiling && `t ${R.t.toFixed(2)} < ceiling`, posA / Math.max(1, nA) < 0.6 && "asset agreement < 60%", classes < 3 && "fewer than 3 classes positive", !(ex.mu > 0 && ex.t >= 2) && "excess over long basket fails"].filter(Boolean).join("; ")}`}`);
+if (K.DUMP) { const m = bookRet["combo"]; const keys = [...m.keys()].filter((d) => isOOS(Date.parse(d + "T00:00:00Z") / 1000)).sort(); const ser = K.CLASS_PARITY === "1" ? seriesCP("combo", isOOS) : keys.map((d) => m.get(d)! / Math.max(1, nDay.get(d) ?? 1)); const obj: Record<string, number> = {}; keys.forEach((d, i) => obj[d] = ser[i]); await Deno.writeTextFile(new URL(`../${K.DUMP}`, import.meta.url).pathname, JSON.stringify({ run: K.RUN_ID, oos_from: K.OOS_FROM, series: obj })); console.log(`  dumped ${keys.length} OOS days to ${K.DUMP}`); }
 await Deno.writeTextFile(new URL("../data/tsmom-oos-assets.json", import.meta.url).pathname, JSON.stringify({ prereg: K.RUN_ID, oos_from: K.OOS_FROM, assets: assetLines }, null, 1));

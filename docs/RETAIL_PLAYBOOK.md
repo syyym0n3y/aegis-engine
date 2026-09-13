@@ -30,16 +30,23 @@ volatile asset you can hold, the switch is nearly all of the risk-adjusted retur
 lifts the book to **Sharpe 0.83 with a −5% drawdown** out of sample (in-sample 1.23, −8%). Best holdable number on the
 record; NULL by one registered clause, so it rides the D-868 clock rather than its own.
 
+**The pair (D-873):** the ISA book and the timed spot-crypto book (D-871) at risk parity, correlation 0.15, OOS 2018–26
+**Sharpe 1.40** (t 4.14, above the ceiling), 14%/yr at 10% vol with a −17% drawdown; **at 20% vol ~28%/yr, −33%, 8.8 years to
+10×** — the first book here for which tenfold inside a decade is arithmetic at a drawdown some people survive. NULL by its
+drawdown clause; on a forward clock from today; nothing forward-tested yet; the crypto leg is a survivor set on a window that
+opens with a crash the timing avoided. If you choose it, size it at 20% vol at most and expect the −33%.
+
 ## 3. What NOT to hold, measured
 - **CFDs with overnight financing** (D-866): 6.5%/yr on notional turns the trend book from +0.26 to **−0.32** Sharpe.
 - **Hourly technical set-ups** (D-859–862): gross **zero** across 24 instruments and 26,349 counted fits.
 - **FX carry and 5-year value** (D-865): dead since 2015 (Sharpe −0.47 and −0.14).
 
 ## 4. Sizing, and the tenfold arithmetic (D-864)
-Tenfold in ~7 years needs ~39%/yr, i.e. a sustained net Sharpe near **1.5** at a survivable drawdown. The best holdable
-book here is 0.83 (timed, class parity, VIX overlay). At 20% book vol that is **~16%/yr, a drawdown near −30%, and
-~12–13 years to 10×**; at 40% vol the drawdown passes −60%. **A conservative tenfold is a twelve-to-fifteen-year outcome on
-these measurements, not a strategy — and not a decade.** Position size so
+Tenfold in ~7 years needs ~39%/yr, i.e. a sustained net Sharpe near **1.5** at a survivable drawdown. The best single
+holdable book is 0.83 (timed ISA, class parity, VIX overlay): at 20% vol ~16%/yr, −30%, 12–13 years. The pair with timed
+spot crypto (D-873) is 1.40: **at 20% vol ~28%/yr, −33%, 8.8 years to 10×.** That is the honest frontier: tenfold in under a
+decade is arithmetic only with the crypto leg, only at a −33% drawdown, and only if the forward record confirms a Sharpe
+that has so far been measured on survivors. Never lever past 20% vol; at 30% the drawdown is −50%. Position size so
 the book's vol is 10–20%; never lever a Sharpe below 1 past 20% vol.
 
 ## 5. What would change this page

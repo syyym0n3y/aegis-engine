@@ -18239,6 +18239,43 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-873 (2026-09-13) THE TWO HOLDABLE BOOKS TOGETHER — Sharpe 1.40, t above the ceiling, tenfold inside a decade becomes arithmetic, NULL by the drawdown clause
+
+The only two holdable books that are both positive out of sample — the timed class-parity ISA basket with VIX overlay
+(D-870/872) and the timed spot-crypto basket (D-871) — at risk parity, OOS 2018–2026 on the union calendar (3,177 days):
+
+| | Sharpe | t | %/yr at 10% vol | maxDD | underwater |
+|---|---|---|---|---|---|
+| ISA book alone | 1.08 | 3.19 | | −5.3% | |
+| crypto book alone | 0.84 | 2.46 | | −6.4% | |
+| **risk parity** | **1.40** | **4.14** | **14.0** | **−16.6%** | 1.4y |
+| equal weight | 1.24 | 3.64 | 12.4 | −14.4% | 2.0y |
+
+Correlation **0.15**; in the March 2020 crash −0.03, in 2022 0.07. The t-statistic is above the pre-registered ceiling
+(3.02) — no book on this record had done that. **NULL by exactly one clause:** −16.6% against the registered −8%. That
+is leverage arithmetic — the union series is low-vol, so scaling it to 10% levers the sleeves ~2.5× above the vol at
+which their −5% and −6% drawdowns were measured. The Sharpe does not change with leverage; the drawdown does.
+
+**Against the tenfold target (D-864), in the book's own numbers:**
+
+| book vol | %/yr | maxDD | years to 10× |
+|---|---|---|---|
+| 10% | 14.0 | −17% | 17 |
+| **20%** | **28.1** | **−33%** | **8.8** |
+| 30% | 42.1 | −50% | 6.1 |
+| 40% | 56.1 | −66% | 4.8 |
+
+**The first book on the record for which tenfold inside a decade is arithmetic at a drawdown some people survive.**
+Caveats at the same volume: the crypto sleeve is 27 survivor coins on a window that opens with a crash the timing
+avoided; the ISA sleeve reads 1.08 on 2018+ against 0.83 on 2015+; both are research series with placeable instruments
+at their stated costs; **nothing is forward-tested.** Registered as the immutable clock `fwd-isa-crypto-parity` (promote
+at 24 months with Sharpe ≥ 1.0, maxDD better than −20%, correlation < 0.4; kill at Sharpe ≤ 0.3 or −25%), and the daily
+paper book now carries the crypto sleeve and the pair. The MICRO-rung decision is the operator's.
+
+GOLD: research — the diversified-book question answered with the two books that survived, and the tenfold arithmetic
+stated in the pair's own numbers.
+ACTS-ON: clock — the highest risk-adjusted book on the record is on an immutable forward rule, scored daily.
+
 ## D-872 (2026-09-13) THE MARKET'S PRICE OF INSURANCE AS AN OVERLAY — 0.83 with a −5% drawdown, the best holdable number on the record, NULL by one clause
 
 The question-ledger cell *daily × index × insurance*, applied to the best holdable book: after any close where VIX sits

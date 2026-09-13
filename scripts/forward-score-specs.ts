@@ -38,13 +38,13 @@ interface Score { metric: string; value: number | null; n: number; note: string 
 // deliberately distinguished from returning a number.
 
 // D-867 helper: Sharpe / t / maxDD of a paper sleeve since the clock start; months elapsed decide computability.
-async function trendClock(started: string, key: "trend" | "long" | "parity", promoteSR: number, killSR: number) {
+async function trendClock(started: string, key: "trend" | "long" | "parity" | "pair", promoteSR: number, killSR: number) {
   const M = `paper_sharpe_${key}`;
-  let L: { date: string; trend: number; long: number; parity: number }[] = [];
+  let L: { date: string; trend: number; long: number; parity: number; pair?: number }[] = [];
   try { L = JSON.parse(await Deno.readTextFile(new URL("../data/trend-paper.json", import.meta.url).pathname)); } catch (e) { if (e instanceof Deno.errors.NotFound) return { metric: M, value: null, n: 0, note: `paper book absent — scripts/trend-paper.ts has not run since ${started}` }; throw e; }
   const rows = L.filter((x) => x.date >= started); const months = rows.length / 21;
   if (rows.length < 60) return { metric: M, value: null, n: rows.length, note: `${rows.length} paper day(s) since ${started} (~${months.toFixed(1)} months); first read at 12 months, decision at 24. not-yet-computable, NOT inconclusive.` };
-  const x = rows.map((r) => r[key]); const mu = mean(x) * 252, vol = sd(x) * Math.sqrt(252), sr = vol ? mu / vol : 0, t = mu / (vol / Math.sqrt(rows.length / 252));
+  const x = rows.map((r) => (r[key] ?? 0) as number); const mu = mean(x) * 252, vol = sd(x) * Math.sqrt(252), sr = vol ? mu / vol : 0, t = mu / (vol / Math.sqrt(rows.length / 252));
   let eq = 0, peak = 0, mdd = 0; for (const v of x) { eq += v; peak = Math.max(peak, eq); mdd = Math.min(mdd, eq - peak); }
   return { metric: M, value: sr, n: rows.length, note: `${rows.length} paper days (~${months.toFixed(1)} months): Sharpe ${sr.toFixed(2)}, t ${t.toFixed(2)}, ${(100 * mu).toFixed(1)}%/yr at ${(100 * vol).toFixed(1)}% vol, maxDD ${(100 * mdd).toFixed(1)}%. Rule: promote at >= 24 months with Sharpe >= ${promoteSR} and t >= 2; kill at >= 12 months with Sharpe <= ${killSR} or maxDD worse than the registered floor.` };
 }
@@ -175,6 +175,7 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     const t = rows.map((r) => r.timed!), h = rows.map((r) => r.hold!); const dt = dd(t), dh = dd(h);
     return { metric: M, value: dh < 0 ? dt / dh : null, n: rows.length, note: `${rows.length} paper days: timed maxDD ${(100 * dt).toFixed(1)}% vs hold ${(100 * dh).toFixed(1)}% (ratio ${dh < 0 ? (dt / dh).toFixed(2) : "n/a — no drawdown yet"}); Sharpe timed ${sr(t).toFixed(2)} vs hold ${sr(h).toFixed(2)}. Rule: promote at 24 months with timed DD <= 0.7x hold DD and Sharpe within 0.15 or above; kill at >= 12 months if timed DD deeper than hold's or Sharpe gap > 0.3.` };
   },
+  "fwd-isa-crypto-parity": async (started) => trendClock(started, "pair" as never, 1.0, 0.3),
   "fwd-tsmom-110": async (started) => trendClock(started, "trend", 0.5, 0),
   "fwd-trend-long-parity": async (started) => trendClock(started, "parity", 0.8, 0.3),
   // D-860: the gold paper bot's rule. Reads the append-only paper ledger the bot writes; excess over the unconditional
