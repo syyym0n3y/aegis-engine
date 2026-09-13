@@ -37,5 +37,7 @@ echo "$T0 MICRO HOURLY done: $(grep -o '[0-9]* candidate(s); [0-9]* instrument(s
 # D-854: the hourly job's own FAILED lines must reach the operator, not just its log.
 # D-857: the first version grepped the sub-logs for the word FAILED, but the FAILED echo is written by THIS script to
 # its own stdout (infra/data/micro-hourly.log) — so a failing refresh never notified. Count THIS run's own echoes.
-FAILS="$(grep -c "^$T0 MICRO HOURLY: .*FAILED" ../infra/data/micro-hourly.log 2>/dev/null || echo 0)"
+# grep -c prints its count AND exits 1 when the count is 0, so `|| echo 0` produced "0\n0" and a shell error — caught
+# on the first background run of this hook. grep -c is the count; only a missing file needs the fallback.
+FAILS="$( { grep -c "^$T0 MICRO HOURLY: .*FAILED" ../infra/data/micro-hourly.log 2>/dev/null || true; } | head -1 )"; FAILS="${FAILS:-0}"
 [ "${FAILS:-0}" -gt 0 ] && "$(dirname "$0")/_notify.sh" "AEGIS MICRO HOURLY" "$FAILS FAILED step(s) this hour — see infra/data/micro-hourly.log" || true
