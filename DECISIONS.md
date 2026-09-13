@@ -18239,6 +18239,62 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-858/859/859b/860 (2026-09-13) THE ADAPTIVE GOLD BOT, BUILT AT FULL SCALE INSIDE THE LAWS — two designs, 10,621 counted fits, a NULL that got cleaner when the bot itself exposed the backtest, and a paper bot that runs anyway
+
+Operator direction: build an automated bot that enters and exits; look at all gold charts across timeframes; run far
+more trials with many more set-ups; when a set-up fails, do not conclude failure — find the category in which
+another set-up wins and combine them; make sure the data set is sound first.
+
+### D-858 — the data set, made sound first
+Three gold series: XAUUSD hourly (Dukascopy, 2016–, 80,328 bars), the live Yahoo GC=F 60m proxy (since June), GC=F
+daily (2000–). **21.4% of the hourly bars are zero-volume placeholders** the feed writes for closed hours — flat OHLC,
+uniform across years, 73% of the 21:00 UTC hour. They are not data and every consumer drops them (all prior gold
+consumers already did, via the `h≠l` filter). Cross-source control: my first pass read r 0.86 and "NOT SOUND"
+because I aligned to UTC midnight; at the futures settle hour it is **0.98** — the C2 day-boundary class, in my own
+audit. The live series sits 0.74% above spot, so level rules must never mix the two. **SOUND**, with the rule written.
+
+### D-859 — the category-conditioned ensemble, as registered
+7 setup families (prior-day level break and sweep-reclaim, session drive/fade, day-open reversion/continuation,
+range extension continuation/fade, 4h trend, NR7 breakout) × 6 exits (K4/12/24, three ATR stop/target paths) = 132
+cells, across 60 categories (vol tercile × daily trend × 4h/1d alignment × session). For each category the best cell
+on TRAIN (2016–22) is chosen, **written to disk, and only then applied to TEST** (2023–26). Pre-registered ceiling for
+the id: 4.19 — because 5,976 fits were spent and the ceiling counts them. **TEST: net −1.01bp/trade, t −0.35, excess
+over drift −2.3bp. NULL.**
+
+### D-859b — the redesign, registered fresh, not re-cut
+Coarse categories (9), MIN_TRAIN 150, shrunk pick statistic, yearly walk-forward 2019–26 refit on all prior years.
+**Pooled OOS: −2.68bp/trade, t −1.04, four of eight years positive. NULL.** The category-conditioned idea is flat
+however it is built.
+
+### D-860 — the paper bot, and what its dry run caught
+`scripts/gold-paper-bot.ts` runs hourly on the live series, enters at the next bar's open, exits 24 bars later,
+writes every paper fill to an append-only ledger the forward scorer reads, and honours the paper kill switch. **No
+broker path exists** (LADDER stage 1); that is the invariant, not a hedge.
+
+**Its dry run produced 3 signals in ten weeks where the backtest implied ~40.** The backtest had pushed an event at
+*every hour* a band condition held, so one slow drift through the band produced several overlapping "events" —
+within-day pseudo-replication, the D-416 trap. The bot fires once per day at first entry, and that is the trade.
+Re-run first-hit-only:
+
+| | as first recorded | corrected |
+|---|---|---|
+| events | 96,868 | 64,906 |
+| D-859b "lead" range-ext 1.5× cont K24 | n 1,529, +15.5bp, **t 2.04, 7/8 years** | **n 294, +8.9bp, t 0.95, 4/8 years** |
+| best single train cell (D-859) | +18.9bp OOS, t 1.59 | t −0.16 on train; nothing reaches 0.9 |
+
+The one apparent survivor was an artifact of the event definition. **A backtest that does not match the bot is not a
+backtest of the bot.** The forward clock `fwd-gold-rangeext-cont-k24` was registered on the inflated figure minutes
+before the correction; its rule is immutable and numeric, it is scored hourly by the bot, and it stays as a
+low-prior forward test (~0.1 events/day, ~4 years to its first read). The lineage rows, prereg notes and this entry
+carry the correction; nothing was tidied away.
+
+**What this establishes, said without softening.** The operator's method was executed at the scale asked for, under
+the laws that exist for it — selection frozen on train, every fit counted, the ceiling raised by the search itself —
+and on gold hourly at 6bp it finds no return. The bot exists, runs, and will score whatever the market gives it.
+
+GOLD: research — the full adaptive programme on one instrument, two designs, with the correction found by the bot.
+ACTS-ON: clock — a new immutable forward clock scored hourly from live bars by a running paper bot.
+
 ## D-857 (2026-09-13) THE HOURLY JOB CRIED WOLF 94 TIMES IN FIVE DAYS AND THE NOTIFIER NEVER HEARD IT — found on the first unattended check-in
 
 Three days unattended. The runner committed its own docs each day (D-855 works), the board was green, no marker was

@@ -149,6 +149,21 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: M, value: m * 1e4, n: nets.length,
       note: `forward net ${(m * 1e4).toFixed(2)}bp/event, event t ${t.toFixed(2)}, ${pos}/${tested} instrument(s) positive at n>=50, excess over the unconditional 24h return ${(excess * 1e4).toFixed(2)}bp (gross ${(mean(grosses) * 1e4).toFixed(2)}bp). Rule: promote at >=400 events with net>0, t>=2.0, >=2/3 positive and excess>0; kill at >=250 with net<=0 or t<=0.` };
   },
+  // D-860: the gold paper bot's rule. Reads the append-only paper ledger the bot writes; excess over the unconditional
+  // 24h forward return of the same live series since the clock start (BENCHMARK LAW).
+  "fwd-gold-rangeext-cont-k24": async (started) => {
+    const M = "net_bp_per_trade_paper";
+    let L: { status: string; net_bp: number | null; dir: number; entry_ts: number }[] = [];
+    try { L = JSON.parse(await Deno.readTextFile(new URL("../data/gold-paper-ledger.json", import.meta.url).pathname)); }
+    catch (e) { if (e instanceof Deno.errors.NotFound) return { metric: M, value: null, n: 0, note: `paper ledger absent — scripts/gold-paper-bot.ts has not run since the clock start ${started}` }; throw e; }
+    const cl = L.filter((f) => f.status === "closed" && f.net_bp !== null);
+    if (cl.length < 20) return { metric: M, value: null, n: cl.length, note: `${cl.length} closed paper fill(s) since ${started} (${L.length - cl.length} open); rule first reads at 150, decides at 400 (~0.6/day historically). not-yet-computable, NOT inconclusive.` };
+    const nets = cl.map((f) => f.net_bp!); const m = mean(nets), t = m / (sd(nets) / Math.sqrt(nets.length));
+    const bars = (await q(`trd_fx_hourly?symbol=eq.XAUUSD.yh1h&ts=gte.${Date.parse(started + "T00:00:00Z") / 1000}&select=ts,o,vol&order=ts.asc&limit=5000`) as { ts: number; o: number; vol: number }[]).filter((b) => b.vol > 0);
+    const dr: number[] = []; for (let i = 0; i + 25 < bars.length; i++) dr.push(Math.log(bars[i + 25].o / bars[i + 1].o) * 1e4);
+    const drift = mean(dr); const excess = mean(cl.map((f) => f.net_bp! - f.dir * drift));
+    return { metric: M, value: m, n: cl.length, note: `${cl.length} closed paper fills since ${started}: net ${m.toFixed(2)}bp/trade, event t ${t.toFixed(2)}, unconditional 24h drift ${drift.toFixed(2)}bp, excess ${excess.toFixed(2)}bp. Rule: promote at >=400 with net>0, t>=2, excess>0; kill at >=150 with net<=0 or t<=0.` };
+  },
   // Rule: >=250 forward trading days, realised Sharpe >= 0.60.
   "fwd-crypto-lit5": async (started) => {
     // D-853: this read asked for a column `d` that trd_crypto_forward does not have (its date column is `asof`), so it
