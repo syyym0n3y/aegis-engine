@@ -26,8 +26,12 @@ broker path; it will score whatever the market gives its one clock.
 2. **Execution-side money has never been measured, only assumed away.** THE EXECUTION LAW says a maker fill is a
    hypothesis until the *fill-conditional* return is measured; D-447 measured it once and it reversed the sign. Every
    hourly result here is priced at taker. A maker/limit engine with measured fills is an open question, not a null.
-3. **Events are not in the data.** Scheduled releases (CPI, NFP, FOMC, inventories), listings/delistings, funding
-   settlements as *timestamps* — the panel has funding and OI for perps but no macro calendar. A calendar is free.
+3. **Events are not in the data — and the data path is now known.** BLS publishes its full release schedule as an
+   iCalendar feed (`bls.gov/schedule/news_release/bls.ics`: 416 events, Jan-2025 to Dec-2026, CPI/NFP/PPI/JOLTS with
+   times to the minute) and per-year archives for earlier years. It is keyless. **The runner cannot fetch bls.gov until it
+   is on the endpoint allowlist — one line, the operator's to add** (`echo '^https?://www\.bls\.gov/' >> ~/.claude/hooks/endpoints.allowlist`).
+   With that, a release-timestamp event study on the hourly panel is a day's build, and it is the first design on this
+   record that would condition on something other than price.
 4. ~~Cross-instrument lead–lag at hourly resolution has not been asked~~ **Measured (D-862): NULL, sign missed.** Same-hour
    correlation up to 0.92, lagged slope negative — a sub-fee reversal (−0.2 to −4.2bp per 1sd vs 9bp). Information crosses
    instruments within the hour; nothing tradable leaks across it.
