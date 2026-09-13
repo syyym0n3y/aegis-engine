@@ -163,6 +163,18 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
       note: `forward net ${(m * 1e4).toFixed(2)}bp/event, event t ${t.toFixed(2)}, ${pos}/${tested} instrument(s) positive at n>=50, excess over the unconditional 24h return ${(excess * 1e4).toFixed(2)}bp (gross ${(mean(grosses) * 1e4).toFixed(2)}bp). Rule: promote at >=400 events with net>0, t>=2.0, >=2/3 positive and excess>0; kill at >=250 with net<=0 or t<=0.` };
   },
   // D-867: the two trend clocks, read from the daily paper book data/trend-paper.json (scripts/trend-paper.ts).
+  // D-868: a DRAWDOWN clock — the timed ISA basket against its own buy-and-hold basket
+  "fwd-etf-trend-timing": async (started) => {
+    const M = "paper_maxdd_ratio_timed_vs_hold";
+    let L: { date: string; timed?: number; hold?: number }[] = [];
+    try { L = JSON.parse(await Deno.readTextFile(new URL("../data/trend-paper.json", import.meta.url).pathname)); } catch (e) { if (e instanceof Deno.errors.NotFound) return { metric: M, value: null, n: 0, note: `paper book absent — scripts/trend-paper.ts has not run since ${started}` }; throw e; }
+    const rows = L.filter((x) => x.date >= started && typeof x.timed === "number" && typeof x.hold === "number");
+    if (rows.length < 60) return { metric: M, value: null, n: rows.length, note: `${rows.length} paper day(s) since ${started}; first read at 12 months (drawdown claim — needs a drawdown to have happened). not-yet-computable, NOT inconclusive.` };
+    const dd = (x: number[]) => { let eq = 0, peak = 0, m = 0; for (const v of x) { eq += v; peak = Math.max(peak, eq); m = Math.min(m, eq - peak); } return m; };
+    const sr = (x: number[]) => { const mu = mean(x) * 252, v = sd(x) * Math.sqrt(252); return v ? mu / v : 0; };
+    const t = rows.map((r) => r.timed!), h = rows.map((r) => r.hold!); const dt = dd(t), dh = dd(h);
+    return { metric: M, value: dh < 0 ? dt / dh : null, n: rows.length, note: `${rows.length} paper days: timed maxDD ${(100 * dt).toFixed(1)}% vs hold ${(100 * dh).toFixed(1)}% (ratio ${dh < 0 ? (dt / dh).toFixed(2) : "n/a — no drawdown yet"}); Sharpe timed ${sr(t).toFixed(2)} vs hold ${sr(h).toFixed(2)}. Rule: promote at 24 months with timed DD <= 0.7x hold DD and Sharpe within 0.15 or above; kill at >= 12 months if timed DD deeper than hold's or Sharpe gap > 0.3.` };
+  },
   "fwd-tsmom-110": async (started) => trendClock(started, "trend", 0.5, 0),
   "fwd-trend-long-parity": async (started) => trendClock(started, "parity", 0.8, 0.3),
   // D-860: the gold paper bot's rule. Reads the append-only paper ledger the bot writes; excess over the unconditional

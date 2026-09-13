@@ -18239,6 +18239,36 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-868/869 (2026-09-13) THE FIRST PRE-REGISTERED SUPPORTED RESULT A UK RETAIL ACCOUNT CAN HOLD — and the playbook that states what it is and is not
+
+### D-868 — long-only trend timing of ISA-holdable ETFs: SUPPORTED, as a drawdown claim
+Registered as a *drawdown* claim, because that is what D-865's crisis alpha implies for a long investor: hold each of
+51 ISA-holdable ETFs and cash indices vol-scaled when its 1/3/6/12-month trend combination is positive, cash otherwise;
+weekly, 4bp, no shorts, no financing. Three clauses, all met, in **both** eras:
+
+| | timed Sharpe | hold Sharpe | timed maxDD | hold maxDD | cut |
+|---|---|---|---|---|---|
+| OOS 2015–2026 | **0.62** | 0.47 | **−11%** | −31% | 65% |
+| IS 1993–2014 (control) | **1.06** | 0.82 | **−10%** | −28% | 64% |
+
+Return is slightly *lower* (2.9 vs 3.5%/yr at 10% asset vol); the Sharpe rises because the vol falls. This reproduces
+tactical asset allocation (Faber 2007) out of sample after publication. 45 of 51 assets positive. It goes to the
+immutable clock `fwd-etf-trend-timing` (promote at 24 months if the timed drawdown is ≤ 0.7× buy-and-hold's with Sharpe
+within 0.15; kill if the timed drawdown is ever deeper than buy-and-hold's) and the daily paper book now carries
+`timed` and `hold` series. **What it does not do: tenfold.** 22 years at 20% book vol with a −45% drawdown. Timing
+changes the path, not the destination.
+
+### D-869 — `docs/RETAIL_PLAYBOOK.md`
+The measured answer to "any trader from any instance": per-head money first; the timed ETF basket as the only supported
+holdable book; CFDs with financing, hourly set-ups, carry and value as measured negatives; sizing at 10–20% vol; and
+the tenfold arithmetic stated as a two-decade outcome on these measurements, not a strategy. Nothing on the page is an
+instruction to open, fund or trade — those acts are the operator's.
+
+GOLD: research — the first supported, placeable, pre-registered book on the record, with its limits stated in its own
+numbers.
+ACTS-ON: clock — `fwd-etf-trend-timing` registered and scored daily; the MICRO-rung decision on a supported book is now
+the operator's to make.
+
 ## D-866/867 (2026-09-13) "ANY TRADER FROM ANY INSTANCE" — the trend book in the vehicle a retail account can hold, and the two paper books that now run daily
 
 ### D-866 — placeable assets, real financing

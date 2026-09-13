@@ -11,6 +11,8 @@ const K = declareKnobs("tsmom-book", [
   { name: "REBAL_D", def: "5", note: "trading days between rebalances (weekly)" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" },
   { name: "PLACEABLE", def: "0", note: "1 = D-866: restrict to what a UK retail account can hold (ETFs, index/sector ETFs, commodity CFD proxies, major FX) and charge overnight FINANCING on CFD legs and ETF shorts" },
   { name: "FINANCING", def: "0.065", note: "D-866: annual financing rate on gross CFD/short notional (SOFR ~4% + 2.5%); 0 = the research number" },
+  { name: "LONG_ONLY", def: "0", note: "1 = D-868: long-only trend timing — hold vol-scaled when the combo trend is positive, cash otherwise; no shorts, no financing; restricts to ISA-holdable ETFs and cash indices" },
+  { name: "RF", def: "0.02", note: "D-868: cash yield while timed out, annual" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -28,8 +30,10 @@ const cutoff = new Date(); cutoff.setUTCFullYear(cutoff.getUTCFullYear() - +K.MI
 let sel = meta.filter((m) => m.first_date <= cutoff.toISOString().slice(0, 10) && m.n_bars > 2000 && !/^\^VIX$|USDT|^\^IRX$/.test(m.symbol));
 const cryptoSel = sel.filter((m) => m.asset_class === "crypto").slice(0, +K.MAX_CRYPTO); sel = [...sel.filter((m) => m.asset_class !== "crypto"), ...cryptoSel];
 const PLACEABLE_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|GC=F|SI=F|CL=F|BZ=F|HG=F|NG=F|PL=F|EURUSD=X|GBPUSD=X|JPY=X|AUDUSD=X|CAD=X|CHF=X|NZDUSD=X|EURGBP=X|EURJPY=X|GBPJPY=X|AUDJPY=X|EURCHF=X|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E)$/;
+const LONGONLY_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E|\^GSPTSE|\^SSMI|\^IBEX|\^KS11|\^BSESN|\^MXX|\^BVSP)$/;
+if (K.LONG_ONLY === "1") { sel = sel.filter((m) => LONGONLY_RE.test(m.symbol)); console.log(`  LONG-ONLY TIMING subset: ${sel.length} ETFs / cash indices an ISA can hold; cash at ${(100 * +K.RF).toFixed(1)}% when timed out; no shorts, no financing`); }
 if (K.PLACEABLE === "1") { sel = sel.filter((m) => PLACEABLE_RE.test(m.symbol)); console.log(`  PLACEABLE subset: ${sel.length} assets a UK retail account can hold (ETF long / CFD both ways); financing ${(100 * +K.FINANCING).toFixed(1)}%/yr on gross CFD and short notional`); }
-assertNonEmpty("assets with >= MIN_YEARS", sel, K.PLACEABLE === "1" ? 40 : 60);
+assertNonEmpty("assets with >= MIN_YEARS", sel, K.PLACEABLE === "1" || K.LONG_ONLY === "1" ? 40 : 60);
 type Ser = { sym: string; cls: string; ts: number[]; c: number[] };
 const S: Ser[] = [];
 for (let i = 0; i < sel.length; i += 5) { const page = sel.slice(i, i + 5); const rows = await q(`trd_bars_deep?symbol=in.(${page.map((p) => encodeURIComponent(p.symbol)).join(",")})&select=symbol,asset_class,bars`) as { symbol: string; asset_class: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0).sort((a, z) => a[0] - z[0]); S.push({ sym: r.symbol, cls: r.asset_class, ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
@@ -50,10 +54,11 @@ for (const a of S) {
       if (i - lastReb >= +K.REBAL_D) {
         lastReb = i; const vol = sd(Array.from(r.slice(i - 60, i))) * Math.sqrt(252); const scale = vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0;
         let sgn = 0; if (sig === "combo") { for (const L of LOOK) sgn += Math.sign(a.c[i] / a.c[i - L] - 1); sgn /= LOOK.length; } else sgn = Math.sign(a.c[i] / a.c[i - +sig] - 1);
-        const newPos = sgn * scale; const turn = Math.abs(newPos - pos); pos = newPos; rets.push(-turn * cost / 2); // cost charged on the traded fraction (half a round trip per side)
+        const newPos = K.LONG_ONLY === "1" ? (sgn > 0 ? scale : 0) : sgn * scale; const turn = Math.abs(newPos - pos); pos = newPos; rets.push(-turn * cost / 2); // cost charged on the traded fraction (half a round trip per side)
       } else rets.push(0);
       const isEtf = a.cls === "etf" || a.cls === "sector"; const finDaily = (+K.FINANCING / 252) * (isEtf ? Math.max(0, -pos) : Math.abs(pos)) * (K.PLACEABLE === "1" ? 1 : 0);
-      const v = pos * r[i + 1] + rets.pop()! - finDaily; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
+      const cashD = K.LONG_ONLY === "1" && pos === 0 ? +K.RF / 252 * +K.VOL_TARGET / 0.10 : 0;
+      const v = pos * r[i + 1] + rets.pop()! - finDaily + cashD; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
       rets.push(v); const d = day(a.ts[i + 1]); const m = bookRet[sig]; m.set(d, (m.get(d) ?? 0) + v); if (sig === "combo") nDay.set(d, (nDay.get(d) ?? 0) + 1);
       if (sig === "combo" && isOOS(a.ts[i + 1])) perAsset[a.sym][sig] = perAsset[a.sym][sig] ?? [], perAsset[a.sym][sig].push(v);
       if (sig === "combo") { const vol = sd(Array.from(r.slice(Math.max(0, i - 60), i))) * Math.sqrt(252); const lv = (vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0) * r[i + 1]; longRet.set(d, (longRet.get(d) ?? 0) + lv); if (isOOS(a.ts[i + 1])) perAssetLong[a.sym].push(lv); }
@@ -67,8 +72,8 @@ const ceilInfo = await preregCeiling({ rest: OWNED, headers: hdr, preregId: K.RU
 await spendTrials({ rest: OWNED, headers: hdr, family: "tsmom", runId: K.RUN_ID, spent: SIGS.length * 2 });
 console.log(`\n  ${"signal".padEnd(8)} ${"IS 1990-2014 Sharpe".padStart(20)} ${"OOS 2015+ Sharpe".padStart(17)} ${"OOS t".padStart(7)} ${"OOS %/yr".padStart(9)} ${"vol".padStart(6)} ${"maxDD".padStart(7)} ${"underwater".padStart(11)}`);
 const res: Record<string, ReturnType<typeof stats>> = {};
-for (const sig of SIGS) { const is = stats(series(bookRet[sig], isIS)), oos = stats(series(bookRet[sig], isOOS)); res[sig] = oos; console.log(`  ${sig.padEnd(8)} ${is.sr.toFixed(2).padStart(20)} ${oos.sr.toFixed(2).padStart(17)} ${oos.t.toFixed(2).padStart(7)} ${(100 * oos.mu).toFixed(1).padStart(8)}% ${(100 * oos.vol).toFixed(1).padStart(5)}% ${(100 * oos.mdd).toFixed(0).padStart(6)}% ${(oos.uwDays / 252).toFixed(1).padStart(9)}y`); }
-const lo = stats(series(longRet, isOOS)); console.log(`  ${"long-only".padEnd(8)} ${"".padStart(20)} ${lo.sr.toFixed(2).padStart(17)} ${lo.t.toFixed(2).padStart(7)} ${(100 * lo.mu).toFixed(1).padStart(8)}% ${(100 * lo.vol).toFixed(1).padStart(5)}%   (vol-matched long basket, the benchmark)`);
+for (const sig of SIGS) { if (K.LONG_ONLY === "1" && sig !== "combo") continue; const is = stats(series(bookRet[sig], isIS)), oos = stats(series(bookRet[sig], isOOS)); res[sig] = oos; console.log(`  ${sig.padEnd(8)} ${is.sr.toFixed(2).padStart(20)} ${oos.sr.toFixed(2).padStart(17)} ${oos.t.toFixed(2).padStart(7)} ${(100 * oos.mu).toFixed(1).padStart(8)}% ${(100 * oos.vol).toFixed(1).padStart(5)}% ${(100 * oos.mdd).toFixed(0).padStart(6)}% ${(oos.uwDays / 252).toFixed(1).padStart(9)}y   IS maxDD ${(100 * is.mdd).toFixed(0)}% IS underwater ${(is.uwDays / 252).toFixed(1)}y`); }
+const lo = stats(series(longRet, isOOS)); const loIS = stats(series(longRet, isIS)); console.log(`  ${"long-only".padEnd(8)} ${loIS.sr.toFixed(2).padStart(20)} ${lo.sr.toFixed(2).padStart(17)} ${lo.t.toFixed(2).padStart(7)} ${(100 * lo.mu).toFixed(1).padStart(8)}% ${(100 * lo.vol).toFixed(1).padStart(5)}%   (vol-matched long basket, the benchmark)  IS maxDD ${(100 * loIS.mdd).toFixed(0)}% OOS maxDD ${(100 * lo.mdd).toFixed(0)}% OOS underwater ${(lo.uwDays / 252).toFixed(1)}y`);
 const comboIS = stats(series(bookRet["combo"], isIS));
 console.log(`\n  POSITIVE CONTROL: IS 1990-2014 combo Sharpe ${comboIS.sr.toFixed(2)} [needs > 0.4 — the literature's own era must reproduce]`);
 // excess over the long basket, day by day
