@@ -25,6 +25,13 @@ carry and value are dead; trend is crisis alpha. The holdable line is long-only 
 → VIX overlay: **Sharpe 0.62 → 0.76 → 0.83, drawdown −11% → −7% → −5%**, the best measured. Tenfold: ~12–13 years at 20% vol.
 Spot crypto timed: 0.69 with −6% vs a hold basket that made nothing. `docs/RETAIL_PLAYBOOK.md` is the synthesis.
 
+## Update 2026-09-13 late — where the day ended
+The holdable line ended as a PAIR on an immutable forward clock: the timed class-parity ISA basket with VIX overlay (0.83 / −5%)
+and the timed spot-crypto basket, survivor-free leg (0.60 / −6%), at risk parity: **Sharpe 1.29 on 2020–26, 0.90 without the
+2020–21 crypto bull, robust across 36 parameter cells, positive in all seven years; at 20% vol ~26%/yr, −33%, 9.7 years to 10×.**
+Tenfold inside a decade is now arithmetic on one book, at a drawdown some people survive, measured only backward. Every
+question the data could answer at the big-picture level has been asked; what remains needs data the panel does not hold.
+
 ## What is genuinely missing — not "more of the same"
 1. **A gross edge in price-only hourly rules does not appear to exist at this resolution.** Three designs and 26,305
    fits say so with coverage stated (24 instruments, 2016–2026, first-hit events). More set-ups of the same kind is

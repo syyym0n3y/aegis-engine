@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-read
+#!/usr/bin/env -S deno run --allow-read --allow-env --allow-write
 // tenfold-arithmetic.ts (D-864) — the operator's target stated as arithmetic: "any trader ... grow their return on
 // investment at least tenfold if we are being conservative". Tenfold is a function of THREE things only — the Sharpe
 // of what you run, the volatility you run it at (leverage), and the years you give it — with the drawdown you must
@@ -6,6 +6,7 @@
 // has actually measured, so the gap between the target and the record is a number, not an argument.
 import { declareKnobs } from "../supabase/functions/_shared/run-preconditions.ts";
 const K = declareKnobs("tenfold-arithmetic", [{ name: "SHARPES", def: "0.3,0.5,0.8,1.0,1.5,2.0" }, { name: "VOLS", def: "0.10,0.20,0.40,0.80" }, { name: "RF", def: "0.04" }]);
+const OUTL: string[] = []; const _log = console.log; console.log = (...a: unknown[]) => { const t = a.map(String).join(" "); OUTL.push(t); _log(t); };
 const S = K.SHARPES.split(",").map(Number), V = K.VOLS.split(",").map(Number), rf = +K.RF;
 // geometric growth of a strategy with arithmetic excess mean mu = S*sigma: g = rf + S*sigma - sigma^2/2
 const g = (s: number, v: number) => rf + s * v - v * v / 2;
@@ -22,3 +23,4 @@ console.log(`  requires a sustained NET Sharpe of about 1.5 at 30-40% vol. At Sh
 console.log(`\n  WHAT THIS RECORD HAS MEASURED (net, OOS or modern era, from the ledger):`);
 for (const [what, sh, ref] of [["combined factor book, modern era", 0.40, "D-527/558"], ["crypto GBM candidate, liquid tercile (unholdable: 3.7y underwater)", 1.11, "D-535/565"], ["hourly adaptive set-ups, 24 instruments", 0.0, "D-861 (gross zero)"], ["diversified TSMOM book, 110 assets, OOS 2015-26 (long basket did 0.80)", 0.62, "D-863"], ["timed ISA basket, class risk parity, VIX overlay (maxDD -5%)", 0.83, "D-870/872"], ["ISA book x SURVIVOR-FREE crypto timed, risk parity, 2020-26 — BEST (maxDD -17% at 10% vol)", 1.29, "D-873b/874 — forward clock"]] as [string, number, string][]) console.log(`    ${what.padEnd(64)} Sharpe ${isNaN(sh) ? " pending" : sh.toFixed(2).padStart(8)}   ${ref}`);
 console.log(`\n  The distance between the table's 1.5 and the record's best HOLDABLE number is the mission, stated as a number.`);
+await Deno.writeTextFile(new URL("../docs/TENFOLD.md", import.meta.url).pathname, "# TENFOLD — the arithmetic beside the record (D-864, regenerated each cycle)\n\n```\n" + OUTL.join("\n") + "\n```\n");

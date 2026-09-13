@@ -365,6 +365,9 @@ while true; do
   deno run --allow-net --allow-env --allow-write ../scripts/catalogue.ts > ../data/catalogue.log 2>&1 || echo "$(date -u +%FT%TZ) CATALOGUE FAILED"
   # D-850: the outside-in map of who-pays-and-why, matched to the ledger daily so UNTESTED cells cannot drift stale
   deno run --allow-net --allow-env --allow-read --allow-write ../scripts/search-space.ts > ../data/search-space.log 2>&1 || echo "$(date -u +%FT%TZ) SEARCH-SPACE MAP FAILED"
+  # D-864/875: the question ledger and the tenfold arithmetic beside the record, regenerated so neither drifts from the ledger
+  deno run --allow-net --allow-env --allow-read --allow-write ../scripts/question-ledger.ts > ../data/question-ledger.log 2>&1 || echo "$(date -u +%FT%TZ) QUESTION LEDGER FAILED"
+  deno run --allow-read --allow-env --allow-write ../scripts/tenfold-arithmetic.ts > ../data/tenfold.log 2>&1 || echo "$(date -u +%FT%TZ) TENFOLD TABLE FAILED"
   # D-854: read the error stream the board never read (the D-853 class), then write the operator's one page LAST so it reflects this cycle
   deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/log-triage-guard.ts > ../data/log-triage.log 2>&1 || echo "$(date -u +%FT%TZ) LOG TRIAGE RED — new error class(es); see data/log-triage.log"
   deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/operator-queue.ts > ../data/operator-queue.log 2>&1 || echo "$(date -u +%FT%TZ) OPERATOR QUEUE FAILED"
@@ -377,7 +380,7 @@ while true; do
   # D-855: the cycle regenerates docs/CATALOGUE.md, docs/SEARCH_SPACE.md and docs/OPERATOR_QUEUE.md every day; left
   # uncommitted they sit as tree noise until a session commits them, which is a prompt in disguise. Paths-restricted,
   # local only (never pushes), no-op when nothing changed.
-  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
+  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/TENFOLD.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
   sleep 86400
 done
 
