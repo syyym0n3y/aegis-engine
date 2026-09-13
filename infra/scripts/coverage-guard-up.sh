@@ -351,6 +351,8 @@ while true; do
   fi
   # D-586: print the cycle summary LAST so the state of the whole suite is the final thing in the log, rather than
   # six RED lines buried mid-file with no reader. This is the line a human actually reads.
+  # D-879: the whole-stack data audit runs before the board so data-stack-guard reads a fresh audit
+  deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read --allow-write ../scripts/data-stack-audit.ts > ../data/data-stack-audit.log 2>&1 || echo "$(date -u +%FT%TZ) DATA STACK AUDIT FAILED"
   ../scripts/guard-status.sh > ../data/guard-status.log 2>&1 || true   # D-854b: logged so operator-queue.ts can read the board without re-running 31 guards
   # OWNED COCKPIT (D-751) — THE LAST STEP OF EVERY LOOP, deliberately. The operator's view was an edge function on
   # the inactive CC project; this renders the same oversight into ONE self-contained file the operator owns

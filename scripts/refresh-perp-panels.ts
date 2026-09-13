@@ -11,7 +11,7 @@
 // Positive control: >= 90% of TRADING symbols per panel are fresh (newest bar within 2 intervals) after the run, else RED.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 const K = declareKnobs("refresh-perp-panels", [
-  { name: "PANELS", def: "1dSF:1d,1hSF:1h,1h:1h", note: "tf:interval pairs" }, { name: "PAUSE_MS", def: "120" },
+  { name: "PANELS", def: "1dSF:1d,1hSF:1h,1h:1h,1dSPOT:1d,1dBYBIT:1d", note: "tf:interval pairs; 1dSPOT reads Binance spot klines, 1dBYBIT reads Bybit v5 klines (D-879: both panels were one-shot ingests with no refresh job and sat 3 weeks stale under a green board)" }, { name: "PAUSE_MS", def: "120" },
   { name: "SYMBOLS", def: "", note: "D-823e: comma list to refresh ONLY those symbols (empty = the whole panel, the runner default). The hourly micro job needs 5 of 25; refreshing 25 every hour piles avoidable load on a DB the daily cycle is already using." },
   { name: "MAX_PAGES", def: "40", note: "1500 bars per page; 40 pages covers ~2.5 months of hourly or ~160 years of daily" },
 ]);
@@ -22,6 +22,11 @@ const { q } = mkStrictRead(OWNED, hdr); const sleep = (ms: number) => new Promis
 const info = await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo").then((r) => r.ok ? r.json() : null) as { symbols: { symbol: string; status: string }[] } | null;
 if (!info) { console.error("  RED — exchangeInfo unreachable; refusing to guess which contracts trade"); Deno.exit(1); }
 const trading = new Set(info.symbols.filter((s) => s.status === "TRADING").map((s) => s.symbol));
+const spotInfo = await fetch("https://api.binance.com/api/v3/exchangeInfo").then((r) => r.ok ? r.json() : null).catch(() => null) as { symbols: { symbol: string; status: string }[] } | null;
+const spotTrading = new Set((spotInfo?.symbols ?? []).filter((s) => s.status === "TRADING").map((s) => s.symbol));
+const byInfo = await fetch("https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000").then((r) => r.ok ? r.json() : null).catch(() => null);
+const byTrading = new Set(((byInfo?.result?.list ?? []) as { symbol: string; status: string }[]).filter((x) => x.status === "Trading").map((x) => x.symbol));
+const tradingFor = (tf: string) => tf === "1dSPOT" ? spotTrading : tf === "1dBYBIT" ? byTrading : trading;
 const SEC: Record<string, number> = { "1d": 86400, "1h": 3600 }; let red = false; const nowS = Math.floor(Date.now() / 1000);
 for (const pair of K.PANELS.split(",")) {
   const [tf, interval] = pair.split(":"); const step = SEC[interval];
@@ -36,7 +41,7 @@ for (const pair of K.PANELS.split(",")) {
   }
   let fresh = 0, refreshed = 0, skippedDelisted = 0, failed: string[] = [], tradingN = 0;
   for (const m of meta) {
-    const isTrading = trading.has(m.symbol); if (isTrading) tradingN++;
+    const isTrading = tradingFor(tf).has(m.symbol); if (isTrading) tradingN++;
     // last_ts may be stale metadata (D-806); read the true newest from the bars of THIS symbol only
     const row = (await q(`trd_bars_intraday?tf=eq.${tf}&symbol=eq.${m.symbol}&select=bars`) as { bars: number[][] }[])[0];
     const bars = (row?.bars ?? []).filter((b) => b.length >= 6); if (!bars.length) { failed.push(`${m.symbol}(empty)`); continue; }
@@ -45,11 +50,14 @@ for (const pair of K.PANELS.split(",")) {
     if (!isTrading) { skippedDelisted++; continue; }
     const seen = new Map<number, number[]>(); let cursor = (last + step) * 1000; let pages = 0;
     for (; pages < +K.MAX_PAGES; pages++) {
-      const j = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${m.symbol}&interval=${interval}&limit=1500&startTime=${cursor}`).then((r) => r.ok ? r.json() : null).catch(() => null);
+      // D-879: venue-aware. Binance futures (default) and spot share the kline shape; Bybit v5 returns newest-first [start,o,h,l,c,vol,turnover].
+      let j: (string | number)[][] | null = null;
+      if (tf === "1dBYBIT") { const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${m.symbol}&interval=D&start=${cursor}&limit=1000`).then((r) => r.ok ? r.json() : null).catch(() => null); const list = r?.result?.list; j = Array.isArray(list) ? (list as string[][]).slice().reverse().map((k) => [k[0], k[1], k[2], k[3], k[4], k[5], String(Date.now() + 1), k[6], "0", "0"]) : null; }
+      else { const host = tf === "1dSPOT" ? "https://api.binance.com/api/v3/klines" : "https://fapi.binance.com/fapi/v1/klines"; j = await fetch(`${host}?symbol=${m.symbol}&interval=${interval}&limit=1000&startTime=${cursor}`).then((r) => r.ok ? r.json() : null).catch(() => null); }
       await sleep(+K.PAUSE_MS);
       if (!Array.isArray(j) || !j.length) break;
-      for (const kk of j as (string | number)[][]) { const t = Math.floor(+kk[0] / 1000), c = +kk[4], v = +kk[5]; if (t > last && c > 0 && v > 0 && +kk[6] < Date.now()) seen.set(t, [t, +kk[1], +kk[2], +kk[3], c, v, +kk[7], +kk[9], +kk[8]]); }
-      const lastOpen = +(j[j.length - 1] as (string | number)[])[0]; if (j.length < 1500) break; cursor = lastOpen + step * 1000;
+      for (const kk of j) { const t = Math.floor(+kk[0] / 1000), c = +kk[4], v = +kk[5]; const closed = tf === "1dBYBIT" ? t + step < Date.now() / 1000 : +kk[6] < Date.now(); if (t > last && c > 0 && v > 0 && closed) seen.set(t, [t, +kk[1], +kk[2], +kk[3], c, v, +kk[7], +kk[9], +kk[8]]); }
+      const lastOpen = +(j[j.length - 1] as (string | number)[])[0]; if (j.length < 1000) break; cursor = lastOpen + step * 1000;
     }
     const add = [...seen.values()].sort((a, b) => a[0] - b[0]);
     if (!add.length) { failed.push(`${m.symbol}(no new bars)`); continue; }

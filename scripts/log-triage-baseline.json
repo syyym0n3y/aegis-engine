@@ -1,5 +1,7 @@
 {
-  "classes": {},
-  "set": "2026-09-13T18:58:49.715Z",
+  "classes": {
+    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 1
+  },
+  "set": "2026-09-13T21:16:02.474Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }

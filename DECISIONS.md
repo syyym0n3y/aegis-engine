@@ -18239,6 +18239,51 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-877/878/879 (2026-09-13) THE PRINCIPLES APPLIED TO THE WHOLE DATA STACK, THE FIRST NON-PRICE QUESTION, AND THE LIMIT THAT ACTUALLY BINDS
+
+Operator: allowlist the release calendar; apply the principles neglected before across the entire data stack; multiple
+positions, 100% a week, get over any limitation, control the risk. Done in that order, and the last two turned out to
+be one question with a measured answer.
+
+### D-879 — the data stack, audited as a whole for the first time
+`scripts/data-stack-audit.ts` runs the D-858 rules over every price table, every timeframe and every macro series
+(2,018 series; equities sampled), and it found what a green board had been sitting on:
+
+| finding | size | fix |
+|---|---|---|
+| **Bybit and Binance-spot daily panels had no refresh job** — one-shot ingests, 3 weeks stale | 883 contracts | `refresh-perp-panels.ts` is venue-aware; both panels now refresh daily (480/397 fresh) |
+| **~40 non-equity daily series outside the refresh list** — rates, intl indices, most FX, half the crypto — 3 weeks stale, and the trend paper book reads all 110 | 75 due | `refresh-bars.ts` targets every non-equity series in `trd_bars_deep` (196 targets); 51 refreshed |
+| the `*-EX` crypto series have no live source | 23 | retired, not stale; no consumer reads them |
+| Yahoo daily bars whose O/H/L disagree with the *adjusted* close | 39 series (GC=F 344 bars, SI=F/HG=F 207) | a stated **source property**: no range or level rule on daily bars without an OHLC filter; close-only rules unaffected |
+| zero-volume placeholders | 519 series | droppable per D-858; and Yahoo 60m FX carries no volume at all — `h≠l` is the liveness test there |
+
+Two defects in the audit itself were caught on its first runs: it read 100k rows of two FX symbols (PostgREST has no
+DISTINCT) and it flagged all 20 FX dailies as placeholders for having no volume. Shipped as the **32nd guard**,
+`data-stack-guard.ts`: a whole panel not refreshed is RED unconditionally; per-series reds ratchet against a baseline
+(now 0). The audit runs before the board every cycle.
+
+### D-877 — the release calendar, and the first non-price question
+The operator added the `bls.gov` allowlist line; `ingest-bls-calendar.ts` holds **1,724 timed releases 2016–2026** (CPI
+and Employment Situation 12 a year in ten of eleven years — the parse control). Joined to the hourly panel: **the
+release hour is 1.6–2.1× louder on every FX and index instrument** and not on crypto or oil, so the pooled control
+failed by class, not by alignment — UNTESTED as registered, re-scoped to the seven instruments US data moves
+(D-877b). There: **continuation NULL (1 of 7)**; the indices *reverse* the release-hour move over the next four hours
+(S&P t −2.4, Nasdaq t −2.7, −11 to −18bp per 1sd against 6bp) — a sign registered the other way, so **not claimable**,
+named as the one forward-only candidate the calendar produced.
+
+### D-878 — the risk governor, and the limitation that binds
+Rolling 20% vol target, 3× cap, drawdown governor on the pair's 2020–26 history: **Sharpe unchanged (1.27 vs 1.29),
+drawdown halved (−15% vs −33%), return 11%/yr against 26% — 44% retained.** NULL on the retained clause, and the cause
+is the finding: the pair's native vol is ~3%, so 20% vol means **6.7× leverage**, and the cap refuses it. **The binding
+limitation on weekly payoff is not risk control; it is access to leverage.** An ISA is 1×. CFD financing turns the
+trend book negative (D-866). Crypto spot levers only through perps at funding cost. A UK retail account runs the pair
+at about 1× each leg: ~4–5% vol, ~5–6%/yr, **about a tenth of a percent a week.** `docs/WEEKLY_PAYOFF.md` states the
+arithmetic of "100% a week" (2^52 a year; a week at 100% vol has a −165% fifth percentile) beside these numbers.
+`pair20g` stays in the daily paper book as the risk machine it was asked for.
+
+GOLD: reliability — the stack audited whole and guarded; the first non-price question asked; the limitation named as a number.
+ACTS-ON: gate — 883 contracts and 51 series back on refresh; a 32nd guard; the weekly arithmetic on the record.
+
 ## D-875/876 (2026-09-13) IS THE PAIR A KNIFE-EDGE, AND DOES IT REPLICATE? — robust across 36 cells with the registered cell mid-grid; the Bybit "replication" is the same measurement
 
 ### D-875 — parameter sensitivity, 36 counted cells

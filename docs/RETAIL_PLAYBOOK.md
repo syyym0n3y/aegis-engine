@@ -51,6 +51,11 @@ decade is arithmetic only with the crypto leg, only at a −33% drawdown, and on
 that has so far been measured only backward. Never lever past 20% vol; at 30% the drawdown is −50%. Position size so
 the book's vol is 10–20%; never lever a Sharpe below 1 past 20% vol.
 
-## 5. What would change this page
+## 5. The limitation that binds (D-878)
+The pair's native vol is ~3%; every "20% vol" figure above is 6.7× leverage. **An ISA cannot be levered. CFD financing kills the
+trend book. Crypto spot levers only through perps at funding cost.** At 1× each leg a UK account gets ~4–5% vol and ~5–6%/yr —
+about a tenth of a percent a week. Risk is controlled by a machine (`pair20g`, D-878); return is capped by access, not by risk.
+
+## 6. What would change this page
 Only a new *source* of return, not a better signal: execution-side fills (unmeasured), event timestamps (BLS calendar,
 blocked on one allowlist line), or a broker answer on odd lots. Everything price-only at hourly resolution has been asked.

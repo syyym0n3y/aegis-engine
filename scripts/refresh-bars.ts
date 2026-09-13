@@ -76,7 +76,14 @@ assertNonEmpty(`force tickers parsed from ${K.CONSUMER}`, forceTickers, 5);
 // Both lists are consumed, so both must be fresh: a stale regressor corrupts every loading in the report exactly as
 // surely as a stale target corrupts its return.
 const REQUIRED = [...new Set([...consumerUniverse, ...forceTickers])];
-const TARGETS = [...new Set([...REQUIRED, ...EXTRA])];
+// D-879: EVERY non-equity daily series in trd_bars_deep is a target, not only the attribution universe. The data-stack
+// audit found ~40 of the 186 non-equity series (rates, intl indices, most FX, half the crypto, the crypto_ex set) three
+// weeks stale under a green board because nothing listed them — and the trend paper book (D-867) reads all 110 of them.
+const allNonEqRes = await fetch(`${OWNED}/trd_bars_deep?asset_class=neq.equity&select=symbol`, { headers: hdr }).catch(() => null);   // plumbing-ok: checked on the next line — a failed read EXITS rather than silently shrinking the target list to the hand-listed subset
+if (!allNonEqRes || !allNonEqRes.ok) { console.error(`!! cannot list non-equity series (HTTP ${allNonEqRes?.status ?? "net"}) — refusing to refresh a silently shrunken target list. RED.`); Deno.exit(1); }
+const allNonEq = await allNonEqRes.json() as { symbol: string }[];
+const TARGETS = [...new Set([...REQUIRED, ...EXTRA, ...allNonEq.map((r) => r.symbol)])];
+console.log(`    + ${allNonEq.length} non-equity series in trd_bars_deep (D-879) -> ${TARGETS.length} targets`);
 console.log(`==> REFRESH BARS — ${consumerUniverse.length} target(s) + ${forceTickers.length} force ticker(s) parsed from ${K.CONSUMER}, +${EXTRA.length} extra = ${TARGETS.length} distinct`);
 console.log(`    forces: ${forceTickers.join(" ")}`);
 

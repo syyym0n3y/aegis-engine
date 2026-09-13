@@ -49,7 +49,10 @@ if (!back.length) { console.error("  RED — read-back of EURUSD.yh1h returned n
 // cry-wolf shape THE CONTINUITY LAW names (a weekly dataset is not stale at three days). FX/CFD close Fri 21:00 UTC
 // and reopen Sun 21:00 UTC. Inside that window "fresh" means the newest bar is within 3h of the Friday close.
 const nowD = new Date(); const dow = nowD.getUTCDay(), hr = nowD.getUTCHours();
-const closed = (dow === 5 && hr >= 21) || dow === 6 || (dow === 0 && hr < 21);
+// The reopen is Sun 21:00 UTC but the first COMPLETED bar after it lands at ~22:00 and Yahoo serves it later still, so the
+// hours around the reopen are judged against the Friday close too (D-879: a Sunday 21:03 run had read "0/7 fresh on a
+// trading day" and echoed FAILED — the second cry-wolf of the weekend rule, found by the log-triage guard).
+const closed = (dow === 5 && hr >= 21) || dow === 6 || dow === 0 || (dow === 1 && hr < 1);
 if (closed) {
   const friClose = new Date(nowD); friClose.setUTCDate(nowD.getUTCDate() - ((dow + 2) % 7)); friClose.setUTCHours(21, 0, 0, 0);
   const cutoff = friClose.getTime() / 1000 - 3 * 3600;
