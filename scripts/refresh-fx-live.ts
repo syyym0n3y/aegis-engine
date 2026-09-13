@@ -44,4 +44,16 @@ for (const [sym, ysym] of Object.entries(MAP)) {
 console.log(`==> FX/INDEX LIVE HOURLY (Yahoo 60m -> trd_fx_hourly *.yh1h): ${fresh}/${Object.keys(MAP).length} fresh within 3h`); for (const l of report) console.log("    " + l);
 const back = await q(`trd_fx_hourly?symbol=eq.EURUSD.yh1h&select=ts&order=ts.desc&limit=1`) as { ts: number }[];
 if (!back.length) { console.error("  RED — read-back of EURUSD.yh1h returned nothing"); Deno.exit(1); }
-if (fresh < 5) { console.error(`  RED — only ${fresh}/7 fresh (weekend/holiday closes are stated on the sheet, but a weekday below 5 is a broken feed)`); Deno.exit(1); }
+// D-857: the freshness rule had no notion of a MARKET CLOSE, so every weekend hour it exited RED, the hourly job
+// echoed FAILED 94 times in five days, and the true failure of 2026-09-08 (D-853) was one line among them — the
+// cry-wolf shape THE CONTINUITY LAW names (a weekly dataset is not stale at three days). FX/CFD close Fri 21:00 UTC
+// and reopen Sun 21:00 UTC. Inside that window "fresh" means the newest bar is within 3h of the Friday close.
+const nowD = new Date(); const dow = nowD.getUTCDay(), hr = nowD.getUTCHours();
+const closed = (dow === 5 && hr >= 21) || dow === 6 || (dow === 0 && hr < 21);
+if (closed) {
+  const friClose = new Date(nowD); friClose.setUTCDate(nowD.getUTCDate() - ((dow + 2) % 7)); friClose.setUTCHours(21, 0, 0, 0);
+  const cutoff = friClose.getTime() / 1000 - 3 * 3600;
+  const atClose = report.filter((l) => { const m = /last (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/.exec(l); return m && Date.parse(m[1] + ":00Z") / 1000 >= cutoff; }).length;
+  console.log(`  WEEKEND CLOSE (Fri 21:00 -> Sun 21:00 UTC): ${atClose}/7 series hold their last bar within 3h of the Friday close — ${atClose >= 5 ? "feed intact, market closed, NOT a failure" : "RED: a series stopped BEFORE the close"}`);
+  if (atClose < 5) Deno.exit(1);
+} else if (fresh < 5) { console.error(`  RED — only ${fresh}/7 fresh on a trading day (weekend closes are handled above; a weekday below 5 is a broken feed)`); Deno.exit(1); }

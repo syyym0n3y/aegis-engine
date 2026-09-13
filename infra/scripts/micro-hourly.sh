@@ -35,5 +35,7 @@ fi
 deno run --allow-net --allow-env ../scripts/micro-sheet.ts > ../data/micro-sheet.log 2>&1 || echo "$T0 MICRO HOURLY: sheet FAILED"
 echo "$T0 MICRO HOURLY done: $(grep -o '[0-9]* candidate(s); [0-9]* instrument(s) STALE' ../data/micro-sheet.log)"
 # D-854: the hourly job's own FAILED lines must reach the operator, not just its log.
-FAILS="$(grep -c "FAILED" ../data/micro-fx-live.log ../data/micro-sheet.log 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')"
-[ "${FAILS:-0}" -gt 0 ] && "$(dirname "$0")/_notify.sh" "AEGIS MICRO HOURLY" "$FAILS FAILED line(s) in the hourly refresh/sheet logs" || true
+# D-857: the first version grepped the sub-logs for the word FAILED, but the FAILED echo is written by THIS script to
+# its own stdout (infra/data/micro-hourly.log) — so a failing refresh never notified. Count THIS run's own echoes.
+FAILS="$(grep -c "^$T0 MICRO HOURLY: .*FAILED" ../infra/data/micro-hourly.log 2>/dev/null || echo 0)"
+[ "${FAILS:-0}" -gt 0 ] && "$(dirname "$0")/_notify.sh" "AEGIS MICRO HOURLY" "$FAILS FAILED step(s) this hour — see infra/data/micro-hourly.log" || true

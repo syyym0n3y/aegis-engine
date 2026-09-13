@@ -36,7 +36,7 @@ const rest = await sh(["docker", "logs", "aegis-rest", "--since", K.SINCE]);
 let restLines = 0;
 for (const L of rest.split("\n")) { const m = /"(?:GET|POST|PATCH|DELETE) (\/[^ ?"]*)[^"]*" ([45]\d\d) /.exec(L); if (m) { restLines++; add("postgrest", `${m[2]} ${m[1]}`, L.slice(0, 160)); } }
 // 3. Ingest / job logs: a failed write printed as a status, or named as a failure
-const LOGS = ["data/micro-fx-live.log", "data/micro-sheet.log", "infra/data/coverage.log", "infra/data/coverage.err", "infra/data/daily.err", "infra/data/cryptofwd.err", "infra/data/autopilot.err", "infra/data/attribution.err", "data/catalogue.log", "data/search-space.log"];
+const LOGS = ["data/micro-fx-live.log", "data/micro-sheet.log", "infra/data/micro-hourly.log", "infra/data/micro-hourly.err", "infra/data/coverage.log", "infra/data/coverage.err", "infra/data/daily.err", "infra/data/cryptofwd.err", "infra/data/autopilot.err", "infra/data/attribution.err", "data/catalogue.log", "data/search-space.log"];
 for (const f of LOGS) {
   let t = ""; try { t = await Deno.readTextFile(`${base}${f}`); } catch { continue; }
   // The daily runner's logs ACCUMULATE across cycles (a 2026-09-06 borrow-fee failure was still in coverage.log four

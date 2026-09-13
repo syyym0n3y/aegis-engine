@@ -18239,6 +18239,33 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-857 (2026-09-13) THE HOURLY JOB CRIED WOLF 94 TIMES IN FIVE DAYS AND THE NOTIFIER NEVER HEARD IT — found on the first unattended check-in
+
+Three days unattended. The runner committed its own docs each day (D-855 works), the board was green, no marker was
+set — and the hourly micro job had echoed **`fx LIVE refresh FAILED` 94 times since 2026-09-08.** Two defects, both
+of the cry-wolf class THE CONTINUITY LAW names: *a weekly dataset is not stale at three days, and crying wolf trains
+everyone to ignore the alarm.*
+
+**1. The freshness rule had no notion of a market close.** FX and index CFDs close Friday 21:00 UTC and reopen Sunday
+21:00 UTC. `refresh-fx-live.ts` required a bar within three hours of *now* and exited RED at every weekend hour, so the
+hourly job wrote FAILED every hour of every weekend, and the one true failure (2026-09-08, D-853) was one line among
+ninety-four. Fixed: inside the closure window, fresh means the newest bar sits within three hours of the Friday close.
+Verified on this Saturday: **7/7 series hold their last bar at the close — feed intact, market closed, not a failure.**
+
+**2. The notifier read the wrong log.** D-854's hourly hook grepped the *sub-logs* for the word FAILED, but the FAILED
+echo is written by the hourly script to its *own* stdout, which launchd sends to `infra/data/micro-hourly.log`. So a
+failing refresh never notified. Fixed: the hook counts this run's own echoes. The log-triage guard now reads the
+hourly job's stdout and stderr too — it did not — and on first read flagged the 94-line class, which was root-caused
+above and baselined; the log was archived and truncated at the fix point so a future FAILED is NEW again rather
+than "seen".
+
+**What the check-in proves either way:** the promise "you will not have to prompt" was false for three days on the
+hourly rung and true on the daily one. The daily cycle was never the risk. The mechanism that tells you is now
+pointed at the right file.
+
+GOLD: reliability — two cry-wolf defects in the live path, found by the routine the operator was promised, not by luck.
+ACTS-ON: gate — the micro rung's freshness signal is honest at weekends and its failures now reach the board and the notifier.
+
 ## D-856 (2026-09-11) G7 MEASURED BY POPULATION — the filing-text ingest D-849 asked for, done at the level that settles it
 
 D-849 left merger odd-lot and round-up provisions UNTESTED because a today-serving price source cannot hold the
