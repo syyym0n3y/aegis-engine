@@ -40,6 +40,7 @@ const T: Cell[] = [
   // D. someone is SLOW
   { id: "D1", who: "trend followers' counterparties", why: "underreact to persistent information", examples: "time-series momentum, cross-sectional momentum, breakouts, MTF structure", re: /momentum|trend|breakout|\bmtf\b|price.action|persist/i },
   { id: "D2", who: "mean-reverters' counterparties", why: "overreact and pay to get out", examples: "reversal, range exhaustion, fades, overnight/intraday", re: /reversal|reversion|\bfade|exhaust|overreact|overnight/i },
+  { id: "D4", who: "cross-instrument laggards", why: "one instrument moves first and the other catches up", examples: "lead-lag, spillover, leader/follower at hourly resolution", re: /lead.?lag|leader|follower|spillover|cross.instrument/i },
   { id: "D3", who: "seasonal / calendar", why: "predictable timing of flows", examples: "turn-of-month, day-of-week, settlement stamps, session windows", re: /season|calendar|day.of.week|turn.of|settlement (clock|stamp)|utc window|session/i },
   // E. someone is SMALL and the venue pays them for it
   { id: "E1", who: "venues / brokers / issuers", why: "subsidise acquisition per HEAD, not per pound", examples: "sign-up bonuses, fee rebates, maker rebates, prop-firm payout structure", re: /bonus|subsid|rebate|acquisition|prop.?firm|payout|referral|cashback/i, smallOnly: true },

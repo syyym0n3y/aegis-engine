@@ -2,7 +2,7 @@
 
 > Regenerated daily by `scripts/search-space.ts`. D-848 measured the search as 64.1% self-referential; this map is drawn from OUTSIDE the ledger — by counterparty, not by asset class or signal — and then matched to it. The taxonomy is the author's enumeration, not a citation, and is kept open. **A cell reading UNTESTED is a question this programme has never asked, not a market that has been shown efficient.**
 
-**20 cells: 20 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 6 (1 live) · B4 tested 13 (4 live) · C1 tested 20 (8 live) · C2 tested 10 (7 live) · C3 tested 3 (3 live) · D1 tested 16 (7 live) · D2 tested 14 (5 live) · D3 tested 12 (4 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 7 (6 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
+**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 6 (1 live) · B4 tested 13 (4 live) · C1 tested 20 (8 live) · C2 tested 10 (7 live) · C3 tested 3 (3 live) · D1 tested 16 (7 live) · D2 tested 14 (5 live) · D4 tested 5 (1 live) · D3 tested 12 (4 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 7 (6 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
 
 ## A1 — index funds: must trade at rebalance regardless of price
 examples: index inclusion/deletion, close auction imbalance, month-end
@@ -187,6 +187,17 @@ examples: reversal, range exhaustion, fades, overnight/intraday
 | D-809-poc-pressure-delta | timing | rejected |
 | D-811-fx-footprint | timing | rejected |
 | … | 2 more | |
+
+## D4 — cross-instrument laggards: one instrument moves first and the other catches up
+examples: lead-lag, spillover, leader/follower at hourly resolution
+
+| row | family | status |
+|---|---|---|
+| D-417 | cross-asset | killed |
+| xasset-leadlag | xasset | killed |
+| xasset-hourly-leadlag | ml | killed |
+| D-763-mtf-liquidity-break | price-action structure | measured |
+| D-862-hourly-leadlag | timing | killed |
 
 ## D3 — seasonal / calendar: predictable timing of flows
 examples: turn-of-month, day-of-week, settlement stamps, session windows

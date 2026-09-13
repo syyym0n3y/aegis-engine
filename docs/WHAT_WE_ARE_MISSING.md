@@ -28,8 +28,9 @@ broker path; it will score whatever the market gives its one clock.
    hourly result here is priced at taker. A maker/limit engine with measured fills is an open question, not a null.
 3. **Events are not in the data.** Scheduled releases (CPI, NFP, FOMC, inventories), listings/delistings, funding
    settlements as *timestamps* — the panel has funding and OI for perps but no macro calendar. A calendar is free.
-4. **Cross-instrument lead–lag at hourly resolution has not been asked** — the map has D1/D2 cells for every
-   instrument on its own and nothing that conditions one instrument on another's move.
+4. ~~Cross-instrument lead–lag at hourly resolution has not been asked~~ **Measured (D-862): NULL, sign missed.** Same-hour
+   correlation up to 0.92, lagged slope negative — a sub-fee reversal (−0.2 to −4.2bp per 1sd vs 9bp). Information crosses
+   instruments within the hour; nothing tradable leaks across it.
 5. **The placeable classes are the weak ones.** FX and index CFDs at 4–6bp show gross ≈ 0; the only class with any
    gross is crypto perps at 9bp, which a UK retail account cannot hold. Access, not signal, is the binding constraint
    (INSTRUMENT LAW).

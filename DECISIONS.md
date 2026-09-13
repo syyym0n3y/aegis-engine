@@ -18239,6 +18239,29 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-862 (2026-09-13) THE LAST PRICE-ONLY CELL — hourly lead-lag across 22 followers: NULL, sign MISSED, and the residue is a sub-fee reversal
+
+`docs/WHAT_WE_ARE_MISSING.md` item 4 was the one price-only question the search-space map had never held: does one
+instrument's last completed hour predict another's next? Registered with a POSITIVE sign prior (lead-lag continuation),
+three families — 15 perps on BTC, three CFDs on the S&P proxy, four FX pairs on gold — 44 counted regressions,
+ceiling 3.10. **Positive control first:** same-hour correlations 0.45–0.84 for the perps and **0.92 for Nasdaq on S&P**,
+so the alignment is right before any lagged number is read.
+
+**The lagged slope is negative almost everywhere.** Perps at h=1 on test: −0.005 to −0.096 (BNB t −4.8, SOL −3.0,
+XRP −2.4), the same sign on train for every deep name (ADA −6.1, LINK −4.3, XRP −4.2). **0 of 22 followers show the
+registered sign.** Sign MISSED; the opposite sign is a post-hoc flip and is not claimable (SIGN LAW). Recorded
+descriptively: **followers slightly reverse against their leader's last hour — by 0.2 to 4.2bp per 1sd of leader move,
+against a 9bp round trip.** An order of magnitude below any retail cost. The "trade net" t-values of −10 to −50 are the
+flat cost on a near-zero series (D-661), not the market.
+
+**What it closes.** Cross-instrument information at hourly resolution is absorbed within the hour (r up to 0.92
+contemporaneous) and what leaks across the boundary is a sub-fee reversal. With D-861 this completes the price-only
+programme on the hourly panel: own-history set-ups adaptively combined, gross zero; cross-instrument, sub-fee reversal.
+The map's D4 cell now carries a row. What remains unmeasured is not price: execution-side fills and event timestamps.
+
+GOLD: research — the last never-asked price-only cell, answered against its registered sign with the controls stated.
+ACTS-ON: gate — the search-space map has no price-only cell without a measured row; the queue front is data, not search.
+
 ## D-861 (2026-09-13) THE ADAPTIVE PROGRAMME ACROSS ALL 24 INSTRUMENTS — 15,684 fits, NULL, and the gross is ZERO
 
 The gold engine generalised to the whole hourly panel after `scripts/panel-data-audit.ts` passed every instrument
