@@ -50,7 +50,7 @@ const RESEARCH = new Set(["ml", "book", "vol", "crypto-derivatives", "equity-vol
 
 // Causal/interpretive language: the move from "we measured X" to "X is because Y".
 const MECHANISM = /(because|therefore|driven by|explained by|the mechanism|mechanism is|is not beta|is beta|attributable to|the reason is|this shows that|which means the|caused by|stems from|reflects the)/i;
-const HAS_PREREG = /PREREG:\s*([A-Za-z0-9._-]+)/;
+const HAS_PREREG = /PREREG:\s*([A-Za-z0-9._-]*[A-Za-z0-9_-])/;   // D-865: a trailing "." is sentence punctuation, not part of the id — it produced a false "does not exist" red
 const DESCRIPTIVE = /DESCRIPTIVE ONLY/i;
 const POOLED = /\bpooled\b/i;
 const DISAGG = /(disaggregat|by geometry|by stratum|by symbol|by era|excluding|ex-|dominant stratum|decompos)/i;

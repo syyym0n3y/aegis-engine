@@ -18239,6 +18239,80 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-865 (2026-09-13) THE PORTFOLIO QUESTION — four uncorrelated sleeves, and two of them are dead; trend is crisis alpha; tenfold is still out of reach
+
+A Sharpe rises through diversification across uncorrelated books, so the four that the held data can build were
+combined at risk parity on the same 110 assets, OOS 2015–2026, weights fixed in the registration.
+
+| sleeve | Sharpe | t | maxDD | underwater |
+|---|---|---|---|---|
+| trend (D-863) | 0.62 | 2.55 | −10% | 3.1y |
+| long basket | 0.76 | 3.13 | −22% | 2.9y |
+| **FX carry** (3m rate differentials, 14 pairs) | **−0.47** | −1.93 | −35% | **16.8y** |
+| **value** (5-year reversal within class) | **−0.14** | −0.59 | −14% | 10.1y |
+| **four-sleeve risk parity, 10% vol** | **0.45** | 1.85 | −27% | 6.1y |
+
+Every pair correlates below 0.26 — the mechanism is real — but carry and value have been dead for a decade and pull
+the registered blend below its best sleeve. **NULL.**
+
+**The finding that survives is descriptive and matters more than the verdict: trend is crisis alpha.** Feb–Mar 2020,
+trend **+4.4%** while the long basket lost **19.4%** (correlation −0.65); Jan–Oct 2022, trend +2.6% against −5.9%
+(−0.69). That is *how* a trend sleeve improves a long portfolio — not its Sharpe, its worst months.
+
+**Not claimable, stated so it cannot be mistaken for a result:** trend+long at risk parity is Sharpe 0.89, t 3.64,
+8.9%/yr at 10% vol with a −27% drawdown — a subset chosen after the sleeves were seen, i.e. a pick on the evaluation
+window (D-455). Even that flattering pair needs **15 years at 20% vol with a −53% drawdown** to reach tenfold, and at
+40% vol it is ruined. Against D-864's arithmetic, nothing measured is near the ~1.5 the target needs.
+
+*The mechanism guard produced a false red on the D-863 row because its id regex swallowed a trailing full stop —
+fixed in the guard, not the row.*
+
+GOLD: research — the diversified-book question answered with its sleeves, correlations and crash months, and the
+one descriptive fact that changes how a long portfolio should be built.
+ACTS-ON: gate — the best diversified book on the record is now a number (0.45 registered / 0.89 descriptive) the
+tenfold requirement can be read against.
+
+## D-863/864 (2026-09-13) THE BIG-PICTURE LENS — the record had never tested trend-following across asset classes; it reproduces the literature, survives out of sample at 0.62, loses to a long basket, and tenfold is now a number
+
+Operator: stop looking at segments; take the broad view; every question asked; a model that lets any trader grow
+tenfold conservatively. The broad view, done as arithmetic and as the one large question the record had skipped.
+
+### D-864 — tenfold, as arithmetic, and the question ledger
+`scripts/tenfold-arithmetic.ts`: years to 10× = ln 10 / (rf + Sharpe·vol − vol²/2). **Tenfold inside ~7 years needs
+~39%/yr, which at a survivable drawdown needs a sustained net Sharpe near 1.5.** At Sharpe 0.5 and 20% vol it is 19
+years with an 80% drawdown. `scripts/question-ledger.ts` turns "every question" into a grid — horizon × class ×
+counterparty mechanism, 120 cells — and marks each ASKED or UNASKED from the ledger: **40 asked, 80 not**, listed.
+
+### D-863 — diversified time-series momentum, 110 assets, 1990–2026
+A grep found no row on trend-following at weekly–monthly horizons across classes — the most replicated return source
+in the literature — so it was pre-registered with a positive sign prior and the literature's own era as the positive
+control. **The control reproduces: in-sample 1990–2014 Sharpe 0.87** (21d 0.40, 63d 0.78, 126d 0.74, 252d 0.93).
+
+| OOS 2015–2026 | Sharpe | t | %/yr | maxDD | underwater |
+|---|---|---|---|---|---|
+| **trend combo** | **0.62** | 2.55 | 2.2 (at 3.6% vol) | −10% | 3.1y |
+| vol-matched long-only basket | **0.80** | 3.30 | 4.3 | | |
+
+69 of 110 assets positive; equity indices/rates, FX and crypto positive; **commodities — the class trend-following was
+built on — negative since 2015.** NULL on the rule: t 2.55 sits below the 2.96 ceiling, and the trend book does not
+beat a plain vol-scaled long basket over the decade in which everything went up (excess −2.0%/yr, t −1.5). Decay after
+publication: a third of the Sharpe, not all of it. Sign MATCHED.
+
+**The tenfold question answered in the book's own numbers:**
+
+| target vol | %/yr | maxDD | years to 10× |
+|---|---|---|---|
+| 10% | 6.2 | −28% | 40 |
+| 20% | 12.4 | −57% | 22 |
+| 40% | 24.8 | **−114%** | ruin |
+
+A Sharpe-0.6 book cannot be levered to tenfold inside a decade without ruin. The best holdable number on this record
+is now 0.62; the target needs 1.5. **The distance is the mission, and it is a number.** What raises a Sharpe from 0.6
+toward 1 is not a better signal but diversification across *uncorrelated* books — which is D-865, registered next.
+
+GOLD: research — the largest untested question on the record, asked with the literature era as its control.
+ACTS-ON: gate — the tenfold target is now a stated Sharpe requirement the `micro_entry` gate can be read against.
+
 ## D-862 (2026-09-13) THE LAST PRICE-ONLY CELL — hourly lead-lag across 22 followers: NULL, sign MISSED, and the residue is a sub-fee reversal
 
 `docs/WHAT_WE_ARE_MISSING.md` item 4 was the one price-only question the search-space map had never held: does one
