@@ -2,7 +2,7 @@
 
 > Regenerated daily by `scripts/search-space.ts`. D-848 measured the search as 64.1% self-referential; this map is drawn from OUTSIDE the ledger — by counterparty, not by asset class or signal — and then matched to it. The taxonomy is the author's enumeration, not a citation, and is kept open. **A cell reading UNTESTED is a question this programme has never asked, not a market that has been shown efficient.**
 
-**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 6 (1 live) · B4 tested 13 (4 live) · C1 tested 20 (8 live) · C2 tested 10 (7 live) · C3 tested 3 (3 live) · D1 tested 16 (7 live) · D2 tested 14 (5 live) · D4 tested 5 (1 live) · D3 tested 12 (4 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 7 (6 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
+**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 6 (1 live) · B4 tested 13 (4 live) · C1 tested 20 (8 live) · C2 tested 11 (7 live) · C3 tested 3 (3 live) · D1 tested 23 (11 live) · D2 tested 16 (5 live) · D4 tested 5 (1 live) · D3 tested 13 (5 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 11 (10 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
 
 ## A1 — index funds: must trade at rebalance regardless of price
 examples: index inclusion/deletion, close auction imbalance, month-end
@@ -140,6 +140,7 @@ examples: FX carry, funding carry, basis carry, dividend carry
 | D-741-fx-carry-em | carry (fx) | measured |
 | D-742-commodity-roll | carry (commodity) | measured |
 | D-849-g7-merger-oddlot | structural | untested |
+| D-865-multistrategy-blend | book | killed |
 
 ## C3 — tail buyers: overpay for convexity
 examples: lottery / longshot, low-vol, IPO allocation, prediction markets
@@ -167,7 +168,7 @@ examples: time-series momentum, cross-sectional momentum, breakouts, MTF structu
 | D-765-mtf-fvg | price-action structure | measured |
 | D-763-mtf-liquidity-break | price-action structure | measured |
 | D-766-mtf-setup-battery | D-766-mtf-setup-battery | MEASURED |
-| … | 4 more | |
+| … | 11 more | |
 
 ## D2 — mean-reverters' counterparties: overreact and pay to get out
 examples: reversal, range exhaustion, fades, overnight/intraday
@@ -185,8 +186,8 @@ examples: reversal, range exhaustion, fades, overnight/intraday
 | D-767-mtf-volume-conditions | D-767-mtf-volume-conditions | MEASURED |
 | D-764-psl-fade | price-action structure | monitoring |
 | D-809-poc-pressure-delta | timing | rejected |
-| D-811-fx-footprint | timing | rejected |
-| … | 2 more | |
+| D-866-trend-placeable-retail | book | killed |
+| … | 4 more | |
 
 ## D4 — cross-instrument laggards: one instrument moves first and the other catches up
 examples: lead-lag, spillover, leader/follower at hourly resolution
@@ -216,6 +217,7 @@ examples: turn-of-month, day-of-week, settlement stamps, session windows
 | D-808-value-area-levels | timing | rejected |
 | D-816-equity-depth-flow | timing | rejected |
 | D-846b-adjusted-levels-eighths | reliability | measured |
+| … | 1 more | |
 
 ## E1 — venues / brokers / issuers: subsidise acquisition per HEAD, not per pound  *(capacity-inverted: pays per head, not per pound)*
 examples: sign-up bonuses, fee rebates, maker rebates, prop-firm payout structure
@@ -243,6 +245,10 @@ examples: ISA/SIPP wrapper, employer match, deposit compounding
 | D-750-cef-discount | wrapper mispricing (CEF) | monitoring |
 | D-755-cef-tender | wrapper mispricing (CEF) | measured |
 | D-758-uk-retail-structural | structural income | measured |
+| D-868-etf-longonly-trend-timing | book | monitoring |
+| D-873-isa-plus-crypto-parity | book | monitoring |
+| D-870-timed-risk-parity-classes | book | monitoring |
+| D-872-vol-regime-overlay | book | monitoring |
 
 ## F1 — nobody — the process: range/vol is forecastable even when direction is not
 examples: HAR-RV, range persistence, GARCH
