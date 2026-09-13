@@ -19,6 +19,12 @@ nothing before cost across 24 liquid instruments, and any retail cost turns zero
 manufactured by the flat cost (D-661). The paper bot (`scripts/gold-paper-bot.ts`) exists and runs hourly with no
 broker path; it will score whatever the market gives its one clock.
 
+## Update 2026-09-13 evening — the big-picture pass (D-863–872)
+Trend-following across 110 assets reproduces the literature (IS 0.87) and survives OOS at 0.62 but loses to a long basket;
+carry and value are dead; trend is crisis alpha. The holdable line is long-only trend-timed ISA ETFs → class risk parity
+→ VIX overlay: **Sharpe 0.62 → 0.76 → 0.83, drawdown −11% → −7% → −5%**, the best measured. Tenfold: ~12–13 years at 20% vol.
+Spot crypto timed: 0.69 with −6% vs a hold basket that made nothing. `docs/RETAIL_PLAYBOOK.md` is the synthesis.
+
 ## What is genuinely missing — not "more of the same"
 1. **A gross edge in price-only hourly rules does not appear to exist at this resolution.** Three designs and 26,305
    fits say so with coverage stated (24 instruments, 2016–2026, first-hit events). More set-ups of the same kind is

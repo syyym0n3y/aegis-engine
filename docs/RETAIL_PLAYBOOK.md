@@ -18,6 +18,18 @@ Venue sign-up subsidies (D-851): roughly **£150–£400 once** on ~£1,000 of d
 Reproduced in-sample 1993–2014 (Sharpe 1.06 vs 0.82, maxDD −10% vs −28%). **It is a drawdown result: it gives up ~0.6%/yr
 of return to cut the worst drawdown by two thirds.** Weekly rebalance, 4bp, no financing. On a forward clock from today.
 
+**Construction (D-870):** group the timed sleeves into equity / bond / precious / commodity and weight the classes at equal
+risk (inverse trailing vol) rather than equal-weighting 51 tickers: OOS **Sharpe 0.76, maxDD −7%, 1.6 years underwater**
+(in-sample 1.19), above equal weight in both eras. This is the book the paper record carries forward.
+
+**Spot crypto (D-871), if you choose the exposure:** the same long-only trend switch on 27 spot coins with 8+ years gave
+Sharpe 0.69 with a −6% drawdown over 2018–26, while holding them at matched vol made nothing (−24% drawdown). On the most
+volatile asset you can hold, the switch is nearly all of the risk-adjusted return.
+
+**Insurance-priced overlay (D-872):** halving positions the day after VIX closes above its trailing-year 80th percentile
+lifts the book to **Sharpe 0.83 with a −5% drawdown** out of sample (in-sample 1.23, −8%). Best holdable number on the
+record; NULL by one registered clause, so it rides the D-868 clock rather than its own.
+
 ## 3. What NOT to hold, measured
 - **CFDs with overnight financing** (D-866): 6.5%/yr on notional turns the trend book from +0.26 to **−0.32** Sharpe.
 - **Hourly technical set-ups** (D-859–862): gross **zero** across 24 instruments and 26,349 counted fits.
@@ -25,8 +37,9 @@ of return to cut the worst drawdown by two thirds.** Weekly rebalance, 4bp, no f
 
 ## 4. Sizing, and the tenfold arithmetic (D-864)
 Tenfold in ~7 years needs ~39%/yr, i.e. a sustained net Sharpe near **1.5** at a survivable drawdown. The best holdable
-book here is 0.62. At 20% book vol that is **~12%/yr, a −45% drawdown, and ~22 years to 10×**; at 40% vol the drawdown
-exceeds 90%. **A conservative tenfold is a two-decade outcome on these measurements, not a strategy.** Position size so
+book here is 0.83 (timed, class parity, VIX overlay). At 20% book vol that is **~16%/yr, a drawdown near −30%, and
+~12–13 years to 10×**; at 40% vol the drawdown passes −60%. **A conservative tenfold is a twelve-to-fifteen-year outcome on
+these measurements, not a strategy — and not a decade.** Position size so
 the book's vol is 10–20%; never lever a Sharpe below 1 past 20% vol.
 
 ## 5. What would change this page

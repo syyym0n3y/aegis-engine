@@ -18239,6 +18239,53 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-872 (2026-09-13) THE MARKET'S PRICE OF INSURANCE AS AN OVERLAY — 0.83 with a −5% drawdown, the best holdable number on the record, NULL by one clause
+
+The question-ledger cell *daily × index × insurance*, applied to the best holdable book: after any close where VIX sits
+above its trailing 252-day 80th percentile, halve every position the next day (lag-1; the term-structure series are
+not held, so the registered percentile fallback applied — 20.8% of days flagged).
+
+| OOS 2015–2026 | Sharpe | maxDD | underwater |
+|---|---|---|---|
+| timed class parity (D-870) | 0.76 | −7% | 1.6y |
+| **+ VIX overlay** | **0.83** (t 3.00) | **−5%** | 1.5y |
+| untimed class parity | 0.51 | −26% | 3.0y |
+| untimed + VIX overlay | 0.62 | −15% | 2.9y |
+
+In-sample 1993–2014: 1.23 vs 1.19, maxDD −8% vs −10% — a 20% cut against the registered 25%, so **NULL by exactly one
+clause**, met on the other five. The overlay times the untimed book too, so it is information, not a fit to the trend
+switch. Against tenfold: at 20% book vol roughly 16–17%/yr with a drawdown near −30%, **12–13 years** — the first book
+here for which tenfold inside fifteen years is arithmetic rather than fantasy, and still not a decade.
+
+GOLD: research — the last insurance-priced cell answered on the holdable book, with its comparators in both eras.
+ACTS-ON: gate — 0.83 is now the best holdable Sharpe the tenfold requirement is read against.
+
+## D-870/871 (2026-09-13) CONSTRUCTION AND THE MOST VOLATILE PLACEABLE CLASS — the best holdable book on the record is now 0.76 with a −7% drawdown, and it is still not tenfold
+
+### D-870 — class risk parity over the timed ISA sleeves
+D-868 equal-weights 51 ETFs, which makes it ~85% equity. Grouping the same timed sleeves into equity / bond / precious /
+commodity and combining at inverse trailing class vol:
+
+| OOS 2015–2026 | Sharpe | maxDD | underwater | IS 1993–2014 Sharpe |
+|---|---|---|---|---|
+| **timed, class parity** | **0.76** (t 2.75) | **−7%** | 1.6y | **1.19** |
+| untimed, class parity | 0.51 | −26% | 3.0y | 0.91 |
+| timed, equal weight (D-868) | 0.62 | −11% | 2.4y | 1.06 |
+| hold, equal weight | 0.47 | −31% | 3.0y | 0.82 |
+
+Same ordering in both eras. NULL on the registered 0.85 clause; every other clause met. **Construction bought +0.14 of
+Sharpe and a third off the drawdown; it did not buy tenfold** — 20% book vol is ~15%/yr, −37%, 17.6 years. The paper
+book now carries this construction (`timedcp`) beside the equal-weight one under the D-868 drawdown clock.
+
+### D-871 — spot crypto, long-only timed, 27 assets with 8+ years, OOS 2018–2026
+Sharpe **0.69**, maxDD **−6%**, 26 of 26 assets positive, versus a vol-matched hold basket that made **nothing** (Sharpe
+0.01, −24% drawdown, 7.3 years underwater). NULL on the registered 0.8 clause; a 75% drawdown cut and +2.9%/yr over hold
+on the rest. On the most volatile asset a retail account can hold as spot, the trend switch is where nearly all of the
+risk-adjusted return lives. Not a clock (rule not met); a measured candidate for an operator who chooses crypto exposure.
+
+GOLD: research — the two remaining big-picture cells on the holdable side, answered with comparators in both eras.
+ACTS-ON: clock — the paper book now records the class-parity construction daily.
+
 ## D-868/869 (2026-09-13) THE FIRST PRE-REGISTERED SUPPORTED RESULT A UK RETAIL ACCOUNT CAN HOLD — and the playbook that states what it is and is not
 
 ### D-868 — long-only trend timing of ISA-holdable ETFs: SUPPORTED, as a drawdown claim

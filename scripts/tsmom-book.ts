@@ -15,6 +15,8 @@ const K = declareKnobs("tsmom-book", [
   { name: "RF", def: "0.02", note: "D-868: cash yield while timed out, annual" },
   { name: "CLASS_PARITY", def: "0", note: "1 = D-870: weight the book across classes (equity / bond / precious / commodity) at equal ex-ante vol from trailing 60-day class-sleeve vol, instead of equal weight per asset" },
   { name: "CRYPTO_ONLY", def: "0", note: "1 = D-871: the crypto-with->=8y subset, long-only timed, 20bp spot cost" },
+  { name: "ALWAYS_LONG", def: "0", note: "1 = timing OFF in LONG_ONLY mode (the untimed comparator for D-870)" },
+  { name: "VOL_OVERLAY", def: "0", note: "1 = D-872: halve every position the day after a close where ^VIX is above its trailing 252-day 80th percentile (term-structure series not held; registered fallback), lag-1" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -49,6 +51,12 @@ const GROUP = (a: { sym: string; cls: string }) => a.cls === "crypto" ? "crypto"
 const grpRet: Record<string, Record<string, Daily>> = {}; const grpN: Record<string, Record<string, Daily>> = {}; const longGrp: Record<string, Daily> = {}; const longGrpN: Record<string, Daily> = {};
 const perAsset: Record<string, Record<string, number[]>> = {}; const perAssetLong: Record<string, number[]> = {};
 const isOOS = (ts: number) => day(ts) >= K.OOS_FROM, isIS = (ts: number) => day(ts) >= K.IS_FROM && day(ts) < K.OOS_FROM;
+// D-872: VIX regime flag per date, from the PRIOR close (lag-1): 1 if VIX close > trailing 252-day 80th percentile
+const vixFlag = new Map<string, number>();
+if (K.VOL_OVERLAY === "1") { const vb = ((await q(`trd_bars_deep?symbol=eq.%5EVIX&select=bars`) as { bars: number[][] }[])[0]?.bars ?? []).sort((a, b) => a[0] - b[0]); const cl = vb.map((x) => x[4]);
+  for (let i = 252; i < vb.length; i++) { const win = cl.slice(i - 252, i).sort((a, b) => a - b); const p80 = win[Math.floor(0.8 * win.length)]; vixFlag.set(day(vb[i][0]), cl[i] > p80 ? 1 : 0); }
+  console.log(`  VOL OVERLAY: ${[...vixFlag.values()].filter((v) => v).length} of ${vixFlag.size} VIX days flagged (> trailing-252d 80th pct); positions halved the NEXT day`); }
+const overlayMult = (dPrev: string) => K.VOL_OVERLAY === "1" && vixFlag.get(dPrev) === 1 ? 0.5 : 1;
 const nDay = new Map<string, number>();
 for (const a of S) {
   const n = a.c.length; if (n < 300) continue; const r = new Float64Array(n); for (let i = 1; i < n; i++) r[i] = Math.log(a.c[i] / a.c[i - 1]);
@@ -59,11 +67,12 @@ for (const a of S) {
       if (i - lastReb >= +K.REBAL_D) {
         lastReb = i; const vol = sd(Array.from(r.slice(i - 60, i))) * Math.sqrt(252); const scale = vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0;
         let sgn = 0; if (sig === "combo") { for (const L of LOOK) sgn += Math.sign(a.c[i] / a.c[i - L] - 1); sgn /= LOOK.length; } else sgn = Math.sign(a.c[i] / a.c[i - +sig] - 1);
-        const newPos = K.LONG_ONLY === "1" ? (sgn > 0 ? scale : 0) : sgn * scale; const turn = Math.abs(newPos - pos); pos = newPos; rets.push(-turn * cost / 2); // cost charged on the traded fraction (half a round trip per side)
+        const newPos = K.LONG_ONLY === "1" ? (K.ALWAYS_LONG === "1" || sgn > 0 ? scale : 0) : sgn * scale; const turn = Math.abs(newPos - pos); pos = newPos; rets.push(-turn * cost / 2); // cost charged on the traded fraction (half a round trip per side)
       } else rets.push(0);
       const isEtf = a.cls === "etf" || a.cls === "sector"; const finDaily = (+K.FINANCING / 252) * (isEtf ? Math.max(0, -pos) : Math.abs(pos)) * (K.PLACEABLE === "1" ? 1 : 0);
       const cashD = K.LONG_ONLY === "1" && pos === 0 ? +K.RF / 252 * +K.VOL_TARGET / 0.10 : 0;
-      const v = pos * r[i + 1] + rets.pop()! - finDaily + cashD; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
+      const om = overlayMult(day(a.ts[i]));
+      const v = om * pos * r[i + 1] + rets.pop()! - finDaily + cashD; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
       rets.push(v); const d = day(a.ts[i + 1]); const m = bookRet[sig]; m.set(d, (m.get(d) ?? 0) + v); if (sig === "combo") nDay.set(d, (nDay.get(d) ?? 0) + 1);
       if (K.CLASS_PARITY === "1") { const g = GROUP(a); const gr = (grpRet[sig] ??= {}); const gm = (gr[g] ??= new Map()); gm.set(d, (gm.get(d) ?? 0) + v); const gn = (grpN[sig] ??= {}); const gnm = (gn[g] ??= new Map()); gnm.set(d, (gnm.get(d) ?? 0) + 1); }
       if (sig === "combo" && isOOS(a.ts[i + 1])) perAsset[a.sym][sig] = perAsset[a.sym][sig] ?? [], perAsset[a.sym][sig].push(v);
