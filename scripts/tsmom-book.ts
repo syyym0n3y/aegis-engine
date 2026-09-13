@@ -20,6 +20,7 @@ const K = declareKnobs("tsmom-book", [
   { name: "DUMP", def: "", note: "if set, write the combo book's daily OOS series {date: ret} to this JSON path (for D-873 blends)" },
   { name: "SOURCE_1DSF", def: "0", note: "1 = D-874: load the survivor-free Binance daily perp panel (trd_bars_intraday tf=1dSF, dead contracts included to their last bar) instead of trd_bars_deep" },
   { name: "SF_MIN_BARS", def: "400" },
+  { name: "LOOKS", def: "21,63,126,252", note: "D-875: lookbacks (trading days) for the trend combination" }, { name: "VOL_N", def: "60", note: "D-875: trailing window for the per-asset vol scaling" }, { name: "SF_TF", def: "1dSF", note: "D-876: which daily panel the SOURCE_1DSF loader reads (1dSF Binance, 1dBYBIT Bybit)" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -45,15 +46,15 @@ if (K.SOURCE_1DSF !== "1") assertNonEmpty("assets with >= MIN_YEARS", sel, K.CRY
 type Ser = { sym: string; cls: string; ts: number[]; c: number[] };
 const S: Ser[] = [];
 if (K.SOURCE_1DSF === "1") {
-  const metaSF = (await q(`trd_bars_intraday?tf=eq.1dSF&select=symbol,n_bars&order=symbol`) as { symbol: string; n_bars: number }[]).filter((r) => (r.n_bars ?? 0) >= +K.SF_MIN_BARS);
+  const metaSF = (await q(`trd_bars_intraday?tf=eq.${K.SF_TF}&select=symbol,n_bars&order=symbol`) as { symbol: string; n_bars: number }[]).filter((r) => (r.n_bars ?? 0) >= +K.SF_MIN_BARS);
   COST.crypto = +(Deno.env.get("CRYPTO_COST_BP") ?? "20");
-  for (let i = 0; i < metaSF.length; i += 20) { const page = metaSF.slice(i, i + 20); const rows = await q(`trd_bars_intraday?tf=eq.1dSF&symbol=in.(${page.map((p) => p.symbol).join(",")})&select=symbol,bars`) as { symbol: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0 && x[5] > 0).sort((a, z) => a[0] - z[0]); if (b.length < +K.SF_MIN_BARS) continue; S.push({ sym: r.symbol, cls: "crypto", ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
-  console.log(`  SURVIVOR-FREE 1dSF panel: ${S.length} contracts with >= ${K.SF_MIN_BARS} daily bars (dead contracts held to their last bar); cost ${COST.crypto}bp`);
+  for (let i = 0; i < metaSF.length; i += 20) { const page = metaSF.slice(i, i + 20); const rows = await q(`trd_bars_intraday?tf=eq.${K.SF_TF}&symbol=in.(${page.map((p) => p.symbol).join(",")})&select=symbol,bars`) as { symbol: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0 && x[5] > 0).sort((a, z) => a[0] - z[0]); if (b.length < +K.SF_MIN_BARS) continue; S.push({ sym: r.symbol, cls: "crypto", ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
+  console.log(`  SURVIVOR-FREE ${K.SF_TF} panel: ${S.length} contracts with >= ${K.SF_MIN_BARS} daily bars (dead contracts held to their last bar); cost ${COST.crypto}bp`);
 }
 for (let i = 0; i < (K.SOURCE_1DSF === "1" ? 0 : sel.length); i += 5) { const page = sel.slice(i, i + 5); const rows = await q(`trd_bars_deep?symbol=in.(${page.map((p) => encodeURIComponent(p.symbol)).join(",")})&select=symbol,asset_class,bars`) as { symbol: string; asset_class: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0).sort((a, z) => a[0] - z[0]); S.push({ sym: r.symbol, cls: r.asset_class, ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
 console.log(`\n==> D-863 DIVERSIFIED TSMOM BOOK — ${S.length} assets: ${Object.entries(S.reduce((a, s) => (a[s.cls] = (a[s.cls] ?? 0) + 1, a), {} as Record<string, number>)).map(([k, v]) => `${k} ${v}`).join(", ")}`);
 // ---- per-asset daily strategy returns for each signal, vol-scaled, weekly rebalance, cost on position changes ----
-const LOOK = [21, 63, 126, 252]; const SIGS = [...LOOK.map(String), "combo"];
+const LOOK = K.LOOKS.split(",").map(Number); const SIGS = [...LOOK.map(String), "combo"]; const VN = +K.VOL_N;
 type Daily = Map<string, number>; // day -> return
 const bookRet: Record<string, Daily> = {}; for (const s of SIGS) bookRet[s] = new Map(); const longRet: Daily = new Map();
 const GROUP = (a: { sym: string; cls: string }) => a.cls === "crypto" ? "crypto" : a.cls === "fx" ? "fx" : /^(TLT|IEF|SHY|LQD|HYG)$/.test(a.sym) || a.cls === "rate" ? "bond" : /^(GLD|SLV|GC=F|SI=F|PL=F|PA=F)$/.test(a.sym) ? "precious" : a.cls === "commodity" || /^(USO|UNG)$/.test(a.sym) ? "commodity" : "equity";
@@ -74,7 +75,7 @@ for (const a of S) {
     let pos = 0, lastReb = -1e9; const rets: number[] = [];
     for (let i = 260; i < n - 1; i++) {
       if (i - lastReb >= +K.REBAL_D) {
-        lastReb = i; const vol = sd(Array.from(r.slice(i - 60, i))) * Math.sqrt(252); const scale = vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0;
+        lastReb = i; const vol = sd(Array.from(r.slice(i - VN, i))) * Math.sqrt(252); const scale = vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0;
         let sgn = 0; if (sig === "combo") { for (const L of LOOK) sgn += Math.sign(a.c[i] / a.c[i - L] - 1); sgn /= LOOK.length; } else sgn = Math.sign(a.c[i] / a.c[i - +sig] - 1);
         const newPos = K.LONG_ONLY === "1" ? (K.ALWAYS_LONG === "1" || sgn > 0 ? scale : 0) : sgn * scale; const turn = Math.abs(newPos - pos); pos = newPos; rets.push(-turn * cost / 2); // cost charged on the traded fraction (half a round trip per side)
       } else rets.push(0);
