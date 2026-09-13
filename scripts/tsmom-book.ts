@@ -13,6 +13,8 @@ const K = declareKnobs("tsmom-book", [
   { name: "FINANCING", def: "0.065", note: "D-866: annual financing rate on gross CFD/short notional (SOFR ~4% + 2.5%); 0 = the research number" },
   { name: "LONG_ONLY", def: "0", note: "1 = D-868: long-only trend timing — hold vol-scaled when the combo trend is positive, cash otherwise; no shorts, no financing; restricts to ISA-holdable ETFs and cash indices" },
   { name: "RF", def: "0.02", note: "D-868: cash yield while timed out, annual" },
+  { name: "CLASS_PARITY", def: "0", note: "1 = D-870: weight the book across classes (equity / bond / precious / commodity) at equal ex-ante vol from trailing 60-day class-sleeve vol, instead of equal weight per asset" },
+  { name: "CRYPTO_ONLY", def: "0", note: "1 = D-871: the crypto-with->=8y subset, long-only timed, 20bp spot cost" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -31,9 +33,10 @@ let sel = meta.filter((m) => m.first_date <= cutoff.toISOString().slice(0, 10) &
 const cryptoSel = sel.filter((m) => m.asset_class === "crypto").slice(0, +K.MAX_CRYPTO); sel = [...sel.filter((m) => m.asset_class !== "crypto"), ...cryptoSel];
 const PLACEABLE_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|GC=F|SI=F|CL=F|BZ=F|HG=F|NG=F|PL=F|EURUSD=X|GBPUSD=X|JPY=X|AUDUSD=X|CAD=X|CHF=X|NZDUSD=X|EURGBP=X|EURJPY=X|GBPJPY=X|AUDJPY=X|EURCHF=X|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E)$/;
 const LONGONLY_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E|\^GSPTSE|\^SSMI|\^IBEX|\^KS11|\^BSESN|\^MXX|\^BVSP)$/;
-if (K.LONG_ONLY === "1") { sel = sel.filter((m) => LONGONLY_RE.test(m.symbol)); console.log(`  LONG-ONLY TIMING subset: ${sel.length} ETFs / cash indices an ISA can hold; cash at ${(100 * +K.RF).toFixed(1)}% when timed out; no shorts, no financing`); }
+if (K.CRYPTO_ONLY === "1") { const c8 = new Date(); c8.setUTCFullYear(c8.getUTCFullYear() - 8); sel = meta.filter((m) => m.asset_class === "crypto" && m.first_date <= c8.toISOString().slice(0, 10) && !/USDT|-EX$/.test(m.symbol)); COST.crypto = 20; console.log(`  CRYPTO-ONLY subset: ${sel.length} spot crypto with >= 8y (${sel.map((m) => m.symbol).join(", ")}); spot cost 20bp`); }
+else if (K.LONG_ONLY === "1") { sel = sel.filter((m) => LONGONLY_RE.test(m.symbol)); console.log(`  LONG-ONLY TIMING subset: ${sel.length} ETFs / cash indices an ISA can hold; cash at ${(100 * +K.RF).toFixed(1)}% when timed out; no shorts, no financing`); }
 if (K.PLACEABLE === "1") { sel = sel.filter((m) => PLACEABLE_RE.test(m.symbol)); console.log(`  PLACEABLE subset: ${sel.length} assets a UK retail account can hold (ETF long / CFD both ways); financing ${(100 * +K.FINANCING).toFixed(1)}%/yr on gross CFD and short notional`); }
-assertNonEmpty("assets with >= MIN_YEARS", sel, K.PLACEABLE === "1" || K.LONG_ONLY === "1" ? 40 : 60);
+assertNonEmpty("assets with >= MIN_YEARS", sel, K.CRYPTO_ONLY === "1" ? 2 : K.PLACEABLE === "1" || K.LONG_ONLY === "1" ? 40 : 60);
 type Ser = { sym: string; cls: string; ts: number[]; c: number[] };
 const S: Ser[] = [];
 for (let i = 0; i < sel.length; i += 5) { const page = sel.slice(i, i + 5); const rows = await q(`trd_bars_deep?symbol=in.(${page.map((p) => encodeURIComponent(p.symbol)).join(",")})&select=symbol,asset_class,bars`) as { symbol: string; asset_class: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0).sort((a, z) => a[0] - z[0]); S.push({ sym: r.symbol, cls: r.asset_class, ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
@@ -42,6 +45,8 @@ console.log(`\n==> D-863 DIVERSIFIED TSMOM BOOK — ${S.length} assets: ${Object
 const LOOK = [21, 63, 126, 252]; const SIGS = [...LOOK.map(String), "combo"];
 type Daily = Map<string, number>; // day -> return
 const bookRet: Record<string, Daily> = {}; for (const s of SIGS) bookRet[s] = new Map(); const longRet: Daily = new Map();
+const GROUP = (a: { sym: string; cls: string }) => a.cls === "crypto" ? "crypto" : a.cls === "fx" ? "fx" : /^(TLT|IEF|SHY|LQD|HYG)$/.test(a.sym) || a.cls === "rate" ? "bond" : /^(GLD|SLV|GC=F|SI=F|PL=F|PA=F)$/.test(a.sym) ? "precious" : a.cls === "commodity" || /^(USO|UNG)$/.test(a.sym) ? "commodity" : "equity";
+const grpRet: Record<string, Record<string, Daily>> = {}; const grpN: Record<string, Record<string, Daily>> = {}; const longGrp: Record<string, Daily> = {}; const longGrpN: Record<string, Daily> = {};
 const perAsset: Record<string, Record<string, number[]>> = {}; const perAssetLong: Record<string, number[]> = {};
 const isOOS = (ts: number) => day(ts) >= K.OOS_FROM, isIS = (ts: number) => day(ts) >= K.IS_FROM && day(ts) < K.OOS_FROM;
 const nDay = new Map<string, number>();
@@ -60,13 +65,24 @@ for (const a of S) {
       const cashD = K.LONG_ONLY === "1" && pos === 0 ? +K.RF / 252 * +K.VOL_TARGET / 0.10 : 0;
       const v = pos * r[i + 1] + rets.pop()! - finDaily + cashD; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
       rets.push(v); const d = day(a.ts[i + 1]); const m = bookRet[sig]; m.set(d, (m.get(d) ?? 0) + v); if (sig === "combo") nDay.set(d, (nDay.get(d) ?? 0) + 1);
+      if (K.CLASS_PARITY === "1") { const g = GROUP(a); const gr = (grpRet[sig] ??= {}); const gm = (gr[g] ??= new Map()); gm.set(d, (gm.get(d) ?? 0) + v); const gn = (grpN[sig] ??= {}); const gnm = (gn[g] ??= new Map()); gnm.set(d, (gnm.get(d) ?? 0) + 1); }
       if (sig === "combo" && isOOS(a.ts[i + 1])) perAsset[a.sym][sig] = perAsset[a.sym][sig] ?? [], perAsset[a.sym][sig].push(v);
       if (sig === "combo") { const vol = sd(Array.from(r.slice(Math.max(0, i - 60), i))) * Math.sqrt(252); const lv = (vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0) * r[i + 1]; longRet.set(d, (longRet.get(d) ?? 0) + lv); if (isOOS(a.ts[i + 1])) perAssetLong[a.sym].push(lv); }
     }
   }
 }
 // book = equal-weight across assets active that day (divide by count), so the book's ex-ante vol ~ VOL_TARGET/sqrt(N_eff)
-const series = (m: Daily, filt: (ts: number) => boolean) => [...m.entries()].filter(([d]) => filt(Date.parse(d + "T00:00:00Z") / 1000)).sort().map(([d, v]) => v / Math.max(1, nDay.get(d) ?? 1));
+const seriesEW = (m: Daily, filt: (ts: number) => boolean) => [...m.entries()].filter(([d]) => filt(Date.parse(d + "T00:00:00Z") / 1000)).sort().map(([d, v]) => v / Math.max(1, nDay.get(d) ?? 1));
+// D-870 class parity: each class's equal-weight sleeve, then classes combined at inverse trailing-60d class vol (no look-ahead: vol from prior days)
+const seriesCP = (sig: string, filt: (ts: number) => boolean) => {
+  const gr = grpRet[sig] ?? {}; const gn = grpN[sig] ?? {}; const groups = Object.keys(gr); const days = [...new Set(groups.flatMap((g) => [...gr[g].keys()]))].sort();
+  const hist: Record<string, number[]> = {}; for (const g of groups) hist[g] = []; const out: number[] = [];
+  for (const d of days) { const vals: Record<string, number> = {}; for (const g of groups) { const v = gr[g].get(d); if (v !== undefined) vals[g] = v / Math.max(1, gn[g].get(d) ?? 1); }
+    const w: Record<string, number> = {}; let tot = 0; for (const g of Object.keys(vals)) { const h = hist[g]; const vol = h.length > 40 ? sd(h.slice(-60)) : 0; w[g] = vol > 0 ? 1 / vol : 0; tot += w[g]; }
+    let v = 0; for (const g of Object.keys(vals)) v += (tot > 0 ? w[g] / tot : 1 / Object.keys(vals).length) * vals[g]; for (const g of Object.keys(vals)) hist[g].push(vals[g]);
+    if (filt(Date.parse(d + "T00:00:00Z") / 1000)) out.push(v); }
+  return out; };
+const series = (m: Daily, filt: (ts: number) => boolean) => K.CLASS_PARITY === "1" && m === bookRet["combo"] ? seriesCP("combo", filt) : seriesEW(m, filt);
 const stats = (x: number[]) => { const mu = mean(x) * 252, vol = sd(x) * Math.sqrt(252); let eq = 0, peak = 0, mdd = 0, uw = 0, maxUw = 0; for (const v of x) { eq += v; if (eq > peak) { peak = eq; uw = 0; } else { uw++; maxUw = Math.max(maxUw, uw); } mdd = Math.min(mdd, eq - peak); } return { mu, vol, sr: vol ? mu / vol : 0, t: tstat(x), mdd, uwDays: maxUw, n: x.length }; };
 const ceilInfo = await preregCeiling({ rest: OWNED, headers: hdr, preregId: K.RUN_ID });
 await spendTrials({ rest: OWNED, headers: hdr, family: "tsmom", runId: K.RUN_ID, spent: SIGS.length * 2 });

@@ -1,8 +1,8 @@
-# OPERATOR QUEUE — regenerated 2026-09-13T19:28Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-09-13T20:25Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — all green (31 guards, board logged 5.1h ago)
+## Board — all green (31 guards, board logged 6.0h ago)
 - nothing to fix. A red here that persists two cycles is the one time a session is worth starting; the guard's own output names the fix.
 
 ## Micro rung — live feed and sheet
@@ -16,7 +16,7 @@
 4. **Three wealth-ledger rows (D-735/746/758):** deposits × wrapper are the certain money and are unlogged because they are boring.
 5. **File every settlement notice on any US-listed position you ever hold (D-852):** 75% of eligible investors never do; it is free money with a deadline, not a mechanism.
 
-## Forward clocks — 20 registered, none may be re-mined
+## Forward clocks — 23 registered, none may be re-mined
 | clock | started | latest reading | n | note |
 |---|---|---|---|---|
 | fwd-book-p2-paper | 2026-08-24 | not yet computable | 0 | trd_paper_book holds ZERO marks; the French panel ends 2026-06 so the first markable month has not occurred |
@@ -25,6 +25,7 @@
 | fwd-despac-underperf | 2026-08-31 | not yet computable | 0 | 0 new de-SPACs with 500d since 2026-08-31; rule needs >=15. Post-boom de-SPAC volume is low — may stay inconcl |
 | fwd-despac-underperf-v2 | 2026-09-02 | not yet computable | 0 | 0 new de-SPACs (5.06 dated) with 500d since 2026-09-02; rule needs >=15. First possible read ~2028-09; post-bo |
 | fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | not yet computable | 0 | 0 forward event-days since 2026-09-04 (rule requires >=150 for kill or >=200 for promote). not-yet-computable. |
+| fwd-etf-trend-timing | 2026-09-13 | no mark | - |  |
 | fwd-ftd-persistence-short | 2026-08-26 | not yet computable | 18 | 18 day(s) of the 728 required. Scored by scripts/ftd-persistence.ts with FROM_D=2026-08-26 and LIQUID_ONLY=1. |
 | fwd-gold-rangeext-cont-k24 | 2026-09-13 | no mark | - |  |
 | fwd-hedging-pressure-flip | 2026-08-26 | not yet computable | 18 | 18 day(s) of the 728 required. Scored by scripts/cot-crosssectional.ts and tff-crosssectional.ts with FROM_D s |
@@ -36,6 +37,8 @@
 | fwd-psl-fade | 2026-09-03 | not yet computable | 109 | 109 forward PSL-fade events since 2026-09-03 across 0 instrument(s) with >=20; rule needs >=1000 pooled (~6 mo |
 | fwd-residual-follow | 2026-08-24 | not yet computable | 6 | 6 attribution stamp(s) since the clock start. UNDERPOWERED BY CONSTRUCTION until the stamps are daily: the rul |
 | fwd-spinoff-premium | 2026-08-31 | not yet computable | 0 | 0 new liquid spincos with full 500d forward data since 2026-08-31; rule needs >=20 (~3-4y to accrue). not-yet- |
+| fwd-trend-long-parity | 2026-09-13 | no mark | - |  |
+| fwd-tsmom-110 | 2026-09-13 | no mark | - |  |
 | fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | not yet computable | 7 | 7 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250,  |
 | fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | not yet computable | 22 | 22 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, |
 | fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | not yet computable | 17 | 17 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, |
