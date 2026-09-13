@@ -36,6 +36,19 @@ interface Score { metric: string; value: number | null; n: number; note: string 
 
 // Each scorer returns the statistic ITS OWN RULE names. Returning null with a reason is a valid outcome and is
 // deliberately distinguished from returning a number.
+
+// D-867 helper: Sharpe / t / maxDD of a paper sleeve since the clock start; months elapsed decide computability.
+async function trendClock(started: string, key: "trend" | "long" | "parity", promoteSR: number, killSR: number) {
+  const M = `paper_sharpe_${key}`;
+  let L: { date: string; trend: number; long: number; parity: number }[] = [];
+  try { L = JSON.parse(await Deno.readTextFile(new URL("../data/trend-paper.json", import.meta.url).pathname)); } catch (e) { if (e instanceof Deno.errors.NotFound) return { metric: M, value: null, n: 0, note: `paper book absent — scripts/trend-paper.ts has not run since ${started}` }; throw e; }
+  const rows = L.filter((x) => x.date >= started); const months = rows.length / 21;
+  if (rows.length < 60) return { metric: M, value: null, n: rows.length, note: `${rows.length} paper day(s) since ${started} (~${months.toFixed(1)} months); first read at 12 months, decision at 24. not-yet-computable, NOT inconclusive.` };
+  const x = rows.map((r) => r[key]); const mu = mean(x) * 252, vol = sd(x) * Math.sqrt(252), sr = vol ? mu / vol : 0, t = mu / (vol / Math.sqrt(rows.length / 252));
+  let eq = 0, peak = 0, mdd = 0; for (const v of x) { eq += v; peak = Math.max(peak, eq); mdd = Math.min(mdd, eq - peak); }
+  return { metric: M, value: sr, n: rows.length, note: `${rows.length} paper days (~${months.toFixed(1)} months): Sharpe ${sr.toFixed(2)}, t ${t.toFixed(2)}, ${(100 * mu).toFixed(1)}%/yr at ${(100 * vol).toFixed(1)}% vol, maxDD ${(100 * mdd).toFixed(1)}%. Rule: promote at >= 24 months with Sharpe >= ${promoteSR} and t >= 2; kill at >= 12 months with Sharpe <= ${killSR} or maxDD worse than the registered floor.` };
+}
+
 const SCORERS: Record<string, (started: string) => Promise<Score>> = {
   // Rule: >=30 marked months, realised Sharpe >= 0.40, maxDD < 6%.
   "fwd-book-p2-paper": async () => {
@@ -149,6 +162,9 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: M, value: m * 1e4, n: nets.length,
       note: `forward net ${(m * 1e4).toFixed(2)}bp/event, event t ${t.toFixed(2)}, ${pos}/${tested} instrument(s) positive at n>=50, excess over the unconditional 24h return ${(excess * 1e4).toFixed(2)}bp (gross ${(mean(grosses) * 1e4).toFixed(2)}bp). Rule: promote at >=400 events with net>0, t>=2.0, >=2/3 positive and excess>0; kill at >=250 with net<=0 or t<=0.` };
   },
+  // D-867: the two trend clocks, read from the daily paper book data/trend-paper.json (scripts/trend-paper.ts).
+  "fwd-tsmom-110": async (started) => trendClock(started, "trend", 0.5, 0),
+  "fwd-trend-long-parity": async (started) => trendClock(started, "parity", 0.8, 0.3),
   // D-860: the gold paper bot's rule. Reads the append-only paper ledger the bot writes; excess over the unconditional
   // 24h forward return of the same live series since the clock start (BENCHMARK LAW).
   "fwd-gold-rangeext-cont-k24": async (started) => {

@@ -9,6 +9,8 @@ import { spendTrials, preregCeiling } from "../supabase/functions/_shared/trial-
 const K = declareKnobs("tsmom-book", [
   { name: "OOS_FROM", def: "2015-01-01" }, { name: "IS_FROM", def: "1990-01-01" }, { name: "VOL_TARGET", def: "0.10", note: "per-asset ex-ante annualised vol" },
   { name: "REBAL_D", def: "5", note: "trading days between rebalances (weekly)" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" },
+  { name: "PLACEABLE", def: "0", note: "1 = D-866: restrict to what a UK retail account can hold (ETFs, index/sector ETFs, commodity CFD proxies, major FX) and charge overnight FINANCING on CFD legs and ETF shorts" },
+  { name: "FINANCING", def: "0.065", note: "D-866: annual financing rate on gross CFD/short notional (SOFR ~4% + 2.5%); 0 = the research number" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -25,7 +27,9 @@ const meta = await q(`trd_bars_deep?asset_class=in.(commodity,fx,index,intl_inde
 const cutoff = new Date(); cutoff.setUTCFullYear(cutoff.getUTCFullYear() - +K.MIN_YEARS);
 let sel = meta.filter((m) => m.first_date <= cutoff.toISOString().slice(0, 10) && m.n_bars > 2000 && !/^\^VIX$|USDT|^\^IRX$/.test(m.symbol));
 const cryptoSel = sel.filter((m) => m.asset_class === "crypto").slice(0, +K.MAX_CRYPTO); sel = [...sel.filter((m) => m.asset_class !== "crypto"), ...cryptoSel];
-assertNonEmpty("assets with >= MIN_YEARS", sel, 60);
+const PLACEABLE_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|GC=F|SI=F|CL=F|BZ=F|HG=F|NG=F|PL=F|EURUSD=X|GBPUSD=X|JPY=X|AUDUSD=X|CAD=X|CHF=X|NZDUSD=X|EURGBP=X|EURJPY=X|GBPJPY=X|AUDJPY=X|EURCHF=X|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E)$/;
+if (K.PLACEABLE === "1") { sel = sel.filter((m) => PLACEABLE_RE.test(m.symbol)); console.log(`  PLACEABLE subset: ${sel.length} assets a UK retail account can hold (ETF long / CFD both ways); financing ${(100 * +K.FINANCING).toFixed(1)}%/yr on gross CFD and short notional`); }
+assertNonEmpty("assets with >= MIN_YEARS", sel, K.PLACEABLE === "1" ? 40 : 60);
 type Ser = { sym: string; cls: string; ts: number[]; c: number[] };
 const S: Ser[] = [];
 for (let i = 0; i < sel.length; i += 5) { const page = sel.slice(i, i + 5); const rows = await q(`trd_bars_deep?symbol=in.(${page.map((p) => encodeURIComponent(p.symbol)).join(",")})&select=symbol,asset_class,bars`) as { symbol: string; asset_class: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0).sort((a, z) => a[0] - z[0]); S.push({ sym: r.symbol, cls: r.asset_class, ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
@@ -48,7 +52,8 @@ for (const a of S) {
         let sgn = 0; if (sig === "combo") { for (const L of LOOK) sgn += Math.sign(a.c[i] / a.c[i - L] - 1); sgn /= LOOK.length; } else sgn = Math.sign(a.c[i] / a.c[i - +sig] - 1);
         const newPos = sgn * scale; const turn = Math.abs(newPos - pos); pos = newPos; rets.push(-turn * cost / 2); // cost charged on the traded fraction (half a round trip per side)
       } else rets.push(0);
-      const v = pos * r[i + 1] + rets.pop()!; // next-day return on the position set at close i (lag-1)
+      const isEtf = a.cls === "etf" || a.cls === "sector"; const finDaily = (+K.FINANCING / 252) * (isEtf ? Math.max(0, -pos) : Math.abs(pos)) * (K.PLACEABLE === "1" ? 1 : 0);
+      const v = pos * r[i + 1] + rets.pop()! - finDaily; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
       rets.push(v); const d = day(a.ts[i + 1]); const m = bookRet[sig]; m.set(d, (m.get(d) ?? 0) + v); if (sig === "combo") nDay.set(d, (nDay.get(d) ?? 0) + 1);
       if (sig === "combo" && isOOS(a.ts[i + 1])) perAsset[a.sym][sig] = perAsset[a.sym][sig] ?? [], perAsset[a.sym][sig].push(v);
       if (sig === "combo") { const vol = sd(Array.from(r.slice(Math.max(0, i - 60), i))) * Math.sqrt(252); const lv = (vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0) * r[i + 1]; longRet.set(d, (longRet.get(d) ?? 0) + lv); if (isOOS(a.ts[i + 1])) perAssetLong[a.sym].push(lv); }

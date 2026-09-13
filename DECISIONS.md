@@ -18239,6 +18239,34 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-866/867 (2026-09-13) "ANY TRADER FROM ANY INSTANCE" — the trend book in the vehicle a retail account can hold, and the two paper books that now run daily
+
+### D-866 — placeable assets, real financing
+| placeable trend book, OOS 2015–26 | Sharpe | t | maxDD | underwater | assets + |
+|---|---|---|---|---|---|
+| 62 placeable assets, **no financing** | 0.26 | 0.99 | −12% | 4.8y | 39/62 |
+| same, **6.5%/yr financing on CFD and short notional** | **−0.32** | −1.24 | −25% | 13.2y | 24/62 |
+| (D-863, all 110 assets, no financing) | 0.62 | 2.55 | −10% | 3.1y | 69/110 |
+
+The in-sample control reproduces (0.74), so the subset code is right. Two things happen on the way to a retail
+account: the book loses the commodity, rates and international breadth that carried it (0.62 → 0.26), and overnight
+financing on CFD legs turns what is left negative. **The loss with financing is the financing, not the market** — gross
+is about +1.5%/yr. FX is over-charged here (CFD financing on FX is the rate differential, which nets to near zero on
+majors), so the truth sits between −0.32 and +0.26. Nowhere near 0.4, let alone 1.5. **The one vehicle in which the
+book keeps its sign is the ETF long leg with no financing — long-only trend timing of index and sector ETFs at roughly
+Sharpe 0.3 — a drawdown reducer, not a return engine.** NULL.
+
+### D-867 — the trend paper books, running daily
+`scripts/trend-paper.ts` recomputes the D-863 trend positions and the vol-matched long basket on the 110-asset panel
+every cycle and appends one row per completed day to an append-only ledger, from which the scorer reads two new
+immutable clocks: `fwd-tsmom-110` (promote at Sharpe ≥ 0.5 over 24 months; kill at ≤ 0 after 12, or −20% DD, or 30
+months underwater) and `fwd-trend-long-parity` (the descriptive pair from D-865, promote at ≥ 0.8 and better than
+both sleeves; kill at ≤ 0.3 or −30% DD). No broker path. Wired into the daily runner before the scorer.
+
+GOLD: research — the retail conversion of the only positive book on the record measured rather than assumed, and
+that book put on a forward record.
+ACTS-ON: clock — two new immutable forward clocks scored daily from a running paper book.
+
 ## D-865 (2026-09-13) THE PORTFOLIO QUESTION — four uncorrelated sleeves, and two of them are dead; trend is crisis alpha; tenfold is still out of reach
 
 A Sharpe rises through diversification across uncorrelated books, so the four that the held data can build were

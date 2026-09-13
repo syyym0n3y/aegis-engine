@@ -309,6 +309,8 @@ while true; do
   fi
   # W3: spec-specific forward scoring. The D-613 tracker records elapsed time and reds on matured-without-verdict;
   # this computes the statistic each rule actually names, so maturity produces a NUMBER rather than a flag.
+  # D-867: the daily trend paper book (two clocks) — no broker path; must run BEFORE the scorer reads it
+  deno run --v8-flags=--max-old-space-size=6144 --allow-net --allow-env --allow-read --allow-write ../scripts/trend-paper.ts > ../data/trend-paper.log 2>&1 || echo "$(date -u +%FT%TZ) TREND PAPER BOOK FAILED"
   deno run --allow-net --allow-env --allow-read --allow-run ../scripts/forward-score-specs.ts || true
   # CONTINUITY (D-613): a stopped ingest fails silently — old rows remain and every query still answers, from a
   # frozen snapshot. This is the check that the whole board is still being fed.
