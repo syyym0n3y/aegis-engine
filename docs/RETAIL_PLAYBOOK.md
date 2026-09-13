@@ -53,7 +53,7 @@ the book's vol is 10–20%; never lever a Sharpe below 1 past 20% vol.
 
 ## 5. The limitation that binds (D-878)
 The pair's native vol is ~3%; every "20% vol" figure above is 6.7× leverage. **An ISA cannot be levered. CFD financing kills the
-trend book. Crypto spot levers only through perps at funding cost.** At 1× each leg a UK account gets ~4–5% vol and ~5–6%/yr —
+trend book. Crypto spot levers only through perps — measured (D-880): funding and notional-scaled turnover take the sleeve from 0.54 to 0.22 at 2×.** At 1× each leg a UK account gets ~4–5% vol and ~5–6%/yr —
 about a tenth of a percent a week. Risk is controlled by a machine (`pair20g`, D-878); return is capped by access, not by risk.
 
 ## 6. What would change this page

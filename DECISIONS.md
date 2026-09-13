@@ -18239,6 +18239,29 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-880 (2026-09-13) THE LAST LEVERAGE ROUTE, MEASURED — perps at realised funding halve the Sharpe by 2×; no retail leverage route on this record pays
+
+D-878 said crypto levers only through perps at funding cost. Measured on the survivor-free crypto sleeve (469 contracts,
+funding joined for all 469, 2021–2026):
+
+| the crypto sleeve held as | Sharpe | %/yr | vol | maxDD |
+|---|---|---|---|---|
+| spot 1× (no funding) | **0.54** | 2.1 | 3.9% | −6% |
+| perp 1×, realised funding paid | 0.40 | 1.5 | 3.8% | −6% |
+| perp 2×, no funding | 0.35 | 2.7 | 7.7% | −17% |
+| **perp 2×, funding paid** | **0.22** | 1.7 | 7.7% | −18% |
+| perp 3×, funding paid | 0.16 | 1.8 | 11.5% | −29% |
+
+**NULL on both clauses.** Two costs compound: turnover drag scales with notional, so even unfunded leverage loses Sharpe
+(0.54 → 0.35 → 0.29), and funding on the long side of trending coins is highest exactly when the switch is long,
+taking another ~0.13 at each level. With D-866 (CFD financing turns the trend book negative) and the ISA at 1×, **every
+retail leverage route on this record is measured and none pays.** "Get over any limitation" is answered by measurement:
+the limit is real. What a UK retail account holds is the pair at 1× each leg — ~4–5% vol, ~5–6% a year, about a tenth
+of a percent a week — with the risk machine of D-878 on top.
+
+GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
+ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
+
 ## D-877/878/879 (2026-09-13) THE PRINCIPLES APPLIED TO THE WHOLE DATA STACK, THE FIRST NON-PRICE QUESTION, AND THE LIMIT THAT ACTUALLY BINDS
 
 Operator: allowlist the release calendar; apply the principles neglected before across the entire data stack; multiple

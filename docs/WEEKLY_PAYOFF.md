@@ -29,6 +29,9 @@ restoring in steps as the peak is regained. It is scored daily under the D-873 c
 20% vol on this pair means 6.7× leverage. **The binding constraint is access to leverage, not risk:** at 1× (an ISA) the pair is
 ~4–5% vol and about 0.1%/week.
 
+**Every leverage route measured (D-866/878/880):** ISA 1× only; CFD financing negative; perps at 2× halve the Sharpe. The
+rows above 10% vol are arithmetic, not access.
+
 ## 3. What would raise the weekly number honestly
 Only a higher Sharpe: uncorrelated sleeves that survive (the release-hour study D-877 is the first non-price candidate),
 or execution-side edges never measured. Leverage cannot; it moves return and drawdown together.
