@@ -18,6 +18,8 @@ const K = declareKnobs("tsmom-book", [
   { name: "ALWAYS_LONG", def: "0", note: "1 = timing OFF in LONG_ONLY mode (the untimed comparator for D-870)" },
   { name: "VOL_OVERLAY", def: "0", note: "1 = D-872: halve every position the day after a close where ^VIX is above its trailing 252-day 80th percentile (term-structure series not held; registered fallback), lag-1" },
   { name: "DUMP", def: "", note: "if set, write the combo book's daily OOS series {date: ret} to this JSON path (for D-873 blends)" },
+  { name: "SOURCE_1DSF", def: "0", note: "1 = D-874: load the survivor-free Binance daily perp panel (trd_bars_intraday tf=1dSF, dead contracts included to their last bar) instead of trd_bars_deep" },
+  { name: "SF_MIN_BARS", def: "400" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -36,13 +38,19 @@ let sel = meta.filter((m) => m.first_date <= cutoff.toISOString().slice(0, 10) &
 const cryptoSel = sel.filter((m) => m.asset_class === "crypto").slice(0, +K.MAX_CRYPTO); sel = [...sel.filter((m) => m.asset_class !== "crypto"), ...cryptoSel];
 const PLACEABLE_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|GC=F|SI=F|CL=F|BZ=F|HG=F|NG=F|PL=F|EURUSD=X|GBPUSD=X|JPY=X|AUDUSD=X|CAD=X|CHF=X|NZDUSD=X|EURGBP=X|EURJPY=X|GBPJPY=X|AUDJPY=X|EURCHF=X|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E)$/;
 const LONGONLY_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E|\^GSPTSE|\^SSMI|\^IBEX|\^KS11|\^BSESN|\^MXX|\^BVSP)$/;
-if (K.CRYPTO_ONLY === "1") { const c8 = new Date(); c8.setUTCFullYear(c8.getUTCFullYear() - 8); sel = meta.filter((m) => m.asset_class === "crypto" && m.first_date <= c8.toISOString().slice(0, 10) && !/USDT|-EX$/.test(m.symbol)); COST.crypto = 20; console.log(`  CRYPTO-ONLY subset: ${sel.length} spot crypto with >= 8y (${sel.map((m) => m.symbol).join(", ")}); spot cost 20bp`); }
+if (K.CRYPTO_ONLY === "1") { const c8 = new Date(); c8.setUTCFullYear(c8.getUTCFullYear() - 8); sel = meta.filter((m) => m.asset_class === "crypto" && m.first_date <= c8.toISOString().slice(0, 10) && !/USDT|-EX$/.test(m.symbol)); COST.crypto = +(Deno.env.get("CRYPTO_COST_BP") ?? "20"); console.log(`  CRYPTO-ONLY subset: ${sel.length} spot crypto with >= 8y (${sel.map((m) => m.symbol).join(", ")}); spot cost 20bp`); }
 else if (K.LONG_ONLY === "1") { sel = sel.filter((m) => LONGONLY_RE.test(m.symbol)); console.log(`  LONG-ONLY TIMING subset: ${sel.length} ETFs / cash indices an ISA can hold; cash at ${(100 * +K.RF).toFixed(1)}% when timed out; no shorts, no financing`); }
 if (K.PLACEABLE === "1") { sel = sel.filter((m) => PLACEABLE_RE.test(m.symbol)); console.log(`  PLACEABLE subset: ${sel.length} assets a UK retail account can hold (ETF long / CFD both ways); financing ${(100 * +K.FINANCING).toFixed(1)}%/yr on gross CFD and short notional`); }
-assertNonEmpty("assets with >= MIN_YEARS", sel, K.CRYPTO_ONLY === "1" ? 2 : K.PLACEABLE === "1" || K.LONG_ONLY === "1" ? 40 : 60);
+if (K.SOURCE_1DSF !== "1") assertNonEmpty("assets with >= MIN_YEARS", sel, K.CRYPTO_ONLY === "1" ? 2 : K.PLACEABLE === "1" || K.LONG_ONLY === "1" ? 40 : 60);
 type Ser = { sym: string; cls: string; ts: number[]; c: number[] };
 const S: Ser[] = [];
-for (let i = 0; i < sel.length; i += 5) { const page = sel.slice(i, i + 5); const rows = await q(`trd_bars_deep?symbol=in.(${page.map((p) => encodeURIComponent(p.symbol)).join(",")})&select=symbol,asset_class,bars`) as { symbol: string; asset_class: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0).sort((a, z) => a[0] - z[0]); S.push({ sym: r.symbol, cls: r.asset_class, ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
+if (K.SOURCE_1DSF === "1") {
+  const metaSF = (await q(`trd_bars_intraday?tf=eq.1dSF&select=symbol,n_bars&order=symbol`) as { symbol: string; n_bars: number }[]).filter((r) => (r.n_bars ?? 0) >= +K.SF_MIN_BARS);
+  COST.crypto = +(Deno.env.get("CRYPTO_COST_BP") ?? "20");
+  for (let i = 0; i < metaSF.length; i += 20) { const page = metaSF.slice(i, i + 20); const rows = await q(`trd_bars_intraday?tf=eq.1dSF&symbol=in.(${page.map((p) => p.symbol).join(",")})&select=symbol,bars`) as { symbol: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0 && x[5] > 0).sort((a, z) => a[0] - z[0]); if (b.length < +K.SF_MIN_BARS) continue; S.push({ sym: r.symbol, cls: "crypto", ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
+  console.log(`  SURVIVOR-FREE 1dSF panel: ${S.length} contracts with >= ${K.SF_MIN_BARS} daily bars (dead contracts held to their last bar); cost ${COST.crypto}bp`);
+}
+for (let i = 0; i < (K.SOURCE_1DSF === "1" ? 0 : sel.length); i += 5) { const page = sel.slice(i, i + 5); const rows = await q(`trd_bars_deep?symbol=in.(${page.map((p) => encodeURIComponent(p.symbol)).join(",")})&select=symbol,asset_class,bars`) as { symbol: string; asset_class: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0).sort((a, z) => a[0] - z[0]); S.push({ sym: r.symbol, cls: r.asset_class, ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
 console.log(`\n==> D-863 DIVERSIFIED TSMOM BOOK — ${S.length} assets: ${Object.entries(S.reduce((a, s) => (a[s.cls] = (a[s.cls] ?? 0) + 1, a), {} as Record<string, number>)).map(([k, v]) => `${k} ${v}`).join(", ")}`);
 // ---- per-asset daily strategy returns for each signal, vol-scaled, weekly rebalance, cost on position changes ----
 const LOOK = [21, 63, 126, 252]; const SIGS = [...LOOK.map(String), "combo"];

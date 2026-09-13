@@ -18239,6 +18239,27 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-874 / D-873b (2026-09-13) THE LARGEST CAVEAT MEASURED — the crypto leg survives the survivorship repair, and the pair's headline is 1.29, not 1.40
+
+The crypto sleeve behind D-871/873 was 27 coins Yahoo still serves. The same long-only trend switch on the
+**survivor-free** Binance daily panel (469 contracts with 400+ bars, 138 of them dead and held to their last bar):
+
+| OOS 2020–2026 | timed Sharpe | timed maxDD | hold Sharpe | hold maxDD |
+|---|---|---|---|---|
+| **survivor-free, 469 contracts** | **0.60** (t 1.81) | −6% | **−0.07** | **−39%** |
+| survivor set, 27 coins, same window | 0.82 | −6% | 0.19 | −24% |
+
+Survivorship is worth **0.22 of Sharpe** on the sleeve — inside the registered 0.25 — and on the full panel, where
+buy-and-hold lost money with a −39% drawdown, the switch is the whole difference. **SUPPORTED** on both clauses.
+
+**The pair, re-run with the survivor-free leg (D-873b), 2020–2026:** Sharpe **1.29**, t 3.34 (above the 3.03 ceiling),
+12.9%/yr at 10% vol, correlation 0.15, **positive in all seven calendar years** (2020 +23, 2021 +29, 2022 +3, 2023 +15,
+2024 +8, 2025 +5, 2026 +6 at 10% vol). At 20% vol: **25.8%/yr, −33%, 9.7 years to tenfold.** Survivorship cost the pair
+0.11 of Sharpe and one year of horizon. That is the number to quote; 1.40 is the survivor figure.
+
+GOLD: research — the stated caveat on the highest book measured and bounded rather than carried as a footnote.
+ACTS-ON: gate — the tenfold requirement is read against 1.29 on a survivor-free leg; the forward clock is unchanged.
+
 ## D-873 (2026-09-13) THE TWO HOLDABLE BOOKS TOGETHER — Sharpe 1.40, t above the ceiling, tenfold inside a decade becomes arithmetic, NULL by the drawdown clause
 
 The only two holdable books that are both positive out of sample — the timed class-parity ISA basket with VIX overlay
