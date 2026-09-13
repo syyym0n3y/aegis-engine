@@ -21,6 +21,7 @@ const K = declareKnobs("tsmom-book", [
   { name: "SOURCE_1DSF", def: "0", note: "1 = D-874: load the survivor-free Binance daily perp panel (trd_bars_intraday tf=1dSF, dead contracts included to their last bar) instead of trd_bars_deep" },
   { name: "SF_MIN_BARS", def: "400" },
   { name: "LOOKS", def: "21,63,126,252", note: "D-875: lookbacks (trading days) for the trend combination" }, { name: "VOL_N", def: "60", note: "D-875: trailing window for the per-asset vol scaling" }, { name: "SF_TF", def: "1dSF", note: "D-876: which daily panel the SOURCE_1DSF loader reads (1dSF Binance, 1dBYBIT Bybit)" },
+  { name: "LEV", def: "1", note: "D-880: gross leverage on the (crypto) sleeve" }, { name: "FUNDING", def: "0", note: "D-880: 1 = pay realised 8h funding (trd_perp_oi interval=funding) on the full long notional while in position" },
   { name: "RUN_ID", def: "D-863-tsmom-multiasset" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
@@ -49,6 +50,7 @@ if (K.SOURCE_1DSF === "1") {
   const metaSF = (await q(`trd_bars_intraday?tf=eq.${K.SF_TF}&select=symbol,n_bars&order=symbol`) as { symbol: string; n_bars: number }[]).filter((r) => (r.n_bars ?? 0) >= +K.SF_MIN_BARS);
   COST.crypto = +(Deno.env.get("CRYPTO_COST_BP") ?? "20");
   for (let i = 0; i < metaSF.length; i += 20) { const page = metaSF.slice(i, i + 20); const rows = await q(`trd_bars_intraday?tf=eq.${K.SF_TF}&symbol=in.(${page.map((p) => p.symbol).join(",")})&select=symbol,bars`) as { symbol: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0 && x[5] > 0).sort((a, z) => a[0] - z[0]); if (b.length < +K.SF_MIN_BARS) continue; S.push({ sym: r.symbol, cls: "crypto", ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
+  if (K.FUNDING === "1") { for (const a of S) { const rows = await q(`trd_perp_oi?symbol=eq.${a.sym}&venue=eq.binance&interval=eq.funding&select=ts,open_interest&order=ts.asc&limit=20000`) as { ts: number; open_interest: number }[]; const m = new Map<string, number>(); for (const r of rows) { const d = day(r.ts); m.set(d, (m.get(d) ?? 0) + r.open_interest); } (a as Ser & { fund?: Map<string, number> }).fund = m; } console.log(`  FUNDING joined for ${S.filter((a) => ((a as Ser & { fund?: Map<string, number> }).fund?.size ?? 0) > 100).length} of ${S.length} contracts (8h rates summed per day)`); }
   console.log(`  SURVIVOR-FREE ${K.SF_TF} panel: ${S.length} contracts with >= ${K.SF_MIN_BARS} daily bars (dead contracts held to their last bar); cost ${COST.crypto}bp`);
 }
 for (let i = 0; i < (K.SOURCE_1DSF === "1" ? 0 : sel.length); i += 5) { const page = sel.slice(i, i + 5); const rows = await q(`trd_bars_deep?symbol=in.(${page.map((p) => encodeURIComponent(p.symbol)).join(",")})&select=symbol,asset_class,bars`) as { symbol: string; asset_class: string; bars: number[][] }[]; for (const r of rows) { const b = (r.bars ?? []).filter((x) => x[4] > 0).sort((a, z) => a[0] - z[0]); S.push({ sym: r.symbol, cls: r.asset_class, ts: b.map((x) => x[0]), c: b.map((x) => x[4]) }); } }
@@ -82,7 +84,8 @@ for (const a of S) {
       const isEtf = a.cls === "etf" || a.cls === "sector"; const finDaily = (+K.FINANCING / 252) * (isEtf ? Math.max(0, -pos) : Math.abs(pos)) * (K.PLACEABLE === "1" ? 1 : 0);
       const cashD = K.LONG_ONLY === "1" && pos === 0 ? +K.RF / 252 * +K.VOL_TARGET / 0.10 : 0;
       const om = overlayMult(day(a.ts[i]));
-      const v = om * pos * r[i + 1] + rets.pop()! - finDaily + cashD; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
+      const L = +K.LEV; const fund = K.FUNDING === "1" && pos > 0 ? L * pos * ((a as Ser & { fund?: Map<string, number> }).fund?.get(day(a.ts[i + 1])) ?? 0) : 0;   // D-880: funding paid on the full long notional
+      const v = L * om * pos * r[i + 1] + L * rets.pop()! - finDaily + cashD - fund; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
       rets.push(v); const d = day(a.ts[i + 1]); const m = bookRet[sig]; m.set(d, (m.get(d) ?? 0) + v); if (sig === "combo") nDay.set(d, (nDay.get(d) ?? 0) + 1);
       if (K.CLASS_PARITY === "1") { const g = GROUP(a); const gr = (grpRet[sig] ??= {}); const gm = (gr[g] ??= new Map()); gm.set(d, (gm.get(d) ?? 0) + v); const gn = (grpN[sig] ??= {}); const gnm = (gn[g] ??= new Map()); gnm.set(d, (gnm.get(d) ?? 0) + 1); }
       if (sig === "combo" && isOOS(a.ts[i + 1])) perAsset[a.sym][sig] = perAsset[a.sym][sig] ?? [], perAsset[a.sym][sig].push(v);
