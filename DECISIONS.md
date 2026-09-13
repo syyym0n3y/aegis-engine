@@ -18239,6 +18239,32 @@ the operator's decision (the D-816 arming covered the equity tests only). If arm
 spirit by `D-817-wide-options-positioning-forward`; a history pull would need its own pre-registration first.
 GOLD: structural — the sizing input exists daily now; the direction side is what every measurement says it is.
 
+## D-861 (2026-09-13) THE ADAPTIVE PROGRAMME ACROSS ALL 24 INSTRUMENTS — 15,684 fits, NULL, and the gross is ZERO
+
+The gold engine generalised to the whole hourly panel after `scripts/panel-data-audit.ts` passed every instrument
+(17–29% zero-volume placeholders on the CFD series dropped; none on the perps). One pooled category map — class ×
+realised-vol tercile × daily trend — refit each year 2019–2026 on all prior years, 132 cells, first-hit events, class
+costs, judged on pooled OOS, per-instrument agreement, per-class and per-year. Pre-registered ceiling 4.40.
+
+| | net/trade | t | note |
+|---|---|---|---|
+| **pooled OOS, n 14,394** | **−6.57bp** | −1.54 | excess over class drift −7.95bp t −2.84 |
+| years positive | 1 of 8 | | 2024 +33.6bp was the one |
+| instruments positive | 6 of 24 | | needed 60% |
+| crypto (cost 9bp) | −8.6bp | −1.04 | **gross +0.4bp** |
+| fx (cost 4bp) | −4.9bp | **−5.40** | **gross −0.9bp** — the t is the cost, not the market (D-661) |
+| idx (cost 6bp) | −4.2bp | −1.43 | **gross +1.8bp** |
+
+**The gross is zero.** Three designs (D-859, 859b, 861), **26,305 counted fits**, no OOS return on gold or on the
+panel, and the shape is the same every time: nothing before cost, a loss after it. What the operator asked for —
+more set-ups, adaptive combination by category, all instruments, all conditions — was executed at full scale inside
+the laws that stop it fooling itself, and the market's answer at hourly resolution is zero. `docs/WHAT_WE_ARE_MISSING.md`
+says what that leaves: execution-side money never measured, events not in the data, cross-instrument lead–lag never
+asked, and the placeable classes being the weakest. The maps are on disk as the record of what was chosen where.
+
+GOLD: research — the adaptive panel programme, at the scale asked for, with its answer stated as a measurement.
+ACTS-ON: gate — the micro_entry gate has seen the full adaptive programme and nothing was produced to admit.
+
 ## D-858/859/859b/860 (2026-09-13) THE ADAPTIVE GOLD BOT, BUILT AT FULL SCALE INSIDE THE LAWS — two designs, 10,621 counted fits, a NULL that got cleaner when the bot itself exposed the backtest, and a paper bot that runs anyway
 
 Operator direction: build an automated bot that enters and exits; look at all gold charts across timeframes; run far
