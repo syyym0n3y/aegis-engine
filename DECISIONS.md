@@ -18262,6 +18262,51 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-903b (2026-09-14) THE CLOCK WAS WRITING TO A FILE ITS SCORER WOULD NEVER OPEN — and the guard I wrote for it could not catch it
+
+Checking the direction paper bot's health at the end of the session, the log said **four fills, mean net −99.38bp** and
+the ledger said **zero fills**. Both were true. The log was from 19:06 and the ledger from 01:24.
+
+**The bot resolved its ledger path against the WORKING DIRECTORY.** `micro-hourly.sh` does
+`cd "$(dirname "$0")/.."`, so its cwd is `infra/` — the bot wrote to `infra/data/direction-paper-ledger.json` while
+`forward-score-specs.ts` read the repo root. **The clock accumulated four real paper fills into a file its own scorer
+would never open.** It was invisible because *both sides worked*: the bot wrote successfully, the scorer read
+successfully, just not the same file. This is D-613's failure exactly — a forward clock nobody scores is
+indistinguishable from no forward clock — arriving through plumbing rather than through neglect.
+
+`gold-paper-bot.ts` had always done it correctly with `new URL(\`../${LEDGER}\`, import.meta.url)`. Mine did not.
+
+**Fixed, and no data lost:** the path is now script-relative, the stray ledger's four fills and one pending intent were
+merged into the canonical one, and the scorer went from `n=0` to `n=4`. The fills are real and early — XRP short
+−208/−58/−169bp, BNB long +66bp — which is the clock doing its job on a tiny sample.
+
+### The guard, and the three narrowings it needed
+
+RULE 7 flags persistent state under `data/` resolved against the cwd. Writing it was the easy part; **making it true
+took four passes, and each failure is the point:**
+
+1. **It over-fired on `abs(K.CACHE)`** — `refresh-liquid-panel.ts` already absolutised its path. A guard that reds on
+   correct code gets waived, and a waived guard is off.
+2. **It over-fired on the ternary** `const OUT = K.OUT.startsWith("/") ? K.OUT : new URL(...)` because it only
+   inspected the head of the assignment.
+3. **It over-fired on `${REPO}${K.X}`** and then again on a local `P()` helper — so rather than chase helper names, any
+   function call on the right-hand side now counts as resolved. Over-firing is the worse failure, so the rule errs
+   toward silence.
+4. **And the one that mattered: it could not catch its own origin case.** `const LP = K.LEDGER; … readTextFile(LP)`
+   slipped through, because the rule matched only when the *argument itself* was the knob. I found this by
+   reintroducing the exact defect and watching the guard stay green. **A guard that cannot catch the bug it was written
+   for is theatre.** It now follows one level of indirection, and reintroducing the line takes it from 0 regressions to
+   1, naming the file.
+
+**What it found beyond the origin:** 33 sites across 17 scripts. Two were live on the daily runner
+(`ingest-borrow-fees`, `ingest-sp500-changes`) and are fixed; `dump-etf-sleeve`, `uk-retail-structural`,
+`fetch-finra-shortvol`, `despac-event-506`, `prediction-markets`, `prediction-markets-ingest` and `cef-discount` are
+fixed too. Baseline ratcheted at 584 sites, 0 regressions, so no new instance can appear silently.
+
+GOLD: reliability — a live forward clock was silently writing to a file nothing read, the data was recovered rather than
+lost, and the defect class is now enforced on disk by a rule that has been made to red on the very case that produced it.
+ACTS-ON: clock — `fwd-direction-4h-xrp-bnb-makerin-takerout` is now actually scorable, at n=4 instead of n=0.
+
 ## D-903 (2026-09-13) THE BROKEN REGIME PROPAGATED INTO THE LADDER — not material, and now published beside the favourable one
 
 D-902 measured that equity–rates diversification ended in 2022, and **noted** that D-896's bootstrap and D-897's

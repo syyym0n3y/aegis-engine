@@ -6,7 +6,8 @@
 // is not. Extracts only our book (keeps the file tiny) → data/finra/shortvol.csv (date,sym,short,total).
 const BOOK = new Set(["SPY","QQQ","IWM","DIA","EFA","EEM","FXI","EWZ","XLK","XLF","XLE","XLV","XLU","XLI","XLP","XLY","XLB","SMH","XBI","KRE","GLD","SLV","USO","DBC","TLT","IEF","HYG","LQD","AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","JPM","XOM","JNJ","KO","PFE","INTC","CSCO","BA","GE","F"]);
 await Deno.mkdir("data/finra", { recursive: true });
-const OUT = "data/finra/shortvol.csv";
+// script-relative (D-903b): a cwd-relative state path silently forks under any runner that cds.
+const OUT = new URL("../data/finra/shortvol.csv", import.meta.url).pathname;
 let have = new Set<string>();
 try { const ex = await Deno.readTextFile(OUT); for (const l of ex.split("\n")) { const d = l.split(",")[0]; if (d) have.add(d); } } catch { /* first run */ }
 const f = await Deno.open(OUT, { create: true, append: true });

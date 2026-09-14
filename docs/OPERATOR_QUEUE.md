@@ -1,12 +1,12 @@
-# OPERATOR QUEUE — regenerated 2026-09-14T01:57Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-09-14T18:55Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — all green (32 guards, board logged 0.1h ago)
+## Board — all green (32 guards, board logged 17.0h ago)
 - nothing to fix. A red here that persists two cycles is the one time a session is worth starting; the guard's own output names the fix.
 
 ## Micro rung — live feed and sheet
-- hourly FX/index feed: **7/7 fresh within 3h** · sheet: **3 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
+- hourly FX/index feed: **7/7 fresh within 3h** · sheet: **0 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
 - the sheet prints candidates only on fresh bars; a STALE instrument prints no candidate by design.
 
 ## Yours — in evidence order, each with its exact act

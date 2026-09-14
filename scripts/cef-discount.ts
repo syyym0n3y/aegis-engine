@@ -93,7 +93,9 @@ assertNonEmpty("CEF universe tickers", tickers, 20);
 
 // Cache so re-runs are cheap and the fetch is genuinely sequential.
 let cache: Record<string, { px: YF; nav: YF }> = {};
-try { cache = JSON.parse(await Deno.readTextFile(K.CEFD_CACHE)); } catch { /* first run */ }
+// script-relative (D-903b): a cwd-relative state path silently forks under any runner that cds.
+const CACHE_P = K.CEFD_CACHE.startsWith("/") ? K.CEFD_CACHE : new URL(`../${K.CEFD_CACHE}`, import.meta.url).pathname;
+try { cache = JSON.parse(await Deno.readTextFile(CACHE_P)); } catch { /* first run */ }
 let fetched = 0, dropped = 0;
 for (const t of tickers) {
   if (cache[t]) continue;
@@ -102,9 +104,9 @@ for (const t of tickers) {
   const nav = await yahoo(`X${t}X`); await sleep(SLEEP);
   if (!nav) { dropped++; continue; }
   cache[t] = { px, nav }; fetched++;
-  if (fetched % 25 === 0) { await Deno.writeTextFile(K.CEFD_CACHE, JSON.stringify(cache)); console.log(`    ...${fetched} fetched`); }
+  if (fetched % 25 === 0) { await Deno.writeTextFile(CACHE_P, JSON.stringify(cache)); console.log(`    ...${fetched} fetched`); }
 }
-await Deno.writeTextFile(K.CEFD_CACHE, JSON.stringify(cache));
+await Deno.writeTextFile(CACHE_P, JSON.stringify(cache));
 
 // ---------------- monthly panel ----------------
 // Month-end close of price, NAV and 21d mean dollar volume. Discount = price/NAV - 1 (negative = trading BELOW NAV).

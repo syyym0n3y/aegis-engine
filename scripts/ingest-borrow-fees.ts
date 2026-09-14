@@ -37,6 +37,8 @@ const K = declareKnobs("ingest-borrow-fees", [
   { name: "BF_ONLY", def: "", note: "comma-separated symbols: fetch exactly these (ignores the universe), for targeted top-ups" },
   { name: "BF_LIMIT", def: "0", note: "0 = whole universe; >0 truncates the fetch list (smoke tests only)" },
 ]);
+// script-relative (D-903b): the daily runner cds to infra/, so a cwd-relative state path reads a file that is not there.
+const BF_CEF_P = K.BF_CEF.startsWith("/") ? K.BF_CEF : new URL(`../${K.BF_CEF}`, import.meta.url).pathname;
 const DVOL_FLOOR = Number(K.BF_DVOL), FRESH_D = Number(K.BF_FRESH_D), SLEEP_MS = Number(K.BF_SLEEP);
 
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000";
@@ -92,7 +94,7 @@ if (!ctlAAPL) { console.error("  !! universe control FAILED — the dollar-volum
 // section (3) downstream is to settle the "wide-discount CEFs are hard to borrow" folklore on MEASURED fees.
 let cefN = 0;
 try {
-  const cef = JSON.parse(await Deno.readTextFile(K.BF_CEF)) as { candidate_tickers?: string[] };
+  const cef = JSON.parse(await Deno.readTextFile(BF_CEF_P)) as { candidate_tickers?: string[] };
   const t = (cef.candidate_tickers ?? []).filter((s) => /^[A-Z]{1,6}$/.test(s));
   cefN = t.length;
   for (const s of t) if (!liquid.includes(s)) liquid.push(s);
@@ -115,7 +117,7 @@ for (const s of topExp) if (!liquid.includes(s)) liquid.push(s);
 // hard-to-borrow-CEF question is answerable at 454 names and not at 4,100; (3) the liquid equities by DESCENDING
 // dollar volume, so the names a real account could actually hold arrive first.
 const cefSet = new Set<string>();
-try { for (const t of (JSON.parse(await Deno.readTextFile(K.BF_CEF)) as { candidate_tickers?: string[] }).candidate_tickers ?? []) if (/^[A-Z]{1,6}$/.test(t)) cefSet.add(t); } catch { /* already reported */ }
+try { for (const t of (JSON.parse(await Deno.readTextFile(BF_CEF_P)) as { candidate_tickers?: string[] }).candidate_tickers ?? []) if (/^[A-Z]{1,6}$/.test(t)) cefSet.add(t); } catch { /* already reported */ }
 const rank = (s: string) => topExp.includes(s) ? 0 : cefSet.has(s) ? 1 : 2;
 let attempt = [...new Set(liquid)].sort((a, b) => rank(a) - rank(b) || (dvolOf.get(b) ?? 0) - (dvolOf.get(a) ?? 0) || a.localeCompare(b));
 if (K.BF_ONLY.trim()) attempt = K.BF_ONLY.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);

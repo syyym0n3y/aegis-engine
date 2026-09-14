@@ -58,7 +58,13 @@ type Fill = { sym: string; dir: number; entryTs: number; entry: number; exitTs: 
 type Pending = { sym: string; dir: number; entryTs: number; signalledAt: string };
 type Ledger = { clock: string; pending: Pending[]; opened: Pos[]; fills: Fill[]; marks: { at: string; note: string }[] };
 let L: Ledger = { clock: K.CLOCK, pending: [], opened: [], fills: [], marks: [] };
-try { L = JSON.parse(await Deno.readTextFile(K.LEDGER)); } catch (e) { if (!(e instanceof Deno.errors.NotFound)) throw e; }
+// THE LEDGER PATH MUST BE SCRIPT-RELATIVE, NOT CWD-RELATIVE. The hourly runner does `cd "$(dirname "$0")/.."`, so its
+// working directory is infra/ — and the first version of this bot resolved "data/direction-paper-ledger.json" against
+// that, writing to infra/data/ while scripts/forward-score-specs.ts read the repo root. The clock accumulated four real
+// fills into a file its own scorer would never open: a forward clock nobody scores is indistinguishable from no forward
+// clock (D-613). scripts/gold-paper-bot.ts already did this correctly; this now matches it.
+const LP = new URL(`../${K.LEDGER}`, import.meta.url).pathname;
+try { L = JSON.parse(await Deno.readTextFile(LP)); } catch (e) { if (!(e instanceof Deno.errors.NotFound)) throw e; }
 L.pending ??= [];
 if (L.clock !== K.CLOCK) { console.error(`!! ledger belongs to clock ${L.clock}, not ${K.CLOCK} — refusing to mix two books`); Deno.exit(1); }
 
@@ -108,5 +114,5 @@ for (const sym of K.SYMBOLS.split(",")) {
 const net = L.fills.map((f) => f.netBp), acc = L.fills.filter((f) => f.grossBp > 0).length;
 L.marks.push({ at: new Date().toISOString(), note: `${L.fills.length} fills, ${L.opened.length} open, ${L.pending.length} pending; mean net ${net.length ? mean(net).toFixed(2) : "–"}bp; win rate ${L.fills.length ? (100 * acc / L.fills.length).toFixed(1) : "–"}%` });
 if (L.marks.length > 2000) L.marks = L.marks.slice(-2000);
-await Deno.writeTextFile(K.LEDGER, JSON.stringify(L, null, 1));
+await Deno.writeTextFile(LP, JSON.stringify(L, null, 1));
 console.log(`  DIRECTION PAPER BOT: pended ${pended}, opened ${opened}, closed ${closed}, missed ${missed}; book ${L.fills.length} fills, mean net ${net.length ? mean(net).toFixed(2) : "–"}bp, ${L.opened.length} open, ${L.pending.length} pending. NO BROKER PATH — paper only.`);

@@ -27,7 +27,7 @@ const med = (a: number[]) => { const s = [...a].sort((x, y) => x - y); return s[
 async function bars(sym: string): Promise<number[][]> { const r = await fetch(`${OWNED}/trd_bars_deep?symbol=eq.${encodeURIComponent(sym)}&select=bars`, { headers: hdr }); if (!r.ok) throw new Error(`bars ${sym}: ${r.status}`); const raw = await r.json(); return (raw?.[0]?.bars || []).filter((b: number[]) => b[4] > 0); }
 
 interface Ev { ticker: string | null; date: string; }
-const doc = JSON.parse(await Deno.readTextFile("data/despac-506-events.json")) as { events: Ev[] };
+const doc = JSON.parse(await Deno.readTextFile(new URL("../data/despac-506-events.json", import.meta.url).pathname)) as { events: Ev[] };   // script-relative (D-903b): a cwd-relative state path silently forks under any runner that cds
 const events = doc.events.filter((e) => e.ticker && /^[A-Z]{1,5}$/.test(e.ticker) && /^\d{4}-\d\d-\d\d$/.test(e.date)) as { ticker: string; date: string }[];
 assertNonEmpty("resolved 506 de-SPAC events", events, 50);
 

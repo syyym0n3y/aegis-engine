@@ -35,7 +35,10 @@ const K = declareKnobs("prediction-markets-ingest", [
   { name: "OUT", def: "data/prediction-markets.json", note: "output (gitignored)" },
 ]);
 const PM_PAGES = Number(K.PM_PAGES), PM_HIST_N = Number(K.PM_HIST_N), PM_MIN_VOL = Number(K.PM_MIN_VOL);
-const KS_PAGES = Number(K.KS_PAGES), SLEEP_MS = Number(K.SLEEP_MS), OUT = K.OUT;
+const KS_PAGES = Number(K.KS_PAGES), SLEEP_MS = Number(K.SLEEP_MS);
+// script-relative (D-903b): a cwd-relative state path silently forks under any runner that cds — the direction paper
+// bot wrote four real fills to infra/data/ while its scorer read the repo root, and both sides "worked".
+const OUT = K.OUT.startsWith("/") ? K.OUT : new URL(`../${K.OUT}`, import.meta.url).pathname;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function getJson(url: string, tries = 3): Promise<unknown> {

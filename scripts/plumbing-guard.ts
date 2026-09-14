@@ -106,6 +106,48 @@ function lint(fileAbs:string,src:string){
     if(!/on_conflict=/.test(win))
       hits.push({file,line:at,rule:"inert-upsert",snip:"Prefer: resolution=ignore-duplicates with no on_conflict target — the header is inert and the write 409s on any legitimate re-run"});
   }
+  // RULE 7 — CWD-RELATIVE STATE PATH (D-903b). A script that reads or writes a persistent file under data/ using a
+  // BARE relative path resolves it against the WORKING DIRECTORY, not the script. The hourly runner does
+  // `cd "$(dirname "$0")/.."`, so its cwd is infra/ — and direction-paper-bot.ts wrote four real paper fills to
+  // infra/data/ while forward-score-specs.ts read the repo root. The clock accumulated genuine trading history into a
+  // file its own scorer would never open, which is D-613's failure exactly: a forward clock nobody scores is
+  // indistinguishable from no forward clock. It was invisible because BOTH sides worked — the bot wrote successfully
+  // and the scorer read successfully, just not the same file. gold-paper-bot.ts had always done it correctly with
+  // `new URL(\`../${LEDGER}\`, import.meta.url)`; this rule makes that the enforced form rather than a convention.
+  // Scoped to persistent state under data/, not to every path: a scratch file or a log the runner redirects is fine.
+  for(const m of src.matchAll(/Deno\.(?:readTextFile|writeTextFile)\(\s*(?!new URL)([A-Za-z_$][\w$.]*|["'`][^"'`\n]*["'`])/g)){
+    const at=src.slice(0,m.index??0).split("\n").length;
+    const arg=m[1];
+    const win=lines.slice(Math.max(0,at-30),at+1).join("\n");
+    // only flag when the path demonstrably points at data/ — either literally, or via a knob whose default does
+    const literalData=/^["'`]\s*data\//.test(arg);
+    const knobIsData=(n:string)=>new RegExp(`name:\\s*["'\`]${n}["'\`][^\\n]*def:\\s*["'\`]data\\/`).test(src);
+    const knobData=!/^["'`]/.test(arg)&&knobIsData(arg.replace(/^K\./,""));
+    // THE RULE OVER-FIRED ON ITS FIRST RUN AND IS NARROWED HERE, which is the correction that matters more than the
+    // rule. refresh-liquid-panel.ts does `const CACHE = abs(K.CACHE)` and prediction-markets-ingest.ts does the same
+    // through its own resolver: the knob's DEFAULT starts with data/, but the value reaching Deno.writeTextFile has
+    // already been absolutised, so flagging it is wrong. A guard that reds on correct code gets waived, and a waived
+    // guard is off. Only flag a bare identifier when its assignment is NOT passed through a path resolver.
+    // the resolver may appear anywhere in the assignment, including inside a ternary such as
+    // `const OUT = K.OUT.startsWith("/") ? K.OUT : new URL(...)`, so match the whole right-hand side, not its head.
+    const rhs=!/^["'`]/.test(arg)&&new RegExp(`(?:const|let)\\s+${arg.replace(/^K\./,"").replace(/[.$]/g,"\\$&")}\\s*=([^;\\n]*(?:\\n[^;\\n]*)?);`).exec(src);
+    // Recognise every form that already absolutises: a helper call, new URL(), and the template-prefix idiom
+    // `const base = K.X.startsWith("/") ? K.X : `${REPO}${K.X}`` used by rest-restart-guard.ts and cockpit-render.ts.
+    // The rule over-fired on that idiom too, which is the second narrowing it has needed; both are recorded because a
+    // guard that reds on correct code gets waived, and a waived guard is off. A THIRD form appeared after the second
+    // narrowing — cockpit-render.ts wraps its knob in a local P() helper — so rather than chase helper names one at a
+    // time, ANY function call on the right-hand side counts as resolved: a genuinely unresolved path is a bare K.X or a
+    // bare literal, never a call. Over-firing is the worse failure here, so the rule errs toward silence.
+    const resolved=!!rhs&&(/\babs\(|new URL\(|fromFileUrl\(|resolve\(|join\(|import\.meta\.url/.test(rhs[1])||/\$\{\s*REPO\s*\}|startsWith\(\s*["'`]\/["'`]\s*\)/.test(rhs[1])||/^\s*[A-Za-z_$][\w$]*\s*\(/.test(rhs[1]));
+    // FOLLOW ONE LEVEL OF INDIRECTION. The first version of this rule matched only when the ARGUMENT was itself the
+    // knob (K.CEFD_CACHE) or a literal — so `const LP = K.LEDGER; ... readTextFile(LP)` slipped through, which is the
+    // EXACT shape of the defect this rule was written for. A guard that cannot catch its own origin case is theatre.
+    // Verified by reintroducing that line and watching the guard stay green, which is how the gap was found.
+    const viaLocal=!!rhs&&!resolved&&/K\.([A-Z0-9_]+)/.test(rhs[1])&&knobIsData(/K\.([A-Z0-9_]+)/.exec(rhs[1])![1]);
+    const viaLocalLiteral=!!rhs&&!resolved&&/["'`]\s*data\//.test(rhs[1]);
+    if((literalData||knobData||viaLocal||viaLocalLiteral)&&!resolved)
+      hits.push({file,line:at,rule:"cwd-relative-state",snip:`persistent state under data/ resolved against the WORKING DIRECTORY (${arg}) — a runner that cds elsewhere writes a second copy the readers never see; use new URL(\`../${"$"}{path}\`, import.meta.url)`});
+  }
   if(/trd_fundamentals/.test(src)&&readsValue&&!hasPIT)
     hits.push({file,line:1,rule:"lookahead-risk",snip:"reads fundamental VALUES with no point-in-time discipline anywhere in the file (no effective_date, no asOf, no period_end+lag) — a historical query returning today's value is look-ahead by default"});
 }

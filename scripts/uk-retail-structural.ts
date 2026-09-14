@@ -42,7 +42,8 @@ const f = (x: number, d = 2) => Number.isFinite(x) ? x.toFixed(d) : "n/a";
 const gbp = (x: number) => "£" + Math.round(x).toLocaleString("en-GB");
 try { await Deno.mkdir("data", { recursive: true }); } catch { /* exists */ }
 
-const CACHE = "data/uk-retail-sources.json";
+// script-relative (D-903b): a cwd-relative state path silently forks under any runner that cds.
+const CACHE = new URL("../data/uk-retail-sources.json", import.meta.url).pathname;
 type Cache = Record<string, string>;
 let cache: Cache = {};
 if (!REFRESH) { try { cache = JSON.parse(await Deno.readTextFile(CACHE)) as Cache; } catch { cache = {}; } }

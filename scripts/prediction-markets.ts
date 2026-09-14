@@ -33,8 +33,9 @@ interface PmMarket { id: string; eventId: string; question: string; outcome: 0 |
 interface KsMarket { ticker: string; series: string; title: string; outcome: 0 | 1; lastPrice: number; volume: number; openTime: string; closeTime: string }
 interface Blob { fetchedAt: string; caps: Record<string, number>; polymarket: PmMarket[]; kalshi: KsMarket[] }
 let blob: Blob;
-try { blob = JSON.parse(await Deno.readTextFile(K.IN)); }
-catch { console.error(`!! ${K.IN} not found. Run scripts/prediction-markets-ingest.ts first.`); Deno.exit(1); }
+const INP = K.IN.startsWith("/") ? K.IN : new URL(`../${K.IN}`, import.meta.url).pathname;   // script-relative (D-903b)
+try { blob = JSON.parse(await Deno.readTextFile(INP)); }
+catch { console.error(`!! ${INP} not found. Run scripts/prediction-markets-ingest.ts first.`); Deno.exit(1); }
 assertNonEmpty("polymarket markets", blob.polymarket, 200);
 assertNonEmpty("kalshi markets", blob.kalshi, 200);
 

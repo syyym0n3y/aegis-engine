@@ -29,7 +29,9 @@ for (let i = 1; i < bars.length; i++) {
 const ks = Object.keys(series).sort(); const v = ks.map((d) => series[d]);
 const mean = v.reduce((a, b) => a + b, 0) / v.length;
 const sd = Math.sqrt(v.reduce((s, x) => s + (x - mean) ** 2, 0) / (v.length - 1));
-const out = K.OUT || `data/d894-${K.SYMBOL.toLowerCase()}.json`;
+// script-relative (D-903b): a cwd-relative state path silently forks under any runner that cds.
+const outRel = K.OUT || `data/d894-${K.SYMBOL.toLowerCase()}.json`;
+const out = outRel.startsWith("/") ? outRel : new URL(`../${outRel}`, import.meta.url).pathname;
 await Deno.writeTextFile(out, JSON.stringify({ prereg: "D-894-placeable-vol-premium-sleeve", symbol: K.SYMBOL, passive: true, rf_annual: +K.RF_ANNUAL, series }));
 console.log(`  ${K.SYMBOL.padEnd(6)} ${ks.length} days ${ks[0]}..${ks.at(-1)}  Sharpe(excess) ${(mean / sd * Math.sqrt(252)).toFixed(2).padStart(6)}  vol ${(100 * sd * Math.sqrt(252)).toFixed(1).padStart(5)}%  maxDD ${(100 * (Math.exp(mdd) - 1)).toFixed(1).padStart(6)}%  worst day ${(100 * (Math.exp(mn) - 1)).toFixed(1)}%  underwater ${(maxUw / 252).toFixed(1)}y  -> ${out}`);
 console.log(`         PASSIVE buy-and-hold, excess of a ${(100 * +K.RF_ANNUAL).toFixed(0)}% cash rate. Not a timed book — stated because the other sleeves are.`);

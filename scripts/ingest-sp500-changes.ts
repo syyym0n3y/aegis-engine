@@ -123,7 +123,9 @@ const payload = {
   changes,
 };
 await Deno.mkdir("data", { recursive: true });
-await Deno.writeTextFile(K.SP500_OUT, JSON.stringify(payload, null, 2));
+// script-relative (D-903b): the daily runner cds to infra/, so a cwd-relative state path writes a second copy nothing reads.
+const SP_OUT = K.SP500_OUT.startsWith("/") ? K.SP500_OUT : new URL(`../${K.SP500_OUT}`, import.meta.url).pathname;
+await Deno.writeTextFile(SP_OUT, JSON.stringify(payload, null, 2));
 
 console.log(`\n==> S&P 500 MEMBERSHIP CHANGES ingested`);
 console.log(`    source parsed   ${source}`);
