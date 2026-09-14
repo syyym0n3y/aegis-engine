@@ -4,6 +4,31 @@
 > a Sharpe already measured on this record. Target 100,000x = 11.51 nats.
 > The attempt is declared over at a 50% drawdown. Risk-free 4%.
 
+
+> ## ⚠ CORRECTION (D-905, 2026-09-13) — read this before any table below
+>
+> **Every figure in sections 1–9 describes a book scaled to a 10% annualised volatility target.** The underlying blend
+> realises **3.4%**. Scaling it to 10% is approximately **2.9× leverage**, and the rows labelled "1x" carried that
+> exposure *with no financing charged*.
+>
+> **At the book's genuine unlevered size — the only size an ISA or cash account can hold — the median time from $10 to
+> $1,000,000 is 149 years, not 77.** The published figures understated it by 94%.
+>
+> | | published as "1x" | **corrected, genuine 1x** |
+> |---|---|---|
+> | implied exposure | 2.9× | **1.0×** |
+> | median to target | 77y | **149y** |
+> | P(target), 10% floor | 95.5% | 100.0% |
+>
+> **What survives unchanged:** D-897's leverage conclusion. Read from the true bottom, genuine 2x gives 163y and 3x
+> gives 157y with ruin rising to 20.9% under a 10% floor — so **1x still dominates**, and now from an honest baseline
+> rather than from a rung that was already levered.
+>
+> The scaling was always disclosed in the caption; it was never disclosed in the *row label*, and a row labelled 1x
+> that carries 2.9× is mislabelled whatever the caption says. THE INSTRUMENT LAW exists because exactly this gap
+> between the measured thing and the holdable thing has failed four times out of four.
+
+
 ## 1. At the leverage that is actually purchasable
 
 | book | ledger | route | net Sharpe | leverage | growth/yr | P(reach target) | median time |

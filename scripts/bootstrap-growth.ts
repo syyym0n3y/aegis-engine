@@ -14,7 +14,7 @@ const K = declareKnobs("bootstrap-growth", [
   { name: "BLOCKS", def: "5,21,63", note: "mean block length in days, swept — a bootstrap quoted at one block length is a choice presented as a measurement" },
   { name: "LEVS", def: "1,2,3", note: "only levels where D-880 MEASURED the funding cost" },
   { name: "FLOORS", def: "0.5,0.9", note: "fraction of starting capital at which the attempt is over; 0.9 = a 10% drawdown, a typical prop rule" },
-  { name: "VOL_TARGET", def: "0.10", note: "the blend is scaled to this annualised vol BEFORE leverage, because D-892 assumed a 10%-vol book and comparing a 3.4%-vol raw series against it would not be the same question" }, { name: "RF", def: "0.04", note: "same risk-free D-892 uses; the sleeve series are excess returns" }, { name: "SEED", def: "20260913" },
+  { name: "VOL_TARGET", def: "0.10", note: "the blend is scaled to this annualised vol BEFORE leverage. D-905: scaling a 3.4%-vol book to 10% IS ~2.9x leverage, so a row labelled 1x at this setting carries ~2.9x exposure. Set VOL_TARGET=0 to run the book at its GENUINE unlevered risk level." }, { name: "RF", def: "0.04", note: "same risk-free D-892 uses; the sleeve series are excess returns" }, { name: "SEED", def: "20260913" },
   { name: "OUT", def: "docs/GROWTH_TO_TARGET.md", note: "appended to, not overwritten" },
 ]);
 const j = JSON.parse(await Deno.readTextFile(K.BLEND)) as { series: Record<string, number>; ann_obs: number; sleeves: string[] };
@@ -29,7 +29,10 @@ const M = Math.log(+K.TARGET / +K.START);
 // and earns 3.7%/yr, so a 100,000x target needs ~311 years and every path censored at the 100-year cap. D-892's
 // comparator is a book scaled to 10% vol. Scaling to a common vol target first makes it the same question.
 const volRaw = sd(R) * Math.sqrt(ANN);
-const volScale = +K.VOL_TARGET / volRaw;
+// D-905. VOL_TARGET=0 means NO SCALING: the book runs at the volatility it actually realises, which is the only
+// setting an ISA or cash account can hold. At any other setting the implied exposure is VOL_TARGET/volRaw, and that
+// multiple is printed beside every table so no row can be read as 1x while carrying three times that.
+const volScale = +K.VOL_TARGET > 0 ? +K.VOL_TARGET / volRaw : 1;
 const RS = R.map((x) => x * volScale);
 // Leverage multiplies BOTH mean and vol; funding reduces the mean ONLY, so it cannot be folded into one multiplier.
 // D-880 measured the perp Sharpe falling 0.54 -> 0.40/0.22/0.16 at 1x/2x/3x. Solving for the constant daily drag f that
@@ -65,7 +68,7 @@ say(`years. Here the actual ${R.length}-day blend (${j.sleeves.join(" + ")}, Sha
 say(`bootstrap — geometric block lengths, wrap-around — preserving fat tails, within-block autocorrelation and the`);
 say(`clustered bad decades. ${(+K.PATHS).toLocaleString("en-US")} paths per cell, ${K.CAP_Y}-year cap, target ${(+K.TARGET / +K.START).toLocaleString("en-US")}x.`);
 say();
-say(`Scaled to ${(100 * +K.VOL_TARGET).toFixed(0)}% annualised vol (raw blend is ${(100 * volRaw).toFixed(1)}%), plus a ${(100 * +K.RF).toFixed(0)}% risk-free. \`*\` marks levered rows where the`);
+say(`${volScale === 1 ? `UNSCALED — the book at its own realised ${(100 * volRaw).toFixed(1)}% vol, the only size a cash account can hold (D-905).` : `Scaled to ${(100 * +K.VOL_TARGET).toFixed(0)}% annualised vol from a realised ${(100 * volRaw).toFixed(1)}%, which is **${volScale.toFixed(1)}x implied exposure before the leverage column** (D-905).`} Plus a ${(100 * +K.RF).toFixed(0)}% risk-free. \`*\` marks levered rows where the`);
 say(`financing drag is D-880's PERP funding applied as a proxy — the only leverage cost measured on this record, but`);
 say(`measured on crypto perps, not on this book. At 1x there is no financing.`);
 say();
@@ -90,7 +93,7 @@ for (const levS of K.LEVS.split(",")) for (const floorS of K.FLOORS.split(",")) 
     if (t >= capD) cens++;
   }
   const med = times.length ? q(times, 0.5) : NaN;
-  say(`| ${lev}x${lev > 1 ? "*" : ""} | ${(100 * (1 - floor)).toFixed(0)}% DD | ${blk}d | ${(100 * hit / +K.PATHS).toFixed(1)}% | ${(100 * ruin / +K.PATHS).toFixed(1)}% | ${(100 * cens / +K.PATHS).toFixed(1)}% | ${times.length ? med.toFixed(0) + "y" : "—"} | ${times.length ? q(times, 0.25).toFixed(0) + "y" : "—"} | ${times.length ? q(times, 0.75).toFixed(0) + "y" : "—"} |`);
+  say(`| ${(lev * volScale).toFixed(1)}x total${lev > 1 ? "*" : ""} | ${(100 * (1 - floor)).toFixed(0)}% DD | ${blk}d | ${(100 * hit / +K.PATHS).toFixed(1)}% | ${(100 * ruin / +K.PATHS).toFixed(1)}% | ${(100 * cens / +K.PATHS).toFixed(1)}% | ${times.length ? med.toFixed(0) + "y" : "—"} | ${times.length ? q(times, 0.25).toFixed(0) + "y" : "—"} | ${times.length ? q(times, 0.75).toFixed(0) + "y" : "—"} |`);
 }
 // APPLES TO APPLES. D-892's 70-year figure is for the PAIR at Sharpe 1.29; this book is the two-sleeve blend at a
 // different Sharpe, so comparing the bootstrap against 70 would compare two books rather than two ASSUMPTIONS.

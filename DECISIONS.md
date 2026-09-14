@@ -18262,6 +18262,69 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-904/905 (2026-09-13) THE BOOK'S OWN OUTPUT HAD BEEN TELLING ME ALL SESSION — the timing adds no return, and every ladder figure described 2.9× exposure labelled 1x
+
+The core book prints, **on every run**, `excess over vol-matched long basket −0.8%/yr t −0.77` and then
+`VERDICT (D-863 rule): NULL — excess over long basket fails`. **I read that line all session while building D-892,
+D-895, D-896, D-897, D-900, D-901, D-902 and D-903 on top of it.** THE BENCHMARK LAW says a return claim is a claim
+about a *signal* only if it states what the passive alternative earned. Here the passive alternative is simply holding
+the same 51 assets.
+
+### D-904 — the head to head, identical universe, identical costs, identical window
+
+| | Sharpe | excess %/yr | vol | **geometric growth** | to 100,000× | maxDD | underwater |
+|---|---|---|---|---|---|---|---|
+| timed combo | 1.01 | 3.7% | 3.6% | **7.64%/yr** | 151y | **−6%** | 4.0y |
+| vol-matched long basket | 0.60 | 4.4% | 7.4% | **8.13%/yr** | **142y** | −31% | **3.7y** |
+
+**The timing does not earn its place on growth.** The basket earns more arithmetic return *and* more geometric growth,
+reaching the target **nine years sooner**. Competing hypothesis (2) — that the timed book's low volatility wins back
+through a smaller `−σ²/2` drag — is **refuted**: at 3.6% and 7.4% the drags are 0.06% and 0.27% a year, nowhere near
+a 0.7-point gap.
+
+**And the holdability story does not survive either**, which I did not expect. **Time underwater is a wash — 4.0 years
+timed against 3.7 passive**, marginally *worse* for the timing on the very measure THE HOLDABILITY LAW says ends
+deployments. What the timing genuinely buys is **drawdown depth**: −6% against −31%, a fivefold reduction. Depth is
+exactly what D-565 established is *not* the binding constraint.
+
+Where the timing wins is at a **common volatility target** — 13.6%/yr against 9.5%, 85 years against 121. But reaching
+10% from 3.6% requires **2.8× leverage**. Which led straight to:
+
+### D-905 — a correction to my own work, published earlier in this same session
+
+**Every growth-to-target figure on this record describes a book scaled to 10% volatility.** D-892 assumed it outright;
+D-896, D-897 and D-903 each multiply the blend by `VOL_TARGET/realised` before applying leverage, then label the
+unlevered row **"1x"**. The blend realises **3.4%**. That scaling is **≈2.9× leverage, with no financing charged** —
+and the ladder's own rung 2 says *"ISA 1x only"*.
+
+| | published as "1x" | **corrected, genuine 1x** |
+|---|---|---|
+| implied exposure | 2.9× | **1.0×** |
+| **median to target** | **77y** | **149y** |
+
+**An understatement of 94%.** Closed-form cross-check: 151 years. Not a bootstrap artifact.
+
+**The disclosure defence is rejected on its merits.** The caption did say "scaled to 10% annualised vol (raw blend is
+3.4%)". But **a row labelled 1x that carries 2.9× is mislabelled whatever the caption says**, and THE INSTRUMENT LAW
+exists because this exact gap between the measured thing and the holdable thing has failed four times out of four.
+
+**D-897 survives, and for a better reason than I gave it.** Its sweep really compared 2.9×, 5.8× and 8.7×, so it said
+nothing about genuine 1x. Re-run from the true bottom: genuine 2x gives **163y** and 3x gives **157y**, with ruin under
+a 10% floor climbing **0.0% → 3.9% → 20.9%**. **1x still dominates** — now from an honest baseline.
+
+**The honest frame, adopted:** nobody targets a 100,000× return from a 3.4%-volatility position. The corrected answer is
+that **at its holdable size this book cannot address the question at all.** 149 years is not a plan; it is a
+demonstration that the question needs a different instrument or a different account type. That is more useful than the
+77 years it replaces **because it is true**.
+
+`docs/GROWTH_TO_TARGET.md` now carries a correction banner **above section 1**, so no reader reaches a table without
+meeting the 149-year figure first. `scripts/bootstrap-growth.ts` prints the implied exposure beside every table, labels
+rows as *total* exposure, and accepts `VOL_TARGET=0` to run a book at the only size a cash account can hold.
+
+GOLD: research — the benchmark line the foundation had been printing all along is finally confronted, and it cascades
+into a 94% correction of figures I published hours earlier. The engine caught its author.
+ACTS-ON: gate — the ladder states the holdable answer and the bootstrap can no longer print a 1x row that is not 1x.
+
 ## D-903b (2026-09-14) THE CLOCK WAS WRITING TO A FILE ITS SCORER WOULD NEVER OPEN — and the guard I wrote for it could not catch it
 
 Checking the direction paper bot's health at the end of the session, the log said **four fills, mean net −99.38bp** and
