@@ -18,7 +18,7 @@ console.log(`\n==> DATA STACK GUARD — audit from ${a.at.slice(0, 16)} (${ageH.
 if (ageH > +K.MAX_AGE_H) { red++; console.log(`  RED  the audit is ${ageH.toFixed(0)}h old (budget ${K.MAX_AGE_H}h) — a guard reading a stale audit certifies nothing`); }
 const findings = [...a.findings, ...(SELFTEST ? [{ table: "trd_bars_intraday", tf: "SELFTEST", symbol: "SELFTEST", verdict: "RED-PANEL-STALE", staleDays: 99 }] : [])];
 const panelStale = [...new Set(findings.filter((f) => f.verdict === "RED-PANEL-STALE").map((f) => `${f.table}/${f.tf}`))];
-for (const p of panelStale) { red++; console.log(`  RED  whole panel not refreshed: ${p}`); }
+for (const p of panelStale) { red++; console.log(`  RED  ${p.includes("Q") ? "archival chunk ends before its own quarter" : "whole panel not refreshed"}: ${p}`); }
 const other = findings.filter((f) => f.verdict === "RED");
 let baseline = other.length; try { baseline = JSON.parse(await Deno.readTextFile(BASE)).red; } catch { try { await Deno.writeTextFile(BASE, JSON.stringify({ red: other.length, set: new Date().toISOString() }, null, 2)); } catch { /* board runs without write */ } }
 if (K.UPDATE_BASELINE === "1" && other.length < baseline) { await Deno.writeTextFile(BASE, JSON.stringify({ red: other.length, set: new Date().toISOString() }, null, 2)); baseline = other.length; console.log(`  baseline ratcheted down to ${baseline}`); }

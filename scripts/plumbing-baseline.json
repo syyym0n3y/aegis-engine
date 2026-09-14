@@ -55,7 +55,6 @@
  "silent-read|scripts/factory-forward-score.ts": 6,
  "silent-read|scripts/factory-report.ts": 2,
  "silent-read|scripts/forward-rules-guard.ts": 1,
- "silent-read|scripts/forward-score-specs.ts": 1,
  "silent-read|scripts/fpi-flags.ts": 2,
  "silent-read|scripts/fpi-liquid-impact.ts": 2,
  "silent-read|scripts/ftd-persistence.ts": 3,

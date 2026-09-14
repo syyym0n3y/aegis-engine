@@ -18262,6 +18262,109 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-881/884/888/889 (2026-09-13) CAN DIRECTION BE PREDICTED AT ALL — yes, measurably, on every perp tested, and the fee eats it five times over
+
+The operator's directive was explicit: *"as much as we cannot predict direction of any trade at this point, we know
+everything that contributes to every movement and all those factors need to serve as mechanisms of prediction of
+direction especially on a second by second basis."* This is the answer, with numbers, across four registrations.
+
+**Stop hand-building set-ups; fit the question directly.** A walk-forward ridge-logistic model on 30 features per bar —
+lagged returns at 1/2/3/6/12/24, realised vol at 12/48, range position, taker-buy ratio and its trailing mean, trade-count
+and volume z-scores, eight hour-of-day blocks, seven day-of-week dummies, a BLS release-hour flag (D-877), and BTC's lead
+return for the non-BTC names. Refit every 30 days on 180 days of history. A **shuffled-label control refit at every single
+step**, not once — the control is what converts an accuracy number from a claim into a measurement.
+
+**The finding: direction IS predictable, and this programme's standing assumption that it is not was never measured.**
+
+| timeframe | OOS accuracy | shuffled control | perps beating their own control |
+|---|---|---|---|
+| **1 hour** | **52.87%** (52.18–53.28%) | 50.19–50.56% | **5 of 5** |
+| 5 minutes | 51.72% (50.89–52.33%) | 50.17–50.88% | 5 of 5 |
+
+**And the finding that kills it: the edge is about 1–2bp a bar against a 9bp round trip — sub-fee by roughly 5×.** Net at
+taker is −2.00 to −6.43bp per trade at 1h, 0 of 5 positive, best day-clustered t −0.62 against a 3.67 ceiling.
+
+**Faster is worse.** Accuracy FALLS from 52.87% to 51.72% going from hourly to 5-minute bars while the fee stays fixed, so
+the 5-minute book loses −8.59 to −9.03bp a trade. The retail intuition that more frequent trading extracts more is exactly
+inverted here, and it is now measured rather than asserted.
+
+**Outside crypto it is chance (D-884).** The same model on eight FX, index and commodity CFD series — EURUSD, GBPUSD,
+USDJPY, AUDUSD, XAUUSD, S&P, Nasdaq, Brent — gives 51.32% against controls of 49.71–50.83%, with USATECH scoring *below*
+its own control. 0 of 8 net positive. **The operator's session thesis is MISSED:** hour-of-day structure did not make FX
+more predictable than crypto, it made it less.
+
+### The three ways past a fee, and what happened to each
+
+A sub-fee signal has exactly three escapes: pay less per trade, trade less often for more per trade, or hold longer so the
+fee amortises. Two are now measured shut.
+
+**Escape 1, pay less — closed across three registrations (D-885/886/887).** Raising the conviction threshold to 0.65 turns
+4 of 5 perps positive at *maker* pricing, +9.7 to +13.5bp. A maker fee is a HYPOTHESIS ABOUT FILLS (THE EXECUTION LAW), so
+it was tested rather than assumed:
+- **D-885 UNTESTED.** A limit resting at the signal close fills **100%** of the time within the hour on all five perps. The
+  unfilled set is empty, so filled-versus-unfilled — the entire mechanism the law asks about — is undefined. The crypto
+  hourly range is tens of basis points against a 2bp fee; at this horizon a passive order simply fills.
+- **D-886 NULL, by control rather than by argument.** Sweeping how much price improvement a resting limit can demand, a
+  **coin-flip control** (identical signal times and limits, direction replaced by a deterministic coin) MATCHES OR BEATS
+  the model at every level. At 40bp the control returns 30.3/32.8/–/14.2/38.9bp at t 3.34/2.90/–/0.99/3.99 against the
+  model's 27.3/29.9/42.4/49.5/25.7 at t 2.36/2.16/2.18/3.65/2.73. **The control scores 3 of 5; the model scores 2 of 5.**
+- **D-887 NULL at full breadth.** The mechanism the control exposed, tested at all 17,540 hourly anchors per perp with a
+  taker exit charged: **negative in all 60 cells**, −0.77 to −8.81bp per opportunity. GROSS is **essentially zero** — all
+  30 gross cells between −4.16 and +3.35bp, none reaching the 3.19 ceiling — so the net t of −4.5 to −21.8 is the flat
+  11bp round trip on a flat series (THE COST-INFLATION COROLLARY, third occurrence on this record).
+
+**Escape 2, hold longer — closed (D-888).** Sweeping the horizon with non-overlapping trades only:
+
+| horizon | accuracy | control | net positive | best day-t |
+|---|---|---|---|---|
+| 1h | 52.87% | 50.40% | 0/5 | −0.62 |
+| 4h | 52.50% | 50.30% | 2/5 | 0.57 |
+| 8h | 52.21% | 50.45% | 2/5 | 0.88 |
+| 24h | 51.36% | 50.77% | 0/5 | −0.36 |
+| 72h | 50.91% | 50.84% | 4/5 | 1.51 |
+
+**Accuracy decays monotonically and converges on its own control by 72 hours** — a 0.07pp gap, indistinguishable. The
+signal decays faster than the fee amortises; the best t anywhere on the curve is 1.51 against 3.67. **The 72-hour row is a
+trap and is recorded as one:** it is the only row meeting the "4 of 5 positive" clause and its accuracy is at chance, so it
+is holding crypto through an up-sample, not predicting. The accuracy column is what refuses it.
+
+**Escape 3, fee tier** — the same trade at a maker rebate rather than a fee changes the sign of the arithmetic. That is an
+account-status question for the operator, not a research question, and it is the only one of the three still open.
+
+### The breadth form, because one signal at 97 names is not one signal at 5 (D-889)
+
+Information ratio scales as IC × √breadth, and every result above is per-instrument. The survivor-free hourly panel holds
+**97 deep names** (breadth mean 77 per hour, clearing THE BREADTH LAW's ~50 floor), so a pooled cross-sectional model —
+features z-scored across names each hour, label = beats the cross-sectional median, dollar-neutral decile spread — has
+about 4× the √breadth. At H=4h it is **NULL**: gross **−2.30bp** per rebalance at t −1.43, and turnover of 50.4% per
+rebalance over 2,190 rebalances a year is a **198.7%/yr drag**. THE TURNOVER LAW's prior fires exactly as registered. The
+leg decomposition is the informative part: the long leg beats the universe by +0.81bp and **the short leg beats it too**
+(short-leg names return +0.20bp against a −2.91bp universe), so the model picks the long side slightly right and the short
+side wrong — which is what a drift-carrying signal looks like when you force it to be neutral.
+
+### Three defects found by building this, all invisible in the output
+
+1. **A limit resting AT the signal close is touched by the next bar's open**, giving a 100% fill rate on all five perps —
+   a broken question, not a result (THE POSITIVE-CONTROL RULE, D-641). Fixed with a strict trade-through requirement.
+2. **The fill scan counted window coverage INSIDE the scan and broke on the fill**, so a signal filled on the first bar had
+   coverage 1 of 12 and was dropped by the coverage floor — the study was silently discarding its *fastest* fills. BTC's
+   usable count rose from 116 to 144 once coverage was counted independently (THE PRECONDITION LAW class, D-598).
+3. **A filled-versus-unfilled comparison with an empty side was scoring as a pass.** Now refused automatically: fewer than
+   20 on either side prints UNTESTED.
+
+### What did NOT move
+
+None of the four exit conditions (D-823). No position, no ledger row, no gate row, no clock verdict — these are research
+registrations and every one resolved NULL or UNTESTED. Six pre-registrations resolved (D-881, D-883, D-884, D-885, D-886,
+D-887, D-888), one open (D-889, grid completing). The honest summary is that the programme now knows direction is weakly
+predictable in crypto at a 1–4 hour scale and that no route from that fact to money survives its own controls.
+
+GOLD: research — the programme's oldest unmeasured assumption ("we cannot predict direction") is replaced by a number
+with a control, the three escapes from a sub-fee signal are enumerated and two are closed by measurement, and the one that
+remains is named as an account question rather than left as a research hope.
+ACTS-ON: gate — docs/CAPITAL_LADDER.md now carries the bar that any future direction work must clear (beat 52.9% at 1h,
+or beat the fee), and the fill-conditional machinery refuses a study with no filled/unfilled contrast.
+
 ## D-877/878/879 (2026-09-13) THE PRINCIPLES APPLIED TO THE WHOLE DATA STACK, THE FIRST NON-PRICE QUESTION, AND THE LIMIT THAT ACTUALLY BINDS
 
 Operator: allowlist the release calendar; apply the principles neglected before across the entire data stack; multiple

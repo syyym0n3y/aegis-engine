@@ -24,12 +24,26 @@ const check = (table: string, tf: string, symbol: string, b: number[][], step: n
 const im = await q(`trd_bars_intraday?select=tf,symbol&order=tf,symbol`) as { tf: string; symbol: string }[];
 // A survivor-free panel HOLDS dead contracts by design (D-645/844): a contract whose last bar is old is DEAD, not stale, as long as the
 // PANEL itself is fresh. So per-contract staleness is judged against the panel's newest bar, and the panel's own freshness is the RED.
+const ARCH_TOL_D = +(Deno.env.get("ARCH_TOL_D") ?? "1");   // days a finished quarter may end short of its own end; set to -1 to prove the rule can go RED (D-586: a green never made to go red is meaningless)
 const panelNewest = new Map<string, number>();
 for (const tf of [...new Set(im.map((r) => r.tf))]) { const syms = im.filter((r) => r.tf === tf).map((r) => r.symbol); const step = tf.startsWith("1h") ? 3600 : 86400;
   for (let i = 0; i < syms.length; i += 20) { const page = syms.slice(i, i + 20); const rows = await q(`trd_bars_intraday?tf=eq.${tf}&symbol=in.(${page.join(",")})&select=symbol,bars`) as { symbol: string; bars: number[][] }[]; for (const r of rows) { const b = ((r.bars ?? []) as number[][]).map((x) => { const d = decodeBar(x); return [d.ts, d.o, d.h, d.l, d.c, d.v]; }); const f = check("trd_bars_intraday", tf, r.symbol, b, step, tf === "1h" || tf === "1hSF" ? 3 : 4, true); if (b.length) panelNewest.set(tf, Math.max(panelNewest.get(tf) ?? 0, b[b.length - 1][0])); findings.push(f); } }
   const pn = panelNewest.get(tf) ?? 0; const panelStaleDays = (todayS - pn) / 86400; const budget = tf.startsWith("1h") ? 3 : 4;
-  for (const f of findings) if (f.table === "trd_bars_intraday" && f.tf === tf && f.verdict === "RED" && f.dup === 0 && f.offgrid === 0 && f.badOHLC === 0) { if (panelStaleDays <= budget) f.verdict = "ok-delisted"; else f.verdict = "RED-PANEL-STALE"; }
-  console.log(`  panel ${tf.padEnd(8)} newest bar ${new Date(pn * 1000).toISOString().slice(0, 10)} (${panelStaleDays.toFixed(1)}d; budget ${budget}d) ${panelStaleDays > budget ? "RED — the whole panel is not being refreshed" : "ok"}`); }
+  // ARCHIVAL CHUNKS (D-881): sub-hourly history is stored one CLOSED CALENDAR QUARTER per row ("5m-2024Q3", "1m90-2026Q2")
+  // because a single 210k-bar row is a ~12MB body that closed the REST connection. A finished quarter will never receive a
+  // new bar, so judging it against a 4-day freshness budget is asking the wrong question. It is NOT waved through: the
+  // right question is COMPLETENESS, and a finished chunk must run to within one day of its own quarter end or it is RED.
+  const qm = /-(\d{4})Q([1-4])$/.exec(tf);
+  let arch = "";
+  if (qm) {
+    const yq = +qm[1], qq = +qm[2];
+    const qEnd = Date.UTC(qq === 4 ? yq + 1 : yq, qq === 4 ? 0 : qq * 3, 1) / 1000;   // first instant after the quarter
+    const finished = todayS >= qEnd;
+    if (finished) arch = (qEnd - pn) / 86400 <= ARCH_TOL_D ? "ok-archival-complete" : "RED-ARCHIVAL-SHORT";
+  }
+  const panelRed = arch ? arch.startsWith("RED") : panelStaleDays > budget;
+  for (const f of findings) if (f.table === "trd_bars_intraday" && f.tf === tf && f.verdict === "RED" && f.dup === 0 && f.offgrid === 0 && f.badOHLC === 0) { f.verdict = panelRed ? "RED-PANEL-STALE" : arch ? "ok-archival-complete" : "ok-delisted"; }
+  console.log(`  panel ${tf.padEnd(14)} newest bar ${new Date(pn * 1000).toISOString().slice(0, 10)} (${panelStaleDays.toFixed(1)}d; budget ${budget}d)${arch ? ` [${arch}]` : ""} ${panelRed ? (arch ? "RED — archival chunk ends before its own quarter" : "RED — the whole panel is not being refreshed") : "ok"}`); }
 // 2. trd_fx_hourly, every symbol
 // PostgREST has no DISTINCT and the first run read 100k rows of two symbols; enumerate by probing each known symbol (D-879 audit-of-the-audit).
 const FX_BASE = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "XAUUSD", "USA500IDXUSD", "USATECHIDXUSD", "BRENTCMDUSD"]; const fxSyms: string[] = [];
