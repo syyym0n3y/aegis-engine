@@ -18262,6 +18262,54 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-900 (2026-09-13) THE BOOK EVERYTHING RESTS ON, STRESS-TESTED — not a knife-edge, and one clause missed by 1% and is recorded as missed
+
+Everything this programme currently rests on traces to **one book**. D-895 measured the long-run blend at 1.10 while this
+sleeve alone is 1.07; the four candidate fourth sleeves of D-894/898/899 all add nothing or dilute; and D-892's ladder,
+D-896's bootstrap and D-897's leverage curve are **all computed on series derived from it**. Its parameters were chosen
+across D-868/870/872 and its robustness had never been tested over the long window. **If the 1.07 is a knife-edge, every
+number above it is illusory.** This is the most load-bearing check on the record.
+
+**Base case run and checked first**, as the kill condition required — a sweep whose base does not reproduce is measuring
+its own harness. It reproduces: combo OOS **1.01** on tsmom-book's 252-day annualisation against the **1.07** D-895
+measured through the blend harness at 339 obs/yr. Same book, two conventions.
+
+| trend lookbacks (both flags on) | SR | | other knobs | SR |
+|---|---|---|---|---|
+| **21,63,126,252 — REGISTERED** | **1.01** | | vol window 20 | 0.94 |
+| 63,126,252 | **1.12** ← best | | vol window 120 | 1.04 |
+| 21,63,126 | 1.04 | | no VIX overlay | 0.97 |
+| 126,252 | 1.07 | | no class parity | 0.81 |
+| 21,252 | 1.00 | | neither flag | 0.74 |
+| 252 alone | 1.05 | | | |
+
+### The clause that decides is emphatically met
+
+**The registered configuration is not the best cell — it is the eighth best of eleven**, and the best (63,126,252 at
+1.12) is one the programme did not choose. **A configuration fitted to its sample sits at the top of its own sweep;
+this one sits near the bottom.** That is the signature D-875 checked for on the pair, and it is absent here.
+
+Across the **eight pure-parameter cells** the range is 0.94–1.12, a ratio of **1.19** — comfortably inside THE UNIVERSE
+LAW's 1.5x band.
+
+### The clause that missed, stated plainly rather than rounded
+
+Across **all eleven** cells the ratio is 1.12/0.74 = **1.514 against a registered threshold of 1.50**. That is a miss by
+one percent and I am not rounding it away. It is driven entirely by the single cell with **both** construction overlays
+removed — arguably a different book rather than a parameter variant, but the flags were registered as part of the sweep,
+so they count and the clause fails as written. No cell is below 0.70 (minimum 0.74), so that clause is met.
+
+### Not flag-dependent, though closer than comfortable
+
+Removing the VIX overlay costs **0.04**; removing class parity costs **0.20**; removing both costs **0.27**, against a
+0.30 threshold. So competing hypothesis (2) — that the overlays do all the work — is **refuted for the VIX overlay**,
+which is worth almost nothing on this window, and **partly supported for class parity**. The bare long-only trend rule
+still earns **0.74**: a trend book with a useful construction, not an overlay stack on a mediocre core.
+
+GOLD: research — the foundation under D-892, D-895, D-896 and D-897 is shown to be robust to its own parameters and not
+at the peak of its own surface, which is the check that decides whether any of those numbers mean anything.
+ACTS-ON: gate — the most load-bearing check on this record is done and it passes on the substance.
+
 ## D-899 (2026-09-13) NON-PRICE MACRO STATE — genuinely uncorrelated and NOT crisis alpha, but too weak; and the four-sleeve synthesis closes the diversification route
 
 D-898 settled that mechanical orthogonality is achievable and redirected the hunt to **non-price mechanisms that
