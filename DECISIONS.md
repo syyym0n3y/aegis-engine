@@ -18262,6 +18262,66 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-899 (2026-09-13) NON-PRICE MACRO STATE — genuinely uncorrelated and NOT crisis alpha, but too weak; and the four-sleeve synthesis closes the diversification route
+
+D-898 settled that mechanical orthogonality is achievable and redirected the hunt to **non-price mechanisms that
+actually earn**. This record holds long series from other markets entirely — option-implied tail pricing, the corporate
+credit spread, the Treasury curve — and survivorship-adjusted breadth back to **1973**. None had ever been made into a
+sleeve. Both D-898 lessons are built in from the start here rather than added after being fooled: a
+**time-in-market-matched** comparator, and **five-year blocks** instead of a two-way split.
+
+| signal | days | episodes | SR | matched | excess | blocks + |
+|---|---|---|---|---|---|---|
+| new 252d lows high = out | 73% | 372 | **0.39** | 0.29 | **+0.10** | 5/8 |
+| credit spread high = out | 72% | 129 | 0.37 | 0.29 | +0.08 | 6/8 |
+| SKEW high = out | 72% | 465 | 0.32 | 0.29 | +0.03 | 5/8 |
+| breadth >200dma low = out | 71% | 153 | 0.29 | 0.29 | **+0.00** | 6/8 |
+| new 252d highs low = out | 76% | 340 | 0.07 | 0.30 | **−0.22** | 5/8 |
+
+**NULL** — best excess +0.10 against a +0.15 floor, best Sharpe 0.39 against 0.40. The matched comparator alone converts
+two of the five from apparently positive into nothing.
+
+### Hypothesis (1) refuted, and that is the surprise
+
+These are **not** crisis alpha in disguise. The macro sleeve correlates **0.270** with the timed ISA book and **0.103**
+with the trend book — where those two correlate **0.504 with each other**. Credit spreads, breadth collapse and tail
+pricing genuinely carry information the price books do not. **They simply do not earn enough.**
+
+All five share one block signature — negative in the 1990s and 2000s, positive from the 2010s — so they are largely
+redundant *with each other* while being uncorrelated with price. The 2000s block is negative for all five: a risk-off
+filter that avoided the dot-com decline also missed the recovery.
+
+### The synthesis across four candidate sleeves — this is the durable output
+
+| candidate | Sharpe | corr | effect on blend |
+|---|---|---|---|
+| USMV (D-894) | 0.53 | 0.315 | 1.34 → **1.28** dilutes |
+| QYLD (D-894) | 0.29 | 0.26 / 0.12 / 0.05 | 1.34 → 1.37 |
+| calendar (D-898) | 0.21 | **0.119 / 0.020** | 1.10 → **1.01** dilutes |
+| macro (D-899) | 0.38 | 0.270 / 0.103 | 1.10 → **1.02** dilutes |
+
+D-893 estimated that one sleeve at ~0.80 and uncorrelated would reach 1.49, using `√(ΣSᵢ²)` — **which assumes optimal
+weighting.** That ceiling is unreachable in practice, and **D-893 itself measured why**: reaching it requires
+*estimating* weights, and the walk-forward tangency that estimates them returns **0.41** against equal weight's 1.11. So
+the practical rule is risk parity, which allocates by **risk, not quality** — and a sleeve far below the blend's own
+Sharpe dilutes it however uncorrelated it is.
+
+**The requirement is therefore much harder than D-893 estimated: the missing sleeve needs a Sharpe near the blend's own
+~1.0 *and* low correlation. Orthogonality is cheap — now demonstrated three separate ways — and quality at that level is
+what nothing on this record supplies.**
+
+### One guard did its job on me
+
+The first attempt to write this outcome was **rejected with a 400**: `trd_prereg: outcome_note is append-only — the
+existing text must remain as a prefix`. I had retyped the registration note from memory instead of prepending it
+verbatim, and a punctuation difference was enough. That is D-631's trigger working exactly as designed, on its author.
+
+GOLD: research — the diversification route to D-892's missing 0.20 is closed with a measured reason rather than an unmet
+hope, and the reason generalises: at any weighting scheme robust enough to survive out of sample, quality dominates
+correlation.
+ACTS-ON: gate — `scripts/macro-state-sleeve.ts` prices any non-price state series against a matched comparator with its
+block decomposition and episode count in one run.
+
 ## D-898 (2026-09-13) THE ORTHOGONAL SLEEVE EXISTS — a two-way split at one point is not a stability test
 
 D-893 specified the missing piece as one sleeve at ~0.80 that is *genuinely uncorrelated*. D-895 then showed the
