@@ -18262,6 +18262,49 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-903 (2026-09-13) THE BROKEN REGIME PROPAGATED INTO THE LADDER — not material, and now published beside the favourable one
+
+D-902 measured that equity–rates diversification ended in 2022, and **noted** that D-896's bootstrap and D-897's
+leverage curve both resample the full-window series and therefore assume the favourable regime persists — *the same
+class of assumption D-896 was written to remove*. **Noting a consequence is not propagating it.** This propagates it:
+the blend rebuilt with the rates class removed — the conservative stand-in for a world where bonds no longer hedge —
+run through the identical bootstrap at identical settings, so only the input series differs.
+
+The bootstrap's moment-matching control was required to pass on the **new** series rather than be inherited: mean to
+4.1%, sd to 0.4%. The no-bonds blend is Sharpe **0.95** against the full-window **1.10**.
+
+| leverage | floor | P(target) full | **era-conditional** | median full | **era-conditional** |
+|---|---|---|---|---|---|
+| 0.5x | 10% | 99.9% | 99.8% | 121y | **132y** |
+| **1x** | **10%** | **95.5%** | **93.8%** | **77y** | **85y** |
+| 2x\* | 10% | 52.6% | 46.3% | 86y | 94y |
+| 3x\* | 10% | 30.3% | 27.0% | 79y | 84y |
+
+**NOT MATERIAL.** Median at 1x +10.4% against a 15% trigger; P(target) −1.7 points against a 10-point trigger;
+**survival-optimal leverage unchanged** — 1x still dominates 2x and 3x on both dimensions. None of the three fires.
+
+**Why, and it was the registered null's own reasoning:** the rates class is worth only 0.21 of Sharpe, and D-897
+established that time-to-target is dominated by the **growth rate**, not by path details. A book that loses a
+diversifier loses some growth and some smoothness; the distance to a 100,000× target stays set by the drift.
+
+**I was right about the shape and wrong about the scale, and that is recorded as such.** I expected damage concentrated
+in ruin against a tight floor rather than in the median — and it is (P falls 6.3 points at 2x and 3.3 at 3x against 1.7
+at 1x) — but the magnitudes are small, not the sharp degradation predicted.
+
+**The proxy caveat makes the null stronger, not weaker.** The no-bonds series removes rates *entirely*, whereas the real
+post-2022 world still holds rates that merely stopped hedging. This is an **upper bound on the harm, not a forecast**,
+and it is labelled a proxy rather than presented as a measurement.
+
+**D-896 and D-897 stand unamended**, and D-902's caveat is quantified rather than open: about eight years on
+seventy-seven, and under two points of probability at the leverage that actually dominates. Both ladders are now
+published **side by side** in `docs/GROWTH_TO_TARGET.md` §9 — and *that publication, not the numbers, is the point of
+this registration.* **A caveat that lives only in a decision entry is a caveat nobody applies.**
+
+GOLD: research — a consequence this programme identified in one entry is carried into the numbers it qualifies and into
+the document a reader actually consults, and it turns out to be small, which is worth knowing precisely because it was
+not obvious in advance.
+ACTS-ON: gate — the era condition is in the document, not only in the ledger.
+
 ## D-902 (2026-09-13) THE FOUNDATION'S ONE STATED EXPOSURE, MEASURED — equity-rates diversification is gone since 2022
 
 D-901 left exactly one exposure: the book's **holdability** depends on the rates class. Removing all bonds costs only

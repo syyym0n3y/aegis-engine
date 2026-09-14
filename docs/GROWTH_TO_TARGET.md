@@ -221,3 +221,32 @@ an account.
 
 `*` sub-1x rows are part-cash and carry no financing, so that half of the curve is measured cleanly; 2x and 3x carry
 D-880's crypto-perp funding as a proxy on an equities-and-futures book.
+
+## 9. The era-conditional twin (D-903) — published beside §8, never instead of it
+
+D-902 measured that equity–rates diversification **ended in 2022**: fourteen consecutive negative correlation years
+(2007–2020) then five non-negative ones, with 2026 the most positive reading in the series. The rates class was worth
++0.21 of Sharpe and 5.7 years of avoided drawdown duration over the full window; post-2022 it is worth **−0.04**.
+
+Everything in §7 and §8 resamples the **full-window** series and therefore assumes that regime persists. So here is the
+same computation on a blend **with the rates class removed** — the conservative stand-in for a world where bonds no
+longer hedge. Identical settings, 200-year cap, only the input series differs.
+
+| leverage | floor | P(target) full-window | **era-conditional** | median full-window | **era-conditional** |
+|---|---|---|---|---|---|
+| 0.5x | 10% | 99.9% | 99.8% | 121y | **132y** |
+| **1x** | **10%** | **95.5%** | **93.8%** | **77y** | **85y** |
+| 2x\* | 10% | 52.6% | 46.3% | 86y | 94y |
+| 3x\* | 10% | 30.3% | 27.0% | 79y | 84y |
+
+**NOT MATERIAL, by the registered thresholds.** The median at 1x lengthens by 8 years (+10%, against a 15% trigger) and
+P(target) falls 1.7 points (against a 10-point trigger). **The survival-optimal leverage does not change** — 1x still
+dominates 2x and 3x on both dimensions.
+
+So D-902's finding is **real about the mechanism and small in its effect on this ladder.** The reason is structural and
+was the registered null: the rates class is worth only 0.21 of Sharpe, and D-897 already showed time-to-target is
+dominated by the growth rate rather than by path details.
+
+**And this is an upper bound on the harm, not a forecast.** The no-bonds series removes rates *entirely*, whereas the
+real post-2022 world still holds rates that merely stopped hedging — so the true effect is at most this and probably
+less.
