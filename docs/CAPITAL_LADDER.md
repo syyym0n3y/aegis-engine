@@ -104,8 +104,15 @@ validated simulator** (D-914): a driftless trader is −EV at every volatility (
 excess** book (you earn no risk-free rate on the firm's capital, so the ~0.4 excess Sharpe drives the evaluation, not
 the ~1.1 total) the measured edge is **marginally +EV: ~+$292 per $500 fee at 15% account volatility, 26% pass rate.**
 The first +EV route to external capital on this record — but thin, variance-heavy (74% of attempts fail), and its sign
-turns on one firm's actual fee-refund and consistency rules. It improves if the fee is refundable (standard). See
-`docs/GROWTH_TO_TARGET.md` and D-914.
+turns on one firm's actual fee-refund and consistency rules. It improves if the fee is refundable (standard). See `docs/GROWTH_TO_TARGET.md` and D-914.
+
+**Priced at REAL firm terms, self-sourced (D-915).** FTMO (2-phase, 10% static drawdown, €540 refundable), Apex and
+Topstep (1-phase, 3% trailing drawdown, ~$100/mo). Under the zero-edge honesty gate only **Topstep validates** (its
+tight 3% trailing DD makes a no-edge trader −EV), and there the honest edge is **break-even** (+$13/attempt at 6% vol,
+negative above). FTMO and Apex show apparent profit but their *no-edge control is also +EV* — impossible for a real
+firm — so those numbers fail the gate and are not a green light. **Net: at real terms, prop does not deliver a
+validated edge-driven profit on the ~0.4-Sharpe futures book — the binding constraint is the book's quality, and no
+funding structure fixes a thin book.**
 See `docs/GROWTH_TO_TARGET.md` §11.
 
 **The bar any future direction work must clear**, so that it is not re-litigated: beat **52.87% at 1 hour** against a

@@ -18326,6 +18326,59 @@ the futures branch of the how-to-not-wait-so-long question is closed with a sele
 ACTS-ON: gate — `scripts/futures-trainselect.ts` and the SERIES_OUT dump make any future subset claim on this record
 testable train-only in one run.
 
+## D-915 (2026-09-14) PROP AT REAL FIRM TERMS — I sourced them myself, and the honesty gate says prop does not pay on this book
+
+The operator told me to account for the firm terms myself. I sourced the current rules for the two firm types — FX-style
+(FTMO) and futures-style (Topstep, Apex), the latter being the ones that fund the futures book the route would actually
+run through — and priced each on the **honest ~0.4-Sharpe excess futures book**, with the **zero-edge control gating
+every firm** (a driftless trader must be −EV, or the firm would not exist).
+
+### The real terms (official pages, Sep 2026)
+
+| | FTMO 100k | Apex 100k | Topstep 100k |
+|---|---|---|---|
+| phases | 2 (10% / 5%) | 1 (6%) | 1 (6%) |
+| drawdown | **10% static** | **3% trailing, locks at +$100** | 3% EOD-trailing |
+| daily loss | 5% | none | 2% (soft) |
+| split | 80% | ~90% | 90% |
+| fee | €540 **refunded on 1st payout** | ~$150/mo | $99/mo |
+| extra | — | 30% consistency, 5 win days | consistency |
+
+### The honesty gate validates only one firm
+
+| firm | zero-edge control | verdict |
+|---|---|---|
+| FTMO | **+$98 to +$585** | +EV → **UNTESTED** (fails gate) |
+| Apex | **+$73 to +$219** | +EV → **UNTESTED** (fails gate) |
+| **Topstep** | **−$49 to −$99** | −EV → **VALIDATED** |
+
+A no-edge trader profiting is impossible, so FTMO and Apex are UNTESTED by my own kill condition: their static-DD +
+full-refund (FTMO) and trailing-lock structures *as I modelled them* are too loose — most likely missing sourced-but-
+unmodelled funded/payout constraints (payout caps, scaling limits, withdrawal floors), or genuinely exploitable by a
+perfectly disciplined low-vol trader. The firms profit from **undisciplined high-leverage traders** who blow the limits
+fast — behaviour my mechanical model does not reproduce, which is why my low-vol control passes ~33% of FTMO's two
+phases against the real ~7–10%.
+
+### On the validated firm, the honest edge is break-even
+
+Topstep: **+$13/attempt at 6% account vol, negative above.** The same tight 3% trailing drawdown that makes its control
+honest **strangles the ~0.4-Sharpe edge** — you cannot build a 6% profit before a 3%-from-peak stop, whatever your small
+edge. So on the firm I can trust, the prop route does **not** pay on this book.
+
+### The differential, and the net
+
+Edge-minus-control is positive everywhere (FTMO +$1,100–1,370, Apex +$187–350, Topstep ~+$62), confirming the ~0.4
+excess Sharpe **adds value** — but a differential is not a profit where the absolute control is +EV, and the edge helps
+most exactly where the structure is loosest (the least trustworthy place). **Net: the binding constraint is the quality
+of the book (~0.4 excess Sharpe, the whole session's finding), and no funding structure manufactures a profit from a
+book that thin.** At real terms under the honesty gate, prop is **break-even at best.**
+
+GOLD: research — the operator's first-named option is priced at real, self-sourced firm terms with the zero-edge gate,
+and the disciplined answer is that prop does not deliver a validated profit on the honest ~0.4-Sharpe book; the one firm
+whose control validates (Topstep) is break-even, and the profitable-looking firms fail the gate.
+ACTS-ON: gate — `scripts/prop-firms.ts` holds the three firm presets and the control gate for any re-test with fuller
+rules; `docs/CAPITAL_LADDER.md` carries the real-terms prop verdict.
+
 ## D-914 (2026-09-14) THE PROP SIMULATOR, VALIDATED — the zero-edge control finally loses money, and the honest edge is thin
 
 The operator named prop firms as their first option, and D-907 had left it UNTESTED because the simulator failed its own
