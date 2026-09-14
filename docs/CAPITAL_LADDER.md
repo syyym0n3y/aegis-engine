@@ -65,6 +65,20 @@ single best book (D-872). Tenfold in a year needs roughly Sharpe 1.5 sustained a
 measured a route to. Tenfold over a decade is arithmetic at the numbers we hold. The one place tenfold-in-a-year is
 real is rung 0, it is per head, and it does not repeat.
 
+**How long from here, computed (D-892, docs/GROWTH_TO_TARGET.md).** The $10-to-$1M question is a two-barrier
+first-passage problem and it now has numbers. At the best measured book (Sharpe 1.29) at **purchasable** leverage the
+median is **70 years**. At the growth-optimal leverage it is **12.2 years** — but that leverage is **12.9x** and every
+route measured here caps at 3x, where the perp route delivers 30% of the Sharpe rather than 3× of it. The identity
+that matters: at full Kelly the volatility **cancels**, and growth is `rf + S²/2` — **a function of the Sharpe alone**.
+Leverage has an optimum; past it, more leverage *lowers* growth and raises the chance of ruin, and the crypto book at
+3x goes outright negative. **Chasing leverage has been chasing the wrong variable.**
+
+Inverted, which is the useful direction: the Sharpe needed is **1.04 for a twenty-year run — already inside what this
+record has measured** — and **1.49 for ten years**, a gap of **0.20 of Sharpe** from today's 1.29. Not an order of
+magnitude. The stated target of 100% a week requires a Sharpe of **8.49**, against roughly 2.5 net for the best
+documented fund in history; doubling once a year requires **1.14**, which is inside the record. And a prop firm's ~10%
+drawdown rule costs **59 percentage points** of P(reaching the target) on an unchanged strategy.
+
 **The bar any future direction work must clear**, so that it is not re-litigated: beat **52.87% at 1 hour** against a
 per-step shuffled control, or beat the fee — and if it claims to beat the fee through execution, it must measure the
 **EXIT** leg, not only the entry. That last clause is D-891's contribution and it is the one that would have caught

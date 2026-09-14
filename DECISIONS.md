@@ -18262,6 +18262,70 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-892 (2026-09-13) $10 TO $1,000,000, COMPUTED INSTEAD OF ASSERTED — 70 years at the leverage you can buy, and the gap to a ten-year run is 0.20 of Sharpe
+
+The operator's central question — *"turning a coffee into a million"* — had been answered on this record only
+qualitatively ("rungs are crossed by deposits"). `docs/TENFOLD.md` gives a deterministic years-to-10x grid with **no
+ruin barrier, no leverage optimum and no probability**. That is a well-posed stochastic problem and every input was
+already measured here, so it was computed. **0 trials spent — this is arithmetic on already-counted results.**
+
+Log-wealth under leverage L is Brownian with drift `rf + L·S·σ − L²σ²/2`. P(target before ruin) is the two-barrier
+scale function (checked against its zero-drift limit `A/(A+M)`); median time is the inverse-Gaussian first-passage
+median. Target 100,000× = 11.51 nats. Six books, each cited to its ledger row; leverage used only where its cost was
+**measured** — ISA 1x, and D-880's perps at 1x/2x/3x with the measured Sharpe degradation 0.40/0.22/0.16 from 0.54,
+never an assumed linear scaling.
+
+**At the leverage you can actually buy:**
+
+| book | route | growth/yr | P(target) | median time |
+|---|---|---|---|---|
+| the pair, Sharpe 1.29 (D-873b/875) | ISA 1x | 16.4% | 100% | **70 years** |
+| crypto timed, 0.69 (D-871) | ISA 1x | 15.8% | 99.6% | 72 years |
+| the pair | perp 3x | 11.0% | 81.5% | 101 years |
+| crypto timed | perp 3x | **−1.7%** | **3.1%** | never |
+
+**NULL on the registered claim** — nothing reaches the target with P ≥ 10% inside ten years, and the best median misses
+by an order of magnitude.
+
+### The identity that makes it useful
+
+At full Kelly `L* = S/σ`, the volatility **cancels**: `g(L*) = rf + S²/2`. **The achievable growth rate is a function
+of the Sharpe ratio alone.** Leverage is not a variable to maximise — it has an optimum, and past it more leverage
+*lowers* growth while raising the chance of hitting the floor first. The crypto book at 3x demonstrates this by going
+outright negative. **This programme has been pointed at the wrong variable every time it has chased leverage access.**
+
+### Inverted — the deliverable
+
+`S = √(2(M/T − rf))` is the Sharpe needed to reach the target in median time T *at unlimited free leverage*, a floor
+any real cap makes strictly worse:
+
+| target in | 1y | 3y | 5y | **10y** | **20y** | 40y |
+|---|---|---|---|---|---|---|
+| Sharpe needed | 4.79 | 2.76 | 2.13 | **1.49** | **1.04** | 0.70 |
+
+The record's best measured holdable Sharpe is **1.29**. So a **twenty-year run is already inside what has been
+measured**, and the ten-year run needs 1.49 — **a gap of 0.20 of Sharpe, not an order of magnitude.** The mission is
+now a specific small number.
+
+**The operator's own targets, inverted, which is the honest answer to what was asked:** 100% every week needs Sharpe
+**8.49**; 100% a month needs **4.07**; 10x in a year needs **2.13** — against roughly **2.5 net** for the best
+documented fund in history. **Doubling once a year needs 1.14, which is inside this record.** The weekly target is
+refused by arithmetic; the annual double is not.
+
+**Drawdown floors are not a detail.** On the *same* strategy, P(ever reaching the target) is 22.6% under a 10% rule,
+58.1% at 30%, 81.5% at 50%, 99.6% at 90%. A prop firm's ~10% rule costs **59 percentage points** on an unchanged
+strategy — the live content of the D-807 clock.
+
+**Stated in the document rather than buried:** the 70-year figures assume the measured edge persists for 70 years,
+which nothing supports — these Sharpes span about six years and the pair falls from 1.40 to 0.90 excluding 2020–21. The
+long horizons are evidence the target is **unreachable at 1x**, not forecasts of an arrival year.
+
+GOLD: research — the programme's headline question stops being rhetorical and becomes a number, and the number
+redirects the search from leverage (capped, measured, and harmful past its optimum) to Sharpe, where the remaining gap
+is 0.20.
+ACTS-ON: gate — `docs/GROWTH_TO_TARGET.md` is the standing answer to "how long from here" and names the Sharpe
+required at every horizon.
+
 ## D-881/884/888/889 (2026-09-13) CAN DIRECTION BE PREDICTED AT ALL — yes, measurably, on every perp tested, and the fee eats it five times over
 
 The operator's directive was explicit: *"as much as we cannot predict direction of any trade at this point, we know
