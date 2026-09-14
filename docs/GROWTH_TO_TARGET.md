@@ -24,6 +24,13 @@
 > gives 157y with ruin rising to 20.9% under a 10% floor — so **1x still dominates**, and now from an honest baseline
 > rather than from a rung that was already levered.
 >
+> **A SECOND, DEEPER CORRECTION (D-913).** The books' headline Sharpes (~0.9–1.3) are **total-return** Sharpes. Leverage
+> multiplies only the **excess over the risk-free rate**, and these are low-vol timed books whose return sits just above
+> cash — so their **leverageable excess Sharpe is ~0.45**, about half the headline. Kelly growth is `rf + S_excess²/2`,
+> so the Kelly-optimal timeline is **~82 years, not the ~12** a total-return Sharpe implies. The **unlevered** figures
+> below are correct (an unlevered holder earns cash on cash days); any **levered** figure built on the headline Sharpe is
+> optimistic. This reinforces §8's "1× dominates."
+>
 > The scaling was always disclosed in the caption; it was never disclosed in the *row label*, and a row labelled 1x
 > that carries 2.9× is mislabelled whatever the caption says. THE INSTRUMENT LAW exists because exactly this gap
 > between the measured thing and the holdable thing has failed four times out of four.

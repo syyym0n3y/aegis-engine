@@ -18326,6 +18326,61 @@ the futures branch of the how-to-not-wait-so-long question is closed with a sele
 ACTS-ON: gate — `scripts/futures-trainselect.ts` and the SERIES_OUT dump make any future subset claim on this record
 testable train-only in one run.
 
+## D-912/913 (2026-09-14) THE WINNING CONSTRUCTION ON FUTURES, AND THE LEVERAGEABLE-EXCESS CORRECTION — the best books' headline Sharpe is half risk-free interest
+
+Continuing the operator's how-to-not-wait-so-long question after D-911 closed the futures *trend* branch, I tested the one
+synthesis that could compress the personal-account timeline: the **best** book (D-905/906, the long-only-timed
+class-parity VIX-overlay construction) rebuilt **entirely in futures** so D-908's cheap financing applies.
+
+### D-912 — it transfers, but the headline was cash interest
+
+The winning construction on 26 futures gives OOS Sharpe **1.18 (2005) / 1.51 (2016)** — *above* the ETF book's 1.01, on
+the universe where the long-short trend book scored 0.08–0.15. Long-only is the engine (0.80), class-parity adds 0.32,
+the VIX overlay 0.06 — and **shorting is poison** (long-short parity-overlay: 0.19).
+
+**Then the skeptical check that saved me from believing it.** At RF=0 (cash earns nothing), the Sharpe **collapses from
+2.32 to 0.46.** For futures, whose price returns are already excess-of-carry, RF=0 *is* the clean leverageable book —
+the headline was **risk-free interest on the book's large cash holdings, which leverage cannot multiply.** The honest
+**leverageable excess Sharpe is 0.31 / 0.46 / 0.36** across three splits: real, stable, but modest. Cheap futures
+leverage on a 0.4-Sharpe book gives **~80–115 years** — better than unlevered, not a transformation. **MARGINAL:** a real
+uncorrelated managed-futures diversifier, not the compression lever.
+
+### D-913 — the record-wide correction it exposed
+
+If the futures headline was half cash interest, was the whole record's "best book Sharpe ~1.0"? Measured directly.
+**A false alarm first:** subtracting a flat 4% rf gave a −0.08 excess that looked catastrophic — wrong, because the
+realized 3-month T-bill averaged **1.75%** over 2005–2026 and the book credited a flat **2%**, close to realized. Adding
+`RF_REAL` (the realized daily ust_3m path) barely moved the ETF book (0.93 vs 1.01).
+
+The real finding, on the ETF winning book with the realized-rf cash leg: total-return Sharpe **0.93**, but
+**leverageable excess Sharpe 0.45** (excess 1.63%/yr over realized rf). The futures book's clean excess is ~0.40. **Both
+best books have a leverageable excess Sharpe of ~0.4–0.45 — half their total-return headline** — because they are
+low-vol timed books whose return sits only modestly above cash.
+
+**The correction to D-892:** Kelly growth is `rf + S_excess²/2`, not `S_total²/2`. At the honest excess Sharpe 0.45,
+Kelly-optimal is **~82 years**, not the ~12–24 the total Sharpe implied. D-892's "coffee to a million in ~12 years at
+Kelly" was an artifact of levering a total-return Sharpe.
+
+**What stands / strengthens:** D-905/906 **unlevered** figures stand (the flat 2% ≈ realized 1.75%; an unlevered holder
+correctly earns cash). D-897's **"1x dominates"** *strengthens* — leverage buys even less at a lower excess Sharpe. The
+headline Sharpes remain correct as total-return / unlevered figures; they are simply not the leverageable quantity.
+**Containment:** the only live figure corrected is D-892's Kelly hypothetical; every correction is conservative —
+leverage looks worse, the stake looks even more like the real lever.
+
+### Net answer to the operator
+
+The honest leverageable edge on this record is a **~0.45 excess Sharpe.** Cheap futures leverage gives modest compression
+(~80–115y), not the fast path the total-return Sharpes suggested. **The two real levers are unchanged and now clearer:
+the starting STAKE** (time scales with `log(target/stake)`, the dominant lever) **and the PROP route** as a bounded-loss
+bet (D-907, pending one firm's real terms).
+
+GOLD: research — the best book was rebuilt in futures and its leverageable edge honestly measured at ~0.4, a skeptical
+RF=0 check caught a headline that was mostly cash interest, and the record-wide leverageable-excess correction was made
+with the realized rate path rather than a flat guess — correcting one optimistic figure and reinforcing the primary
+conclusion.
+ACTS-ON: gate — `tsmom-book RF_REAL` measures honest excess going forward; `docs/GROWTH_TO_TARGET.md` distinguishes the
+unlevered total-return Sharpe from the ~0.45 leverageable excess.
+
 ## D-909/910 (2026-09-14) THE FUTURES COLUMN, MEASURED AND WITHDRAWN — and my own floor justification did not survive the data
 
 D-908 left one conditional: the futures column said what the route *would* deliver, because this record held 16

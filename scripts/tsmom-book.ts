@@ -18,6 +18,7 @@ const K = declareKnobs("tsmom-book", [
   { name: "ALWAYS_LONG", def: "0", note: "1 = timing OFF in LONG_ONLY mode (the untimed comparator for D-870)" },
   { name: "VOL_OVERLAY", def: "0", note: "1 = D-872: halve every position the day after a close where ^VIX is above its trailing 252-day 80th percentile (term-structure series not held; registered fallback), lag-1" },
   { name: "DUMP", def: "", note: "if set, write the combo book's daily OOS series {date: ret} to this JSON path (for D-873 blends)" },
+  { name: "RF_REAL", def: "0", note: "D-913: 1 = credit the REALIZED daily 3m T-bill rate (ust_3m) on cash days instead of a flat RF, and print the excess Sharpe vs the realized rate — the leverageable quantity. The flat-4% default over-credited cash during the 2009-2021 near-zero era." },
   { name: "SERIES_OUT", def: "", note: "D-911: if set, dump the PER-ASSET dated daily combo series {sym:{cls,series:[[date,ret]]}} so train/test selection can be done externally, leak-free, on the proven construction" },
   { name: "SOURCE_1DSF", def: "0", note: "1 = D-874: load the survivor-free Binance daily perp panel (trd_bars_intraday tf=1dSF, dead contracts included to their last bar) instead of trd_bars_deep" },
   { name: "SF_MIN_BARS", def: "400" },
@@ -42,7 +43,7 @@ const cryptoSel = sel.filter((m) => m.asset_class === "crypto").slice(0, +K.MAX_
 const PLACEABLE_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|GC=F|SI=F|CL=F|BZ=F|HG=F|NG=F|PL=F|EURUSD=X|GBPUSD=X|JPY=X|AUDUSD=X|CAD=X|CHF=X|NZDUSD=X|EURGBP=X|EURJPY=X|GBPJPY=X|AUDJPY=X|EURCHF=X|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E)$/;
 const LONGONLY_RE = /^(SPY|QQQ|DIA|IWM|IWF|IWD|EFA|EEM|EWJ|EWZ|EWG|EWU|EWH|EWA|EWC|FXI|VGK|TLT|IEF|SHY|LQD|HYG|GLD|SLV|USO|UNG|XL[IEBFVPYKU]|ITB|KRE|XLRE|SMH|VNQ|\^GSPC|\^IXIC|\^DJI|\^RUT|\^FTSE|\^GDAXI|\^FCHI|\^N225|\^HSI|\^AXJO|\^STOXX50E|\^GSPTSE|\^SSMI|\^IBEX|\^KS11|\^BSESN|\^MXX|\^BVSP)$/;
 if (K.CRYPTO_ONLY === "1") { const c8 = new Date(); c8.setUTCFullYear(c8.getUTCFullYear() - 8); sel = meta.filter((m) => m.asset_class === "crypto" && m.first_date <= c8.toISOString().slice(0, 10) && !/USDT|-EX$/.test(m.symbol)); COST.crypto = +(Deno.env.get("CRYPTO_COST_BP") ?? "20"); console.log(`  CRYPTO-ONLY subset: ${sel.length} spot crypto with >= 8y (${sel.map((m) => m.symbol).join(", ")}); spot cost 20bp`); }
-else if (K.LONG_ONLY === "1") { sel = sel.filter((m) => LONGONLY_RE.test(m.symbol)); console.log(`  LONG-ONLY TIMING subset: ${sel.length} ETFs / cash indices an ISA can hold; cash at ${(100 * +K.RF).toFixed(1)}% when timed out; no shorts, no financing`); }
+else if (K.LONG_ONLY === "1" && K.FUTURES_ONLY !== "1") { sel = sel.filter((m) => LONGONLY_RE.test(m.symbol)); console.log(`  LONG-ONLY TIMING subset: ${sel.length} ETFs / cash indices an ISA can hold; cash at ${(100 * +K.RF).toFixed(1)}% when timed out; no shorts, no financing`); }
 if (K.PLACEABLE === "1") { sel = sel.filter((m) => PLACEABLE_RE.test(m.symbol)); console.log(`  PLACEABLE subset: ${sel.length} assets a UK retail account can hold (ETF long / CFD both ways); financing ${(100 * +K.FINANCING).toFixed(1)}%/yr on gross CFD and short notional`); }
 // D-901 universe sweep. Both default to empty and cannot alter the book's existing behaviour; they exist because the
 // universe was a hardcoded regex with no way to vary it, which is why THE UNIVERSE LAW's own check had never been run
@@ -78,6 +79,9 @@ if (K.VOL_OVERLAY === "1") { const vb = ((await q(`trd_bars_deep?symbol=eq.%5EVI
   for (let i = 252; i < vb.length; i++) { const win = cl.slice(i - 252, i).sort((a, b) => a - b); const p80 = win[Math.floor(0.8 * win.length)]; vixFlag.set(day(vb[i][0]), cl[i] > p80 ? 1 : 0); }
   console.log(`  VOL OVERLAY: ${[...vixFlag.values()].filter((v) => v).length} of ${vixFlag.size} VIX days flagged (> trailing-252d 80th pct); positions halved the NEXT day`); }
 const overlayMult = (dPrev: string) => K.VOL_OVERLAY === "1" && vixFlag.get(dPrev) === 1 ? 0.5 : 1;
+const rfReal = new Map<string, number>();
+if (K.RF_REAL === "1") { const rr = (await q(`trd_macro_series?series=eq.ust_3m&select=d,v&order=d.asc&limit=20000`) as { d: string; v: number }[]); for (const x of rr) rfReal.set(x.d, x.v / 100); console.log(`  RF_REAL: ${rfReal.size} realized 3m T-bill rates loaded (avg ${(100 * [...rfReal.values()].reduce((a, b) => a + b, 0) / Math.max(1, rfReal.size)).toFixed(2)}%); cash days credited the realized rate, not a flat ${(100 * +K.RF).toFixed(0)}%`); }
+let rfLast = +K.RF; const rfDay = (d: string) => { if (K.RF_REAL !== "1") return +K.RF; const v = rfReal.get(d); if (v !== undefined) rfLast = v; return rfLast; };
 const nDay = new Map<string, number>();
 for (const a of S) {
   const n = a.c.length; if (n < 300) continue; const r = new Float64Array(n); for (let i = 1; i < n; i++) r[i] = Math.log(a.c[i] / a.c[i - 1]);
@@ -91,7 +95,7 @@ for (const a of S) {
         const newPos = K.LONG_ONLY === "1" ? (K.ALWAYS_LONG === "1" || sgn > 0 ? scale : 0) : sgn * scale; const turn = Math.abs(newPos - pos); pos = newPos; rets.push(-turn * cost / 2); // cost charged on the traded fraction (half a round trip per side)
       } else rets.push(0);
       const isEtf = a.cls === "etf" || a.cls === "sector"; const finDaily = (+K.FINANCING / 252) * (isEtf ? Math.max(0, -pos) : Math.abs(pos)) * (K.PLACEABLE === "1" ? 1 : 0);
-      const cashD = K.LONG_ONLY === "1" && pos === 0 ? +K.RF / 252 * +K.VOL_TARGET / 0.10 : 0;
+      const cashD = K.LONG_ONLY === "1" && pos === 0 ? rfDay(day(a.ts[i + 1])) / 252 * +K.VOL_TARGET / 0.10 : 0;
       const om = overlayMult(day(a.ts[i]));
       const L = +K.LEV; const fund = K.FUNDING === "1" && pos > 0 ? L * pos * ((a as Ser & { fund?: Map<string, number> }).fund?.get(day(a.ts[i + 1])) ?? 0) : 0;   // D-880: funding paid on the full long notional
       const v = L * om * pos * r[i + 1] + L * rets.pop()! - finDaily + cashD - fund; // next-day return on the position set at close i (lag-1), minus overnight financing on CFD/short notional
