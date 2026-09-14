@@ -354,10 +354,13 @@ with **11 years underwater against 4**. So the financing *arithmetic* above stan
 withdrawn**: cheap leverage on a weak book loses to expensive leverage on a strong one, and a futures-implemented
 version of this book does not inherit the ETF book's Sharpe.
 
-The one lead worth carrying: within that book, commodities ran **−0.5%/yr (5 of 16 positive)** while the newly-ingested
-**index and rate contracts ran +1.6%/yr with 7 of 7 positive** and currencies **+0.9%/yr with 3 of 3**. Choosing that
-subset now, after seeing the breakdown, would be exactly D-455's failure — it needs its own registration with train-only
-selection.
+The one lead was then chased the only admissible way and **died (D-911).** Selecting contracts on **train data alone**
+(2005–2015), freezing, and measuring on **test** (2016–2026) gives a 13-contract book at OOS Sharpe **0.15 — the 70th
+percentile of random 13-contract books**, i.e. no better than chance, and negative at the class level. The class tilt
+**inverts across the split** (fx led on train and lost on test; rate was negative on train and led on test), so D-910's
+full-sample breakdown was a pooled artifact of two opposite regimes. **There is no actionable leverageable futures book
+here** — D-908's cheap-financing route is real arithmetic but needs a book good enough to lever, and this universe does
+not supply one.
 
 **Not yet priced:** a linearly-scaled drawdown **understates** a levered futures position, because a margin call forces
 liquidation at the worst moment and a continuous series cannot see that. And contract sizes may put the route out of

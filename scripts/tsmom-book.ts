@@ -18,6 +18,7 @@ const K = declareKnobs("tsmom-book", [
   { name: "ALWAYS_LONG", def: "0", note: "1 = timing OFF in LONG_ONLY mode (the untimed comparator for D-870)" },
   { name: "VOL_OVERLAY", def: "0", note: "1 = D-872: halve every position the day after a close where ^VIX is above its trailing 252-day 80th percentile (term-structure series not held; registered fallback), lag-1" },
   { name: "DUMP", def: "", note: "if set, write the combo book's daily OOS series {date: ret} to this JSON path (for D-873 blends)" },
+  { name: "SERIES_OUT", def: "", note: "D-911: if set, dump the PER-ASSET dated daily combo series {sym:{cls,series:[[date,ret]]}} so train/test selection can be done externally, leak-free, on the proven construction" },
   { name: "SOURCE_1DSF", def: "0", note: "1 = D-874: load the survivor-free Binance daily perp panel (trd_bars_intraday tf=1dSF, dead contracts included to their last bar) instead of trd_bars_deep" },
   { name: "SF_MIN_BARS", def: "400" },
   { name: "LOOKS", def: "21,63,126,252", note: "D-875: lookbacks (trading days) for the trend combination" }, { name: "VOL_N", def: "60", note: "D-875: trailing window for the per-asset vol scaling" }, { name: "SF_TF", def: "1dSF", note: "D-876: which daily panel the SOURCE_1DSF loader reads (1dSF Binance, 1dBYBIT Bybit)" },
@@ -69,6 +70,7 @@ const bookRet: Record<string, Daily> = {}; for (const s of SIGS) bookRet[s] = ne
 const GROUP = (a: { sym: string; cls: string }) => a.cls === "crypto" ? "crypto" : a.cls === "fx" ? "fx" : /^(TLT|IEF|SHY|LQD|HYG)$/.test(a.sym) || a.cls === "rate" ? "bond" : /^(GLD|SLV|GC=F|SI=F|PL=F|PA=F)$/.test(a.sym) ? "precious" : a.cls === "commodity" || /^(USO|UNG)$/.test(a.sym) ? "commodity" : "equity";
 const grpRet: Record<string, Record<string, Daily>> = {}; const grpN: Record<string, Record<string, Daily>> = {}; const longGrp: Record<string, Daily> = {}; const longGrpN: Record<string, Daily> = {};
 const perAsset: Record<string, Record<string, number[]>> = {}; const perAssetLong: Record<string, number[]> = {};
+const perAssetDated: Record<string, { cls: string; series: [string, number][] }> = {};
 const isOOS = (ts: number) => day(ts) >= K.OOS_FROM, isIS = (ts: number) => day(ts) >= K.IS_FROM && day(ts) < K.OOS_FROM;
 // D-872: VIX regime flag per date, from the PRIOR close (lag-1): 1 if VIX close > trailing 252-day 80th percentile
 const vixFlag = new Map<string, number>();
@@ -96,6 +98,7 @@ for (const a of S) {
       rets.push(v); const d = day(a.ts[i + 1]); const m = bookRet[sig]; m.set(d, (m.get(d) ?? 0) + v); if (sig === "combo") nDay.set(d, (nDay.get(d) ?? 0) + 1);
       if (K.CLASS_PARITY === "1") { const g = GROUP(a); const gr = (grpRet[sig] ??= {}); const gm = (gr[g] ??= new Map()); gm.set(d, (gm.get(d) ?? 0) + v); const gn = (grpN[sig] ??= {}); const gnm = (gn[g] ??= new Map()); gnm.set(d, (gnm.get(d) ?? 0) + 1); }
       if (sig === "combo" && isOOS(a.ts[i + 1])) perAsset[a.sym][sig] = perAsset[a.sym][sig] ?? [], perAsset[a.sym][sig].push(v);
+      if (K.SERIES_OUT && sig === "combo" && isOOS(a.ts[i + 1])) (perAssetDated[a.sym] ??= { cls: a.cls, series: [] }).series.push([day(a.ts[i + 1]), v]);
       if (sig === "combo") { const vol = sd(Array.from(r.slice(Math.max(0, i - 60), i))) * Math.sqrt(252); const lv = (vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0) * r[i + 1]; longRet.set(d, (longRet.get(d) ?? 0) + lv); if (isOOS(a.ts[i + 1])) perAssetLong[a.sym].push(lv); }
     }
   }
@@ -140,3 +143,4 @@ console.log(`\n  ceiling for this id ${ceilInfo.ceiling.toFixed(3)}`);
 console.log(`  VERDICT (D-863 rule): ${comboIS.sr <= 0.4 ? "UNTESTED — positive control failed (in-sample era does not reproduce)" : ok ? "SUPPORTED" : `NULL — ${[R.sr < 0.5 && `OOS Sharpe ${R.sr.toFixed(2)} < 0.5`, R.t < ceilInfo.ceiling && `t ${R.t.toFixed(2)} < ceiling`, posA / Math.max(1, nA) < 0.6 && "asset agreement < 60%", classes < 3 && "fewer than 3 classes positive", !(ex.mu > 0 && ex.t >= 2) && "excess over long basket fails"].filter(Boolean).join("; ")}`}`);
 if (K.DUMP) { const m = bookRet["combo"]; const keys = [...m.keys()].filter((d) => isOOS(Date.parse(d + "T00:00:00Z") / 1000)).sort(); const ser = K.CLASS_PARITY === "1" ? seriesCP("combo", isOOS) : keys.map((d) => m.get(d)! / Math.max(1, nDay.get(d) ?? 1)); const obj: Record<string, number> = {}; keys.forEach((d, i) => obj[d] = ser[i]); await Deno.writeTextFile(new URL(`../${K.DUMP}`, import.meta.url).pathname, JSON.stringify({ run: K.RUN_ID, oos_from: K.OOS_FROM, series: obj })); console.log(`  dumped ${keys.length} OOS days to ${K.DUMP}`); }
 await Deno.writeTextFile(new URL("../data/tsmom-oos-assets.json", import.meta.url).pathname, JSON.stringify({ prereg: K.RUN_ID, oos_from: K.OOS_FROM, assets: assetLines }, null, 1));
+if (K.SERIES_OUT) { await Deno.writeTextFile(new URL(`../${K.SERIES_OUT}`, import.meta.url).pathname, JSON.stringify({ prereg: K.RUN_ID, oos_from: K.OOS_FROM, assets: perAssetDated })); console.log(`  per-asset dated series -> ${K.SERIES_OUT} (${Object.keys(perAssetDated).length} assets)`); }

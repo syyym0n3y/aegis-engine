@@ -18262,6 +18262,70 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-911 (2026-09-14) THE D-910 FUTURES LEAD, TESTED CLEAN — dead: train selection is no better than random, and the class tilt inverts across the split
+
+The operator asked me to run the index-rate-fx-only futures book with train-only selection. D-910 had flagged the lead —
+index/rate/fx positive on the full sample, commodities negative — and **refused to chase it, because choosing that
+subset after seeing the full-sample breakdown is D-455's exact violation.** The only admissible test is a **mechanical
+rule on train alone, frozen, measured on test, against a random same-size placebo.** Per-asset dated series for all 26
+contracts were dumped from the proven construction, so every subset book is reconstructed identically and nothing is
+hand-picked. Internal control: reconstructing all 26 reproduces the book's 0.08 (tsmom-book reported 0.11 over 2015+).
+
+### The result — train 2005–2015, test 2016–2026
+
+| book | n | OOS Sharpe | vs full | placebo pctl | maxDD | underwater |
+|---|---|---|---|---|---|---|
+| full (no selection) | 26 | 0.08 | — | — | −6% | 5.0y |
+| **positive-train (P)** | 13 | **0.15** | +0.07 | **70th** | −9% | 4.0y |
+| positive-train-**class** | 22 | **−0.10** | −0.18 | — | −7% | 6.3y |
+
+**SELECTION-ADDS-NOTHING — D-455 confirmed.** The positive-train book beats the full book by 0.07 (needed 0.25) and
+sits at the **70th percentile of 500 random 13-contract books** (p90 = 0.28), so it is **no better than picking 13
+contracts at random.** The class-level selection is outright **negative**: rate was negative on train so it was
+excluded, and the kept fx+commodity+index all went negative on test.
+
+### Split-date robustness — bulletproof
+
+Across four splits the positive-train book lands at the **43rd (2011), 70th (2015), 72nd (2018), 93rd (2013)** placebo
+percentile — a roughly uniform spread, the exact signature of **no persistent information.** If selection were
+informative, P would sit consistently high; instead it wanders around the middle and pokes above 90 once in four, which
+chance delivers under the null. The 2013 hit is MARGINAL anyway (0.15 over full, below the 0.25 bar).
+
+### The mechanism — the class tilt inverts
+
+| class | train Sharpe | test Sharpe |
+|---|---|---|
+| index | +0.06 | **+0.53** |
+| rate | **−0.08** | **+0.45** |
+| fx | **+0.45** | −0.13 |
+| commodity | +0.06 | −0.39 |
+
+**The classes that won on test (index, rate) are not the ones that won on train (fx).** The relative ranking essentially
+inverts across 2015. So D-910's full-sample finding was a **pooled statistic averaging an fx-led first half and a
+rate/index-led second half**, and neither half's winner predicts the other's — the pooling artifact THE UNIVERSE LAW and
+D-455 exist to catch, arriving through class-tilt instability.
+
+### Accounted for, and stated
+
+**Breadth, not rescued:** 13 contracts is below every floor, so even an informative selection would be a lead not a
+promotable book — and lowering a floor to promote it is the move D-910 caught me making, which I did not repeat.
+**Construction:** measured in the natural long-short form correct for futures (they short freely — which is *why* the
+ETF book is long-only and this is not); the findings are about persistence of relative performance and are
+construction-independent.
+
+**The operator's question, answered:** there is **no actionable, leverageable futures book here.** D-908's insight that
+the *financing route* rather than leverage killed the earlier attempts stands as arithmetic — but it needs a book good
+enough to lever, and this universe does not supply one. **Cheap leverage on a weak book loses to expensive leverage on a
+strong one, and this closes the door on the weak book being rescued by selection.** The two live levers are unchanged:
+the **starting stake** (worth more than any route) and the **prop route pending one firm's real terms** (D-907, still
+UNTESTED).
+
+GOLD: research — a lead I flagged and deliberately did not chase is now tested the only admissible way and is dead, the
+mechanism (a class tilt that inverts across the split) is recorded so no future run re-surfaces the pooled version, and
+the futures branch of the how-to-not-wait-so-long question is closed with a selection-law-clean negative.
+ACTS-ON: gate — `scripts/futures-trainselect.ts` and the SERIES_OUT dump make any future subset claim on this record
+testable train-only in one run.
+
 ## D-909/910 (2026-09-14) THE FUTURES COLUMN, MEASURED AND WITHDRAWN — and my own floor justification did not survive the data
 
 D-908 left one conditional: the futures column said what the route *would* deliver, because this record held 16
