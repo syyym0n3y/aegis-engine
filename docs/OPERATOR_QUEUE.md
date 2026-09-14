@@ -1,8 +1,8 @@
-# OPERATOR QUEUE — regenerated 2026-09-14T21:28Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-09-14T22:12Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — all green (32 guards, board logged 19.6h ago)
+## Board — all green (32 guards, board logged 20.3h ago)
 - nothing to fix. A red here that persists two cycles is the one time a session is worth starting; the guard's own output names the fix.
 
 ## Micro rung — live feed and sheet
