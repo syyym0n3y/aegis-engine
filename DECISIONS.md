@@ -18262,6 +18262,58 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-894 (2026-09-13) THE VOLATILITY PREMIUM IN ITS PLACEABLE WRAPPER — the best standalone Sharpe DILUTES the blend and the worst one improves it
+
+D-893 specified the missing piece: one more sleeve at ~0.80, uncorrelated, **not** trend, carry or value (carry −0.47
+and value −0.14 are already measured negative here, D-865). The volatility risk premium is the remaining family, and
+THE INSTRUMENT LAW says start from **what can be placed** — precisely where D-574 failed, measuring crypto VRP at
+t 3.76 in research space and getting 0.42 from the actual delta-hedged straddle. The wrappers are on the shelf and had
+never been tested here: the option writing happens inside their published NAV, so the conversion is bought, not assumed.
+
+### Standalone, each on its own full history, excess of cash
+
+| | Sharpe | vol | maxDD | worst day | underwater |
+|---|---|---|---|---|---|
+| USMV — minimum volatility | **0.53** | 13.4% | −33.4% | −10.1% | 2.5y |
+| QYLD — Nasdaq covered call | 0.29 | 14.8% | −27.2% | −10.2% | 2.8y |
+| SVXY — short VIX futures | 0.12 | 69.3% | **−95.6%** | **−83.0%** | 8.6y |
+| PBP — S&P buy-write | 0.08 | 15.1% | −45.3% | −11.3% | 13.4y |
+| *SPY reference, 1993–2026* | *0.34* | *18.5%* | | | |
+
+Drawdowns are **arithmetic**, not summed logs — a −313% cumulative log drawdown is a −95.6% loss, and quoting the log
+figure makes a wipeout look like an impossible number. **SVXY is recorded NOT HOLDABLE** on a −95.6% drawdown with a
+single day of −83%: the registered kill clause, with no appeal to its Sharpe. That is THE HOLDABILITY LAW doing exactly
+what it was written for.
+
+### The finding: correlation decides, quality does not
+
+| 4th sleeve | standalone | corr w/ ISA | risk-parity blend |
+|---|---|---|---|
+| *(none — D-893 baseline)* | | | 1.34 |
+| **USMV** | **0.53** (best) | 0.315 | **1.28 — it DILUTES** |
+| **QYLD** | 0.29 (worst qualifying) | 0.260 | **1.37** |
+
+**The candidate with the best standalone Sharpe makes the blend worse; the one with the worst makes it better.** USMV is
+minimum-volatility *equity* and shares a factor with the timed ISA sleeve. QYLD does not — and the reason is worth
+keeping: **the ISA sleeve is TIMED and therefore flat much of the time, so a passive fund correlates with it far less
+than with the index itself** (QYLD vs the three sleeves: 0.260 / 0.121 / 0.047).
+
+**NOT SUPPORTED.** USMV fails the correlation clause and dilutes; QYLD fails the standalone clause and reaches only
+1.37. PARTIAL applies to QYLD alone.
+
+### The arithmetic that outranks any single candidate
+
+Two sleeves gave **1.29**, three gave **1.33**, four give **1.37**. **Each additional sleeve buys +0.03 to +0.04 against
+a gap of 0.20** — so roughly five more would be needed, each uncorrelated with everything already in the blend. And
+excluding 2020–21 the figure does not move at all: **0.82** with three sleeves, **0.82** with QYLD, **0.69** with USMV,
+against a 1.20 floor. **Excluding the bull years the book is not a book, whichever fourth sleeve is chosen.**
+
+GOLD: research — the volatility-premium family is measured in the wrapper that can actually be held rather than in
+research space, the blend route to D-892's missing 0.20 is priced at about +0.035 per sleeve, and a portfolio lesson
+that generalises beyond this record is recorded: when adding a sleeve, correlation decides and standalone quality does
+not.
+ACTS-ON: gate — `scripts/dump-etf-sleeve.ts` prices any exchange-traded wrapper against the book in one run.
+
 ## D-893 (2026-09-13) CAN DIVERSIFICATION BUY THE MISSING 0.20? — a third sleeve buys 0.04, the ESTIMATED blend is the worst one, and ex-bull the book is 0.82
 
 D-892 reduced the mission to one number: best holdable Sharpe **1.29**, ten-year run needs **1.49**, gap **0.20**.
