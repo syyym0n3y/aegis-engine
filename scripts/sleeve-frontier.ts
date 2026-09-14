@@ -12,7 +12,7 @@ const K = declareKnobs("sleeve-frontier", [
   { name: "STEP_D", def: "63", note: "re-estimate quarterly" },
   { name: "EXCLUDE_YEARS", def: "", note: "D-875 convention: drop these years before computing anything" },
   { name: "WINDOW", def: "common", note: "common = from the day every sleeve is live (the honest blend); union = every day any sleeve has data, mirroring scripts/pair-blend.ts so its 1.29 can be reproduced as a control" }, { name: "TARGET_SR", def: "1.49", note: "D-892's ten-year requirement; the number this is judged against" },
-  { name: "RUN_ID", def: "D-893-sleeve-frontier" },
+  { name: "RUN_ID", def: "D-893-sleeve-frontier" }, { name: "DUMP_BLEND", def: "", note: "if set, write the risk-parity blend daily series to this JSON path (D-896 consumes it)" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "sf", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
@@ -121,3 +121,4 @@ console.log(`  TO CLOSE THE GAP: at the observed average sleeve Sharpe of ${avgS
 await spendTrials({ rest: OWNED, headers: hdr, family: "sleeve-frontier", runId: `${K.RUN_ID}${drop.size ? "-ex" + [...drop].join("") : ""}`, spent: 4 });
 const ceil = await preregCeiling({ rest: OWNED, headers: hdr, preregId: K.RUN_ID });
 console.log(`  ceiling ${ceil.ceiling.toFixed(2)} (trial-count deflation; the blend Sharpes above are not t-statistics and are reported with their day counts)`);
+if (K.DUMP_BLEND) { const obj: Record<string, number> = {}; days.forEach((d, i) => obj[d] = +parity[i].toFixed(8)); await Deno.writeTextFile(K.DUMP_BLEND, JSON.stringify({ prereg: K.RUN_ID, scheme: "dynamic risk parity on trailing 60d sleeve vol", sleeves: names, ann_obs: +ANN.toFixed(1), series: obj })); console.log(`  blend series -> ${K.DUMP_BLEND} (${days.length} days)`); }

@@ -18262,6 +18262,63 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-896 (2026-09-13) THE SAME QUESTION ON THE REAL RETURNS — the Gaussian was worth 3% of the horizon, and my RNG was broken
+
+D-892 answered $10 → $1M under geometric Brownian motion: a fixed Sharpe compounding forever, Gaussian daily returns,
+no autocorrelation, no era variation. D-895 then **measured** what that assumption is worth — five-year block Sharpes
+of 1.72 / 0.57 / 1.07 / 1.23 / 0.50 over 21.7 years — and I wrote that the caveat "now has a measured size rather than
+a warning" **and never propagated it into the answer.** This does that, by stationary block bootstrap on the actual
+7,363-day blend, preserving the real fat tails, the real within-block autocorrelation and the real clustered bad
+decades instead of assuming all three away. 0 new fits.
+
+### The like-for-like comparison
+
+D-892's 70 years is the **pair** at Sharpe 1.29; this is the two-sleeve blend at **1.10**. Measuring against 70 would
+compare two *books*, not two *assumptions*. The Gaussian answer for **this** book is 14.5%/yr → **80 years**.
+
+| | median | p25 | p75 |
+|---|---|---|---|
+| Gaussian (this book) | 80y | — | — |
+| **Bootstrap on real returns** | **77y** | 73y | 81y |
+
+**Three years shorter, and slightly *faster* than the Gaussian.** The persistence caveat is worth about **3% of the
+horizon at 1x** — D-892 stands unamended, and its open caveat is now a measured small number. Block length, the
+researcher degree of freedom this test was built to expose, moves the 1x median by **zero years** (77/77/77 at
+5d/21d/63d).
+
+### Where a two-barrier formula genuinely cannot follow
+
+| leverage | floor | P(target) | P(ruin) | censored at 100y |
+|---|---|---|---|---|
+| 1x | 50% DD | 100% | 0% | 0% |
+| 1x | 10% DD | 92.8–97.2% | 2.8–7.2% | 0.1% |
+| 2x\* | 50% DD | 75.9–79.2% | 0.7–2.4% | **20–22%** |
+| 2x\* | 10% DD | 40.9–45.5% | 44.6–49.9% | ~10% |
+| 3x\* | 50% DD | 70.3–75.0% | 9.3–12.9% | ~16% |
+| 3x\* | 10% DD | 25.8–27.4% | **68.2–70.6%** | ~4% |
+
+At 3x against a typical prop-firm 10% rule, **roughly 70% of paths end in ruin before the target.** At 2x, **a fifth of
+all paths are still running at the hundred-year cap** — censored, neither success nor failure, which the analytic
+solution has no way to express because it assumes infinite time. `*` marks a **stated proxy**: D-880 measured funding on
+*crypto perps* and this book is equities and futures proxies, so at 2x/3x that drag is the only leverage cost measured
+on this record, not one measured on this instrument. At 1x there is no financing.
+
+### Two defects, both caught by the output rather than by review
+
+1. **The first run was 100% censored in all 18 cells.** Not a market fact — a unit mismatch. The raw blend runs at 3.4%
+   vol and 3.7%/yr, so a 100,000× target needs ~311 years and every path hit the cap; D-892's comparator is a 10%-vol
+   book. **An all-zero result is a broken question until proven otherwise** (D-641).
+2. **The random number generator was degenerate.** `seed*1103515245 + 12345` reaches ~2.4e18, far past
+   `Number.MAX_SAFE_INTEGER` (9.0e15), so the modulo ran on a lossy float and **every path came out nearly identical** —
+   visible as p25 ≈ p50 ≈ p75 and as probabilities printing small-integer fractions (5/6, 2/3, 1/9, 3/13) from a
+   supposed 20,000 paths. Replaced with mulberry32, which keeps every intermediate inside 32 bits via `Math.imul`. **A
+   moment-matching positive control now runs on every invocation** — 200k resampled draws must reproduce the source mean
+   and sd to within 10% or the script exits 1 — and it would have caught this immediately. It passes at 3.7% and 0.1%.
+
+GOLD: research — a caveat this programme had flagged twice and quantified once is finally propagated into the answer it
+qualifies, and it turns out to be small at 1x and enormous under leverage against a tight floor.
+ACTS-ON: gate — `docs/GROWTH_TO_TARGET.md` now answers on measured returns rather than on a Gaussian.
+
 ## D-895 (2026-09-13) IS THE BLEND A BULL-WINDOW ARTIFACT? — no: 1.10 over 21.7 years, and I am correcting my own reading from hours earlier
 
 Every blend number on this record sits on a **six-year window starting 2020**, because the crypto sleeve does not exist
