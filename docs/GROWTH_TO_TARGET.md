@@ -308,3 +308,64 @@ that closed. Stated, not corrected — this record cannot reconstruct the dead-E
 
 **And 94 years is still not a plan.** The target remains unreachable at 1× by any holdable instrument. It needs leverage
 this record measured as harmful (D-897), an account type this book cannot use, or the per-head money at rung 0.
+
+## 11. How to not wait so long — the two levers, and neither is the strategy (D-907/908)
+
+### The financing route, not the leverage, killed every previous attempt
+
+Every leverage route this record measured charges financing **on top of** the risk-free rate, and every one failed —
+CFD spread (D-866, negative), perp funding (D-880, Sharpe 0.54 → 0.16 at 3×). **Exchange-traded futures do not**: the
+carry is embedded in the price, so net financing excess is ≈ 0. On a book earning 3.7% excess, a 3% broker spread at 5×
+notional is a **12%/yr drag — larger than the entire return.** That is why they died.
+
+| leverage | maxDD | **futures (rf only)** | CFD (rf+3%) | perp (measured) |
+|---|---|---|---|---|
+| 1× | −6% | 150y | 150y | 172y |
+| 3× | −16% | **78y** | 133y | 169y |
+| 5× | −25% | **54y** | 125y | — |
+| 8× | −37% | **38y** | 126y | — |
+| 12× | −50% | **28y** | 155y | — |
+
+**Under futures financing, leverage works and D-897's "1× dominates" inverts.** Under CFD financing it does essentially
+nothing. Roll-cost sensitivity at 12×: 28y at 0bp, 33y at 50bp, 41y at 100bp, 70y at 200bp, **never at 400bp**. Liquid
+index and rate futures roll at roughly 10–50bp/yr; commodities in contango can cost hundreds.
+
+### The bigger lever: the stake sets the multiple, and the multiple sets the clock
+
+£10 → £1M is **100,000×**, and this document has been quoting that one number as though the *strategy* set the timeline.
+It does not — time scales with `log(target/stake)`.
+
+| from → to | multiple | unlevered | futures 5× | futures 8× |
+|---|---|---|---|---|
+| £10 → £1M | 100,000× | 150y | 62y | 44y |
+| £1,000 → £1M | 1,000× | 90y | 37y | 26y |
+| £10,000 → £1M | 100× | 60y | 25y | 18y |
+| **£50,000 → £1M** | **20×** | 39y | 16y | **11y** |
+| £10,000 → £100,000 | 10× | 30y | 12y | 9y |
+
+**Neither lever is the strategy.** The financing route is worth ~2–3× on the clock; the starting stake is worth far more.
+
+### What is conditional, and what is not yet priced
+
+**Conditional:** this record holds 16 commodity futures and **no index or rate futures** with long history, so the
+futures column says what the route *would* deliver, not a measurement of a futures-implemented book. The missing input
+is an **ingest task** — continuous history for ES, NQ, ZN, ZB beside the GC and CL already held.
+
+**Not yet priced:** a linearly-scaled drawdown **understates** a levered futures position, because a margin call forces
+liquidation at the worst moment and a continuous series cannot see that. And contract sizes may put the route out of
+reach below some account size.
+
+### The prop route is a different object, and I could not price it
+
+A prop account is **not leverage on your own money — it is a bounded-loss bet on a fixed notional.** Your loss is the
+fee; the notional is $100,000 whether your stake is £500 or £50,000; the attempt repeats. **None of the arithmetic above
+applies to it.**
+
+I built the simulation and **it failed its own control**: a zero-edge trader also came out profitable (+$742 per fee),
+which is impossible — the industry would not exist. One real defect was found and fixed (withdrawals were resetting the
+drawdown clock) and the control stayed positive, so the rule set I encoded is still more generous than reality.
+**Recorded UNTESTED.** The missing facts are a firm's own terms: minimum trading days, consistency rule, trailing vs
+static drawdown, exact fee and refund condition, payout schedule.
+
+**The one robust figure is the difference, not the level** — whatever is wrong applies to both arms equally, so: **the
+edge roughly doubles the pass rate** (47.8% vs 22.1%) and adds about $3,300 per fee over a no-edge trader.

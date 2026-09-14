@@ -90,6 +90,19 @@ And a train-chosen holdable ETF beats the whole construction: **MTUM reaches the
 book's 149**, with six other train-chosen entries also ahead of it. The timing's price is now stated: **55 years of
 time-to-target in exchange for a fivefold smaller worst loss.** See `docs/GROWTH_TO_TARGET.md` §10.
 
+**How to not wait so long, with numbers (D-907/908).** Two levers, and **neither is the strategy**.
+**(1) The financing route.** Every leverage route measured here charges financing *on top of* the risk-free rate and
+every one failed — CFD spread (D-866), perp funding (D-880). **Exchange-traded futures embed the carry in the price**,
+so net financing excess is ≈0. Same book: at 5× the futures route reaches the target in **54 years against the CFD
+route's 125** and unlevered's 150. **D-897's "1× dominates" was a statement about those routes, not about leverage.**
+Conditional — this record holds no index futures, so that is an ingest task, not a measurement.
+**(2) The starting stake, which is worth more.** £10 → £1M is 100,000×; £50,000 → £1M is 20×. Time scales with
+`log(target/stake)`, so the same book at 8× futures takes **11 years from £50,000** against 44 from £10.
+**The prop route is a different object entirely** — a bounded-loss bet on a fixed notional, where your loss is the fee
+and the notional does not depend on your stake, so none of the above arithmetic applies. I could not price it: the
+simulation failed its own zero-edge control and is recorded UNTESTED pending one firm's actual terms.
+See `docs/GROWTH_TO_TARGET.md` §11.
+
 **The bar any future direction work must clear**, so that it is not re-litigated: beat **52.87% at 1 hour** against a
 per-step shuffled control, or beat the fee — and if it claims to beat the fee through execution, it must measure the
 **EXIT** leg, not only the entry. That last clause is D-891's contribution and it is the one that would have caught

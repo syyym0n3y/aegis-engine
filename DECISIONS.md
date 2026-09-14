@@ -18262,6 +18262,78 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-907/908 (2026-09-14) HOW TO NOT WAIT SO LONG — two levers, and neither of them is the strategy
+
+The operator asked how the goal is reached without waiting so long, through a prop firm or a live personal account.
+Both halves turned out to rest on things this record had measured wrongly or not at all.
+
+### D-908 — the financing ROUTE, not the leverage, killed every previous attempt
+
+Every leverage route measured here charges financing **on top of** the risk-free rate, and every one failed: CFD spread
+(D-866, negative), perp funding (D-880, Sharpe 0.54 → 0.16 at 3×). D-897 then concluded **1× dominates**, and D-905
+confirmed it from an honest baseline. **But that is a statement about those routes, not about leverage.**
+Exchange-traded futures embed the carry in the price, so net financing excess is ≈ 0. On a book earning 3.7% excess, a
+3% broker spread at 5× notional is a **12%/yr drag — larger than the entire return.**
+
+| leverage | maxDD | **futures (rf only)** | CFD (rf+3%) | perp (measured) |
+|---|---|---|---|---|
+| 1× | −6% | 150y | 150y | 172y |
+| 3× | −16% | **78y** | 133y | 169y |
+| 5× | −25% | **54y** | 125y | — |
+| 8× | −37% | **38y** | 126y | — |
+| 12× | −50% | **28y** | 155y | — |
+
+**Under futures financing, leverage works and D-897's dominance inverts.** Under CFD financing it does essentially
+nothing. Roll sensitivity at 12×: 28y at 0bp, 33y at 50bp, 41y at 100bp, 70y at 200bp, **never at 400bp** — liquid index
+and rate futures roll at ~10–50bp/yr, so it holds there.
+
+**CONDITIONAL, and labelled so on every line.** The futures-restricted book could **not** be built: `UNIV_KEEP='=F$'`
+leaves 16 commodity futures and the script refuses it against its own 60-name breadth floor — the precondition working,
+not a bug to override. This record holds **no index or rate futures** with long history. Competing hypothesis (1) is
+therefore *unresolved, not refuted*: a 16-commodity book may be too weak for cheap leverage to rescue, and D-863 already
+measured commodities as the negative class.
+
+### The bigger lever, which this ladder has missed throughout
+
+**The stake sets the multiple and the multiple sets the clock.** £10 → £1M is 100,000×, and this record has been quoting
+that one number as though the *strategy* set the timeline. Time scales with `log(target/stake)`:
+
+| from → to | multiple | unlevered | futures 5× | futures 8× |
+|---|---|---|---|---|
+| £10 → £1M | 100,000× | 150y | 62y | 44y |
+| £10,000 → £1M | 100× | 60y | 25y | 18y |
+| **£50,000 → £1M** | **20×** | 39y | 16y | **11y** |
+
+**Neither lever is the strategy.** The route is worth ~2–3× on the clock; the stake is worth far more.
+
+### D-907 — the prop route is a different object, and I could not price it
+
+**A prop account is not leverage on your own money — it is a bounded-loss bet on a fixed notional.** Your loss is the
+fee; the notional is $100,000 whether your stake is £500 or £50,000; the attempt repeats. **None of this record's
+time-to-target arithmetic applies to it**, and I had been applying it all session. That category error is worth more
+than the number I could not compute.
+
+I built the simulation and **it failed its own registered control.** A zero-edge trader also came out profitable
+(+$742 per fee at 20% account vol) — impossible, or the industry would not exist. One real defect was found and fixed:
+the first version reset **both** equity and the high-water mark on withdrawal, resetting the drawdown clock and handing
+the trader unlimited free options. Pinning the floor to the initial balance **halved the control's edge and left it
+positive**, so the rule set I encoded is still more generous than reality. The gambler's-ruin arithmetic shows why a
+constraint must be missing: with a static −10% floor and withdrawal at +4%, a driftless walk banks 2.5 withdrawals
+before ruin — $8,000 gross at an 80% split.
+
+**Recorded UNTESTED**, and I am not reporting the headline it produced (+$4,040 per fee, three years to £1M) — that is
+precisely the answer the operator was hoping for, and it rests on a simulator my own control says is wrong.
+
+**The one robust figure is the difference, not the level.** Whatever is wrong applies to both arms equally, so this
+survives: **the edge roughly doubles the pass rate** (47.8% against 22.1%) and adds about **$3,300 per fee** over a
+no-edge trader.
+
+GOLD: research — the operator's question is answered with two quantified levers, the leverage conclusion that stood all
+session is localised to the financing routes that produced it, and a result that looked exactly like the hoped-for
+answer was refused by its own control rather than shipped.
+ACTS-ON: gate — `docs/GROWTH_TO_TARGET.md` §11 and `docs/CAPITAL_LADDER.md` carry both levers; the two missing inputs
+(index-futures history; one firm's actual terms) are named as tasks rather than guessed.
+
 ## D-906 (2026-09-13) WHAT THE 1× RUNG CAN ACTUALLY HOLD — a train-chosen momentum ETF beats the whole timed construction by 55 years
 
 D-905 corrected the timed book to **149 years** at its holdable size; D-904 showed a passive basket of the same assets
