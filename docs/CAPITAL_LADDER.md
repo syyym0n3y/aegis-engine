@@ -79,6 +79,17 @@ magnitude. The stated target of 100% a week requires a Sharpe of **8.49**, again
 documented fund in history; doubling once a year requires **1.14**, which is inside the record. And a prop firm's ~10%
 drawdown rule costs **59 percentage points** of P(reaching the target) on an unchanged strategy.
 
+**The 1× rung, corrected and priced (D-904/905/906).** Two corrections landed here. First, every growth-to-target
+figure this record published described a book scaled to **10% volatility** — about **2.9× leverage** on a 3.4%-vol
+book, with no financing charged, in a rung whose own text says *"ISA 1x only"*. At genuine unlevered size the timed
+book takes **149 years**, not 77. Second, the timed book does **not** beat simply holding the same assets: a
+vol-matched long basket has **higher geometric growth** (8.13% against 7.64%) and the **same time underwater**. What
+the timing buys is drawdown depth, −6% against −31%.
+
+And a train-chosen holdable ETF beats the whole construction: **MTUM reaches the target in 94 years against the timed
+book's 149**, with six other train-chosen entries also ahead of it. The timing's price is now stated: **55 years of
+time-to-target in exchange for a fivefold smaller worst loss.** See `docs/GROWTH_TO_TARGET.md` §10.
+
 **The bar any future direction work must clear**, so that it is not re-litigated: beat **52.87% at 1 hour** against a
 per-step shuffled control, or beat the fee — and if it claims to beat the fee through execution, it must measure the
 **EXIT** leg, not only the entry. That last clause is D-891's contribution and it is the one that would have caught

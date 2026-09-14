@@ -275,3 +275,36 @@ dominated by the growth rate rather than by path details.
 **And this is an upper bound on the harm, not a forecast.** The no-bonds series removes rates *entirely*, whereas the
 real post-2022 world still holds rates that merely stopped hedging — so the true effect is at most this and probably
 less.
+
+## 10. What the 1× rung can actually hold (D-906)
+
+D-905 corrected the timed book to **149 years** at its holdable size. So the honest question becomes a maximisation over
+**holdable assets**, not over signals — because once leverage is unavailable, time-to-target is set by geometric growth
+alone. 35 ISA-holdable instruments, **pick made on train (2005–2015) only**, measured on test (2016–2026), split fixed
+before anything was ranked.
+
+| train-chosen | g (test) | years to target | maxDD | underwater |
+|---|---|---|---|---|
+| **MTUM** | **12.3%/yr** | **94y** | −34% | 3.0y |
+| QQQ | 15.6% | 74y | −38% | 2.2y |
+| IWF | 13.6% | 85y | −35% | 2.3y |
+| VLUE | 11.6% | 100y | −40% | 3.6y |
+| QUAL | 11.3% | 101y | −34% | 2.2y |
+| *the timed book (D-905)* | *7.6%* | *149y* | *−6%* | *4.0y* |
+
+**The train-chosen holdable pick beats the programme's entire timed construction by 55 years** — and six entries beat
+it, so it is not a fluke. Buying a factor or index ETF and holding it outgrows a class-parity trend book with a
+volatility overlay, at the only leverage an ISA can use, by decades.
+
+**The trade-off, now priced:** the timed book buys **drawdown depth** (−6% against −34%) and pays **55 years** for it.
+A fivefold smaller worst loss is worth something — but the price should be known.
+
+**HINDSIGHT ONLY** on the registered rule: the ex-post best on test is SMH at 24.1%/yr and 48 years, but that is
+hindsight, and the **11.8-point gap** between it and the train-chosen pick measures exactly how much. Quoting 48 years
+would have been the D-455 failure.
+
+**Survivorship:** this panel holds instruments that exist *today*, so the whole frontier is biased upward by every fund
+that closed. Stated, not corrected — this record cannot reconstruct the dead-ETF universe.
+
+**And 94 years is still not a plan.** The target remains unreachable at 1× by any holdable instrument. It needs leverage
+this record measured as harmful (D-897), an account type this book cannot use, or the per-head money at rung 0.

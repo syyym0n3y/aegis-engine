@@ -18262,6 +18262,48 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-906 (2026-09-13) WHAT THE 1× RUNG CAN ACTUALLY HOLD — a train-chosen momentum ETF beats the whole timed construction by 55 years
+
+D-905 corrected the timed book to **149 years** at its holdable size; D-904 showed a passive basket of the same assets
+beats it on geometric growth. Both point at a question this record had never asked: once leverage is unavailable,
+time-to-target is set by **geometric growth alone**, so the ladder's real question is a maximisation over **holdable
+assets**, not over signals.
+
+35 ISA-holdable instruments. **Pick made on train (2005–2015) only**, measured on test (2016–2026), split fixed in the
+registration before anything was ranked.
+
+| train-chosen | g (test) | years to target | maxDD | underwater |
+|---|---|---|---|---|
+| **MTUM** | **12.3%/yr** | **94y** | −34% | 3.0y |
+| QQQ | 15.6% | 74y | −38% | 2.2y |
+| IWF | 13.6% | 85y | −35% | 2.3y |
+| QUAL | 11.3% | 101y | −34% | 2.2y |
+| *the timed book (D-905)* | *7.6%* | *149y* | *−6%* | *4.0y* |
+
+**The train-chosen holdable pick beats the programme's entire timed construction by 55 years**, and six entries beat it,
+so it is not a fluke. **Buying a factor or index ETF and holding it outgrows a class-parity trend book with a volatility
+overlay, at the only leverage an ISA can use, by decades.**
+
+**The trade-off is now priced**, which this record had never done: the timed book buys **drawdown depth** (−6% against
+−34%) and pays **55 years** for it. A fivefold smaller worst loss is worth something — but the price should be known.
+
+**HINDSIGHT ONLY** on the registered rule. The ex-post best on test is SMH at 24.1%/yr and 48 years — but that is
+hindsight, and the **11.8-point selection gap** measures exactly how much. Quoting 48 years would have been D-455's
+failure. The split was fixed in advance precisely so this could be measured rather than argued.
+
+**XBI is what the other failure mode looks like:** third on train at 11.1%, collapsing to 2.3% on test at −67% drawdown
+and 5.6 years underwater — NOT HOLDABLE, and disqualified by the drawdown clause rather than by its growth.
+
+**Survivorship is stated, not corrected:** the panel holds instruments that exist today, so the frontier is biased
+upward by every fund that closed, and this record cannot reconstruct the dead-ETF universe.
+
+**And 94 years is still not a plan.** The target remains unreachable at 1× by any holdable instrument. It needs leverage
+D-897 measured as harmful, an account type this book cannot use, or the per-head money at rung 0.
+
+GOLD: research — the ladder's 1× rung finally has a measured best case and a priced trade-off, and the answer is that
+the programme's own sophisticated construction is beaten by a factor ETF held flat, by decades.
+ACTS-ON: gate — `docs/CAPITAL_LADDER.md` and `docs/GROWTH_TO_TARGET.md` §10 carry the corrected, priced 1× rung.
+
 ## D-904/905 (2026-09-13) THE BOOK'S OWN OUTPUT HAD BEEN TELLING ME ALL SESSION — the timing adds no return, and every ladder figure described 2.9× exposure labelled 1x
 
 The core book prints, **on every run**, `excess over vol-matched long basket −0.8%/yr t −0.77` and then
