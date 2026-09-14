@@ -34,6 +34,10 @@ fi
 [ "$LAT" -ge 5 ] || RANGE=5d deno run --allow-net --allow-env ../scripts/refresh-fx-live.ts > ../data/micro-fx-live.log 2>&1 || echo "$T0 MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)"
 # D-860: the gold PAPER bot — no broker path; writes paper fills to data/gold-paper-ledger.json for the forward scorer
 [ "$LAT" -ge 5 ] || deno run --allow-net --allow-env --allow-read --allow-write ../scripts/gold-paper-bot.ts > ../data/gold-paper-bot.log 2>&1 || echo "$T0 MICRO HOURLY: gold paper bot FAILED (see data/gold-paper-bot.log)"
+
+# clock fwd-direction-4h-xrp-bnb-makerin-takerout (D-890/891): 4-hour direction book on XRP and BNB, maker in / taker out.
+# Paper only, no broker path. Gated on the same latency check as the gold bot so a stale panel cannot mint fake fills.
+[ "$LAT" -ge 5 ] || deno run --allow-net --allow-env --allow-read --allow-write ../scripts/direction-paper-bot.ts > ../data/direction-paper-bot.log 2>&1 || echo "$T0 MICRO HOURLY: direction paper bot FAILED (see data/direction-paper-bot.log)"
 deno run --allow-net --allow-env ../scripts/micro-sheet.ts > ../data/micro-sheet.log 2>&1 || echo "$T0 MICRO HOURLY: sheet FAILED"
 echo "$T0 MICRO HOURLY done: $(grep -o '[0-9]* candidate(s); [0-9]* instrument(s) STALE' ../data/micro-sheet.log)"
 # D-854: the hourly job's own FAILED lines must reach the operator, not just its log.

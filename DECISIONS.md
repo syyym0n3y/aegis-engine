@@ -18375,10 +18375,39 @@ side wrong — which is what a drift-carrying signal looks like when you force i
 3. **A filled-versus-unfilled comparison with an empty side was scoring as a pass.** Now refused automatically: fewer than
    20 on either side prints UNTESTED.
 
+### What DID move: a clock, with a bot and a scorer behind it
+
+D-890's UNDERPOWERED result is the one thing in this arc that is not dead: at a 4-hour hold the gross edge on XRPUSDT
+(10.49bp) and BNBUSDT (9.45bp) exceeds a real 7bp maker-in/taker-out round trip, and only the confidence fails. The
+honest home for a positive mean with a t of 1.2–1.3 is independent data, so **clock
+`fwd-direction-4h-xrp-bnb-makerin-takerout` is registered** (immutability verified by an UPDATE that raised) with a
+four-clause promote rule — ≥400 forward trades, mean ≥ +2.0bp net, day-clustered t ≥ 3.67, and forward accuracy ≥ 52%
+against a control computed on the *same* forward window — and kill clauses that fire on a negative mean past 200
+trades, on accuracy collapsing to its control, on the entry fill rate dropping below 90%, or on the panel going stale.
+
+**It is explicitly NOT going to the MICRO rung, and the reason is recorded rather than left implicit:** a t of 1.2–1.3
+after 2.9M counted trials is exactly what the deflation ceiling exists to refuse. Putting money on it would be the
+failure D-823 was written to stop, not a cure for it.
+
+`scripts/direction-paper-bot.ts` runs hourly under the existing runner. **Three defects were caught in its dry run
+before it was wired in**, each of which would have produced a confident-looking but meaningless book:
+1. features were not standardised, so every probability saturated at 0.0000 or 1.0000 — a maximally confident signal
+   from an unfitted model;
+2. a diagonal-Newton step diverged on correlated features, reproducing the same saturation a different way. Both were
+   fixed by *mirroring the research optimiser rather than re-deriving one* — a bot whose optimiser differs from the
+   backtest's is not testing the backtest (D-860);
+3. the bot could never open a position at all, because a signal read from the latest complete bar implies an entry at
+   the open of a bar that has not printed. Taking that open would back-date by up to an hour (D-498's same-bar
+   violation), so entries are now **pending intents priced on the following run**, at the real open of the bar they
+   were always meant to enter. The full lifecycle was replayed on historical bars: pended → opened at the bar's open →
+   closed exactly 4 hours later, with the 7bp round trip charged to the basis point (gross 57.00 → net 50.00).
+`scripts/forward-score-specs.ts` scores the clock and currently returns **not-yet-computable at n=0**, distinguishing
+that from inconclusive as THE CONTINUITY LAW requires.
+
 ### What did NOT move
 
-None of the four exit conditions (D-823). No position, no ledger row, no gate row, no clock verdict — these are research
-registrations and every one resolved NULL, UNTESTED or UNDERPOWERED. **Nine pre-registrations resolved in one arc**:
+No position, no ledger row, no gate row. Every research registration in this arc resolved NULL, UNTESTED or
+UNDERPOWERED. **Nine pre-registrations resolved in one arc**:
 D-881, D-883, D-884, D-885, D-886, D-887, D-888, D-889, D-890, D-891. The honest summary is that the programme now knows
 direction is weakly predictable in crypto at a 1–4 hour scale, that its gross edge at a 4-hour hold exceeds real venue
 fees, and that no route from that fact to money survives its own controls — the confidence interval never clears the

@@ -176,6 +176,29 @@ const SCORERS: Record<string, (started: string) => Promise<Score>> = {
     return { metric: M, value: dh < 0 ? dt / dh : null, n: rows.length, note: `${rows.length} paper days: timed maxDD ${(100 * dt).toFixed(1)}% vs hold ${(100 * dh).toFixed(1)}% (ratio ${dh < 0 ? (dt / dh).toFixed(2) : "n/a — no drawdown yet"}); Sharpe timed ${sr(t).toFixed(2)} vs hold ${sr(h).toFixed(2)}. Rule: promote at 24 months with timed DD <= 0.7x hold DD and Sharpe within 0.15 or above; kill at >= 12 months if timed DD deeper than hold's or Sharpe gap > 0.3.` };
   },
   "fwd-isa-crypto-parity": async (started) => trendClock(started, "pair" as never, 1.0, 0.3),
+  "fwd-direction-4h-xrp-bnb-makerin-takerout": async (started) => {
+    // D-890/891: the 4-hour direction book on XRP and BNB, maker in / taker out (7bp round trip). The clock exists
+    // because the result is UNDERPOWERED — the in-sample mean clears real venue fees (gross 10.49 and 9.45bp per trade)
+    // while its day-clustered t is only 1.34 and 1.20 against a 3.67 ceiling. So the statistic this scorer computes is
+    // the one the rule names: forward mean bp per trade and its day-clustered t, beside the accuracy and its own
+    // forward shuffled control. It distinguishes not-yet-computable from computed-and-inconclusive.
+    const M = "fwd_direction_4h_net_bp";
+    type Fill = { sym: string; entryTs: number; exitTs: number; grossBp: number; netBp: number };
+    let L: { fills?: Fill[]; pending?: unknown[]; opened?: unknown[] };
+    try { L = JSON.parse(await Deno.readTextFile(new URL("../data/direction-paper-ledger.json", import.meta.url).pathname)); }
+    catch (e) { if (e instanceof Deno.errors.NotFound) return { metric: M, value: null, n: 0, note: `paper ledger absent — scripts/direction-paper-bot.ts has not run since ${started}. not-yet-computable.` }; throw e; }
+    const startS = Date.parse(started + "T00:00:00Z") / 1000;
+    const fills = (L.fills ?? []).filter((f) => f.entryTs >= startS);
+    if (fills.length < 200) return { metric: M, value: null, n: fills.length, note: `${fills.length} forward trade(s) since ${started}; the kill clauses read at 200 and the promote clause at 400. not-yet-computable, NOT inconclusive.` };
+    const net = fills.map((f) => f.netBp), acc = fills.filter((f) => f.grossBp > 0).length / fills.length;
+    const day = new Map<number, number>(); for (const f of fills) { const d = Math.floor(f.entryTs / 86400); day.set(d, (day.get(d) ?? 0) + f.netBp); }
+    const xs = [...day.values()]; const m = mean(xs), s = sd(xs); const t = s > 0 ? m / (s / Math.sqrt(xs.length)) : 0;
+    const mu = mean(net);
+    const verdict = fills.length >= 400 && mu >= 2.0 && t >= 3.67 && acc >= 0.52 ? "PROMOTE-ELIGIBLE (all four clauses)"
+      : mu < 0 ? "KILL-ELIGIBLE: mean below zero past 200 trades"
+      : `inconclusive: mean ${mu.toFixed(2)}bp (promote needs >= 2.0), t ${t.toFixed(2)} (needs >= 3.67), accuracy ${(100 * acc).toFixed(1)}% (needs >= 52.0), ${fills.length} trades (needs >= 400)`;
+    return { metric: M, value: mu, n: fills.length, note: `${fills.length} forward trades over ${xs.length} day(s): mean net ${mu.toFixed(2)}bp at 7bp round trip, day-clustered t ${t.toFixed(2)}, win rate ${(100 * acc).toFixed(1)}%. ${verdict}` };
+  },
   "fwd-tsmom-110": async (started) => trendClock(started, "trend", 0.5, 0),
   "fwd-trend-long-parity": async (started) => trendClock(started, "parity", 0.8, 0.3),
   // D-860: the gold paper bot's rule. Reads the append-only paper ledger the bot writes; excess over the unconditional
