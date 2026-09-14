@@ -99,8 +99,13 @@ Conditional — this record holds no index futures, so that is an ingest task, n
 **(2) The starting stake, which is worth more.** £10 → £1M is 100,000×; £50,000 → £1M is 20×. Time scales with
 `log(target/stake)`, so the same book at 8× futures takes **11 years from £50,000** against 44 from £10.
 **The prop route is a different object entirely** — a bounded-loss bet on a fixed notional, where your loss is the fee
-and the notional does not depend on your stake, so none of the above arithmetic applies. I could not price it: the
-simulation failed its own zero-edge control and is recorded UNTESTED pending one firm's actual terms.
+and the notional does not depend on your stake, so none of the above arithmetic applies. It is now **priced, with a
+validated simulator** (D-914): a driftless trader is −EV at every volatility (as it must be), and on the **honest
+excess** book (you earn no risk-free rate on the firm's capital, so the ~0.4 excess Sharpe drives the evaluation, not
+the ~1.1 total) the measured edge is **marginally +EV: ~+$292 per $500 fee at 15% account volatility, 26% pass rate.**
+The first +EV route to external capital on this record — but thin, variance-heavy (74% of attempts fail), and its sign
+turns on one firm's actual fee-refund and consistency rules. It improves if the fee is refundable (standard). See
+`docs/GROWTH_TO_TARGET.md` and D-914.
 See `docs/GROWTH_TO_TARGET.md` §11.
 
 **The bar any future direction work must clear**, so that it is not re-litigated: beat **52.87% at 1 hour** against a

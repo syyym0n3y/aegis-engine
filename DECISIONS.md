@@ -18326,6 +18326,44 @@ the futures branch of the how-to-not-wait-so-long question is closed with a sele
 ACTS-ON: gate — `scripts/futures-trainselect.ts` and the SERIES_OUT dump make any future subset claim on this record
 testable train-only in one run.
 
+## D-914 (2026-09-14) THE PROP SIMULATOR, VALIDATED — the zero-edge control finally loses money, and the honest edge is thin
+
+The operator named prop firms as their first option, and D-907 had left it UNTESTED because the simulator failed its own
+zero-edge control (a driftless trader came out +EV — impossible). The remaining generosity was the funded phase: a static
+floor with equity reset on each 4% withdrawal, handing a driftless trader ~1.5 free-option withdrawals per passed
+evaluation. Real funded accounts police a **trailing** maximum drawdown from the high-water mark.
+
+**The fix, and it worked.** Replacing the funded phase with a trailing max drawdown on cumulative equity — no interim
+free-option withdrawals, payout only on a surviving account — turned the **zero-edge control −EV at every volatility**
+(−$166 to −$499). A driftless trader now loses money at the prop game, which must be true for the industry to exist. The
+D-641 control gate that failed in D-907 now passes, so an edge number is finally reportable.
+
+**Then D-913's lesson applied again, and it mattered.** A prop account pays you no risk-free rate on the firm's capital,
+so the evaluation drift is the book's **excess** alpha, not its total return. The first validated run used the
+total-return blend (Sharpe ~1.1) and gave a best cell of **+$2,312/fee — inflated**. Feeding the clean-excess futures
+book (RF=0, Sharpe ~0.4, the honest trading alpha) drops it ~8×:
+
+| account vol | book P(pass) | control P(pass) | book E[$/fee] |
+|---|---|---|---|
+| 10% | 15.8% | 10.6% | +$36 |
+| **15%** | **26.0%** | 19.8% | **+$292** |
+| 20% | 29.0% | 21.5% | −$204 |
+
+**MARGINALLY +EV:** ~**+$292 per $500 fee** at 15% account volatility, 26% pass — the edge raises the pass rate ~1.3–1.5×
+over a no-edge trader, consistent with the ~0.4 excess Sharpe. The first +EV path to trading **external capital** on this
+record — but thin, variance-heavy (74% of attempts fail), confined to a narrow 10–15% vol band.
+
+**The caveats that decide its sign:** a $500 **non-refundable** fee was assumed; real challenge fees are typically
+**refundable on the first payout** (which would make it *more* +EV, so this is conservative), while **consistency rules**
+capping any single day's profit share are not modelled (which would reduce it). So the true sign depends on one firm's
+actual terms — exactly the operator-obtainable blocker D-907 named.
+
+GOLD: research — the prop simulator is validated (a driftless trader is −EV, the durable deliverable), and the operator's
+first-named option has a real, thin, terms-sensitive +EV answer of ~+$292/fee rather than the inflated +$2,312 that the
+same risk-free-rate error (D-913) had produced.
+ACTS-ON: gate — `prop-economics` is validated and documents the clean-excess input requirement; the prop route's honest
+economics are in `docs/CAPITAL_LADDER.md`.
+
 ## D-912/913 (2026-09-14) THE WINNING CONSTRUCTION ON FUTURES, AND THE LEVERAGEABLE-EXCESS CORRECTION — the best books' headline Sharpe is half risk-free interest
 
 Continuing the operator's how-to-not-wait-so-long question after D-911 closed the futures *trend* branch, I tested the one

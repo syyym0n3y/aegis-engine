@@ -16,13 +16,13 @@ const K = declareKnobs("prop-economics", [
   { name: "EVAL_DAYS", def: "180", note: "each phase times out here" }, { name: "FUNDED_DAYS", def: "252" },
   { name: "VOLS", def: "0.04,0.06,0.08,0.10,0.15,0.20,0.30", note: "annualised vol the trader runs the account at — the free variable" },
   { name: "PATHS", def: "4000" }, { name: "SEED", def: "20260914" },
-  { name: "STAKE", def: "2000", note: "personal capital available to fund fees" },
+  { name: "MIN_TD", def: "5", note: "D-914: minimum trading days to qualify for a funded payout (near-universal prop rule)" }, { name: "STAKE", def: "2000", note: "personal capital available to fund fees" },
   { name: "TARGET", def: "1000000" },
 ]);
 const j = JSON.parse(await Deno.readTextFile(new URL(`../${K.BLEND}`, import.meta.url).pathname)) as { series: Record<string, number>; ann_obs: number };
 const days = Object.keys(j.series).sort(); const R = days.map((d) => j.series[d]);
 assertNonEmpty("blend daily observations", R, 2500);
-const ANN = j.ann_obs;
+const ANN = j.ann_obs || (days.length / Math.max(1e-9, (Date.parse(days.at(-1)!) - Date.parse(days[0])) / (365.25 * 864e5)));   // derive from date span when the dump lacks ann_obs
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 const sd = (a: number[]) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); };
 const volRaw = sd(R) * Math.sqrt(ANN), srBook = mean(R) / sd(R) * Math.sqrt(ANN);
@@ -59,20 +59,23 @@ for (const control of [false, true]) {
       const b = phase(+K.P2_TARGET, sc, !control);
       if (b < 0) { if (b === -1) breach++; else timeout++; continue; }
       pass++; dsum += a + b;
-      // funded phase: same rules, profits split, run to FUNDED_DAYS or a breach
-      let eq = 0, peak = 0, i = Math.floor(rnd() * R.length), paid = 0;
+      // FUNDED PHASE, D-914: the previous version withdrew at each +4% and reset equity while the floor barely moved,
+      // handing a driftless trader ~1.5 free-option withdrawals per passed evaluation (the reason the zero-edge control
+      // stayed +EV, D-907). The honest rule: a TRAILING max drawdown on CUMULATIVE equity from its running high-water
+      // mark, and NO interim free-option withdrawals — the payout is the profit that SURVIVES to FUNDED_DAYS, split, and
+      // ZERO if the account breaches. A driftless trader breaches a trailing 10% DD with high probability and banks
+      // almost nothing. A minimum-trading-days rule (the trader must be exposed >= MIN_TD days) forces the drift to act.
+      let eq = 0, peak = 0, i = Math.floor(rnd() * R.length); let breached = false, tradedDays = 0;
       for (let t = 0; t < +K.FUNDED_DAYS; t++) {
         if (rnd() < 1 / 21) i = Math.floor(rnd() * R.length); else i = (i + 1) % R.length;
         const r = (control ? R[Math.floor(rnd() * R.length)] - mean(R) : R[i]) * sc;
-        if (r <= -+K.DAILY_LOSS) break;
+        tradedDays++;
+        if (r <= -+K.DAILY_LOSS) { breached = true; break; }
         eq += r; peak = Math.max(peak, eq);
-        if (eq - peak <= -+K.MAX_DD) break;
-        // DEFECT FOUND BY THE ZERO-EDGE CONTROL: the first version reset BOTH eq and peak on withdrawal, which reset the
-        // drawdown clock every time the trader banked a profit — an unlimited sequence of free options, and the reason a
-        // no-edge trader appeared to profit. Real accounts police the loss against the INITIAL balance: withdrawing
-        // returns equity to the start, but the floor does NOT move. peak is therefore pinned at 0, never re-based.
-        if (eq >= 0.04) { paid += eq * +K.ACCOUNT * +K.SPLIT; eq = 0; }
+        if (eq - peak <= -+K.MAX_DD) { breached = true; break; }   // trailing DD on cumulative equity
       }
+      // payout only on a surviving account that met the minimum trading days; profit split, no interim withdrawals
+      const paid = (!breached && tradedDays >= +K.MIN_TD) ? Math.max(0, eq) * +K.ACCOUNT * +K.SPLIT : 0;
       paysum += paid;
     }
     const pP = pass / +K.PATHS, ev = pP * (paysum / Math.max(1, pass)) - +K.FEE;
