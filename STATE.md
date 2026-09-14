@@ -1,6 +1,41 @@
 # STATE — Aegis (live state)
 
-## 2026-09-08 (LATEST) — THE FIVE (D-823): research freeze enforced; ceiling split (mined 5.4556 / pre-registered 2.89); MICRO rung prepped and hourly; prop parked behind 30 real fills; session exit condition
+## 2026-09-13 (LATEST) — DIRECTION IS PREDICTABLE AND SUB-FEE: nine registrations, all three escapes from the fee closed, one clock armed
+
+**The programme's oldest unmeasured assumption is now a number.** A walk-forward ridge-logistic on 30 features per bar
+predicts the next hour's sign at **52.87% OOS** on five perps against a **50.4% shuffled control refit at every step** —
+all five beat their own control (D-881). Outside crypto it is chance: 51.32% on eight FX, index and commodity CFDs
+(D-884). Faster is worse: 51.72% at 5 minutes while the fee stays fixed.
+
+**The edge is ~1–2bp a bar against a 9bp round trip — sub-fee by ~5×.** All three escapes are measured shut:
+- **Passive execution, both legs.** Entry: a limit at the signal close fills 100% of the time, a coin-flip control
+  matches or beats the model at every level of demanded improvement, and at full breadth with the exit charged it is
+  negative in all 60 cells with zero gross (D-885/886/887). Exit: fills 89%, and **the unfilled 10% carries −52 to
+  −86bp each**, dragging executed 6–11bp below assumed and negative on all five (D-891).
+- **Holding horizon.** Accuracy decays monotonically and reaches its own control by 72 hours (D-888).
+- **Fee tier — UNDERPOWERED, the one live number.** At a 4-hour hold the gross is **4.0–10.5bp/trade**, so XRP (10.49)
+  and BNB (9.45) exceed the full 10bp VIP0 taker round trip. The round trip needed for t to clear the 3.67 ceiling is
+  −9.3 to +2.0bp, which no schedule reaches (D-890). **The mean clears real fees; the confidence never does.**
+- **Breadth does not rescue it.** 97 survivor-free names, dollar-neutral, 9 cells: NULL and not sign-consistent
+  (D-889). √97 multiplies nothing when the IC is zero.
+
+**THE DURABLE FINDING, general and binding:** a closing limit fails to fill precisely when price has run away from the
+position, so the unfilled set is entirely large adverse moves. **A passive EXIT converts a bounded gain into an
+unbounded loss tail.** The entry leg has the opposite, benign asymmetry — which is why measuring only the entry (as
+D-885 did) would have been badly misleading. **Every future execution claim on this record must measure the exit leg.**
+
+**What moved: a clock.** `fwd-direction-4h-xrp-bnb-makerin-takerout` registered (immutability verified), fed hourly by
+`scripts/direction-paper-bot.ts` (paper only, no broker path, entries are pending intents so nothing is back-dated) and
+scored by `forward-score-specs.ts`, currently not-yet-computable at n=0. Promote needs all four of ≥400 trades, mean
+≥ +2.0bp, t ≥ 3.67, accuracy ≥ 52% vs a same-window control. **Explicitly not sent to MICRO:** a t of 1.2–1.3 after
+2.9M trials is what the deflation ceiling exists to refuse.
+
+**Infra.** Sub-hourly history stored one closed calendar quarter per row (a 210k-bar row is a ~12MB body that closed the
+REST connection); 5m×730d and 1m×90d for five perps at 100.1% / 101.0% of grid. `data-stack-audit` learns **archival
+chunks** — a finished quarter is judged on completeness, not freshness, verified in both directions. Board 32/32 green,
+meta-guard 33/33.
+
+## 2026-09-08 — THE FIVE (D-823): research freeze enforced; ceiling split (mined 5.4556 / pre-registered 2.89); MICRO rung prepped and hourly; prop parked behind 30 real fills; session exit condition
 - **Gate rows (insert-only, D-823):** `deflation_split`, `micro_entry`. Kill-switch `micro` armed. `trd_strategy_specs` micro-psl-fade-k24 frozen; `trd_ladder_state` rung MICRO (PREP until the first hand-placed fill).
 - **The split admits nothing today:** 22 of 41 pre-registered rows clear their bar; all are retracted (wrong-direction or sub-fee t) or confirmed measurements of the fails family already verdicted as drift. Report: `scripts/prereg-ceiling.ts` (cockpit).
 - **Micro tooling:** `scripts/micro-sheet.ts` (hourly via `io.aegis.micro`; STALE bars print no candidate; **D-823b:** FX/index/gold now intraday via `refresh-fx-live.ts` → `*.yh1h`, 12/12 live; FX candidates carry the D-764 FLAT warning), `scripts/micro-ledger.ts` (fills in `trd_manual_trades`, TRIP/ARM), cockpit sections. First sheet: 0 candidates.
