@@ -18326,6 +18326,48 @@ the futures branch of the how-to-not-wait-so-long question is closed with a sele
 ACTS-ON: gate — `scripts/futures-trainselect.ts` and the SERIES_OUT dump make any future subset claim on this record
 testable train-only in one run.
 
+## D-916 (2026-09-14) WHY THE STAKE MATTERS MORE, MODELLED — and the strategic synthesis: make the money elsewhere, keep it here, never be the 96%
+
+The operator asked me to model why the stake dominates the edge and to answer every strategic question so the system
+becomes financial value — out of the weeds. `T = ln(W/S)/g`, computed on the record's own numbers (~0.45 leverageable
+Sharpe, D-913; leverage capped at 9.1× by a −50% floor, D-897).
+
+### The correction to my own framing
+
+Per unit near our regime the levers are **comparable** — at Sharpe 0.45 a 100× stake cuts 35 years and a +0.2 Sharpe
+cuts 28. So "the stake dominates" was imprecise. **The stake matters more because of *range*:** the edge is capped and
+900+ tests proved ~0.45 is the ceiling (you cannot move it an order of magnitude), while the stake spans 20,000×, moved
+freely by income and capital. And the deeper truth the model makes explicit: **stake-dominance is a symptom of a weak
+edge** — at Medallion Sharpe the edge would dominate; at our 0.45, £1M from a coffee is ~88 years however you cut it.
+
+| stake ↓ / Sharpe → | 0.45 (ours) | 0.90 | 2.50 (Medallion) |
+|---|---|---|---|
+| £10 | 88y | 43y | 15y |
+| £50,000 | 23y | 11y | 4y |
+| £200,000 | 12y | 6y | 2y |
+
+### The strategic synthesis (`docs/STRATEGY.md`)
+
+You cannot dominate markets via alpha at ~0.45 Sharpe — nobody does, and saying otherwise is the guru dishonesty this
+system refuses. But **"the 4% who win" is a survival problem, not an edge problem:** the 4% don't over-trade, don't
+over-leverage, keep costs near zero, don't chase false edges, and add capital — every one of which this system
+*enforces*. So the system's real financial value is three things:
+1. **Loss-avoidance — the largest.** The money you don't lose is the whole difference between the 96% and the 4%. The
+   honesty gates caught my *own* inflated results five times this session; that same machine keeps the operator's money
+   out of the false-edge traps that sink the majority.
+2. **A real, deployable ~0.45-Sharpe uncorrelated diversifier** (the timed class-parity book).
+3. **The falsification methodology itself** as a licensable/sellable research discipline.
+
+**Value creation is capital formation** (income, business), with the book as the compounding-and-survival vehicle,
+**because the record has proven the edge cannot be the engine.** The prop route is break-even (D-915), not a capital
+source. **The one-line strategy: make the money elsewhere, keep it here, and never be the 96%.**
+
+GOLD: research — the stake-vs-edge question is modelled honestly (correcting my own overclaim), and the mission is
+reframed from "find a dominating edge" (proven absent across 900+ tests) to "form capital, compound it with a disciplined
+survival vehicle, and never be the 96%" — the first strategic direction on this record grounded in what the engine
+actually established rather than in aspiration.
+ACTS-ON: gate — `docs/STRATEGY.md` is the standing strategic direction.
+
 ## D-915 (2026-09-14) PROP AT REAL FIRM TERMS — I sourced them myself, and the honesty gate says prop does not pay on this book
 
 The operator told me to account for the firm terms myself. I sourced the current rules for the two firm types — FX-style
