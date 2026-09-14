@@ -18262,6 +18262,67 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-893 (2026-09-13) CAN DIVERSIFICATION BUY THE MISSING 0.20? — a third sleeve buys 0.04, the ESTIMATED blend is the worst one, and ex-bull the book is 0.82
+
+D-892 reduced the mission to one number: best holdable Sharpe **1.29**, ten-year run needs **1.49**, gap **0.20**.
+Diversification is the only route to more Sharpe that needs **no new edge** — for *k* mutually uncorrelated sleeves the
+optimal blend has Sharpe `√(ΣSᵢ²)`. Three sleeves already on this record were blended, none refitted: the timed ISA
+basket (D-872), survivor-free timed crypto (D-874), and the long-short TSMOM book (D-863).
+
+### The positive control failed before it passed, and that is the methodological finding
+
+The first version reproduced the pair at **0.94** where `pair-blend.ts` reports **1.29 on the same two files**. Two
+convention errors, both caught by the control rather than by review:
+1. **A book holding crypto trades ~365 days a year, not 252.** Annualising at 252 understates Sharpe by `√(365/252)`.
+2. **The record's script takes the UNION of days** and falls back to equal weight whenever *any* sleeve has zero
+   trailing vol — which, in the ~100 days before the crypto sleeve exists, splits weight into a sleeve that is not
+   there and quietly de-risks the 2020 crash. Worth about **0.12 of Sharpe** on the pair.
+
+After mirroring both, the control reproduces `pair-blend.ts` **exactly**: isa 0.98, cryptosf 0.70, equal 1.07, risk
+parity 1.29. Only then were the three-sleeve numbers computed. **A blend script that cannot reproduce a known blend is
+measuring its own conventions.**
+
+### The result
+
+| | standalone | | correlations | |
+|---|---|---|---|---|
+| isa | 0.98 | | isa–cryptosf | 0.150 |
+| cryptosf | 0.70 | | isa–tsmom | **0.418** |
+| tsmom | 0.74 | | cryptosf–tsmom | 0.248 |
+
+| scheme | Sharpe (full) | Sharpe (ex 2020–21) |
+|---|---|---|
+| equal weight | 1.11 | 0.67 |
+| inverse vol | 1.12 | 0.67 |
+| **risk parity (the record's)** | **1.33** | **0.82** |
+| **walk-forward tangency** | **0.41** | 0.66 |
+
+**PARTIAL.** The pair was 1.29; the third sleeve takes it to **1.33 — a gain of +0.04 against the +0.20 required.**
+
+### Three findings, in order of importance
+
+1. **The estimated blend is the worst one.** Walk-forward tangency — the scheme that actually estimates the covariance
+   and the means, on train only, applied forward — returns **0.41**, against equal weight's 1.11 and *below every
+   individual sleeve*. Estimation error in a 3×3 covariance from two years of daily data destroys more than
+   optimisation adds. The schemes that estimate **nothing** win outright. **Do not optimise sleeve weights on this
+   data** — this is THE SELECTION LAW's arithmetic cousin.
+2. **Ex-bull it is not a book.** Dropping 2020–21 takes the blend to **0.82** against the registered 1.20 floor, and
+   the uncorrelated ceiling itself falls to 0.92.
+3. **Even perfect independence would not have been enough.** `√(ΣSᵢ²)` is **1.41** on the full window — still short of
+   1.49. The shortfall is not only correlation; the sleeves are not individually good enough.
+
+### What would close it, specified rather than hoped
+
+Exactly **one more sleeve** at the observed average quality (0.80) that is *genuinely uncorrelated* with these — and
+"uncorrelated" is load-bearing, since the two trend sleeves already correlate at 0.42. **The obvious non-trend
+candidates are already measured negative on this record: carry −0.47 and value −0.14 (D-865).** So the fourth sleeve is
+not sitting in the drawer waiting to be blended. It must be something that is not trend, not carry, and not value.
+
+GOLD: research — the diversification route to D-892's missing 0.20 is measured and priced rather than assumed, the
+weight-optimisation route is closed by its own arithmetic, and the remaining hunt has a specification instead of a hope.
+ACTS-ON: gate — the blend machinery now reproduces the record's own number as a control, so any future sleeve can be
+priced against the book in one run.
+
 ## D-892 (2026-09-13) $10 TO $1,000,000, COMPUTED INSTEAD OF ASSERTED — 70 years at the leverage you can buy, and the gap to a ten-year run is 0.20 of Sharpe
 
 The operator's central question — *"turning a coffee into a million"* — had been answered on this record only
