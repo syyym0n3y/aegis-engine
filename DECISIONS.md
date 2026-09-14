@@ -18262,6 +18262,61 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-901 (2026-09-13) THE FOUNDATION'S UNIVERSE SWEEP — IDENTIFIED at 1.29x, 51 of 51 assets positive, and the bond effect is class-level not name-level
+
+D-900 stress-tested the book everything rests on — but **every one of those eleven cells varied parameters**. THE
+UNIVERSE LAW exists because *who is in the universe* moves the answer more than most of what the other laws police: it
+found a **2.1x** Sharpe spread on the last book tested this way. This book's universe is a **hardcoded 51-symbol regex**
+chosen once, with no knob to vary it — which is exactly why it had never been swept. `UNIV_DROP`/`UNIV_KEEP` were added,
+default empty, and verified inert: the base still reproduces 1.01 at 51 assets.
+
+| cell | assets | SR | underwater |
+|---|---|---|---|
+| **BASE** | 51 | **1.01** | 4.0y |
+| drop US equity | 41 | **1.03** | 3.9y |
+| drop Treasuries (TLT, IEF) | 49 | 1.02 | 4.0y |
+| drop credit (LQD, HYG) | 49 | 1.01 | 4.0y |
+| drop commodities | 49 | 1.00 | 3.1y |
+| drop SHY alone | 50 | 0.95 | 4.0y |
+| **drop ALL bonds** | 46 | **0.80** | **9.7y** |
+
+**IDENTIFIED.** Max/min = **1.29**, inside the 1.5x band; largest single-block cost **0.21**, inside the 0.30 clause.
+Minimum-history variants, reported separately because they change the sample too: 15y → 1.01, 20y → 1.01. **Dropping the
+largest block in the universe — all US equity — does not move the book at all.**
+
+### The bond result is non-additive, and that decomposition is the finding
+
+Treasuries cost **0.00**, credit **0.00**, SHY **0.06** — yet the whole class costs **0.21**. Those do not add up. The
+reason is structural, not about any asset: **under class parity the rates bucket takes a full share**, so removing the
+entire class removes a *diversifying bucket* and pushes its weight into equities, while removing any subset leaves the
+bucket intact and the survivors absorb it. Competing hypothesis (2) — that one block carries the book — is **refuted**
+and refined: what matters is **having** a rates class, not which rate instruments are in it.
+
+**A defect I went looking for and did not find.** SHY is 1–3 year Treasuries at ~1.5% vol, which a 10% vol target would
+lever six or seven times — a near-cash instrument dominating a parity bucket was a plausible artifact. Measured, it
+costs 0.06. The artifact does not exist.
+
+### Concentration, answered better than the registered test allowed
+
+The halves test is impossible under the 40-name floor and is **UNTESTED by my own kill condition** (each half is ~25
+names). But the base run answers it directly and more strongly: **asset agreement is 51 of 51 positive out of sample.**
+The kill condition fired correctly twice more — the sector drop leaves 37 names and the international drop leaves 26,
+both recorded UNTESTED rather than reported as thin results.
+
+### The caveat worth carrying forward
+
+**Holdability depends on the rates class**: without bonds, longest time underwater goes from **4.0 years to 9.7**. Rates
+enjoyed a historic bull market across most of 2005–2026, which 2022 interrupted. That is a stated exposure, not a hidden
+one.
+
+**With D-900 this completes the foundation check**: the book is robust to its **parameters** (11 cells, registered
+configuration eighth best of eleven) and **identified across its universe** (1.29x, no block worth more than 0.21,
+51/51 positive). D-892, D-895, D-896, D-897 and D-900 all rest on it, and that foundation now has both checks behind it.
+
+GOLD: research — the one sweep THE UNIVERSE LAW names as most decisive is run on the programme's load-bearing book and
+it passes, and the universe knob now exists so no future claim on this book rests on a hardcoded regex.
+ACTS-ON: gate — any future claim on this book can be universe-swept in one run.
+
 ## D-900 (2026-09-13) THE BOOK EVERYTHING RESTS ON, STRESS-TESTED — not a knife-edge, and one clause missed by 1% and is recorded as missed
 
 Everything this programme currently rests on traces to **one book**. D-895 measured the long-run blend at 1.10 while this
