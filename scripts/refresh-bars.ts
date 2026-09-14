@@ -27,7 +27,7 @@ const K = declareKnobs("refresh-bars", [
   { name: "CONSUMER", def: "scripts/aegis-attribution.ts", note: "source of truth for the universe that must stay fresh" },
   { name: "PAUSE_MS", def: "250", note: "between fetches; sequential by Hard Rule, never parallel" },
   { name: "MIN_BARS", def: "300", note: "a short series means a bad symbol, not a refresh" },
-  { name: "STALE_D", def: "3", note: "only refetch symbols whose newest bar is older than this" },
+  { name: "ONLY", def: "", note: "D-909: comma list restricting the run to these symbols; empty = the full target set" }, { name: "STALE_D", def: "3", note: "only refetch symbols whose newest bar is older than this" },
   { name: "DEAD_D", def: "7", note: "D-826: absolute floor in trading days — a newest bar older than this is a FROZEN FEED, which no holiday explains. A knob so the RED path can be exercised, not just the green one." },
 ]);
 
@@ -56,7 +56,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // the first version: I listed plausible force ETFs from memory, missed `^GSPC` (the MKT force), refreshed 52 symbols
 // to today, and the engine still produced a report dated a week earlier. The fix is not a better memory.
 const EXTRA = ["LQD", "IEF", "JNK", "IWD", "MTUM", "QUAL", "USMV", "VLUE",
-  "EEM", "EFA", "VGK", "EWJ", "XLF", "XLK", "XLE", "XLU", "XLP", "XLI", "XLV", "XLY", "UUP"];
+  "EEM", "EFA", "VGK", "EWJ", "XLF", "XLK", "XLE", "XLU", "XLP", "XLI", "XLV", "XLY", "UUP",
+  // D-909: index and rate futures. D-908 found that the FINANCING ROUTE, not leverage, killed every previous attempt —
+  // CFDs and perps charge a spread over the risk-free rate while exchange-traded futures embed the carry in the price —
+  // but it could only be computed CONDITIONALLY, because this panel held 16 commodity futures and no index or rate
+  // contracts. These are the instruments the leverage would actually run through, and without them the conclusion
+  // cannot be measured on a book built the way it would be traded.
+  "ES=F", "NQ=F", "YM=F", "RTY=F", "ZN=F", "ZB=F", "ZF=F", "ZT=F", "6E=F", "6B=F", "6J=F"];
 
 // Parse the consumer's own lists rather than restating them. A restated list is a second thing to remember, and this
 // whole defect is what happens when a second thing to remember is not remembered.
@@ -82,7 +88,8 @@ const REQUIRED = [...new Set([...consumerUniverse, ...forceTickers])];
 const allNonEqRes = await fetch(`${OWNED}/trd_bars_deep?asset_class=neq.equity&select=symbol`, { headers: hdr }).catch(() => null);   // plumbing-ok: checked on the next line — a failed read EXITS rather than silently shrinking the target list to the hand-listed subset
 if (!allNonEqRes || !allNonEqRes.ok) { console.error(`!! cannot list non-equity series (HTTP ${allNonEqRes?.status ?? "net"}) — refusing to refresh a silently shrunken target list. RED.`); Deno.exit(1); }
 const allNonEq = await allNonEqRes.json() as { symbol: string }[];
-const TARGETS = [...new Set([...REQUIRED, ...EXTRA, ...allNonEq.map((r) => r.symbol)])];
+let TARGETS = [...new Set([...REQUIRED, ...EXTRA, ...allNonEq.map((r) => r.symbol)])];
+if (K.ONLY) { const want = new Set(K.ONLY.split(",").map((x) => x.trim())); TARGETS = TARGETS.filter((t) => want.has(t)); assertNonEmpty(`ONLY filter matched targets`, TARGETS, 1); }
 console.log(`    + ${allNonEq.length} non-equity series in trd_bars_deep (D-879) -> ${TARGETS.length} targets`);
 console.log(`==> REFRESH BARS — ${consumerUniverse.length} target(s) + ${forceTickers.length} force ticker(s) parsed from ${K.CONSUMER}, +${EXTRA.length} extra = ${TARGETS.length} distinct`);
 console.log(`    forces: ${forceTickers.join(" ")}`);

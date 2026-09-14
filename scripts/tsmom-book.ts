@@ -8,7 +8,7 @@ import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/function
 import { spendTrials, preregCeiling } from "../supabase/functions/_shared/trial-ledger.ts";
 const K = declareKnobs("tsmom-book", [
   { name: "OOS_FROM", def: "2015-01-01" }, { name: "IS_FROM", def: "1990-01-01" }, { name: "VOL_TARGET", def: "0.10", note: "per-asset ex-ante annualised vol" },
-  { name: "REBAL_D", def: "5", note: "trading days between rebalances (weekly)" }, { name: "MIN_YEARS", def: "10" }, { name: "UNIV_DROP", def: "", note: "D-901: regex of symbols to EXCLUDE from the selected universe; empty = no change" }, { name: "UNIV_KEEP", def: "", note: "D-901: regex the symbol must MATCH to be kept; empty = no change" }, { name: "MAX_CRYPTO", def: "10" },
+  { name: "REBAL_D", def: "5", note: "trading days between rebalances (weekly)" }, { name: "MIN_YEARS", def: "10" }, { name: "FUTURES_ONLY", def: "0", note: "1 = D-910: exchange-traded futures only, with a breadth floor of 20 stated and justified in the D-910 registration BEFORE any result was seen — managed-futures books in the published trend literature run on 20-60 contracts, and the diversification that matters is across SECTORS not tickers. THE BREADTH LAW governs cross-sectional statistics; this is a time-series book trading each contract on its own signal, which is why the floor is already construction-dependent (60 general / 40 long-only / 2 crypto)." }, { name: "UNIV_DROP", def: "", note: "D-901: regex of symbols to EXCLUDE from the selected universe; empty = no change" }, { name: "UNIV_KEEP", def: "", note: "D-901: regex the symbol must MATCH to be kept; empty = no change" }, { name: "MAX_CRYPTO", def: "10" },
   { name: "PLACEABLE", def: "0", note: "1 = D-866: restrict to what a UK retail account can hold (ETFs, index/sector ETFs, commodity CFD proxies, major FX) and charge overnight FINANCING on CFD legs and ETF shorts" },
   { name: "FINANCING", def: "0.065", note: "D-866: annual financing rate on gross CFD/short notional (SOFR ~4% + 2.5%); 0 = the research number" },
   { name: "LONG_ONLY", def: "0", note: "1 = D-868: long-only trend timing — hold vol-scaled when the combo trend is positive, cash otherwise; no shorts, no financing; restricts to ISA-holdable ETFs and cash indices" },
@@ -49,7 +49,8 @@ if (K.PLACEABLE === "1") { sel = sel.filter((m) => PLACEABLE_RE.test(m.symbol));
 // an UNTESTED rather than a thin result.
 if (K.UNIV_DROP) { const re = new RegExp(K.UNIV_DROP); const before = sel.length; sel = sel.filter((m) => !re.test(m.symbol)); console.log(`  UNIV_DROP ${K.UNIV_DROP}: ${before} -> ${sel.length} assets`); }
 if (K.UNIV_KEEP) { const re = new RegExp(K.UNIV_KEEP); const before = sel.length; sel = sel.filter((m) => re.test(m.symbol)); console.log(`  UNIV_KEEP ${K.UNIV_KEEP}: ${before} -> ${sel.length} assets`); }
-if (K.SOURCE_1DSF !== "1") assertNonEmpty("assets with >= MIN_YEARS", sel, K.CRYPTO_ONLY === "1" ? 2 : K.PLACEABLE === "1" || K.LONG_ONLY === "1" ? 40 : 60);
+if (K.FUTURES_ONLY === "1") { const before = sel.length; sel = sel.filter((m) => /=F$/.test(m.symbol)); console.log(`  FUTURES-ONLY subset (D-910): ${before} -> ${sel.length} exchange-traded futures; carry is embedded in the price, so leverage costs approximately the risk-free rate rather than a broker spread (D-908)`); }
+if (K.SOURCE_1DSF !== "1") assertNonEmpty("assets with >= MIN_YEARS", sel, K.CRYPTO_ONLY === "1" ? 2 : K.FUTURES_ONLY === "1" ? 20 : K.PLACEABLE === "1" || K.LONG_ONLY === "1" ? 40 : 60);
 type Ser = { sym: string; cls: string; ts: number[]; c: number[] };
 const S: Ser[] = [];
 if (K.SOURCE_1DSF === "1") {

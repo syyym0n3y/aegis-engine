@@ -18262,6 +18262,62 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-909/910 (2026-09-14) THE FUTURES COLUMN, MEASURED AND WITHDRAWN — and my own floor justification did not survive the data
+
+D-908 left one conditional: the futures column said what the route *would* deliver, because this record held 16
+commodity futures and no index or rate contracts. **That gap is now closed, and closing it withdrew the column.**
+
+**The ingest worked.** ES, NQ, YM, RTY, ZN, ZB, ZF, ZT, 6E, 6B, 6J — 2,310 to 6,589 daily bars each, back to ~2000,
+from an already-allowlisted keyless source, now permanently in the refresh target list with an `ONLY` knob so a scoped
+ingest need not touch all 196 targets.
+
+**The roll-gap screen ran first and passed cleanly.** Across all 27 futures, observations beyond 8 standard deviations
+run 0.00%–0.22% against a 2% drop threshold; **zero series dropped**. Whatever roll convention these continuous series
+use, it does not inject the artifacts that would corrupt a trend measurement.
+
+**A defect worth naming:** `refresh-bars` ingested the bars with a **NULL `asset_class`**, so every consumer that filters
+by class silently ignored all eleven. A symbol can be ingested successfully and remain **invisible to the entire
+system**. Classes assigned; the book then saw 26 instead of 16.
+
+### The substance
+
+| | IS | **OOS Sharpe** | t | %/yr | vol | maxDD | **underwater** |
+|---|---|---|---|---|---|---|---|
+| futures book (26 contracts) | 0.55 | **0.11** | 0.52 | 0.3% | 2.6% | −9% | **11.0y** |
+| ETF book (51) | 1.25 | **1.01** | 5.00 | 3.7% | 3.6% | −6% | 4.0y |
+
+**0.90 below the comparator — past the MIRAGE threshold.** It also fails its own construction's rule on every clause,
+including excess over its own vol-matched long basket at −1.5%/yr, t −1.54.
+
+**D-908's arithmetic stands; its futures column is withdrawn.** The finding that the *financing route* rather than
+leverage killed the earlier attempts survives. What does **not** survive is the implication that a futures-implemented
+book would inherit the ETF book's Sharpe and so reach the target in 38 years at 8×. **Cheap leverage on a weak book
+loses to expensive leverage on a strong one.**
+
+### And the floor justification failed, which I am recording against myself first
+
+I lowered the breadth floor to 20 and justified it on the universe spanning **seven sectors**. **The panel does not carry
+seven.** `trd_bars_deep` assigns **four** classes to these contracts (commodity 16, index 4, rate 4, fx 3), and the
+commodity sub-sectors that would have made seven are not distinguished anywhere in the metadata. The registered kill
+condition says UNTESTED below five sectors. **Competing hypothesis (3) — that the justification was motivated reasoning
+because I wanted the test to run — is partly confirmed against me.** It was stated in advance and was falsifiable, which
+is the only thing that kept it honest, and it was falsified.
+
+### The one lead, which is a lead and not a result
+
+Within that book: commodities **−0.5%/yr, 5 of 16 positive**; the newly-ingested index and rate contracts **+1.6%/yr,
+7 of 7 positive**; currencies **+0.9%/yr, 3 of 3**. The sixteen commodities drag the book to 0.11 while the eleven new
+contracts are positive without exception, reproducing D-863's finding that commodities are the negative class.
+
+**I am not running the index-rate-fx-only book here.** Choosing that subset after seeing the breakdown is D-455's
+failure exactly — a component set chosen on the full sample and reported as a result. It needs its own registration,
+with the subset named before the numbers are seen and selection made train-only.
+
+GOLD: research — a conditional this record had been carrying is converted into a measurement, the measurement withdraws
+the optimistic half of it, and a floor justification I wrote in advance was checked against the data and found wanting.
+ACTS-ON: gate — `docs/GROWTH_TO_TARGET.md` §11 carries the withdrawal; eleven futures are ingested, classified and on
+the refresh list.
+
 ## D-907/908 (2026-09-14) HOW TO NOT WAIT SO LONG — two levers, and neither of them is the strategy
 
 The operator asked how the goal is reached without waiting so long, through a prop firm or a live personal account.

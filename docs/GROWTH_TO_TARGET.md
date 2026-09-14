@@ -347,9 +347,17 @@ It does not — time scales with `log(target/stake)`.
 
 ### What is conditional, and what is not yet priced
 
-**Conditional:** this record holds 16 commodity futures and **no index or rate futures** with long history, so the
-futures column says what the route *would* deliver, not a measurement of a futures-implemented book. The missing input
-is an **ingest task** — continuous history for ES, NQ, ZN, ZB beside the GC and CL already held.
+**Conditional — and now measured, and the measurement withdraws the column (D-909/910).** The missing contracts were
+ingested (ES, NQ, YM, RTY, ZN, ZB, ZF, ZT, 6E, 6B, 6J — 2,310–6,589 bars each, roll-screened clean). The
+futures-implemented book was then built on 26 contracts and came out at **OOS Sharpe 0.11 against the ETF book's 1.01**,
+with **11 years underwater against 4**. So the financing *arithmetic* above stands, but **the futures column is
+withdrawn**: cheap leverage on a weak book loses to expensive leverage on a strong one, and a futures-implemented
+version of this book does not inherit the ETF book's Sharpe.
+
+The one lead worth carrying: within that book, commodities ran **−0.5%/yr (5 of 16 positive)** while the newly-ingested
+**index and rate contracts ran +1.6%/yr with 7 of 7 positive** and currencies **+0.9%/yr with 3 of 3**. Choosing that
+subset now, after seeing the breakdown, would be exactly D-455's failure — it needs its own registration with train-only
+selection.
 
 **Not yet priced:** a linearly-scaled drawdown **understates** a levered futures position, because a margin call forces
 liquidation at the worst moment and a continuous series cannot see that. And contract sizes may put the route out of
