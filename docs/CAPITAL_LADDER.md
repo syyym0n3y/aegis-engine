@@ -38,20 +38,34 @@ There is no measured rung where £1,000 becomes £10,000 by trading within a yea
 record does not hold — order-book depth, fills, options chains deep enough to price convexity historically — and the
 page will say so the day it is measured rather than assumed.
 
-**What the direction work narrowed (D-881/884/885/886/887).** The gap is no longer "can direction be predicted" — it
-can, at 1 hour, in crypto, on every perp tested. The gap is the **fee**, and the three ways past a fee are all now
-either measured or named:
-1. **Pay less per trade.** Passive execution is closed (D-885/886/887). What is NOT closed is fee tier: the same trade
-   at a maker rebate rather than a maker fee changes the sign of the arithmetic, and that is an account-status
-   question the operator can answer, not a research question.
-2. **Trade less often for more per trade.** The conviction threshold does exactly this and turns 4 of 5 perps positive
-   at taker, but it was chosen after seeing the sweep, so it is not claimable until it is registered fresh and run
-   forward. That registration is the obvious next move and it costs nothing.
-3. **Hold longer so the fee amortises.** The model's edge is measured at a one-bar horizon. Whether the same features
-   predict a 6-hour or 24-hour move — where a 9bp round trip is a smaller fraction of the move — is untested and is
-   the single cheapest open question on this page.
+**What the direction work settled (D-881/884/885/886/887/888/889/890/891).** The gap is no longer "can direction be
+predicted" — it can, at 1 hour, in crypto, on every perp tested. The gap is the **fee**, and all three ways past a fee
+are now measured shut.
+
+1. **Pay less per trade — closed on both legs.** Passive entry: a limit at the signal close fills 100% of the time, a
+   coin-flip control matches or beats the model at every level of demanded price improvement, and at full breadth with
+   the exit charged the mechanism is negative in all 60 cells with zero gross (D-885/886/887). Passive exit: the
+   closing limit fills 89% of the time, and **the unfilled 10% carries −52 to −86bp each** (D-891). A closing limit
+   fails to fill precisely when price has run away from the position, so a passive exit converts a bounded gain into
+   an unbounded loss tail. Executed returns land 6 to 11bp below assumed and are negative on all five perps.
+2. **Hold longer so the fee amortises — closed.** Accuracy decays monotonically with horizon and reaches its own
+   shuffled control by 72 hours (D-888). The signal decays faster than the fee amortises.
+3. **A better fee tier — underpowered, and this is the one number worth keeping.** At a 4-hour hold the gross edge is
+   **4.0 to 10.5bp per trade**, so the breakeven round trip is at or above real schedules: XRP (10.5bp) and BNB
+   (9.5bp) exceed the full 10bp VIP0 taker round trip. But the round trip needed for the t-statistic to clear the
+   deflation ceiling is −9.3 to +2.0bp, which no published schedule reaches (D-890). The mean clears; the confidence
+   does not.
+
+**Breadth does not rescue it either.** Information ratio scales as IC × √breadth, so the same model was run
+cross-sectionally over 97 survivor-free names, dollar-neutral, across three horizons and three portfolio splits. NULL
+in all nine cells, and not even sign-consistent across them (D-889). √97 multiplies nothing when the IC is zero.
 
 **The honest ceiling as of today.** Best holdable Sharpe on the record is 1.29 (the pair, D-873b/875) and 0.83 for the
 single best book (D-872). Tenfold in a year needs roughly Sharpe 1.5 sustained at 40% vol with leverage nobody has
 measured a route to. Tenfold over a decade is arithmetic at the numbers we hold. The one place tenfold-in-a-year is
 real is rung 0, it is per head, and it does not repeat.
+
+**The bar any future direction work must clear**, so that it is not re-litigated: beat **52.87% at 1 hour** against a
+per-step shuffled control, or beat the fee — and if it claims to beat the fee through execution, it must measure the
+**EXIT** leg, not only the entry. That last clause is D-891's contribution and it is the one that would have caught
+this programme's own near-miss.

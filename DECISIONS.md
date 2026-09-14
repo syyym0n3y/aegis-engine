@@ -18328,8 +18328,31 @@ signal decays faster than the fee amortises; the best t anywhere on the curve is
 trap and is recorded as one:** it is the only row meeting the "4 of 5 positive" clause and its accuracy is at chance, so it
 is holding crypto through an up-sample, not predicting. The accuracy column is what refuses it.
 
-**Escape 3, fee tier** — the same trade at a maker rebate rather than a fee changes the sign of the arithmetic. That is an
-account-status question for the operator, not a research question, and it is the only one of the three still open.
+**Escape 3, fee tier — UNDERPOWERED, and it produced the one number worth keeping (D-890).** Solving on the model's own
+daily gross series for the round trip at which it breaks even: at a 4-hour hold the gross edge is **4.03–10.49bp per
+trade**, so **XRP (10.49) and BNB (9.45) exceed the full 10bp VIP0 taker round trip** and all five exceed the 4bp
+maker-maker round trip. The mean genuinely clears real fees. The round trip needed for the day-clustered t to reach the
+3.67 ceiling is −9.26 to +1.99bp, which no published schedule reaches — day-t at the best real tier (3.4bp) is
+0.54/1.46/0.17/2.72/2.97. **The mean clears and the confidence does not**, which is UNDERPOWERED, not a profit.
+
+**And the condition that left standing, closed the same day (D-891).** At a *zero* round trip — both legs maker — XRP
+reaches t 4.02 and BNB 4.65, above the ceiling. That requires both legs passive, and D-885 had measured only the entry.
+The exit, measured on 6,868–7,911 signals per perp over the 730-day 5-minute panel:
+
+| | exit fill | assumed bp | executed bp | unfilled tail bp / n |
+|---|---|---|---|---|
+| BTCUSDT | 89.2% | −0.43 | **−6.65** | −51.5 / 807 |
+| ETHUSDT | 89.6% | +2.01 | **−6.96** | −81.8 / 819 |
+| SOLUSDT | 89.7% | +4.59 | **−5.38** | −79.0 / 706 |
+| XRPUSDT | 89.8% | +3.30 | **−7.74** | −86.1 / 797 |
+| BNBUSDT | 88.7% | +2.23 | **−5.12** | −59.6 / 894 |
+
+The fill rate is not what kills it — 89% is high. **The unfilled 10% carries −52 to −86bp each.** The mechanism is
+general and is the durable output of the whole arc: *a closing limit fails to fill precisely when price has run away
+from the position, so the unfilled set is composed entirely of large adverse moves. A passive EXIT converts a bounded
+gain into an unbounded loss tail.* The entry leg has the opposite, benign asymmetry — which is exactly why D-885 saw a
+100% entry fill, and why a study that measured only the entry would have been badly misleading. **Every future
+execution claim on this record must measure the exit leg.**
 
 ### The breadth form, because one signal at 97 names is not one signal at 5 (D-889)
 
@@ -18355,13 +18378,16 @@ side wrong — which is what a drift-carrying signal looks like when you force i
 ### What did NOT move
 
 None of the four exit conditions (D-823). No position, no ledger row, no gate row, no clock verdict — these are research
-registrations and every one resolved NULL or UNTESTED. Six pre-registrations resolved (D-881, D-883, D-884, D-885, D-886,
-D-887, D-888), one open (D-889, grid completing). The honest summary is that the programme now knows direction is weakly
-predictable in crypto at a 1–4 hour scale and that no route from that fact to money survives its own controls.
+registrations and every one resolved NULL, UNTESTED or UNDERPOWERED. **Nine pre-registrations resolved in one arc**:
+D-881, D-883, D-884, D-885, D-886, D-887, D-888, D-889, D-890, D-891. The honest summary is that the programme now knows
+direction is weakly predictable in crypto at a 1–4 hour scale, that its gross edge at a 4-hour hold exceeds real venue
+fees, and that no route from that fact to money survives its own controls — the confidence interval never clears the
+deflation ceiling at any reachable fee, and the passive execution that would reach it destroys the return on the exit.
 
 GOLD: research — the programme's oldest unmeasured assumption ("we cannot predict direction") is replaced by a number
-with a control, the three escapes from a sub-fee signal are enumerated and two are closed by measurement, and the one that
-remains is named as an account question rather than left as a research hope.
+with a control, all three escapes from a sub-fee signal are enumerated and closed by measurement rather than by argument,
+and the arc ends with a general execution finding — measure the exit leg, not only the entry — that binds every future
+claim on this record.
 ACTS-ON: gate — docs/CAPITAL_LADDER.md now carries the bar that any future direction work must clear (beat 52.9% at 1h,
 or beat the fee), and the fill-conditional machinery refuses a study with no filled/unfilled contrast.
 

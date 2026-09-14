@@ -9,6 +9,7 @@ const K = declareKnobs("direction-model", [{ name: "SYMBOLS", def: "BTCUSDT,ETHU
 const DUMPED: Record<string, number[][]> = {};
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "dm", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
+const be: { sym: string; grossBp: number; beCost: number; ceilCost: number; tAtBp: number[] }[] = [];
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length); const sd = (a: number[]) => { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, a.length - 1)); };
 const tstat = (a: number[]) => a.length > 2 ? mean(a) / (sd(a) / Math.sqrt(a.length) || 1e-12) : 0;
@@ -46,19 +47,31 @@ const predict = (m: { w: number[]; mu: number[]; sg: number[] }, x: number[]) =>
 console.log(`\n==> D-881 DIRECTION MODEL — tf ${K.TF}, walk-forward ${K.TRAIN_D}d train / ${K.STEP_D}d step, ${LAGS.length + 2 + 1 + 2 + 2 + 8 + 7 + 2} features`);
 console.log(`  ${"symbol".padEnd(9)} ${"OOS bars".padStart(9)} ${"acc".padStart(6)} ${"shuffled".padStart(9)} ${"trades".padStart(7)} ${"net@taker bp".padStart(13)} ${"day-t".padStart(6)} ${"net@maker bp".padStart(13)} ${"day-t".padStart(6)}`);
 let trials = 0; const summary: { sym: string; acc: number; tT: number; netT: number; netM: number }[] = [];
+const ceilPre = await preregCeiling({ rest: OWNED, headers: hdr, preregId: K.RUN_ID }); const ceilNow = ceilPre.ceiling;
 for (const sym of K.SYMBOLS.split(",")) {
   const takerBp = ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"].includes(sym) ? 4 : FXH.includes(sym) ? 6 : +K.TAKER_BP;   // D-884 class costs incl. 2bp slip
   const b = await bars(sym); if (b.length < perDay * 300) { console.log(`  ${sym.padEnd(9)} only ${b.length} bars — skipped`); continue; }
   const H = +K.HORIZON; const F: (number[] | null)[] = b.map((_, i) => i + H < b.length ? features(b, i, sym === "BTCUSDT") : null); const Y = b.map((_, i) => i + H < b.length ? (b[i + H][4] > b[i][4] ? 1 : 0) : 0);
   const fwd = b.map((_, i) => i + H + 1 < b.length ? Math.log(b[i + H + 1][1] / b[i + 1][1]) : 0);   // lag-1: enter next open, exit H bars later
-  let correct = 0, total = 0, shufCorrect = 0; const netT: number[] = [], netM: number[] = [], dayT = new Map<number, number>(), dayM = new Map<number, number>();
+  let correct = 0, total = 0, shufCorrect = 0; const netT: number[] = [], netM: number[] = [], dayT = new Map<number, number>(), dayM = new Map<number, number>(); const dayG = new Map<number, number>(), dayN = new Map<number, number>();
   const T = +K.TRAIN_D * perDay, S = +K.STEP_D * perDay; let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
   for (let start = 60 + T; start + S < b.length; start += S) {
     const Xtr: number[][] = [], ytr: number[] = []; for (let i = start - T; i < start; i++) if (F[i]) { Xtr.push(F[i]!); ytr.push(Y[i]); } if (Xtr.length < 100) continue;
     const m = fit(Xtr, ytr, +K.LAMBDA); const ysh = ytr.slice().sort(() => rnd() - 0.5); const ms = fit(Xtr, ysh, +K.LAMBDA); trials++;
     for (let i = start; i < start + S && i + H + 1 < b.length; i++) { if (!F[i]) continue; const p = predict(m, F[i]!), ps = predict(ms, F[i]!); total++; if ((p > 0.5) === (Y[i] === 1)) correct++; if ((ps > 0.5) === (Y[i] === 1)) shufCorrect++;
-      if (K.DUMP === "1") (DUMPED[sym] ??= []).push([b[i][0], +p.toFixed(4), b[i][4], b[i + 1][1], b[i + H + 1][1]]); const dir = p > +K.P_HI ? 1 : p < 1 - +K.P_HI ? -1 : 0; if (!dir) continue; if (H > 1 && i % H !== 0) continue; /* non-overlapping trades only: consecutive bars share a forward window (D-416 pseudo-replication) */ const g = dir * fwd[i]; const d = Math.floor(b[i][0] / 86400); netT.push(g - takerBp / 1e4); netM.push(g - +K.MAKER_BP / 1e4); dayT.set(d, (dayT.get(d) ?? 0) + g - takerBp / 1e4); dayM.set(d, (dayM.get(d) ?? 0) + g - +K.MAKER_BP / 1e4); } }
+      if (K.DUMP === "1") (DUMPED[sym] ??= []).push([b[i][0], +p.toFixed(4), b[i][4], b[i + 1][1], b[i + H + 1][1], b[i + H + 1][0]]); const dir = p > +K.P_HI ? 1 : p < 1 - +K.P_HI ? -1 : 0; if (!dir) continue; if (H > 1 && i % H !== 0) continue; /* non-overlapping trades only: consecutive bars share a forward window (D-416 pseudo-replication) */ const g = dir * fwd[i]; const d = Math.floor(b[i][0] / 86400); dayG.set(d, (dayG.get(d) ?? 0) + g); dayN.set(d, (dayN.get(d) ?? 0) + 1); netT.push(g - takerBp / 1e4); netM.push(g - +K.MAKER_BP / 1e4); dayT.set(d, (dayT.get(d) ?? 0) + g - takerBp / 1e4); dayM.set(d, (dayM.get(d) ?? 0) + g - +K.MAKER_BP / 1e4); } }
   const acc = correct / Math.max(1, total), sh = shufCorrect / Math.max(1, total); const tT = tstat([...dayT.values()]), tM = tstat([...dayM.values()]);
+  // D-890: the round trip at which this signal would break even, and the round trip at which its day-clustered t would
+  // reach the pre-registered ceiling. net_day(c) = gross_day - trades_day * c, so both are one bisection on c. A NEGATIVE
+  // answer means no fee clears it and only a REBATE would — which is a fact about venue fee schedules, not about the market.
+  const days = [...dayG.keys()];
+  const tAt = (c: number) => tstat(days.map((d) => dayG.get(d)! - dayN.get(d)! * c));
+  const mAt = (c: number) => mean(days.map((d) => dayG.get(d)! - dayN.get(d)! * c));
+  const solve = (f: (c: number) => number, target: number) => { let lo = -0.02, hi = 0.02; if (f(lo) < target) return NaN; for (let k = 0; k < 60; k++) { const mid = (lo + hi) / 2; if (f(mid) >= target) lo = mid; else hi = mid; } return lo * 1e4; };
+  const beCost = solve(mAt, 0), ceilCost = solve(tAt, ceilNow);
+  const grossBp = mean([...dayG.values()]) / Math.max(1, mean([...dayN.values()])) * 1e4;
+  const tAtBp = [0, 3.4, 4, 7, 10].map((c) => tAt(c / 1e4));
+  be.push({ sym, grossBp, beCost, ceilCost, tAtBp });
   summary.push({ sym, acc, tT, netT: mean(netT) * 1e4, netM: mean(netM) * 1e4 });
   console.log(`  ${sym.padEnd(9)} ${String(total).padStart(9)} ${(100 * acc).toFixed(2).padStart(5)}% ${(100 * sh).toFixed(2).padStart(8)}% ${String(netT.length).padStart(7)} ${(mean(netT) * 1e4).toFixed(2).padStart(13)} ${tT.toFixed(2).padStart(6)} ${(mean(netM) * 1e4).toFixed(2).padStart(13)} ${tM.toFixed(2).padStart(6)}`);
 }
@@ -68,4 +81,8 @@ const accM = mean(summary.map((s) => s.acc)), posT = summary.filter((s) => s.net
 console.log(`\n  mean OOS accuracy ${(100 * accM).toFixed(2)}% (shuffled control ~50% above); ${posT}/${summary.length} perps net positive at taker; best day-t at taker ${tMax.toFixed(2)}; ceiling ${ceil.ceiling.toFixed(2)}; ${trials} refits counted`);
 console.log(`  VERDICT (${K.TF}): ${accM > 0.52 && tMax >= ceil.ceiling && posT >= 4 ? "SUPPORTED" : `NULL — ${[accM <= 0.52 && `accuracy ${(100 * accM).toFixed(2)}% <= 52%`, tMax < ceil.ceiling && "no perp's taker day-t clears the ceiling", posT < 4 && `${posT}/5 positive at taker`].filter(Boolean).join("; ")}`}`);
 console.log(`  MAKER figures are reported, not claimable: a maker fill is a hypothesis about fills (EXECUTION LAW, D-447) and the fill-conditional return is unmeasured here.`);
-if (K.DUMP === "1") { await Deno.writeTextFile(`data/direction-signals-${K.TF}.json`, JSON.stringify({ tf: K.TF, columns: ["ts", "p", "signalClose", "nextOpen", "exitOpen"], written: new Date().toISOString(), signals: DUMPED })); console.log(`  dumped ${Object.values(DUMPED).reduce((a, v) => a + v.length, 0)} OOS predictions to data/direction-signals-${K.TF}.json`); }
+if (K.DUMP === "1") { await Deno.writeTextFile(`data/direction-signals-${K.TF}-H${K.HORIZON}.json`, JSON.stringify({ tf: K.TF, columns: ["ts", "p", "signalClose", "nextOpen", "exitOpen", "exitTs"], written: new Date().toISOString(), signals: DUMPED })); console.log(`  dumped ${Object.values(DUMPED).reduce((a, v) => a + v.length, 0)} OOS predictions to data/direction-signals-${K.TF}-H${K.HORIZON}.json`); }
+console.log(`\n  BREAKEVEN ROUND TRIP (D-890) — the cost at which this signal pays, from its own gross. Ceiling ${ceilNow.toFixed(2)}.`);
+console.log(`  ${"symbol".padEnd(9)} ${"gross bp/trade".padStart(15)} ${"breakeven rt".padStart(13)} ${"rt for t>=ceil".padStart(15)} | day-t at a REAL round trip: ${"0bp".padStart(7)} ${"3.4bp".padStart(7)} ${"4bp".padStart(7)} ${"7bp".padStart(7)} ${"10bp".padStart(7)}`);
+for (const r of be) console.log(`  ${r.sym.padEnd(9)} ${r.grossBp.toFixed(3).padStart(15)} ${(isNaN(r.beCost) ? "none" : r.beCost.toFixed(3)).padStart(13)} ${(isNaN(r.ceilCost) ? "none".padStart(15) : r.ceilCost.toFixed(3).padStart(15))} | ${r.tAtBp.map((t) => t.toFixed(2).padStart(7)).join(" ")}`);
+console.log(`  Read it against real schedules: Binance USDT-M VIP0 taker 5bp / maker 2bp (round trips 10 / 4), VIP9 taker 1.7 / maker 0 (3.4 / 0), and the deepest maker REBATE tiers are negative-fee for the maker leg only.`);
