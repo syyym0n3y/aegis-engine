@@ -18262,6 +18262,63 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-902 (2026-09-13) THE FOUNDATION'S ONE STATED EXPOSURE, MEASURED — equity-rates diversification is gone since 2022
+
+D-901 left exactly one exposure: the book's **holdability** depends on the rates class. Removing all bonds costs only
+0.21 of Sharpe but takes longest-time-underwater from **4.0 years to 9.7**. That benefit was earned across 2005–2026, a
+window where bonds rallied during almost every equity selloff. **In 2022 they did not.**
+
+### The mechanism, measured with no book involved
+
+SPY against TLT and IEF, annual correlation:
+
+| 2007–2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 |
+|---|---|---|---|---|---|---|
+| **−0.12 to −0.71**, negative every single year | −0.14 | **+0.08** | +0.13 | +0.06 | +0.10 | **+0.34** |
+
+**Fourteen consecutive negative years, then five consecutive non-negative ones — and 2026 is the most positive reading
+in the entire series.** Competing hypothesis (2), that 2022 was one episode rather than a regime, is **refuted**: it has
+persisted five years and is strengthening, not decaying.
+
+### The book test
+
+| | Sharpe | underwater |
+|---|---|---|
+| full window, with bonds | 1.01 | 4.0y |
+| full window, no bonds | 0.80 | 9.7y |
+| | **benefit +0.21** | **5.7 years avoided** |
+| post-2022, with bonds | 0.76 | 0.8y |
+| post-2022, no bonds | 0.80 | 0.9y |
+| | **benefit −0.04** | **0.1 years** |
+
+**The benefit has not shrunk. It has vanished.** DIVERSIFICATION LOST fires on both registered triggers.
+
+### The honest limit, stated not buried
+
+Post-2022 is 4.7 years and a Sharpe difference of −0.04 on that window is **well inside sampling noise**. The Sharpe half
+of this test proves little on its own. **What carries the verdict is the correlation half** — 250 observations a year,
+five consecutive years, independent of any book, parameter or cost model.
+
+### The benign hypothesis is partly confirmed, and it matters
+
+The book **times** its assets, so it exited bonds as they trended down through 2022 — which is why the post-2022 book
+still earns 0.76 and is underwater only 0.8 years. **The timing rule insulated the book from the flip.** What it could
+not do is keep earning a diversification benefit, because a timed-out asset contributes nothing either way.
+
+### Consequence
+
+The 4.0-year time-underwater figure D-901 reported, which every downstream row inherits, was earned in a regime where
+bonds hedged equities. **That regime ended in 2022 and has not returned.** D-896's bootstrap and D-897's leverage curve
+both resample the full-window series and therefore both assume it persists — *the same class of assumption D-896 was
+written to remove, now found in a different place.* **Time-underwater figures on this record are era-conditional**, and
+the honest forward expectation for this book's drawdown duration is closer to the no-bonds case than the with-bonds case
+unless the correlation reverts.
+
+GOLD: research — the foundation's last stated exposure is converted from a caveat into a measurement, and it turns out
+to have already broken, which makes every drawdown-duration number downstream explicitly conditional rather than quietly
+optimistic.
+ACTS-ON: gate — drawdown-duration figures downstream now carry an explicit regime condition.
+
 ## D-901 (2026-09-13) THE FOUNDATION'S UNIVERSE SWEEP — IDENTIFIED at 1.29x, 51 of 51 assets positive, and the bond effect is class-level not name-level
 
 D-900 stress-tested the book everything rests on — but **every one of those eleven cells varied parameters**. THE
