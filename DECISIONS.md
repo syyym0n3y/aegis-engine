@@ -18262,6 +18262,59 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-898 (2026-09-13) THE ORTHOGONAL SLEEVE EXISTS — a two-way split at one point is not a stability test
+
+D-893 specified the missing piece as one sleeve at ~0.80 that is *genuinely uncorrelated*. D-895 then showed the
+long-run blend is 1.10 while its best single sleeve is 1.07 — the second sleeve adds +0.03. **Every sleeve tested so far
+is a function of price**, which is why they correlate 0.42–0.50. Calendar effects are the one family orthogonal to price
+**by construction**: the position depends on the date, not on the series.
+
+Seven rules on SPY, 8,461 days from 1993, net of a 2bp round trip, lag-1. **Every Sharpe beside a time-in-market-matched
+buy-and-hold** — a rule long the market 19% of days inherits 19% of the equity premium, so a calendar Sharpe quoted
+against *zero* is a claim about the equity premium, not the calendar.
+
+| rule | days | SR | matched B&H | excess |
+|---|---|---|---|---|
+| **turn-of-month (last 1 + first 3)** | 19% | **0.40** | 0.15 | **+0.25** |
+| turn-of-month (last 2 + first 3) | 24% | 0.29 | 0.17 | +0.12 |
+| Nov–Apr (sell in May) | 49% | 0.35 | 0.24 | +0.11 |
+| Mon+Fri only | 39% | 0.28 | 0.21 | +0.07 |
+| first half of month | 48% | 0.24 | 0.23 | **+0.00** |
+| not-Monday | 81% | 0.15 | 0.31 | **−0.15** |
+| pre-holiday | 3% | −0.20 | 0.06 | −0.26 |
+
+The comparator alone reveals two of the seven as **pure equity premium**.
+
+### The positive, and it is why the family was worth testing
+
+**Correlation 0.119 against the timed ISA sleeve and 0.020 against the trend book** — where those two correlate with
+each other at **0.504**. A date-based rule really is structurally orthogonal. **This is the first sleeve on this record
+to meet D-893's correlation specification.** So mechanical orthogonality is achievable, and **the binding constraint on
+the hunt is quality, not orthogonality.**
+
+### It still fails, and the way it fails is the lesson
+
+Adding it takes the long-run risk-parity blend from **1.10 down to 1.01** — it dilutes, for the mirror-image reason USMV
+did in D-894: that one was good and correlated, this one is uncorrelated and not good enough.
+
+**A TWO-WAY SPLIT AT ONE CHOSEN POINT IS NOT A STABILITY TEST.** Turn-of-month reads **0.41 pre-2010 and 0.39
+post-2010** — the most stable-looking result on this record, and exactly what the registration's publication-death
+clause asked for. Five-year blocks:
+
+| 1990s | 1995s | 2000s | 2005s | 2010s | 2015s | 2020s | 2025s |
+|---|---|---|---|---|---|---|---|
+| −0.83 | **+1.70** | +0.37 | −0.24 | +0.52 | +0.25 | +0.69 | −0.56 |
+
+**Negative in three of eight, swinging from −0.83 to +1.70**, with the 2005–2015 decade alone at 0.09. The 2010 split
+averaged over wild swings that happened to balance either side of it. The script now prints five-year blocks for every
+rule so a split point can never again be the thing doing the work. **Publication death is not what killed this** — the
+post-2010 half is as strong as the pre-2010 half. It was never stable to begin with.
+
+GOLD: research — the orthogonality question is settled affirmatively, the hunt is redirected from correlation to
+quality, and a stability test that would have passed on one split and failed on the data is fixed at source.
+ACTS-ON: gate — `scripts/calendar-sleeve.ts` prices any date-based rule against a matched comparator with its block
+decomposition in one run.
+
 ## D-897 (2026-09-13) THE LEVERAGE THAT MAXIMISES *ARRIVING*, NOT GROWING — 1x dominates 2x and 3x on both dimensions
 
 D-892 computed the **growth**-optimal leverage and registered, as a competing hypothesis, that "the leverage that
