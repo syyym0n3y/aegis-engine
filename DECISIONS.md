@@ -18262,6 +18262,53 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-895 (2026-09-13) IS THE BLEND A BULL-WINDOW ARTIFACT? — no: 1.10 over 21.7 years, and I am correcting my own reading from hours earlier
+
+Every blend number on this record sits on a **six-year window starting 2020**, because the crypto sleeve does not exist
+earlier. D-893 and D-894 both fell to **0.82** when 2020–21 were excluded, and I wrote that "excluding the bull years
+the book is not a book". That framing was an over-read. Two of the three sleeves have **decades** of history, so they
+were blended alone over the longest window their data supports.
+
+### Long run: ISA + TSMOM, 7,363 days, 2005–2026
+
+| scheme | Sharpe |
+|---|---|
+| **risk parity** | **1.10** |
+| equal weight | 1.02 |
+| walk-forward tangency | 0.89 |
+
+*(the estimated scheme is worst again, as in D-893)*
+
+| block | 2005–09 | 2010–14 | 2015–19 | 2020–24 | 2025–29 |
+|---|---|---|---|---|---|
+| Sharpe | **1.72** | 0.57 | 1.07 | 1.23 | 0.50 |
+
+**Both clauses met.** 1.10 ≥ 0.80, and the 2020–24 block at 1.23 is the **second**-best, behind 2005–09 by 0.49.
+
+### The registered control is the decisive number
+
+The **same two sleeves** restricted to 2020–2026 give **1.06**, against **1.10** over the full span. **The recent
+window is slightly *worse*, not flattering.** So the gap between 1.06 and D-893's three-sleeve 1.33 is entirely the
+**crypto sleeve — composition, not window.** No published blend figure needs restating for window choice.
+
+### Correcting D-893 and D-894
+
+Dropping 2020–21 from a six-year window leaves **4.5 years dominated by the weak 2025–26 patch** (block Sharpe 0.50).
+That 0.82 is a **small-sample artifact of removing a third of a short window**, not evidence of a bull-only book. Over
+21.7 years the identical construction earns 1.10 **through a full cycle including trend-following's poor decade** —
+2010–14 at 0.57, with 2011 at 0.1, 2014 at −0.5 and 2018 at −0.8.
+
+The correct statement is that the book is **real and highly era-variable**, five-year blocks running **0.50 to 1.72**.
+Era variation of that size is exactly what a deployment must survive — what THE HOLDABILITY LAW asks, and what D-892's
+ladder assumes away when it compounds a fixed Sharpe forever. **D-892's persistence caveat now has a measured size
+rather than a warning.** Corrections appended to both prereg notes (append-only, so the original reading remains
+visible beside its correction).
+
+GOLD: research — the record's blend figures no longer rest on a six-year window, an over-read recorded hours earlier is
+corrected by measurement rather than left standing, and the per-sleeve arithmetic of D-893/894 (+0.035 per sleeve
+against a 0.20 gap) survives unchanged.
+ACTS-ON: gate — every blend figure on this record now carries a 21.7-year number and a per-era decomposition beside it.
+
 ## D-894 (2026-09-13) THE VOLATILITY PREMIUM IN ITS PLACEABLE WRAPPER — the best standalone Sharpe DILUTES the blend and the worst one improves it
 
 D-893 specified the missing piece: one more sleeve at ~0.80, uncorrelated, **not** trend, carry or value (carry −0.47

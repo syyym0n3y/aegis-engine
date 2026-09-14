@@ -99,6 +99,18 @@ for (const [label, r] of rows) {
   const s = SR(r);
   console.log(`  ${label.padEnd(24)} ${s.toFixed(2).padStart(6)} ${(100 * sd(r) * Math.sqrt(ANN)).toFixed(1).padStart(6)}% ${(100 * mean(r) * ANN).toFixed(1).padStart(6)}%   ${(s - bestSingle >= 0 ? "+" : "") + (s - bestSingle).toFixed(2).padStart(6)}        ${s >= +K.TARGET_SR ? "CLEARS" : (s - +K.TARGET_SR).toFixed(2) + " short"}`);
 }
+// D-895: a single long-run Sharpe hides exactly the instability this kind of test exists to find, so the blend is also
+// decomposed by calendar block. Reported regardless of outcome, as the registration requires.
+{
+  const parBy = new Map<string, number[]>();
+  for (let t = 0; t < days.length; t++) { const y = +days[t].slice(0, 4); const blk = `${Math.floor(y / 5) * 5}-${Math.floor(y / 5) * 5 + 4}`; (parBy.get(blk) ?? parBy.set(blk, []).get(blk)!).push(parity[t]); }
+  const blocks = [...parBy.keys()].sort();
+  console.log(`\n  RISK-PARITY BLEND BY CALENDAR BLOCK (the single number above averages over all of these):`);
+  for (const b of blocks) { const x = parBy.get(b)!; console.log(`    ${b}  n ${String(x.length).padStart(5)}  Sharpe ${SR(x).toFixed(2).padStart(6)}  ${(100 * mean(x) * ANN).toFixed(1).padStart(6)}%/yr`); }
+  const yrBy = new Map<string, number[]>();
+  for (let t = 0; t < days.length; t++) { const y = days[t].slice(0, 4); (yrBy.get(y) ?? yrBy.set(y, []).get(y)!).push(parity[t]); }
+  console.log(`    by year: ` + [...yrBy.keys()].sort().map((y) => `${y} ${SR(yrBy.get(y)!).toFixed(1)}`).join(" | "));
+}
 const avgW = names.map((_, i) => mean(wfUsed.map((w) => w[i])));
 console.log(`\n  mean walk-forward weights: ${names.map((n, i) => `${n} ${(100 * avgW[i]).toFixed(0)}%`).join(", ")} over ${wfUsed.length} re-estimations`);
 // how many more sleeves of the observed average quality would close the gap
