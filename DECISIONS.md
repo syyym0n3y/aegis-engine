@@ -18262,6 +18262,51 @@ of a percent a week — with the risk machine of D-878 on top.
 GOLD: research — the operator's named limitation put to data on every route, with the costs stated per route.
 ACTS-ON: gate — the leverage table's higher rows are now labelled unreachable at retail; the weekly arithmetic is final.
 
+## D-897 (2026-09-13) THE LEVERAGE THAT MAXIMISES *ARRIVING*, NOT GROWING — 1x dominates 2x and 3x on both dimensions
+
+D-892 computed the **growth**-optimal leverage and registered, as a competing hypothesis, that "the leverage that
+maximises growth is not the leverage that maximises P(reach target), so reporting only one of them would mislead" —
+then reported only the growth optimum. D-896 showed the two diverge violently. This computes the other one.
+
+200-year cap, so slow paths finish rather than censoring:
+
+| leverage | P(target), 10% floor | median | P(target), 50% floor |
+|---|---|---|---|
+| 0.25x | **100.0%** | 171y | 100.0% |
+| 0.5x | **100.0%** | 121y | 100.0% |
+| 0.75x | 98.8% | 94y | 100.0% |
+| **1x** | **96.1%** | **77y** | **100.0%** |
+| 2x\* | 50.7% | 87y | 99.1% |
+| 3x\* | 30.6% | 77y | 89.2% |
+
+**SUPPORTED, and the finding is stronger than the claim — it is a dominance, not a trade-off.** 1x reaches the target
+96.1% of the time with a 77-year median; **3x reaches it 30.6% of the time with the *same* 77-year median**; 2x is worse
+on both. **Levering this book above 1x does not buy speed at the price of risk — it buys nothing and pays risk for it**,
+because leverage multiplies volatility in full while D-880's measured funding claws back the return. Kelly on this
+series is **11.0x**; the survival optimum is **0.25–1x**, a factor of 11 to 44 below it.
+
+### The control that would have inverted the answer
+
+At the 100-year cap, 0.25x and 0.5x come back **100% censored** and would have read as total failures. At 200 years both
+reach the target in **every** path, at medians of 171 and 121 years. **Slow is not the same as never**, and only the
+registered longer-cap rerun separated them. Censored fractions are reported per cell for exactly this reason.
+
+### What it means for the live prop clock
+
+A prop account's ~10% drawdown rule is **the binding constraint**, and on this book the correct size under it is **1x or
+below** — a measured statement about sizing, not a recommendation to fund an account. The fee remains unpaid and Claude
+executes nothing.
+
+`*` sub-1x rows are part-cash and carry no financing, so that half of the curve is clean; 2x and 3x carry D-880's
+crypto-perp funding as a **stated proxy** on an equities-and-futures book, so the collapse above 1x rests on a proxied
+cost rather than one measured on this instrument. No level between D-880's measured points is used — interpolating a
+funding cost is forbidden here exactly as extrapolating past 3x was in D-892.
+
+GOLD: research — a hypothesis this programme registered and then left uncomputed is closed, and it reverses the
+intuition the whole leverage hunt rested on: on a book with measured financing, more leverage is not a faster route to
+a distant target, it is the same route with a third of the success rate.
+ACTS-ON: clock — `fwd-prop-ftmo100k-utc16-0p5x-v1` now has a measured sizing answer behind it.
+
 ## D-896 (2026-09-13) THE SAME QUESTION ON THE REAL RETURNS — the Gaussian was worth 3% of the horizon, and my RNG was broken
 
 D-892 answered $10 → $1M under geometric Brownian motion: a fixed Sharpe compounding forever, Gaussian daily returns,

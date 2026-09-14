@@ -142,3 +142,82 @@ roughly **3% of the horizon at 1x**, not a different answer. Block length barely
 Where the distributions genuinely diverge is under **leverage with a tight floor**: at 3x against a 10% drawdown
 rule the bootstrap puts **68–71% of paths into ruin** before the target, and at 2x, **20% of paths are still
 running at the 100-year cap**. Neither is visible in a two-barrier formula that assumes infinite time.
+
+## 7. The same question on the REAL returns, not a Gaussian (D-896)
+
+D-892 above assumes a fixed Sharpe compounding forever with Gaussian daily returns. D-895 measured what that
+assumption is worth: the same book earns five-year block Sharpes of **1.72 / 0.57 / 1.07 / 1.23 / 0.50** over 21.7
+years. Here the actual 7363-day blend (isa + tsmom, Sharpe 1.10) is resampled by stationary block
+bootstrap — geometric block lengths, wrap-around — preserving fat tails, within-block autocorrelation and the
+clustered bad decades. 2,000 paths per cell, 100-year cap, target 100,000x.
+
+Scaled to 10% annualised vol (raw blend is 3.4%), plus a 4% risk-free. `*` marks levered rows where the
+financing drag is D-880's PERP funding applied as a proxy — the only leverage cost measured on this record, but
+measured on crypto perps, not on this book. At 1x there is no financing.
+
+| leverage | floor | mean block | P(target) | P(ruin) | censored | median | p25 | p75 |
+|---|---|---|---|---|---|---|---|---|
+| 1x | 50% DD | 5d | 100.0% | 0.0% | 0.0% | 77y | 73y | 81y |
+| 1x | 50% DD | 21d | 100.0% | 0.0% | 0.1% | 77y | 73y | 81y |
+| 1x | 50% DD | 63d | 100.0% | 0.0% | 0.0% | 77y | 73y | 81y |
+| 1x | 10% DD | 5d | 92.8% | 7.2% | 0.1% | 76y | 72y | 81y |
+| 1x | 10% DD | 21d | 96.5% | 3.4% | 0.1% | 77y | 73y | 80y |
+| 1x | 10% DD | 63d | 97.2% | 2.8% | 0.0% | 77y | 73y | 81y |
+| 2x* | 50% DD | 5d | 75.9% | 2.4% | 21.7% | 84y | 76y | 91y |
+| 2x* | 50% DD | 21d | 77.7% | 1.1% | 21.2% | 84y | 77y | 91y |
+| 2x* | 50% DD | 63d | 79.2% | 0.7% | 20.2% | 84y | 77y | 91y |
+| 2x* | 10% DD | 5d | 40.9% | 49.9% | 9.3% | 82y | 74y | 89y |
+| 2x* | 10% DD | 21d | 42.4% | 47.1% | 10.6% | 83y | 75y | 90y |
+| 2x* | 10% DD | 63d | 45.5% | 44.6% | 9.8% | 83y | 76y | 90y |
+| 3x* | 50% DD | 5d | 70.3% | 12.9% | 16.8% | 75y | 66y | 85y |
+| 3x* | 50% DD | 21d | 73.3% | 10.4% | 16.3% | 76y | 67y | 86y |
+| 3x* | 50% DD | 63d | 75.0% | 9.3% | 15.8% | 77y | 68y | 87y |
+| 3x* | 10% DD | 5d | 25.8% | 70.6% | 3.6% | 75y | 64y | 84y |
+| 3x* | 10% DD | 21d | 27.4% | 68.3% | 4.3% | 74y | 65y | 85y |
+| 3x* | 10% DD | 63d | 27.1% | 68.2% | 4.7% | 75y | 65y | 86y |
+
+**The like-for-like comparison.** D-892's 70 years is the PAIR at Sharpe 1.29; this is the two-sleeve blend at
+Sharpe 1.10, so comparing against 70 would compare two BOOKS rather than two ASSUMPTIONS. The Gaussian answer for
+*this* book is `g = rf + S·σ − σ²/2` = 14.5%/yr, i.e. **80 years** — against a bootstrap median of **77 years**.
+
+So on the real returns, with the real fat tails, the real autocorrelation and the real bad decades, the answer is
+**within a couple of years of the Gaussian one**. The persistence caveat D-892 flagged and D-895 measured is worth
+roughly **3% of the horizon at 1x**, not a different answer. Block length barely matters either (5d/21d/63d give
+77/77/77), so the researcher degree of freedom in clause (4) is small here.
+
+Where the distributions genuinely diverge is under **leverage with a tight floor**: at 3x against a 10% drawdown
+rule the bootstrap puts **68–71% of paths into ruin** before the target, and at 2x, **20% of paths are still
+running at the 100-year cap**. Neither is visible in a two-barrier formula that assumes infinite time.
+
+## 8. The leverage that maximises REACHING the target, not growth (D-897)
+
+D-892 computed the **growth**-optimal leverage (Kelly, 11.0x on this book) and flagged — but never computed — that
+the leverage maximising **P(reach the target)** is a different number. It is, and the gap is a factor of 11 to 44.
+
+200-year cap so that slow paths finish rather than censoring (at a 100-year cap the 0.25x and 0.5x cells come back
+100% censored and would read as total failures — they are *slow*, not *failing*):
+
+| leverage | P(target), 10% floor | median | P(target), 50% floor |
+|---|---|---|---|
+| 0.25x | **100.0%** | 171y | 100.0% |
+| 0.5x | **100.0%** | 121y | 100.0% |
+| 0.75x | 98.8% | 94y | 100.0% |
+| **1x** | **96.1%** | **77y** | **100.0%** |
+| 2x\* | 50.7% | 87y | 99.1% |
+| 3x\* | 30.6% | 77y | 89.2% |
+
+**1x dominates 2x and 3x on *both* dimensions.** 1x reaches the target 96.1% of the time with a 77-year median; 3x
+reaches it 30.6% of the time with the *same* 77-year median; 2x is worse on both at 50.7% and 87 years. **Levering this
+book above 1x does not buy speed at the price of risk — it buys nothing and pays risk for it**, because leverage
+multiplies volatility in full while D-880's measured funding claws back the return. At the loose 50% floor 1x still
+weakly dominates, so this is not purely a prop-firm artifact.
+
+Kelly on this series is **11.0x**. The survival optimum is **0.25–1x**. Chasing the growth optimum here would mean
+holding a position eleven to forty-four times larger than the one that actually maximises the chance of arriving.
+
+**For a prop account** (~10% drawdown rule, the D-807 clock): the drawdown rule is the binding constraint and the
+correct size on this book is **1x or below**. That is a measured statement about sizing, not a recommendation to fund
+an account.
+
+`*` sub-1x rows are part-cash and carry no financing, so that half of the curve is measured cleanly; 2x and 3x carry
+D-880's crypto-perp funding as a proxy on an equities-and-futures book.

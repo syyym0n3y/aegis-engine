@@ -36,7 +36,9 @@ const RS = R.map((x) => x * volScale);
 // reproduces that: f = L * sigma_d * S_d * (1 - deg). NOTE THE PROXY, stated rather than buried — D-880 measured funding
 // on CRYPTO PERPS and this book is equities and futures proxies, so at 2x and 3x the drag is the only MEASURED leverage
 // cost on this record, not a cost measured on this instrument. At 1x there is no financing at all (ISA/cash) and deg=1.
-const DEG: Record<string, number> = { "1": 1, "2": 0.22 / 0.54, "3": 0.16 / 0.54 };
+// Sub-1x is part-cash and carries NO financing. 2x and 3x carry D-880's measured degradation. Nothing between
+// these points is used: interpolating a funding cost is forbidden here exactly as extrapolating past 3x was (D-892).
+const DEG: Record<string, number> = { "0.25": 1, "0.5": 1, "0.75": 1, "1": 1, "2": 0.22 / 0.54, "3": 0.16 / 0.54 };
 const muD = mean(RS), sdD = sd(RS);
 const q = (a: number[], p: number) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.floor(p * b.length))]; };
 // The first version used seed = (seed * 1103515245 + 12345) % 2147483648. That product reaches ~2.4e18, far beyond
