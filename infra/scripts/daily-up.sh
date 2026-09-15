@@ -9,5 +9,7 @@ export OWNED_REST="http://localhost:${REST_PORT:-33000}"
 while true; do
   self_restart_if_changed
   deno run --allow-net --allow-env ../scripts/aegis-daily.ts || true
+  echo "=== on-chain refresh (D-928, blockchain.info keyless) ==="
+  deno run --allow-net --allow-env ../scripts/ingest-onchain.ts || true
   sleep 86400
 done
