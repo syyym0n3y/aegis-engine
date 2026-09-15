@@ -1,17 +1,8 @@
 {
   "classes": {
-    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 1,
-    "postgres|relation \"public.trd_deribit_chain\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_deribit_dvol\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_deribit_iv\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_deribit_options\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_dvol\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_option_chain\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_option_skew\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_option_writing\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_options\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_us_options\" does not exist at character N": 1
+    "infra/data/coverage.log|SPN CHANGES INGEST FAILED": 1,
+    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 1
   },
-  "set": "2026-09-14T00:06:32.404Z",
+  "set": "2026-09-15T06:17:07.052Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }

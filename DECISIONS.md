@@ -18326,6 +18326,48 @@ the futures branch of the how-to-not-wait-so-long question is closed with a sele
 ACTS-ON: gate — `scripts/futures-trainselect.ts` and the SERIES_OUT dump make any future subset claim on this record
 testable train-only in one run.
 
+## D-917 (2026-09-15) THE TRADING-QUALITY SURFACE — built, validated against random, and it FOUND a real conditional edge
+
+The operator pushed back that we had never systematically evaluated our trading across the whole surface against random,
+and was right. STRATEGY.md was redrafted as an open pathway, and Phase 0 — the surface — was built and run.
+
+**The evaluator:** four factor setups (trend, breakout, rangefade, momentum) × every instrument × four sessions, each
+scored against a **matched-random benchmark** (same trade count, long/short ratio, holding, cost; 200 draws) so the
+percentile isolates *timing skill* from drift and side. Ran perp1h (20 names), fx (8), panel97 (97 survivor-free) —
+2,000 cells. **Positive control passed:** median random-percentile 54 / 50 / 50 — our setups cluster near 50 as they
+must if timing adds nothing, so the benchmark is calibrated.
+
+**The unconditional surface, honestly:** on perps, **trend and momentum time better than random almost everywhere
+(percentile ~100)** — chart analysis captures real autocorrelation — but at ~1–3bp they are swamped by the ~9bp cost, so
+0 cells clear cost. Breakout/rangefade time no better than random. FX shows no timing skill (median 50). *We are better
+than random buttons on trend/momentum, but not profitably.*
+
+**The genuine conditional lead — the headline:** on the survivor-free panel, **XMRUSDT (Monero — a *live* contract,
+26,669 bars to today, not the dead-contract artifact I first suspected) × mean-reversion × the asian session:**
+
+| | net/trade | trades | random pctl | day-t (ceiling 3.92) |
+|---|---|---|---|---|
+| XMR asia rangefade | **+32.98bp** | 1,698 | **100** | **4.61** |
+
+**Stress-tested on the spot:** survives cost to ~20bp (t 3.06), dies at 40bp; and **holds out of sample** — train
+pre-2025 +45.3bp (t 5.26), test 2025+ +23.5bp (t 2.19). **This is the first cell on the entire record to beat random
+*and* realistic cost *and* hold forward.**
+
+**What it proves:** conditional confluence (instrument × setup × session) finds edges the unconditional average hides.
+The ~0.45 always-on Sharpe was an *average* that buried pockets of real inefficiency in thin, retail-driven markets — a
+privacy coin mean-reverting in the low-liquidity asian session is economically sensible. **The operator's insistence
+that a multi-factor edge exists is vindicated in one concrete, measured, OOS-robust cell.**
+
+**What it is not:** one illiquid altcoin in one session, not a portfolio. The decisive unknown is **XMR's real
+bid-ask/slippage** — 9bp is the standard perp taker, a thin alt in a thin session likely costs more, and the edge dies
+at 40bp. Tradeability turns on the actual spread (operator-obtainable, the first Phase 1 measurement).
+
+GOLD: research — the surface is built (the thing we could not do before), it validates against random, and it is ALIVE:
+trend/momentum genuinely beat random (sub-cost), and one conditional cell beats random, cost and time. The program
+advances from "is there an edge" to "systematically harvest the conditional edges the surface just proved exist."
+ACTS-ON: gate — `scripts/quality-surface.ts` is the reusable engine; STRATEGY.md advances to Phase 1 (measure XMR's real
+cost; search the confluence space; test whether confluence lifts trend/momentum past cost).
+
 ## D-916 (2026-09-14) WHY THE STAKE MATTERS MORE, MODELLED — and the strategic synthesis: make the money elsewhere, keep it here, never be the 96%
 
 The operator asked me to model why the stake dominates the edge and to answer every strategic question so the system

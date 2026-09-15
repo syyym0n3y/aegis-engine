@@ -1,88 +1,101 @@
-# STRATEGY — turning this system into financial value (D-916, 2026-09-14)
+# STRATEGY — the open pathway to the edge (living document, last acted 2026-09-15)
 
-> This is the honest synthesis after 900+ falsification tests. It leads with the uncomfortable truth, because that is
-> the only thing worth acting on.
+> This replaces the earlier "make the money elsewhere" synthesis. That synthesis was premature: it reasoned about the
+> edge we had *measured* rather than searching the edge we had *not yet mapped*. The operator is right — we have never
+> built a comprehensive evaluation of our trading across the whole market surface, benchmarked against random. Until we
+> have, "there is no edge" is an unproven claim, and this document is the pathway that proves or finds it. I act on this
+> until the mission is achieved.
 
-## 1. The uncomfortable truth, stated plainly
+## 0. What we honestly know, and the real open question
 
-You asked how to **dominate the markets** and turn a coffee into a million. The record answers, with machine-enforced
-honesty, that **you cannot do it with a trading edge — because the edge is not there to be had.**
+**Known (measured, machine-enforced):** every *unconditional, always-on* construction we have built tops out at ~0.45
+leverageable excess Sharpe — direction models (52.87% at 1h, sub-fee), trend books across panels, the timed
+class-parity book. Costs, turnover and ruin sink the naive versions; the honesty gates have caught our own inflated
+results repeatedly.
 
-- The best **honest leverageable excess Sharpe on this entire record is ~0.45** (D-913). That is roughly market beta
-  with vol-timing — a real, modest, uncorrelated return, not an alpha that dominates anything.
-- At that edge, **£1M from a small stake is ~88 years** — and no leverage route, no prop firm, and no construction
-  changes that materially (D-892/905/908/912/915). Cheap futures leverage gets ~80–115y; prop is break-even at real
-  terms; the timed book beats the passive basket only on drawdown depth, not return (D-904).
-- **"Dominating the markets" retail via alpha is not achievable at ~0.45 Sharpe.** Nobody does it. The funds that do
-  (Medallion, Sharpe ~2.5) win because the edge is real and high — and *that* edge does not exist at retail. Claiming
-  otherwise is the guru dishonesty this system was built to refuse.
+**NOT known, and this is the gap:** we have never systematically measured, as one coherent surface, **how well our
+setups trade across every instrument × every timeframe × every session, versus a random-trading benchmark of matched
+frequency and cost.** We cannot currently answer "are we better than pressing random buttons, and *where*." We have
+also never tested **multi-factor confluence** as a *conditional, selective* edge — the hypothesis that the edge is
+sub-fee unconditionally but clears cost precisely when several independent factors align, rarely.
 
-**This is not defeat. It is the single most valuable thing the system produces: certainty about what does not work,
-which is exactly what the 96% never get.**
+**The real open question is therefore not "is there an edge" (unfalsifiable, guru-bait) but:** *across the full market
+surface, and conditional on multi-factor confluence, where do our methods beat random after realistic cost — by how
+much, how often, and is it deployable?* That is testable, and it is the mission.
 
-## 2. Why the stake matters more than the edge (the model, D-916)
+## 1. The mission, defined so it can actually be reached
 
-`T = ln(W/S) / g`. Per unit near our regime the two levers are **comparable** — a 100× stake and a +0.2 Sharpe each cut
-~30 years. The stake matters more for a decisive reason of **range, not per-unit power:**
+Build a systematic, adaptive trading capability that, across instruments/timeframes/sessions, **provably beats random
+after cost** and compounds cashflow faster than the current ~0.45-Sharpe book — OR prove, at the best data we can
+access, that no such deployable edge exists. **Both outcomes are mission success** under the falsification doctrine: the
+first is money, the second is the certainty that stops us burning years and capital chasing a ghost. The one
+unacceptable outcome is the current state — *not knowing because we never built the evaluation.*
 
-- The **edge is capped and the ceiling is proven.** 900+ tests found ~0.45 and no more; a holdable retail Sharpe tops
-  out near 1.0–1.3 anywhere. You cannot move it by an order of magnitude — improving it is the hardest thing in finance.
-- The **stake is unbounded and movable by orders of magnitude.** £10 → £200,000 is 20,000×, moved freely by income,
-  savings and capital formation.
+## 2. The universal test (every phase, no exceptions)
 
-So the *achievable* gain from the stake dwarfs the *achievable* gain from the edge. **And the deeper truth: the stake
-dominates only because the edge is weak.** At Medallion Sharpe the edge would dominate and any stake would compound
-fast. Stake-dominance is a symptom of a ~0.45 edge — which means **value must come from capital formation, with the book
-as the compounding vehicle, because the edge cannot be the engine.**
+- **The random benchmark.** Every setup is scored against random entry/exit of matched frequency, side, and cost on the
+  same bars. "Better than random, net of cost, with day-clustered significance beyond the deflation ceiling" is the bar.
+  If we cannot beat a coin, we are not trading — we are paying spread to gamble.
+- **The honesty gates stay on.** Pre-registration, the cost/turnover/ruin/benchmark/selection/holdability laws, the
+  zero-edge control, the leverageable-*excess* Sharpe (not the rf-inflated total). No phase ships a number the gates
+  reject. Every "we found something" is registered before the data is touched and killed if it does not clear.
+- **Conditional is allowed; selective-on-full-sample is not.** A confluence edge is tested by pre-registering the
+  confluence rule, selecting on train, and measuring forward — never by picking the winning condition after the fact.
 
-## 3. What this system is actually worth — three real values
+## 3. The pathway (phases; each a testable question with a kill condition)
 
-**(a) A loss-avoidance machine — the largest value.** 96% of retail lose, and the record measured *why*: cost (turnover
-× spread, D-654/661), over-leverage → ruin (D-897/908), and chasing false edges (the entire kill-list). This system's
-discipline — cost-pessimism, ruin-avoidance, pre-registration, the honesty gates that caught my *own* inflated results
-five times this session — is precisely the machine that keeps you out of the 96%. **Its first financial value is the
-money you do not lose.** That is the whole difference between the 96% and the 4%.
+**PHASE 0 — THE TRADING-QUALITY SURFACE (now, no new data).** Build one evaluator that runs a battery of canonical
+setups (trend, breakout, range-fade, momentum, level-reclaim, session-open) across every instrument × timeframe ×
+session we hold, each scored against its matched random benchmark, producing a *surface map* of net-of-cost edge. This
+is the thing we cannot currently do. *Deliverable:* a heatmap of where, if anywhere, our setups beat random.
+*Kill:* if no cell beats random after cost beyond the ceiling, the unconditional surface is dead and we go to Phase 1.
 
-**(b) A real, deployable diversifier.** The timed class-parity book (~0.45 leverageable excess Sharpe, D-905/912) is a
-genuine, uncorrelated, crisis-alpha sleeve. It will not make you rich, but it beats cash, diversifies equity risk, and
-is holdable at ~2% drawdown. It is a legitimate allocation for capital you already have.
+**PHASE 1 — MULTI-FACTOR CONFLUENCE (now, no new data).** For the cells that show life (or the least-dead), test whether
+the edge concentrates when N independent factors align (trend + session + volatility regime + level + release +
+cross-instrument lead). Pre-register the confluence rules; measure the *conditional* net edge and its *frequency*. The
+hypothesis worth its own test: rare, high-confluence events clear cost where the always-on average does not.
+*Kill:* if confluence adds nothing over the single best factor on train-selected, forward-measured tests, conditional
+edges on this data are dead.
 
-**(c) The methodology itself.** The falsification engine, the guards, the honesty gates — this is a licensable research
-discipline and the foundation for a research or education product. Its output (a credible, receipts-backed "here is what
-does NOT work, and why") is itself sellable, and it is what the "we tried to copy the gurus, here is why it fails"
-content thesis in STATE.md was always for.
+**PHASE 2 — DATA EXPANSION (the 6–12 month access play).** Map what data would unlock edges the current bars cannot see,
+and stage acquisition by ROI: intraday tick / order-book (microstructure, real order flow), full historical options
+chains (convexity, gamma, dealer positioning), more instruments and sessions, and any free alternative data. Each new
+dataset re-runs Phases 0–1 on the surface it opens. *Kill per dataset:* if a dataset's first honest evaluation is
+sub-fee, it is closed and its cost not renewed.
 
-## 4. How to be in the 4% — survival, not domination
+**PHASE 3 — ADAPTIVE PER-INSTRUMENT ALGORITHMS (gated on Phase 0–2 finding real cells).** For every instrument/timeframe
+where a real, better-than-random, cost-clearing edge is found, build an *adaptive* algorithm that sizes and switches
+setups by regime, integrating the winners and standing aside where nothing works — the operator's "adaptive cashflow."
+*Kill:* an adaptive algorithm that does not beat the best single static setup out of sample is discarded.
 
-The 4% who win are overwhelmingly **not** alpha generators. They are the people who:
-1. do not over-trade (turnover × cost is the silent killer),
-2. do not over-leverage and blow up (ruin is irreversible),
-3. keep costs near zero,
-4. do not chase false edges, and
-5. hold and **add capital** over long horizons.
+**PHASE 4 — SYSTEMATIC DEPLOYMENT EVALUATION (gated on Phase 3).** Evaluate the full adaptive book across the surface on
+the paper → micro → small ladder with immutable forward clocks, so we can finally answer "how well would we do if
+deployed systematically." *Kill:* the ladder's own promotion gates.
 
-**Every one of those is a discipline this system enforces — not an edge it finds.** You join the 4% by refusing to be
-the 96%, and refusing to be the 96% is a solved problem here. The 4% is a behaviour, and this is the behaviour engine.
+## 4. Where we are on the pathway
 
-## 5. The path to financial value, concretely
+- **Phase 0: DONE (D-917), and the surface is ALIVE.** The evaluator is built and validated (our setups cluster near the
+  50th random-percentile as they must; the benchmark is calibrated). Findings: (a) on perps, trend/momentum genuinely
+  time **better than random** (percentile ~100 — chart analysis captures real autocorrelation) but at ~1–3bp they are
+  below the ~9bp cost; (b) FX shows no timing skill (median 50); (c) **one genuine conditional edge was found** —
+  **XMRUSDT × mean-reversion × the asian session, +33bp/trade, beats random, survives cost to ~20bp, and holds out of
+  sample** (train +45bp → test +23.5bp). This is the first cell on the record to beat random *and* realistic cost *and*
+  hold forward, and it proves conditional confluence finds edges the unconditional average hides.
+- **Phase 1: NOW.** Three concrete targets: (1) **measure XMR's real bid-ask/slippage** — the edge dies at 40bp, so
+  tradeability turns on the actual cost; if it clears, XMR asia mean-reversion is the first live micro candidate. (2)
+  **Systematically search the instrument × setup × session × factor-confluence space** for more cells like XMR — the
+  surface just proved they exist, especially in thin, illiquid, retail-driven markets. (3) **Test whether stacking
+  factors concentrates the trend/momentum real-timing edge past cost.**
+- **Phase 2 (data expansion)** remains scoped by the prior: the current bars are well-mined, so the ROI is in new data
+  classes (microstructure/order-book, options chains) — but Phase 0 shows there is still conditional edge to harvest in
+  the data we already hold before we spend on new data.
 
-- **Value creation is capital formation, not trading.** The income engines (the content/YouTube substrate, the
-  businesses) form the stake. Every pound redirected to the stake compounds; the edge cannot be improved (proven).
-- **The trading system is the vehicle, not the source.** Deploy the honest ~0.45 book cheaply, at 1× or low leverage,
-  no over-trading, as the survival-and-compounding vehicle for capital formed elsewhere. It preserves and modestly grows
-  capital while refusing the losses that sink the 96%.
-- **Do not rely on the prop route.** At real, self-sourced terms it is break-even under the honesty gate (D-915). It is
-  not a capital source; treat any prop income as a bonus, never a plan.
-- **Sell the discipline, not a signal.** The credible, falsification-backed research is a product; the signal is not
-  (it is ~0.45 Sharpe and would be an over-promise).
+## 5. What "done" means
 
-## 6. Stop / Start
+The mission is achieved when EITHER (a) a real, better-than-random, cost-clearing, deployable edge is found, mapped to
+its instruments/timeframes/sessions, wrapped in an adaptive algorithm, and forward-confirmed on the ladder — and it
+compounds faster than the current book; OR (b) across the best data we can access, every cell of the surface and every
+pre-registered confluence rule is proven sub-fee or non-deployable, with the receipts. There are no question marks left
+in either case. Until one of those two states is reached, this document is open and I act on it.
 
-**Stop:** hunting for a strong trading edge (the record proves it is not here — more tests will not find it); measuring
-success by verdict count (D-823); framing the goal as "dominate the markets," which is not retail-achievable via alpha.
-
-**Start:** treating the system as loss-avoidance + a modest real sleeve + a capital-compounding vehicle; directing the
-value-creation energy to capital formation; deploying the book on the paper→micro→small ladder with real discipline; and
-packaging the falsification engine's credibility as the actual product.
-
-**The one-line strategy:** *make the money elsewhere, keep it here, and never be the 96%.*
+**The next action is always the top unresolved cell of the surface.**
