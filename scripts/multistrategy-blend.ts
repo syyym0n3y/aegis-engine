@@ -7,7 +7,7 @@
 // Blend = risk parity (equal ex-ante vol weight, from trailing 60-day sleeve vol). No weight is optimised on OOS.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials, preregCeiling } from "../supabase/functions/_shared/trial-ledger.ts";
-const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }]);
+const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "msb2", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -93,3 +93,40 @@ console.log(`\n  RISK-PARITY BLEND at ${(100 * +K.VOL_TARGET).toFixed(0)}% vol: 
 console.log(`  LEVERAGE TABLE (blend): ` + [0.10, 0.20, 0.40].map((tv) => { const x = blend.map((v) => v * tv / (bv || 1)); const s2 = stats(x); const g = s2.mu - s2.vol * s2.vol / 2; return `${(100 * tv).toFixed(0)}% vol -> ${(100 * s2.mu).toFixed(1)}%/yr, DD ${(100 * s2.mdd).toFixed(0)}%, 10x in ${g > 0 ? (Math.log(10) / g).toFixed(1) + "y" : "never"}`; }).join(" | "));
 const ok = B.sr >= 1.0 && B.t >= ceil.ceiling && B.mdd > -0.25 && B.sr > Math.max(...names.map((s) => st[s].sr)) && maxCorr < 0.5;
 console.log(`  ceiling ${ceil.ceiling.toFixed(3)}. VERDICT (D-865 rule): ${ok ? "SUPPORTED" : `NULL — ${[B.sr < 1.0 && `blend Sharpe ${B.sr.toFixed(2)} < 1.0`, B.t < ceil.ceiling && `t ${B.t.toFixed(2)} < ceiling`, B.mdd <= -0.25 && "maxDD worse than -25%", B.sr <= Math.max(...names.map((s) => st[s].sr)) && "does not beat the best sleeve", maxCorr >= 0.5 && "a sleeve pair correlates >= 0.5"].filter(Boolean).join("; ")}`}`);
+
+
+// ---- D-926 PAPER STAND-UP (additive; default off) — stand the 3-factor blend up on paper for the forward clock ----
+if (K.PAPER === "1") {
+  const wh = { ...hdr, "Content-Type": "application/json" } as Record<string, string>;
+  // kill switch — never mark a killed book
+  const ks = await q(`trd_kill_switch?account=eq.paper&select=state`) as { state: string }[];
+  const st0 = String(ks[0]?.state ?? "").toLowerCase(); const killed = !!ks[0] && st0 !== "armed" && st0 !== "ok"; // armed/ok = paper rung active & marking (matches paper-book.ts)
+  // forward-window realized stats (vol-targeted blend returns since PAPER_START)
+  const fwdIdx = days.map((d, i) => [d, i] as [string, number]).filter(([d]) => d >= K.PAPER_START).map(([, i]) => i);
+  const fwd = fwdIdx.map((i) => blend[i] * lev);
+  const fs = fwd.length >= 2 ? stats(fwd) : null;
+  const computable = fwd.length >= 20;
+  const elapsed = fwdIdx.length;
+  const metricVal = computable && fs ? fs.sr : null;
+  const note = killed ? `KILL SWITCH engaged — book frozen, not marked (${fwd.length} fwd days).`
+    : !computable ? `${fwd.length} forward days since ${K.PAPER_START}; below 20, not-yet-computable (rule floors: promote at n>=250 & Sharpe>0.76 & >2-sleeve, kill if <=2-sleeve forward).`
+    : `${fwd.length} forward days since ${K.PAPER_START}: realized 3-sleeve blend Sharpe ${fs!.sr.toFixed(2)}, ${(100 * fs!.mu).toFixed(1)}%/yr, maxDD ${(100 * fs!.mdd).toFixed(0)}%.`;
+  if (!killed) {
+    const mk = await fetch(`${OWNED}/trd_forward_marks`, { method: "POST", headers: { ...wh, Prefer: "return=minimal" }, // plumbing-ok: audited — status checked next line
+      body: JSON.stringify({ rule_id: K.PAPER_RULE, elapsed_days: elapsed, metric_name: "fwd_sharpe_3sleeve", metric_value: metricVal, n_obs: fwd.length, note, matured: false }) });
+    console.log(`\n  PAPER MARK -> trd_forward_marks[${K.PAPER_RULE}]: ${mk.status} — ${note}`);
+  } else console.log(`\n  PAPER: ${note}`);
+  // one-time DORMANT position snapshot (idempotent: only if no three-factor snapshot exists)
+  const existing = await q(`trd_positions?book->>spec_id=eq.three-factor-blend&select=id&limit=1`) as { id: number }[];
+  if (!existing.length) {
+    const sleeveW = names.filter((s) => BL.includes(s)).map((s) => { const win = X[s].slice(-60); const v = sd(win) * Math.sqrt(252); return { sleeve: s, inv_vol_weight: v > 0 ? 1 / v : 0, standalone_sharpe: +st[s].sr.toFixed(2) }; });
+    const wtot = sleeveW.reduce((a, x) => a + x.inv_vol_weight, 0) || 1; sleeveW.forEach((x) => x.inv_vol_weight = +(x.inv_vol_weight / wtot).toFixed(3));
+    const book = { dormant: true, spec_id: "three-factor-blend", decision: "D-924", forward_rule: K.PAPER_RULE, inception: K.PAPER_START,
+      construction: "risk-parity blend of trend (multi-class TSMOM 21/63/126/252d) + long (vol-matched basket) + cryptomom (crypto-only TSMOM), equal-risk-parity from trailing 60d sleeve vol, 10% vol target, per-class costs, 5-day rebalance",
+      sleeve_weights: sleeveW, insample_sharpe: +B.sr.toFixed(2), insample_t: +B.t.toFixed(2), insample_maxDD: +(100 * B.mdd).toFixed(0), insample_underwater_y: +B.uwY.toFixed(1),
+      target_vol: +K.VOL_TARGET, confident_vol_note: "size at ~20% vol (real-path DD -46%); 40% vol is ruinous",
+      honest_note: "DORMANT paper book, $0 at risk, NEVER auto-armed — arming is the operator's act after the staged gates. In-sample 1.09 is DESCRIPTIVE (post-hoc sleeve subset); the forward clock fwd-three-factor-blend validates it. Claude never executes; manual fills only at MICRO." };
+    const ins = await fetch(`${OWNED}/trd_positions`, { method: "POST", headers: { ...wh, Prefer: "return=minimal" }, body: JSON.stringify({ book }) }); // plumbing-ok: audited — status checked next line
+    console.log(`  PAPER SNAPSHOT -> trd_positions (DORMANT three-factor-blend): ${ins.status}`);
+  } else console.log(`  PAPER SNAPSHOT: three-factor-blend already stood up (id ${existing[0].id}) — idempotent, not duplicated.`);
+}
