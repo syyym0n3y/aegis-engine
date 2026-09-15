@@ -2,8 +2,11 @@
   "classes": {
     "infra/data/coverage.log|SPN CHANGES INGEST FAILED": 1,
     "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 1,
-    "postgres|column trd_lineage.created_at does not exist at character N": 1
+    "postgres|column trd_bars_deep.kind does not exist at character N": 1,
+    "postgres|column trd_lineage.created_at does not exist at character N": 1,
+    "postgres|column trd_macro_series.series_id does not exist at character N": 1,
+    "postgres|relation \"public.trd_driver_register\" does not exist at character N": 3
   },
-  "set": "2026-09-15T06:34:22.990Z",
+  "set": "2026-09-15T06:47:34.480Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }

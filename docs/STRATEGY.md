@@ -23,6 +23,27 @@ sub-fee unconditionally but clears cost precisely when several independent facto
 surface, and conditional on multi-factor confluence, where do our methods beat random after realistic cost — by how
 much, how often, and is it deployable?* That is testable, and it is the mission.
 
+**SETTLED 2026-09-15 (D-920) — the measurable variables are accounted for, and they collapse to ~3 factors + noise.**
+A variance decomposition of 90 instruments across 8 asset classes onto 9 measurable market drivers (equity market,
+yield-curve slope, credit, vol, inflation expectations, real yield, growth, BTC) settled the *why-does-each-instrument-
+behave-this-way* question empirically: the median instrument's daily variance is **32.8% explained, 67.2% residual**,
+the macro block adds **0.9pp over a market-only model** (the 'many variables' are one risk-on/off factor wearing many
+hats — plus a BTC factor for crypto and a rates factor for bonds), and the **residual autocorrelation is −0.02** — the
+unexplained two-thirds is a random walk with no cheap timing handle. This is the *structural* reason every surface edge
+is real-but-sub-cost and why confluence of collinear factors (D-919) adds nothing: there is no missed measurable
+variable that unlocks daily timing. The only places a new variable could still live are the **intraday / order-book
+horizon** (the BTC/ETH/SOL microstructure mirrors already in the panel — the daily residual is noise, the 1-min residual
+might not be) and **non-linear / lagged** structure. Both are Phase 2.
+
+**And the timeline question, answered (D-920 Part B).** The 149-year figure is the low-Sharpe *unlevered* floor; the
+honest lever that compresses it is **leverage × stake on a real Sharpe, not a bigger edge** (the residual can't be
+timed). Monte-Carlo of the levered wealth path: at the best Sharpe we have actually built (**0.83**, the VIX-overlay
+risk-parity book), the *confident* setting is **~2× (half-Kelly), drawdown-survivable → £10k → £1M in ~16 years median**;
+full-Kelly (4×) reaches ~11y but at ~100% drawdown and ruin risk — reckless. **Stake is the largest *safe* lever:** the
+same book takes **£100k → ~7y, £250k → ~4y** with zero added risk. To go faster *confidently* needs a higher Sharpe than
+demonstrated, and D-920 says that Sharpe can only come from **diversification across the ~3 independent factors (portfolio
+Sharpe > any component — the one free lunch)** or the intraday horizon — never from timing the residual.
+
 ## 1. The mission, defined so it can actually be reached
 
 Build a systematic, adaptive trading capability that, across instruments/timeframes/sessions, **provably beats random
@@ -114,6 +135,25 @@ deployed systematically." *Kill:* the ladder's own promotion gates.
   confluence edge on (test: does K≥3 clear cost *only* in the top vol tercile). Each dataset re-runs the surface,
   illiquid-class and confluence engines already built (`quality-surface.ts`, `illiquid-altmr.ts`, `confluence.ts`) — the
   evaluation machinery is done and waiting on data. *Kill per dataset:* first honest evaluation sub-fee → closed.
+
+- **D-920 settled the accounting and the timeline (2026-09-15).** Two deliverables shipped: a driver variance
+  decomposition (markets = ~3 independent factors + 67% autocorrelation-free residual) and a leverage-confidence
+  frontier (confident ½-Kelly ~2× on Sharpe 0.83 → £10k→£1M ~16y; £100k→~7y). **This reframes the whole mission:** the
+  fast path is no longer 'find a bigger edge' (the residual is unpredictable) — it is **(1) raise the portfolio Sharpe by
+  diversifying across the ~3 independent factors and every additional independent stream, (2) size at confident
+  half-Kelly, (3) maximise the stake, and (4) mine the one horizon still unaccounted-for: intraday/order-book.**
+
+  **Highest-ROI next actions, in order:**
+  1. **Portfolio-Sharpe via diversification (free lunch, no new data).** Combine the ~3 independent return streams
+     (equity risk-parity/VIX-overlay, a BTC-factor timed book, a rates/carry stream) into one book and measure the
+     *combined* holdable Sharpe vs the 0.83 component — diversification is the only demonstrated way to raise Sharpe, and
+     every 0.1 of Sharpe measurably shortens the timeline. Pre-register; the combined book is the deployable candidate.
+  2. **Intraday/order-book residual (the one un-mined variable).** Re-run the surface + confluence engines on the
+     1-min / bookDepth / metrics mirrors already held for BTC/ETH/SOL — the daily residual is noise, but order-flow at
+     the minute scale is the untested place a real timing edge could live. Kill if the 1-min residual ACF is also ~0.
+  3. **The confident-leverage MICRO rung.** When the combined book clears, size it at half-Kelly and run it on the
+     paper→micro ladder with an immutable forward clock — the frontier says this is where the 149-year path becomes
+     human-scale, and it needs no mythical edge, only disciplined sizing.
 
 ## 5. What "done" means
 
