@@ -165,6 +165,21 @@ deployed systematically." *Kill:* the ladder's own promotion gates.
   allowlist addition (operator action) and carries a low prior after D-921 showed the visible microstructure is the
   bid-ask bounce.
 
+- **D-924/925 (2026-09-15) — the diversification ladder reached Sharpe 1.09, and the last free dataset was acquired and is null.**
+  Adding the third independent factor (a dedicated crypto-momentum sleeve, standalone 0.76, corr ≤0.32) lifted the blend
+  to **Sharpe 1.09 (t 4.46), maxDD −23%** — the ladder is now 0.74 → 0.89 → 1.09 as each of D-920's three factors is
+  added, on the forward clock `fwd-three-factor-blend`. Real-path survivable size (~20% vol): **£10k→£1M ~23y, £100k→~12y,
+  £250k→~7y**. And with the allowlist armed, the last un-acquired free variable — Binance order-book depth + taker order
+  flow — was ingested and tested (D-925): order flow is **contemporaneous, not predictive** (control r=0.49, forward
+  sub-cost bounce), confirming D-921 with real data. **The measurable-variable accounting is now complete across every
+  horizon and every data class held or acquirable free** — factors, intraday, positioning, order-book/flow — all
+  non-timeable beta or sub-cost. The value is the diversified book, not a hidden variable.
+
+  **The path from here is execution, not more search:** (1) the deployable candidate is the 3-factor blend, forward-clocked
+  and sized at survivable ~20% vol; (2) the only remaining lever on the timeline is a *fourth* genuinely independent stream
+  (bond/term-premium carry is the untested candidate — FX carry was dead, but fixed-income carry is a distinct premium) or
+  simply a larger stake; (3) the MICRO rung, when a forward clock promotes.
+
   1. **Portfolio-Sharpe via diversification (free lunch, no new data).** Combine the ~3 independent return streams
      (equity risk-parity/VIX-overlay, a BTC-factor timed book, a rates/carry stream) into one book and measure the
      *combined* holdable Sharpe vs the 0.83 component — diversification is the only demonstrated way to raise Sharpe, and

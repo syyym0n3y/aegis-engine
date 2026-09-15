@@ -34,7 +34,7 @@ const rateAt = (c: string, d: string) => { const r = rates.get(c); if (!r) retur
 const usAt = (d: string) => { let k = d; for (let i = 0; i < 7; i++) { const v = usRate.get(k); if (v !== undefined) return v; k = day(Date.parse(k + "T00:00:00Z") / 1000 - 86400); } return null; };
 // ---- sleeves as daily book returns (equal weight over active assets; each asset vol-scaled to VOL_TARGET) ----
 const isOOS = (d: string) => d >= K.OOS_FROM;
-type Daily = Map<string, number>; const sleeves: Record<string, Daily> = { trend: new Map(), long: new Map(), carry: new Map(), value: new Map() }; const nAct: Record<string, Daily> = { trend: new Map(), long: new Map(), carry: new Map(), value: new Map() };
+type Daily = Map<string, number>; const sleeves: Record<string, Daily> = { trend: new Map(), long: new Map(), carry: new Map(), value: new Map(), cryptomom: new Map() }; const nAct: Record<string, Daily> = { trend: new Map(), long: new Map(), carry: new Map(), value: new Map(), cryptomom: new Map() };
 const add = (s: string, d: string, v: number) => { sleeves[s].set(d, (sleeves[s].get(d) ?? 0) + v); nAct[s].set(d, (nAct[s].get(d) ?? 0) + 1); };
 const LOOK = [21, 63, 126, 252];
 // monthly cross-sectional sleeves need ranks across assets on rebalance days: precompute per asset the signal series
@@ -45,7 +45,7 @@ for (const a of S) {
     const d1 = day(a.ts[i + 1]); const vol = sd(Array.from(a.r.slice(i - 60, i))) * Math.sqrt(252); const scale = vol > 0 ? Math.min(3, +K.VOL_TARGET / vol) : 0;
     let tc = 0, lc = 0;
     if (i - lastReb >= +K.REBAL_D) { lastReb = i; let sgn = 0; for (const L of LOOK) sgn += Math.sign(a.c[i] / a.c[i - L] - 1); sgn /= LOOK.length; const nt = sgn * scale; tc = Math.abs(nt - posT) * cost / 2; posT = nt; const nl = scale; lc = Math.abs(nl - posL) * cost / 2; posL = nl; }
-    add("trend", d1, posT * a.r[i + 1] - tc); add("long", d1, posL * a.r[i + 1] - lc);
+    add("trend", d1, posT * a.r[i + 1] - tc); add("long", d1, posL * a.r[i + 1] - lc); if (a.cls === "crypto") add("cryptomom", d1, posT * a.r[i + 1] - tc);
     if (day(a.ts[i]).slice(8, 10) <= "03" && day(a.ts[i - 1]).slice(0, 7) !== day(a.ts[i]).slice(0, 7)) monthKeys.add(day(a.ts[i]));
   }
 }
@@ -71,10 +71,10 @@ for (const [name, posMap] of [["carry", carryPos], ["value", valuePos]] as [stri
 }
 // ---- OOS series, equal-weight per active asset, risk-parity blend ----
 const series = (s: string) => { const out = new Map<string, number>(); for (const [d, v] of sleeves[s]) if (isOOS(d)) out.set(d, v / Math.max(1, nAct[s].get(d) ?? 1)); return out; };
-const OS: Record<string, Map<string, number>> = { trend: series("trend"), long: series("long"), carry: series("carry"), value: series("value") };
+const OS: Record<string, Map<string, number>> = { trend: series("trend"), long: series("long"), carry: series("carry"), value: series("value"), cryptomom: series("cryptomom") };
 const days = [...OS.trend.keys()].filter((d) => OS.long.has(d)).sort();
 const stats = (x: number[]) => { const mu = mean(x) * 252, vol = sd(x) * Math.sqrt(252); let eq = 0, peak = 0, mdd = 0, uw = 0, maxUw = 0; for (const v of x) { eq += v; if (eq > peak) { peak = eq; uw = 0; } else { uw++; maxUw = Math.max(maxUw, uw); } mdd = Math.min(mdd, eq - peak); } return { mu, vol, sr: vol ? mu / vol : 0, t: tstat(x), mdd, uwY: maxUw / 252, n: x.length }; };
-const names = ["trend", "long", "carry", "value"]; const X: Record<string, number[]> = {}; for (const s of names) X[s] = days.map((d) => OS[s].get(d) ?? 0);
+const names = K.SLEEVES.split(",").includes("cryptomom") ? ["trend", "long", "carry", "value", "cryptomom"] : ["trend", "long", "carry", "value"]; const X: Record<string, number[]> = {}; for (const s of names) X[s] = days.map((d) => OS[s].get(d) ?? 0);
 console.log(`\n==> D-865 MULTI-STRATEGY BLEND — ${S.length} assets, OOS ${K.OOS_FROM}+, ${days.length} days, cost x${K.COST_MULT}`);
 console.log(`  ${"sleeve".padEnd(8)} ${"Sharpe".padStart(7)} ${"t".padStart(6)} ${"%/yr".padStart(6)} ${"vol".padStart(6)} ${"maxDD".padStart(7)} ${"underwater".padStart(11)}`);
 const st: Record<string, ReturnType<typeof stats>> = {}; for (const s of names) { st[s] = stats(X[s]); console.log(`  ${s.padEnd(8)} ${st[s].sr.toFixed(2).padStart(7)} ${st[s].t.toFixed(2).padStart(6)} ${(100 * st[s].mu).toFixed(1).padStart(5)}% ${(100 * st[s].vol).toFixed(1).padStart(5)}% ${(100 * st[s].mdd).toFixed(0).padStart(6)}% ${st[s].uwY.toFixed(1).padStart(9)}y`); }
