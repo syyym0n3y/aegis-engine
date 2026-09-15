@@ -153,6 +153,18 @@ deployed systematically." *Kill:* the ladder's own promotion gates.
   half-Kelly, (3) maximise the stake, and (4) mine the one horizon still unaccounted-for: intraday/order-book.**
 
   **Highest-ROI next actions, in order:**
+- **D-922/923 resolved the diversification test AND the data-completeness question (2026-09-15).** The free lunch is
+  real: the risk-parity blend of trend-following + long-basket gives **Sharpe 0.89 (t 3.65)**, beating the best
+  component 0.74 and the 0.83 ceiling — now on an immutable forward clock (`fwd-canonical-premia-blend`). Real-path
+  drawdown (not the optimistic Monte-Carlo) sets the confident size at ~20% vol → **£10k→£1M ~29y, £100k→~15y,
+  £250k→~9y**. And the last measurable-variable class — options-positioning (CBOE skew/put-call/VVIX, Deribit DVOL) —
+  was tested as a predictor (D-923) and carries **no robust deployable edge**, completing the accounting: across
+  factors, intraday, and positioning, every measurable variable in held data is non-timeable beta or sub-cost. **The
+  thing being sought is not a hidden variable — it is this diversified book, sized survivably, with the largest stake.**
+  The only un-acquired free data with any prior is historical order-book depth (`data.binance.vision`), which needs an
+  allowlist addition (operator action) and carries a low prior after D-921 showed the visible microstructure is the
+  bid-ask bounce.
+
   1. **Portfolio-Sharpe via diversification (free lunch, no new data).** Combine the ~3 independent return streams
      (equity risk-parity/VIX-overlay, a BTC-factor timed book, a rates/carry stream) into one book and measure the
      *combined* holdable Sharpe vs the 0.83 component — diversification is the only demonstrated way to raise Sharpe, and
