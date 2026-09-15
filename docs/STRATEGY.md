@@ -35,6 +35,15 @@ variable that unlocks daily timing. The only places a new variable could still l
 horizon** (the BTC/ETH/SOL microstructure mirrors already in the panel — the daily residual is noise, the 1-min residual
 might not be) and **non-linear / lagged** structure. Both are Phase 2.
 
+**Intraday horizon tested (D-921), and it closes the loop.** The 5m/1m residual of the five major perps *does*
+carry structure the daily residual lacks — significant negative autocorrelation — but it is **0.1–1.5bp, an order of
+magnitude below the 5bp round-trip, and it grows as liquidity falls and after removing BTC beta: it is the bid-ask
+bounce**, the very spread you'd cross to harvest it (the same mechanism that made D-918's illiquid class a mirage). So
+the measurable-variable accounting is now **complete for the data we hold, across both horizons**: every measurable
+variable is either a common-factor beta (not timeable alpha) or sub-fee microstructure. The only genuinely un-tested
+variables are **real order-book depth / order-flow** (only a single snapshot is held — a data-acquisition item) and
+**options / positioning** — which is exactly what Phase 2 acquires.
+
 **And the timeline question, answered (D-920 Part B).** The 149-year figure is the low-Sharpe *unlevered* floor; the
 honest lever that compresses it is **leverage × stake on a real Sharpe, not a bigger edge** (the residual can't be
 timed). Monte-Carlo of the levered wealth path: at the best Sharpe we have actually built (**0.83**, the VIX-overlay
