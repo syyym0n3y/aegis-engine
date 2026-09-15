@@ -64,4 +64,8 @@ const byName = new Map<string, number[]>(); for (const r of rows) if (r.e126 !==
 const nameAvgAll = [...byName.values()].map(mean); const nameAvgLiq = [...byName.entries()].filter(([k]) => (vol.get(k) ?? 0) >= volMed).map(([, v]) => mean(v));
 console.log(`  NAME-CLUSTERED 126d: ALL ${(mean(nameAvgAll)*100).toFixed(1)}% t ${tstat(nameAvgAll).toFixed(2)} over ${nameAvgAll.length} names; LIQUID ${(mean(nameAvgLiq)*100).toFixed(1)}% t ${tstat(nameAvgLiq).toFixed(2)} over ${nameAvgLiq.length} names`);
 await spendTrials({ rest: OWNED, headers: hdr, family: "goingconcern", runId: K.RUN_ID, spent: 6 });
+// D-931: dump the liquid going-concern names (per-name avg 126d excess + $vol) for the borrow-cost measurement
+const dumpRows = [...byName.entries()].map(([sym, v]) => ({ sym, avg_excess_126d: +mean(v).toFixed(4), n: v.length, dollar_vol: Math.round(vol.get(sym) ?? 0), liquid: (vol.get(sym) ?? 0) >= volMed }));
+await Deno.writeTextFile(new URL("../data/d930-liquid-names.json", import.meta.url), JSON.stringify(dumpRows.filter(r => r.liquid), null, 0));
+console.log(`  dumped ${dumpRows.filter(r=>r.liquid).length} liquid names -> data/d930-liquid-names.json`);
 console.log(`\n  READ: negative fwd-excess with |name-t| past ${ceil.ceiling.toFixed(2)} = distress underperformance. Deployable SHORT only if the LIQUID half clears it; else capacity-bound (illiquid-only) = untradeable, at most an AVOID filter.`);

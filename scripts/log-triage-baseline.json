@@ -11,13 +11,15 @@
     "postgres|relation \"public.trd_chain_metrics\" does not exist at character N": 1,
     "postgres|relation \"public.trd_cot_positioning\" does not exist at character N": 1,
     "postgres|relation \"public.trd_driver_register\" does not exist at character N": 3,
+    "postgres|relation \"public.trd_finra_shortvol\" does not exist at character N": 1,
     "postgres|relation \"public.trd_onchain\" does not exist at character N": 1,
     "postgres|relation \"public.trd_onchain_metrics\" does not exist at character N": 1,
     "postgres|relation \"public.trd_paper_marks\" does not exist at character N": 1,
     "postgres|relation \"public.trd_paper_nav\" does not exist at character N": 1,
     "postgres|relation \"public.trd_paper_positions\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_positioning_cot\" does not exist at character N": 1
+    "postgres|relation \"public.trd_positioning_cot\" does not exist at character N": 1,
+    "postgres|relation \"public.trd_shortvol\" does not exist at character N": 1
   },
-  "set": "2026-09-15T11:44:50.180Z",
+  "set": "2026-09-15T23:25:46.597Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }
