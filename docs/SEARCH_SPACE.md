@@ -2,7 +2,7 @@
 
 > Regenerated daily by `scripts/search-space.ts`. D-848 measured the search as 64.1% self-referential; this map is drawn from OUTSIDE the ledger — by counterparty, not by asset class or signal — and then matched to it. The taxonomy is the author's enumeration, not a citation, and is kept open. **A cell reading UNTESTED is a question this programme has never asked, not a market that has been shown efficient.**
 
-**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 6 (1 live) · B4 tested 14 (4 live) · C1 tested 20 (8 live) · C2 tested 11 (7 live) · C3 tested 3 (3 live) · D1 tested 24 (11 live) · D2 tested 16 (5 live) · D4 tested 5 (1 live) · D3 tested 14 (5 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 12 (10 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
+**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 7 (1 live) · B4 tested 14 (4 live) · C1 tested 20 (8 live) · C2 tested 11 (7 live) · C3 tested 3 (3 live) · D1 tested 25 (11 live) · D2 tested 16 (5 live) · D4 tested 5 (1 live) · D3 tested 15 (5 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 14 (10 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
 
 ## A1 — index funds: must trade at rebalance regardless of price
 examples: index inclusion/deletion, close auction imbalance, month-end
@@ -86,6 +86,7 @@ examples: taker imbalance, OI, basis, book depth
 | D-808-flow-metrics | timing | rejected |
 | D-816-equity-depth-flow | timing | rejected |
 | D-820-spx-oi-levels | timing | rejected |
+| D-904-timing-vs-long-basket | portfolio | reference |
 
 ## B4 — analysts / issuers: estimates and guidance move before price finishes
 examples: revisions, earnings drift, going-concern, late filings, non-reliance
@@ -168,7 +169,7 @@ examples: time-series momentum, cross-sectional momentum, breakouts, MTF structu
 | D-765-mtf-fvg | price-action structure | measured |
 | D-763-mtf-liquidity-break | price-action structure | measured |
 | D-766-mtf-setup-battery | D-766-mtf-setup-battery | MEASURED |
-| … | 12 more | |
+| … | 13 more | |
 
 ## D2 — mean-reverters' counterparties: overreact and pay to get out
 examples: reversal, range exhaustion, fades, overnight/intraday
@@ -217,7 +218,7 @@ examples: turn-of-month, day-of-week, settlement stamps, session windows
 | D-808-value-area-levels | timing | rejected |
 | D-816-equity-depth-flow | timing | rejected |
 | D-846b-adjusted-levels-eighths | reliability | measured |
-| … | 2 more | |
+| … | 3 more | |
 
 ## E1 — venues / brokers / issuers: subsidise acquisition per HEAD, not per pound  *(capacity-inverted: pays per head, not per pound)*
 examples: sign-up bonuses, fee rebates, maker rebates, prop-firm payout structure
@@ -250,6 +251,7 @@ examples: ISA/SIPP wrapper, employer match, deposit compounding
 | D-870-timed-risk-parity-classes | book | monitoring |
 | D-872-vol-regime-overlay | book | monitoring |
 | D-894-placeable-vol-premium-sleeve | portfolio | killed |
+| … | 2 more | |
 
 ## F1 — nobody — the process: range/vol is forecastable even when direction is not
 examples: HAR-RV, range persistence, GARCH
