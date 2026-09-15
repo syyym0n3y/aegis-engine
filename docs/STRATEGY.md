@@ -81,14 +81,39 @@ deployed systematically." *Kill:* the ladder's own promotion gates.
   **XMRUSDT × mean-reversion × the asian session, +33bp/trade, beats random, survives cost to ~20bp, and holds out of
   sample** (train +45bp → test +23.5bp). This is the first cell on the record to beat random *and* realistic cost *and*
   hold forward, and it proves conditional confluence finds edges the unconditional average hides.
-- **Phase 1: NOW.** Three concrete targets: (1) **measure XMR's real bid-ask/slippage** — the edge dies at 40bp, so
-  tradeability turns on the actual cost; if it clears, XMR asia mean-reversion is the first live micro candidate. (2)
-  **Systematically search the instrument × setup × session × factor-confluence space** for more cells like XMR — the
-  surface just proved they exist, especially in thin, illiquid, retail-driven markets. (3) **Test whether stacking
-  factors concentrates the trend/momentum real-timing edge past cost.**
-- **Phase 2 (data expansion)** remains scoped by the prior: the current bars are well-mined, so the ROI is in new data
-  classes (microstructure/order-book, options chains) — but Phase 0 shows there is still conditional edge to harvest in
-  the data we already hold before we spend on new data.
+- **Phase 1: RESOLVED (D-918, D-919) — the multi-factor edge is real but sub-cost, and the illiquid class is a mirage.**
+  The three Phase-1 targets are now answered with receipts:
+  1. **Is XMR the head of a deployable illiquid-alt CLASS? No (D-918).** Train-select (positive train mean, frozen) the
+     whole class of illiquid-alt mean-reversion/breakout × session cells, measure the equal-weight portfolio on test at
+     escalating realistic cost. Every cell is net-**negative** by 40bp, and four of five sit at random percentile **<30**
+     — the selected direction is *worse than a coin flip* out of sample. The one percentile-100 cell has a **negative**
+     day-clustered t (a few-days concentration). The huge nominal-net cells (HOME +58, FARTCOIN +59, TUT +109bp) are the
+     **illiquidity premium**, not an edge. XMR individually still clears while its class is worse-than-random — so it is
+     *not* a class artifact; it is either genuine tiny-capacity microstructure or a 1-in-~1000-cell multiple-comparisons
+     survivor, now moved to an **immutable forward clock** (`fwd-xmr-asia-rangefade`) rather than decided by more mining.
+  2. **Does CONFLUENCE lift the timing edge past cost? No, but it carries real information (D-919).** Sweeping K of the 4
+     factors agreeing: on the panel, gross rises monotonically with K (0.38→0.55→**3.77bp**) and K≥2 **beats matched-
+     random** (pctl 100) — so *factor agreement does carry a real signal*, the operator's hypothesis confirmed in the weak
+     sense. But net-of-cost is negative at every K, the day-clustered t at high K is **negative** (the profit is a few
+     heavy-trading trend days, not a robust daily edge), and on the capacity-rich **liquid majors K=3 inverts** to negative
+     gross (agreement marks exhaustion). The multi-factor edge *is* the trend-regime signal already known to be real, to
+     lose to buy-and-hold, and to be sub-cost intraday.
+  3. **XMR real cost:** XMR is a mid-cap (median hourly $vol ~$7M in-sample), whose real perp round-trip is a few bp, well
+     under the ~33bp where its edge dies — so *cost* is not what threatens XMR; *multiple-comparisons* is, which is exactly
+     what the forward clock adjudicates. (A live order-book spread read is a Phase-2 data item.)
+
+  **The honest terminal read of Phase 1:** across the data we hold, there is no broad multi-factor edge that clears cost —
+  the multi-factor signal is real, sub-cost, and regime-concentrated, and the illiquid-alt cells are the uncapturable
+  illiquidity premium. This is *measured*, not assumed. One marginal single-market cell (XMR) is on a forward clock.
+- **Phase 2 (data expansion) is now the live phase — and the pathway is intact, not closed.** Phase 1 did not find a
+  deployable edge in the current bars; it found *where the edge would have to come from*. The decisive open question is
+  **conditional-on-regime at finer resolution**: the confluence signal is real and beats random but concentrates in trend
+  days — so the Phase-2 datasets with the highest ROI are the ones that resolve regime and microstructure the 1h bars
+  cannot: (a) **sub-1h / tick + order-book** (does confluence clear cost with tighter holds inside a high-vol regime, and
+  what is the real spread on the thin cells); (b) **a realized/implied volatility-regime series** to condition the
+  confluence edge on (test: does K≥3 clear cost *only* in the top vol tercile). Each dataset re-runs the surface,
+  illiquid-class and confluence engines already built (`quality-surface.ts`, `illiquid-altmr.ts`, `confluence.ts`) — the
+  evaluation machinery is done and waiting on data. *Kill per dataset:* first honest evaluation sub-fee → closed.
 
 ## 5. What "done" means
 
