@@ -177,8 +177,11 @@ deployed systematically." *Kill:* the ladder's own promotion gates.
 
   **The path from here is execution, not more search:** (1) the deployable candidate is the 3-factor blend, forward-clocked
   and sized at survivable ~20% vol; (2) the only remaining lever on the timeline is a *fourth* genuinely independent stream
-  (bond/term-premium carry is the untested candidate — FX carry was dead, but fixed-income carry is a distinct premium) or
-  simply a larger stake; (3) the MICRO rung, when a forward clock promotes.
+  — but every classic 4th premium is now confirmed dead in this data: FX carry (−0.44), value (−0.26), **bond/term-premium
+  carry (D-731b re-run: null, t 1.18)**, and the variance-risk premium (D-574/575). So **1.09 is the honest ceiling of
+  held-data diversification**, and further Sharpe needs genuinely new independent alpha we do not have. The realistic
+  levers are therefore (a) a **larger stake** (the largest safe compressor of the timeline) and (b) the **MICRO rung** when
+  the `fwd-three-factor-blend` clock promotes. The search for a hidden edge is complete; the work from here is execution.
 
   1. **Portfolio-Sharpe via diversification (free lunch, no new data).** Combine the ~3 independent return streams
      (equity risk-parity/VIX-overlay, a BTC-factor timed book, a rates/carry stream) into one book and measure the
