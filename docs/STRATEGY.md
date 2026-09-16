@@ -1,10 +1,51 @@
-# STRATEGY — the open pathway to the edge (living document, last acted 2026-09-15)
+# STRATEGY — the reverse-engineered pathway (synthesis 2026-09-16)
 
-> This replaces the earlier "make the money elsewhere" synthesis. That synthesis was premature: it reasoned about the
-> edge we had *measured* rather than searching the edge we had *not yet mapped*. The operator is right — we have never
-> built a comprehensive evaluation of our trading across the whole market surface, benchmarked against random. Until we
-> have, "there is no edge" is an unproven claim, and this document is the pathway that proves or finds it. I act on this
-> until the mission is achieved.
+> Big picture, compiled across D-917..D-932 and the full data stack (19,728 deep-panel instruments, 14,579 macro
+> series / 1.06M rows, 287k COT, 3.9M short-interest, 10.8M fails-to-deliver, 655k FX-hourly). Every conclusion below
+> is reverse-engineered from a pre-registered test with receipts.
+
+## What the whole arc proved (reverse-engineered)
+1. **Markets at our horizons/instruments are ~3 factors + unpredictable noise (D-920).** 32.8% of the median
+   instrument's variance is common-factor beta (equity market, BTC, rates); the 67% residual has ~zero autocorrelation.
+2. **Every single-variable timing edge is sub-cost or decays out of sample** — surface (D-917), confluence (D-919),
+   intraday order-flow = bid-ask bounce (D-921/925), positioning/options (D-923), cross-instrument lead-lag (D-927),
+   on-chain (D-928), attention (D-929). The residual cannot be timed cheaply.
+3. **The only things that work are structural, not predictive:**
+   - **Diversification across independent premia — the free lunch.** Sharpe ladder as each independent factor is added:
+     **trend 0.74 -> +long 0.89 -> +crypto-momentum 1.09 -> +going-concern short 1.60** (D-922/924/932).
+   - **Leverage** on that Sharpe (bounded by drawdown, not edge).
+   - **Stake** — the largest *safe* compressor of the timeline.
+4. **The breakthrough (D-930/931/932): the going-concern distress SHORT.** The first strong cross-sectional edge in
+   this program that does NOT die in the liquid tercile (it strengthens: liquid 126d excess -24.6%, t -8.5). Borrow
+   survives on the non-crowded majority (~40%/yr net). As a 4th sleeve it lifts the blend 1.09 -> **1.60**, cuts maxDD
+   -23% -> -15%, and HALVES time-underwater 3.8y -> **1.7y**. Real, independent (max |corr| 0.12), forward-clocked.
+
+## The honest timeline (measured, not hoped) — 4-sleeve blend Sharpe 1.60
+| start | -> £1M, survivable (~40% vol, DD -60%) | -> £1M, full-Kelly (RUINOUS) |
+|---|---|---|
+| a coffee (£5) | ~25 years | ~9 years |
+| £10k | ~9 years | ~3.5 years |
+| £250k | ~2.8 years | ~1.1 years |
+
+**"Coffee -> £1M in a year" is arithmetically impossible with the best edge ever built here.** It requires either a
+starting stake of ~£273k-610k, or ~9-25 years from a coffee. A coffee compounded for one year at the highest *survivable*
+rate is ~£8; at ruinous full-Kelly, ~£18 -- not £1M. The path that promises £1M in a year from a coffee is the 45x
+grid in the operator's screenshot, whose hidden float we reconstructed at -£400-700k: it does not compress time, it
+deletes the account. **The real lever is STAKE x the 1.60 book x survivable sizing -- and that reaches £1M in YEARS.**
+
+## The pathway forward (act on this)
+1. **Run the forward clocks to promotion** -- fwd-fourfactor-blend-gcshort (the 1.60 book) is the single most valuable
+   pending fact; it only matures with time. The 3-sleeve book is already live on paper (D-926).
+2. **Verify the gcshort tail** -- its standalone maxDD is -92% (squeeze risk); measure realized borrow + cover slippage
+   and cap the sleeve's drawdown before any live sizing.
+3. **Maximise the stake** -- from £250k the survivable path to £1M is ~3 years; from a coffee it is ~25. Stake is the
+   lever, not a mythical edge.
+4. **Keep the coverage discipline** (COVERAGE LAW) -- broad now; the productive frontier is not more data classes
+   (all lands sub-cost) but the going-concern short's live deployment and a live forward feed.
+
+---
+
+## (Earlier working notes, retained as history)
 
 ## 0. What we honestly know, and the real open question
 
