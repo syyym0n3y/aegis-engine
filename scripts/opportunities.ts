@@ -17,11 +17,14 @@ for (let i = 0; i < meta.length; i += 40) { const page = meta.slice(i, i + 40);
     const c = b.map((x) => x[4]); const n = c.length; const px = c[n - 1];
     // TSMOM: blended sign over 21/63/126/252d, strength normalised by trailing vol
     const rets: number[] = []; for (let k = n - 63; k < n; k++) rets.push(Math.log(c[k] / c[k - 1])); const vol = sd(rets) * Math.sqrt(252);
+    // ATR(14) — the D-934 exit unit: target/stop at +/- 2*ATR
+    let atrv = 0; for (let k = n - 14; k < n; k++) { const tr = Math.max(b[k][2] - b[k][3], Math.abs(b[k][2] - b[k - 1][4]), Math.abs(b[k][3] - b[k - 1][4])); atrv += tr; } atrv /= 14;
     let sig = 0; for (const L of [21, 63, 126, 252]) sig += Math.sign(c[n - 1] / c[n - 1 - L] - 1); sig /= 4;
     const strength = sig * (c[n - 1] / c[n - 1 - 126] - 1) / (vol || 1); // signed momentum / vol
     if (Math.abs(sig) < 0.5) continue; // require agreement
-    const dir = sig > 0 ? "LONG" : "SHORT"; const atr = vol / Math.sqrt(252) * px; // ~daily $ move
-    opps.push({ sym: r.symbol, cls: r.asset_class, dir, signal: strength, px, vol: +(vol * 100).toFixed(0), entry: px, target: +(px * (dir === "LONG" ? 1 + 2 * vol / Math.sqrt(252) * Math.sqrt(21) : 1 - 2 * vol / Math.sqrt(252) * Math.sqrt(21))).toFixed(2), stop: +(px * (dir === "LONG" ? 1 - vol / Math.sqrt(252) * Math.sqrt(21) : 1 + vol / Math.sqrt(252) * Math.sqrt(21))).toFixed(2) });
+    const dir = sig > 0 ? "LONG" : "SHORT"; const twoATR = 2 * atrv;
+    opps.push({ sym: r.symbol, cls: r.asset_class, dir, signal: strength, px, vol: +(vol * 100).toFixed(0), entry: px,
+      target: +(dir === "LONG" ? px + twoATR : px - twoATR).toFixed(2), stop: +(dir === "LONG" ? px - twoATR : px + twoATR).toFixed(2) });
   }
 }
 const longs = opps.filter((o) => o.dir === "LONG").sort((a, b) => Math.abs(b.signal) - Math.abs(a.signal)).slice(0, +K.TOPN);
@@ -47,6 +50,7 @@ if (K.SIZE === "1") {
   const wh = { ...hdr, "Content-Type": "application/json" } as Record<string, string>;
   const port = { dormant: true, spec_id: "opportunities-book", decision: "operator-sized", as_of: new Date().toISOString().slice(0, 10), wallet_gbp: +K.WALLET, target_vol: +K.TARGET_VOL,
     gross_exposure_gbp: gross, net_exposure_gbp: net, gross_leverage: lev, n_positions: sized.length,
+    exit_rule: "2xATR profit-target / 2xATR stop (D-934); on hit -> exit and redeploy capital to the next-highest-signal validated setup",
     positions: sized.map((x) => ({ sym: x.sym, cls: x.cls, dir: x.dir, entry: x.px, gbp: x.gbp, units: x.units, vol_pct: x.vol, risk_pct: x.risk_pct, target: x.target, stop: x.stop })),
     honest_note: "DORMANT paper portfolio, £0 real. Risk-parity sizing to ~" + (100 * +K.TARGET_VOL) + "% portfolio vol; each position ~equal risk. Claude never executes — the operator arms and fills manually. The wallet grows across MANY small both-direction trades, not one; do not upsize any single line." };
   // idempotent per day: replace today's opportunities-book snapshot
@@ -60,7 +64,7 @@ const today = new Date().toISOString().slice(0, 10);
 const md = `# Current opportunities — ${today}
 
 > What the validated 4-sleeve book (D-932, Sharpe 1.60) says to trade NOW, both directions, across the global panel.
-> Signal = blended 21/63/126/252d trend, vol-normalised. Target/stop are volatility-scaled (2σ/1σ over ~21 trading days).
+> Signal = blended 21/63/126/252d trend, vol-normalised. Target and stop are **2xATR** (D-934: the exit that wins on capital-velocity — caps the tail, frees capital fastest).
 > This is the systematic entry/exit for "one trade at a time" — the edge is the DIRECTION + diversification, not the timing.
 > DORMANT / paper only. Claude never executes; the operator arms and fills manually.
 
@@ -80,7 +84,7 @@ hold ~126 days or to a profit target; net ~40%/yr on the borrowable subset. Run 
 
 ## How to use (the operator's loop)
 1. Pick the highest-|signal| trade with favourable conditions, long or short.
-2. Enter at market; set the volatility-scaled profit-target and stop above.
+2. Enter at market; set the 2xATR profit-target and stop above (the D-934 validated exit).
 3. On target or stop, exit and rotate to the next highest-signal setup.
 4. Size each trade small (the wallet grows across many trades, not one bet) — the 4-sleeve book's edge is diversification.
 `;
