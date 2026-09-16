@@ -2,7 +2,7 @@
 
 > Regenerated daily by `scripts/search-space.ts`. D-848 measured the search as 64.1% self-referential; this map is drawn from OUTSIDE the ledger — by counterparty, not by asset class or signal — and then matched to it. The taxonomy is the author's enumeration, not a citation, and is kept open. **A cell reading UNTESTED is a question this programme has never asked, not a market that has been shown efficient.**
 
-**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 7 (1 live) · B4 tested 14 (4 live) · C1 tested 20 (8 live) · C2 tested 11 (7 live) · C3 tested 3 (3 live) · D1 tested 25 (11 live) · D2 tested 16 (5 live) · D4 tested 5 (1 live) · D3 tested 15 (5 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 14 (10 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
+**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 11 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 8 (1 live) · B4 tested 17 (4 live) · C1 tested 21 (8 live) · C2 tested 11 (7 live) · C3 tested 3 (3 live) · D1 tested 26 (11 live) · D2 tested 17 (5 live) · D4 tested 6 (1 live) · D3 tested 15 (5 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 14 (10 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
 
 ## A1 — index funds: must trade at rebalance regardless of price
 examples: index inclusion/deletion, close auction imbalance, month-end
@@ -87,6 +87,7 @@ examples: taker imbalance, OI, basis, book depth
 | D-816-equity-depth-flow | timing | rejected |
 | D-820-spx-oi-levels | timing | rejected |
 | D-904-timing-vs-long-basket | portfolio | reference |
+| D-925 | attribution | descriptive |
 
 ## B4 — analysts / issuers: estimates and guidance move before price finishes
 examples: revisions, earnings drift, going-concern, late filings, non-reliance
@@ -105,7 +106,7 @@ examples: revisions, earnings drift, going-concern, late filings, non-reliance
 | accounting-red-flags | nonreliance | killed |
 | delisting-notices | nonreliance | killed |
 | D-762-activist-13d | event (equity) | measured |
-| … | 2 more | |
+| … | 5 more | |
 
 ## C1 — hedgers: pay a premium to shed variance
 examples: variance risk premium, skew, term structure, hedging pressure (COT/TFF)
@@ -124,7 +125,7 @@ examples: variance risk premium, skew, term structure, hedging pressure (COT/TFF
 | tff-sign-replication | tff | killed |
 | vrp-straddle-model | vol | killed |
 | crypto-vrp | vol | monitoring |
-| … | 8 more | |
+| … | 9 more | |
 
 ## C2 — carry payers: pay to hold the wrong side of a rate gap
 examples: FX carry, funding carry, basis carry, dividend carry
@@ -169,7 +170,7 @@ examples: time-series momentum, cross-sectional momentum, breakouts, MTF structu
 | D-765-mtf-fvg | price-action structure | measured |
 | D-763-mtf-liquidity-break | price-action structure | measured |
 | D-766-mtf-setup-battery | D-766-mtf-setup-battery | MEASURED |
-| … | 13 more | |
+| … | 14 more | |
 
 ## D2 — mean-reverters' counterparties: overreact and pay to get out
 examples: reversal, range exhaustion, fades, overnight/intraday
@@ -188,7 +189,7 @@ examples: reversal, range exhaustion, fades, overnight/intraday
 | D-764-psl-fade | price-action structure | monitoring |
 | D-809-poc-pressure-delta | timing | rejected |
 | D-866-trend-placeable-retail | book | killed |
-| … | 4 more | |
+| … | 5 more | |
 
 ## D4 — cross-instrument laggards: one instrument moves first and the other catches up
 examples: lead-lag, spillover, leader/follower at hourly resolution
@@ -200,6 +201,7 @@ examples: lead-lag, spillover, leader/follower at hourly resolution
 | xasset-hourly-leadlag | ml | killed |
 | D-763-mtf-liquidity-break | price-action structure | measured |
 | D-862-hourly-leadlag | timing | killed |
+| D-927 | attribution | descriptive |
 
 ## D3 — seasonal / calendar: predictable timing of flows
 examples: turn-of-month, day-of-week, settlement stamps, session windows
