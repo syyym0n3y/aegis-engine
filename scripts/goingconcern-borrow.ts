@@ -1,13 +1,13 @@
 // D-931 — borrow-cost measurement on the 297 liquid going-concern names. Is the short live, or avoid-filter-only?
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials } from "../supabase/functions/_shared/trial-ledger.ts";
-const K = declareKnobs("goingconcern-borrow", [{ name: "EDGE_ANN", def: "45.8", note: "annualized gross short excess %/yr (D-930 126d -22.9% x2)" }, { name: "RUN_ID", def: "D-931-goingconcern-borrow-cost" }]);
+const K = declareKnobs("goingconcern-borrow", [{ name: "EDGE_ANN", def: "45.8", note: "annualized gross short excess %/yr (D-930 126d -22.9% x2)" }, { name: "RUN_ID", def: "D-931-goingconcern-borrow-cost" }, { name: "NAMES", def: "d930-liquid-names.json", note: "which liquid-names dump to price borrow on (D-936: d936-distress-liquid-names.json for the combined universe)" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "gb", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
 const med = (a: number[]) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
-const names: { sym: string; avg_excess_126d: number }[] = JSON.parse(await Deno.readTextFile(new URL("../data/d930-liquid-names.json", import.meta.url)));
+const names: { sym: string; avg_excess_126d: number }[] = JSON.parse(await Deno.readTextFile(new URL(`../data/${K.NAMES}`, import.meta.url)));
 const syms = names.map((n) => n.sym);
 const inList = (a: string[]) => `(${a.map((s) => encodeURIComponent(s)).join(",")})`;
 // 1) direct borrow_fee (latest per name) — chunk the series query
@@ -32,7 +32,7 @@ if (fees.length) { const net = fees.map((f) => +K.EDGE_ANN - f); const clr = net
 let hardSI = 0, ftdFlag = 0, noSignal = 0;
 const dcs: number[] = [];
 for (const s of syms) { const d = si.get(s); if (d) dcs.push(d.dc); if (d && d.dc >= 5) hardSI++; if ((ftd.get(s) ?? 0) > 0) ftdFlag++; if (!feeSeries.has(s) && !si.has(s)) noSignal++; }
-console.log(`\n  BORROW-SCARCITY (all 297): median days-to-cover ${med(dcs).toFixed(1)}; ${hardSI} names days-cover>=5 (crowded short = pricey borrow); ${ftdFlag} names with recent fails-to-deliver (borrow scarcity); ${noSignal} with NO borrow/SI signal (likely delisted -> unshortable now)`);
+console.log(`\n  BORROW-SCARCITY (all ${syms.length}): median days-to-cover ${med(dcs).toFixed(1)}; ${hardSI} names days-cover>=5 (crowded short = pricey borrow); ${ftdFlag} names with recent fails-to-deliver (borrow scarcity); ${noSignal} with NO borrow/SI signal (likely delisted -> unshortable now)`);
 // positive control: distress names' short-crowding vs a random equity sample
 const rnd = (await q(`trd_bars_deep?asset_class=eq.equity&select=symbol&limit=400`) as { symbol: string }[]).map((r) => r.symbol);
 const rdc: number[] = [];

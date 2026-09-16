@@ -56,4 +56,9 @@ console.log(`    LIQUID:   ${(mean(nameAvgLiq)*100).toFixed(1)}%  t ${tstat(name
 console.log(`    ILLIQUID: ${(mean(nameAvgIll)*100).toFixed(1)}%  t ${tstat(nameAvgIll).toFixed(2)}  (${nameAvgIll.length})`);
 console.log(`  OVERLAP with going-concern liquid names: ${gcOverlap}/${wanted.length} (${(100*gcOverlap/wanted.length).toFixed(0)}%) -> ${gcOverlap/wanted.length < 0.6 ? "ADDITIVE population" : "REDUNDANT with going-concern"}`);
 await spendTrials({ rest: OWNED, headers: hdr, family: "latefiling", runId: K.RUN_ID, spent: 3 });
+// D-936: dump raw panel-present NT late-filing events (ticker+date) for the combined distress-sleeve builder.
+// distress-sleeve.ts unions these with the going-concern events and builds the single deployable short (d931).
+const ntEvents = hits.filter((h) => px.has(h.ticker)).map((h) => ({ ticker: h.ticker, date: h.date }));
+await Deno.writeTextFile(new URL("../data/d935-nt-events.json", import.meta.url), JSON.stringify(ntEvents));
+console.log(`  dumped ${ntEvents.length} panel NT late-filing events (${new Set(ntEvents.map(e=>e.ticker)).size} names) -> data/d935-nt-events.json`);
 console.log(`\n  READ: significant-negative liquid excess past the ceiling + <60% overlap = an additive/earlier distress sleeve; else weaker or redundant.`);

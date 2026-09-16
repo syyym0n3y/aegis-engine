@@ -5,7 +5,8 @@
     "postgrest|500 /trd_macro_series": 1,
     "postgres|ON CONFLICT DO UPDATE command cannot affect row a second time": 1,
     "postgres|column trd_bars_deep.kind does not exist at character N": 1,
-    "postgres|column trd_lineage.created_at does not exist at character N": 1,
+    "postgres|column trd_forward_rules.spec_id does not exist at character N": 1,
+    "postgres|column trd_lineage.lead_id does not exist at character N": 1,
     "postgres|column trd_macro_series.series_id does not exist at character N": 1,
     "postgres|relation \"public.trd_book_nav\" does not exist at character N": 1,
     "postgres|relation \"public.trd_chain_metrics\" does not exist at character N": 1,
@@ -18,8 +19,9 @@
     "postgres|relation \"public.trd_paper_nav\" does not exist at character N": 1,
     "postgres|relation \"public.trd_paper_positions\" does not exist at character N": 1,
     "postgres|relation \"public.trd_positioning_cot\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_shortvol\" does not exist at character N": 1
+    "postgres|relation \"public.trd_shortvol\" does not exist at character N": 1,
+    "postgres|window function lead requires an OVER clause at character N": 1
   },
-  "set": "2026-09-15T23:25:46.597Z",
+  "set": "2026-09-16T08:28:58.282Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }

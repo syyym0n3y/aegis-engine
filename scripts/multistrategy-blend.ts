@@ -110,12 +110,13 @@ if (K.PAPER === "1") {
   const computable = fwd.length >= 20;
   const elapsed = fwdIdx.length;
   const metricVal = computable && fs ? fs.sr : null;
+  const nsl = names.length;
   const note = killed ? `KILL SWITCH engaged — book frozen, not marked (${fwd.length} fwd days).`
-    : !computable ? `${fwd.length} forward days since ${K.PAPER_START}; below 20, not-yet-computable (rule floors: promote at n>=250 & Sharpe>0.76 & >2-sleeve, kill if <=2-sleeve forward).`
-    : `${fwd.length} forward days since ${K.PAPER_START}: realized 3-sleeve blend Sharpe ${fs!.sr.toFixed(2)}, ${(100 * fs!.mu).toFixed(1)}%/yr, maxDD ${(100 * fs!.mdd).toFixed(0)}%.`;
+    : !computable ? `${fwd.length} forward days since ${K.PAPER_START}; below 20, not-yet-computable (numeric two-sided promote/kill floors live in trd_forward_rules[${K.PAPER_RULE}]).`
+    : `${fwd.length} forward days since ${K.PAPER_START}: realized ${nsl}-sleeve blend Sharpe ${fs!.sr.toFixed(2)}, ${(100 * fs!.mu).toFixed(1)}%/yr, maxDD ${(100 * fs!.mdd).toFixed(0)}%.`;
   if (!killed) {
     const mk = await fetch(`${OWNED}/trd_forward_marks`, { method: "POST", headers: { ...wh, Prefer: "return=minimal" }, // plumbing-ok: audited — status checked next line
-      body: JSON.stringify({ rule_id: K.PAPER_RULE, elapsed_days: elapsed, metric_name: "fwd_sharpe_3sleeve", metric_value: metricVal, n_obs: fwd.length, note, matured: false }) });
+      body: JSON.stringify({ rule_id: K.PAPER_RULE, elapsed_days: elapsed, metric_name: `fwd_sharpe_${nsl}sleeve`, metric_value: metricVal, n_obs: fwd.length, note, matured: false }) });
     console.log(`\n  PAPER MARK -> trd_forward_marks[${K.PAPER_RULE}]: ${mk.status} — ${note}`);
   } else console.log(`\n  PAPER: ${note}`);
   // one-time DORMANT position snapshot (idempotent: only if no three-factor snapshot exists)
@@ -123,12 +124,13 @@ if (K.PAPER === "1") {
   if (!existing.length) {
     const sleeveW = names.filter((s) => BL.includes(s)).map((s) => { const win = X[s].slice(-60); const v = sd(win) * Math.sqrt(252); return { sleeve: s, inv_vol_weight: v > 0 ? 1 / v : 0, standalone_sharpe: +st[s].sr.toFixed(2) }; });
     const wtot = sleeveW.reduce((a, x) => a + x.inv_vol_weight, 0) || 1; sleeveW.forEach((x) => x.inv_vol_weight = +(x.inv_vol_weight / wtot).toFixed(3));
-    const book = { dormant: true, spec_id: K.PAPER_SPEC, decision: K.PAPER_SPEC === "four-factor-blend" ? "D-932" : "D-924", forward_rule: K.PAPER_RULE, inception: K.PAPER_START,
-      construction: "risk-parity blend of trend (multi-class TSMOM 21/63/126/252d) + long (vol-matched basket) + cryptomom (crypto-only TSMOM), equal-risk-parity from trailing 60d sleeve vol, 10% vol target, per-class costs, 5-day rebalance",
+    const decMap: Record<string, string> = { "four-factor-blend": "D-932", "distress-blend-combined": "D-936", "three-factor-blend": "D-924" };
+    const book = { dormant: true, spec_id: K.PAPER_SPEC, decision: decMap[K.PAPER_SPEC] ?? "D-924", forward_rule: K.PAPER_RULE, inception: K.PAPER_START,
+      construction: `risk-parity blend of ${names.join(" + ")}, equal-risk-parity from trailing 60d sleeve vol, ${(+K.VOL_TARGET*100)}% vol target, per-class costs, ${K.REBAL_D}-day rebalance` + (names.includes("gcshort") ? " — gcshort = the D-936 COMBINED distress short (going-concern UNION late-filing)" : ""),
       sleeve_weights: sleeveW, insample_sharpe: +B.sr.toFixed(2), insample_t: +B.t.toFixed(2), insample_maxDD: +(100 * B.mdd).toFixed(0), insample_underwater_y: +B.uwY.toFixed(1),
       target_vol: +K.VOL_TARGET, confident_vol_note: "size at ~20% vol (real-path DD -46%); 40% vol is ruinous",
-      honest_note: "DORMANT paper book, $0 at risk, NEVER auto-armed — arming is the operator's act after the staged gates. In-sample 1.09 is DESCRIPTIVE (post-hoc sleeve subset); the forward clock fwd-three-factor-blend validates it. Claude never executes; manual fills only at MICRO." };
+      honest_note: `DORMANT paper book, $0 at risk, NEVER auto-armed — arming is the operator's act after the staged gates. In-sample Sharpe ${B.sr.toFixed(2)} is DESCRIPTIVE (post-hoc sleeve subset; distress tail is squeeze-optimistic under flat 10% borrow); the forward clock ${K.PAPER_RULE} validates it. Claude never executes; manual fills only at MICRO.` };
     const ins = await fetch(`${OWNED}/trd_positions`, { method: "POST", headers: { ...wh, Prefer: "return=minimal" }, body: JSON.stringify({ book }) }); // plumbing-ok: audited — status checked next line
-    console.log(`  PAPER SNAPSHOT -> trd_positions (DORMANT three-factor-blend): ${ins.status}`);
-  } else console.log(`  PAPER SNAPSHOT: three-factor-blend already stood up (id ${existing[0].id}) — idempotent, not duplicated.`);
+    console.log(`  PAPER SNAPSHOT -> trd_positions (DORMANT ${K.PAPER_SPEC}): ${ins.status}`);
+  } else console.log(`  PAPER SNAPSHOT: ${K.PAPER_SPEC} already stood up (id ${existing[0].id}) — idempotent, not duplicated.`);
 }
