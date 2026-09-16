@@ -2,7 +2,7 @@
 // global panel. Long/short trend across every placeable instrument + crypto momentum + the live going-concern shorts.
 // Operator-facing: grow the wallet one trade at a time, with a systematic entry and exit. Writes docs/OPPORTUNITIES.md.
 import { declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
-const K = declareKnobs("opportunities", [{ name: "TOPN", def: "8" }]);
+const K = declareKnobs("opportunities", [{ name: "TOPN", def: "8" }, { name: "WALLET", def: "10000", note: "paper wallet £" }, { name: "TARGET_VOL", def: "0.20", note: "survivable portfolio vol" }, { name: "SIZE", def: "1", note: "1 = size into the paper book + write DORMANT portfolio" }, { name: "MAX_LEV", def: "3", note: "hard cap on gross leverage (survivable)" }, { name: "MAX_POS_PCT", def: "20", note: "max % of wallet in any one position" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "op", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -29,7 +29,33 @@ const shorts = opps.filter((o) => o.dir === "SHORT").sort((a, b) => Math.abs(b.s
 // live going-concern shorts (recent filings)
 const gc = await fetch('https://efts.sec.gov/LATEST/search-index?q=%22substantial+doubt%22+%22going+concern%22&forms=10-K&startdt=2026-06-16&enddt=2026-09-16', { headers: { "User-Agent": "aegis-research (research@aegis.local)" } }).then((r) => r.json()).catch(() => ({}));
 const gcN = (gc as { hits?: { total?: { value?: number } } }).hits?.total?.value ?? 0;
-const fmt = (o: Opp) => `| ${o.sym} | ${o.cls} | ${o.dir} | ${o.signal.toFixed(2)} | ${o.px} | ${o.vol}% | ${o.target} | ${o.stop} |`;
+// ---- SIZE each opportunity into the paper book (risk-parity to the wallet at target vol) ----
+const book = [...longs, ...shorts]; const N = book.length || 1;
+const perRisk = +K.TARGET_VOL / Math.sqrt(N); // equal risk per position (uncorrelated approx)
+type Sized = Opp & { gbp: number; units: number; risk_pct: number };
+const sized: Sized[] = book.map((o) => { const v = o.vol / 100; const w = v > 0 ? perRisk / v : 0; const gbp = +(+K.WALLET * w).toFixed(0); return { ...o, gbp, units: +(gbp / o.px).toFixed(4), risk_pct: +(perRisk * 100).toFixed(1) }; });
+// cap any single position at MAX_POS_PCT of wallet (no line dominates — low-vol instruments gap)
+const posCap = +K.WALLET * +K.MAX_POS_PCT / 100;
+for (const x of sized) if (x.gbp > posCap) { x.gbp = +posCap.toFixed(0); x.units = +(x.gbp / x.px).toFixed(4); }
+// cap gross leverage at MAX_LEV (scale the whole book down if it exceeds — the survivable discipline)
+let gross = sized.reduce((s, x) => s + Math.abs(x.gbp), 0);
+const cap = +K.WALLET * +K.MAX_LEV;
+if (gross > cap) { const f = cap / gross; for (const x of sized) { x.gbp = +(x.gbp * f).toFixed(0); x.units = +(x.gbp / x.px).toFixed(4); } gross = sized.reduce((s, x) => s + Math.abs(x.gbp), 0); }
+const net = sized.reduce((s, x) => s + (x.dir === "LONG" ? x.gbp : -x.gbp), 0);
+const lev = +(gross / +K.WALLET).toFixed(2);
+if (K.SIZE === "1") {
+  const wh = { ...hdr, "Content-Type": "application/json" } as Record<string, string>;
+  const port = { dormant: true, spec_id: "opportunities-book", decision: "operator-sized", as_of: new Date().toISOString().slice(0, 10), wallet_gbp: +K.WALLET, target_vol: +K.TARGET_VOL,
+    gross_exposure_gbp: gross, net_exposure_gbp: net, gross_leverage: lev, n_positions: sized.length,
+    positions: sized.map((x) => ({ sym: x.sym, cls: x.cls, dir: x.dir, entry: x.px, gbp: x.gbp, units: x.units, vol_pct: x.vol, risk_pct: x.risk_pct, target: x.target, stop: x.stop })),
+    honest_note: "DORMANT paper portfolio, £0 real. Risk-parity sizing to ~" + (100 * +K.TARGET_VOL) + "% portfolio vol; each position ~equal risk. Claude never executes — the operator arms and fills manually. The wallet grows across MANY small both-direction trades, not one; do not upsize any single line." };
+  // idempotent per day: replace today's opportunities-book snapshot
+  const ex = await q(`trd_positions?book->>spec_id=eq.opportunities-book&book->>as_of=eq.${port.as_of}&select=id`) as { id: number }[];
+  if (!ex.length) { const r = await fetch(`${OWNED}/trd_positions`, { method: "POST", headers: { ...wh, Prefer: "return=minimal" }, body: JSON.stringify({ book: port }) }); console.log(`  SIZED PORTFOLIO -> trd_positions (DORMANT opportunities-book ${port.as_of}): ${r.status}`); } // plumbing-ok: audited — status checked
+  else console.log(`  SIZED PORTFOLIO: today's opportunities-book already recorded (id ${ex[0].id}) — idempotent`);
+  console.log(`  wallet £${K.WALLET}, target vol ${(100*+K.TARGET_VOL).toFixed(0)}%, ${sized.length} positions, gross £${gross.toLocaleString()}, net £${net.toLocaleString()}, leverage ${lev}x`);
+}
+const sz = new Map(sized.map((s) => [s.dir + s.sym, s])); const fmt = (o: Opp) => { const s = sz.get(o.dir + o.sym); return `| ${o.sym} | ${o.cls} | ${o.dir} | ${o.signal.toFixed(2)} | ${o.px} | £${s?.gbp ?? 0} | ${s?.units ?? 0} | ${o.target} | ${o.stop} |`; };
 const today = new Date().toISOString().slice(0, 10);
 const md = `# Current opportunities — ${today}
 
@@ -39,13 +65,13 @@ const md = `# Current opportunities — ${today}
 > DORMANT / paper only. Claude never executes; the operator arms and fills manually.
 
 ## LONG (trend up)
-| symbol | class | dir | signal | px | vol | profit-target | stop |
-|---|---|---|---|---|---|---|---|
+| symbol | class | dir | signal | px | £size | units | profit-target | stop |
+|---|---|---|---|---|---|---|---|---|
 ${longs.map(fmt).join("\n")}
 
 ## SHORT (trend down)
-| symbol | class | dir | signal | px | vol | profit-target | stop |
-|---|---|---|---|---|---|---|---|
+| symbol | class | dir | signal | px | £size | units | profit-target | stop |
+|---|---|---|---|---|---|---|---|---|
 ${shorts.map(fmt).join("\n")}
 
 ## SHORT — going-concern distress (the persistent edge, D-930/931)
