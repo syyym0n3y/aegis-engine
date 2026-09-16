@@ -68,4 +68,19 @@ await spendTrials({ rest: OWNED, headers: hdr, family: "goingconcern", runId: K.
 const dumpRows = [...byName.entries()].map(([sym, v]) => ({ sym, avg_excess_126d: +mean(v).toFixed(4), n: v.length, dollar_vol: Math.round(vol.get(sym) ?? 0), liquid: (vol.get(sym) ?? 0) >= volMed }));
 await Deno.writeTextFile(new URL("../data/d930-liquid-names.json", import.meta.url), JSON.stringify(dumpRows.filter(r => r.liquid), null, 0));
 console.log(`  dumped ${dumpRows.filter(r=>r.liquid).length} liquid names -> data/d930-liquid-names.json`);
+// D-932: daily going-concern SHORT sleeve (market-neutral vs IWM, 10%/yr borrow on the short leg), LIQUID names only
+const BORROW_D = 0.10 / 252;
+const liqSet = new Set([...vol.entries()].filter(([, v]) => v >= volMed).map(([k]) => k));
+const flagBy = new Map<string, number[]>();
+for (const h of hits) { if (!liqSet.has(h.ticker) || !px.has(h.ticker)) continue; const d0 = Math.floor(Date.parse(h.date + "T00:00:00Z") / 86400000); (flagBy.get(h.ticker) ?? flagBy.set(h.ticker, []).get(h.ticker)!).push(d0); }
+const iwmDays = [...iwmC.keys()].sort((a, b) => a - b);
+const gcDaily: { d: string; ret: number }[] = [];
+for (let k = 1; k < iwmDays.length; k++) { const tt = iwmDays[k], tp = iwmDays[k - 1]; const rIWM = Math.log(iwmC.get(tt)! / iwmC.get(tp)!); const shorts: number[] = [];
+  for (const [tk, fds] of flagBy) { if (!fds.some((fd) => tt > fd && tt <= fd + 180)) continue; const m = px.get(tk)!; const p0 = m.get(tp), p1 = m.get(tt); if (p0 && p1) shorts.push(Math.log(p1 / p0)); }
+  const ret = shorts.length >= 3 ? -mean(shorts) + rIWM - BORROW_D : 0;
+  gcDaily.push({ d: new Date(tt * 86400000).toISOString().slice(0, 10), ret }); }
+const active = gcDaily.filter((x) => x.ret !== 0).length;
+await Deno.writeTextFile(new URL("../data/d931-gcshort-daily.json", import.meta.url), JSON.stringify(gcDaily));
+{ const gr = gcDaily.map((x) => x.ret); const gmu = mean(gr) * 252; const gsd = Math.sqrt(gr.reduce((s, x) => s + (x - mean(gr)) ** 2, 0) / Math.max(1, gr.length - 1)) * Math.sqrt(252);
+  console.log(`  GCSHORT sleeve: ${active} active days, standalone ${(gmu*100).toFixed(1)}%/yr, vol ${(gsd*100).toFixed(1)}%, Sharpe ${(gmu/(gsd||1)).toFixed(2)} (net 10% borrow) -> data/d931-gcshort-daily.json`); }
 console.log(`\n  READ: negative fwd-excess with |name-t| past ${ceil.ceiling.toFixed(2)} = distress underperformance. Deployable SHORT only if the LIQUID half clears it; else capacity-bound (illiquid-only) = untradeable, at most an AVOID filter.`);

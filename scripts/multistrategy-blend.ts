@@ -72,9 +72,11 @@ for (const [name, posMap] of [["carry", carryPos], ["value", valuePos]] as [stri
 // ---- OOS series, equal-weight per active asset, risk-parity blend ----
 const series = (s: string) => { const out = new Map<string, number>(); for (const [d, v] of sleeves[s]) if (isOOS(d)) out.set(d, v / Math.max(1, nAct[s].get(d) ?? 1)); return out; };
 const OS: Record<string, Map<string, number>> = { trend: series("trend"), long: series("long"), carry: series("carry"), value: series("value"), cryptomom: series("cryptomom") };
+const _SLgc = () => K.SLEEVES.split(",").includes("gcshort");
+if (_SLgc()) { const gc = JSON.parse(await Deno.readTextFile(new URL("../data/d931-gcshort-daily.json", import.meta.url))) as { d: string; ret: number }[]; OS.gcshort = new Map(gc.filter((x) => isOOS(x.d)).map((x) => [x.d, x.ret])); }
 const days = [...OS.trend.keys()].filter((d) => OS.long.has(d)).sort();
 const stats = (x: number[]) => { const mu = mean(x) * 252, vol = sd(x) * Math.sqrt(252); let eq = 0, peak = 0, mdd = 0, uw = 0, maxUw = 0; for (const v of x) { eq += v; if (eq > peak) { peak = eq; uw = 0; } else { uw++; maxUw = Math.max(maxUw, uw); } mdd = Math.min(mdd, eq - peak); } return { mu, vol, sr: vol ? mu / vol : 0, t: tstat(x), mdd, uwY: maxUw / 252, n: x.length }; };
-const names = K.SLEEVES.split(",").includes("cryptomom") ? ["trend", "long", "carry", "value", "cryptomom"] : ["trend", "long", "carry", "value"]; const X: Record<string, number[]> = {}; for (const s of names) X[s] = days.map((d) => OS[s].get(d) ?? 0);
+const _SL = K.SLEEVES.split(","); const names = ["trend", "long", "carry", "value", ...(_SL.includes("cryptomom") ? ["cryptomom"] : []), ...(_SL.includes("gcshort") ? ["gcshort"] : [])]; const X: Record<string, number[]> = {}; for (const s of names) X[s] = days.map((d) => OS[s].get(d) ?? 0);
 console.log(`\n==> D-865 MULTI-STRATEGY BLEND — ${S.length} assets, OOS ${K.OOS_FROM}+, ${days.length} days, cost x${K.COST_MULT}`);
 console.log(`  ${"sleeve".padEnd(8)} ${"Sharpe".padStart(7)} ${"t".padStart(6)} ${"%/yr".padStart(6)} ${"vol".padStart(6)} ${"maxDD".padStart(7)} ${"underwater".padStart(11)}`);
 const st: Record<string, ReturnType<typeof stats>> = {}; for (const s of names) { st[s] = stats(X[s]); console.log(`  ${s.padEnd(8)} ${st[s].sr.toFixed(2).padStart(7)} ${st[s].t.toFixed(2).padStart(6)} ${(100 * st[s].mu).toFixed(1).padStart(5)}% ${(100 * st[s].vol).toFixed(1).padStart(5)}% ${(100 * st[s].mdd).toFixed(0).padStart(6)}% ${st[s].uwY.toFixed(1).padStart(9)}y`); }
