@@ -15,6 +15,7 @@ const K = declareKnobs("volatility-anomaly", [
   { name: "QUINTILE", def: "5", note: "long low / short high 1/QUINTILE within the liquid tercile" },
   { name: "COST_BP", def: "20" }, { name: "MIN_NAMES", def: "100" }, { name: "MAX_NAMES", def: "2200", note: "cap the universe by history length (memory) — the anomaly is a LIQUID-name effect, microcaps are not needed and OOM the loader" },
   { name: "RUN_ID", def: "D-939-volatility-anomaly" }, { name: "DUMP", def: "0", note: "1 = write d939-<signal>-daily.json for the blend correlation test" },
+  { name: "DUMP_SHORTS", def: "0", note: "1 = write d939-<signal>-shorts.json (recent short-leg names) for the INSTRUMENT-LAW borrow gate" }, { name: "SHORT_REBS", def: "24", note: "how many recent rebalances define the representative short-leg universe" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "va", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
@@ -98,5 +99,17 @@ if (K.DUMP === "1") {
       if (lr.length < 5 || sr.length < 5) continue; daily.push({ d: new Date(d * 86400000).toISOString().slice(0, 10), ret: mean(lr) - mean(sr) }); } }
   await Deno.writeTextFile(new URL(`../data/d939-${K.SIGNAL}-daily.json`, import.meta.url), JSON.stringify(daily));
   console.log(`  dumped ${daily.length} daily L-S returns -> data/d939-${K.SIGNAL}-daily.json`);
+}
+if (K.DUMP_SHORTS === "1") {
+  // the representative short-leg universe = names appearing in the high-signal short leg over the last SHORT_REBS
+  const last = rebs.slice(-Math.min(+K.SHORT_REBS, rebs.length)); const freq = new Map<string, number>();
+  for (const r of last) for (const s of r.shorts) freq.set(s, (freq.get(s) ?? 0) + 1);
+  const dLast = rebs[rebs.length - 1].d;
+  const rows = [...freq.entries()].map(([sym, n]) => ({ sym, appearances: n, dollar_vol: Math.round(dvTrail(sym, dLast)), avg_excess_126d: 0 }));
+  await Deno.writeTextFile(new URL(`../data/d939-${K.SIGNAL}-shorts.json`, import.meta.url), JSON.stringify(rows));
+  // break-even borrow = the short leg's own annualized excess (what it earns by the names underperforming)
+  const shortAnnPct = -mean(shortEx) * ann * 100; // positive: how much the short leg gains per year from underperformance
+  console.log(`  dumped ${rows.length} recent short-leg names (last ${last.length} rebs) -> data/d939-${K.SIGNAL}-shorts.json`);
+  console.log(`  SHORT-LEG break-even borrow = its annualized excess ~= ${shortAnnPct.toFixed(1)}%/yr (borrow below this = the short is economic)`);
 }
 console.log(`\n  READ: a quality-AND-independent 5th sleeve needs low correlation to the four sleeves AND to help the blend; a low-vol short is DEFENSIVE so watch its correlation to the distress short (both profit when bad names fall).`);
