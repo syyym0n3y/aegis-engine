@@ -16,8 +16,8 @@ TO_Y=2026 deno run --allow-net --allow-env --allow-write ../scripts/goingconcern
 TO_Y=2026 deno run --allow-net --allow-env --allow-write ../scripts/latefiling-test.ts >/dev/null 2>&1 || true
 # D-936: combine both triggers into the single deployable distress short (d931 = the "gcshort" sleeve the blend reads)
 deno run --allow-net --allow-env --allow-read --allow-write ../scripts/distress-sleeve.ts 2>&1 | grep -E "==>|late-filing added|combined liquid" || true
-echo "=== refresh IVOL anomaly sleeve (D-939, held bars) — the 5th sleeve ==="
-SIGNAL=ivol MAX_NAMES=3000 DUMP=1 deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read --allow-write ../scripts/volatility-anomaly.ts 2>&1 | grep -E "NET |CLEARS" | grep -vE "deno \+|0x0000" || true
+echo "=== refresh IVOL anomaly sleeve (D-939, held bars; D-939c borrow avoid-filter days_cover<5) — the 5th sleeve ==="
+SIGNAL=ivol MAX_NAMES=3000 CROWD_DC=5 DUMP=1 deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read --allow-write ../scripts/volatility-anomaly.ts 2>&1 | grep -E "NET |CLEARS|AVOID-FILTER" | grep -vE "deno \+|0x0000" || true
 echo "=== FIVE-sleeve blend paper mark (D-939 distress+IVOL, DORMANT \$0) — the deployable candidate ==="
 PAPER=1 SLEEVES=trend,long,cryptomom,gcshort,ivol PAPER_START=2026-09-16 PAPER_RULE=fwd-distress-ivol-blend-5 PAPER_SPEC=distress-ivol-blend-5 deno run --allow-net --allow-env --allow-read --allow-write ../scripts/multistrategy-blend.ts 2>&1 | grep -E "PAPER|RISK-PARITY BLEND at" || true
 echo "=== refresh current opportunities (both directions, global) ==="

@@ -14,6 +14,8 @@ const K = declareKnobs("volatility-anomaly", [
   { name: "REBAL_D", def: "21", note: "trading-day rebalance/hold step" },
   { name: "QUINTILE", def: "5", note: "long low / short high 1/QUINTILE within the liquid tercile" },
   { name: "COST_BP", def: "20" }, { name: "MIN_NAMES", def: "100" }, { name: "MAX_NAMES", def: "2200", note: "cap the universe by history length (memory) — the anomaly is a LIQUID-name effect, microcaps are not needed and OOM the loader" },
+  { name: "CROWD_DC", def: "0", note: "D-939c AVOID-FILTER: if >0, drop SHORT-leg names whose point-in-time days-to-cover >= this (crowded short = expensive/unavailable borrow); the borrowable-majority deployment rule" },
+  { name: "SI_LAG_D", def: "14", note: "publication lag on short-interest: a settlement is knowable ~T+10bd, so only use SI with settlement <= d - SI_LAG_D (no look-ahead)" },
   { name: "RUN_ID", def: "D-939-volatility-anomaly" }, { name: "DUMP", def: "0", note: "1 = write d939-<signal>-daily.json for the blend correlation test" },
   { name: "DUMP_SHORTS", def: "0", note: "1 = write d939-<signal>-shorts.json (recent short-leg names) for the INSTRUMENT-LAW borrow gate" }, { name: "SHORT_REBS", def: "24", note: "how many recent rebalances define the representative short-leg universe" },
 ]);
@@ -35,6 +37,25 @@ for (let i = 0; i < meta.length; i += 40) { const page = meta.slice(i, i + 40);
 }
 console.log(`loaded ${S.size} equity names with >=400 bars`);
 assertNonEmpty("priced names", [...S.keys()], 100);
+// D-939c: point-in-time short-interest (days_cover) for the SHORT-leg borrow avoid-filter (held historical SI)
+const siByName = new Map<string, { d: number; dc: number }[]>();
+const CROWD = +K.CROWD_DC, SILAG = +K.SI_LAG_D;
+if (CROWD > 0) {
+  const syms = [...S.keys()];
+  for (let i = 0; i < syms.length; i += 60) {
+    const rows = await q(`trd_short_interest?symbol=in.(${syms.slice(i, i + 60).map(encodeURIComponent).join(",")})&select=symbol,settlement,days_cover`) as { symbol: string; settlement: string; days_cover: number }[];
+    for (const r of rows) { if (!r.settlement || r.days_cover == null) continue; const s = r.symbol.toUpperCase(); (siByName.get(s) ?? siByName.set(s, []).get(s)!).push({ d: Math.floor(Date.parse(r.settlement + "T00:00:00Z") / 86400000), dc: +r.days_cover }); }
+  }
+  for (const [, a] of siByName) a.sort((x, y) => x.d - y.d);
+  console.log(`  AVOID-FILTER on: short-interest for ${siByName.size}/${S.size} names; drop short-leg names with as-of days_cover >= ${CROWD} (SI publication lag ${SILAG}d, point-in-time)`);
+}
+let siMissing = 0;
+const borrowOK = (sym: string, d: number): boolean => {
+  if (CROWD <= 0) return true;
+  const a = siByName.get(sym); if (!a || !a.length) { siMissing++; return true; } // no SI on a liquid name (rare) -> treat borrowable, counted
+  let dc: number | null = null; for (const x of a) { if (x.d <= d - SILAG) dc = x.dc; else break; }
+  return dc === null ? true : dc < CROWD;
+};
 // 2) common calendar + equal-weight market factor (for IVOL residual)
 const allDays = new Set<number>(); for (const b of S.values()) for (const x of b) allDays.add(x.d);
 const cal = [...allDays].sort((a, z) => a - z);
@@ -64,10 +85,14 @@ for (let ci = 260; ci < cal.length; ci += RB) { const d = cal[ci];
   const volMed = [...cand.map((c) => c.dv)].sort((a, z) => a - z)[Math.floor(cand.length / 2)];
   const liq = cand.filter((c) => c.dv >= volMed); if (liq.length < 50) continue;
   liq.sort((a, z) => a.sig - z.sig); const k = Math.max(5, Math.floor(liq.length / QN));
-  rebs.push({ d, longs: liq.slice(0, k).map((c) => c.s), shorts: liq.slice(-k).map((c) => c.s), liqN: liq.length });
+  const longs = liq.slice(0, k).map((c) => c.s); // long leg borrows nothing — unfiltered
+  // short leg = highest-signal names that pass the borrow filter (walk down from the top), taking k
+  const shorts: string[] = []; for (let j = liq.length - 1; j >= 0 && shorts.length < k; j--) if (borrowOK(liq[j].s, d)) shorts.push(liq[j].s);
+  if (shorts.length < 5) continue;
+  rebs.push({ d, longs, shorts, liqN: liq.length });
 }
 console.log(`\n==> D-939 VOLATILITY ANOMALY [${K.SIGNAL}] — long LOW / short HIGH within liquid tercile; ceiling ${ceil.ceiling.toFixed(2)}`);
-console.log(`   ${rebs.length} rebalances, mean liquid universe ${Math.round(mean(rebs.map((r) => r.liqN)))}, leg ${Math.round(mean(rebs.map((r) => r.longs.length)))}`);
+console.log(`   ${rebs.length} rebalances, mean liquid universe ${Math.round(mean(rebs.map((r) => r.liqN)))}, leg ${Math.round(mean(rebs.map((r) => r.longs.length)))}${CROWD > 0 ? ` | AVOID-FILTER active (days_cover < ${CROWD}); short leg = borrowable-majority` : ""}`);
 assertNonEmpty("rebalances", rebs, 24);
 // 5) forward returns (long-short + per-leg excess vs liquid universe = BENCHMARK LAW) + liquidity halves + turnover
 const fwd = (s: string, d0: number, d1: number): number | null => { const p0 = pxAt(s, d0), p1 = pxAt(s, d1); return p0 && p1 ? Math.log(p1 / p0) : null; };
