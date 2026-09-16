@@ -74,9 +74,11 @@ const series = (s: string) => { const out = new Map<string, number>(); for (cons
 const OS: Record<string, Map<string, number>> = { trend: series("trend"), long: series("long"), carry: series("carry"), value: series("value"), cryptomom: series("cryptomom") };
 const _SLgc = () => K.SLEEVES.split(",").includes("gcshort");
 if (_SLgc()) { const gc = JSON.parse(await Deno.readTextFile(new URL("../data/d931-gcshort-daily.json", import.meta.url))) as { d: string; ret: number }[]; OS.gcshort = new Map(gc.filter((x) => isOOS(x.d)).map((x) => [x.d, x.ret])); }
+const _SLiv = () => K.SLEEVES.split(",").includes("ivol"); // D-939 idiosyncratic-vol anomaly candidate sleeve
+if (_SLiv()) { const iv = JSON.parse(await Deno.readTextFile(new URL("../data/d939-ivol-daily.json", import.meta.url))) as { d: string; ret: number }[]; OS.ivol = new Map(iv.filter((x) => isOOS(x.d)).map((x) => [x.d, x.ret])); }
 const days = [...OS.trend.keys()].filter((d) => OS.long.has(d)).sort();
 const stats = (x: number[]) => { const mu = mean(x) * 252, vol = sd(x) * Math.sqrt(252); let eq = 0, peak = 0, mdd = 0, uw = 0, maxUw = 0; for (const v of x) { eq += v; if (eq > peak) { peak = eq; uw = 0; } else { uw++; maxUw = Math.max(maxUw, uw); } mdd = Math.min(mdd, eq - peak); } return { mu, vol, sr: vol ? mu / vol : 0, t: tstat(x), mdd, uwY: maxUw / 252, n: x.length }; };
-const _SL = K.SLEEVES.split(","); const names = ["trend", "long", "carry", "value", ...(_SL.includes("cryptomom") ? ["cryptomom"] : []), ...(_SL.includes("gcshort") ? ["gcshort"] : [])]; const X: Record<string, number[]> = {}; for (const s of names) X[s] = days.map((d) => OS[s].get(d) ?? 0);
+const _SL = K.SLEEVES.split(","); const names = ["trend", "long", "carry", "value", ...(_SL.includes("cryptomom") ? ["cryptomom"] : []), ...(_SL.includes("gcshort") ? ["gcshort"] : []), ...(_SL.includes("ivol") ? ["ivol"] : [])]; const X: Record<string, number[]> = {}; for (const s of names) X[s] = days.map((d) => OS[s].get(d) ?? 0);
 console.log(`\n==> D-865 MULTI-STRATEGY BLEND — ${S.length} assets, OOS ${K.OOS_FROM}+, ${days.length} days, cost x${K.COST_MULT}`);
 console.log(`  ${"sleeve".padEnd(8)} ${"Sharpe".padStart(7)} ${"t".padStart(6)} ${"%/yr".padStart(6)} ${"vol".padStart(6)} ${"maxDD".padStart(7)} ${"underwater".padStart(11)}`);
 const st: Record<string, ReturnType<typeof stats>> = {}; for (const s of names) { st[s] = stats(X[s]); console.log(`  ${s.padEnd(8)} ${st[s].sr.toFixed(2).padStart(7)} ${st[s].t.toFixed(2).padStart(6)} ${(100 * st[s].mu).toFixed(1).padStart(5)}% ${(100 * st[s].vol).toFixed(1).padStart(5)}% ${(100 * st[s].mdd).toFixed(0).padStart(6)}% ${st[s].uwY.toFixed(1).padStart(9)}y`); }
@@ -124,7 +126,7 @@ if (K.PAPER === "1") {
   if (!existing.length) {
     const sleeveW = names.filter((s) => BL.includes(s)).map((s) => { const win = X[s].slice(-60); const v = sd(win) * Math.sqrt(252); return { sleeve: s, inv_vol_weight: v > 0 ? 1 / v : 0, standalone_sharpe: +st[s].sr.toFixed(2) }; });
     const wtot = sleeveW.reduce((a, x) => a + x.inv_vol_weight, 0) || 1; sleeveW.forEach((x) => x.inv_vol_weight = +(x.inv_vol_weight / wtot).toFixed(3));
-    const decMap: Record<string, string> = { "four-factor-blend": "D-932", "distress-blend-combined": "D-936", "three-factor-blend": "D-924" };
+    const decMap: Record<string, string> = { "four-factor-blend": "D-932", "distress-blend-combined": "D-936", "distress-ivol-blend-5": "D-939", "three-factor-blend": "D-924" };
     const book = { dormant: true, spec_id: K.PAPER_SPEC, decision: decMap[K.PAPER_SPEC] ?? "D-924", forward_rule: K.PAPER_RULE, inception: K.PAPER_START,
       construction: `risk-parity blend of ${names.join(" + ")}, equal-risk-parity from trailing 60d sleeve vol, ${(+K.VOL_TARGET*100)}% vol target, per-class costs, ${K.REBAL_D}-day rebalance` + (names.includes("gcshort") ? " — gcshort = the D-936 COMBINED distress short (going-concern UNION late-filing)" : ""),
       sleeve_weights: sleeveW, insample_sharpe: +B.sr.toFixed(2), insample_t: +B.t.toFixed(2), insample_maxDD: +(100 * B.mdd).toFixed(0), insample_underwater_y: +B.uwY.toFixed(1),
