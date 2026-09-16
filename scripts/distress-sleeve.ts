@@ -5,7 +5,7 @@
 // trigger set it sits in), and builds ONE market-neutral short. Reports gc-only vs combined so the marginal
 // contribution of late-filing is measured, not assumed.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
-const K = declareKnobs("distress-sleeve", [{ name: "BORROW", def: "0.10" }, { name: "WINDOW", def: "180" }, { name: "MINN", def: "3" }, { name: "STALE_H", def: "0", note: "if >0, refuse event dumps older than this many hours (upstream test scripts silently stopped)" }, { name: "WRITE", def: "combined", note: "which series to write to d931 (the deployable sleeve): combined | gconly — gconly is for the marginal-contribution isolation only" }]);
+const K = declareKnobs("distress-sleeve", [{ name: "BORROW", def: "0.10" }, { name: "WINDOW", def: "180" }, { name: "MINN", def: "3" }, { name: "STALE_H", def: "0", note: "if >0, refuse event dumps older than this many hours (upstream test scripts silently stopped)" }, { name: "WRITE", def: "combined", note: "which series to write to d931 (the deployable sleeve): combined | gconly — gconly is for the marginal-contribution isolation only" }, { name: "INCLUDE_AUDITOR", def: "0", note: "1 = fold D-937 auditor-resignation events (d937-auditor-events.json) in as a 3rd trigger — only after its marginal blend contribution is measured positive" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "ds", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -26,9 +26,11 @@ if (staleH > 0) for (const p of [gcPath.pathname, ntPath.pathname]) {
 const gcEv = JSON.parse(await Deno.readTextFile(gcPath)) as Ev[];
 const ntEv = JSON.parse(await Deno.readTextFile(ntPath)) as Ev[];
 assertNonEmpty("going-concern events", gcEv, 50); assertNonEmpty("late-filing events", ntEv, 30);
-console.log(`events: going-concern ${gcEv.length} (${new Set(gcEv.map(e=>e.ticker)).size} names), late-filing ${ntEv.length} (${new Set(ntEv.map(e=>e.ticker)).size} names)`);
+let auEv: Ev[] = [];
+if (K.INCLUDE_AUDITOR === "1") { auEv = JSON.parse(await Deno.readTextFile(new URL("../data/d937-auditor-events.json", import.meta.url))) as Ev[]; assertNonEmpty("auditor-resignation events", auEv, 30); }
+console.log(`events: going-concern ${gcEv.length} (${new Set(gcEv.map(e=>e.ticker)).size} names), late-filing ${ntEv.length} (${new Set(ntEv.map(e=>e.ticker)).size} names)${K.INCLUDE_AUDITOR === "1" ? `, auditor-resign ${auEv.length} (${new Set(auEv.map(e=>e.ticker)).size} names)` : ""}`);
 // tag each event with its source so we can build gc-only vs combined
-const tagged = [...gcEv.map((e) => ({ ...e, src: "gc" as const })), ...ntEv.map((e) => ({ ...e, src: "nt" as const }))];
+const tagged = [...gcEv.map((e) => ({ ...e, src: "gc" as const })), ...ntEv.map((e) => ({ ...e, src: "nt" as const })), ...auEv.map((e) => ({ ...e, src: "au" as const }))];
 const allTickers = [...new Set(tagged.map((e) => e.ticker))];
 console.log(`combined distress universe: ${allTickers.length} unique names (gc ${new Set(gcEv.map(e=>e.ticker)).size} + nt ${new Set(ntEv.map(e=>e.ticker)).size}, overlap ${new Set(gcEv.map(e=>e.ticker)).size + new Set(ntEv.map(e=>e.ticker)).size - allTickers.length})`);
 // 2) load bars + benchmark; liquidity on the UNION
@@ -53,7 +55,7 @@ function buildSleeve(evs: Ev[]): { d: string; ret: number }[] {
   return out;
 }
 const gcOnly = buildSleeve(gcEv);
-const combined = buildSleeve([...gcEv, ...ntEv]);
+const combined = buildSleeve([...gcEv, ...ntEv, ...auEv]);
 // dump the combined LIQUID names (with which trigger(s) flag each) so goingconcern-borrow.ts can price borrow on the
 // FULL deployable universe — INSTRUMENT LAW for the NT-only names the D-931 gate never measured.
 const gcNames = new Set(gcEv.map((e) => e.ticker)), ntNames = new Set(ntEv.map((e) => e.ticker));
