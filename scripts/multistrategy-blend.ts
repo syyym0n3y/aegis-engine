@@ -95,6 +95,14 @@ await spendTrials({ rest: OWNED, headers: hdr, family: "multistrategy", runId: K
 const ceil = await preregCeiling({ rest: OWNED, headers: hdr, preregId: K.RUN_ID });
 console.log(`\n  RISK-PARITY BLEND at ${(100 * +K.VOL_TARGET).toFixed(0)}% vol: Sharpe ${B.sr.toFixed(2)}, t ${B.t.toFixed(2)}, ${(100 * B.mu).toFixed(1)}%/yr, maxDD ${(100 * B.mdd).toFixed(0)}%, underwater ${B.uwY.toFixed(1)}y; best single sleeve Sharpe ${Math.max(...names.map((s) => st[s].sr)).toFixed(2)}; max |corr| ${maxCorr.toFixed(2)}`);
 console.log(`  LEVERAGE TABLE (blend): ` + [0.10, 0.20, 0.40].map((tv) => { const x = blend.map((v) => v * tv / (bv || 1)); const s2 = stats(x); const g = s2.mu - s2.vol * s2.vol / 2; return `${(100 * tv).toFixed(0)}% vol -> ${(100 * s2.mu).toFixed(1)}%/yr, DD ${(100 * s2.mdd).toFixed(0)}%, 10x in ${g > 0 ? (Math.log(10) / g).toFixed(1) + "y" : "never"}`; }).join(" | "));
+// D-913 HONESTY: the Sharpe above is on RAW returns; leverage multiplies the EXCESS-over-rf Sharpe, and financing the
+// levered book costs rf on the borrowed notional. Report the fully-funded excess Sharpe (subtract daily rf from the
+// book) as the CONSERVATIVE leverageable number — the truth sits between it and the raw Sharpe by how self-financing
+// the net exposure is (market-neutral sleeves add nothing to subtract; the long/trend legs carry rf).
+{ const rfBlend = days.map((d, i) => { const r = usAt(d); return blend[i] - (r === null ? 0 : (r / 100) / 252); });
+  const rfCov = days.filter((d) => usAt(d) !== null).length;
+  const Bx = stats(rfBlend.map((v) => v * (+K.VOL_TARGET / (bv || 1)))); const rfAnn = 100 * mean(days.map((d) => { const r = usAt(d); return r === null ? 0 : (r / 100); }));
+  console.log(`  D-913 EXCESS (fully-funded, rf~${rfAnn.toFixed(1)}%/yr, cov ${rfCov}/${days.length}): Sharpe ${Bx.sr.toFixed(2)} vs raw ${B.sr.toFixed(2)} — leverageable Sharpe is in [${Bx.sr.toFixed(2)}, ${B.sr.toFixed(2)}]; Kelly g uses the excess, so 10x-in-Ny above is OPTIMISTIC by the rf gap`); }
 const ok = B.sr >= 1.0 && B.t >= ceil.ceiling && B.mdd > -0.25 && B.sr > Math.max(...names.map((s) => st[s].sr)) && maxCorr < 0.5;
 console.log(`  ceiling ${ceil.ceiling.toFixed(3)}. VERDICT (D-865 rule): ${ok ? "SUPPORTED" : `NULL — ${[B.sr < 1.0 && `blend Sharpe ${B.sr.toFixed(2)} < 1.0`, B.t < ceil.ceiling && `t ${B.t.toFixed(2)} < ceiling`, B.mdd <= -0.25 && "maxDD worse than -25%", B.sr <= Math.max(...names.map((s) => st[s].sr)) && "does not beat the best sleeve", maxCorr >= 0.5 && "a sleeve pair correlates >= 0.5"].filter(Boolean).join("; ")}`}`);
 
