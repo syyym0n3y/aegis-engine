@@ -36,6 +36,11 @@ const usAt = (d: string) => { let k = d; for (let i = 0; i < 7; i++) { const v =
 const isOOS = (d: string) => d >= K.OOS_FROM;
 type Daily = Map<string, number>; const sleeves: Record<string, Daily> = { trend: new Map(), long: new Map(), carry: new Map(), value: new Map(), cryptomom: new Map() }; const nAct: Record<string, Daily> = { trend: new Map(), long: new Map(), carry: new Map(), value: new Map(), cryptomom: new Map() };
 const add = (s: string, d: string, v: number) => { sleeves[s].set(d, (sleeves[s].get(d) ?? 0) + v); nAct[s].set(d, (nAct[s].get(d) ?? 0) + 1); };
+// D-913 financing: track each directional sleeve's NET signed position (sum over assets) — financing is charged on
+// net-long DOLLAR exposure (borrowed cash), which only the long-only + net-trend legs carry; dollar-neutral
+// long-shorts (carry/value/gcshort/ivol) borrow no net cash and cost ~0 to finance regardless of beta.
+const netPos: Record<string, Daily> = { trend: new Map(), long: new Map(), cryptomom: new Map() };
+const addNet = (s: string, d: string, p: number) => netPos[s].set(d, (netPos[s].get(d) ?? 0) + p);
 const LOOK = [21, 63, 126, 252];
 // monthly cross-sectional sleeves need ranks across assets on rebalance days: precompute per asset the signal series
 const monthKeys = new Set<string>();
@@ -46,6 +51,7 @@ for (const a of S) {
     let tc = 0, lc = 0;
     if (i - lastReb >= +K.REBAL_D) { lastReb = i; let sgn = 0; for (const L of LOOK) sgn += Math.sign(a.c[i] / a.c[i - L] - 1); sgn /= LOOK.length; const nt = sgn * scale; tc = Math.abs(nt - posT) * cost / 2; posT = nt; const nl = scale; lc = Math.abs(nl - posL) * cost / 2; posL = nl; }
     add("trend", d1, posT * a.r[i + 1] - tc); add("long", d1, posL * a.r[i + 1] - lc); if (a.cls === "crypto") add("cryptomom", d1, posT * a.r[i + 1] - tc);
+    addNet("trend", d1, posT); addNet("long", d1, posL); if (a.cls === "crypto") addNet("cryptomom", d1, posT);
     if (day(a.ts[i]).slice(8, 10) <= "03" && day(a.ts[i - 1]).slice(0, 7) !== day(a.ts[i]).slice(0, 7)) monthKeys.add(day(a.ts[i]));
   }
 }
@@ -89,20 +95,27 @@ const crash = (from: string, to: string) => { const ix = days.map((d, i) => [d, 
 console.log(`  CRASHES: ${crash("2020-02-20", "2020-03-31")} | ${crash("2022-01-01", "2022-10-31")}`);
 // risk parity: weight_i = 1/vol_i over trailing 60d, renormalised to 10% book vol daily
 const BL = K.SLEEVES.split(","); if (BL.length < 4) console.log(`\n  SUBSET ${BL.join("+")} — DESCRIPTIVE ONLY, not the registered blend (D-455: chosen after the sleeves were seen).`);
-const blend: number[] = []; for (let i = 0; i < days.length; i++) { const w: number[] = names.map((s) => { const win = X[s].slice(Math.max(0, i - 60), i); const v = win.length > 20 ? sd(win) * Math.sqrt(252) : 0; return v > 0 && BL.includes(s) ? 1 / v : 0; }); const tot = w.reduce((a, b) => a + b, 0) || 1; let v = 0; names.forEach((s, j) => v += (w[j] / tot) * X[s][i]); blend.push(v); }
+// net-exposure series per directional sleeve (same normalisation as the return series in series())
+const netExpX: Record<string, number[]> = {}; for (const s of ["trend", "long", "cryptomom"]) if (names.includes(s)) netExpX[s] = days.map((d) => (netPos[s].get(d) ?? 0) / Math.max(1, nAct[s].get(d) ?? 1));
+const blend: number[] = []; const blendNet: number[] = []; for (let i = 0; i < days.length; i++) { const w: number[] = names.map((s) => { const win = X[s].slice(Math.max(0, i - 60), i); const v = win.length > 20 ? sd(win) * Math.sqrt(252) : 0; return v > 0 && BL.includes(s) ? 1 / v : 0; }); const tot = w.reduce((a, b) => a + b, 0) || 1; let v = 0, ne = 0; names.forEach((s, j) => { v += (w[j] / tot) * X[s][i]; ne += (w[j] / tot) * (netExpX[s]?.[i] ?? 0); }); blend.push(v); blendNet.push(ne); }
 const bv = sd(blend) * Math.sqrt(252); const lev = +K.VOL_TARGET / (bv || 1); const B = stats(blend.map((v) => v * lev));
 await spendTrials({ rest: OWNED, headers: hdr, family: "multistrategy", runId: K.RUN_ID, spent: names.length + 1 });
 const ceil = await preregCeiling({ rest: OWNED, headers: hdr, preregId: K.RUN_ID });
 console.log(`\n  RISK-PARITY BLEND at ${(100 * +K.VOL_TARGET).toFixed(0)}% vol: Sharpe ${B.sr.toFixed(2)}, t ${B.t.toFixed(2)}, ${(100 * B.mu).toFixed(1)}%/yr, maxDD ${(100 * B.mdd).toFixed(0)}%, underwater ${B.uwY.toFixed(1)}y; best single sleeve Sharpe ${Math.max(...names.map((s) => st[s].sr)).toFixed(2)}; max |corr| ${maxCorr.toFixed(2)}`);
 console.log(`  LEVERAGE TABLE (blend): ` + [0.10, 0.20, 0.40].map((tv) => { const x = blend.map((v) => v * tv / (bv || 1)); const s2 = stats(x); const g = s2.mu - s2.vol * s2.vol / 2; return `${(100 * tv).toFixed(0)}% vol -> ${(100 * s2.mu).toFixed(1)}%/yr, DD ${(100 * s2.mdd).toFixed(0)}%, 10x in ${g > 0 ? (Math.log(10) / g).toFixed(1) + "y" : "never"}`; }).join(" | "));
 // D-913 HONESTY: the Sharpe above is on RAW returns; leverage multiplies the EXCESS-over-rf Sharpe, and financing the
-// levered book costs rf on the borrowed notional. Report the fully-funded excess Sharpe (subtract daily rf from the
-// book) as the CONSERVATIVE leverageable number — the truth sits between it and the raw Sharpe by how self-financing
-// the net exposure is (market-neutral sleeves add nothing to subtract; the long/trend legs carry rf).
-{ const rfBlend = days.map((d, i) => { const r = usAt(d); return blend[i] - (r === null ? 0 : (r / 100) / 252); });
-  const rfCov = days.filter((d) => usAt(d) !== null).length;
-  const Bx = stats(rfBlend.map((v) => v * (+K.VOL_TARGET / (bv || 1)))); const rfAnn = 100 * mean(days.map((d) => { const r = usAt(d); return r === null ? 0 : (r / 100); }));
-  console.log(`  D-913 EXCESS (fully-funded, rf~${rfAnn.toFixed(1)}%/yr, cov ${rfCov}/${days.length}): Sharpe ${Bx.sr.toFixed(2)} vs raw ${B.sr.toFixed(2)} — leverageable Sharpe is in [${Bx.sr.toFixed(2)}, ${B.sr.toFixed(2)}]; Kelly g uses the excess, so 10x-in-Ny above is OPTIMISTIC by the rf gap`); }
+// levered book costs rf only on the NET-LONG dollar exposure (dollar-neutral long-shorts borrow no net cash). Two
+// charges: (floor) fully-funded — subtract rf from the WHOLE book (over-charges, treats every sleeve as financed);
+// (pinned) net-exposure — subtract rf * blendNet, the actual net-long dollar exposure the long/trend legs carry.
+{ const rfDay = (d: string) => { const r = usAt(d); return r === null ? 0 : (r / 100) / 252; };
+  const rfCov = days.filter((d) => usAt(d) !== null).length; const lv = +K.VOL_TARGET / (bv || 1);
+  const floor = stats(days.map((d, i) => (blend[i] - rfDay(d)) * lv));                 // subtract rf from the WHOLE book (over-charge)
+  const pinned = stats(days.map((d, i) => (blend[i] - rfDay(d) * blendNet[i]) * lv));   // subtract rf only on net-long dollar exposure
+  const rf = mean(days.map(rfDay)) * 252; const avgNet = mean(blendNet);
+  const kelly = (S: number, sig = 0.20) => { const g = rf + sig * S - sig * sig / 2; return g > 0 ? (Math.log(10) / g).toFixed(1) + "y" : "never"; };
+  console.log(`  D-913 EXCESS (rf~${(100 * rf).toFixed(1)}%/yr, cov ${rfCov}/${days.length}, avg net-long exposure ${avgNet.toFixed(2)}x of capital):`);
+  console.log(`    raw ${B.sr.toFixed(2)}  |  net-exposure-financed (PINNED) ${pinned.sr.toFixed(2)}  |  fully-funded floor ${floor.sr.toFixed(2)}  ->  leverageable ~${pinned.sr.toFixed(2)}, bounded [${floor.sr.toFixed(2)}, ${B.sr.toFixed(2)}]`);
+  console.log(`    Kelly 10x @20% vol: raw ${kelly(B.sr)} | PINNED ${kelly(pinned.sr)} | floor ${kelly(floor.sr)}  (g = rf + sigma*S_excess - sigma^2/2)`); }
 const ok = B.sr >= 1.0 && B.t >= ceil.ceiling && B.mdd > -0.25 && B.sr > Math.max(...names.map((s) => st[s].sr)) && maxCorr < 0.5;
 console.log(`  ceiling ${ceil.ceiling.toFixed(3)}. VERDICT (D-865 rule): ${ok ? "SUPPORTED" : `NULL — ${[B.sr < 1.0 && `blend Sharpe ${B.sr.toFixed(2)} < 1.0`, B.t < ceil.ceiling && `t ${B.t.toFixed(2)} < ceiling`, B.mdd <= -0.25 && "maxDD worse than -25%", B.sr <= Math.max(...names.map((s) => st[s].sr)) && "does not beat the best sleeve", maxCorr >= 0.5 && "a sleeve pair correlates >= 0.5"].filter(Boolean).join("; ")}`}`);
 
