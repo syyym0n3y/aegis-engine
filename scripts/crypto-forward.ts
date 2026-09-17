@@ -12,7 +12,13 @@ const hdr=await H();
 // D-399: use the EXCHANGE-quality feed (Alpaca, D-397). Yahoo's aggregated crypto produced a false positive that forced a
 // retraction; the forward record must not be built on the weaker source.
 const CLS=Deno.env.get("FWD_CLS")||"crypto_ex";
-const rows=await fetch(`${OWNED}/trd_bars_deep?asset_class=eq.${CLS}&select=symbol,bars`,{headers:hdr}).then(r=>r.json()) as {symbol:string;bars:number[][]}[];
+// D-940: the initial DB read was UNGUARDED — a transient PostgREST restart-window blip (connection refused) threw an
+// uncaught TypeError and CRASHED the resident daemon, leaving crash stderr that tripped agent-output/log-triage for
+// hours. Retry the transient (survives a restart), and on a persistent outage SKIP the cycle gracefully (stdout, exit 0)
+// so launchd's next run retries — never crash-loop the daemon on a blip.
+async function getJSON(url:string,opts:RequestInit,tries=6):Promise<unknown>{ for(let i=0;i<tries;i++){ try{ const r=await fetch(url,opts); if(r.ok) return await r.json(); }catch(_){ /* transient — retry */ } await new Promise(res=>setTimeout(res,1500*(i+1))); } return null; }
+const rows=await getJSON(`${OWNED}/trd_bars_deep?asset_class=eq.${CLS}&select=symbol,bars`,{headers:hdr}) as {symbol:string;bars:number[][]}[]|null;
+if(!Array.isArray(rows)){ console.log(`crypto-forward: DB unreachable after retries — skipping this cycle (no crash; launchd retries next run).`); Deno.exit(0); }
 // 1. score the most recent prior snapshot (paper, no capital)
 const prior=await fetch(`${OWNED}/trd_crypto_forward?scored_at=is.null&select=id,asof,sym,px,weight,in_uptrend&order=asof.asc&limit=500`,{headers:hdr}).then(r=>r.json()).catch(()=>[]) as {id:number;asof:string;sym:string;px:number;weight:number;in_uptrend:boolean}[];
 const MIN_HOLD_D=Number(Deno.env.get("MIN_HOLD_D")||5);
