@@ -2,7 +2,7 @@
 
 > Regenerated daily by `scripts/search-space.ts`. D-848 measured the search as 64.1% self-referential; this map is drawn from OUTSIDE the ledger — by counterparty, not by asset class or signal — and then matched to it. The taxonomy is the author's enumeration, not a citation, and is kept open. **A cell reading UNTESTED is a question this programme has never asked, not a market that has been shown efficient.**
 
-**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 12 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 8 (1 live) · B4 tested 19 (4 live) · C1 tested 21 (8 live) · C2 tested 11 (7 live) · C3 tested 3 (3 live) · D1 tested 26 (11 live) · D2 tested 17 (5 live) · D4 tested 6 (1 live) · D3 tested 15 (5 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 14 (10 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
+**21 cells: 21 have at least one matching row, 0 have none.** Cells: A1 tested 2 (2 live) · A2 tested 2 (2 live) · A3 tested 3 (3 live) · A4 tested 12 (8 live) · A5 tested 3 (1 live) · B1 tested 3 (1 live) · B2 tested 5 (1 live) · B3 tested 8 (1 live) · B4 tested 20 (4 live) · C1 tested 21 (8 live) · C2 tested 11 (7 live) · C3 tested 3 (3 live) · D1 tested 26 (11 live) · D2 tested 17 (5 live) · D4 tested 6 (1 live) · D3 tested 15 (5 live) · E1 tested 1 (1 live) · E2 tested 1 (1 live) · E3 tested 14 (10 live) · F1 tested 5 (1 live) · F2 tested 4 (1 live)
 
 ## A1 — index funds: must trade at rebalance regardless of price
 examples: index inclusion/deletion, close auction imbalance, month-end
@@ -107,7 +107,7 @@ examples: revisions, earnings drift, going-concern, late filings, non-reliance
 | accounting-red-flags | nonreliance | killed |
 | delisting-notices | nonreliance | killed |
 | D-762-activist-13d | event (equity) | measured |
-| … | 7 more | |
+| … | 8 more | |
 
 ## C1 — hedgers: pay a premium to shed variance
 examples: variance risk premium, skew, term structure, hedging pressure (COT/TFF)
