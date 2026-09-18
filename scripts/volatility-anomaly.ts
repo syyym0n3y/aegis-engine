@@ -116,6 +116,41 @@ console.log(`  BENCHMARK LAW (excess vs liquid universe): LONG(low-${K.SIGNAL}) 
 const survives = N.sr > 0 && Math.abs(N.t) > ceil.ceiling;
 console.log(`  CLEARS NET PAST CEILING: ${survives ? "YES" : "NO"} (net t ${N.t.toFixed(2)} vs ${ceil.ceiling.toFixed(2)}) — but for a SLEEVE, correlation decides (D-894)`);
 await spendTrials({ rest: OWNED, headers: hdr, family: "volatility-anomaly", runId: K.RUN_ID, spent: 3 });
+if ((Deno.env.get("HOLD_SWEEP") ?? "0") === "1") {
+  // D-943: longer-horizon sweep — same formation (${FD}d) + avoid-filter, vary the HOLD/rebalance step. Longer hold =>
+  // fewer rebalances => lower turnover cost; if net SR rises the edge is slow-moving and the 21d deploy is cost-bound.
+  console.log(`\n  === HOLD-HORIZON SWEEP [${K.SIGNAL}] (formation ${FD}d fixed, avoid-filter ${CROWD > 0 ? "on" : "off"}) ===`);
+  console.log(`  ${"hold".padStart(5)} ${"rebs".padStart(5)} ${"grossSR".padStart(8)} ${"netSR".padStart(7)} ${"net t".padStart(6)} ${"turn/reb".padStart(9)} ${"shortExcess".padStart(12)}`);
+  for (const rb of [21, 42, 63, 126, 189, 252]) {
+    const rbs: Reb[] = [];
+    for (let ci = 260; ci < cal.length; ci += rb) { const d = cal[ci];
+      const cand: { s: string; sig: number; dv: number }[] = [];
+      for (const s of S.keys()) { const sig = signal(s, d); if (sig === null || pxAt(s, d) === null) continue; cand.push({ s, sig, dv: dvTrail(s, d) }); }
+      if (cand.length < MINN) continue;
+      const volMed = [...cand.map((c) => c.dv)].sort((a, z) => a - z)[Math.floor(cand.length / 2)];
+      const liq = cand.filter((c) => c.dv >= volMed); if (liq.length < 50) continue;
+      liq.sort((a, z) => a.sig - z.sig); const k = Math.max(5, Math.floor(liq.length / QN));
+      const longs = liq.slice(0, k).map((c) => c.s);
+      const shorts: string[] = []; for (let j = liq.length - 1; j >= 0 && shorts.length < k; j--) if (borrowOK(liq[j].s, d)) shorts.push(liq[j].s);
+      if (shorts.length < 5) continue; rbs.push({ d, longs, shorts, liqN: liq.length });
+    }
+    if (rbs.length < 12) { console.log(`  ${String(rb).padStart(5)}  too few rebalances`); continue; }
+    const g: number[] = [], nn: number[] = [], se: number[] = [], tt: number[] = []; let pv = new Set<string>();
+    for (let r = 0; r < rbs.length - 1; r++) { const d0 = rbs[r].d, d1 = rbs[r + 1].d;
+      const uni = [...rbs[r].longs, ...rbs[r].shorts]; const uniR = uni.map((s) => fwd(s, d0, d1)).filter((x): x is number => x !== null); if (!uniR.length) continue; const um = mean(uniR);
+      const lr = rbs[r].longs.map((s) => fwd(s, d0, d1)).filter((x): x is number => x !== null);
+      const sr = rbs[r].shorts.map((s) => fwd(s, d0, d1)).filter((x): x is number => x !== null);
+      if (lr.length < 5 || sr.length < 5) continue;
+      g.push(mean(lr) - mean(sr)); se.push(mean(sr) - um);
+      const now = new Set(uni); const churn = pv.size ? [...now].filter((s) => !pv.has(s)).length / now.size : 1; tt.push(churn); pv = now;
+      nn.push((mean(lr) - mean(sr)) - 2 * churn * cost);
+    }
+    const an = 252 / rb; const st2 = (a: number[]) => { const mu = mean(a) * an, s = sd(a) * Math.sqrt(an); return { sr: mu / (s || 1), t: mean(a) / (sd(a) / Math.sqrt(a.length) || 1) }; };
+    const gs = st2(g), ns = st2(nn);
+    console.log(`  ${String(rb).padStart(5)} ${String(g.length).padStart(5)} ${gs.sr.toFixed(2).padStart(8)} ${ns.sr.toFixed(2).padStart(7)} ${ns.t.toFixed(2).padStart(6)} ${(mean(tt) * 100).toFixed(0).padStart(8)}% ${(mean(se) * 100).toFixed(2).padStart(11)}%`);
+  }
+  console.log(`  READ: if net SR rises with the hold, the edge is slow-moving and the 21d deploy is cost-bound — the best hold is a deployable improvement.`);
+}
 if (K.DUMP === "1") {
   const daily: { d: string; ret: number }[] = [];
   for (let r = 0; r < rebs.length - 1; r++) { const d0 = rebs[r].d, d1 = rebs[r + 1].d; const L = rebs[r].longs, Sh = rebs[r].shorts;

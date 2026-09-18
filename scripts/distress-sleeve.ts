@@ -44,15 +44,28 @@ const liqSet = new Set([...vol.entries()].filter(([, v]) => v >= volMed).map(([k
 console.log(`priced ${px.size}/${allTickers.length}; liquid tercile (>= median $vol) ${liqSet.size} names — LIQUIDITY LAW: only liquid names enter the sleeve`);
 // 3) build a daily short over the IWM calendar from a chosen event subset (liquid-only)
 const iwmDays = [...iwmC.keys()].sort((a, b) => a - b);
-function buildSleeve(evs: Ev[]): { d: string; ret: number }[] {
+function buildSleeve(evs: Ev[], win = WIN): { d: string; ret: number }[] {
   const flagBy = new Map<string, number[]>();
   for (const h of evs) { if (!liqSet.has(h.ticker) || !px.has(h.ticker)) continue; const d0 = Math.floor(Date.parse(h.date + "T00:00:00Z") / 86400000); (flagBy.get(h.ticker) ?? flagBy.set(h.ticker, []).get(h.ticker)!).push(d0); }
   const out: { d: string; ret: number }[] = [];
   for (let k = 1; k < iwmDays.length; k++) { const tt = iwmDays[k], tp = iwmDays[k - 1]; const rIWM = Math.log(iwmC.get(tt)! / iwmC.get(tp)!); const shorts: number[] = [];
-    for (const [tk, fds] of flagBy) { if (!fds.some((fd) => tt > fd && tt <= fd + WIN)) continue; const m = px.get(tk)!; const p0 = m.get(tp), p1 = m.get(tt); if (p0 && p1) shorts.push(Math.log(p1 / p0)); }
+    for (const [tk, fds] of flagBy) { if (!fds.some((fd) => tt > fd && tt <= fd + win)) continue; const m = px.get(tk)!; const p0 = m.get(tp), p1 = m.get(tt); if (p0 && p1) shorts.push(Math.log(p1 / p0)); }
     const ret = shorts.length >= MINN ? -mean(shorts) + rIWM - BORROW_D : 0;
     out.push({ d: new Date(tt * 86400000).toISOString().slice(0, 10), ret }); }
   return out;
+}
+if ((Deno.env.get("WIN_SWEEP") ?? "0") === "1") {
+  // D-943: distress longer-horizon sweep — hold the short WINDOW days after each event. Longer window captures more of
+  // the documented year-long distress drift (D-647: 369d median lead) but adds more diluted late-drift days. Read-only.
+  const allEv = [...gcEv, ...ntEv, ...auEv];
+  console.log(`\n  === DISTRESS HOLD-WINDOW SWEEP (combined gc+nt, ${allTickers.length}-name universe) ===`);
+  console.log(`  ${"window".padStart(7)} ${"activeDays".padStart(10)} ${"%/yr".padStart(7)} ${"vol%".padStart(6)} ${"Sharpe".padStart(7)}`);
+  for (const win of [63, 90, 180, 252, 365, 540]) {
+    const s = buildSleeve(allEv, win); const active = s.filter((x) => x.ret !== 0).length; const st = shp(s.map((x) => x.ret));
+    console.log(`  ${String(win).padStart(7)} ${String(active).padStart(10)} ${st.annPct.toFixed(1).padStart(7)} ${st.volPct.toFixed(1).padStart(6)} ${st.sharpe.toFixed(2).padStart(7)}`);
+  }
+  console.log(`  READ: if Sharpe rises with the window, the distress short is slow-moving and the 180d deploy leaves drift on the table; if it falls, late-drift dilutes. (Standalone; the blend contribution is what ultimately decides.)`);
+  Deno.exit(0); // read-only sweep — never overwrite the deployed d931
 }
 const gcOnly = buildSleeve(gcEv);
 const combined = buildSleeve([...gcEv, ...ntEv, ...auEv]);
