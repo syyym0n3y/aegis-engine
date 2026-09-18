@@ -59,12 +59,15 @@ if ((Deno.env.get("WIN_SWEEP") ?? "0") === "1") {
   // the documented year-long distress drift (D-647: 369d median lead) but adds more diluted late-drift days. Read-only.
   const allEv = [...gcEv, ...ntEv, ...auEv];
   console.log(`\n  === DISTRESS HOLD-WINDOW SWEEP (combined gc+nt, ${allTickers.length}-name universe) ===`);
-  console.log(`  ${"window".padStart(7)} ${"activeDays".padStart(10)} ${"%/yr".padStart(7)} ${"vol%".padStart(6)} ${"Sharpe".padStart(7)}`);
+  console.log(`  ${"window".padStart(7)} ${"activeDays".padStart(10)} ${"%/yr".padStart(7)} ${"vol%".padStart(6)} ${"Sharpe".padStart(7)}  ${"SR-early".padStart(8)} ${"SR-late".padStart(8)}  (era-robust?)`);
   for (const win of [63, 90, 180, 252, 365, 540]) {
     const s = buildSleeve(allEv, win); const active = s.filter((x) => x.ret !== 0).length; const st = shp(s.map((x) => x.ret));
-    console.log(`  ${String(win).padStart(7)} ${String(active).padStart(10)} ${st.annPct.toFixed(1).padStart(7)} ${st.volPct.toFixed(1).padStart(6)} ${st.sharpe.toFixed(2).padStart(7)}`);
+    // era split of the ACTIVE period only (events start 2016; pre-event days are all zero and would fake a "dead early era")
+    const fa = s.findIndex((x) => x.ret !== 0); const act = fa >= 0 ? s.slice(fa) : s; const mid = Math.floor(act.length / 2);
+    const e1 = shp(act.slice(0, mid).map((x) => x.ret)), e2 = shp(act.slice(mid).map((x) => x.ret));
+    console.log(`  ${String(win).padStart(7)} ${String(active).padStart(10)} ${st.annPct.toFixed(1).padStart(7)} ${st.volPct.toFixed(1).padStart(6)} ${st.sharpe.toFixed(2).padStart(7)}  ${e1.sharpe.toFixed(2).padStart(8)} ${e2.sharpe.toFixed(2).padStart(8)}`);
   }
-  console.log(`  READ: if Sharpe rises with the window, the distress short is slow-moving and the 180d deploy leaves drift on the table; if it falls, late-drift dilutes. (Standalone; the blend contribution is what ultimately decides.)`);
+  console.log(`  READ: if Sharpe rises with the window in BOTH eras, the 365d deploy (D-943) is robust; if the gain is one-era-only it is a full-sample artifact and 180d should stand.`);
   Deno.exit(0); // read-only sweep — never overwrite the deployed d931
 }
 const gcOnly = buildSleeve(gcEv);
