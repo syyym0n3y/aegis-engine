@@ -115,6 +115,9 @@ console.log(`  NET   L-S: ${N.annPct.toFixed(1)}%/yr Sharpe ${N.sr.toFixed(2)} t
 console.log(`  BENCHMARK LAW (excess vs liquid universe): LONG(low-${K.SIGNAL}) ${(mean(longEx)*100).toFixed(2)}%/reb, SHORT(high-${K.SIGNAL}) ${(mean(shortEx)*100).toFixed(2)}%/reb (short should be NEGATIVE = lottery names underperform)`);
 const survives = N.sr > 0 && Math.abs(N.t) > ceil.ceiling;
 console.log(`  CLEARS NET PAST CEILING: ${survives ? "YES" : "NO"} (net t ${N.t.toFixed(2)} vs ${ceil.ceiling.toFixed(2)}) — but for a SLEEVE, correlation decides (D-894)`);
+{ // D-943b: era-split (net L-S is chronological) — is the IVOL edge era-STEADY (persistent low-vol anomaly) or concentrated like distress?
+  const em = Math.floor(lsNet.length / 2); const eE = stat(lsNet.slice(0, em)), eL = stat(lsNet.slice(em));
+  console.log(`  ERA-SPLIT net SR: early ${eE.sr.toFixed(2)} (t ${eE.t.toFixed(2)}), late ${eL.sr.toFixed(2)} (t ${eL.t.toFixed(2)}) — IVOL should be steadier than distress (2016-21 ~1.1 vs 2021-26 ~4.5)`); }
 await spendTrials({ rest: OWNED, headers: hdr, family: "volatility-anomaly", runId: K.RUN_ID, spent: 3 });
 if ((Deno.env.get("HOLD_SWEEP") ?? "0") === "1") {
   // D-943: longer-horizon sweep — same formation (${FD}d) + avoid-filter, vary the HOLD/rebalance step. Longer hold =>
