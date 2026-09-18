@@ -7,7 +7,7 @@
 // Blend = risk parity (equal ex-ante vol weight, from trailing 60-day sleeve vol). No weight is optimised on OOS.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials, preregCeiling } from "../supabase/functions/_shared/trial-ledger.ts";
-const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }]);
+const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }, { name: "REGIME", def: "0", note: "1 = print per-sleeve regime dependence (own active-halves + shared calendar eras) — read-only, no writes" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "msb2", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -119,6 +119,35 @@ console.log(`  LEVERAGE TABLE (blend): ` + [0.10, 0.20, 0.40].map((tv) => { cons
 const ok = B.sr >= 1.0 && B.t >= ceil.ceiling && B.mdd > -0.25 && B.sr > Math.max(...names.map((s) => st[s].sr)) && maxCorr < 0.5;
 console.log(`  ceiling ${ceil.ceiling.toFixed(3)}. VERDICT (D-865 rule): ${ok ? "SUPPORTED" : `NULL — ${[B.sr < 1.0 && `blend Sharpe ${B.sr.toFixed(2)} < 1.0`, B.t < ceil.ceiling && `t ${B.t.toFixed(2)} < ceiling`, B.mdd <= -0.25 && "maxDD worse than -25%", B.sr <= Math.max(...names.map((s) => st[s].sr)) && "does not beat the best sleeve", maxCorr >= 0.5 && "a sleeve pair correlates >= 0.5"].filter(Boolean).join("; ")}`}`);
 
+// ---- REGIME DEPENDENCE (read-only, default off) — is each sleeve's edge concentrated in one regime, and do the
+// five sleeves diversify ACROSS regimes or all earn in the same era? The blend's headline is only robust if the
+// sleeves are paid in DIFFERENT eras; if all five carry their edge in 2021-26, the ~1.98 is one bet, not five. ----
+if (K.REGIME === "1") {
+  // per-index-subset stats on a return series (annualised Sharpe, portfolio t, %/yr, N)
+  const sub = (x: number[], idx: number[]) => { const s = idx.map((i) => x[i]); const mu = mean(s) * 252, vol = sd(s) * Math.sqrt(252); return { sr: vol ? mu / vol : 0, t: tstat(s), mu, n: s.length }; };
+  const blendLev = blend.map((v) => v * lev);
+  const cols = [...names, "BLEND"] as const;
+  const seriesOf = (s: string) => s === "BLEND" ? blendLev : X[s];
+  // VIEW A — each sleeve split at the midpoint of its OWN active (first-non-zero .. end) span: within-sleeve concentration.
+  console.log(`\n==> REGIME DEPENDENCE (${days.length} common days, ${days[0]}..${days[days.length - 1]})`);
+  console.log(`\n  VIEW A — own active-period halves (is THIS sleeve's edge recent-concentrated?):`);
+  console.log(`  ${"sleeve".padEnd(9)} ${"active from".padStart(12)} ${"early SR".padStart(9)}${"(t)".padStart(8)} ${"late SR".padStart(9)}${"(t)".padStart(8)}   verdict`);
+  for (const s of cols) {
+    const x = seriesOf(s); const fa = x.findIndex((v) => v !== 0); const act = fa >= 0 ? [...Array(x.length - fa).keys()].map((k) => k + fa) : [];
+    if (act.length < 40) { console.log(`  ${s.padEnd(9)} ${"(<40 obs)".padStart(12)}`); continue; }
+    const mid = fa + Math.floor((x.length - fa) / 2); const eIdx = act.filter((i) => i < mid), lIdx = act.filter((i) => i >= mid);
+    const e = sub(x, eIdx), l = sub(x, lIdx); const ratio = Math.abs(e.sr) > 0.05 ? l.sr / e.sr : Infinity;
+    const verdict = e.sr <= 0 && l.sr > 0.3 ? "LATE-ONLY (dead early)" : ratio > 2 ? "recent-concentrated" : ratio < 0.5 ? "early-concentrated" : "era-robust";
+    console.log(`  ${s.padEnd(9)} ${days[fa].padStart(12)} ${e.sr.toFixed(2).padStart(9)}${("(" + e.t.toFixed(1) + ")").padStart(8)} ${l.sr.toFixed(2).padStart(9)}${("(" + l.t.toFixed(1) + ")").padStart(8)}   ${verdict}`);
+  }
+  // VIEW B — shared calendar eras: WHICH regime pays each sleeve, and does the blend depend on one era? (%/yr per era)
+  const eras: [string, string, string][] = [["15-19 calm", "0000", "2020-02-19"], ["20 covid", "2020-02-20", "2020-12-31"], ["21 rally", "2021-01-01", "2021-12-31"], ["22 bear", "2022-01-01", "2022-12-31"], ["23-26 recent", "2023-01-01", "9999"]];
+  const eraIdx = eras.map(([, a, b]) => days.map((d, i) => [d, i] as [string, number]).filter(([d]) => d >= a && d <= b).map(([, i]) => i));
+  console.log(`\n  VIEW B — shared calendar eras (%/yr; N days) — do the sleeves earn in DIFFERENT regimes?:`);
+  console.log(`  ${"sleeve".padEnd(9)} ${eras.map(([n]) => n.padStart(13)).join("")}`);
+  for (const s of cols) { const x = seriesOf(s); console.log(`  ${s.padEnd(9)} ${eras.map((_, k) => { const r = sub(x, eraIdx[k]); return r.n < 15 ? "  —".padStart(13) : `${(100 * r.mu).toFixed(0)}%/${r.sr.toFixed(1)}`.padStart(13); }).join("")}`); }
+  console.log(`  (cell = annualised %/yr and Sharpe in that era; "—" = under 15 days of the sleeve's data in the era)`);
+}
 
 // ---- D-926 PAPER STAND-UP (additive; default off) — stand the 3-factor blend up on paper for the forward clock ----
 if (K.PAPER === "1") {

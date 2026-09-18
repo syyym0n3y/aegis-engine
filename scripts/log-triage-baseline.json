@@ -1,27 +1,11 @@
 {
   "classes": {
     "infra/data/coverage.log|SPN CHANGES INGEST FAILED": 1,
-    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 1,
-    "postgrest|500 /trd_macro_series": 1,
-    "postgres|ON CONFLICT DO UPDATE command cannot affect row a second time": 1,
-    "postgres|column trd_bars_deep.kind does not exist at character N": 1,
-    "postgres|column trd_forward_rules.spec_id does not exist at character N": 1,
-    "postgres|column trd_lineage.lead_id does not exist at character N": 1,
-    "postgres|column trd_macro_series.series_id does not exist at character N": 1,
-    "postgres|relation \"public.trd_book_nav\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_chain_metrics\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_cot_positioning\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_driver_register\" does not exist at character N": 3,
-    "postgres|relation \"public.trd_finra_shortvol\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_onchain\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_onchain_metrics\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_paper_marks\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_paper_nav\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_paper_positions\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_positioning_cot\" does not exist at character N": 1,
-    "postgres|relation \"public.trd_shortvol\" does not exist at character N": 1,
-    "postgres|window function lead requires an OVER clause at character N": 1
+    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 2,
+    "postgres|column trd_lineage_roster.decision does not exist at character N": 1,
+    "postgres|column trd_lineage_roster.lead_id does not exist at character N": 1,
+    "postgres|permission denied for view trd_lineage_roster": 1
   },
-  "set": "2026-09-16T08:28:58.282Z",
+  "set": "2026-09-18T22:22:59.207Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }
