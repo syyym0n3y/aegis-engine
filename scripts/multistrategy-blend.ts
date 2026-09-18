@@ -7,7 +7,7 @@
 // Blend = risk parity (equal ex-ante vol weight, from trailing 60-day sleeve vol). No weight is optimised on OOS.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials, preregCeiling } from "../supabase/functions/_shared/trial-ledger.ts";
-const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }, { name: "REGIME", def: "0", note: "1 = print per-sleeve regime dependence (own active-halves + shared calendar eras) — read-only, no writes" }]);
+const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }, { name: "REGIME", def: "0", note: "1 = print per-sleeve regime dependence (own active-halves + shared calendar eras) — read-only, no writes" }, { name: "STRESS", def: "", note: "a FROM:TO date window (e.g. 2021-01-01:2021-12-31) to stress-test the blend in that regime — path, attribution, leave-one-out, worst rolling quarter; read-only" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "msb2", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -97,7 +97,7 @@ console.log(`  CRASHES: ${crash("2020-02-20", "2020-03-31")} | ${crash("2022-01-
 const BL = K.SLEEVES.split(","); if (BL.length < 4) console.log(`\n  SUBSET ${BL.join("+")} — DESCRIPTIVE ONLY, not the registered blend (D-455: chosen after the sleeves were seen).`);
 // net-exposure series per directional sleeve (same normalisation as the return series in series())
 const netExpX: Record<string, number[]> = {}; for (const s of ["trend", "long", "cryptomom"]) if (names.includes(s)) netExpX[s] = days.map((d) => (netPos[s].get(d) ?? 0) / Math.max(1, nAct[s].get(d) ?? 1));
-const blend: number[] = []; const blendNet: number[] = []; for (let i = 0; i < days.length; i++) { const w: number[] = names.map((s) => { const win = X[s].slice(Math.max(0, i - 60), i); const v = win.length > 20 ? sd(win) * Math.sqrt(252) : 0; return v > 0 && BL.includes(s) ? 1 / v : 0; }); const tot = w.reduce((a, b) => a + b, 0) || 1; let v = 0, ne = 0; names.forEach((s, j) => { v += (w[j] / tot) * X[s][i]; ne += (w[j] / tot) * (netExpX[s]?.[i] ?? 0); }); blend.push(v); blendNet.push(ne); }
+const blend: number[] = []; const blendNet: number[] = []; const blendW: number[][] = []; for (let i = 0; i < days.length; i++) { const w: number[] = names.map((s) => { const win = X[s].slice(Math.max(0, i - 60), i); const v = win.length > 20 ? sd(win) * Math.sqrt(252) : 0; return v > 0 && BL.includes(s) ? 1 / v : 0; }); const tot = w.reduce((a, b) => a + b, 0) || 1; let v = 0, ne = 0; names.forEach((s, j) => { v += (w[j] / tot) * X[s][i]; ne += (w[j] / tot) * (netExpX[s]?.[i] ?? 0); }); blend.push(v); blendNet.push(ne); blendW.push(names.map((_, j) => w[j] / tot)); }
 const bv = sd(blend) * Math.sqrt(252); const lev = +K.VOL_TARGET / (bv || 1); const B = stats(blend.map((v) => v * lev));
 await spendTrials({ rest: OWNED, headers: hdr, family: "multistrategy", runId: K.RUN_ID, spent: names.length + 1 });
 const ceil = await preregCeiling({ rest: OWNED, headers: hdr, preregId: K.RUN_ID });
@@ -147,6 +147,34 @@ if (K.REGIME === "1") {
   console.log(`  ${"sleeve".padEnd(9)} ${eras.map(([n]) => n.padStart(13)).join("")}`);
   for (const s of cols) { const x = seriesOf(s); console.log(`  ${s.padEnd(9)} ${eras.map((_, k) => { const r = sub(x, eraIdx[k]); return r.n < 15 ? "  —".padStart(13) : `${(100 * r.mu).toFixed(0)}%/${r.sr.toFixed(1)}`.padStart(13); }).join("")}`); }
   console.log(`  (cell = annualised %/yr and Sharpe in that era; "—" = under 15 days of the sleeve's data in the era)`);
+}
+
+// ---- STRESS TEST a single regime window (read-only, default off) — the blend's WEAKEST era is its floor, and a
+// one-year Sharpe is one draw (t ~= SR). This interrogates the path (worst month, drawdown, worst rolling quarter),
+// the attribution (which sleeves carried vs dragged), and the FRAGILITY (leave-one-out: if dropping the load-bearing
+// sleeve turns the window negative, the "floor" is really one-sleeve-dependent). All measured, nothing simulated. ----
+if (K.STRESS) {
+  const [from, to] = K.STRESS.split(":"); const idx = days.map((d, i) => [d, i] as [string, number]).filter(([d]) => d >= from && d <= to).map(([, i]) => i);
+  console.log(`\n==> STRESS TEST — blend in ${from}..${to} (${idx.length} days, deployed ${(100 * +K.VOL_TARGET).toFixed(0)}% vol target)`);
+  if (idx.length < 40) console.log(`  only ${idx.length} days — UNTESTED (need >= 40).`);
+  else {
+    const lv = lev; const bw = idx.map((i) => blend[i] * lv); const p = stats(bw); const yrs = (Date.parse(days[idx[idx.length - 1]]) - Date.parse(days[idx[0]])) / (365.25 * 864e5);
+    // PATH: monthly P&L, worst/best month, negatives, worst rolling 63d Sharpe
+    const byMonth = new Map<string, number>(); for (const i of idx) { const m = days[i].slice(0, 7); byMonth.set(m, (byMonth.get(m) ?? 0) + blend[i] * lv); }
+    const months = [...byMonth.entries()].sort(); const worstM = months.reduce((a, b) => b[1] < a[1] ? b : a); const bestM = months.reduce((a, b) => b[1] > a[1] ? b : a); const nNeg = months.filter(([, r]) => r < 0).length;
+    let worstQ = Infinity, worstQfrom = ""; for (let k = 0; k + 63 <= idx.length; k++) { const s = stats(idx.slice(k, k + 63).map((i) => blend[i] * lv)); if (s.sr < worstQ) { worstQ = s.sr; worstQfrom = days[idx[k]]; } }
+    console.log(`  PATH: Sharpe ${p.sr.toFixed(2)} (t ${p.t.toFixed(2)} on ${idx.length} obs / ${yrs.toFixed(1)} calendar-yr — a single-regime Sharpe is one draw), ${(100 * p.mu).toFixed(1)}%/yr, vol ${(100 * p.vol).toFixed(1)}%, maxDD ${(100 * p.mdd).toFixed(1)}%, ${p.uwY.toFixed(2)}y underwater`);
+    console.log(`        months ${months.length}, ${nNeg} negative; worst ${worstM[0]} ${(100 * worstM[1]).toFixed(1)}%, best ${bestM[0]} ${(100 * bestM[1]).toFixed(1)}%; worst rolling quarter Sharpe ${worstQ === Infinity ? "n/a (<63d)" : `${worstQ.toFixed(2)} (from ${worstQfrom})`}`);
+    // ATTRIBUTION: each sleeve's contribution to the window's TOTAL levered return = sum_day w_i*ret_i*lev
+    const contrib = names.map((s, j) => ({ s, c: idx.reduce((acc, i) => acc + (blendW[i]?.[j] ?? 0) * X[s][i] * lv, 0), own: stats(idx.map((i) => X[s][i])) }));
+    const totRet = idx.reduce((a, i) => a + blend[i] * lv, 0); console.log(`  ATTRIBUTION (contribution to the window's ${(100 * totRet).toFixed(1)}% total return; own = sleeve's standalone Sharpe in the window):`);
+    for (const { s, c, own } of contrib.sort((a, b) => b.c - a.c)) console.log(`    ${s.padEnd(9)} ${(100 * c).toFixed(1).padStart(6)}%   own Sharpe ${own.sr.toFixed(2).padStart(6)}`);
+    // LEAVE-ONE-OUT: drop each sleeve, renormalise risk-parity weights among the rest, recompute the window blend.
+    // Sharpe is scale-free so leverage is irrelevant to it; the drop that most lowers Sharpe is the load-bearing sleeve.
+    console.log(`  LEAVE-ONE-OUT (window Sharpe / %/yr with that sleeve removed; full blend Sharpe ${p.sr.toFixed(2)}):`);
+    const loo = names.map((drop, d) => { const r = idx.map((i) => { let v = 0, tot = 0; for (let j = 0; j < names.length; j++) { if (j === d) continue; const w = blendW[i]?.[j] ?? 0; tot += w; v += w * X[names[j]][i]; } return tot > 0 ? v / tot : 0; }); const rv = sd(r) * Math.sqrt(252); const rl = rv > 0 ? +K.VOL_TARGET / rv : 0; const s = stats(r.map((x) => x * rl)); return { drop, sr: s.sr, mu: s.mu }; });
+    for (const { drop, sr, mu } of loo.sort((a, b) => a.sr - b.sr)) console.log(`    without ${drop.padEnd(9)} Sharpe ${sr.toFixed(2).padStart(6)}  ${(100 * mu).toFixed(1).padStart(6)}%/yr   ${sr < 0 ? "<- window goes NEGATIVE without it" : sr < p.sr - 0.5 ? "<- load-bearing" : ""}`);
+  }
 }
 
 // ---- D-926 PAPER STAND-UP (additive; default off) — stand the 3-factor blend up on paper for the forward clock ----
