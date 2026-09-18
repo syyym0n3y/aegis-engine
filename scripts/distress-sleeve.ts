@@ -5,7 +5,7 @@
 // trigger set it sits in), and builds ONE market-neutral short. Reports gc-only vs combined so the marginal
 // contribution of late-filing is measured, not assumed.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
-const K = declareKnobs("distress-sleeve", [{ name: "BORROW", def: "0.10" }, { name: "WINDOW", def: "180" }, { name: "MINN", def: "3" }, { name: "STALE_H", def: "0", note: "if >0, refuse event dumps older than this many hours (upstream test scripts silently stopped)" }, { name: "WRITE", def: "combined", note: "which series to write to d931 (the deployable sleeve): combined | gconly — gconly is for the marginal-contribution isolation only" }, { name: "INCLUDE_AUDITOR", def: "0", note: "1 = fold D-937 auditor-resignation events (d937-auditor-events.json) in as a 3rd trigger — only after its marginal blend contribution is measured positive" }]);
+const K = declareKnobs("distress-sleeve", [{ name: "BORROW", def: "0.10" }, { name: "WINDOW", def: "180" }, { name: "MINN", def: "3" }, { name: "STALE_H", def: "0", note: "if >0, refuse event dumps older than this many hours (upstream test scripts silently stopped)" }, { name: "WRITE", def: "combined", note: "which series to write to d931 (the deployable sleeve): combined | gconly — gconly is for the marginal-contribution isolation only" }, { name: "INCLUDE_AUDITOR", def: "0", note: "1 = fold D-937 auditor-resignation events (d937-auditor-events.json) in as a 3rd trigger — only after its marginal blend contribution is measured positive" }, { name: "CROWD_DC", def: "0", note: "D-946 SQUEEZE AVOID-FILTER: if >0, exclude a flagged name from the SHORT on any day its point-in-time days-to-cover >= this (crowded short = squeeze fuel; the D-945 Jan-2021 blowup was these names). With CROWD_DC>0 the series is NEVER written to d931 (writes to ALT_OUT) — measurement only until it clears." }, { name: "SI_LAG_D", def: "14", note: "publication lag: use SI with settlement <= d - SI_LAG_D (no look-ahead)" }, { name: "ALT_OUT", def: "d946-distress-crowdfilt-daily.json", note: "where the CROWD_DC>0 series is written (never d931, to protect the deployed sleeve)" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "ds", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -42,14 +42,29 @@ assertNonEmpty("priced names", [...px.keys()], 30);
 const volMed = [...vol.values()].sort((a, b) => a - b)[Math.floor(vol.size / 2)];
 const liqSet = new Set([...vol.entries()].filter(([, v]) => v >= volMed).map(([k]) => k));
 console.log(`priced ${px.size}/${allTickers.length}; liquid tercile (>= median $vol) ${liqSet.size} names — LIQUIDITY LAW: only liquid names enter the sleeve`);
+// D-946 squeeze avoid-filter: point-in-time days-to-cover for the flagged names, so the short can drop the crowded
+// (squeeze-prone) distressed names on the days they are crowded — the same D-939c discipline the IVOL short already uses.
+const CROWD = +K.CROWD_DC, SILAG = +K.SI_LAG_D; const siByName = new Map<string, { d: number; dc: number }[]>();
+if (CROWD > 0) {
+  const syms = [...px.keys()];
+  for (let i = 0; i < syms.length; i += 60) {
+    const rows = await q(`trd_short_interest?symbol=in.(${syms.slice(i, i + 60).map(encodeURIComponent).join(",")})&select=symbol,settlement,days_cover`) as { symbol: string; settlement: string; days_cover: number }[];
+    for (const r of rows) { if (!r.settlement || r.days_cover == null) continue; const s = r.symbol.toUpperCase(); (siByName.get(s) ?? siByName.set(s, []).get(s)!).push({ d: Math.floor(Date.parse(r.settlement + "T00:00:00Z") / 86400000), dc: +r.days_cover }); }
+  }
+  for (const [, a] of siByName) a.sort((x, y) => x.d - y.d);
+  console.log(`  D-946 AVOID-FILTER on: SI present for ${siByName.size}/${px.size} names; drop a name from the short on days its point-in-time days_cover >= ${CROWD} (lag ${SILAG}d). CROWD_DC>0 writes to ${K.ALT_OUT}, NEVER d931.`);
+}
+// borrowOK == "safe to short" == not a crowded squeeze target as of the lagged settlement (no SI on a name -> allowed, counted)
+let siMissDays = 0;
+const shortOK = (sym: string, dEpochDays: number): boolean => { if (CROWD <= 0) return true; const a = siByName.get(sym.toUpperCase()); if (!a || !a.length) { siMissDays++; return true; } let dc: number | null = null; for (const x of a) { if (x.d <= dEpochDays - SILAG) dc = x.dc; else break; } return dc === null ? true : dc < CROWD; };
 // 3) build a daily short over the IWM calendar from a chosen event subset (liquid-only)
 const iwmDays = [...iwmC.keys()].sort((a, b) => a - b);
-function buildSleeve(evs: Ev[], win = WIN): { d: string; ret: number }[] {
+function buildSleeve(evs: Ev[], win = WIN, flt = CROWD > 0): { d: string; ret: number }[] {
   const flagBy = new Map<string, number[]>();
   for (const h of evs) { if (!liqSet.has(h.ticker) || !px.has(h.ticker)) continue; const d0 = Math.floor(Date.parse(h.date + "T00:00:00Z") / 86400000); (flagBy.get(h.ticker) ?? flagBy.set(h.ticker, []).get(h.ticker)!).push(d0); }
   const out: { d: string; ret: number }[] = [];
   for (let k = 1; k < iwmDays.length; k++) { const tt = iwmDays[k], tp = iwmDays[k - 1]; const rIWM = Math.log(iwmC.get(tt)! / iwmC.get(tp)!); const shorts: number[] = [];
-    for (const [tk, fds] of flagBy) { if (!fds.some((fd) => tt > fd && tt <= fd + win)) continue; const m = px.get(tk)!; const p0 = m.get(tp), p1 = m.get(tt); if (p0 && p1) shorts.push(Math.log(p1 / p0)); }
+    for (const [tk, fds] of flagBy) { if (!fds.some((fd) => tt > fd && tt <= fd + win)) continue; if (flt && !shortOK(tk, tt)) continue; const m = px.get(tk)!; const p0 = m.get(tp), p1 = m.get(tt); if (p0 && p1) shorts.push(Math.log(p1 / p0)); }
     const ret = shorts.length >= MINN ? -mean(shorts) + rIWM - BORROW_D : 0;
     out.push({ d: new Date(tt * 86400000).toISOString().slice(0, 10), ret }); }
   return out;
@@ -82,8 +97,21 @@ console.log(`  dumped ${liqNames.length} combined liquid names (${ntOnlyLiq} NT-
 // 4) write the deployable sleeve (single owner of d931); report the marginal contribution of late-filing.
 // WRITE=gconly writes the going-concern-only series instead, used ONLY to isolate late-filing's blend contribution.
 const toWrite = K.WRITE === "gconly" ? gcOnly : combined;
-await Deno.writeTextFile(new URL("../data/d931-gcshort-daily.json", import.meta.url), JSON.stringify(toWrite));
-console.log(`  wrote ${K.WRITE} series -> data/d931-gcshort-daily.json${K.WRITE === "gconly" ? "  (ISOLATION RUN — re-run with WRITE=combined to restore the deployable sleeve)" : ""}`);
+// D-946 WRITE GUARD: with the squeeze avoid-filter on, this is a MEASUREMENT run — never overwrite the deployed d931.
+const outName = CROWD > 0 ? K.ALT_OUT : "d931-gcshort-daily.json";
+await Deno.writeTextFile(new URL(`../data/${outName}`, import.meta.url), JSON.stringify(toWrite));
+console.log(`  wrote ${K.WRITE} series -> data/${outName}${K.WRITE === "gconly" ? "  (ISOLATION RUN — re-run with WRITE=combined to restore the deployable sleeve)" : CROWD > 0 ? "  (CROWD_DC MEASUREMENT — d931 untouched)" : ""}`);
+if (CROWD > 0) {
+  // D-946 A/B: does excluding crowded (squeeze-prone) distressed names cut the Jan-2021 blowup WITHOUT killing the edge?
+  const unf = buildSleeve([...gcEv, ...ntEv, ...auEv], WIN, false); // same universe/window, filter OFF
+  const winRet = (s: { d: string; ret: number }[], a: string, b: string) => 100 * s.filter((x) => x.d >= a && x.d <= b).reduce((t, x) => t + x.ret, 0);
+  const su = shp(unf.map((x) => x.ret)), sf = shp(combined.map((x) => x.ret));
+  const eps: [string, string, string][] = [["Jan-Feb 2021 meme squeeze", "2021-01-01", "2021-02-28"], ["full 2021", "2021-01-01", "2021-12-31"], ["Aug 2022 meme wave", "2022-08-01", "2022-08-31"]];
+  console.log(`\n  === D-946 SQUEEZE AVOID-FILTER A/B (distress short, days_cover >= ${CROWD} excluded; ${siMissDays} name-days had no SI) ===`);
+  console.log(`  full-sample:  UNFILTERED Sharpe ${su.sharpe.toFixed(2)} (${su.annPct.toFixed(1)}%/yr) -> FILTERED ${sf.sharpe.toFixed(2)} (${sf.annPct.toFixed(1)}%/yr)  [edge must survive]`);
+  for (const [nm, a, b] of eps) console.log(`  ${nm.padEnd(26)} short return: UNFILTERED ${winRet(unf, a, b).toFixed(1)}% -> FILTERED ${winRet(combined, a, b).toFixed(1)}%  [squeeze windows must improve]`);
+  console.log(`  READ: deploy the filter only if the squeeze windows improve AND the full-sample Sharpe survives (D-939c precedent: IVOL's did).`);
+}
 const aGc = gcOnly.filter((x) => x.ret !== 0).length, aCb = combined.filter((x) => x.ret !== 0).length;
 const sGc = shp(gcOnly.map((x) => x.ret)), sCb = shp(combined.map((x) => x.ret));
 console.log(`\n==> D-936 DISTRESS SLEEVE (going-concern UNION late-filing), net ${(+K.BORROW*100)}% borrow, ${WIN}d window, >=${MINN} names/day\n`);

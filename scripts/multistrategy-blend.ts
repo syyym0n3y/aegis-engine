@@ -7,7 +7,7 @@
 // Blend = risk parity (equal ex-ante vol weight, from trailing 60-day sleeve vol). No weight is optimised on OOS.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials, preregCeiling } from "../supabase/functions/_shared/trial-ledger.ts";
-const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }, { name: "REGIME", def: "0", note: "1 = print per-sleeve regime dependence (own active-halves + shared calendar eras) — read-only, no writes" }, { name: "STRESS", def: "", note: "a FROM:TO date window (e.g. 2021-01-01:2021-12-31) to stress-test the blend in that regime — path, attribution, leave-one-out, worst rolling quarter; read-only" }]);
+const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }, { name: "REGIME", def: "0", note: "1 = print per-sleeve regime dependence (own active-halves + shared calendar eras) — read-only, no writes" }, { name: "STRESS", def: "", note: "a FROM:TO date window (e.g. 2021-01-01:2021-12-31) to stress-test the blend in that regime — path, attribution, leave-one-out, worst rolling quarter; read-only" }, { name: "HEDGE_SPEC", def: "", note: "D-946: filename under data/ of a daily hedge series {d,ret}[] to OVERLAY on the blend (e.g. d946-squeeze-daily.json); read-only" }, { name: "HEDGE_FRAC", def: "0,0.05,0.1,0.2", note: "comma list of hedge vol allocations as fractions of VOL_TARGET to sweep in the overlay" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "msb2", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -79,7 +79,8 @@ for (const [name, posMap] of [["carry", carryPos], ["value", valuePos]] as [stri
 const series = (s: string) => { const out = new Map<string, number>(); for (const [d, v] of sleeves[s]) if (isOOS(d)) out.set(d, v / Math.max(1, nAct[s].get(d) ?? 1)); return out; };
 const OS: Record<string, Map<string, number>> = { trend: series("trend"), long: series("long"), carry: series("carry"), value: series("value"), cryptomom: series("cryptomom") };
 const _SLgc = () => K.SLEEVES.split(",").includes("gcshort");
-if (_SLgc()) { const gc = JSON.parse(await Deno.readTextFile(new URL("../data/d931-gcshort-daily.json", import.meta.url))) as { d: string; ret: number }[]; OS.gcshort = new Map(gc.filter((x) => isOOS(x.d)).map((x) => [x.d, x.ret])); }
+const GC_FILE = Deno.env.get("GC_SPEC") || "d931-gcshort-daily.json"; // D-946: override to A/B the squeeze-avoid-filtered distress series (read-only; d931 stays the deployed one)
+if (_SLgc()) { const gc = JSON.parse(await Deno.readTextFile(new URL(`../data/${GC_FILE}`, import.meta.url))) as { d: string; ret: number }[]; OS.gcshort = new Map(gc.filter((x) => isOOS(x.d)).map((x) => [x.d, x.ret])); if (GC_FILE !== "d931-gcshort-daily.json") console.log(`  [D-946 A/B] gcshort sleeve loaded from ${GC_FILE} (NOT the deployed d931)`); }
 const _SLiv = () => K.SLEEVES.split(",").includes("ivol"); // D-939 idiosyncratic-vol anomaly candidate sleeve
 if (_SLiv()) { const iv = JSON.parse(await Deno.readTextFile(new URL("../data/d939-ivol-daily.json", import.meta.url))) as { d: string; ret: number }[]; OS.ivol = new Map(iv.filter((x) => isOOS(x.d)).map((x) => [x.d, x.ret])); }
 const days = [...OS.trend.keys()].filter((d) => OS.long.has(d)).sort();
@@ -175,6 +176,30 @@ if (K.STRESS) {
     const loo = names.map((drop, d) => { const r = idx.map((i) => { let v = 0, tot = 0; for (let j = 0; j < names.length; j++) { if (j === d) continue; const w = blendW[i]?.[j] ?? 0; tot += w; v += w * X[names[j]][i]; } return tot > 0 ? v / tot : 0; }); const rv = sd(r) * Math.sqrt(252); const rl = rv > 0 ? +K.VOL_TARGET / rv : 0; const s = stats(r.map((x) => x * rl)); return { drop, sr: s.sr, mu: s.mu }; });
     for (const { drop, sr, mu } of loo.sort((a, b) => a.sr - b.sr)) console.log(`    without ${drop.padEnd(9)} Sharpe ${sr.toFixed(2).padStart(6)}  ${(100 * mu).toFixed(1).padStart(6)}%/yr   ${sr < 0 ? "<- window goes NEGATIVE without it" : sr < p.sr - 0.5 ? "<- load-bearing" : ""}`);
   }
+}
+
+// ---- HEDGE OVERLAY (read-only, default off) — D-946: overlay a squeeze-hedge series on the deployed blend at a
+// swept vol fraction and report Sharpe / maxDD / worst rolling quarter / the Jan-2021 squeeze window / underwater.
+// A squeeze hedge must (a) be negatively correlated with the distress+IVOL short legs and (b) turn the Jan-2021 window
+// POSITIVE at a size that does not wreck the Sharpe. If it cannot, it is dominated by simply shorting less. ----
+if (K.HEDGE_SPEC) {
+  const hs = JSON.parse(await Deno.readTextFile(new URL(`../data/${K.HEDGE_SPEC}`, import.meta.url))) as { d: string; ret: number }[];
+  const hm = new Map(hs.map((x) => [x.d, x.ret])); const covD = days.filter((d) => hm.has(d)); const hraw = days.map((d) => hm.get(d) ?? 0);
+  const hvol = sd(covD.map((d) => hm.get(d)!)) * Math.sqrt(252);
+  const jan = days.map((d, i) => [d, i] as [string, number]).filter(([d]) => d >= "2021-01-01" && d <= "2021-02-28").map(([, i]) => i);
+  const janBase = jan.reduce((a, i) => a + blend[i] * lev, 0);
+  const worstQ = (x: number[]) => { let w = Infinity; for (let k = 0; k + 63 <= x.length; k++) { const s = stats(x.slice(k, k + 63)); if (s.sr < w) w = s.sr; } return w; };
+  console.log(`\n==> HEDGE OVERLAY — ${K.HEDGE_SPEC} (coverage ${covD.length}/${days.length} days, hedge standalone vol ${(100 * hvol).toFixed(1)}%)`);
+  console.log(`  hedge daily corr: gcshort ${corr(hraw, X.gcshort ?? hraw).toFixed(2)}, ivol ${corr(hraw, X.ivol ?? hraw).toFixed(2)}, blend ${corr(hraw, blend).toFixed(2)} (a hedge should be NEGATIVE to the short sleeves)`);
+  console.log(`  baseline blend Jan-2021 (Jan+Feb) window return ${(100 * janBase).toFixed(1)}%, worst rolling quarter Sharpe ${worstQ(blend.map((v) => v * lev)).toFixed(2)}`);
+  console.log(`  ${"frac".padStart(6)} ${"w_hedge".padStart(8)} ${"Sharpe".padStart(7)} ${"exc".padStart(6)} ${"%/yr".padStart(6)} ${"maxDD".padStart(7)} ${"worstQ".padStart(7)} ${"Jan21".padStart(7)} ${"uw(y)".padStart(6)}`);
+  const rfDay = (d: string) => { const r = usAt(d); return r === null ? 0 : (r / 100) / 252; };
+  for (const f of K.HEDGE_FRAC.split(",").map(Number).filter((x) => !isNaN(x))) {
+    const wh = hvol > 0 ? f * +K.VOL_TARGET / hvol : 0; const hb = days.map((d, i) => blend[i] * lev + wh * hraw[i]);
+    const s = stats(hb); const exc = stats(days.map((d, i) => blend[i] * lev + wh * hraw[i] - rfDay(d) * blendNet[i])); const janR = jan.reduce((a, i) => a + hb[i], 0);
+    console.log(`  ${f.toFixed(2).padStart(6)} ${wh.toFixed(2).padStart(8)} ${s.sr.toFixed(2).padStart(7)} ${exc.sr.toFixed(2).padStart(6)} ${(100 * s.mu).toFixed(1).padStart(5)}% ${(100 * s.mdd).toFixed(0).padStart(6)}% ${worstQ(hb).toFixed(2).padStart(7)} ${(100 * janR).toFixed(1).padStart(6)}% ${s.uwY.toFixed(2).padStart(6)}`);
+  }
+  console.log(`  READ: frac 0 is the deployed blend. A useful hedge lifts Jan21 toward >=0 AND holds exc-Sharpe; if exc-Sharpe falls monotonically with frac and Jan21 stays negative, the hedge does not work and shorting less dominates it.`);
 }
 
 // ---- D-926 PAPER STAND-UP (additive; default off) — stand the 3-factor blend up on paper for the forward clock ----
