@@ -5,13 +5,13 @@
 // trigger set it sits in), and builds ONE market-neutral short. Reports gc-only vs combined so the marginal
 // contribution of late-filing is measured, not assumed.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
-const K = declareKnobs("distress-sleeve", [{ name: "BORROW", def: "0.10" }, { name: "WINDOW", def: "180" }, { name: "MINN", def: "3" }, { name: "STALE_H", def: "0", note: "if >0, refuse event dumps older than this many hours (upstream test scripts silently stopped)" }, { name: "WRITE", def: "combined", note: "which series to write to d931 (the deployable sleeve): combined | gconly — gconly is for the marginal-contribution isolation only" }, { name: "INCLUDE_AUDITOR", def: "0", note: "1 = fold D-937 auditor-resignation events (d937-auditor-events.json) in as a 3rd trigger — only after its marginal blend contribution is measured positive" }, { name: "CROWD_DC", def: "0", note: "D-946 SQUEEZE AVOID-FILTER: if >0, exclude a flagged name from the SHORT on any day its point-in-time days-to-cover >= this (crowded short = squeeze fuel; the D-945 Jan-2021 blowup was these names). With CROWD_DC>0 the series is NEVER written to d931 (writes to ALT_OUT) — measurement only until it clears." }, { name: "SI_LAG_D", def: "14", note: "publication lag: use SI with settlement <= d - SI_LAG_D (no look-ahead)" }, { name: "ALT_OUT", def: "d946-distress-crowdfilt-daily.json", note: "where the CROWD_DC>0 series is written (never d931, to protect the deployed sleeve)" }]);
+const K = declareKnobs("distress-sleeve", [{ name: "BORROW", def: "0.10" }, { name: "WINDOW", def: "180" }, { name: "MINN", def: "3" }, { name: "STALE_H", def: "0", note: "if >0, refuse event dumps older than this many hours (upstream test scripts silently stopped)" }, { name: "WRITE", def: "combined", note: "which series to write to d931 (the deployable sleeve): combined | gconly — gconly is for the marginal-contribution isolation only" }, { name: "INCLUDE_AUDITOR", def: "0", note: "1 = fold D-937 auditor-resignation events (d937-auditor-events.json) in as a 3rd trigger — only after its marginal blend contribution is measured positive" }, { name: "CROWD_DC", def: "0", note: "D-946 SQUEEZE AVOID-FILTER: if >0, exclude a flagged name from the SHORT on any day its point-in-time days-to-cover >= this (crowded short = squeeze fuel; the D-945 Jan-2021 blowup was these names). With CROWD_DC>0 the series is NEVER written to d931 (writes to ALT_OUT) — measurement only until it clears." }, { name: "SI_LAG_D", def: "14", note: "publication lag: use SI with settlement <= d - SI_LAG_D (no look-ahead)" }, { name: "ALT_OUT", def: "d946-distress-crowdfilt-daily.json", note: "where the CROWD_DC>0 series is written (never d931, to protect the deployed sleeve)" }, { name: "NAMES_CAP", def: "0", note: "D-954: if >0, short only the top-N MOST-LIQUID active flagged names each day (hand-fillable + borrowable). Writes to ALT_OUT, never d931, until validated." }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "ds", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
 const shp = (r: number[]) => { const mu = mean(r) * 252; const sd = Math.sqrt(r.reduce((s, x) => s + (x - mean(r)) ** 2, 0) / Math.max(1, r.length - 1)) * Math.sqrt(252); return { annPct: mu * 100, volPct: sd * 100, sharpe: mu / (sd || 1) }; };
-const BORROW_D = +K.BORROW / 252; const WIN = +K.WINDOW; const MINN = +K.MINN;
+const BORROW_D = +K.BORROW / 252; const WIN = +K.WINDOW; const MINN = +K.MINN; const CAP = +K.NAMES_CAP;
 type Ev = { ticker: string; date: string };
 // 1) read both event dumps; if STALE_H>0, refuse dumps older than that budget (upstream fetch silently stopped —
 // the D-613 continuity failure: a frozen snapshot answers plausibly forever). Not "after my own start", because the
@@ -63,8 +63,13 @@ function buildSleeve(evs: Ev[], win = WIN, flt = CROWD > 0): { d: string; ret: n
   const flagBy = new Map<string, number[]>();
   for (const h of evs) { if (!liqSet.has(h.ticker) || !px.has(h.ticker)) continue; const d0 = Math.floor(Date.parse(h.date + "T00:00:00Z") / 86400000); (flagBy.get(h.ticker) ?? flagBy.set(h.ticker, []).get(h.ticker)!).push(d0); }
   const out: { d: string; ret: number }[] = [];
-  for (let k = 1; k < iwmDays.length; k++) { const tt = iwmDays[k], tp = iwmDays[k - 1]; const rIWM = Math.log(iwmC.get(tt)! / iwmC.get(tp)!); const shorts: number[] = [];
-    for (const [tk, fds] of flagBy) { if (!fds.some((fd) => tt > fd && tt <= fd + win)) continue; if (flt && !shortOK(tk, tt)) continue; const m = px.get(tk)!; const p0 = m.get(tp), p1 = m.get(tt); if (p0 && p1) shorts.push(Math.log(p1 / p0)); }
+  for (let k = 1; k < iwmDays.length; k++) { const tt = iwmDays[k], tp = iwmDays[k - 1]; const rIWM = Math.log(iwmC.get(tt)! / iwmC.get(tp)!);
+    // collect the active flagged names for this day, then (D-954) optionally cap to the top-N most-liquid = hand-fillable
+    const active: string[] = [];
+    for (const [tk, fds] of flagBy) { if (!fds.some((fd) => tt > fd && tt <= fd + win)) continue; if (flt && !shortOK(tk, tt)) continue; active.push(tk); }
+    const sel = CAP > 0 && active.length > CAP ? [...active].sort((a, b) => (vol.get(b) ?? 0) - (vol.get(a) ?? 0)).slice(0, CAP) : active;
+    const shorts: number[] = [];
+    for (const tk of sel) { const m = px.get(tk)!; const p0 = m.get(tp), p1 = m.get(tt); if (p0 && p1) shorts.push(Math.log(p1 / p0)); }
     const ret = shorts.length >= MINN ? -mean(shorts) + rIWM - BORROW_D : 0;
     out.push({ d: new Date(tt * 86400000).toISOString().slice(0, 10), ret }); }
   return out;
@@ -98,7 +103,7 @@ console.log(`  dumped ${liqNames.length} combined liquid names (${ntOnlyLiq} NT-
 // WRITE=gconly writes the going-concern-only series instead, used ONLY to isolate late-filing's blend contribution.
 const toWrite = K.WRITE === "gconly" ? gcOnly : combined;
 // D-946 WRITE GUARD: with the squeeze avoid-filter on, this is a MEASUREMENT run — never overwrite the deployed d931.
-const outName = CROWD > 0 ? K.ALT_OUT : "d931-gcshort-daily.json";
+const outName = (CROWD > 0 || CAP > 0) ? K.ALT_OUT : "d931-gcshort-daily.json";
 await Deno.writeTextFile(new URL(`../data/${outName}`, import.meta.url), JSON.stringify(toWrite));
 console.log(`  wrote ${K.WRITE} series -> data/${outName}${K.WRITE === "gconly" ? "  (ISOLATION RUN — re-run with WRITE=combined to restore the deployable sleeve)" : CROWD > 0 ? "  (CROWD_DC MEASUREMENT — d931 untouched)" : ""}`);
 if (CROWD > 0) {
