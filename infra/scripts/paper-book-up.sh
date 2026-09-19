@@ -22,8 +22,11 @@ echo "=== refresh IVOL anomaly sleeve (D-939, held bars; D-939c borrow avoid-fil
 # D-953: concentrated to the top/bottom 1/20 by idio-vol (~33 names/leg = 66 total, hand-fillable) — the extreme names
 # carry more signal, so this LIFTS the blend excess 1.98 -> 2.08 AND makes the sleeve deployable by hand (vs 268 names).
 SIGNAL=ivol MAX_NAMES=3000 CROWD_DC=5 QUINTILE=20 DUMP=1 deno run --v8-flags=--max-old-space-size=7168 --allow-net --allow-env --allow-read --allow-write ../scripts/volatility-anomaly.ts 2>&1 | grep -E "NET |CLEARS|AVOID-FILTER" | grep -vE "deno \+|0x0000" || true
-echo "=== FIVE-sleeve blend paper mark (D-939 distress+IVOL, DORMANT \$0) — the deployable candidate ==="
-PAPER=1 SLEEVES=trend,long,cryptomom,gcshort,ivol PAPER_START=2026-09-16 PAPER_RULE=fwd-distress-ivol-blend-5 PAPER_SPEC=distress-ivol-blend-5 deno run --allow-net --allow-env --allow-read --allow-write ../scripts/multistrategy-blend.ts 2>&1 | grep -E "PAPER|RISK-PARITY BLEND at" || true
+echo "=== FIVE-sleeve blend paper mark (D-939 distress+IVOL, D-953 hand-fillable q20, D-953b squeeze de-gross overlay, DORMANT \$0) — the deployable candidate ==="
+# D-953b: the deployed book carries the FROZEN D-947 squeeze de-gross (DEGROSS_LIVE=1) — cuts distress+ivol on a 10-day
+# short-book bleed < -1.0%. Squeeze INSURANCE (honest forward: ~neutral Sharpe + validated acute-tail protection,
+# 2021 maxDD -14%->-10%). The clock tracks the deployed (de-grossed) book; refinement precedes forward data (D-943 precedent).
+PAPER=1 DEGROSS_LIVE=1 SLEEVES=trend,long,cryptomom,gcshort,ivol PAPER_START=2026-09-16 PAPER_RULE=fwd-distress-ivol-blend-5 PAPER_SPEC=distress-ivol-blend-5 deno run --allow-net --allow-env --allow-read --allow-write ../scripts/multistrategy-blend.ts 2>&1 | grep -E "PAPER|RISK-PARITY BLEND at|DE-GROSS LIVE" || true
 echo "=== refresh current opportunities (both directions, global) ==="
 deno run --allow-net --allow-env --allow-write ../scripts/opportunities.ts 2>&1 | grep -E "==>|TOP" || true
 echo "=== attribution refresh (own log: the agent-output guard reads one file per agent) ==="
