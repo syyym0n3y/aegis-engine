@@ -18,6 +18,7 @@ const K = declareKnobs("volatility-anomaly", [
   { name: "SI_LAG_D", def: "14", note: "publication lag on short-interest: a settlement is knowable ~T+10bd, so only use SI with settlement <= d - SI_LAG_D (no look-ahead)" },
   { name: "RUN_ID", def: "D-939-volatility-anomaly" }, { name: "DUMP", def: "0", note: "1 = write d939-<signal>-daily.json for the blend correlation test" },
   { name: "DUMP_SHORTS", def: "0", note: "1 = write d939-<signal>-shorts.json (recent short-leg names) for the INSTRUMENT-LAW borrow gate" }, { name: "SHORT_REBS", def: "24", note: "how many recent rebalances define the representative short-leg universe" },
+  { name: "DUMP_SUFFIX", def: "", note: "D-953: suffix on the DUMP filename (e.g. q30) so a concentrated variant never clobbers the deployed d939-<signal>-daily.json" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "va", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
@@ -160,8 +161,9 @@ if (K.DUMP === "1") {
     for (let d = d0 + 1; d <= d1; d++) { const lr = L.map((s) => { const i = idxOf.get(s)!.get(d), j = idxOf.get(s)!.get(d - 1); return i !== undefined && j !== undefined ? S.get(s)![i].r : null; }).filter((x): x is number => x !== null);
       const sr = Sh.map((s) => { const i = idxOf.get(s)!.get(d); return i !== undefined ? S.get(s)![i].r : null; }).filter((x): x is number => x !== null);
       if (lr.length < 5 || sr.length < 5) continue; daily.push({ d: new Date(d * 86400000).toISOString().slice(0, 10), ret: mean(lr) - mean(sr) }); } }
-  await Deno.writeTextFile(new URL(`../data/d939-${K.SIGNAL}-daily.json`, import.meta.url), JSON.stringify(daily));
-  console.log(`  dumped ${daily.length} daily L-S returns -> data/d939-${K.SIGNAL}-daily.json`);
+  const suf = K.DUMP_SUFFIX;                 // D-953: alt filename so a concentrated variant never clobbers the deployed d939
+  await Deno.writeTextFile(new URL(`../data/d939-${K.SIGNAL}${suf}-daily.json`, import.meta.url), JSON.stringify(daily));
+  console.log(`  dumped ${daily.length} daily L-S returns -> data/d939-${K.SIGNAL}${suf}-daily.json`);
 }
 if (K.DUMP_SHORTS === "1") {
   // the representative short-leg universe = names appearing in the high-signal short leg over the last SHORT_REBS
