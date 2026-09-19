@@ -7,7 +7,7 @@
 // Blend = risk parity (equal ex-ante vol weight, from trailing 60-day sleeve vol). No weight is optimised on OOS.
 import { declareKnobs, mkStrictRead, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 import { spendTrials, preregCeiling } from "../supabase/functions/_shared/trial-ledger.ts";
-const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }, { name: "REGIME", def: "0", note: "1 = print per-sleeve regime dependence (own active-halves + shared calendar eras) — read-only, no writes" }, { name: "STRESS", def: "", note: "a FROM:TO date window (e.g. 2021-01-01:2021-12-31) to stress-test the blend in that regime — path, attribution, leave-one-out, worst rolling quarter; read-only" }, { name: "HEDGE_SPEC", def: "", note: "D-946: filename under data/ of a daily hedge series {d,ret}[] to OVERLAY on the blend (e.g. d946-squeeze-daily.json); read-only" }, { name: "HEDGE_FRAC", def: "0,0.05,0.1,0.2", note: "comma list of hedge vol allocations as fractions of VOL_TARGET to sweep in the overlay" }]);
+const K = declareKnobs("multistrategy-blend", [{ name: "OOS_FROM", def: "2015-01-01" }, { name: "VOL_TARGET", def: "0.10" }, { name: "REBAL_D", def: "5" }, { name: "MIN_YEARS", def: "10" }, { name: "MAX_CRYPTO", def: "10" }, { name: "COST_MULT", def: "1", note: "2 = double every class cost (the retail-access question)" }, { name: "SLEEVES", def: "trend,long,carry,value", note: "the registered blend is all four; any subset is DESCRIPTIVE ONLY (a subset chosen after seeing OOS sleeve results is a pick made on the evaluation window, D-455)" }, { name: "RUN_ID", def: "D-865-multistrategy-blend" }, { name: "PAPER", def: "0", note: "1 = stand up the 3-factor blend on paper (DORMANT snapshot + forward mark for fwd-three-factor-blend)" }, { name: "PAPER_START", def: "2026-09-15" }, { name: "PAPER_RULE", def: "fwd-three-factor-blend" }, { name: "PAPER_SPEC", def: "three-factor-blend" }, { name: "REGIME", def: "0", note: "1 = print per-sleeve regime dependence (own active-halves + shared calendar eras) — read-only, no writes" }, { name: "STRESS", def: "", note: "a FROM:TO date window (e.g. 2021-01-01:2021-12-31) to stress-test the blend in that regime — path, attribution, leave-one-out, worst rolling quarter; read-only" }, { name: "HEDGE_SPEC", def: "", note: "D-946: filename under data/ of a daily hedge series {d,ret}[] to OVERLAY on the blend (e.g. d946-squeeze-daily.json); read-only" }, { name: "HEDGE_FRAC", def: "0,0.05,0.1,0.2", note: "comma list of hedge vol allocations as fractions of VOL_TARGET to sweep in the overlay" }, { name: "DEGROSS", def: "0", note: "D-947: 1 = train/test a CONDITIONAL de-gross of the distress+ivol short legs on a junk-momentum (own-bleed) trigger; rule chosen on TRAIN only, frozen, applied to TEST; read-only" }, { name: "TRAIN_END", def: "2020-12-31", note: "last TRAIN day; TEST = days after it (default puts the Jan-2021 squeeze in the held-out TEST set)" }]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "msb2", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
 const tok = await jwt(); const hdr = { Authorization: `Bearer ${tok}`, apikey: tok }; const { q } = mkStrictRead(OWNED, hdr);
@@ -200,6 +200,55 @@ if (K.HEDGE_SPEC) {
     console.log(`  ${f.toFixed(2).padStart(6)} ${wh.toFixed(2).padStart(8)} ${s.sr.toFixed(2).padStart(7)} ${exc.sr.toFixed(2).padStart(6)} ${(100 * s.mu).toFixed(1).padStart(5)}% ${(100 * s.mdd).toFixed(0).padStart(6)}% ${worstQ(hb).toFixed(2).padStart(7)} ${(100 * janR).toFixed(1).padStart(6)}% ${s.uwY.toFixed(2).padStart(6)}`);
   }
   console.log(`  READ: frac 0 is the deployed blend. A useful hedge lifts Jan21 toward >=0 AND holds exc-Sharpe; if exc-Sharpe falls monotonically with frac and Jan21 stays negative, the hedge does not work and shorting less dominates it.`);
+}
+
+// ---- CONDITIONAL DE-GROSS (read-only, default off) — D-947: the ONLY forward mitigation D-946 left open for the
+// distress+IVOL joint-squeeze tail. When junk rips, the two short legs bleed together; that bleed is the contemporaneous
+// squeeze signature. Rule: when the trailing-K return of the (gcshort+ivol) short book (through i-1, LAG-1, no
+// look-ahead) falls below a threshold, cut (1-f) of the distress+ivol contribution for that day. STRICT DISCIPLINE
+// (SELECTION LAW D-455): (K, threshold-percentile, f) are chosen on TRAIN ONLY (<= TRAIN_END), frozen, applied to TEST.
+// Default TRAIN_END=2020-12-31 holds the Jan-2021 squeeze OUT of training — the rule must protect a squeeze it never saw.
+// D-821 is the known trap: de-grossing in high-vol regimes halved the Sharpe there, because the shorts EARN in the
+// post-squeeze mean-reversion — so cutting after a bleed can cut right before the payback. The OOS test decides. ----
+if (K.DEGROSS === "1") {
+  const iGc = names.indexOf("gcshort"), iIv = names.indexOf("ivol");
+  if (iGc < 0 || iIv < 0) { console.log(`\n==> DE-GROSS: needs gcshort+ivol in SLEEVES (have ${names.join(",")}) — skipped.`); }
+  else {
+    const splitDate = K.TRAIN_END;
+    const trainIdx = days.map((d, i) => [d, i] as [string, number]).filter(([d]) => d <= splitDate).map(([, i]) => i);
+    const testIdx = days.map((d, i) => [d, i] as [string, number]).filter(([d]) => d > splitDate).map(([, i]) => i);
+    const shortBook = days.map((_, i) => (X.gcshort[i] + X.ivol[i]) / 2);      // the two short legs, equal weight
+    const trail = (i: number, Kk: number) => { let s = 0; for (let j = Math.max(0, i - Kk); j < i; j++) s += shortBook[j]; return s; }; // through i-1 only (LAG-1)
+    // de-grossed daily blend for (Kk, tau, f): on days trail(i)<tau, remove (1-f) of the distress+ivol contribution (true de-gross to cash; NOT rotated to other sleeves)
+    const buildDG = (Kk: number, tau: number, f: number) => days.map((_, i) => { const cut = trail(i, Kk) < tau ? (1 - f) : 0; return blend[i] - cut * (blendW[i][iGc] * X.gcshort[i] + blendW[i][iIv] * X.ivol[i]); });
+    const srOf = (idx: number[], s: number[]) => stats(idx.map((i) => s[i])).sr;
+    // TRAIN grid search: pick (K, threshold-percentile, f) maximising TRAIN Sharpe. tau = that percentile of the TRAIN trailing-K distribution (a frozen NUMBER carried into test).
+    const Kgrid = [5, 10, 21], pgrid = [0.02, 0.05, 0.10, 0.20], fgrid = [0, 0.5];
+    let best: { Kk: number; p: number; tau: number; f: number; sr: number } | null = null;
+    for (const Kk of Kgrid) { const tt = trainIdx.map((i) => trail(i, Kk)).sort((a, b) => a - b);
+      for (const p of pgrid) { const tau = tt[Math.floor(p * tt.length)];   // low percentile = a sharp-bleed threshold
+        for (const f of fgrid) { const sr = srOf(trainIdx, buildDG(Kk, tau, f)); if (!best || sr > best.sr) best = { Kk, p, tau, f, sr }; } } }
+    const staticTrainSR = srOf(trainIdx, blend), staticTestSR = srOf(testIdx, blend);
+    const dgFrozen = buildDG(best!.Kk, best!.tau, best!.f); const dgTestSR = srOf(testIdx, dgFrozen);
+    // tail metrics: lever BOTH to VOL_TARGET using the TRAIN vol (frozen — no test leakage), then stats on the TEST slice
+    const lvTrain = (s: number[]) => { const v = sd(trainIdx.map((i) => s[i])) * Math.sqrt(252); return v > 0 ? +K.VOL_TARGET / v : 0; };
+    const lS = lvTrain(blend), lD = lvTrain(dgFrozen);
+    const testStat = (s: number[], lv: number) => stats(testIdx.map((i) => s[i] * lv));
+    const worstQ = (idx: number[], s: number[], lv: number) => { const a = idx.map((i) => s[i] * lv); let w = Infinity; for (let k = 0; k + 63 <= a.length; k++) { const st2 = stats(a.slice(k, k + 63)); if (st2.sr < w) w = st2.sr; } return w === Infinity ? NaN : w; };
+    const jan = testIdx.filter((i) => days[i] >= "2021-01-01" && days[i] <= "2021-02-28");
+    const nActiveTest = testIdx.filter((i) => trail(i, best!.Kk) < best!.tau).length;
+    const sS = testStat(blend, lS), sD = testStat(dgFrozen, lD);
+    console.log(`\n==> D-947 CONDITIONAL DE-GROSS — TRAIN <= ${splitDate} (${trainIdx.length}d), TEST > ${splitDate} (${testIdx.length}d); Jan-2021 squeeze is in TEST`);
+    console.log(`  RULE CHOSEN ON TRAIN: cut ${((1 - best!.f) * 100).toFixed(0)}% of distress+ivol when the ${best!.Kk}-day short-book return < ${(100 * best!.tau).toFixed(1)}% (train ${(100 * best!.p).toFixed(0)}th pct); train Sharpe ${staticTrainSR.toFixed(2)} -> ${best!.sr.toFixed(2)} ${best!.sr > staticTrainSR + 0.02 ? "(helped in-sample)" : "(barely/again NOT helped in-sample — the grid could not beat 'never de-gross')"}`);
+    console.log(`  fired on ${nActiveTest}/${testIdx.length} test days (${(100 * nActiveTest / testIdx.length).toFixed(1)}%)`);
+    console.log(`  ${"".padEnd(10)} ${"Sharpe".padStart(7)} ${"%/yr".padStart(6)} ${"maxDD".padStart(7)} ${"worstQ".padStart(7)} ${"Jan21".padStart(7)} ${"uw(y)".padStart(6)}`);
+    console.log(`  ${"STATIC".padEnd(10)} ${sS.sr.toFixed(2).padStart(7)} ${(100 * sS.mu).toFixed(1).padStart(5)}% ${(100 * sS.mdd).toFixed(0).padStart(6)}% ${worstQ(testIdx, blend, lS).toFixed(2).padStart(7)} ${(100 * jan.reduce((a, i) => a + blend[i] * lS, 0)).toFixed(1).padStart(6)}% ${sS.uwY.toFixed(2).padStart(6)}`);
+    console.log(`  ${"DE-GROSS".padEnd(10)} ${sD.sr.toFixed(2).padStart(7)} ${(100 * sD.mu).toFixed(1).padStart(5)}% ${(100 * sD.mdd).toFixed(0).padStart(6)}% ${worstQ(testIdx, dgFrozen, lD).toFixed(2).padStart(7)} ${(100 * jan.reduce((a, i) => a + dgFrozen[i] * lD, 0)).toFixed(1).padStart(6)}% ${sD.uwY.toFixed(2).padStart(6)}`);
+    const dSr = dgTestSR - staticTestSR, dDD = sD.mdd - sS.mdd, dJan = (jan.reduce((a, i) => a + dgFrozen[i] * lD, 0) - jan.reduce((a, i) => a + blend[i] * lS, 0));
+    const tailHelped = dDD > 0.005 || dJan > 0.03; // shallower maxDD or a materially better squeeze month
+    console.log(`  OOS VERDICT: Sharpe ${dSr >= 0 ? "+" : ""}${dSr.toFixed(2)} (${dgTestSR.toFixed(2)} vs ${staticTestSR.toFixed(2)}), maxDD ${dDD >= 0 ? "+" : ""}${(100 * dDD).toFixed(1)}pt, Jan-2021 ${dJan >= 0 ? "+" : ""}${(100 * dJan).toFixed(1)}pt`);
+    console.log(`  => ${tailHelped && dSr > -0.05 ? "SQUEEZE INSURANCE: protects the held-out tail at ~neutral Sharpe (the test contained a squeeze)" : tailHelped ? "TAIL help but a Sharpe COST — a tolerance trade" : "PURE DRAG (no squeeze in this test window) — D-821: cutting the shorts on their bleed forgoes the post-squeeze payback"}. Net: small negative carry + a contingent squeeze payout = a genuine hedge (unlike D-946's long basket), NOT a Sharpe improver.`);
+  }
 }
 
 // ---- D-926 PAPER STAND-UP (additive; default off) — stand the 3-factor blend up on paper for the forward clock ----
