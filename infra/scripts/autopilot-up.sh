@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
-command -v colima >/dev/null && (colima status >/dev/null 2>&1 || colima start --cpu 2 --memory 4) || true
+command -v colima >/dev/null && (colima status >/dev/null 2>&1 || colima start >/dev/null 2>&1) || true
 docker start aegis-db aegis-rest >/dev/null 2>&1 || bash scripts/provision-owned.sh || true
 export OWNED_REST="http://localhost:${REST_PORT:-3000}"
 exec deno run --allow-net --allow-env ../scripts/aegis-autopilot.ts

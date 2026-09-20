@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
-command -v colima >/dev/null && (colima status >/dev/null 2>&1 || colima start) || true
+command -v colima >/dev/null && (colima status >/dev/null 2>&1 || colima start >/dev/null 2>&1) || true
 docker start aegis-db aegis-rest >/dev/null 2>&1 || true
 export OWNED_REST="http://localhost:${REST_PORT:-33000}"
 echo "=== paper-book run $(date -u +%FT%TZ) ==="

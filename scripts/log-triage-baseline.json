@@ -1,11 +1,17 @@
 {
   "classes": {
-    "infra/data/coverage.log|SPN CHANGES INGEST FAILED": 1,
+    "infra/data/daily.err|\u001b[Nm\u001b[Nm\u001b[Nmerror\u001b[Nm: Uncaught (in promise) TypeError: error sending request for url (htt": 2,
+    "infra/data/daily.err|!! BTCUSDT Nm-NQN: WRITE FAILED network error — a chunk that does not land leaves a hole t": 1,
     "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 2,
-    "postgres|column trd_lineage_roster.decision does not exist at character N": 1,
-    "postgres|column trd_lineage_roster.lead_id does not exist at character N": 1,
-    "postgres|permission denied for view trd_lineage_roster": 1
+    "infra/data/micro-hourly.log|MICRO HOURLY: fx refresh FAILED": 13,
+    "infra/data/micro-hourly.log|MICRO HOURLY: sheet FAILED": 16,
+    "postgrest|503 /trd_factory": 2,
+    "postgrest|503 /trd_forward_rules": 1,
+    "postgrest|503 /trd_fundamentals_coverage_v": 1,
+    "postgrest|503 /trd_lineage": 11,
+    "postgrest|503 /trd_trial_counter": 2,
+    "postgres|permission denied for table trd_lineage": 5
   },
-  "set": "2026-09-18T22:22:59.207Z",
+  "set": "2026-09-20T20:39:34.319Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }
