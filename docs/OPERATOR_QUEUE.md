@@ -1,14 +1,12 @@
-# OPERATOR QUEUE — regenerated 2026-09-21T19:16Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-09-21T23:49Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — **3 RED** (32 guards, board logged 0.0h ago)
-- RED   agent-output   4 PROBLEM(S) IN LIVE AGENT OUTPUT. A guard on the ledger d
-- RED   rest-restart   REST RESTART GUARD RED — PostgREST restarted 2 time(s) s
-- RED   log-triage     RED — 5 NEW error class(es) since the baseline. Read eac
+## Board — **1 RED** (32 guards, board logged 0.0h ago)
+- RED   log-triage     RED — 1 NEW error class(es) since the baseline. Read eac
 
 ## Micro rung — live feed and sheet
-- hourly FX/index feed: **7/7 fresh within 3h** · sheet: **1 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
+- hourly FX/index feed: **7/7 fresh within 3h** · sheet: **0 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
 - the sheet prints candidates only on fresh bars; a STALE instrument prints no candidate by design.
 
 ## Yours — in evidence order, each with its exact act
@@ -27,7 +25,7 @@
 | fwd-crypto-lit5 | 2026-08-24 | not yet computable | 28 | 28 calendar day(s) elapsed of the 250 TRADING days the rule requires; forward table last stamped 2026-09-21 |
 | fwd-despac-underperf | 2026-08-31 | not yet computable | 0 | 0 new de-SPACs with 500d since 2026-08-31; rule needs >=15. Post-boom de-SPAC volume is low — may stay inconcl |
 | fwd-despac-underperf-v2 | 2026-09-02 | not yet computable | 0 | 0 new de-SPACs (5.06 dated) with 500d since 2026-09-02; rule needs >=15. First possible read ~2028-09; post-bo |
-| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | not yet computable | 34 | 34 forward trade(s) since 2026-09-13; the kill clauses read at 200 and the promote clause at 400. not-yet-comp |
+| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | not yet computable | 36 | 36 forward trade(s) since 2026-09-13; the kill clauses read at 200 and the promote clause at 400. not-yet-comp |
 | fwd-distress-blend-combined | 2026-09-16 | not yet computable | - | elapsed 5d of 365d horizon (~250+ trading days from 2026-09-16 (first decisive read ~202) |
 | fwd-distress-ivol-blend-5 | 2026-09-16 | not yet computable | - | elapsed 5d of 365d horizon (~250+ trading days from 2026-09-16 (first decisive read ~202) |
 | fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | not yet computable | 7 | 7 forward event-days since 2026-09-04 (rule requires >=150 for kill or >=200 for promote). not-yet-computable. |
@@ -53,7 +51,7 @@
 | fwd-tsmom-110 | 2026-09-13 | not yet computable | 7 | 7 paper day(s) since 2026-09-13 (~0.3 months); first read at 12 months, decision at 24. not-yet-computable, NO |
 | fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | not yet computable | 12 | 12 forward events since 2026-09-04 on the 17-panel; below 30, not-yet-computable (rule floors: kill at n>=250, |
 | fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | 62.361 | 71 | 71 forward events since 2026-09-04: pooled net 62.36bp, gross t 3.43, 13/17 instruments positive (of 17). belo |
-| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | 2.398 | 54 | 54 forward events since 2026-09-04: pooled net 2.40bp, gross t 0.40, 7/17 instruments positive (of 17). below  |
+| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | 28.561 | 63 | 63 forward events since 2026-09-04: pooled net 28.56bp, gross t 1.66, 9/17 instruments positive (of 17). below |
 | fwd-xmr-asia-rangefade | 2026-09-15 | not yet computable | - | elapsed 6d of 365d horizon (Score after >=150 fresh out-of-sample trades accrue (data pa) |
 
 ## If you want the sessions to run without you
