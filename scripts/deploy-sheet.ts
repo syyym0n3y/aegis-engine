@@ -7,6 +7,7 @@ const K = declareKnobs("deploy-sheet", [
   { name: "CAPITAL", def: "100000", note: "$ armed" }, { name: "VOL_TARGET", def: "0.20", note: "deployable book vol (quarter-Kelly-ish)" },
   { name: "NPL", def: "33", note: "IVOL names per leg (q20 = hand-fillable)" }, { name: "WINDOW", def: "365", note: "distress event hold window (days)" },
   { name: "FORM_D", def: "60" }, { name: "CROWD_DC", def: "5" }, { name: "SI_LAG_D", def: "14" }, { name: "MAX_NAMES", def: "3000" }, { name: "BASE_VOL", def: "0.048", note: "the blend's raw base vol -> leverage = VOL_TARGET/BASE_VOL" },
+  { name: "TICKET", def: "", note: "path to ALSO write a machine-readable target-book ticket JSON (consumed by executor.ts, D-957) — empty = print only" },
 ]);
 const OWNED = Deno.env.get("OWNED_REST") || "http://localhost:33000"; const SECRET = Deno.env.get("JWT_SECRET")!;
 async function jwt() { const e = (o: unknown) => btoa(JSON.stringify(o)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_"); const h = e({ alg: "HS256", typ: "JWT" }), b = e({ role: "service_role", iss: "ds", exp: 4102444800 }); const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(`${h}.${b}`))); return `${h}.${b}.${btoa(String.fromCharCode(...s)).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_")}`; }
@@ -68,3 +69,16 @@ console.log(`  FULL EDGE needs a BASKET order (${distActive.size} names) — dis
 console.log(`  HAND-FILL COMPROMISE: the ${distTop.length} most-liquid (~$${Math.round(perGc)}/name) — but capping to 50 costs the blend 2.08 -> 1.79. Prefer a basket if your broker supports it:\n  ${distTop.join(" ")}${degrossed ? "   [FLAT while de-gross active]" : ""}`);
 console.log(`\nPRACTICAL MINIMUM CAPITAL: distress+ivol are low-weight sleeves, so per-name $ is small — at $${C.toLocaleString()} the IVOL names are ~$${Math.round(perIvL)} each. For fillable per-name size (~$300-500), the name-level shorts need ~$100-150k. Below that you can only run trend+long+crypto (excess ~0.89, D-950).`);
 console.log(`\nCADENCE: IVOL + DISTRESS rebalance MONTHLY (re-run this sheet); TREND weekly; CRYPTO weekly. GATES: paper -> MICRO (this, tiny) -> SMALL, each rung only after a clean kill-switch record. KILL-SWITCH: durable row; if the book draws down past your rung's limit, flatten and step down a rung. Never let Claude place an order.`);
+// D-957: machine-readable ticket for executor.ts — the SAME book, as data. Name-level rows for ivol/distress; the
+// trend/long/crypto sleeves are instrument-choice rows (the operator's venue decides ETF vs spread bet vs spot).
+if (K.TICKET) {
+  const targets: { symbol: string; sleeve: string; side: string; dollars: number }[] = [];
+  for (const s of ivLong) targets.push({ symbol: s, sleeve: "ivol", side: "long", dollars: Math.round(perIvL) });
+  if (!degrossed) for (const s of ivShort) targets.push({ symbol: s, sleeve: "ivol", side: "short", dollars: Math.round(perIvS) });
+  if (!degrossed) for (const s of distTop) targets.push({ symbol: s, sleeve: "gcshort", side: "short", dollars: Math.round(perGc) });
+  for (const [sl, inst] of [["trend", "OPERATOR-CHOICE: managed-futures ETF (e.g. DBMF-class) or per-asset trend"], ["long", "OPERATOR-CHOICE: SPY/VTI-class"], ["cryptomom", "OPERATOR-CHOICE: SPOT top-momentum coins (UK: NO perps, FCA COBS 22.6)"]] as [string, string][])
+    targets.push({ symbol: inst, sleeve: sl, side: "long", dollars: Math.round(dollar(sl)) });
+  const ticket = { written: new Date().toISOString(), book_date: new Date(today * 86400000).toISOString().slice(0, 10), capital: C, vol_target: V, leverage: +LEV.toFixed(2), degrossed, targets };
+  await Deno.writeTextFile(K.TICKET, JSON.stringify(ticket, null, 1));
+  console.log(`\nTICKET written -> ${K.TICKET} (${targets.length} rows; consumed by executor.ts — which still never submits without operator ARM + adapter)`);
+}

@@ -21572,3 +21572,37 @@ is reliability, not research, and it is not an exit.
 
 GOLD: reliability — a defect class that has cost this programme three separate diagnoses is converted from detected to
 self-correcting, and the conversion is enforced on disk for every daemon written from here.
+
+## D-957 (2026-09-21) THE EXECUTION LAYER, BUILT DORMANT — deterministic order tickets from the live book, every gate machine-checked, broker adapter honestly absent
+
+Operator directive: run all verticals autonomously; agents manage the portfolio hands-off. The missing layer was never
+scanning (the daemons already scan thousands of names) and never the model (the invariant is NO LLM in the order path);
+it was a deterministic path from the deployed book to placeable orders. Built and verified in one pass:
+
+**`deploy-sheet.ts` TICKET knob** — the same book computation now also writes a machine-readable target ticket
+(102 rows today: 33 IVOL long / 33 IVOL short borrow-OK / 33 distress-liquid + 3 sleeve-proxy rows, de-gross state
+carried). **`scripts/executor.ts` (NEW)** — consumes the ticket, diffs against REAL open rows in `trd_manual_trades`
+(schema read from the live DB after the strict-read guard rejected guessed columns — the precondition machinery working),
+and emits an order list under three gates, each observed firing on real state: (1) `assertFresh` on the ticket (24h);
+(2) `trd_kill_switch[ACCOUNT]` must read `armed` — read-only, the executor can never write the switch; (3) hard caps —
+a $100k ticket against the $5k micro budget was REFUSED with exit 1, and per-order clipping at $500 flagged. At micro
+capital ($2k) the diff emitted 0 name-level orders (every target under the $25 churn floor) and only the three
+sleeve-proxy reminders — independently reproducing D-950's finding that below ~$25-50k the book IS the proxies.
+SUBMIT=1 refuses with exit 1 (verified un-piped after the tail-swallowed-exit-code trap recurred) and prints the exact
+operator-only runway, now in `docs/BROKER_SETUP.md`: IBKR UK account (API + shorting + SLB borrow — reading real borrow
+on the 33 short names is also how the pending IVOL-borrow instrument gate closes), creds via env, allowlist entries
+(operator-owned), then a 1-share adapter verification with the kill-switch proven to refuse.
+
+Companion moves outside this repo, same session: ballast `scripts/horizon.ts` (the ecosystem Monte Carlo: deposits +
+D-950 empirical quarter-Kelly + D-746 crossover + capacity + stated edge-decay, t(4) tails — median £500/mo-from-zero
+path reaches £1M in year 15 with a 58% median max drawdown and 5.5y underwater stretches printed beside it, never
+without them); launchd `io.ballast.up` / `io.assay.up` keep the vertical DBs alive across reboots (both were found DOWN
+this morning — gap measured, closed, verified running under launchd).
+
+What did NOT move: no position (fills remain the operator's), no clock verdict. GATE machinery moved: the executor's
+caps + kill-switch read now stand between any ticket and any future submission, on disk and self-refusing.
+
+ACTS-ON: gate — the micro rung's order path now exists as gated machinery; SUBMIT is structurally refused until the
+operator completes the BROKER_SETUP runway.
+GOLD: structural — the book-to-orders path is deterministic, capped, kill-switch-gated and DORMANT; the LLM stays out
+of the order path by construction, not by promise.
