@@ -21637,3 +21637,31 @@ ACTS-ON: gate — the micro rung review keeps K24 as the family's deployable for
 non-clearing so it cannot be re-admitted without new evidence.
 GOLD: research — a 6-trial pre-specified confirmation test that LOCALISES where a real family's edge lives (horizon,
 cost geometry, filter, selection) instead of flattening it to works/doesn't.
+
+## D-959 (2026-09-22) THE SUBSTRATE MUST NOT COST THE OPERATOR THEIR MACHINE — night-shift re-architecture, measured 206% -> 18% VM CPU
+
+Operator report: the Mac too slow to watch a video; five app routines firing on every app open; "daemon failing"
+notifications persisting. Diagnosis, measured not guessed: (1) **five Claude-app scheduled routines** — one running a
+full research gauntlet EVERY 25 MINUTES (~58 sessions/day) — all fired simultaneously at app open (identical lastRunAt
+09:02:26), hammering trd_fundamentals and burning tokens; their failed sessions were the notification source; they
+duplicated the deterministic launchd substrate. DELETED all five (prompts preserved in ~/.claude/scheduled-tasks/).
+(2) **every launchd daemon was RunAtLoad+KeepAlive** — the heaviest cycles all fired at boot, exactly when the operator
+sits down; boot-triage's simultaneous kicks (D-958 session) amplified the burst; aegis-db measured at 127% CPU, the
+colima VM at 206%/4GB.
+The fix, in the direction io.aegis.paper already pointed (calendar + Nice): daily 02:10, coverage 02:40, positioning
+03:10, cryptofwd 03:40, autopilot 04:10, discovery 04:40 — StartCalendarInterval, **ProcessType=Background + Nice 10 +
+LowPriorityBackgroundIO**, no RunAtLoad, no KeepAlive. autopilot/discovery converted from resident 6h-cycle daemons to
+single nightly cycles via their own --once flag (aligned with the D-823 research freeze — the mining loops do not need
+6h cadence). micro stays hourly but backgrounded. boot-triage keeps container-start + signature-matched .err cleanup
+and DROPS the daemon kicks (nothing runs at boot to clean up after). Guards accommodate by construction: agent-output
+MAX_STALE_H=30 > 24h cadence; every data budget is daily+.
+Measured after reload: VM 206% -> 18% CPU, aegis-db 127% -> 7.9%, zero resident research processes.
+CAVEATS ON RECORD: (a) a Mac asleep through the night fires missed calendar jobs coalesced at wake — now harmless
+(Background QoS) but visible; the operator can enable a scheduled wake if true night runs are wanted — a system power
+setting that is theirs, not mine; (b) nightly single-cycles mean discovery/autopilot produce 1 cycle/day instead of 4
+— accepted deliberately under the research freeze; (c) colima still reserves 4GiB — memory was measured NOT the
+constraint (65% free), so the allocation stands.
+ACTS-ON: gate — the guard cadence and notification path now run on a schedule that cannot degrade the operator's
+machine; false "daemon failing" alarms from boot bursts and routine sessions are removed at the source.
+GOLD: reliability — the substrate's cost to its own operator was measured, re-architected, and re-measured 11x lower,
+with the trade-offs written down instead of discovered.

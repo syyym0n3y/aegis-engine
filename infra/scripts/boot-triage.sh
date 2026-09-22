@@ -22,16 +22,18 @@ if ! curl -sf -o /dev/null "$REST/"; then echo "  REST never came up — leaving
 # Primary signature (the outage itself) + consequence lines a dead REST produces in the same run: guards echoing
 # could-not-read/refusing-to-certify, traceback frames, caret/code echoes. Widening is safe ONLY because this script
 # acts strictly after REST answers: if the outage were real, the re-kicked daemons rewrite fresh errors immediately.
-SIG='Connection refused|os error 61|error sending request|docker\.sock|colima|starting vm|tcp connect|STRICT READ FAILED|503|could not read|cannot read|unreadable|refusing to certify|^[[:space:]]*at |await fetch|^[[:space:]]*\^|Uncaught \(in promise\)|deno_fetch|mainFetch|REST RESTART GUARD|PostgREST restarted'
+SIG='Connection refused|os error 61|error sending request|docker\.sock|colima|starting vm|tcp connect|STRICT READ FAILED|503|could not read|cannot read|unreadable|refusing to certify|^[[:space:]]*at |await fetch|\^[[:space:]]*$|Uncaught \(in promise\)|deno_fetch|mainFetch|REST RESTART GUARD|PostgREST restarted'
 for f in ./data/*.err; do
   [ -s "$f" ] || continue
-  if grep -vE "$SIG" "$f" | grep -qE '[^[:space:]]'; then
+  # strip ANSI color escapes before matching — deno wraps error lines (and the traceback caret) in them
+  if sed $'s/\x1b\\[[0-9;]*m//g' "$f" | grep -vE "$SIG" | grep -qE '[^[:space:]]'; then
     echo "  KEPT $f — contains lines outside the boot-transient signature (needs a human)" >> "$LOG"
   else
     : > "$f"; echo "  cleared $f (all lines matched boot-transient signature)" >> "$LOG"
   fi
 done
-for j in daily coverage positioning discovery autopilot; do
-  launchctl kickstart -k "gui/$(id -u)/io.aegis.$j" 2>/dev/null && echo "  kicked io.aegis.$j" >> "$LOG"
-done
+# D-959b: NO daemon kicks at boot. The daemons are night-scheduled (StartCalendarInterval 02:10-04:40, Background
+# QoS) since the boot-time burst was measured pinning aegis-db at 127% CPU exactly when the operator sits down.
+# Boot only needs the containers up (done above) and the stale-transient .err debris cleared; the daemons' own
+# night runs produce the fresh clean records the guards read (MAX_STALE_H=30 accommodates a 24h cadence).
 echo "  done $(date -u +%FT%TZ)" >> "$LOG"

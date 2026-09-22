@@ -5,8 +5,10 @@
   <key>ProgramArguments</key><array>
     <string>/bin/bash</string><string>/Users/ona/Projects/aegis/infra/scripts/coverage-guard-up.sh</string>
   </array>
-  <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><true/>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>2</integer><key>Minute</key><integer>40</integer></dict>
+  <key>ProcessType</key><string>Background</string>
+  <key>Nice</key><integer>10</integer>
+  <key>LowPriorityBackgroundIO</key><true/>
   <key>StandardOutPath</key><string>/Users/ona/Projects/aegis/infra/data/coverage.log</string>
   <key>StandardErrorPath</key><string>/Users/ona/Projects/aegis/infra/data/coverage.err</string>
   <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/Users/ona/.deno/bin</string></dict>
