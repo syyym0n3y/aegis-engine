@@ -21665,3 +21665,16 @@ ACTS-ON: gate — the guard cadence and notification path now run on a schedule 
 machine; false "daemon failing" alarms from boot bursts and routine sessions are removed at the source.
 GOLD: reliability — the substrate's cost to its own operator was measured, re-architected, and re-measured 11x lower,
 with the trade-offs written down instead of discovered.
+
+## D-960 (2026-09-22) LONDON-SESSION CONTINUATION PRE-REGISTERED — a post-hoc sign observation converted into a clock instead of a claim
+
+D-958's London window (04:00-06:00 ET) fade of Asia levels lost significantly OOS (t -2.34). The tempting move — trade
+the opposite direction on the same data — is the exact D-511b/D-553 failure (a flip discovered after the fact is not
+claimable). Converted lawfully instead: `trd_prereg` row `D-960-london-session-continuation` (immutable, verified by
+the table's standing trigger) with a numeric two-sided rule — continuation, lag-1, stop at level re-cross, 1.5R
+target, on NQ 1m data STRICTLY after 2026-09-22; promote at t>=2.0 over >=150 trades, kill at t<=0, underpowered
+recorded if <60 trades by 2027-06-30; the untouched hourly panel may corroborate as its own counted trial. The causal
+hypothesis on record: London-open breaches of Asia extremes are INITIATIVE session-builder flow, not stop-hunts — the
+one window where the forced-flow family's direction inverts.
+GOLD: clock — a new forward clock with promote/kill written before its data exists; the D-958 residue can now only
+become evidence the honest way.
