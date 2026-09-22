@@ -21606,3 +21606,34 @@ ACTS-ON: gate — the micro rung's order path now exists as gated machinery; SUB
 operator completes the BROKER_SETUP runway.
 GOLD: structural — the book-to-orders path is deterministic, capped, kill-switch-gated and DORMANT; the LLM stays out
 of the order path by construction, not by promise.
+
+## D-958 (2026-09-22) THE OPERATOR'S SWEEP SPEC, MEASURED — the FAMILY is real (already admitted), the 1-MINUTE R-TRIM RENDERING of it is not
+
+Operator directive: stop invalidating; determine WHY the theories that work, work, and leave no reason unexamined. The
+Notes spec ("London and Asia high-lows; wait for the sweep; 1m reversal; 1-2R trim") is a variant INSIDE the one
+intraday family this programme has admitted — micro-psl-fade-k24 (session-level sweep FADE, hourly K24, D-825 placeable
+expectancy t 1.9-2.1 OOS) and D-955's zone-fade (OOS 51.6% vs 50.7% break-even). Measured the note's own rendering on
+NQ 1m, 936 days, pre-specified (FADE only, lag-1 entry, stop = sweep extreme, R in {1,1.5,2}, both readings of "9AM",
+stop-first bar resolution, 6 variants = 6 counted trials, family session-sweep-fade):
+| variant | train pt/tr | test pt/tr | test t |
+|---|---|---|---|
+| 9am-LONDON, R1..R2 | -0.11 .. +0.51 | **-2.68 .. -3.94** | -1.30 .. **-2.34** |
+| 9am-NY, R1..R2 | **-2.03 .. -2.32** | -1.07 .. +1.11 | -0.65 .. +0.46 |
+No variant is positive in BOTH halves; the London window LOSES significantly OOS. A test-only positive on a negative
+train is noise, not confirmation (D-455 discipline applies in both directions).
+WHY THE FAMILY WORKS WHERE IT WORKS — the mechanism list, kept open: (1) HOLDING HORIZON — the admitted rule holds 24
+HOURLY bars; the reversion after a sweep needs hours to play out, and a 1m 1-2R trim sells the winner into the whipsaw
+that the D-955 economics warned about (path length >> tradable legs); (2) COST GEOMETRY — fade economics clear only
+when leg >> cost (D-955's 50.7% BE) and the 1m trim shrinks the leg back toward the cost; (3) PARTICIPATION FILTER —
+the admitted rule carries a conditioner and instrument selection (D-825: works on gold/index, fails elsewhere), where
+the note's rendering takes EVERY sweep; (4) DISCRETIONARY SELECTION — a live trader's which-sweep-to-take judgment is
+real skill the mechanical version cannot carry (D-948/949 finding), measurable only through trade-journal.ts fills;
+(5) the London-open window result suggests Asia-level sweeps there CONTINUE rather than revert (direction of the
+session builder), an unmined lead left OPEN, not asserted.
+EXPLOITATION PATH, honest: trade the ADMITTED variant (micro-psl-fade K24 on the D-825 placeable instruments, live on
+the micro sheet today), and journal the discretionary 1m version to measure the selection skill — not the mechanical
+1m trim, which is now measured against.
+ACTS-ON: gate — the micro rung review keeps K24 as the family's deployable form; the 1m R-trim rendering is recorded
+non-clearing so it cannot be re-admitted without new evidence.
+GOLD: research — a 6-trial pre-specified confirmation test that LOCALISES where a real family's edge lives (horizon,
+cost geometry, filter, selection) instead of flattening it to works/doesn't.
