@@ -21768,3 +21768,30 @@ ACTS-ON: gate — assay's memecoin claims now carry their measured cohort baseli
 rows state live truth; the OI purchase gate holds an exact price instead of a guess.
 GOLD: research — one unmined free dataset converted to a base-rate measurement the whole memecoin vertical must
 answer to, in one session, at $0.
+
+## D-965 (2026-09-22) THE ANNOUNCEMENT WINDOW, OPENED AND MEASURED — the index-effect pop is consumed within hours of the PR; the lag-1 buyer funds it
+
+The D-963 re-entry gate opened same-day: the operator allowlisted spglobal.com, and the SPDJI indexNews Solr archive
+(discovered from the site's own network calls, D-758 method; Akamai blocks plain curl so the pull ran in-browser)
+yielded 3,561 announcements to Jun-2004 — but constituent PRs are dense only 2023-09+ (33 S&P 500 PRs kept,
+`data/sp500-announcements.json`, matching method + coverage limits stated in the file). Matched 38 of 66 changes
+since 2023-09 (median lead 5 trading days — the mechanism's public head-start confirmed); 28 unmatched = coverage.
+Pre-specified (2 trials, family sp500-announcement-drift): ADD long from the first open AFTER the PR (lag-1) to the
+rebalance close; DEL short the same window; excess vs SPY:
+| leg | n | excess/event | t | win% | registered sign |
+|---|---|---|---|---|---|
+| ADD long | 25 | **-142bp** | -1.22 | 32% | **MISSED** |
+| DEL short | 21 | +119bp | 1.02 | 57% | matched, not significant |
+RECONCILIATION WITH D-963 (the point of the whole thread): D-963's +2.62% add run-up (2020-26, t 3.61) into the
+effective date INCLUDES the announcement-day jump. Enter one open later and the residue is NEGATIVE — the forced
+flow is fully priced in the overnight/opening print after the PR, and the daily-granularity lag-1 entrant funds the
+pop for whoever was faster. No post-hoc flip is claimable (SIGN LAW): "short the adds after the PR" is unregistered.
+VERDICT: FOOTPRINT REAL, DAILY-HARVEST DEAD (adds sign-missed; dels underpowered-positive at n=21 and worth
+re-scoring as PRs accrue). Honest re-entry gates, in order of plausibility: (1) intraday granularity around the PR
+timestamp — the existing intraday-equities PAID gap row now carries this concrete use case; (2) pre-announcement
+candidate prediction (committee criteria are public: mcap/liquidity/earnings — a different, harder, unstarted
+problem); (3) the DEL short at larger n, free, as the PR archive grows.
+ACTS-ON: gate — the sp500-announcement-dates gap row closes FILLED; the harvestable-window question that gated
+D-963 is answered on free data, and any future index-effect claim must beat THIS record, not the pooled folklore.
+GOLD: research — a two-decision thread (footprint -> window) closed end-to-end in one day at $0, with the sign
+failure recorded exactly where a guru would have cropped the chart.

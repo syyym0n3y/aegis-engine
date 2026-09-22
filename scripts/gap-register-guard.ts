@@ -54,6 +54,12 @@ const BACKING: Record<string, [string, string]> = {
   // belongs. The staleness budget here is generous because EDGAR full-text is a one-off historical crawl, not a feed.
   "edgar-fulltext": ["trd_raw_filings?source=eq.edgar&filing_type=like.*going-concern*&select=disclosed_date&order=disclosed_date.desc&limit=1", "disclosed_date"],
 };
+// D-965: some closures are backed by an archive SNAPSHOT FILE, not a live table (the SPDJI PR pull is a one-off
+// crawl like edgar-fulltext). A file-backed fill is checkable too: the file must exist, parse, carry >= minRows
+// rows, and its own `pulled` stamp must be within budget — generous, because an archive snapshot is not a feed.
+const FILE_BACKING: Record<string, { path: string; minRows: number; maxAgeD: number }> = {
+  "sp500-announcement-dates": { path: "data/sp500-announcements.json", minRows: 20, maxAgeD: 365 },
+};
 // A status of "retracted" means the gap was investigated and found not to be one — distinct from "filled", which
 // means it was real and closed. binance-live-universe is the first: the 150 absent contracts turned out to be
 // younger than the panel's minimum-history threshold (D-646 corrected), so there was nothing to fill.
@@ -66,6 +72,18 @@ const SYNTH = SELFTEST
   : [];
 for (const g of [...gaps, ...SYNTH]) {
   if (g.status === "filled") {
+    const fb = FILE_BACKING[g.id];
+    if (fb) {
+      try {
+        const j = JSON.parse(await Deno.readTextFile(new URL(`../${fb.path}`, import.meta.url).pathname)) as { pulled?: string; rows?: unknown[] };
+        const n = Array.isArray(j.rows) ? j.rows.length : 0;
+        const ageD = j.pulled ? (Date.now() - Date.parse(j.pulled)) / 86400000 : Infinity;
+        if (n < fb.minRows) { red++; console.log(`  RED  ${g.id.padEnd(22)} FILLED but backing file has ${n} rows (< ${fb.minRows})`); }
+        else if (ageD > fb.maxAgeD) { red++; console.log(`  RED  ${g.id.padEnd(22)} FILLED but backing snapshot is ${ageD.toFixed(0)}d old (> ${fb.maxAgeD})`); }
+        else console.log(`  ok   ${g.id.padEnd(22)} file-backed: ${n} rows, ${ageD.toFixed(0)}d old`);
+      } catch { red++; console.log(`  RED  ${g.id.padEnd(22)} FILLED but backing file unreadable — unverifiable`); }
+      continue;
+    }
     const b = BACKING[g.id];
     if (!b) { red++; console.log(`  RED  ${g.id.padEnd(22)} marked FILLED but names no backing table — unverifiable`); continue; }
     const rows = await fetch(`${OWNED}/${b[0]}`, { headers: hdr }).then((r) => r.ok ? r.json() : null).catch(() => null);

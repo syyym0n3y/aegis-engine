@@ -346,7 +346,7 @@ while true; do
   fi
   # GAP REGISTER (W2): a gap marked FILLED whose data has gone stale is worse than an unfilled one — it silently
   # licenses conclusions the data no longer supports. Reds only on regressions, reports open engine gaps.
-  if ! deno run --allow-net --allow-env ../scripts/gap-register-guard.ts; then
+  if ! deno run --allow-net --allow-env --allow-read ../scripts/gap-register-guard.ts; then
     echo "$(date -u +%FT%TZ) GAP REGISTER RED — a gap marked filled is empty or stale"
   fi
   # D-586: print the cycle summary LAST so the state of the whole suite is the final thing in the log, rather than
