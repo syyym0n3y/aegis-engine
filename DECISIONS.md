@@ -21678,3 +21678,37 @@ hypothesis on record: London-open breaches of Asia extremes are INITIATIVE sessi
 one window where the forced-flow family's direction inverts.
 GOLD: clock — a new forward clock with promote/kill written before its data exists; the D-958 residue can now only
 become evidence the honest way.
+
+## D-961 (2026-09-22) GAMMA/OI FORCED FLOW, THE TWO FORMS D-820 NEVER TESTED — the vol-damping mechanism is REAL beyond vol clustering; the directional trade is not
+
+Thread #1 of the constraint->forced-flow programme, on the owned 120-day SPXW per-strike OI panel (D-820's $26
+dataset) joined to USA500 hourly. Pre-specified in the script header before running (dealer-sign convention stated as
+an assumption; directions registered; 6 trials spent via the ledger, family gamma-regime):
+| test | result | prereg direction |
+|---|---|---|
+| T1 GEX -> next-day realized vol | hi-lo tercile -130bp/day, **t -8.8** | NEGATIVE, **MATCHED** |
+| T2 regime trade (hi-GEX fade / lo-GEX follow, lag-1, net 4bp) | train +7bp t 0.5 -> test -17bp t -1.2 | fails — not tradable as direction |
+| T3 dOI(near-spot) -> next-day vol | -73bp, t -2.7 | NEGATIVE, MATCHED |
+| CONTROL (the decider): hi-lo GEX within today-RV terciles | calm t -0.5; **mid t -4.4; wild t -4.0** (both bandwidths) | SURVIVES — not vol clustering |
+READ: dealer positioning predicts NEXT-day vol damping beyond today's vol, strongest when there is vol to damp — the
+mechanism is hedging flow, and its honest expression is VOL-SIZING (exposure/vol-target modulation, options carry),
+never next-day direction (T2's failure is the mechanism speaking: gamma damps moves, it does not point them).
+DESCRIPTIVE ONLY beyond the registered directions; 120 days, one macro regime (2026-03..09), CFD hourly-|ret| vol
+proxy, and the dealer-sign convention is an assumption — a longer panel is the gate to any use. DECISION FED: whether
+to buy multi-year SPXW OI history (Databento, cost-check first; the 5-month panel cost $26.06) — >$5 = operator
+confirm, queued as an operator question, not fired.
+ACTS-ON: gate — the vol-sizing use of GEX is registered as the only admissible expression; any directional gamma
+claim now requires fresh registration against this recorded T2 failure.
+GOLD: research — a mechanism confirmed in its registered direction with its confound controlled, and its tradable
+form honestly narrowed before any capital story could attach.
+
+## D-962 (2026-09-22) TURN-OF-MONTH IS DRIFT WEARING A CALENDAR — killed by the benchmark, both halves, both indices
+
+Thread #3. Literature TOM (long last day through first 2-3 days) on 13 years of USA500/USATECH daily closes,
+4 trials spent, BENCHMARK LAW applied: in-window days must beat RANDOM same-size day sets, not zero. No cell
+clears in either half (z -0.6..+0.5); in-window returns sit mostly BELOW out-window (test: 4.4 vs 6.0bp/d USA500).
+The naive read ("TOM days average positive") is pure index drift — exactly the D-630 shape the benchmark exists to
+kill. Verdict: NO turn-of-month effect in this data; the calendar-flow story earns no capital and no clock.
+ACTS-ON: gate — the calendar-anomaly family is recorded non-clearing on the benchmark statistic; re-entry requires
+beating random day-sets, which is now the stated bar.
+GOLD: research — a forced-flow candidate cleanly killed by its correct null in one session.
