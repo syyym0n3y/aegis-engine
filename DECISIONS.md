@@ -21712,3 +21712,59 @@ kill. Verdict: NO turn-of-month effect in this data; the calendar-flow story ear
 ACTS-ON: gate — the calendar-anomaly family is recorded non-clearing on the benchmark statistic; re-entry requires
 beating random day-sets, which is now the stated bar.
 GOLD: research — a forced-flow candidate cleanly killed by its correct null in one session.
+
+## D-963 (2026-09-22) S&P ADD/DELETE: THE FORCED-FLOW FOOTPRINT IS VISIBLE, THE TRADABLE RESIDUE IS DEAD — and the pre-decay era is untestable in this source
+
+Thread of the constraint->forced-flow programme, the purest case: trackers MUST buy additions and sell deletions.
+`scripts/sp500-index-effect.ts` (NEW — extends, does not touch, D-740's `index-inclusion-event.ts`, which had already
+measured ADD post-effective forward returns as NULL). Pre-specified in the script header before running: directions
+registered (ADD run-up +, ADD reversal -, DEL run-up -, DEL reversal +), LAG-1 entry for anything tradable, SPY
+same-window excess as the uniform matched control, 3 trials spent (family sp500-index-effect: 5d run-up, 20d
+reversal, 10d reversal), N 2,937,925, mined ceiling 5.458. LIMITATION stated up front: the data holds EFFECTIVE dates
+only; announcement dates (~5 trading days earlier) are absent and were not invented — so the run-up is a forced-flow
+FOOTPRINT measurement, not a tradable expression, and the announcement-to-effective pop stays UNTESTED (as in D-740).
+| pooled, excess vs SPY | run-up 5d (into eff.) | reversal 20d (LAG-1) | reversal 10d (LAG-1) |
+|---|---|---|---|
+| ADD (n=242/253/254) | **+1.54% t 3.65, MATCHED** | -0.91% t -1.59, FLAT | -0.68% t -1.54 |
+| DEL (n=158/116/116) | **-2.11% t -2.41, MATCHED** | +3.54% t 1.66, FLAT | +1.48% t 1.20 |
+COVERAGE (the law's statement, both layers): panel — ADD 255/385 benchmarkable usable (66.2%), DEL 158/380 (41.6%);
+DEL's 132 no-bars names are SURVIVORSHIP (the deletions most likely to show the effect are the ones most likely to be
+missing, so DEL rows are measured on survivors). Source — the Wikipedia changes table itself holds only 10 adds/9
+dels pre-2000 and 42/42 in 2000-2010 vs ~30+/yr actually made, so the pre-2005 "golden era" of the literature's
+index effect is UNTESTED HERE BY SOURCE COVERAGE (usable pre-2000 n=1): the famous decay CANNOT be confirmed or
+denied against its own baseline in this data — what is measurable is 2010+ only.
+ERAS (what is measurable): the ADD run-up footprint is alive in the most recent era (2020-2026 +2.62% t 3.61;
+2010-2020 +0.16% t 0.33 — if anything the footprint STRENGTHENED, against the decay story, on the era where n is
+real); reversals clear nothing in any era (the DEL 2000-2010 +43.7% t 2.28 cell is n=7, UNTESTED by breadth).
+TRAIN/TEST on the only tradable expression (D-455, first 2/3 vs last 1/3): ADD short-reversal does not form on train
+(t 0.68); DEL long-reversal FORMS on train (+6.26% t 2.09) and FLIPS on test (-1.83% t -0.86) — the exact selection
+shape the law exists to kill. EFFECT SIZE: nothing tradable to size; the run-up t 3.65 is (a) below the mined
+ceiling 5.458 and (b) unharvestable without announcement dates.
+VERDICT: FOOTPRINT-CONFIRMED / TRADABLE-DEAD — the forced flow leaves a visible, correctly-signed price footprint
+into the effective date on both sides, but the lag-1 residue any non-index trader could touch is flat both sides
+and the one train-formed rule dies OOS. Decay per se: UNTESTABLE pre-2005 (source), footprint NOT decayed 2020-2026.
+The honest unlock, if ever wanted, is announcement dates (S&P press releases, free-source probe) — the pop remains
+the only untested cell.
+ACTS-ON: gate — the index add/delete family is recorded non-clearing at LAG-1 on both sides; re-entry requires
+announcement-date data (the untested cell), not another effective-date variant.
+GOLD: research — the purest forced-flow case measured on both sides with its footprint confirmed, its tradable
+residue killed train/test, and the decay question honestly localised to a source-coverage gap.
+
+## D-964 (2026-09-22) COINGECKO MINED + THE CRYPTO COHORT BASE RATE — the lottery's shape measured; a stale register row corrected; the OI decision priced
+
+The gap register's one free+allowlisted+engine-actionable dataset pulled (`scripts/ingest-coingecko-ref.ts`, keyless,
+sequential, 429-respecting partial kept honestly): top-1750 active coins, BTC positive control passed. First
+measurement: drawdown-from-ATH across the ACTIVE universe — median **-85%**, 44% below -90%, 12% below -99%
+(small-caps median -86%, micro -89%) — and every row is a SURVIVOR still listed, so the full cohort is strictly
+worse in every cell. Appended as measured context to assay rows 1/2/4 (the "median 1.5x" snipe and runner claims):
+the memecoin lottery's shape is now a number, and it is the baseline any selection heuristic (dev-list, runner) must
+beat when Solana data lands. Blockchair half verified reachable, still unfetched (register row updated precisely).
+Also this session: the `fred-macro` register row was found LYING (blocked-credential while D-729's keyless ingest
+runs daily — verified: breakeven_10y fresh to 2026-09-21, 1.25M rows/15,188 series) and corrected with evidence in
+the row; and the D-961 data decision was PRICED via free metadata calls: SPXW OI backfill +1y $47.69, +3y $130.52,
++5y $135.22 (years 4-5 cost ~$5 — the menu is $48 one-regime vs $135 full-diversity), remaining free credit ~$3.40,
+operator confirm required either way, nothing purchased.
+ACTS-ON: gate — assay's memecoin claims now carry their measured cohort baseline; the gap register's two audited
+rows state live truth; the OI purchase gate holds an exact price instead of a guess.
+GOLD: research — one unmined free dataset converted to a base-rate measurement the whole memecoin vertical must
+answer to, in one session, at $0.

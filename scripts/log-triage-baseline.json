@@ -6,9 +6,10 @@
     "postgrest|503 /": 2,
     "postgrest|503 /trd_bars_deep": 1,
     "postgrest|503 /trd_perp_oi": 1,
+    "postgres|column \"title\" does not exist at character N": 1,
     "postgres|column trd_manual_trades.qty does not exist at character N": 1,
     "postgres|relation \"trd_spN_changes\" does not exist at character N": 1
   },
-  "set": "2026-09-22T10:49:04.212Z",
+  "set": "2026-09-22T11:22:48.091Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }
