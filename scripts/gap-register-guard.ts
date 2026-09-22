@@ -53,6 +53,9 @@ const BACKING: Record<string, [string, string]> = {
   // and not making the closure checkable is the same failure as the gap itself — an assertion where a measurement
   // belongs. The staleness budget here is generous because EDGAR full-text is a one-off historical crawl, not a feed.
   "edgar-fulltext": ["trd_raw_filings?source=eq.edgar&filing_type=like.*going-concern*&select=disclosed_date&order=disclosed_date.desc&limit=1", "disclosed_date"],
+  // D-966: the blockchair half is a LIVE DAILY FEED (bc_* series via daily-up.sh) — table-backed so staleness is
+  // caught; the coingecko half is the snapshot file data/coingecko-ref.json, noted in the row's blocker text.
+  "coingecko-blockchair": ["trd_macro_series?series=like.bc_*&select=d&order=d.desc&limit=1", "d"],
 };
 // D-965: some closures are backed by an archive SNAPSHOT FILE, not a live table (the SPDJI PR pull is a one-off
 // crawl like edgar-fulltext). A file-backed fill is checkable too: the file must exist, parse, carry >= minRows

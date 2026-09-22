@@ -10,13 +10,15 @@
 import { declareKnobs, assertNonEmpty } from "../supabase/functions/_shared/run-preconditions.ts";
 const K = declareKnobs("ingest-coingecko-ref", [
   { name: "PAGES", def: "20", note: "markets pages (250/page) — 20 = top ~5000 by mcap" },
+  { name: "START_PAGE", def: "1", note: "resume after a 429: merge with the existing OUT file, dedup by id" },
   { name: "SLEEP_MS", def: "6000", note: "spacing between calls (public keyless limit ~10-30/min; sequential per Hard Rule)" },
   { name: "OUT", def: "data/coingecko-ref.json" },
 ]);
 const BASE = "https://api.coingecko.com/api/v3";
 type Mkt = { id: string; symbol: string; market_cap: number | null; total_volume: number | null; current_price: number | null; ath_change_percentage: number | null; atl_change_percentage: number | null };
-const rows: Mkt[] = []; const PAGES = +K.PAGES, SLEEP = +K.SLEEP_MS;
-for (let p = 1; p <= PAGES; p++) {
+const rows: Mkt[] = []; const PAGES = +K.PAGES, SLEEP = +K.SLEEP_MS, START = +K.START_PAGE;
+if (START > 1) { try { const prev = JSON.parse(await Deno.readTextFile(new URL(`../${K.OUT}`, import.meta.url).pathname)) as { rows: Mkt[] }; rows.push(...prev.rows); console.log(`  resuming: ${rows.length} rows loaded from ${K.OUT}`); } catch { console.error("!! START_PAGE>1 but no existing OUT to merge — refusing (would silently drop the head)."); Deno.exit(1); } }
+for (let p = START; p <= PAGES; p++) {
   const r = await fetch(`${BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${p}&sparkline=false`);
   if (!r.ok) { console.error(`  page ${p}: HTTP ${r.status} — stopping here with ${rows.length} rows (rate limit respected, partial kept)`); break; }
   const j = await r.json() as Mkt[]; if (!Array.isArray(j) || !j.length) break;
@@ -27,6 +29,7 @@ assertNonEmpty("coingecko markets rows", rows, 500);
 // POSITIVE CONTROL (D-641): bitcoin must be present with a plausibly huge mcap, or the ingest is broken not empty.
 const btc = rows.find((r) => r.id === "bitcoin");
 if (!btc || !(btc.market_cap && btc.market_cap > 1e11)) { console.error("!! POSITIVE CONTROL FAILED: bitcoin absent or mcap implausible — refusing to write."); Deno.exit(1); }
+const seen = new Set<string>(); const dedup = rows.filter((r) => seen.has(r.id) ? false : (seen.add(r.id), true)); rows.length = 0; rows.push(...dedup);
 await Deno.writeTextFile(new URL(`../${K.OUT}`, import.meta.url).pathname, JSON.stringify({ pulled: new Date().toISOString(), n: rows.length, rows }, null, 0));
 console.log(`\n==> D-964 COINGECKO REFERENCE — ${rows.length} active coins written -> ${K.OUT} (BTC control: mcap $${(btc.market_cap! / 1e9).toFixed(0)}B OK)`);
 // THE MEASUREMENT: distribution of drawdown-from-ATH across the active universe, by mcap bucket

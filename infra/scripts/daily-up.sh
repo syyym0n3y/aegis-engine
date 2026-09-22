@@ -16,5 +16,7 @@ while true; do
   # current-quarter chunk froze 4.5d after the last manual run and reddened data-stack. A daily refresh keeps it ~1d
   # fresh (well inside the 4d budget). Idempotent upsert on (symbol,tf); keyless; sequential; $0.
   deno run --allow-net --allow-env ../scripts/ingest-perp-5m.ts || true
+  echo "=== blockchair multi-chain feed (D-966, keyless, 6 chains, accrual feed) ==="
+  deno run --allow-net --allow-env ../scripts/ingest-blockchair.ts || true
   sleep 86400
 done

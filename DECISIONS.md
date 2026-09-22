@@ -21795,3 +21795,20 @@ ACTS-ON: gate — the sp500-announcement-dates gap row closes FILLED; the harves
 D-963 is answered on free data, and any future index-effect claim must beat THIS record, not the pooled folklore.
 GOLD: research — a two-decision thread (footprint -> window) closed end-to-end in one day at $0, with the sign
 failure recorded exactly where a guru would have cropped the chart.
+
+## D-966 (2026-09-22) THE LAST ENGINE-ACTIONABLE STONE TURNED — Blockchair feed planted + CoinGecko completed to top-5000; the register's engine queue is EMPTY (a state, not a terminal claim)
+
+Blockchair's keyless tier is current-stats only (history is paid), so the honest mine is a FEED: 6 chains x 5
+metrics daily into trd_macro_series as bc_* (27 rows day one, positive control bitcoin blocks 968,147, write
+read-back verified), wired into daily-up.sh — value accrues; a continuity budget gets registered the day a verdict
+leans on it. CoinGecko resumed past the 429 (START_PAGE merge knob) to the full top-5000: the cohort base rate
+WORSENS with depth exactly as the survivorship logic predicted — ALL: median -92% from ATH, 53% below -90%, 20%
+below -99% (micro median -94%, 56% below -90%) — appended to assay rows 1/2/4. The coingecko-blockchair gap row is
+FILLED with guard-checkable backing (feed recency on bc_*; snapshot noted), leaving ZERO engine-actionable rows in
+the register: every remaining stone needs the operator (TRACE credential, allowlist lines, IBKR, paid OI) or is
+structural. Stated per the no-completeness rule: this empties the CURRENT register, it does not declare the search
+space mined — new rows arrive as new threads open them.
+ACTS-ON: gate — the gap register reaches its first all-backed state (every filled row machine-verified, every open
+row operator-keyed), and the assay memecoin claims carry the full-depth cohort baseline.
+GOLD: research — the free-data frontier is fully harvested to a machine-checked register; what remains costs a
+credential, a line, or a decision, and each is priced and named.
