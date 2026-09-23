@@ -22447,3 +22447,18 @@ ACTS-ON: position — the DEPLOYED paper book's distress sleeve changed composit
 the clock now tracks the adopted book.
 GOLD: research — the first improvement adopted end-to-end under its own prior-written numeric rule: registered
 yesterday, measured today, deployed today, with zero post-hoc discretion anywhere in the chain.
+
+## D-972 (2026-09-23) THE ACCRUING FEED GETS A CONSUMER — or a sunset; no dataset is allowed to accrue unexamined
+
+The 2026-09-23 audit (gap 7) flagged the D-966 Blockchair feed as MARGINAL-BY-DESIGN: 6 chains x 5 metrics landing
+daily with no registered question — the shape where a dataset accrues forever, is never tested, and quietly becomes
+sunk cost that nobody will kill. Closed by registration rather than by intention: `trd_prereg`
+`D-972-onchain-breadth-consumer` asks whether CROSS-CHAIN breadth (fraction of tracked chains with positive 30d
+transaction/fee momentum) predicts the cryptomom sleeve's forward 30d return BEYOND BTC-only momentum — nested OOS,
+train-frozen coefficients, >= 180 shared days to score, adopt at >= 5% forecast improvement with a positive sign.
+The kill condition is the part that matters: at < 2% improvement by 270 days, OR a feed stale > 14 days, the ingest
+is REMOVED from daily-up.sh in the same session. An accruing feed with no live question does not get to persist on
+sentiment. This generalises: every future ingest carries a consumer question or a sunset date at birth.
+ACTS-ON: clock — a new forward clock now owns the feed's fate, and the feed's removal is pre-authorised if it fails.
+GOLD: reliability — the "unexamined accrual" failure class is closed by construction rather than by remembering to
+check, and the rule that kills the feed was written before any of its data was looked at.
