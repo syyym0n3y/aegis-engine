@@ -261,7 +261,7 @@ while true; do
   deno run --allow-net --allow-env --allow-read --allow-write ../scripts/refresh-liquid-panel.ts > ../data/refresh-liquid-panel.log 2> ../data/refresh-liquid-panel.err || echo "$(date -u +%FT%TZ) LIQUID PANEL REFRESH FAILED — clock #18 is scoring a frozen input"
   # S&P 500 membership changes (D-740): Wikipedia, free, writes data/sp500-changes.json (data/ is gitignored, so the
   # index-inclusion retest depends on this running). Stamps the source actually parsed; TSLA positive control.
-  SP500_OUT=../data/sp500-changes.json deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-sp500-changes.ts > ../data/sp500.log 2>&1 || echo "$(date -u +%FT%TZ) SP500 CHANGES INGEST FAILED"
+  SP500_OUT=data/sp500-changes.json deno run --allow-net --allow-env --allow-read --allow-write ../scripts/ingest-sp500-changes.ts > ../data/sp500.log 2>&1 || echo "$(date -u +%FT%TZ) SP500 CHANGES INGEST FAILED"
   # FRED macro (D-729): real yields, breakevens, CPI from keyless fredgraph.csv, idempotent. Gold's #1 driver.
   deno run --allow-net --allow-env ../scripts/ingest-fred-macro.ts > ../data/fred.log 2>&1 || echo "$(date -u +%FT%TZ) FRED MACRO INGEST FAILED"
   # GPR geopolitical-risk index (D-727): monthly, idempotent, closes driver #2 of the coverage matrix. Cheap re-run.

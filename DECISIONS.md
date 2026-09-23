@@ -21812,3 +21812,30 @@ ACTS-ON: gate — the gap register reaches its first all-backed state (every fil
 row operator-keyed), and the assay memecoin claims carry the full-depth cohort baseline.
 GOLD: research — the free-data frontier is fully harvested to a machine-checked register; what remains costs a
 credential, a line, or a decision, and each is priced and named.
+
+## D-967 (2026-09-23) THE GAMMA VALIDATION, WON ON SALVAGE — vol-damping holds in ALL THREE REGIMES; the paid pull was killed and the free loop closed instead
+
+The operator authorized the $135 five-year SPXW OI pull, then surfaced mid-stream that no payment method is linked
+and directed free-and-keyless for everything. The pull was KILLED at 16 of 62 months — and those 16 months
+(2021-01..2022-04, streamed first and cheapest, ~$2-4 metered mostly inside the credit; the $135 was NOT consumed)
+happen to contain exactly the regimes the D-961 validation needed: the meme-squeeze year and the bear onset. The
+distillate died with the process; the raw CSV survived; `rebuild-spxw-oi-from-csv.ts` (NEW) re-derived 335 OI days
+locally at $0, merged with the owned 2026 panel = 454 days across three regimes. The registered tests re-run
+(6 trials, D-967-gamma-regime-eras):
+| era | T1 hi-lo GEX -> next-day RV | direction |
+|---|---|---|
+| 2021 (n 252, squeeze year) | -82 to -90bp, t -6.2/-6.5 | MATCHED |
+| 2022 (n 82, bear onset) | -169 to -176bp, **t -6.8/-6.9** | MATCHED |
+| 2026 (n 120) | -126 to -130bp, t -8.5/-8.8 | MATCHED |
+| pooled 454d | -160bp, **t -17.3** | MATCHED (both bandwidths) |
+T3 (dOI->vol) t -6.7 matched; the within-today-RV control survives where it matters (wild t -3.1/-3.5); and T2 (the
+directional trade) is DEAD in every era and both halves — the mechanism damps vol, it never points direction, now
+regime-validated instead of asserted. THE FREE FORWARD LOOP: `collect-us-options.ts` (D-469/817) already snapshots
+CBOE's keyless delayed chains daily — _SPX naive_gex_usd accrues since 2026-09-06, surface series since 08-22, wired
+into the coverage runner — so the signal's future feed costs nothing. The 2022-05..2026-03 hole stays open and
+stated; it is not needed for the vol-sizing use (three disjoint regimes + a live feed decide it). Free-first stands
+re-affirmed for every remaining gap: nothing else gets bought without a fresh operator authorization AND a linked
+payment method.
+ACTS-ON: gate — the vol-sizing expression of GEX is now regime-validated and carries a live $0 feed; the directional
+gamma trade is triple-refuted across eras and cannot re-enter without new registration.
+GOLD: research — a killed purchase converted into the exact validation it was for, at ~2% of the authorized cost.

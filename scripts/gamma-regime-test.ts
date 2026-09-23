@@ -75,6 +75,17 @@ for (const BW of [0.01, 0.02]) {
   console.log(`    T1 GEX->vol: hi-minus-lo tercile next-day RV ${(1e4 * dv).toFixed(1)}bp/day (t ${dvT.toFixed(2)}) — prereg direction NEGATIVE ${dv < 0 ? "MATCHED" : "MISSED"}`);
   console.log(`    T2 regime trade net: TRAIN ${(1e4 * mean(ptr)).toFixed(1)}bp/d (t ${tstat(ptr).toFixed(2)}, n ${ptr.length}) -> TEST ${(1e4 * mean(pte)).toFixed(1)}bp/d (t ${tstat(pte).toFixed(2)}, n ${pte.length})`);
   console.log(`    T3 dOI(near-spot)->vol: hi-minus-lo quintile RV ${(1e4 * dvol3).toFixed(1)}bp (t ${dvol3T.toFixed(2)}) — prereg NEGATIVE ${dvol3 < 0 ? "MATCHED" : "MISSED"}`);
+  // ERA DECOMPOSITION (D-967, not new trials — the same registered T1 statistic broken by calendar year, the D-963
+  // pattern): the 5-year panel exists precisely to ask whether vol-damping held through the 2021 meme squeeze and
+  // the 2022 bear, or is a 2026 artifact.
+  const byYear = new Map<string, Row[]>(); for (const r of rows) { const y = r.d.slice(0, 4); (byYear.get(y) ?? byYear.set(y, []).get(y)!).push(r); }
+  for (const [y, yr] of [...byYear.entries()].sort()) {
+    if (yr.length < 40) { console.log(`    ERA ${y}: n ${yr.length} — too thin`); continue; }
+    const ty = terc(yr, (r) => r.gex, 1 / 3, 2 / 3);
+    const dy = mean(ty.hi.map((r) => r.nextRV)) - mean(ty.lo.map((r) => r.nextRV));
+    const dyT = tstat(ty.hi.map((r) => r.nextRV - mean(ty.lo.map((x) => x.nextRV))));
+    console.log(`    ERA ${y} (n ${yr.length}): T1 hi-lo GEX -> next RV ${(1e4 * dy).toFixed(1)}bp (t ${dyT.toFixed(2)}) ${dy < 0 ? "matched" : "MISSED"}`);
+  }
   // CONTROL (not a new claim — a diagnostic of T1): vol clusters, and calm markets carry high call OI, so GEX may
   // re-measure TODAY's vol. Double-sort: within each today-RV tercile, the hi-minus-lo GEX effect on NEXT-day RV.
   // If the effect dies within-tercile, T1 is vol clustering wearing a gamma costume.
