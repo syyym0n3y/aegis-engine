@@ -203,3 +203,77 @@ The build must pay off in EVERY branch: if capability accelerates, Path B (verif
 and the trust layer become MORE scarce and valuable; if it plateaus, Path A kits and the
 treasury still compound. Nothing above requires a forecast to be right — that is the same
 falsification stance, applied to our own optimism.
+
+---
+
+# PART III — THE CORRECTION: MAXIMAL AUTONOMOUS EXTRACTION + THE HUMAN FLYWHEEL (2026-09-23)
+
+> Operator correction, accepted on its merits: Parts I–II over-rotated toward "every human owns
+> a micro-business" and under-built the AUTONOMOUS engine. The legitimate maximal-AI form was
+> left on the table. This part fixes it. What stays refused stays refused: covert agents on
+> human platforms (Fact 1's graveyard). Everything else scales.
+
+## 13. ENGINE 1 — the autonomous fleet (ours, at maximum AI density)
+
+The company itself operates **fleets of agents selling OUTCOMES under our own name** — the
+verified paying demand (support, SDR, back-office, content ops, data services at $3k–20k/mo
+per replaced function; micropaid API/data products on x402-class rails; listings on the
+agent-native marketplaces, where OUR agents can lawfully bid because WE own them). This is
+"extract wealth from the connecting fabric, autonomously," done in the open: contracts in our
+name, agents disclosed as agents, humans accountable at the top of every chain. Every internal
+stage runs at agent density too — acquisition (the YGS factory is already an autonomous
+distribution engine; it becomes the acquisition fabric), onboarding, support, curriculum
+generation, monitoring — with humans stationed ONLY where judgment, care, accountability and
+teaching live. Aegis's own history is the proof-of-concept: a research organization that ran
+~2.9M trials with one human, because every law was machine-enforced.
+
+## 14. ENGINE 2 — the distributed kits (theirs) — unchanged from Part I
+
+Path A stands as designed: owned micro-businesses for those who want ownership. The
+correction is that Engine 2 is no longer the ONLY on-ramp — most people don't want to found
+anything; they want income, skill, and purpose. That is Engine 1's Academy (below).
+
+## 15. THE ACADEMY FLYWHEEL — earn-while-learn-while-owning (the operator's "teach through the tasks")
+
+Engine 1's fleets structurally REQUIRE humans: verification, evaluation, edge-case judgment,
+ground truth, client care — the Path B work, now fused INSIDE our own engine instead of sold
+to others first. The design law: **every paid task is also a lesson.** The task pipeline IS
+the curriculum — each verification task a person completes teaches the skill it exercises
+(agent supervision, quality judgment, domain knowledge, then agent-building itself), stamps a
+portable credential into their owned record, and accrues ownership units from the work's
+value (Part II's third pool). The flywheel: agents do the work → humans verify and thereby
+train both the agents AND themselves → the surplus buys the humans equity → graduates exit
+upward into fleet governance, client-facing roles, or Engine 2 ownership → their places open
+for the next cohort. Purpose beyond the job market is funded structurally: the autonomous
+surplus endows roles the market underpays — teaching, community stewardship, open-source,
+care — as paid positions in the ownership structure, not charity.
+
+## 16. Answering the capitalism critique with structure, not slogans
+
+The critique is correct as a default trajectory: autonomous extraction under concentrated
+ownership immiserates precisely the people it displaces. Our design inverts the ownership,
+not the market: the fleets extract at maximum efficiency INSIDE the market, and the
+three-pool split + EOT/steward layer + golden-share mission lock (Part II §9) route the
+surplus to the people in the chain — workers, learners, verifiers — as income now and equity
+permanently. The register publishes the split. That is the falsifiable difference between
+this and every "AI for good" deck: anyone can query where the money went.
+
+## 17. What maximal-AI does NOT loosen
+
+The order path stays deterministic (no model ever executes capital). Agents never impersonate
+humans anywhere. Signals are never sold. The take-rate stays published. Every fleet line
+faces the earn-its-keep audit like every daemon in this repo. And every claim this platform
+makes about itself goes through the same machinery that killed our own favorite hypotheses —
+because the moment the mission exempts itself from falsification, it becomes the guru economy
+with better lighting.
+
+## 18. Immediate build order (revised by this correction)
+
+1. **Engine-1 pilot line first, not Engine-2**: ONE fleet-run service with real clients under
+   our name (the CC/YGS content-ops stack is the natural first line — it already produces),
+   instrumented with the audit surface from day one.
+2. The Academy's first cohort = the verification/QA seats that pilot line needs anyway —
+   hired as earn-learn-own from the graduate cohort (§11).
+3. Phase 0 (claims register + honest content) unchanged — it is the acquisition fabric's
+   trust layer and costs nothing.
+4. The treasury (Aegis, pinned 2.18 as of D-971) keeps compounding underneath as endowment.
