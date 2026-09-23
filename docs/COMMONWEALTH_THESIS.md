@@ -122,3 +122,84 @@ went. Every law this engine learned the hard way exists to make that auditabilit
 *Companion of this date: the full-ledger ecosystem audit (component earn-its-keep table,
 gaps, underexploited data, operator-bottleneck register) — produced by a dedicated audit
 pass and folded into the registers it names.*
+
+---
+
+# PART II — OWNERSHIP, GOVERNANCE, AND THE AUDITABLE COMPANY (2026-09-23)
+
+> Operator assignment: undeniable value on both buy and sell side; a future listing priced on
+> growth because impact is certain; every beneficiary in the chain accruing ownership from a
+> share of the work's value; the best management systems; humanity's interests held literally
+> and financially, not theoretically.
+
+## 7. Buy side and sell side — the two engines, named
+
+**BUY SIDE (capital compounding):** the Aegis book — leverageable pinned excess 2.18 as of
+D-971's adoption, ladder-gated, capacity ~$1–5M — is the treasury engine. Its role is the
+ENDOWMENT: it compounds the company's own capital and proves, on an append-only record, that
+our verification machinery finds real edges. It is deliberately NOT the product (capacity-
+bound; signals never sold — adviser-registration law).
+**SELL SIDE (what the world pays us for):** Path A kits (tools + education at a published
+take-rate, G6-measured £150–400/head entry), Path B verified-human work aggregation, Path C
+trust/verification services — and the meta-product above all of them: **auditability itself**.
+
+## 8. Why the stock could be priced on certainty — the auditable-company thesis
+
+Every public company asks investors to trust adjusted numbers. This company's core asset is
+ten weeks of machinery whose ONLY function is making numbers impossible to fake to ourselves:
+append-only ledgers, immutable pre-registrations, guards with demonstrated red branches,
+outcome notes that cannot be softened. Generalized from trading to OPERATIONS, that becomes
+the listing thesis: **a company whose KPIs (user earnings, take-rate, impact per head,
+treasury performance) are machine-verified, append-only, and third-party-queryable.** Growth
+gets priced richly when it is BELIEVED; our moat is that belief is not required — the
+register is public. "Impact will be certain" is not a promise, it is an audit surface. This
+is the D-913 discipline as investor relations.
+
+## 9. The beneficiary-equity chain — the honest design (and the law around it)
+
+The operator's mechanism: from all AI-facilitated work, one slice pays the human who owns the
+work, one slice funds growth, one slice accrues OWNERSHIP to the beneficiaries themselves.
+Design (three pools, published split, every flow in the append-only ledger):
+- **Worker pool** — the majority slice, paid out; the take-rate is cost-justified (law #2).
+- **Growth pool** — reinvestment, published use-of-funds.
+- **Ownership pool** — each beneficiary's contribution accrues UNITS convertible to real
+  equity at defined events (listing, secondary), so the people whose work builds the company
+  end up on its cap table — the anti-billionaire-pocket mechanism, made literal.
+**THE LEGAL HONESTY (not legal advice; a securities lawyer is a Phase-1 hire):** granting
+equity-like units to users IS securities territory in every major jurisdiction (the SEC
+declined to open Rule 701 to gig workers when Uber asked; UK FCA equivalents apply). The
+lawful staging: (1) contractual profit-share now (not securities); (2) an **Employee
+Ownership Trust / steward-ownership layer** (UK EOT — the John Lewis structure — can hold a
+controlling or blocking stake for beneficiaries as a class, TODAY, without per-user
+issuance); (3) at listing, convert accrued units through a regulated share plan / directed
+allocation. A **golden-share mission lock** (steward-ownership pattern: Bosch, Carlsberg)
+makes the humanity-first constraint SURVIVE the IPO — the thing most mission companies lose
+at exactly that door.
+
+## 10. The management system — we already built it, it just needs generalizing
+
+"Best systems of management" is not a consultant purchase; it is the discipline this repo
+enforces, applied to the whole company: every claim carries its evidence (D-455/D-913);
+every decision is an append-only entry with an ACTS-ON; every improvement is adopted only by
+a pre-registered numeric rule (D-971 executed exactly this way today — registered yesterday,
+measured, deployed, zero post-hoc discretion); every component faces the earn-its-keep audit
+(D-970); every fault reaches a human by machine; nothing depends on one person. Management
+by registers and guards instead of management by meetings and memory. That OS is itself
+sell-side IP.
+
+## 11. The graduate vertical (the crisis named by the operator)
+
+Graduates under student debt in a shrinking entry-level market are Path A's sharpest first
+cohort: high skill, low capital, native to the tools, and the exact population whose ladder
+AI is removing. The kit for them: own a niche AI-operated service business (accountability +
+distribution they already have in communities employers ignore), with the claims register
+protecting them from the guru economy that targets them hardest, and the ownership pool
+making them shareholders in the platform their work grows. Their measurable outcome (net
+earnings vs debt service) is the first public impact KPI on the audit surface.
+
+## 12. Robustness clause — superintelligence timing is not a load-bearing assumption
+
+The build must pay off in EVERY branch: if capability accelerates, Path B (verified humanity)
+and the trust layer become MORE scarce and valuable; if it plateaus, Path A kits and the
+treasury still compound. Nothing above requires a forecast to be right — that is the same
+falsification stance, applied to our own optimism.
