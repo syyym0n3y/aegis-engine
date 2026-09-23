@@ -21864,3 +21864,21 @@ ACTS-ON: gate — GEX-sizing enters the ledger as a measured improvement awaitin
 family is closed both directions on this record; the micro runner stops crying wolf at boot.
 GOLD: research — one mechanism converted to a usable number, one hypothesis killed by its own pre-written rule at
 t -17.6, one alarm made honest, in a single free pass.
+
+## D-969 (2026-09-23) THE CALIBRATION PATH CLOSED FREE — CBOE per-strike SPX chain now accrues daily in panel format
+
+The D-968 gate (calibrate the live naive_gex_usd feed against the measured kernel-GEX before any sizing deploy) had
+no overlap to calibrate on: the OPRA panel ends 2026-09-04, the feed starts 09-06. Closed at the source, $0:
+`collect-us-options.ts` (already fetching full CBOE delayed chains daily, keyless) now ALSO appends the _SPX
+per-strike chain — ALL expiries, no iv/day filters, since 0-4DTE carries the gamma — to
+`data/databento/spxw-oi-cboe.jsonl` in the exact spxw-oi.jsonl format, so `gamma-regime-test.ts` and
+`gex-vol-sizing.ts` read it unchanged. Idempotent by UTC day; positive-control floor 100 rows; runner granted
+--allow-write. Live proof of the parse path (the daemon's own pre-edit collector instance was mid-run and the
+D-817b single-instance guard correctly refused a second stream, so the first real append is tonight's cycle):
+one direct chain fetch parses **21,097 OI rows across 57 expiries** — 200x the floor. From tonight, kernel-GEX,
+naive-GEX and the OPRA construction accrue side by side, and the D-968 sizing gain becomes deployable the day the
+calibration overlap is long enough to state.
+ACTS-ON: gate — the named blocker between the measured +6.7% forecast gain and the paper book's vol targeting now
+resolves by accrual instead of by purchase.
+GOLD: structural — the last engine-actionable stone of this sweep: every input the gamma programme needs from here
+arrives free, keyless, and in the formats the tests already read.

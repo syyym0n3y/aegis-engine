@@ -45,6 +45,21 @@ for(const u of UNDER){
   await sleep(WIDE?1200:400);
   const spot=j?.data?.current_price, list=j?.data?.options;
   if(!spot||!Array.isArray(list)||!list.length){console.error(`  ${u}: chain unavailable — recording NOTHING`);continue;}
+  // D-969: persist the _SPX PER-STRIKE chain daily (all expiries, no iv/day filters — 0-4DTE carries the gamma) in
+  // the exact spxw-oi.jsonl format, so the kernel-GEX series accrues FREE from CBOE and can be calibrated against
+  // the naive_gex_usd feed and, later, extend the D-967 panel. Idempotent by UTC day; append-only file.
+  if(u==="_SPX"){try{
+    const P=new URL("../data/databento/spxw-oi-cboe.jsonl",import.meta.url).pathname;
+    let seen=""; try{seen=await Deno.readTextFile(P);}catch{/* first run */}
+    const dstr=new Date().toISOString().slice(0,10);
+    if(!seen.includes(`"d":"${dstr}"`)){
+      const rr:[string,string,number,number][]=[];
+      for(const o of list){const pm=/^([A-Z]+)(\d{6})([CP])(\d{8})$/.exec(o.option); if(!pm)continue; const oi=+o.open_interest||0; if(!oi)continue;
+        rr.push([`20${pm[2].slice(0,2)}-${pm[2].slice(2,4)}-${pm[2].slice(4,6)}`,pm[3],+pm[4]/1000,oi]);}
+      if(rr.length>100){await Deno.writeTextFile(P,JSON.stringify({d:dstr,rows:rr})+"\n",{append:true});console.error(`  _SPX per-strike jsonl: ${rr.length} rows appended for ${dstr}`);}
+      else console.error(`  _SPX per-strike jsonl: only ${rr.length} OI rows parsed — NOT appended (positive-control floor 100)`);
+    }
+  }catch(e){console.error(`  _SPX per-strike jsonl append failed: ${String(e).slice(0,100)}`);}}
   const opts:Opt[]=[];
   for(const o of list){
     // OCC symbology: ROOT + YYMMDD + C/P + strike*1000 (8 digits)
