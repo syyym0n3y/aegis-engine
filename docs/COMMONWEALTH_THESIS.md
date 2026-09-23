@@ -277,3 +277,101 @@ with better lighting.
 3. Phase 0 (claims register + honest content) unchanged — it is the acquisition fabric's
    trust layer and costs nothing.
 4. The treasury (Aegis, pinned 2.18 as of D-971) keeps compounding underneath as endowment.
+
+---
+
+# PART IV — UNIT ECONOMICS, EBITDA CONSTRUCTION, AND THE DUAL MARKETPLACE (2026-09-23)
+
+> Operator: "EBITDA and valuations are what I am looking at... more value on both sides for
+> every single task... don't larp." So: arithmetic. Tags: [measured] = our record;
+> [comp] = live public comparable; [target] = design number to be validated in the pilot.
+
+## 19. The comp-set warning that shapes everything
+
+[comp, 2026-07/08] Fiverr: take rate 28%, adj-EBITDA margin 21%, valued at **0.2x revenue /
+1.1x EV/EBITDA — distressed**. Upwork: 78% gross / 29% EBITDA margin, valued at **1.1x
+revenue / 3.7x EV/EBITDA**. The market prices human-gig marketplaces as DYING because AI
+substitutes their supply side. **Therefore: we do not build a gig marketplace.** We build the
+inversion the comps demand: agents supply the substitutable work; humans supply the work AI
+makes MORE valuable (verification, judgment, care, teaching). A platform whose human side
+appreciates with AI progress is the only marketplace structure that deserves a growth multiple
+in this decade.
+
+## 20. The per-task value equation — the law every task line must satisfy
+
+For every task t: `V_client(t) > P(t) > C_agent(t) + C_human(t) + C_infra(t)`, and the spread
+splits into: human pay (inside C_human, floor-protected), ownership-pool accrual, growth pool,
+platform margin → EBITDA. **Ship-gate (machine-checkable, the task-line P&L guard — same
+culture as the 32 guards):** a task line ships and STAYS shipped only while all four hold:
+1. Client ROI ≥ 3× price [target] — measured per line, published.
+2. Human effective hourly ≥ living-wage floor AND ≥1 credential unit accrues per task [target].
+3. Platform contribution margin ≥ 30% before pools [target].
+4. Agent unit cost per task declining quarter-over-quarter [measured from compute logs].
+A line failing any inequality gets parked exactly like a not-earning daemon (D-970 policy).
+
+## 21. Worked example [target — the pilot exists to measure this]: content-ops line
+
+Per £1 of client revenue on a £2,000/mo agent-run retainer: agent compute ~£0.03 · paid human
+verification/direction ~£0.15–0.25 (the Academy seats) · infra ~£0.02 · ownership-pool accrual
+£0.05 · growth pool £0.15 · sales/opex ~£0.15 → **EBITDA £0.25–0.35**. Contribution margin
+before pools ~80–87% — software-shaped, not agency-shaped (human agencies run ~30–40% gross
+[comp-typical]). Fifty such retainers = £1.2M ARR at ~30% EBITDA with COMPOULDABLE human
+seats: each retainer funds ~1–2 paid Academy positions. Every number here is a hypothesis the
+pilot measures under the audit surface; none is a promise.
+
+## 22. The two ranked taxonomies (what each party is FOR)
+
+**Agents — wealth creation ranked by margin × scale × verified demand:**
+1. Software/automation build-and-run (highest willingness-to-pay per outcome)
+2. Content/SEO/media ops at scale (YGS-proven internally [measured])
+3. Data products & APIs on micropay rails (near-zero marginal cost; x402 [comp])
+4. Research/analysis products (this repo's own machinery, generalized [measured])
+5. Back-office outcome contracts — support/SDR/admin ($3–20k/mo verified demand [comp])
+6. Monitoring/compliance watching (recurring, sticky, low churn)
+
+**Humans — impact ranked, two beneficiaries:**
+*For humans:* care & coaching · teaching · trust/relationship carrying · accountability
+(the name on the outcome) · creative/strategic direction · community stewardship.
+*For agents:* ground truth & evals (demand RISING — the post-MTurk verification vacuum
+[comp: Prolific's 2M waitlist]) · edge-case judgment · preference data · supervision &
+escalation · domain tacit knowledge · the empathy interface to clients.
+The career ladder climbs that list: verifier → evaluator → agent-trainer → fleet supervisor
+→ line owner / client lead — every rung paid, credentialed, equity-accruing. **Careers OFF
+the platform are a product, not a leak:** the credential register (append-only, verifiable)
+becomes an external talent pipeline employers pay to hire from [target revenue line] — people
+leaving well is an impact KPI and a revenue source, which keeps incentive #2 honest.
+
+## 23. The dual marketplace, precisely
+
+**Side 1 — Outcome market (demand):** businesses buy outcomes from fleets; published price,
+published ROI evidence, audit-surface delivery record. **Side 2 — Contribution market
+(supply):** humans take paid verification/teaching/care/data seats with floor-protected pay,
+embedded curriculum, ownership accrual — the seats the fleets structurally require. The
+platform clears both sides and publishes the take. Both sides need each other by construction:
+no fleet ships without human seats (quality + accountability + the ship-gate), no human seat
+exists without fleet revenue. That mutual necessity is the "all parties need each other"
+condition made structural rather than rhetorical.
+
+## 24. EBITDA construction and the valuation path (honest sequencing)
+
+Phase A [now]: fleet SERVICES — cash-generative early (agent COGS is compute), but services
+earn services multiples; their job is funding, proof, and the audit record. Phase B:
+PRODUCTIZE the repeatable lines (outcome subscriptions, data/API products) — recurring revenue
+re-rates the multiple. Phase C: the dual marketplace at scale — take-rate × GMV with network
+effects in credentials + verified delivery records. The multiple thesis at listing: growth
+priced with a REDUCED risk premium because the KPIs are machine-verified and queryable
+(Part II §8) — the audit surface is not compliance overhead, it is multiple expansion.
+[comp reality-check kept in view: distressed marketplace comps at 0.2–1.1x revenue mean the
+marketplace label alone earns nothing; the premium must come from the inverted human side,
+the recurring outcome revenue, and the auditability.]
+
+## 25. The lattice ("NPOs and many other companies structured this exact way")
+
+OpCo (lists; runs fleets + marketplace) · Ownership Trust/EOT (beneficiary class stake +
+mission golden share) · Foundation/NPO (Academy scholarships, open tooling, claims register
+as public good) · **Replication kits**: the whole structure published as an open spec others
+adopt (companies AND NPOs), with our rails (verification, credentials, audit surface) as the
+revenue-bearing standard underneath — impact multiplies through copies; we monetize the
+trust layer, not the enclosure. Every entity in the lattice faces the same ship-gate
+inequalities; a lattice member that stops satisfying "every party benefits" gets the same
+treatment as a failed guard: visible, then fixed or parked.
