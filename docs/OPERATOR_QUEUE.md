@@ -1,13 +1,12 @@
-# OPERATOR QUEUE — regenerated 2026-09-23T14:08Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-09-23T15:17Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — **2 RED** (32 guards, board logged 0.0h ago)
-- RED   daemon-drift   cost an hour this session (D-719/719b). The agent-output g
-- RED   permissions    An under-granted script fails inside the loop and can pass
+## Board — all green (32 guards, board logged 0.0h ago)
+- nothing to fix. A red here that persists two cycles is the one time a session is worth starting; the guard's own output names the fix.
 
 ## Micro rung — live feed and sheet
-- hourly FX/index feed: **7/7 fresh within 3h** · sheet: **3 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
+- hourly FX/index feed: **7/7 fresh within 3h** · sheet: **8 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
 - the sheet prints candidates only on fresh bars; a STALE instrument prints no candidate by design.
 
 ## Yours — in evidence order, each with its exact act
@@ -26,7 +25,7 @@
 | fwd-crypto-lit5 | 2026-08-24 | not yet computable | 30 | 30 calendar day(s) elapsed of the 250 TRADING days the rule requires; forward table last stamped 2026-09-23 |
 | fwd-despac-underperf | 2026-08-31 | not yet computable | 0 | 0 new de-SPACs with 500d since 2026-08-31; rule needs >=15. Post-boom de-SPAC volume is low — may stay inconcl |
 | fwd-despac-underperf-v2 | 2026-09-02 | not yet computable | 0 | 0 new de-SPACs (5.06 dated) with 500d since 2026-09-02; rule needs >=15. First possible read ~2028-09; post-bo |
-| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | not yet computable | 44 | 44 forward trade(s) since 2026-09-13; the kill clauses read at 200 and the promote clause at 400. not-yet-comp |
+| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | not yet computable | 45 | 45 forward trade(s) since 2026-09-13; the kill clauses read at 200 and the promote clause at 400. not-yet-comp |
 | fwd-distress-blend-combined | 2026-09-16 | not yet computable | - | elapsed 7d of 365d horizon (~250+ trading days from 2026-09-16 (first decisive read ~202) |
 | fwd-distress-ivol-blend-5 | 2026-09-16 | not yet computable | - | elapsed 7d of 365d horizon (~250+ trading days from 2026-09-16 (first decisive read ~202) |
 | fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | not yet computable | 10 | 10 forward event-days since 2026-09-04 (rule requires >=150 for kill or >=200 for promote). not-yet-computable |
