@@ -17,7 +17,7 @@ TO_Y=2026 deno run --allow-net --allow-env --allow-write ../scripts/latefiling-t
 # D-936: combine both triggers into the single deployable distress short (d931 = the "gcshort" sleeve the blend reads)
 # D-943: hold each name 365d after its event (was 180d) — the distress drift is slow (D-647's 369d median lead); this
 # lifts the sleeve Sharpe 1.84->2.03 and the blend excess 1.92->1.98 by smoothing the short book (vol 15.9%->16.9% but return holds).
-WINDOW=365 deno run --allow-net --allow-env --allow-read --allow-write ../scripts/distress-sleeve.ts 2>&1 | grep -E "==>|late-filing added|combined liquid" || true
+WINDOW=365 CROWD_DC=5 SI_LAG_D=14 DEPLOY_CROWD=1 deno run --allow-net --allow-env --allow-read --allow-write ../scripts/distress-sleeve.ts 2>&1 | grep -E "==>|late-filing added|combined liquid" || true
 echo "=== refresh IVOL anomaly sleeve (D-939, held bars; D-939c borrow avoid-filter days_cover<5; D-953 QUINTILE=20 = 33 names/leg, HAND-FILLABLE and stronger) — the 5th sleeve ==="
 # D-953: concentrated to the top/bottom 1/20 by idio-vol (~33 names/leg = 66 total, hand-fillable) — the extreme names
 # carry more signal, so this LIFTS the blend excess 1.98 -> 2.08 AND makes the sleeve deployable by hand (vs 268 names).

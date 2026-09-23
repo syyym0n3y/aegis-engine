@@ -22423,3 +22423,27 @@ ACTS-ON: gate — the ledger's continuity is now machine-enforced, the escalatio
 adoption decisions that had no path now have numeric registered rules with deadlines.
 GOLD: structural — the record's memory, its alarm bell, and its operator surfaces were found lying in three
 different ways on one day, and each lie now has a guard, a fix, or an archive banner where it used to have trust.
+
+## D-971 (2026-09-23) CROWD_DC ADOPTED BY ITS OWN REGISTERED RULE — the deployed distress short now avoids crowded names; blend pinned excess 2.13 -> 2.18
+
+The D-970-crowd-dc-adoption registration (written yesterday to end the "measured improvement with no adoption path"
+shape) was executed same-day, and PASSED both thresholds with margin:
+| leg | baseline | CROWD_DC=5 (SI_LAG_D=14, point-in-time) | rule bar |
+|---|---|---|---|
+| distress sleeve Sharpe (WINDOW=365, same code, same day) | 1.63 | **1.74** | drop <= 0.05 — it RISES |
+| blend leverageable PINNED excess (D-913 net-exposure-financed) | 2.13 | **2.18** | lift >= +0.02 — +0.05 |
+| blend raw / maxDD | 2.30 / -13% | 2.35 / -12% | — |
+ADOPTED: new `DEPLOY_CROWD` flag lifts the D-946 alt-file safety for CROWD_DC only (the stale "d931 untouched"
+message under the flag was found lying and fixed in the same change); paper-book-up.sh now runs the distress sleeve
+with CROWD_DC=5 SI_LAG_D=14 DEPLOY_CROWD=1; deployed d931 verified BYTE-IDENTICAL to the measured filtered series;
+clock fwd-distress-ivol-blend-5 re-marked on the adopted book (8 forward days; numeric floors unchanged in
+trd_forward_rules). Mechanism note: the filter is squeeze-fuel avoidance (D-945's Jan-2021 names were exactly the
+crowded shorts), and it is carry-FREE — the sleeve earns MORE without the crowded names, consistent with the
+forced-flow thesis (a crowded short's forced flow points at us, not for us). Note on figures: today's same-code
+baseline prints pinned 2.13 (vs the 1.92 D-939e pin computed at its own date/config) — deltas from paired same-day
+runs are the decision statistic; the standing conservative pin for sizing math remains the lower published number
+until a fresh pin entry supersedes it.
+ACTS-ON: position — the DEPLOYED paper book's distress sleeve changed composition under a pre-registered rule, and
+the clock now tracks the adopted book.
+GOLD: research — the first improvement adopted end-to-end under its own prior-written numeric rule: registered
+yesterday, measured today, deployed today, with zero post-hoc discretion anywhere in the chain.
