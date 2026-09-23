@@ -18368,6 +18368,515 @@ advances from "is there an edge" to "systematically harvest the conditional edge
 ACTS-ON: gate — `scripts/quality-surface.ts` is the reusable engine; STRATEGY.md advances to Phase 1 (measure XMR's real
 cost; search the confluence space; test whether confluence lifts trend/momentum past cost).
 
+## RESTORED BLOCK (2026-09-23) — D-918..D-956 reconstructed from commit messages + trd_lineage + scripts (the prose entries were never written during those sessions; this restoration is abbreviated and marked, not a claim of original text)
+
+## D-918 (2026-09-15) THE ILLIQUID-ALT CONDITIONAL CLASS IS A MIRAGE — [RESTORED]
+
+Train-selected the whole class of illiquid-alt mean-reversion/breakout x session cells the D-917 surface flagged
+(HOME +58, FARTCOIN +59, TUT +109bp at random pctl 100), froze, measured the equal-weight portfolio on test at
+escalating realistic cost. Every cell net-NEGATIVE by 40bp; 4 of 5 at random percentile <30 (the selected direction
+worse than a coin flip OOS); the one pctl-100 cell has a NEGATIVE day-clustered t (few-days concentration). The class
+is the illiquidity premium + multiple comparisons, not a deployable edge. XMR individually still clears while its
+class is worse-than-random, so not a class artifact — moved to an immutable forward clock (fwd-xmr-asia-rangefade) to
+decide genuine-microstructure vs fluke. Prereg D-918-illiquid-altmr-portfolio (null_confirmed). New: scripts/illiquid-altmr.ts.
+GOLD: research — [RESTORED] the D-917 conditional class killed clean; only the XMR cell survives, clocked not claimed.
+ACTS-ON: clock — fwd-xmr-asia-rangefade registered (immutable); D-918 lineage killed.
+
+## D-919 (2026-09-15) MULTI-FACTOR CONFLUENCE — real information, sub-cost — [RESTORED]
+
+Swept K of 4 factors agreeing: panel gross rises monotonically 0.38 -> 0.55 -> 3.77bp with K, and K>=2 beats
+matched-random (pctl 100) — factor agreement DOES carry real information (the operator's claim confirmed weakly).
+But net@6bp is negative at every K, the day-clustered t is NEGATIVE at high K (-6.42 = few heavy trend days), and on
+liquid majors K=3 INVERTS to negative gross (exhaustion). The multi-factor edge IS the trend-regime signal already
+known real/sub-cost. Terminal read of Phase 1: across held data there is no broad multi-factor edge that clears cost —
+measured against a matched-random benchmark, not assumed. Prereg D-919-confluence-liftpastcost (null_confirmed).
+New: scripts/confluence.ts.
+GOLD: research — [RESTORED] confluence carries information and no money; Phase 1 resolved on measurement.
+ACTS-ON: ledger — D-919 lineage killed; STRATEGY.md Phase 1 resolved -> Phase 2 live.
+
+## D-920 (2026-09-15) EVERY MEASURABLE VARIABLE ACCOUNTED FOR — markets are ~3 factors + noise — [RESTORED]
+
+Driver variance decomposition (scripts/driver-decomp.ts): 90 instruments x 8 asset classes, daily log returns
+OLS-regressed on 9 measurable drivers — median total adj-R2 32.8%, residual 67.2%; the macro block adds only 0.9pp
+over a market-only model; residual lag-1 autocorrelation -0.02. The "many variables" collapse to ~3 independent
+factors (equity market, BTC, rates); the unexplained two-thirds is an autocorrelation-free random walk — no missed
+variable unlocks daily timing. This is the structural reason every surface edge (D-917/918/919) is sub-cost.
+Part B (scripts/leverage-frontier.ts): g = rf + S^2/2 at full Kelly; at the best measured holdable Sharpe 0.83 the
+confident setting is ~2x half-Kelly (GBP 10k -> 1M ~16y median); stake is the largest SAFE lever (GBP 100k -> 7y,
+GBP 250k -> 4y). Prereg D-920-driver-variance-decomposition (null_confirmed).
+GOLD: research — [RESTORED] the confident lever is leverage x stake x diversification, not a bigger edge.
+ACTS-ON: ledger — prereg null_confirmed recorded; STRATEGY.md reframed onto the four highest-ROI actions.
+
+## D-921 (2026-09-15) THE INTRADAY RESIDUAL IS THE BID-ASK BOUNCE — [RESTORED]
+
+5 major perps, 5m (205-210k bars) and 1m (116-128k bars), white-noise control ACF1 -0.002: 5m ACF1 significantly
+NEGATIVE on all 5 (BTC -0.013 ... BNB -0.084; band +-0.0044); implied |ACF1|*sigma = 0.18-1.50bp at 5m — an order of
+magnitude below the 5bp round-trip. The tell: the reversion grows as liquidity falls and after removing BTC beta —
+it is the bid-ask bounce; the intraday "edge" IS the spread crossed to harvest it (the D-918 mirage seen at source).
+Closes the held-data accounting at both horizons. Prereg D-921-intraday-residual-structure (null_confirmed).
+New: scripts/intraday-residual.ts.
+GOLD: research — [RESTORED] intraday structure is real and sub-fee by construction.
+ACTS-ON: ledger — prereg null_confirmed; the intraday horizon closed on held data.
+
+## D-922 (2026-09-15) THE DIVERSIFICATION FREE LUNCH IS REAL — trend + long, Sharpe 0.74 -> 0.89 — [RESTORED]
+
+Risk-parity blend of the two canonical holdable premia (trend-following + vol-matched long basket): Sharpe 0.89
+(t 3.65, clears the 3.14 ceiling), underwater 3.7y, beating the best single component (0.74) and the prior best
+holdable (0.83). The sleeves are crash-negatively-correlated (-0.66 in 2020Q1, -0.70 in 2022) so the blend cuts
+drawdown as well. DESCRIPTIVE (post-hoc subset of the registered 4-sleeve blend, which is 0.43 dragged by dead
+carry/value) -> immutable forward clock fwd-canonical-premia-blend. Real-path drawdown sets survivable size ~20% vol:
+GBP 10k -> 1M ~29y, GBP 250k -> ~9y — the binding constraint at leverage is holdability, not Sharpe.
+GOLD: research — [RESTORED] combining independent premia lifts Sharpe above any component; clocked, not claimed.
+ACTS-ON: clock — fwd-canonical-premia-blend registered (immutable).
+
+## D-923 (2026-09-15) OPTIONS-POSITIONING PREDICTORS — the last untested class, null — [RESTORED]
+
+CBOE skew / put-call / VVIX vs SPX and Deribit BTC/ETH DVOL vs BTC at h=1/5/21d: all 21 cells' slope-t below the
+ceiling except pc_total h5 (t -3.12 AT ceiling on 348 obs); the two auto-flagged cells are multiple-comparisons
+artifacts whose slope sign contradicts their quintile-spread sign. No deployable positioning edge; VVIX/DVOL carry
+no direction (weak vol-regime role only, already harvested by D-872). With D-920/921 this completes the
+measurable-variable accounting for held data. Prereg D-923-positioning-predictors (null_confirmed).
+New: scripts/positioning-predictors.ts.
+GOLD: research — [RESTORED] positioning closed null; the sought thing is the diversified book, not a hidden variable.
+ACTS-ON: ledger — prereg null_confirmed recorded.
+
+## D-924 (2026-09-15) CRYPTO-MOMENTUM THIRD SLEEVE — the ladder reaches Sharpe 1.09, and it is the ceiling — [RESTORED]
+
+Added crypto-only TSMOM (time-series, not the D-443 breadth-killed cross-sectional momentum): standalone Sharpe 0.76
+(t 3.12), corr 0.06 to long / 0.32 to trend. Three-sleeve risk-parity blend: Sharpe 1.09 (t 4.46), maxDD -23%,
+underwater 3.8y. The Sharpe ladder is 0.74 -> 0.89 -> 1.09 as each of D-920's three factors is added. Real-path
+survivable size ~20% vol: GBP 10k -> 1M ~23y, GBP 100k -> ~12y. DESCRIPTIVE -> forward clock fwd-three-factor-blend.
+Same-day addendum: bond carry re-run null (t 1.18); with FX carry (-0.44) and value (-0.26) already dead, every
+classic premium beyond trend/equity/crypto is confirmed dead in held data — 1.09 is the honest diversification
+ceiling of held data; the search is complete, the work from here is execution. Prereg D-924-cryptomom-third-sleeve (supported).
+GOLD: research — [RESTORED] the third factor is real and additive; no fourth independent stream exists in held data.
+ACTS-ON: clock — fwd-three-factor-blend registered.
+
+## D-925 (2026-09-15) ORDER-BOOK / ORDER-FLOW — contemporaneous, not predictive — [RESTORED]
+
+Ingested data.binance.vision (14 days BTCUSDT 1m klines + daily bookDepth). Resting-depth imbalance: contemporaneous
+control WEAK (r~0) — deep resting depth is a slow uninformative wall. Taker order-flow imbalance: contemporaneous
+control PASSES (r 0.488, t 79 — flow IS the intra-minute pressure) but FORWARD is null/sub-cost (1m t -1.39,
+-0.05bp/sd; 5m t -2.93, -0.22bp/sd; Q5-Q1 -0.15bp, all far below the 5bp taker fee) and negative = bid-ask-bounce
+reversion. Order flow is contemporaneous, not predictive — D-921 confirmed with real microstructure data. The last
+un-acquired free variable class is closed. Prereg D-925-orderbook-imbalance-predict (null_confirmed).
+New: scripts/orderbook-flow.py.
+GOLD: research — [RESTORED] the flow variable measured at source and closed.
+ACTS-ON: ledger — prereg null_confirmed recorded.
+
+## D-926 (2026-09-15) THE THREE-FACTOR BLEND STOOD UP ON PAPER — DORMANT book + live clock — [RESTORED]
+
+trd_positions id 32: DORMANT three-factor-blend snapshot (sleeve weights trend 0.573 / long 0.258 / cryptomom 0.169,
+in-sample Sharpe 1.09 t 4.46, 10% vol target). $0 at risk, never auto-armed — Claude never executes, manual fills
+only at MICRO, arming is the operator's act after the staged gates. fwd-three-factor-blend now marks daily (metric
+fwd_sharpe_3sleeve; promote at n>=250 & Sharpe>0.76 & >2-sleeve; kill if <=2-sleeve forward); wired into
+infra/scripts/paper-book-up.sh. Implementation: additive PAPER mode in multistrategy-blend.ts (default off; the
+registered D-865 4-sleeve run still reproduces 0.43 byte-for-byte); kill switch honored via strict fail-closed reads.
+GOLD: research — [RESTORED] real out-of-sample NAV now accrues without a session.
+ACTS-ON: position — DORMANT trd_positions id 32 written; the clock marks daily.
+
+## D-927 (2026-09-15) CROSS-INSTRUMENT LEAD-LAG — no tradable BTC->alt lead — [RESTORED]
+
+96 alts on the survivor-free 1hSF panel, BTC as leader. Positive control passes (contemporaneous BTC-beta +1.2-1.4).
+Lag-1 lead: realizedBp -1.4 (following BTC loses); the alt slightly overshoots and gives back next hour
+(overshoot-reversion = the bid-ask bounce again). OOS: liquid-half train t -3.74 -> test t -0.27, decays to zero;
+the reversed "fade BTC" rule is sub-9bp-cost, a post-hoc sign flip, and OOS-unstable. BTC propagates to alts within
+the hour — efficient diffusion. This closes the last distinct measurable-variable class; the ceiling stays the
+three-factor blend 1.09 (D-924), live on paper (D-926). Prereg D-927-crossinstrument-leadlag (null_confirmed).
+New: scripts/crossinstrument-leadlag.ts.
+GOLD: research — [RESTORED] the lead-lag class closed with a passing positive control.
+ACTS-ON: ledger — prereg null_confirmed recorded.
+
+## D-928 (2026-09-15) BTC ON-CHAIN FUNDAMENTALS — significant in-sample, decays OOS, one candidate clocked — [RESTORED]
+
+New economically-distinct data class: 8 blockchain.info series 2009-2026 (active addresses, tx count, on-chain USD
+volume, hash rate, miner revenue, transaction fees, mempool, price) into trd_macro_series as onchain_btc_*
+(scripts/ingest-onchain.ts, wired into daily-up.sh). Forward-30d non-overlapping t, train(pre-2022)/test:
+transaction_fees 4.47 (4.38 -> 1.30, sign-stable, decays); hash_rate 2.98 (2.20 -> 0.21, largely a price transform);
+miners_revenue 2.70 (contemp-r 0.85 ~ price); NVT sign-flips; addresses/tx-count null. No robustly deployable
+on-chain edge; the one sign-stable economically-distinct signal (fee growth) is clocked, not claimed or dismissed.
+Prereg D-928-onchain-predictors (null_confirmed). Forward clock fwd-onchain-fee-momentum.
+GOLD: research — [RESTORED] a new data class acquired free and honestly resolved.
+ACTS-ON: clock — fwd-onchain-fee-momentum registered.
+
+## D-929 (2026-09-15) THE ATTENTION CLASS — first UNTESTED on the allowlist, then acquired and null — [RESTORED]
+
+First pass: the pageviews METRICS API lives on wikimedia.org/api/rest_v1/ (not allowlisted; en.wikipedia.org's
+rest_v1 is content-only, 404s on pageviews). Per Hard Rule 2 the line was not added; D-929 recorded UNTESTED
+(COVERAGE LAW: no data fetched => untested, not a null). The operator armed the line the same day. Then: 10 article
+pageview series 2015-2026 ingested (attention_wiki_*); control passes (attention tracks big moves — stock_market
+contemp-r 0.137, recession 0.163, bitcoin 0.119). Forward-30d train(pre-2021)/test: nothing clears the 3.15 ceiling;
+bitcoin -> BTC t 1.83; stock_market / federal_reserve -> GSPC fwd7 t -2.12 / -2.13 (contrarian, sign-stable,
+sub-ceiling at a 7-day horizon where cost bites). All three named new data classes (on-chain, COT, attention) land
+the same place. Prereg D-929-attention-predictors (label immutably 'untested'; the lineage row carries the null).
+New: scripts/ingest-attention.ts, scripts/attention-predictors.ts.
+GOLD: research — [RESTORED] the news/sentiment class acquired and closed null, with the allowlist boundary honored.
+ACTS-ON: ledger — prereg note resolved to null; lineage carries the verdict.
+
+## D-930 (2026-09-15) GOING-CONCERN VIA EDGAR — a real, LIQUID-SURVIVING distress edge — [RESTORED]
+
+Closed the going-concern coverage gap by fetching EDGAR full-text (efts.sec.gov): 3,197 going-concern 10-K filings
+2016-2023, 662 mapped to the equity panel. Forward EXCESS vs IWM (BENCHMARK LAW), name-clustered, 126d:
+ALL -20.9% t -7.46 (567 names); LIQUID -22.8% t -6.71 (297); ILLIQUID -15.6% t -5.4. The liquid tercile is STRONGER
+than the illiquid — inverting the usual capacity-bound pattern; the first strong cross-sectional result in this
+program that does not die in the liquid tercile. Delisting-censored (a conservative floor), point-in-time on
+file_date. Deployable forms: (a) long-AVOID filter now (no borrow, placeable immediately); (b) SHORT pending the
+INSTRUMENT-LAW borrow gate. Forward-clocked fwd-goingconcern-distress. Prereg D-930-goingconcern-edgar (supported).
+New: scripts/goingconcern-test.ts.
+GOLD: research — [RESTORED] an unfetched free dataset was a research failure; fetching it surfaced the candidate 4th sleeve.
+ACTS-ON: clock — fwd-goingconcern-distress registered.
+
+## D-931 (2026-09-16) BORROW GATE ON THE GOING-CONCERN SHORT — PASSES — [RESTORED]
+
+Measured borrow on the 297 liquid going-concern names against the ~45.8%/yr gross market-neutral excess break-even.
+Positive control passes: going-concern median days-to-cover 3.05 vs 1.24 for random equities (2.5x more crowded).
+Direct fees (26 priced names): median 0.51%/yr (general collateral); 25/26 clear break-even — net short edge ~45%/yr
+on the non-crowded majority (~188 names); one 657%/yr tail. The crowded ~37% (days-cover >= 5 + the tail) is
+avoid-filter-only. INSTRUMENT LAW passes: the distress short is real, deployable, genuinely independent — the 4th
+sleeve the leverage hunt sought. Prereg D-931-goingconcern-borrow-cost (supported). New: scripts/goingconcern-borrow.ts.
+GOLD: research — [RESTORED] the edge measured in the instrument that would hold it, before any claim.
+ACTS-ON: gate — the INSTRUMENT-LAW borrow gate on the 4th sleeve passed and is recorded.
+
+## D-932 (2026-09-16) THE 4TH SLEEVE — blend 1.09 -> 1.60, time-underwater halved — [RESTORED]
+
+gcshort (short trailing-180d going-concern liquid names, long IWM, 10%/yr borrow) standalone OOS 2015+: Sharpe 1.39,
+t 5.70, 37.5%/yr, underwater 3.2y; correlation to trend/long/cryptomom -0.03 / 0.12 / -0.04. Four-sleeve risk-parity
+blend @10% vol: Sharpe 1.60 (t 6.58), maxDD -15% (vs -23%), underwater 1.7y (vs 3.8y). Ladder 0.74 -> 0.89 -> 1.09
+-> 1.60. Real-path @20% vol: GBP 10k -> 1M ~15y, GBP 100k -> ~8y. Material caveats: gcshort standalone maxDD -92% is
+the short-squeeze/meme-rally tail; flat 10% borrow understates the crowded ~37%; squeeze cover slippage unmodeled —
+the tail is diluted in the blend (DD -15%) but real. DESCRIPTIVE -> forward-validated only.
+Prereg D-932-fourfactor-blend-gcshort (supported). Forward clock fwd-fourfactor-blend-gcshort.
+GOLD: research — [RESTORED] a real uncorrelated distress sleeve materially lifts the book; tail named, not hidden.
+ACTS-ON: clock — fwd-fourfactor-blend-gcshort registered.
+
+## D-933 (2026-09-16) THE "10x-IN-A-DAY" SQUEEZE HYPOTHESIS — real tail, negative EV — [RESTORED]
+
+The operator's hypothesis tested, not dismissed. Squeeze setup (days-to-cover >= 8 + FTD + px < 10), 21,938 events,
+21d forward: THE TAIL IS REAL — setup mean +102.7% vs universe +26.5%; the condition genuinely fattens the right
+tail. But NOT deployable: net of a conservative 15% microcap round-trip only 17% of bets are net-positive (83% LOSE,
+median -14.4%); pre-2020 net -2.6%; the entire edge is 2020+ (+115.8%) = the meme-stock mania, non-repeatable.
+The persistent tradeable edge in this space is the MIRROR: short the distress, don't buy the lottery. Infra: DB
+scale-proofed (ANALYZE over 19.2M/10.8M/4.1M-row tables + trd_short_interest(symbol) index; 10GB is trivial).
+Prereg D-933-explosive-upside-squeeze (null_confirmed). New: scripts/explosive-upside.ts.
+GOLD: research — [RESTORED] the instances exist; the measurable conditions do not identify them ex-ante with +EV.
+ACTS-ON: ledger — prereg null_confirmed recorded.
+
+## D-934 (2026-09-16) EXIT RULES ON CAPITAL-VELOCITY — the fixed 2*ATR target wins — [RESTORED]
+
+Three exits (hold 21d, 2*ATR fixed target/stop, 2*ATR trailing) x two entries on the placeable deep panel, scored as
+return per unit of CAPITAL-TIME. Trend (47,014 trades): HOLD mean -982.7bp / median +1.0bp / 21.0d (the mean is a
+fat-tail artifact — no stop eats a brutal tail); TARGET mean -2.9bp / median +27.1bp / 7.7d (best — caps the tail,
+frees capital ~3x faster); TRAIL mean -16.9bp, 38% win (whipsaws). Honest caveat: all means net-negative — the
+breakout/fade ENTRIES are sub-cost; the exit rule is damage-control + velocity optimization, not manufactured
+profit. Engine rule: attach ~2*ATR target + stop to positions drawn from the VALIDATED edges.
+Prereg D-934-exit-rules-capital-velocity (supported). New: scripts/exit-rules.ts.
+GOLD: research — [RESTORED] the operator's exit-frees-capital thesis validated and refined (target beats trailing).
+ACTS-ON: ledger — the engine exit rule recorded; 2*ATR exits subsequently wired into the opportunities book.
+
+## D-935 (2026-09-16) A SECOND LIQUID-SURVIVING DISTRESS SHORT — late filings — [RESTORED]
+
+NT 10-K / NT 10-Q late filings via EDGAR full-text: 4,402 events 2016-2024, 920 in panel. 126d forward excess vs IWM
+(name-clustered): ALL -21.5% t -10.08 (820 names); LIQUID -21.3% t -8.83 (425); ILLIQUID -21.7% t -6.04. An EARLIER
+trigger of the SAME distress factor (deadline missed before going-concern language appears) — broadens the gcshort
+sleeve rather than adding a 5th factor. The initially-reported 22% overlap with going-concern was a narrower-window
+liquid subset; D-936's full-union measurement corrected it to ~640 shared names (~58% of NT, ~68% of GC). Same
+borrow/delisting/benchmark caveats as D-930/931. Also: the D-934 2*ATR exits wired into every opportunities-book
+position. Forward clock fwd-latefiling-distress. Prereg D-935-latefiling-distress-short (supported).
+New: scripts/latefiling-test.ts.
+GOLD: research — [RESTORED] the distress anomaly is the program's one robust liquid cross-sectional edge, seen twice.
+ACTS-ON: clock — fwd-latefiling-distress registered.
+
+## D-936 (2026-09-16) ONE COMBINED DISTRESS SHORT — blend 1.67 -> 1.79 — [RESTORED]
+
+distress-sleeve.ts is now the single owner of the deployable sleeve (data/d931): a pure offline combiner over the
+gc + NT event dumps, union liquidity, one market-neutral short (>=3 liquid flagged names within 180d of either
+trigger, long IWM, 10% borrow) — removing the two-writer hazard on d931. Three honest corrections the measurement
+forced: overlap is HIGH (640 names, ~58%/68%), not 22%; the lift is NOT coverage (+19 active short-days, +1%) but
+vol reduction from a more diversified short book (sleeve vol 24.9% -> 19.8%, squeeze tail -74% -> -62%, standalone
+1.54 -> 1.84); the +0.12 blend lift is isolated on a fixed universe. Combined four-sleeve blend: Sharpe 1.79,
+t 7.34, maxDD -14%, underwater 1.5y. Borrow gate on the combined 701 liquid names: median 0.41%/yr, 51/55 priced
+clear break-even. Clock fwd-distress-blend-combined (two-sided) supersedes fwd-fourfactor-blend-gcshort (whose
+history stays immutable, no splicing); DORMANT trd_positions snapshot written ($0, never auto-armed).
+GOLD: research — [RESTORED] the promote action D-935 registered, executed with its own corrections recorded.
+ACTS-ON: position — d931 rebuilt combined; DORMANT snapshot + first mark on the superseding clock.
+
+## D-937 (2026-09-16) AUDITOR RESIGNATION (8-K 4.01) — validated, deliberately NOT deployed — [RESTORED]
+
+A third distress trigger tested before wiring: 853 hits / 670 names / 547 in panel; 126d liquid excess -18.1%
+(name-t -4.15, clears the 3.16 ceiling); illiquid t -1.53 — the same liquid-stronger shape as going-concern and
+late-filing. But its MARGINAL contribution measured first (INCLUDE_AUDITOR knob, default off): 65% overlap with
+gc+nt, and folding it in makes the blend slightly WORSE (1.79 -> 1.78; sleeve 1.84 -> 1.81; underwater 1.5 -> 1.7y).
+NOT deployed — wiring a redundant validated signal is overfitting; d931 stays gc+nt. The value is CONFIRMATION:
+three independent EDGAR filing triggers all detect the same liquid-surviving distress underperformance, so the
+anomaly is structural, not a single-trigger artifact. Mirror of D-936: same test, opposite decision.
+GOLD: research — [RESTORED] a validated signal declined on measured marginal contribution.
+ACTS-ON: gate — the "add a 3rd trigger" question closed with a measured NO; lineage status reference.
+
+## D-938 (2026-09-16, date inferred) NSI RETRACTED — a flawed duplicate of a script that already existed — [RESTORED]
+
+No commit carries this id; reconstructed from its trd_lineage row (status killed). The session rediscovered net
+share issuance with a FLAWED construction and reported a spurious tradable signal: liquid Sharpe 0.71 / t 2.43,
+"genuinely independent but non-additive" (gross 0.79 t 2.69; corr to sleeves <= 0.22; blend 1.79 -> 1.79 unchanged,
+maxDD -14% -> -22%). That liquid number is an ARTIFACT of two defects D-648's script did not have: (1) no
+corporate-action removal — splits/reverse-splits contaminated the issuance ranking (D-648 excludes any >40%
+single-step change); (2) a looser per-candidate liquidity median instead of the measured liquid half. The CORRECT
+result (D-648, split-corrected, pseudo-replication-safe): the effect lives ENTIRELY in the illiquid half — liquid
+excess -0.415% at t -0.47, liquid book t 0.29 — capacity-bound, killed. The process failure is the lesson: a
+duplicate of an existing committed script (scripts/net-share-issuance.ts) was built WITHOUT checking it existed,
+caught only by git flagging the file modified-not-new. Verify-before-you-build includes
+verify-it-does-not-already-exist. Blend nsi loader reverted, d938-nsi-daily.json deleted, the D-648 script restored intact.
+GOLD: research — [RESTORED] a false positive retracted before it entered the book; grep scripts/ before building.
+ACTS-ON: ledger — the D-938 lineage row corrected to a retraction; no code from the flawed run survives.
+
+## D-939 (2026-09-16/17, incl. b/c/d/e) THE IVOL ANOMALY — the first quality-AND-independent factor; blend 1.79 -> 2.09, pinned excess 1.92 — [RESTORED]
+
+After PEAD, merger-arb, activist-13D and NSI died or diluted, the idiosyncratic-volatility / lottery-MAX anomaly is
+the winner — a short-sale-constrained mispricing built from held bars only (scripts/volatility-anomaly.ts: long
+low-IVOL / short high-IVOL, liquid tercile, IVOL = residual-to-market vol over 60 sessions, 21d rebalance, 20bp).
+Net Sharpe 0.7-0.94, t 3.17 (cap2200) / 3.77 (cap3000) > 3.16; convergent MAX/lottery variant gross t 3.38.
+Genuinely independent: daily corr long -0.30 (defensive hedge), cryptomom 0.03, gcshort 0.07-0.11. Lifts the blend
+1.79 -> 2.03/2.09, underwater 1.5y -> 0.9-1.2y. Clock fwd-distress-ivol-blend-5 supersedes; DORMANT position + first
+mark. Sub-parts: D-939b — short-leg borrow gate PASSES at general collateral (344 priced names, median 0.32%/yr,
+340/344 clear the 7.0%/yr break-even; 2.09 instrument-verified, not research-space). D-939c — a point-in-time
+days_cover >= 5 avoid-filter (14-day publication lag) preserves the edge (t 3.47 vs 3.77, blend lift 1.79 -> 2.09
+unchanged): the overpricing is broad, not concentrated in un-borrowable names; sleeve deployable-complete. D-939d —
+the 2.09 is a TOTAL-RETURN Sharpe; fully-funded excess floor 1.47 (4-sleeve 1.21). D-939e (09-17) — financing is
+charged on net-long dollar exposure, and the book is only 0.27x net-long: leverageable excess PINNED at 1.92
+(raw 2.09 / floor 1.47), printed on every blend run so it cannot revert; IVOL increment robust (+0.26 excess).
+GOLD: research — [RESTORED] short-sale-constrained mispricings (distress + IVOL) are the winning class; the headline
+honestly stepped down 2.09 -> 1.92 by its own financing decomposition.
+ACTS-ON: position — the 5-sleeve DORMANT book stood up; clock fwd-distress-ivol-blend-5 registered and marking.
+
+## D-940 (2026-09-17) GUARD THE DAEMON'S FIRST READ — a transient crash-looped crypto-forward — [RESTORED]
+
+The resident crypto-forward daemon's first PostgREST read was unguarded: an overnight restart-window connection
+refusal threw an uncaught TypeError, crashed the daemon, and left crash stderr tripping agent-output and log-triage
+for hours while five sibling daemons cleared on restart. Fix: retry the initial read (6 attempts, 1.5s incremental
+backoff — survives a PostgREST restart) and on a persistent outage skip the cycle gracefully (stdout message,
+exit 0) so launchd retries, instead of crash-looping. Verified: cryptofwd.err clean, agent-output and log-triage green.
+GOLD: reliability — [RESTORED] initial reads fail closed and gracefully; the crash-loop class is fixed at its source.
+
+## D-941 (2026-09-17) CAMPBELL-HILSCHER FAILURE PROBABILITY — real, sub-ceiling, dilutive; the class closes — [RESTORED]
+
+Grep-first showed 4 of 5 short-sale-constrained factors already tested and dead (NSI D-648, NOA, asset-growth D-805,
+short-interest D-389/391/805). CHS-2008 failure probability was the one untested member — a continuous
+fundamentals+price distress logit (NIMTA/TLMTA/CASHMTA/EXRET/SIGMA/RSIZE/MB/PRICE), point-in-time from held data.
+Result: net Sharpe 0.56, t 2.21 (< 3.16 ceiling), correct signs (high-failure -0.45%/reb — the distress anomaly a
+fourth way); surprisingly independent (corr ivol 0.19, gcshort -0.04) but DILUTIVE to the blend (2.09 -> 2.05 raw,
+1.92 -> 1.90 pinned). The NSI outcome, not the IVOL outcome: independence is necessary but not sufficient. The
+short-sale-constrained class is closed with distress (D-936) and IVOL (D-939) the only deployable survivors.
+GOLD: research — [RESTORED] the class swept to completion; no new sleeve.
+ACTS-ON: ledger — the class-closure recorded; chs loader reverted, test script kept.
+
+## D-942 (2026-09-17) NONLINEAR/ML ON THE AUGMENTED PANEL — NULL, a fifth time — [RESTORED]
+
+Reused the audited GBM/OLS harness verbatim (fidelity check: AUG=0 reproduces D-513 exactly). Augmented the
+273k-row / 26-year panel with the liquid-surviving signals as features: IVOL (residual-to-SPY 60d), distress recency
+(gc + late-filing events), days-to-cover — point-in-time, coverage asserted. Result: GBM-linear paired t 0.81
+(nonlinearity adds nothing, a fifth confirmation after D-419/423/451/513); liquid books negative (GBM -0.07, linear
+-0.10 SR); no book clears the 5.32 ceiling; near-identical to the 22-feature baseline. The insight: IVOL and
+distress work as specifically-constructed sleeves and add nothing flattened into generic monthly features — a
+nonlinear combiner cannot reconstruct hand-constructed sleeves; the linear risk-parity blend stays strictly better.
+The ML-combination route is closed on equities.
+GOLD: research — [RESTORED] a signal's edge lives in its construction, not as a generic feature.
+ACTS-ON: ledger — the ML-combination closure recorded against the ledger.
+
+## D-943 (2026-09-18, incl. b + addendum) LONGER HORIZONS — distress improves at 365d; deployed, excess 1.92 -> 1.98 — [RESTORED]
+
+Read-only hold sweeps on the deployed constructions. IVOL is horizon-insensitive (net ~0.44-0.49 from 21d to 252d;
+turnover falls 276% -> 94%/yr but net SR does not rise — the 21d deploy is not cost-bound). Distress is slow-moving:
+the short Sharpe rises monotonically with the hold window (1.47 @180d -> 1.62 @365d -> 1.66 @540d) because holding
+longer smooths the book (vol 15.9% -> 13.6%) — exactly what D-647's independently-measured 369-day median
+going-concern lead predicts. Chose 365d on theory, not the argmax. Deployed: distress standalone 1.84 -> 2.03,
+5-sleeve raw 2.09 -> 2.14, pinned excess 1.92 -> 1.98, underwater 1.2y -> 0.8y; d931 rebuilt at WINDOW=365; clock
+re-marked. D-943b era-split (after fixing a split that faked a 0.00 early era): the 365d window is era-robust
+(early 1.13 > 0.99; late 4.51 > 4.10) but the distress edge is era-concentrated (~1.0-1.2 in 2016-21 vs ~4.0-4.6 in
+2021-26 — deployed and reported without flagging this until the validation caught it). Addendum: IVOL too (early
+0.21 t 1.09 vs late 0.69 t 3.58) — the honest forward base rate is materially below the pooled headline.
+GOLD: research — [RESTORED] a within-family refinement deployed on theory, then era-audited against itself.
+ACTS-ON: position — d931 rebuilt at the 365d window; the clock re-marked.
+
+## D-944 (2026-09-18) REGIME DEPENDENCE ACROSS THE FIVE SLEEVES — the BLEND is regime-robust — [RESTORED]
+
+Read-only REGIME block (verified: blend raw 2.15 / pinned 1.98 reproduces the deployed figures). The five sleeves
+are strongly regime-SPECIALISED but paid in COMPLEMENTARY eras (Sharpe per era): trend 0.7/1.8/0.8/0.5/0.1 (dead
+recently); cryptomom 1.2/1.3/0.3/0.4/0.2 (early-only); long 1.0/-0.1/1.4/-1.0/1.0; distress 1.4/-0.1/0.7/3.7/3.7;
+ivol 0.7/0.2/1.2/1.0/1.2 (every era); BLEND 2.1/1.7/1.3/2.2/2.8 — Sharpe >= 1.3 in EVERY era, calm 2.1 ~= recent
+2.8. CORRECTS D-943b's "the ~1.98 is substantially a recent-era number": true per-sleeve, FALSE at portfolio level.
+Surviving caveats: distress individually recent-concentrated; cryptomom near-dead now (insurance for a 2015-20
+regime return); per-era N small. Reliability caught in passing: the D-881 intraday 5m/1m panel had NO scheduler
+(froze 4.5d after the last manual run) — ingest run + wired into daily-up.sh.
+GOLD: research — [RESTORED] the blend earns in every regime because its sleeves are paid in complementary ones.
+ACTS-ON: ledger — the recorded interpretation of the deployed book corrected (regime-robust, not recent-fragile).
+
+## D-945 (2026-09-18) STRESS-TEST THE 21 RALLY — 2021 is the pathological outlier, and its tail is a JOINT short-squeeze blowup — [RESTORED]
+
+STRESS=FROM:TO knob (read-only: path, attribution, leave-one-out). "The rally" is NOT one regime: 2017 SR 3.80
+(45%/yr, maxDD -5.9%, no negative quarter — the blend's best year), 2019 SR 3.00 (maxDD -3.6%), 2021 SR 1.30
+(maxDD -13.9%, worst month Jan -9.2%, 70% of the year underwater) — 2 of 3 rally years were >= 3.0 and smooth; 2021
+is the only one where trend + cryptomom + distress all stalled at once. THE TAIL, MEASURED: Jan-Feb 2021 distress
+-8.6% (own SR -4.58) AND ivol -3.5% (own -1.79) blew up TOGETHER — both are "short the overpriced junk", so their
+body-independence (corr 0.07-0.14) breaks in exactly the tail that matters; that joint blowup IS the blend's -13.9%
+maxDD. The long/momentum sleeves are the de-facto squeeze hedge (blend lost only -4.2% over Jan-Feb vs ~-12% from
+the short legs alone). FLOOR HOLDS: worst rally draw still +15%/1.30 and leave-one-out never goes negative (~1.0
+min) — an uncomfortable-to-HOLD year (D-565), not a losing one. Uncovered corner: no sleeve PROFITS from a junk-squeeze.
+GOLD: research — [RESTORED] the deployed book's tail characterised: a distress+IVOL joint squeeze, not a regime.
+ACTS-ON: ledger — the tail mechanism recorded against the deployed book (descriptive, no position/clock moved).
+
+## D-946 (2026-09-19) A LONG SQUEEZE HEDGE CANNOT BE SIZED IN — the tail is un-hedgeable with trailing signals — [RESTORED]
+
+Verified three ways. (1) squeeze-hedge.ts (NEW): long top-quintile days-to-cover (most-shorted), liquid,
+dollar-neutral, point-in-time SI — carry -3.5%/yr AND it LOST in the squeeze it must hedge (Jan-Feb 2021 -3.3%;
+concentrating worse: DTC>=15 -14.9%, DTC>=20 -18.1%) — a monthly basket captures the post-spike crash, not the
+spike. (2) Blend overlay (HEDGE_SPEC/HEDGE_FRAC): hedge corr to gcshort +0.05 / ivol -0.06 (wrong names); moving
+Jan-2021 -4.2% -> +0.1% needs 83% of the book, dragging excess 2.09 -> 1.95 and worsening underwater. (3) A
+days_cover >= 5 avoid-filter on the distress SHORT (CROWD_DC, D-939c pattern) IMPROVES the full sample (standalone
+1.62 -> 1.73, blend excess 1.98 -> 2.02) but does NOT fix the acute squeeze (Jan-Feb 2021 -34.4% -> -37.2%):
+trailing mid-Dec short interest cannot predict January's surge. Root: the acute squeeze is a forward coordination
+shock, un-hedgeable with any trailing point-in-time signal in held data. The CROWD_DC filter is a carry-free edge
+lift — READY, not deployed (default 0, d931 untouched).
+GOLD: research — [RESTORED] "short less" dominates any static long-junk hedge; the real cushion is the long/momentum sleeves.
+ACTS-ON: ledger — the hedge question closed measured; the ready-but-undeployed CROWD_DC improvement recorded.
+
+## D-947 (2026-09-19) CONDITIONAL JUNK-MOMENTUM DE-GROSS — squeeze INSURANCE, not a Sharpe improver — [RESTORED]
+
+DEGROSS block: signal = the (gcshort+ivol) short book's OWN trailing-K bleed through i-1 (LAG-1); rule: cut (1-f)
+of distress+ivol to cash when the bleed < tau; (K, tau-pct, f) chosen on TRAIN only, frozen, applied to TEST
+(default TRAIN_END=2020-12-31 holds Jan-2021 OUT of training). Across 4 splits the benefit is entirely conditional
+on a squeeze being in the held-out test: train<=2019/test2020+ Sharpe 2.18 -> 2.32, Jan-2021 -4.2% -> +9.4%;
+train<=2020/test2021+ 2.32 -> 2.34 (wash), maxDD -13% -> -10%, Jan-2021 -3.9% -> +9.5%; train<=2021/test2022+
+2.64 -> 2.48 (-0.16 drag — no squeeze in test, D-821 confirmed); train<=2022 small drag. Small certain negative
+carry + a large contingent squeeze payout = a genuine hedge (insurance shape), unlike D-946's long basket (carry
+AND no payout). "It pays" evidence is n=1 squeeze; "it costs" is n=2. Lean against always-on; a tail-vs-Sharpe
+tolerance call for the operator. READY, not deployed (DEGROSS default 0).
+GOLD: research — [RESTORED] a genuine contingent hedge found and priced honestly; deployment deferred to tolerance.
+ACTS-ON: ledger — the train-frozen rule and its 4-split evidence recorded (later deployed by D-953b).
+
+## D-948 (2026-09-19) INTRADAY INDEX EDGE — NO on QQQ; overnight owns the drift, prop-eval is a coin-flip — [RESTORED]
+
+intraday-index-edge.ts (keyless Yahoo QQQ, the NQ proxy), three agreeing measurements over 729d: (1) overnight
+C->O 21.0%/yr t 2.71 vs intraday O->C 3.1%/yr t 0.32 — the index's return is almost entirely overnight, so an
+intraday trader holds the drift-less leg. (2) First-1h-bar momentum: gross 14.7%/yr t 1.87 (54.5% win) but NET @2bp
+4.6%/yr t 0.59 and @4bp negative — sub-ceiling, direction-predictable-but-sub-fee on the index too. (3) Prop-eval
+(Apex-50k-like, +$3000 before $2500 trailing DD, 1 NQ): pass-rate 47.2% vs zero-edge control 46.7% — no edge over a
+coin-flip paying the same costs; the prop reframe does not rescue a sub-fee edge. Scope honestly bounded: 1h, one
+symbol, one structure; the faithful 5m order-flow test needs tick data (next step, D-949).
+GOLD: research — [RESTORED] a systematic intraday index rule has no fee-clearing edge here.
+ACTS-ON: ledger — the intraday-index null recorded with its scope stated.
+
+## D-949 (2026-09-19) THE LIVE NQ SCALPER, REVERSE-ENGINEERED ON REAL DATA — the price-structure half is a SELECTION ARTIFACT — [RESTORED]
+
+The operator's live/profitable scalper (marinexlambo: intraday NQ, order-flow at levels, prop-funded) and the prop
+reframe ($100 doesn't compound = ruin; a ~$150 eval fee buys funded size with capped downside, +EV IFF a real edge).
+Order-flow half already dead 5 ways (D-816 real equity TBBO 0/20 clear 1x fee; D-925 crypto flow; D-921 bounce;
+D-948 index; R-001 latency). Price-structure half on the real instrument (NQ.c.0 1m, 3yr, Databento $3.83 under the
+credit): intraday momentum sub-fee (t 0.73); ORB looked real full-sample (756 trades, +6.9pt, Sharpe 0.90, t 1.55)
+but SELECTION LAW decides — grid frozen on train (picked 15m/1R, train Sharpe 1.66) -> test: -3.30pt/trade, Sharpe
+-0.39. The edge FLIPPED NEGATIVE OOS. Prop sizing sweep honest: 2 MNQ passes ~70% vs 34% control on the in-sample
+edge (sizing dominates) but 35.7% ~= control on the OOS edge = -EV. A live scalper's profit, if real, is
+discretionary skill or survivorship — not a rule we can build or prop-fund. Kept open: discretionary skill
+unmeasured; NQ TBBO order-flow untested (exceeds the credit).
+GOLD: research — [RESTORED] every systematic version of the live-scalper method fails on real data.
+ACTS-ON: ledger — the ORB selection-artifact and prop-EV verdicts recorded; $3.83 spend logged.
+
+## D-950 (2026-09-19) SCALE THE PROVEN EDGE — empirical fat-tail Kelly; quarter-Kelly ~57%/yr; capacity ~$1-5M — [RESTORED]
+
+SCALE block on the net-exposure-financed excess series (4,256 days, excess Sharpe 1.98, rf 2.1%): empirical
+geometric growth g(L) = 252*mean(log(1+L*excess)) — fat-tail-aware, not the S^2/2 shortcut. Full-Kelly is ~12x+
+(120% vol, maxDD -167% = RUIN — the lognormal formula would hide it); Kelly is the CEILING, not the size.
+Deployable: quarter-Kelly 3x/30% vol -> 57%/yr, maxDD -42%; 20% vol (2x) -> 40%/yr, -28%; 10% vol -> 21%/yr, -14%;
+time-underwater 0.9y at all leverages. Trajectory from $1,000 at quarter-Kelly: 10x in 4y, 100x in 8y, $1M in ~12y.
+Binding constraints: CAPACITY ~$1-5M (the distress short's small/mid-cap borrow is the limit); MIN CAPITAL
+~$50-250k name-level, ~$5-25k ETF-proxy — $100 cannot hold a 5-sleeve book (the $100-native intraday path
+D-948/949 did not survive). Updates D-892's Kelly math to the proven excess.
+GOLD: research — [RESTORED] the honest ceiling on the dream: capacity and minimum capital, not Sharpe.
+ACTS-ON: ledger — the sizing/capacity envelope of the deployed book recorded.
+
+## D-951 (2026-09-19) BREADTH-FIRST EDGE SCANNER — 12 signals through the full battery; no new survivor — [RESTORED]
+
+edge-scanner.ts (NEW): a battery of PRE-SPECIFIED (literature-direction, no post-hoc flip) cross-sectional price
+signals through the same gauntlet at once — LIQUIDITY (liquid tercile), BENCHMARK (both legs' excess), BREADTH,
+TURNOVER, EFFECT-SIZE, PSEUDO-REPLICATION (portfolio-t), DEFLATION ceiling 3.16 — with IVOL as a positive control.
+Result (12 signals, liquid, monthly, 20bp): IVOL #1 net t 3.05 (right at the ceiling; its deployed avoid-filter
+build clears it) — positive control passes, scanner not broken. The low-vol/lottery cluster (ivol/volofvol/totvol/
+max5, t 3.05-2.18) is ONE edge seen four ways. illiq -3.02 and size -2.13 are WRONG SIGN in the liquid tercile —
+the LIQUIDITY LAW made visible. Momentum 1.86, 52wk-high 1.76 sub-fee. NO NEW SURVIVOR. The harness is extensible:
+future signals get ranked here instead of backtracked one at a time — the method fix for "contextualise, don't backtrack".
+GOLD: research — [RESTORED] the cross-sectional price field contextualised in one gauntlet.
+ACTS-ON: ledger — the field-scan verdicts recorded through the scanner's battery.
+
+## D-952 (2026-09-19) SPLV/SPHB ETF RECOVERY FAILED — the wrapper captures ~0% of the IVOL edge — [RESTORED]
+
+lowvol-etf-pair.ts (NEW). Long SPLV / short SPHB 2011-2026: -5.3%/yr, Sharpe -0.24 — a net-short-beta bet that
+bleeds in the bull. Beta-neutral (long SPLV / short 0.68*SPY): -1.0%/yr, Sharpe -0.12, t -0.46 = ~zero isolated
+low-vol alpha. The ETF wrapper captures ~0% of the IVOL edge: SPLV is a coarse total-vol cut crowded since 2011;
+the deployed sleeve is fine idiosyncratic vol, beta-purged, name-level. No cheap ETF recovery of the anomaly (the
+D-555 pattern again). Bug caught and recorded: Yahoo range=max silently returns MONTHLY bars — use period1/period2
+for daily.
+GOLD: research — [RESTORED] the cheap wrapper hypothesis killed in the placeable instrument.
+ACTS-ON: ledger — the ETF-recovery null recorded; the Yahoo monthly trap documented.
+
+## D-953 (2026-09-19, incl. a/b/c) CONCENTRATION MAKES THE EDGE HAND-FILLABLE AND IMPROVES IT — DEPLOYED, blend excess 1.98 -> 2.08 — [RESTORED]
+
+The deployment breakthrough: IVOL concentrated to the EXTREME names STRENGTHENS — 134/leg Sharpe 0.47 / t 3.46 ->
+33/leg 0.68 / t 4.94 -> 22/leg 0.67 / t 4.91. DEPLOYED q20 (66 ivol names, hand-fillable, prudent vs q30
+single-name risk): live d939 rebuilt at QUINTILE=20, paper-book-up.sh updated, fwd-distress-ivol-blend-5 re-marked;
+blend excess 1.98 -> 2.08 and the 2021 squeeze path IMPROVED (1.30 -> 1.39). Removes the "700 names not
+hand-fillable" blocker AND lifts the number. D-953a era-validation PASSES: concentrated early era 0.40 (t 2.07, now
+significant) vs the broad sleeve's 0.21 (t 1.09); blend >= 1.4 in every era (calm 2.2, covid 1.5, rally 1.4, bear
+2.4, recent 3.0). D-953b: the frozen D-947 de-gross rule DEPLOYED live (DEGROSS_LIVE=1 in paper-book-up.sh; cut
+distress+ivol when the 10-day short-book bleed < -1.0%, LAG-1, fires 21% of days; 2021 squeeze Sharpe 1.39 -> 2.28,
+maxDD -14.2% -> -10.0%; honest forward per D-947 is ~neutral Sharpe + validated tail protection). D-953c:
+deploy-sheet.ts (NEW) prints WHAT TO HOLD TODAY (66 ivol names ~$253 each at $100k, most-liquid active distress
+shorts, sizing, de-gross status, cadence/gates/kill-switch); it surfaced that practical min capital is set by
+per-name fillability (~$100-150k name-level) and that distress at 280 active names is not hand-fillable (the
+flagged next step -> D-954). Remaining blockers: capital, an execution surface, the staged gates (operator-armed,
+Claude never executes). D-823 EXIT: clock AND position moved.
+GOLD: research — [RESTORED] concentration removed the fillability blocker and improved the edge; deployed to the live paper book.
+ACTS-ON: position — d939 rebuilt at q20, de-gross overlay live, clock re-marked.
+
+## D-954 (2026-09-19) DISTRESS CONCENTRATION FAILS — a BREADTH anomaly, opposite of IVOL; the runbook completes — [RESTORED]
+
+NAMES_CAP on distress-sleeve.ts (short the top-N most-liquid active flagged names, alt file, never d931):
+standalone Sharpe ALL 1.63 -> cap50 1.12 -> cap33 0.82 -> cap20 0.50, monotone decline. Distress is a BREADTH
+anomaly — the edge is diversified across many flagged names (event-binary, no continuous score to rank by; ranking
+by liquidity throws edge away) — the OPPOSITE of IVOL, whose edge is in the signal extremes. Blend A/B:
+full-breadth 2.08 vs hand-fill cap50 1.79 (-0.29). So distress resists hand-filling: full edge needs a basket order
+(~280 names); hand-fill top-50 for a -0.29 haircut; never below ~50. Capital: name-level shorts are low-weight
+(distress 2.5%, ivol 4%), so the bind is per-name fillability — floor ~$100-150k ($30k leaves only
+trend/long/crypto at 0.89). docs/DEPLOY_RUNBOOK.md (NEW) completes the ladder: the one command
+(deploy-sheet.ts CAPITAL=X), per-sleeve instruments, daily de-gross check, cadence, 20%-vol quarter-Kelly sizing,
+and PAPER($0) -> MICRO(manual ~$1-5k) -> SMALL($10-50k) -> SCALED(~$1-5M) gates. Deployed book unchanged (distress
+stays full-breadth d931 at 2.08).
+GOLD: research — [RESTORED] concentration validated per-sleeve, not assumed: it helps IVOL and hurts distress.
+ACTS-ON: gate — the staged-deployment runbook and its ladder gates completed; d931 deliberately unchanged.
+
+## D-955 (2026-09-20) SCALP OPPORTUNITY VIA MTF ZONES — a REAL OOS above-break-even FADE edge, thin — [RESTORED]
+
+Operator pushback on "can't prove direction" was right: the prior null was whole-day rules; the zone-scalp framing
+(tight stops, big legs) has different economics. scalp-opportunity.ts on real NQ 1m, every trading day:
+(a) available path length ~2,553pt/day (a ceiling, not achievable); (b) break-even direction accuracy only 50.7%
+because legs (34pt) >> cost (0.5pt) — the operator's point, a small directional edge banks big legs; (c) real
+signals, train/test 398d/198d, LAG-1 (after fixing a circular signal-at-leg-end bug that faked 58%): TREND
+continuation 47.8% -> 48.4% (loses; momentum REVERSES at zones); FADE reversion 52.2% -> 51.6% — OOS ABOVE
+break-even (unlike the ORB, which flipped negative); (d) accuracy -> P&L: 52% = $329k/yr, 54% = $852k/yr per
+contract. Honest caveats: 77 legs/day is path length, not tradable; the symmetric adjacent-zone stop understates
+the trend-day tail; 51.6% is only ~0.9% (~2 sigma) above break-even and fade slippage (adverse selection) could eat
+it. Real but THIN; only forward measurement of real fills settles it (-> D-956).
+GOLD: research — [RESTORED] corrects the flat "can't prove direction": the fade edge is real, thin, frictions untested.
+ACTS-ON: ledger — the zone-fade OOS result and its bug-fix recorded; settlement routed to real fills.
+
+## D-956 (2026-09-20) trade-journal.ts — THE MEASUREMENT LAYER FOR THE OPERATOR'S OWN TRADES — [RESTORED]
+
+The honest settle for D-955's thin zone-fade edge: real fills, not a model. Log each trade (LOG=1 SIDE= ENTRY=
+EXIT=); the scorer computes hit rate against the break-even implied by YOUR OWN realised win/loss sizes (R>1 puts
+it below the 50.7% theoretical), expectancy + t-stat, and the verdict — UNPROVEN until |t| >= 2, with the number of
+trades still needed printed, and "do NOT scale size until then". It counts real fills only, so it already includes
+the slippage/whipsaw/tail losses the backtest could not see. Generalises the D-807 signed-prop clock: the operator
+trades (a skill Claude cannot replicate or execute), the engine measures and deflates honestly (Route B).
+GOLD: research — [RESTORED] discretionary skill made measurable without being claimable.
+ACTS-ON: gate — the scale-size gate (|t| >= 2 on real fills) stood up over the operator's own trading.
+
 ## D-916 (2026-09-14) WHY THE STAKE MATTERS MORE, MODELLED — and the strategic synthesis: make the money elsewhere, keep it here, never be the 96%
 
 The operator asked me to model why the stake dominates the edge and to answer every strategic question so the system
@@ -21882,3 +22391,35 @@ ACTS-ON: gate — the named blocker between the measured +6.7% forecast gain and
 resolves by accrual instead of by purchase.
 GOLD: structural — the last engine-actionable stone of this sweep: every input the gamma programme needs from here
 arrives free, keyless, and in the formats the tests already read.
+
+## D-970 (2026-09-23) THE ECOSYSTEM AUDITED AGAINST ITS OWN BAR — the lost era restored, the escalation chain repaired, discretion registered, dead weight parked and archived
+
+Operator directive: every aspect must be more beneficial to have than not; go through every decision, data point and
+file; remove every bottleneck including the operator. A dedicated full-ledger audit (26 components scored, 22 gaps,
+12 underexploited datasets, 14 operator-keyed bottlenecks — report delivered to the operator) found, and this entry
+records the same-day repair of, the following:
+1. **DECISIONS.md was missing D-918–D-956** — the era that produced the deployed book existed only in commit messages
+   and trd_lineage. RESTORED as one marked 509-line insertion (39/39 IDs with evidence, 0 stubs; D-938's retraction
+   arithmetic recovered from the DB alone). The hole was CHRONIC (a dozen smaller ones incl. 881→892); the guard now
+   carries a RATCHETED ID-CONTINUITY rule: 18 known holes baselined as debt reported every run, any NEW hole is RED,
+   and the baseline may only shrink (a growable baseline would amnesty the class).
+2. **The D-854 red-board escalation was broken while a RED was live** (_notify.sh unreachable via cwd-relative path
+   from the runner). Fixed with absolute resolution, verified from the runner's cwd.
+3. **Operator surfaces disagreed on the edge itself**: opportunities.ts asserted the superseded 4-sleeve/1.60 book —
+   reframed as the trend WATCHLIST it computes and regenerated; the D-939e leverageable pin (**1.92**, raw 2.08)
+   propagated into DEPLOY_RUNBOOK and BIG_PICTURE; the 0.45-era arithmetic quintet + dead gap docs (9 files) archived
+   under docs/archive/ with superseded-by banners; the stale second board file deleted; STATE.md and NEXT.md fully
+   rewritten (they were 10–15 days and one paradigm behind).
+4. **Parked discretion became registered rules**: trd_prereg rows `D-970-crowd-dc-adoption` (numeric adopt/reject
+   thresholds, deadline 2026-10-07) and `D-970-gex-sizing-calibration` (>=40 shared days, >=5% tracking improvement,
+   sign-flip kills) — the audit's "admitted improvement with no path to adoption" shape closed for both.
+5. **Three NOT-EARNING daemons parked** (autopilot, discovery, positioning): under the D-823 freeze the mining pair
+   only inflated the mined ceiling and positioning contradicted the deployed book. Unloaded; agent-output roster
+   updated in the same change; re-arming requires the commit that reloads them.
+6. The companion COMMONWEALTH_THESIS.md (same date) sets the platform direction this audit serves: the covert
+   bot-farm path refused on evidence (MTurk's death), the owned-micro-business / verified-humanity / trust-layer
+   paths adopted, "every component earns its keep" adopted as standing audit policy.
+ACTS-ON: gate — the ledger's continuity is now machine-enforced, the escalation chain is live again, and two
+adoption decisions that had no path now have numeric registered rules with deadlines.
+GOLD: structural — the record's memory, its alarm bell, and its operator surfaces were found lying in three
+different ways on one day, and each lie now has a guard, a fix, or an archive banner where it used to have trust.

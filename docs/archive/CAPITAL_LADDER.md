@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # CAPITAL LADDER — from $10 to a million, rung by rung, from the measured record (D-882, 2026-09-13)
 
 > Operator: never capped; a coffee into a million; find every reason it is possible. This ladder is built only from rows
@@ -119,3 +120,4 @@ See `docs/GROWTH_TO_TARGET.md` §11.
 per-step shuffled control, or beat the fee — and if it claims to beat the fee through execution, it must measure the
 **EXIT** leg, not only the entry. That last clause is D-891's contribution and it is the one that would have caught
 this programme's own near-miss.
+

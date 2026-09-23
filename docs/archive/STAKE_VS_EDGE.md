@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # WHY THE STAKE DOMINATES THE EDGE (D-916)
 
 `T = ln(W/S) / g`. Target W = £1,000,000. The book's honest leverageable excess Sharpe is ~0.45
@@ -42,3 +43,4 @@ at capped leverage is ~0.31·S, so a big edge changes everything: at Medallion S
 matter how you cut it. Stake-dominance is a SYMPTOM of a ~0.45 edge, not a law — and the strategic consequence is
 that value creation must come from CAPITAL FORMATION (the stake), with the book as a survival-and-compounding vehicle,
 because the record has proven the edge cannot be the engine.
+

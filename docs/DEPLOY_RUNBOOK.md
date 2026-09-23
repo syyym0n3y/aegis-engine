@@ -2,7 +2,8 @@
 
 > The proven edge is the **5-sleeve blend** (`distress-ivol-blend-5`): trend + long + cryptomom +
 > distress-short + IVOL long-short, risk-parity weighted, with the **D-947 squeeze de-gross** overlay.
-> Leverageable **excess Sharpe ~2.08** (2.13 in-sample with the de-gross; honest forward ~2.0).
+> Raw excess Sharpe ~2.08; **the LEVERAGEABLE number is ~1.92 (D-939e pin: financing on the 0.27x net-long charged)** —
+> every Kelly/leverage arithmetic in this doc must use 1.92, not 2.08. (2.13 in-sample with the de-gross; honest forward ~2.0 raw.)
 > **Claude never executes. This is a manual-fill runbook. Every order is placed by the operator.**
 
 ## 0. The one command

@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # GAPS.md — what we don't have, ranked by honest impact (the path to a better engine)
 
 > The operator asked "what would make this 1,000,000× better." Honest answer first: **no single thing does.** Markets are
@@ -45,3 +46,4 @@ factor family (quality/investment/profitability) that we literally cannot test t
 stays: this engine's proven value is **understanding + risk/sizing**, not a directional edge that the evidence says isn't
 freely there. We invest in the fundamentals pipeline and the price-correctness next — measured, deflated, and honest about
 what each returns. See [[STACK.md]] for how any of these plug into the layered architecture without losing context.
+

@@ -1,6 +1,7 @@
-# Current opportunities — 2026-09-16
+# Current opportunities — 2026-09-23
 
-> What the validated 4-sleeve book (D-932, Sharpe 1.60) says to trade NOW, both directions, across the global panel.
+> TREND/momentum WATCHLIST across the global panel — one input family, NOT the deployed book. The deployed book is the
+> 5-sleeve blend (leverageable excess ~1.92, D-939e pin): see DEPLOY_RUNBOOK.md / deploy-sheet.ts for what to hold.
 > Signal = blended 21/63/126/252d trend, vol-normalised. Target and stop are **2xATR** (D-934: the exit that wins on capital-velocity — caps the tail, frees capital fastest).
 > This is the systematic entry/exit for "one trade at a time" — the edge is the DIRECTION + diversification, not the timing.
 > DORMANT / paper only. Claude never executes; the operator arms and fills manually.
@@ -8,26 +9,26 @@
 ## LONG (trend up)
 | symbol | class | dir | signal | px | £size | units | profit-target | stop |
 |---|---|---|---|---|---|---|---|---|
-| USDTRY=X | fx | LONG | 5.67 | 48.586449 | £2000 | 41.1637 | 48.78 | 48.39 |
-| PBP | etf | LONG | 1.66 | 23.299999 | £2000 | 85.8369 | 23.58 | 23.02 |
-| SVXY | etf | LONG | 1.60 | 62.610001 | £2000 | 31.9438 | 64.33 | 60.89 |
-| ^TNX | rate | LONG | 1.15 | 4.961 | £2000 | 403.1445 | 5.09 | 4.84 |
-| SB=F | commodity | LONG | 1.07 | 19.059999 | £1613 | 84.6275 | 20.53 | 17.59 |
-| ZEC-USD | crypto | LONG | 1.05 | 1146.199951 | £500 | 0.4362 | 1365.63 | 926.77 |
-| CT=F | commodity | LONG | 1.02 | 85.040001 | £1724 | 20.2728 | 89.81 | 80.27 |
-| XBI | etf | LONG | 1.02 | 157.600006 | £1724 | 10.9391 | 165.02 | 150.18 |
+| USDTRY=X | fx | LONG | 5.95 | 48.835899 | £2000 | 40.9535 | 49.01 | 48.66 |
+| PBP | etf | LONG | 2.12 | 23.299999 | £2000 | 85.8369 | 23.64 | 22.96 |
+| NEAR-USD | crypto | LONG | 1.95 | 4.3526 | £568 | 130.4967 | 5.09 | 3.62 |
+| SVXY | etf | LONG | 1.95 | 63.57 | £2000 | 31.4614 | 65.44 | 61.7 |
+| ZEC-USD | crypto | LONG | 1.71 | 1614.819946 | £472 | 0.2923 | 1884.99 | 1344.65 |
+| SPY | etf | LONG | 1.68 | 773.5 | £2000 | 2.5856 | 787.7 | 759.3 |
+| ^GSPC | index | LONG | 1.63 | 7764.640137 | £2000 | 0.2576 | 7900.91 | 7628.37 |
+| QUAL | etf | LONG | 1.59 | 222.929993 | £2000 | 8.9714 | 226.99 | 218.87 |
 
 ## SHORT (trend down)
 | symbol | class | dir | signal | px | £size | units | profit-target | stop |
 |---|---|---|---|---|---|---|---|---|
-| USDCNY=X | fx | SHORT | 2.19 | 6.7075 | £2000 | 298.1737 | 6.7 | 6.71 |
-| ZF=F | rate | SHORT | 1.31 | 104.398438 | £2000 | 19.1574 | 103.77 | 105.03 |
-| ZT=F | rate | SHORT | 1.23 | 102.042969 | £2000 | 19.5996 | 101.75 | 102.34 |
-| ZN=F | rate | SHORT | 1.17 | 105.984375 | £2000 | 18.8707 | 105.03 | 106.94 |
-| VXX | etf | SHORT | 1.13 | 18.23 | £1163 | 63.7959 | 17.22 | 19.24 |
-| USDKRW=X | fx | SHORT | 1.06 | 1344.150024 | £2000 | 1.4879 | 1318.05 | 1370.25 |
-| SAND-USD | crypto | SHORT | 0.99 | 0.0353 | £877 | 24844.1926 | 0.03 | 0.04 |
-| SNX-USD | crypto | SHORT | 0.89 | 0.21142 | £1087 | 5141.4247 | 0.19 | 0.23 |
+| USDCNY=X | fx | SHORT | 2.53 | 6.7046 | £2000 | 298.3027 | 6.7 | 6.71 |
+| ZF=F | rate | SHORT | 1.28 | 104.171875 | £2000 | 19.199 | 103.59 | 104.75 |
+| VXX | etf | SHORT | 1.28 | 17.690001 | £1250 | 70.6614 | 16.59 | 18.79 |
+| ZT=F | rate | SHORT | 1.27 | 101.84375 | £2000 | 19.6379 | 101.57 | 102.12 |
+| USDKRW=X | fx | SHORT | 1.10 | 1351.76001 | £2000 | 1.4796 | 1316.3 | 1387.22 |
+| ZN=F | rate | SHORT | 1.09 | 105.890625 | £2000 | 18.8874 | 104.97 | 106.81 |
+| MATIC-USD | crypto | SHORT | 0.73 | 0.216415 | £694 | 3206.8017 | 0.2 | 0.24 |
+| ZB=F | rate | SHORT | 0.65 | 107.3125 | £2000 | 18.6372 | 105.89 | 108.73 |
 
 ## SHORT — going-concern distress (the persistent edge, D-930/931)
 164 going-concern 10-Ks filed in the last 90 days. Short the borrowable liquid names (days-to-cover < 5), long IWM,
@@ -37,4 +38,4 @@ hold ~126 days or to a profit target; net ~40%/yr on the borrowable subset. Run 
 1. Pick the highest-|signal| trade with favourable conditions, long or short.
 2. Enter at market; set the 2xATR profit-target and stop above (the D-934 validated exit).
 3. On target or stop, exit and rotate to the next highest-signal setup.
-4. Size each trade small (the wallet grows across many trades, not one bet) — the 4-sleeve book's edge is diversification.
+4. Size each trade small (the wallet grows across many trades, not one bet) — the blend's edge is diversification across sleeves, not any one trade.

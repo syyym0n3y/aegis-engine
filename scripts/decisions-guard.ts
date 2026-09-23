@@ -79,4 +79,23 @@ const text = await Deno.readTextFile(path);
 const r = audit(text, Number(K.FROM_D), Number(K.FROM_ACTS));
 if (r.checked === 0) { console.error(`  DECISIONS GUARD RED — parser found 0 entries >= D-${K.FROM_D} (positive control failed)`); Deno.exit(1); }
 if (r.missing.length) { console.error(`  DECISIONS GUARD RED — ${r.missing.length} of ${r.checked} entries >= D-${K.FROM_D} carry no GOLD: line: ${r.missing.join(", ")}`); Deno.exit(1); }
+// D-970 ID-CONTINUITY (ratcheted): the 2026-09-23 audit found D-918..D-956 — the era that built the deployed book —
+// simply absent, and the guard "counted entries" without noticing, because it never checked the SEQUENCE. Chronic:
+// a dozen smaller holes exist (881->892 is ten wide). Rule: current holes are a BASELINED DEBT reported every run;
+// any NEW hole is RED; the baseline may only SHRINK (a growable baseline would amnesty the class it exists to stop).
+{
+  const ids = [...text.matchAll(/^## D-(\d+)/gm)].map((m) => Number(m[1])).filter((n) => n >= 800).sort((a, b) => a - b);
+  const gaps: string[] = []; for (let i = 1; i < ids.length; i++) if (ids[i] > ids[i - 1] + 1 && ids[i] !== ids[i - 1]) gaps.push(`${ids[i - 1]}->${ids[i]}`);
+  const uniq = [...new Set(gaps)];
+  const BASE = `${REPO}scripts/decisions-gaps-baseline.json`;
+  let base: string[] | null = null; try { base = JSON.parse(await Deno.readTextFile(BASE)); } catch { /* absent */ }
+  if (Deno.env.get("UPDATE_GAPS_BASELINE") === "1") {
+    if (base && !uniq.every((g) => base!.includes(g)) ) { console.error(`  DECISIONS GUARD RED — refusing to baseline: the new gap set is not a subset of the old (a baseline may only shrink). New: ${uniq.filter((g) => !base!.includes(g)).join(", ")}`); Deno.exit(1); }
+    await Deno.writeTextFile(BASE, JSON.stringify(uniq, null, 1)); console.log(`  (gaps baseline written: ${uniq.length} known holes)`);
+  } else if (base === null) { console.error(`  DECISIONS GUARD RED — no ID-gaps baseline exists; run once with UPDATE_GAPS_BASELINE=1 after verifying every current hole is known debt`); Deno.exit(1); }
+  else { const fresh = uniq.filter((g) => !base!.includes(g));
+    if (fresh.length) { console.error(`  DECISIONS GUARD RED — NEW ID hole(s) in the append-only ledger: ${fresh.join(", ")} (known debt: ${base.length})`); Deno.exit(1); }
+    console.log(`  ID continuity: no new holes; known unrestored debt ${base.length} (shrink it by restoring, then re-baseline)`);
+  }
+}
 console.log(`  DECISIONS GUARD GREEN — ${r.checked} entries >= D-${K.FROM_D} each name the mechanism they feed; research entries >= D-${K.FROM_ACTS} name what they act on`);

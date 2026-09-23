@@ -11,7 +11,11 @@ async function jwt(){const e=(o:unknown)=>btoa(JSON.stringify(o)).replace(/=/g,"
 const hdr=await(async()=>{const t=await jwt();return{Authorization:`Bearer ${t}`,apikey:t};})();
 const DIR=Deno.env.get("AGENT_LOG_DIR")||new URL("../infra/data/",import.meta.url).pathname;
 const SELFTEST=(Deno.env.get("SELFTEST")||Deno.env.get("GUARD_SELFTEST"))==="1";   // D-586: accept BOTH names — the split (6 guards one, 5 the other) produced a silent no-op self-test that I nearly reported as a verification
-const AGENTS=["autopilot","coverage","cryptofwd","daily","discovery","positioning","attribution","paper-book"];
+// D-970 (audit 2026-09-23): autopilot/discovery/positioning PARKED under the research freeze — the mining pair only
+// inflated the mined ceiling while nothing could be admitted, and positioning's watchlist contradicted the deployed
+// book. Their launchd jobs are unloaded; they leave this roster so their (correctly) aging logs stop redding the
+// board. Re-add the name in the same commit that reloads a job — a running agent missing here is unwatched (D-459).
+const AGENTS=["coverage","cryptofwd","daily","attribution","paper-book"];
 // A newly-WIRED agent has not necessarily run yet: its missing log is not evidence of a defect until the daily runner
 // has had a full cycle to produce one. Grace is explicit, stated, and SELF-EXPIRING — after it, missing = RED like any
 // wedged agent. (Extending AGENTS without this made the guard permanently RED, i.e. unsatisfiable — caught before it

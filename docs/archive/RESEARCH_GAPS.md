@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # RESEARCH_GAPS.md — what Aegis has NOT tested, ranked honestly
 
 > Written 2026-08-21 after the operator correctly challenged a premature "markets are efficient" conclusion. The prior
@@ -181,3 +182,4 @@ statistical effect into an untradable one. Nothing found so far fails because th
 **And the laws generalise.** Applied to an independent back catalogue they refuted all three previously-"verified" edges,
 each by a different law (breadth / pseudo-replication / benchmark). They were not tuned to those cases — they were derived
 from unrelated failures in new research and then found real errors that had survived months of review.
+

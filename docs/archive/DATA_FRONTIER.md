@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # DATA FRONTIER (D-469, rev. 2026-08-23) — the map of data not yet held
 
 > **REVISION NOTICE (D-475), written after the operator called the pattern out — correctly.** The first version of this
@@ -95,3 +96,4 @@
 **The sweep gate (operator directive):** no public content until Tier A is loaded AND the strategy factory (D-470) has
 pushed the spec grid — thousands of runs — through all eight laws with the live trial counter, and the most lucrative
 surviving configurations are identified or their absence is proven at that breadth.
+

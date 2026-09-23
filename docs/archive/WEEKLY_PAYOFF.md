@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # WEEKLY PAYOFF — what "100% per week" means in arithmetic, and what the record can actually deliver per week (D-878, 2026-09-13)
 
 > Operator target: extract at least 100% profit on investment at the end of every week, with multiple positions across
@@ -35,3 +36,4 @@ rows above 10% vol are arithmetic, not access.
 ## 3. What would raise the weekly number honestly
 Only a higher Sharpe: uncorrelated sleeves that survive (the release-hour study D-877 is the first non-price candidate),
 or execution-side edges never measured. Leverage cannot; it moves return and drawdown together.
+

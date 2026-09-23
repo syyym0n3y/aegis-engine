@@ -61,7 +61,7 @@ does. This is why the survivors form a single causal family: the laws filtered f
 2. **Pivot to forces** (causal-force pivot) — decompose moves into named mechanisms.
 3. **Law era** (D-419..D-662) — every retraction became machine enforcement; 32 guards.
 4. **Breakthrough** (D-930..D-953) — short-sale-constrained mispricing found: distress +
-   IVOL lift the blend to excess Sharpe **2.08** (net-financed, D-913 discipline),
+   IVOL lift the blend to excess Sharpe **2.08 raw / ~1.92 leverageable (D-939e pin — the number leverage math must use)**,
    IVOL-concentration made it hand-fillable, de-gross insured the joint squeeze tail.
 5. **Deployment & ecosystem** (D-954..) — runbook, executor (D-957, DORMANT, gated),
    verticals split (ballast = certain money + wealth ledger; assay = claims lab),

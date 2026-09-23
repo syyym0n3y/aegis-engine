@@ -1,5 +1,6 @@
-// Current opportunities — what the validated 4-sleeve book (D-932) says to trade NOW, both directions, across the
-// global panel. Long/short trend across every placeable instrument + crypto momentum + the live going-concern shorts.
+// Current opportunities — the TREND/momentum WATCHLIST (one input family of the deployed book), both directions,
+// across the global panel. D-970: the DEPLOYED book is the 5-sleeve blend (leverageable excess ~1.92, D-939e pin;
+// raw 2.08) — deploy-sheet.ts/DEPLOY_RUNBOOK.md are the authoritative "what to hold"; this page is a watchlist. Long/short trend across every placeable instrument + crypto momentum + the live going-concern shorts.
 // Operator-facing: grow the wallet one trade at a time, with a systematic entry and exit. Writes docs/OPPORTUNITIES.md.
 import { declareKnobs, mkStrictRead } from "../supabase/functions/_shared/run-preconditions.ts";
 const K = declareKnobs("opportunities", [{ name: "TOPN", def: "8" }, { name: "WALLET", def: "10000", note: "paper wallet £" }, { name: "TARGET_VOL", def: "0.20", note: "survivable portfolio vol" }, { name: "SIZE", def: "1", note: "1 = size into the paper book + write DORMANT portfolio" }, { name: "MAX_LEV", def: "3", note: "hard cap on gross leverage (survivable)" }, { name: "MAX_POS_PCT", def: "20", note: "max % of wallet in any one position" }]);
@@ -63,7 +64,8 @@ const sz = new Map(sized.map((s) => [s.dir + s.sym, s])); const fmt = (o: Opp) =
 const today = new Date().toISOString().slice(0, 10);
 const md = `# Current opportunities — ${today}
 
-> What the validated 4-sleeve book (D-932, Sharpe 1.60) says to trade NOW, both directions, across the global panel.
+> TREND/momentum WATCHLIST across the global panel — one input family, NOT the deployed book. The deployed book is the
+> 5-sleeve blend (leverageable excess ~1.92, D-939e pin): see DEPLOY_RUNBOOK.md / deploy-sheet.ts for what to hold.
 > Signal = blended 21/63/126/252d trend, vol-normalised. Target and stop are **2xATR** (D-934: the exit that wins on capital-velocity — caps the tail, frees capital fastest).
 > This is the systematic entry/exit for "one trade at a time" — the edge is the DIRECTION + diversification, not the timing.
 > DORMANT / paper only. Claude never executes; the operator arms and fills manually.
@@ -86,7 +88,7 @@ hold ~126 days or to a profit target; net ~40%/yr on the borrowable subset. Run 
 1. Pick the highest-|signal| trade with favourable conditions, long or short.
 2. Enter at market; set the 2xATR profit-target and stop above (the D-934 validated exit).
 3. On target or stop, exit and rotate to the next highest-signal setup.
-4. Size each trade small (the wallet grows across many trades, not one bet) — the 4-sleeve book's edge is diversification.
+4. Size each trade small (the wallet grows across many trades, not one bet) — the blend's edge is diversification across sleeves, not any one trade.
 `;
 await Deno.writeTextFile(new URL("../docs/OPPORTUNITIES.md", import.meta.url), md);
 console.log(`==> OPPORTUNITIES — ${longs.length} longs, ${shorts.length} shorts across ${opps.length} trending instruments; ${gcN} live going-concern shorts. Wrote docs/OPPORTUNITIES.md`);

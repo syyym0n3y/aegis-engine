@@ -153,7 +153,7 @@ while true; do
   # DECISIONS GUARD (D-804): every DECISIONS entry from D-804 on must carry a `GOLD: <mechanism> — <what it changes>` line
   # naming the daily mechanism it feeds (structural|clock|prop|gap|reliability|research|law). 198 of 580 entries carried
   # open-item language that was never revisited; a decision that does not say what it feeds is how research drifts.
-  if ! deno run --allow-read --allow-env ../scripts/decisions-guard.ts; then
+  if ! deno run --allow-read --allow-env --allow-write ../scripts/decisions-guard.ts; then
     echo "$(date -u +%FT%TZ) DECISIONS GUARD RED — a decision entry >= D-804 does not name the mechanism it feeds"
   fi
   # REST RESTART GUARD (D-810): PostgREST restarted 15 times since creation, two coinciding with research panel reads; a

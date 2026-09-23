@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # GROWTH TO TARGET — $10 to $1,000,000, computed (D-892)
 
 > The question is "turn a coffee into a million". It is a two-barrier first-passage problem and every input below is
@@ -387,3 +388,4 @@ static drawdown, exact fee and refund condition, payout schedule.
 
 **The one robust figure is the difference, not the level** — whatever is wrong applies to both arms equally, so: **the
 edge roughly doubles the pass rate** (47.8% vs 22.1%) and adds about $3,300 per fee over a no-edge trader.
+

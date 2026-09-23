@@ -1,3 +1,4 @@
+> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
 # 10^7× LEVER — the honest action plan for actually elevating this project 10,000,000×
 
 > This is not a market-analysis document. This is the strategic operator-action document for the plan the
@@ -113,3 +114,4 @@ income base. Compounding does the rest.
 
 **None of the three needs to be an alpha discovery. The 10^7× is emergent from all three running together
 for a decade. That's the only version of this that arithmetic actually supports.**
+
