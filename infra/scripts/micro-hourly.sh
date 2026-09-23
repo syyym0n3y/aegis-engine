@@ -28,7 +28,12 @@ else
     PANELS=1h:1h MAX_PAGES=2 SYMBOLS="BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT" deno run --allow-net --allow-env ../scripts/refresh-perp-panels.ts > ../data/micro-perp-refresh.log 2>&1 || echo "$T0 MICRO HOURLY: perp 1h refresh FAILED"
   fi
 fi
-if ! ps -eo command | grep -v grep | grep -q "scripts/ingest-dukascopy.py"; then
+# D-968b: this leg ran even when the probe above said UNREACHABLE — so every boot-window hour (both host reboots
+# hit 00:2x UTC) logged "fx refresh FAILED" for a node that was simply not up yet. Same gate as the perp leg now;
+# a genuinely failing ingest on a HEALTHY node still logs the FAILED class.
+if [ "$CODE" != "200" ]; then
+  echo "$T0 MICRO HOURLY: fx refresh deferred — node unreachable this hour (boot window); next hourly run covers it"
+elif ! ps -eo command | grep -v grep | grep -q "scripts/ingest-dukascopy.py"; then
   FROM=$(date -u -v-1d +%F 2>/dev/null || date -u -d '1 day ago' +%F) PAIRS="EURUSD:1e-5,GBPUSD:1e-5,USDJPY:1e-3,AUDUSD:1e-5,XAUUSD:1e-3,USA500IDXUSD:1e-3,USATECHIDXUSD:1e-3" python3 ../scripts/ingest-dukascopy.py > ../data/micro-fx-refresh.log 2>&1 || echo "$T0 MICRO HOURLY: fx refresh FAILED"
 fi
 [ "$LAT" -ge 5 ] || RANGE=5d deno run --allow-net --allow-env ../scripts/refresh-fx-live.ts > ../data/micro-fx-live.log 2>&1 || echo "$T0 MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)"

@@ -21839,3 +21839,28 @@ payment method.
 ACTS-ON: gate — the vol-sizing expression of GEX is now regime-validated and carries a live $0 feed; the directional
 gamma trade is triple-refuted across eras and cannot re-enter without new registration.
 GOLD: research — a killed purchase converted into the exact validation it was for, at ~2% of the authorized cost.
+
+## D-968 (2026-09-23) THE FREE-THREAD SWEEP — GEX earns its keep as SIZING (+6.7% OOS forecast, ~10% tighter targeting); the London window is KILLED both ways; the boot-window false alarm is gated
+
+Three engine-actionable threads pulled to verdicts in one pass, all $0:
+**(1) GEX vol-sizing (the D-967 mechanism's only admissible expression), 2 trials:** nested OOS forecast test on
+the 3-regime panel — log(nextRV) ~ log(ewmaRV) + gexZ, coefficients FROZEN on train (D-455). GEX coefficient -0.21
+(registered sign matched, both bandwidths); TEST forecast MSE improves **6.7%**, vol-target tracking error tightens
+**11.1%/9.8%** (BW 1%/2%). A real sizing gain for any vol-targeted book. NOT deployed: the live $0 feed
+(cboe naive_gex_usd, accruing since 09-06) is a different GEX construction than the per-strike kernel measured
+here — a calibration overlap is the named gate before the paper book's targeting may use it.
+**(2) D-960 corroboration leg (1 trial, its own registered thresholds):** London-window CONTINUATION on the
+untouched hourly panel — **KILLED**: negative on all 8 qualifying instruments, pooled -4.6bp/trade net,
+**t -17.56, n 17,750** (kill bar: t<=0 at n>=150). With D-958's fade loss, the London 04:00-06:00 ET window is now
+measured a TWO-SIDED cost sink — breaches there are whipsaw, not signal, at daily/hourly granularity. Outcome
+appended to the immutable prereg; the primary NQ 1m forward leg stays open on its own rule, unprejudged.
+**(3) The "fx refresh FAILED" night class:** root-caused to the runner, not the ingest — micro-hourly's Dukascopy
+leg ran OUTSIDE the node-health gate that already protects the perp leg, so every boot-window hour (both host
+reboots hit 00:2x UTC exactly) logged FAILED against a node that was not up yet. Reproduction attempt falsified the
+source-lag hypothesis first (incomplete-day request exits 0). Leg now gated on the same probe with a distinct
+"deferred (boot window)" message — a real ingest failure on a healthy node still alarms. (A U+200B in my own edit
+broke the script and bash -n caught it — the check exists because typos do.)
+ACTS-ON: gate — GEX-sizing enters the ledger as a measured improvement awaiting its feed calibration; the London
+family is closed both directions on this record; the micro runner stops crying wolf at boot.
+GOLD: research — one mechanism converted to a usable number, one hypothesis killed by its own pre-written rule at
+t -17.6, one alarm made honest, in a single free pass.
