@@ -32,5 +32,6 @@ Full register: the 14-row bottleneck table in the 2026-09-23 ecosystem audit.
 
 - Clocks age toward their own verdicts; the scorers and continuity guard own them.
 - Every new claim from outside lands in assay first (18 rows).
-- The commonwealth build sequence lives in docs/COMMONWEALTH_THESIS.md (Phase 0: public
-  claims register + honest-base-rate content through owned channels).
+- The commonwealth mission spec has been RELOCATED OUT of this repo (this one is public) to
+  the private command-centre repo, which is also where that mission executes. Aegis's role in
+  it is the treasury/endowment only.
