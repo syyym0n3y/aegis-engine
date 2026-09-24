@@ -22462,3 +22462,23 @@ sentiment. This generalises: every future ingest carries a consumer question or 
 ACTS-ON: clock — a new forward clock now owns the feed's fate, and the feed's removal is pre-authorised if it fails.
 GOLD: reliability — the "unexamined accrual" failure class is closed by construction rather than by remembering to
 check, and the rule that kills the feed was written before any of its data was looked at.
+
+## D-973 (2026-09-24) THE CLOUD/LOCAL BRIDGE — git carries the state, the node stays closed
+
+The operator is moving session work to the cloud while the engine must keep running locally. Those are compatible,
+but only after naming the constraint honestly: **a cloud session gets the REPO, not the node.** It cannot reach
+localhost PostgREST, docker, launchd or the 32-guard board, so without a bridge it would reason from DECISIONS.md
+(what we concluded) while blind to what the machine currently holds — clocks, registrations, kill-switches, gaps.
+Two ways to bridge. Exposing the owned node over the internet was REJECTED: it trades the sovereignty the whole
+stack exists for against convenience, and puts an attack surface on the operator's own metal. Chosen instead:
+`scripts/state-export.ts` writes a compact read-only snapshot to `docs/LIVE_STATE.md` — kill-switch states, all 34
+clocks with their last mark, the 40 most recent pre-registrations with outcomes, the 13 gap-register rows with who
+can act, and the last local board line — wired into the daily runner ahead of its existing docs commit, so git
+carries state and the database is never published. Two honesty devices in the artefact itself: every table is
+stamped "as of" (a snapshot read as live is the D-613 staleness failure), and the board section states explicitly
+that an off-node session **may not claim a green board** — it may only quote the last local line and its timestamp.
+Positive control (D-641): an export that read zero switches or zero clocks refuses to write, so a silent
+connectivity failure can never render as a healthy empty system.
+ACTS-ON: gate — the board's authority is now explicitly non-transferable off-node, and any remote session's claims
+about live state are bounded by a timestamped artefact rather than by memory.
+GOLD: structural — the engine becomes readable from anywhere without becoming reachable from anywhere.

@@ -1,16 +1,17 @@
 {
   "classes": {
-    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 2,
+    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 3,
     "infra/data/micro-hourly.log|MICRO HOURLY: fx refresh FAILED": 15,
     "infra/data/micro-hourly.log|MICRO HOURLY: sheet FAILED": 19,
-    "postgres|column \"created_at\" does not exist at character N": 1,
+    "postgres|column \"created_at\" does not exist at character N": 2,
     "postgres|column \"d\" does not exist at character N": 3,
     "postgres|column \"lead_id\" does not exist at character N": 1,
     "postgres|column \"mark_date\" does not exist at character N": 1,
     "postgres|column \"name\" does not exist at character N": 1,
     "postgres|column \"spec_id\" does not exist at character N": 1,
+    "postgres|column trd_forward_rules.claim does not exist at character N": 1,
     "postgres|relation \"trd_options_surface\" does not exist at character N": 1
   },
-  "set": "2026-09-23T13:57:21.041Z",
+  "set": "2026-09-24T00:51:38.853Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }
