@@ -1,4 +1,5 @@
-> **ARCHIVED 2026-09-23 (D-970, audit).** This page is built on a superseded era of the record (pre-5-sleeve, ~0.45-1.60 Sharpe arithmetic, or a register that now lives in trd_gap_register). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md + the D-939e leverageable pin (~1.92).
+> **ARCHIVED (D-970 audit).** Superseded-era arithmetic (pre-5-sleeve). Current truth: docs/BIG_PICTURE.md + docs/DEPLOY_RUNBOOK.md, leverageable pin ~1.92 (D-939e).
+
 # TENFOLD — the arithmetic beside the record (D-864, regenerated each cycle)
 
 ```
@@ -26,4 +27,3 @@
 
   The distance between the table's 1.5 and the record's best HOLDABLE number is the mission, stated as a number.
 ```
-

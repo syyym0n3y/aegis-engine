@@ -15,7 +15,7 @@ const K = declareKnobs("bootstrap-growth", [
   { name: "LEVS", def: "1,2,3", note: "only levels where D-880 MEASURED the funding cost" },
   { name: "FLOORS", def: "0.5,0.9", note: "fraction of starting capital at which the attempt is over; 0.9 = a 10% drawdown, a typical prop rule" },
   { name: "VOL_TARGET", def: "0.10", note: "the blend is scaled to this annualised vol BEFORE leverage. D-905: scaling a 3.4%-vol book to 10% IS ~2.9x leverage, so a row labelled 1x at this setting carries ~2.9x exposure. Set VOL_TARGET=0 to run the book at its GENUINE unlevered risk level." }, { name: "RF", def: "0.04", note: "same risk-free D-892 uses; the sleeve series are excess returns" }, { name: "SEED", def: "20260913" },
-  { name: "OUT", def: "docs/GROWTH_TO_TARGET.md", note: "appended to, not overwritten" },
+  { name: "OUT", def: "docs/archive/GROWTH_TO_TARGET.md", note: "appended to, not overwritten" },
 ]);
 const j = JSON.parse(await Deno.readTextFile(K.BLEND)) as { series: Record<string, number>; ann_obs: number; sleeves: string[] };
 const days = Object.keys(j.series).sort();

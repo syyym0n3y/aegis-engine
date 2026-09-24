@@ -382,7 +382,7 @@ while true; do
   # D-855: the cycle regenerates docs/CATALOGUE.md, docs/SEARCH_SPACE.md and docs/OPERATOR_QUEUE.md every day; left
   # uncommitted they sit as tree noise until a session commits them, which is a prompt in disguise. Paths-restricted,
   # local only (never pushes), no-op when nothing changed.
-  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/TENFOLD.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
+  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/archive/TENFOLD.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
   sleep 86400
 done
 

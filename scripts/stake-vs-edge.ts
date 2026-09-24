@@ -6,7 +6,7 @@ const K = declareKnobs("stake-vs-edge", [
   { name: "W", def: "1000000" }, { name: "RF", def: "0.04" },
   { name: "BOOK_VOL", def: "0.034", note: "the honest book's realised vol (D-905/913)" },
   { name: "DD_UNLEV", def: "0.055", note: "the book's unlevered maxDD (D-912); leverage capped so L*DD <= 0.50 (D-897)" },
-  { name: "OUT", def: "docs/STAKE_VS_EDGE.md" },
+  { name: "OUT", def: "docs/archive/STAKE_VS_EDGE.md" },
 ]);
 const W = +K.W, RF = +K.RF, ln = Math.log;
 // achievable geometric growth at a given EXCESS Sharpe, using the leverage a -50% drawdown floor permits (not Kelly,
