@@ -49,9 +49,11 @@ echo
 if [ "$RED" -eq 0 ]; then echo "-- all $N guards green"; else echo "-- $RED of $N guards RED"; fi
 # D-854: a RED must reach the operator without a session. Keyless macOS notification + data/BOARD_RED.txt marker;
 # cleared on the first green board so a stale marker cannot cry wolf.
-# D-970: `$(dirname $0)/..` is CWD-RELATIVE when the script is invoked by a relative path (the runner does), which
-# broke the D-854 escalation exactly while a RED was up (audit 2026-09-23: guard-status.log ends "_notify.sh: No such
-# file"). cd-based absolute resolution cannot break from any cwd.
-NOTIFY="$(cd "$(dirname "$0")/.." && pwd)/infra/scripts/_notify.sh"
+# D-974: THIRD attempt at this line, and the first that cannot break. `$(dirname $0)/..` is CWD-relative (D-854's
+# original break); my D-970 "fix" re-resolved $0 a second time -- but line 13 has ALREADY cd'd to the repo root by
+# then, so the relative $0 pointed outside the tree and the cd failed, silently blanking NOTIFY again (found
+# 2026-10-04: guard-status.log carried "cd: ../scripts/..: No such file or directory" while 3 guards sat RED).
+# Line 13 established the repo root as the CWD; $PWD IS that root. No second resolution, nothing left to break.
+NOTIFY="$PWD/infra/scripts/_notify.sh"
 if [ "$RED" -gt 0 ]; then "$NOTIFY" "AEGIS BOARD RED" "$RED of $N guards RED:$REDS"; else "$NOTIFY" --clear; fi
 [ "$RED" -gt 0 ] && exit 1 || exit 0

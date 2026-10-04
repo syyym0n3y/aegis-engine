@@ -22482,3 +22482,30 @@ connectivity failure can never render as a healthy empty system.
 ACTS-ON: gate — the board's authority is now explicitly non-transferable off-node, and any remote session's claims
 about live state are bounded by a timestamped artefact rather than by memory.
 GOLD: structural — the engine becomes readable from anywhere without becoming reachable from anywhere.
+
+## D-974 (2026-10-04) THE OPERATOR'S MACHINE WAS THE BOTTLENECK — an 11GB model on a 16GB iMac, and my own escalation fix broken a second way
+
+Operator returned after ten days: the iMac slows the longer it runs and keeps needing reboots. Diagnosed to a number
+rather than a feeling. **16GB iMac M4: memory free 7%, swap 6.45GB of 7.17GB consumed, 57,477 pageouts** — a
+thrashing machine, which is exactly the "degrades with uptime, recovers on reboot" signature. Cause, traced end to
+end: `io.revitalise.sovereign.decodecron` fires **every 3 hours** (StartInterval 10800) and loads
+`llama3.2-vision:11b` — **11GB resident on a 16GB machine** — with `OLLAMA_KEEP_ALIVE=5m` holding it after the job
+ends. Against a 4GiB colima VM (11 containers using ~1.65GB inside it) and ~3.4GB wired macOS, demand exceeded
+16GB and the kernel swapped. Unloading the model MEASURED the claim: **free 7% -> 81%**.
+Applied: `OLLAMA_KEEP_ALIVE` 5m -> 60s (pure tuning, no capability change — the model is held only while in use).
+Recommended to the operator, not imposed because it is a quality call the content vertical owns: the decode script
+already documents `VMODEL=moondream` (1.7GB) and `qwen2.5vl:3b` (3.2GB) as supported swaps for the 11GB default.
+**AND THE SAME CLASS BIT ME TWICE.** D-970 "fixed" the D-854 notify path by re-resolving `$0` a second time — but
+`guard-status.sh` line 13 has ALREADY cd'd to the repo root by then, so the relative `$0` pointed outside the tree,
+the cd failed, and NOTIFY silently blanked again. Found in the log: `cd: ../scripts/..: No such file or directory`
+**while 3 guards sat RED**. The escalation chain was dead for the entire ten days the operator was away. Fixed with
+no second resolution at all (`NOTIFY="$PWD/infra/scripts/_notify.sh"` — line 13 already established the root) and
+verified from the runner's exact invocation context, which is the step both previous attempts skipped.
+Also: the three daemons parked in D-970 were **running again** — `launchctl unload` does not survive a reboot and
+the plists reload from `~/Library/LaunchAgents` at login. Parking made persistent by moving the plists to
+`~/Library/LaunchAgents/parked/` (launchd does not scan subdirectories). Unrelated-but-checked: the 41 historical
+`micro-hourly sheet FAILED` entries stopped 2026-09-28 and the sheet has run cleanly hourly since.
+ACTS-ON: gate — the board can reach the operator again (verified, not assumed), and the parked daemons stay parked
+across reboots.
+GOLD: reliability — the engine's host was measured as the binding constraint for the first time, and a fix that had
+been declared twice was finally verified in the context that actually runs it.
