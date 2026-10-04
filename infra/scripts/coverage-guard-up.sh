@@ -372,6 +372,8 @@ while true; do
   deno run --allow-read --allow-env --allow-write ../scripts/tenfold-arithmetic.ts > ../data/tenfold.log 2>&1 || echo "$(date -u +%FT%TZ) TENFOLD TABLE FAILED"
   # D-854: read the error stream the board never read (the D-853 class), then write the operator's one page LAST so it reflects this cycle
   deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/log-triage-guard.ts > ../data/log-triage.log 2>&1 || echo "$(date -u +%FT%TZ) LOG TRIAGE RED — new error class(es); see data/log-triage.log"
+  # D-975: the host is a guarded subject too — an engine that costs the operator their machine is not free.
+  deno run --allow-env --allow-read --allow-run ../scripts/host-budget-guard.ts > ../data/host-budget.log 2>&1 || echo "$(date -u +%FT%TZ) HOST BUDGET RED — the machine is starved or paging; see data/host-budget.log"
   deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/operator-queue.ts > ../data/operator-queue.log 2>&1 || echo "$(date -u +%FT%TZ) OPERATOR QUEUE FAILED"
   deno run --allow-net --allow-env --allow-read --allow-run --allow-write ../scripts/guard-selftest-all.ts > ../data/guard-selftest-all.log 2>&1 || echo "$(date -u +%FT%TZ) META-GUARD RED — a guard cannot be shown able to refuse; see data/guard-selftest-all.log"
   deno run --allow-net --allow-env ../scripts/prereg-ceiling.ts > ../data/prereg-ceiling.log 2>&1 || echo "$(date -u +%FT%TZ) PREREG CEILING REPORT FAILED"

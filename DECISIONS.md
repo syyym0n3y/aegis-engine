@@ -22509,3 +22509,37 @@ ACTS-ON: gate — the board can reach the operator again (verified, not assumed)
 across reboots.
 GOLD: reliability — the engine's host was measured as the binding constraint for the first time, and a fix that had
 been declared twice was finally verified in the context that actually runs it.
+
+## D-975 (2026-10-04) THE 33rd GUARD WATCHES THE MACHINE — and the model swap the operator asked for was REFUSED on the record's own evidence
+
+Operator: swap the decode cron to qwen2.5vl:3b, trim colima to 3GB, and make future infra support rather than
+distract from everyday life. Two of three done as asked; the model swap was REFUSED, and the refusal is the finding.
+**THE SWAP WAS ALREADY TESTED AND REJECTED.** `cc-decode-winner-images-sovereign` carries a dated verdict
+(2026-09-19, "verified"): llama3.2-vision:11b classifies roles accurately; **qwen2.5vl:3b "fits @ 100% GPU but
+collapses EVERY role to 'establishing' — useless mix"**; qwen2.5vl:7b thrashes at 14GB; moondream "lies". Swapping
+would have silently destroyed decode quality while appearing to work. Live evidence agreed during this session —
+the running decode produced varied, sane mixes (establishing 50% / map 38%; map 56% / data_chart 28% / establishing
+14%), which is exactly what the rejected model cannot do.
+**THE REAL BUG WAS THE THRASH-GUARD, NOT THE MODEL.** The cron already had a preflight; it skipped only when swap
+free fell below 700M. Measured at the moment of the incident: **719M free — it passed by 19MB**, then loaded 11GB
+into a machine with 7% memory left. Worse, its `except` returned **True** — a detector that could not read the
+machine green-lit the load (fail-open, the class this programme condemns). Hardened: gate on real memory-free
+(>=35%), on swap USED as a fraction (<50%), swap-free floor raised 700M -> 2000M, the `memory_pressure` path
+corrected (/usr/bin, not /usr/sbin — the wrong path would have thrown and, under the old code, passed), and the
+exception now fails CLOSED (skip; the cron retries in 3h).
+**THE 33rd GUARD.** All 32 guards were green through two weeks of a degrading host, because every one inspects the
+WORK and none inspected the WORKSTATION. `host-budget-guard.ts` reds on sustained memory starvation or active
+paging and NAMES the largest resident process so the alarm is actionable. Swap alone never reds — macOS leaves the
+file populated long after recovery, and a guard that stays red after the problem is over trains the operator to
+ignore it; swap counts only while memory is also below comfort. Self-tested in three directions, thresholds
+registered in `trd_gate_thresholds` (D-975) with their reasoning, wired into both the board and the daily runner
+(the registry guard caught that it was unwired — a guard nothing runs is documentation).
+Also applied: colima 4GiB -> 3GiB (11 containers measured at 889MiB inside it; all 11 restarted and every endpoint
+verified 200), OLLAMA_KEEP_ALIVE 5m -> 60s, the in-flight decode stopped to return the machine to the operator
+(idempotent — it skips already-decoded winners next cycle). **Measured outcome: memory free 7% -> 48%, swap file
+shrunk 7.17GB -> 4.10GB.** The host-budget doctrine is now in the global operating file so it binds every future
+project on this machine.
+ACTS-ON: gate — the board now fails when the operator's machine is degraded, and the heavy job that degraded it
+cannot start without live headroom.
+GOLD: reliability — the first guard whose subject is the human's ability to use their own computer, and a requested
+change correctly refused because the record already held the measurement that falsified it.
