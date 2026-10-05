@@ -1,6 +1,6 @@
 # LIVE STATE — snapshot of the owned node
 
-> Written by `state-export.ts` at **2026-10-04T13:50:28.698Z**. This is a SNAPSHOT, not a live view:
+> Written by `state-export.ts` at **2026-10-05T15:54:01.478Z**. This is a SNAPSHOT, not a live view:
 > a session reading it off git (cloud, another device) must treat every number as "as of" that timestamp.
 > The node itself is never exposed — the repo is the only bridge.
 
@@ -13,40 +13,40 @@
 
 | clock | started | last mark |
 |---|---|---|
-| fwd-book-p2-paper | 2026-08-24 | 2026-10-04 |
-| fwd-canonical-premia-blend | 2026-09-15 | 2026-10-04 |
-| fwd-cef-discount | 2026-09-01 | 2026-10-04 |
-| fwd-crypto-lit5 | 2026-08-24 | 2026-10-04 |
-| fwd-despac-underperf | 2026-08-31 | 2026-10-04 |
-| fwd-despac-underperf-v2 | 2026-09-02 | 2026-10-04 |
-| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | 2026-10-04 |
-| fwd-distress-blend-combined | 2026-09-16 | 2026-10-04 |
-| fwd-distress-ivol-blend-5 | 2026-09-16 | 2026-10-04 |
-| fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | 2026-10-04 |
-| fwd-etf-trend-timing | 2026-09-13 | 2026-10-04 |
-| fwd-fourfactor-blend-gcshort | 2026-09-16 | 2026-10-04 |
-| fwd-ftd-persistence-short | 2026-08-26 | 2026-10-04 |
-| fwd-goingconcern-distress | 2026-09-15 | 2026-10-04 |
-| fwd-gold-rangeext-cont-k24 | 2026-09-13 | 2026-10-04 |
-| fwd-hedging-pressure-flip | 2026-08-26 | 2026-10-04 |
-| fwd-isa-crypto-parity | 2026-09-13 | 2026-10-04 |
-| fwd-latefiling-distress | 2026-09-16 | 2026-10-04 |
-| fwd-nt-late-avoid | 2026-09-02 | 2026-10-04 |
-| fwd-onchain-fee-momentum | 2026-09-15 | 2026-10-04 |
-| fwd-payout-8 | 2026-08-22 | 2026-10-04 |
-| fwd-persist-real-K24 | 2026-09-03 | 2026-10-04 |
-| fwd-placeable-psl-fade-k24 | 2026-09-08 | 2026-10-04 |
-| fwd-prop-ftmo100k-utc16-0p5x-v1 | 2026-09-06 | 2026-10-04 |
-| fwd-psl-fade | 2026-09-03 | 2026-10-04 |
-| fwd-residual-follow | 2026-08-24 | 2026-10-04 |
-| fwd-spinoff-premium | 2026-08-31 | 2026-10-04 |
-| fwd-three-factor-blend | 2026-09-15 | 2026-10-04 |
-| fwd-trend-long-parity | 2026-09-13 | 2026-10-04 |
-| fwd-tsmom-110 | 2026-09-13 | 2026-10-04 |
-| fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | 2026-10-04 |
-| fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | 2026-10-04 |
-| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | 2026-10-04 |
-| fwd-xmr-asia-rangefade | 2026-09-15 | 2026-10-04 |
+| fwd-book-p2-paper | 2026-08-24 | 2026-10-05 |
+| fwd-canonical-premia-blend | 2026-09-15 | 2026-10-05 |
+| fwd-cef-discount | 2026-09-01 | 2026-10-05 |
+| fwd-crypto-lit5 | 2026-08-24 | 2026-10-05 |
+| fwd-despac-underperf | 2026-08-31 | 2026-10-05 |
+| fwd-despac-underperf-v2 | 2026-09-02 | 2026-10-05 |
+| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | 2026-10-05 |
+| fwd-distress-blend-combined | 2026-09-16 | 2026-10-05 |
+| fwd-distress-ivol-blend-5 | 2026-09-16 | 2026-10-05 |
+| fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | 2026-10-05 |
+| fwd-etf-trend-timing | 2026-09-13 | 2026-10-05 |
+| fwd-fourfactor-blend-gcshort | 2026-09-16 | 2026-10-05 |
+| fwd-ftd-persistence-short | 2026-08-26 | 2026-10-05 |
+| fwd-goingconcern-distress | 2026-09-15 | 2026-10-05 |
+| fwd-gold-rangeext-cont-k24 | 2026-09-13 | 2026-10-05 |
+| fwd-hedging-pressure-flip | 2026-08-26 | 2026-10-05 |
+| fwd-isa-crypto-parity | 2026-09-13 | 2026-10-05 |
+| fwd-latefiling-distress | 2026-09-16 | 2026-10-05 |
+| fwd-nt-late-avoid | 2026-09-02 | 2026-10-05 |
+| fwd-onchain-fee-momentum | 2026-09-15 | 2026-10-05 |
+| fwd-payout-8 | 2026-08-22 | 2026-10-05 |
+| fwd-persist-real-K24 | 2026-09-03 | 2026-10-05 |
+| fwd-placeable-psl-fade-k24 | 2026-09-08 | 2026-10-05 |
+| fwd-prop-ftmo100k-utc16-0p5x-v1 | 2026-09-06 | 2026-10-05 |
+| fwd-psl-fade | 2026-09-03 | 2026-10-05 |
+| fwd-residual-follow | 2026-08-24 | 2026-10-05 |
+| fwd-spinoff-premium | 2026-08-31 | 2026-10-05 |
+| fwd-three-factor-blend | 2026-09-15 | 2026-10-05 |
+| fwd-trend-long-parity | 2026-09-13 | 2026-10-05 |
+| fwd-tsmom-110 | 2026-09-13 | 2026-10-05 |
+| fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | 2026-10-05 |
+| fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | 2026-10-05 |
+| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | 2026-10-05 |
+| fwd-xmr-asia-rangefade | 2026-09-15 | 2026-10-05 |
 
 ## Pre-registrations (most recent 40)
 
@@ -113,7 +113,7 @@
 
 ## Guard board (last local run)
 
-`-- 3 of 32 guards RED`
+`-- 2 of 33 guards RED`
 
 > The 32-guard board reads the owned node directly and therefore CANNOT run off-machine. Any session
 > without node access must not claim a green board — it can only quote this line and its timestamp.
