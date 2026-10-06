@@ -1,0 +1,47 @@
+# market-context.yml (D-977) — THE CLOUD REGIME TAPE.
+#
+# WHY IT LIVES ON `main`: scheduled workflows only fire from the repository's DEFAULT branch. The engine source is on
+# `engine-source` (unrelated history to this branch, which is the web cockpit), so this file sits here and checks the
+# engine out explicitly. It touches nothing else on main.
+#
+# WHY IT EXISTS: the owned node computes a richer regime tape, but it only runs while the operator's machine is awake
+# — and that machine sleeps and reboots, leaving holes over exactly the periods a maturing forward clock needs
+# explaining. This keeps the tape unbroken. KEYLESS by construction: public Yahoo endpoints, no secrets, no database.
+name: market-context
+on:
+  schedule:
+    - cron: '30 21 * * 1-5'   # weekdays ~after the US close
+    - cron: '0 12 * * 0,6'    # weekends, so the tape has no holiday/weekend holes either
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: market-context
+  cancel-in-progress: false
+jobs:
+  tape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: check out the engine source
+        uses: actions/checkout@v4
+        with:
+          ref: engine-source
+          fetch-depth: 1
+      - name: install deno (official script — no third-party action to drift)
+        run: |
+          curl -fsSL https://deno.land/install.sh | DENO_INSTALL="$HOME/.deno" sh -s -- -y
+          echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
+      - name: compute the regime tape (keyless, no database)
+        run: deno run --allow-net --allow-read --allow-write scripts/market-context-cloud.ts
+      - name: commit the tape back to engine-source
+        run: |
+          git config user.name  "aegis-cloud"
+          git config user.email "cloud@aegis.local"
+          git add docs/MARKET_CONTEXT.md docs/market-context-cloud.json
+          if git diff --cached --quiet; then
+            echo "tape unchanged — nothing to commit"
+          else
+            git commit -m "ctx(cloud): regime tape $(date -u +%F) [skip ci]"
+            git push origin HEAD:engine-source
+          fi
