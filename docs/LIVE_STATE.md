@@ -1,6 +1,6 @@
 # LIVE STATE — snapshot of the owned node
 
-> Written by `state-export.ts` at **2026-10-06T17:43:44.160Z**. This is a SNAPSHOT, not a live view:
+> Written by `state-export.ts` at **2026-10-06T17:50:07.458Z**. This is a SNAPSHOT, not a live view:
 > a session reading it off git (cloud, another device) must treat every number as "as of" that timestamp.
 > The node itself is never exposed — the repo is the only bridge.
 
@@ -110,6 +110,20 @@
 | real-fills | structural | nobody |
 | delisted-price-history | unfetched | operator |
 | binance-vision-archive | unfetched | operator |
+
+## Market context (regime the clocks are running through)
+
+| series | latest | as of |
+|---|---|---|
+| spy_vs200_pct | 8.6231 | 2026-10-06 |
+| spy_rvol20_pct | 10.3471 | 2026-10-06 |
+| spy_dd1y_pct | 0 | 2026-10-06 |
+| breadth_above50_pct | 22.069 | 2026-10-05 |
+| btc_vs200_pct | 19.441 | 2026-10-06 |
+| btc_rvol20_pct | 33.5137 | 2026-10-06 |
+
+> Breadth is a bounded liquid sample, not the full universe; all series are daily-close resolution.
+
 
 ## Guard board (last local run)
 

@@ -22543,3 +22543,38 @@ ACTS-ON: gate — the board now fails when the operator's machine is degraded, a
 cannot start without live headroom.
 GOLD: reliability — the first guard whose subject is the human's ability to use their own computer, and a requested
 change correctly refused because the record already held the measurement that falsified it.
+
+## D-976/977/978 (2026-10-06) THE REGIME TAPE — clocks gain market context retroactively, a keyless cloud runner keeps it unbroken, and a register that cried wolf is repointed
+
+Operator: run it all on the cloud with no gaps, stock data live and keyless, and the forward clocks must have market
+context at all times. Taken in three parts, with one honest refusal.
+**D-976 — CONTEXT, AND IT REACHES BACKWARD.** Every clock recorded a number and none recorded WHAT THE MARKET WAS
+DOING, which makes a forward Sharpe uninterpretable given D-944/945 (the sleeves are regime-SPECIALISED and 2021 was
+pathological). Rather than stamping notes (which would help only future marks and would need every one of several
+mark-writers changed), `market-context.ts` computes a daily regime TIME SERIES any clock joins BY DATE — so the
+marks already on record gain context too. Written as `ctx_*` scalars into trd_macro_series, the table whose shape
+(series,d,v) is exactly this, so NO schema change. **24,430 rows across 7 series backfilled.** Today reads:
+SPY +8.6% vs its 200d at 10.3% realized vol and 0% drawdown, **while only 22% of a 400-name liquid sample is above
+its 50d** — a narrow market, precisely the context a maturing clock needs. Breadth is labelled a SAMPLE, not the
+19.5k universe, in the output itself.
+**D-977 — THE CLOUD GAP-FILLER, AND THE HONEST LIMIT ON "ALL OF IT".** The engine cannot move to the cloud free:
+the owned database is **10GB** (short-volume 2.5GB, FTD 1.4GB, fundamentals 1.2GB) against free Postgres tiers of
+0.5-1GB, and the paid path needs a payment method the operator has not linked (D-967 made free-first binding).
+Stated rather than fudged. What CAN run free: aegis-engine is PUBLIC, so GitHub Actions minutes are unlimited.
+`market-context-cloud.ts` computes the same regime shape from KEYLESS public Yahoo endpoints with **no database, no
+secrets, no local state**, and `.github/workflows/market-context.yml` runs it on a schedule — committed to `main`
+because scheduled workflows only fire from the DEFAULT branch, checking out `engine-source` for the script and
+committing the tape back there. The tape therefore has no holes while the operator's machine sleeps, which is the
+gap that actually mattered. Local stays authoritative (full-universe breadth); the cloud copy is labelled a
+gap-filler in its own output.
+**D-978 — A REGISTER THAT CRIED WOLF.** gap-register went RED on `edgar-fulltext` ("FILLED but stale: 47d"). The
+scare was real-looking and false: it validated against `trd_raw_filings`, which the LIVE path no longer writes —
+going-concern/late-filing hit efts.sec.gov daily and dump JSON, and the **DEPLOYED sleeve was perfectly current**
+(events through 2026-10-05, refreshed 06:21 today). Repointed at the path the edge actually reads; the file-backing
+check now also accepts a bare array and falls back to file mtime when no stamp exists. Verified: 3,764 rows, 1d old.
+Data freshness confirmed live and keyless throughout: SPY bars to today across 19,531 symbols, FX/index hourly to
+16:00 today, CBOE options surface to today, 15,252 macro series.
+ACTS-ON: clock — all 34 forward clocks can now be read against the regime they ran through, retroactively, and the
+regime series continues accruing when the host is off.
+GOLD: structural — the record gains the one axis it was missing, and gains it in a way that survives the operator's
+machine being asleep.

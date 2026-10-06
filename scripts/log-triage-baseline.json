@@ -1,10 +1,11 @@
 {
   "classes": {
-    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 6,
+    "infra/data/micro-hourly.log|MICRO HOURLY: fx LIVE refresh FAILED (see data/micro-fx-live.log)": 7,
     "infra/data/micro-hourly.log|MICRO HOURLY: fx refresh FAILED": 15,
     "infra/data/micro-hourly.log|MICRO HOURLY: perp Nh refresh FAILED": 1,
-    "infra/data/micro-hourly.log|MICRO HOURLY: sheet FAILED": 41
+    "infra/data/micro-hourly.log|MICRO HOURLY: sheet FAILED": 41,
+    "postgres|function array_upper(jsonb, integer) does not exist at character N": 2
   },
-  "set": "2026-10-04T16:13:46.880Z",
+  "set": "2026-10-06T17:54:28.137Z",
   "note": "D-854: every class here was READ and either fixed (it will age out) or waived with a reason in DECISIONS.md"
 }

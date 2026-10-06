@@ -1,0 +1,31 @@
+{
+ "written": "2026-10-06T17:52:41.474Z",
+ "source": "yahoo chart api (keyless, public)",
+ "breadth_sample": 30,
+ "note": "CLOUD gap-filler: no database, no secrets. The owned node's market-context.ts is authoritative and uses full-universe breadth; this keeps the tape unbroken while that machine is off.",
+ "asOf": {
+  "spy": "2026-10-06",
+  "btc": "2026-10-06",
+  "qqq": "2026-10-06",
+  "vix": "2026-10-06"
+ },
+ "ctx": {
+  "spy_vs200_pct": 8.1228,
+  "spy_rvol20_pct": 10.35,
+  "spy_dd1y_pct": 0,
+  "spy_last": 780.1,
+  "btc_vs200_pct": 19.5395,
+  "btc_rvol20_pct": 33.5077,
+  "btc_dd1y_pct": -3.9542,
+  "btc_last": 85658.0313,
+  "qqq_vs200_pct": 13.5912,
+  "qqq_rvol20_pct": 15.4866,
+  "qqq_dd1y_pct": 0,
+  "qqq_last": 761.2093,
+  "vix_vs200_pct": -16.3414,
+  "vix_rvol20_pct": 95.3726,
+  "vix_dd1y_pct": -51.3688,
+  "vix_last": 15.1,
+  "breadth_above50_pct": 40
+ }
+}

@@ -47,6 +47,15 @@ L.push(`\n## Gap register\n`);
 L.push(`| gap | status | actionable by |`); L.push(`|---|---|---|`);
 for (const g of gaps) L.push(`| ${g.id} | ${g.status} | ${g.actionable_by} |`);
 
+// 4b. MARKET CONTEXT (D-976) — the regime every clock is running through, so a remote reader interprets a
+// forward Sharpe in its environment rather than in a vacuum.
+const CTX = ["ctx_spy_vs200_pct", "ctx_spy_rvol20_pct", "ctx_spy_dd1y_pct", "ctx_breadth_above50_pct", "ctx_btc_vs200_pct", "ctx_btc_rvol20_pct"];
+L.push(`\n## Market context (regime the clocks are running through)\n`);
+L.push(`| series | latest | as of |`); L.push(`|---|---|---|`);
+for (const s of CTX) { const r = await q(`trd_macro_series?series=eq.${s}&select=d,v&order=d.desc&limit=1`) as { d: string; v: number }[];
+  if (r.length) L.push(`| ${s.replace("ctx_", "")} | ${r[0].v} | ${r[0].d} |`); }
+L.push(`\n> Breadth is a bounded liquid sample, not the full universe; all series are daily-close resolution.\n`);
+
 // 5. the board, from the runner's own log (the guard board cannot run off-node)
 let board = "unknown — no guard-status.log found";
 try { const log = await Deno.readTextFile(`${REPO}data/guard-status.log`); const line = log.trim().split("\n").reverse().find((l) => /guards (green|RED)/.test(l)); if (line) board = line.trim(); } catch { /* absent */ }

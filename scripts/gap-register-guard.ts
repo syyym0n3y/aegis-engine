@@ -52,7 +52,7 @@ const BACKING: Record<string, [string, string]> = {
   // D-650: added when the guard correctly REDded a gap I had marked filled without wiring it. Marking a gap closed
   // and not making the closure checkable is the same failure as the gap itself — an assertion where a measurement
   // belongs. The staleness budget here is generous because EDGAR full-text is a one-off historical crawl, not a feed.
-  "edgar-fulltext": ["trd_raw_filings?source=eq.edgar&filing_type=like.*going-concern*&select=disclosed_date&order=disclosed_date.desc&limit=1", "disclosed_date"],
+
   // D-966: the blockchair half is a LIVE DAILY FEED (bc_* series via daily-up.sh) — table-backed so staleness is
   // caught; the coingecko half is the snapshot file data/coingecko-ref.json, noted in the row's blocker text.
   "coingecko-blockchair": ["trd_macro_series?series=like.bc_*&select=d&order=d.desc&limit=1", "d"],
@@ -62,6 +62,11 @@ const BACKING: Record<string, [string, string]> = {
 // rows, and its own `pulled` stamp must be within budget — generous, because an archive snapshot is not a feed.
 const FILE_BACKING: Record<string, { path: string; minRows: number; maxAgeD: number }> = {
   "sp500-announcement-dates": { path: "data/sp500-announcements.json", minRows: 20, maxAgeD: 365 },
+  // D-978: edgar-fulltext was validated against trd_raw_filings, which the LIVE path no longer writes — the
+  // going-concern/late-filing ingests hit efts.sec.gov daily and dump JSON. The table went 47 days stale while the
+  // DEPLOYED sleeve was perfectly current (events through 2026-10-05), so the register was reporting a data
+  // emergency that did not exist. Validate the path the edge actually reads.
+  "edgar-fulltext": { path: "data/d930-gc-events.json", minRows: 50, maxAgeD: 7 },
 };
 // A status of "retracted" means the gap was investigated and found not to be one — distinct from "filled", which
 // means it was real and closed. binance-live-universe is the first: the 150 absent contracts turned out to be
@@ -78,9 +83,13 @@ for (const g of [...gaps, ...SYNTH]) {
     const fb = FILE_BACKING[g.id];
     if (fb) {
       try {
-        const j = JSON.parse(await Deno.readTextFile(new URL(`../${fb.path}`, import.meta.url).pathname)) as { pulled?: string; rows?: unknown[] };
-        const n = Array.isArray(j.rows) ? j.rows.length : 0;
-        const ageD = j.pulled ? (Date.now() - Date.parse(j.pulled)) / 86400000 : Infinity;
+        const fp = new URL(`../${fb.path}`, import.meta.url).pathname;
+        const j = JSON.parse(await Deno.readTextFile(fp)) as { pulled?: string; rows?: unknown[] } | unknown[];
+        // accept either {pulled, rows:[...]} or a bare array; when no `pulled` stamp exists, the file's own mtime
+        // is the honest freshness signal (a dump rewritten daily by the runner).
+        const n = Array.isArray(j) ? j.length : (Array.isArray(j.rows) ? j.rows.length : 0);
+        const stamp = !Array.isArray(j) && j.pulled ? Date.parse(j.pulled) : (await Deno.stat(fp)).mtime?.getTime() ?? 0;
+        const ageD = stamp ? (Date.now() - stamp) / 86400000 : Infinity;
         if (n < fb.minRows) { red++; console.log(`  RED  ${g.id.padEnd(22)} FILLED but backing file has ${n} rows (< ${fb.minRows})`); }
         else if (ageD > fb.maxAgeD) { red++; console.log(`  RED  ${g.id.padEnd(22)} FILLED but backing snapshot is ${ageD.toFixed(0)}d old (> ${fb.maxAgeD})`); }
         else console.log(`  ok   ${g.id.padEnd(22)} file-backed: ${n} rows, ${ageD.toFixed(0)}d old`);
