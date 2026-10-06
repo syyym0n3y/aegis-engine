@@ -22544,7 +22544,7 @@ cannot start without live headroom.
 GOLD: reliability — the first guard whose subject is the human's ability to use their own computer, and a requested
 change correctly refused because the record already held the measurement that falsified it.
 
-## D-976/977/978 (2026-10-06) THE REGIME TAPE — clocks gain market context retroactively, a keyless cloud runner keeps it unbroken, and a register that cried wolf is repointed
+## D-976 (2026-10-06) THE REGIME TAPE — clocks gain market context, retroactively
 
 Operator: run it all on the cloud with no gaps, stock data live and keyless, and the forward clocks must have market
 context at all times. Taken in three parts, with one honest refusal.
@@ -22557,7 +22557,11 @@ marks already on record gain context too. Written as `ctx_*` scalars into trd_ma
 SPY +8.6% vs its 200d at 10.3% realized vol and 0% drawdown, **while only 22% of a 400-name liquid sample is above
 its 50d** — a narrow market, precisely the context a maturing clock needs. Breadth is labelled a SAMPLE, not the
 19.5k universe, in the output itself.
-**D-977 — THE CLOUD GAP-FILLER, AND THE HONEST LIMIT ON "ALL OF IT".** The engine cannot move to the cloud free:
+ACTS-ON: clock — all 34 forward clocks can now be read against the regime they ran through, retroactively.
+GOLD: structural — the record gains the one axis it was missing.
+
+## D-977 (2026-10-06) THE CLOUD GAP-FILLER, AND THE HONEST LIMIT ON "ALL OF IT"
+ The engine cannot move to the cloud free:
 the owned database is **10GB** (short-volume 2.5GB, FTD 1.4GB, fundamentals 1.2GB) against free Postgres tiers of
 0.5-1GB, and the paid path needs a payment method the operator has not linked (D-967 made free-first binding).
 Stated rather than fudged. What CAN run free: aegis-engine is PUBLIC, so GitHub Actions minutes are unlimited.
@@ -22567,7 +22571,11 @@ because scheduled workflows only fire from the DEFAULT branch, checking out `eng
 committing the tape back there. The tape therefore has no holes while the operator's machine sleeps, which is the
 gap that actually mattered. Local stays authoritative (full-universe breadth); the cloud copy is labelled a
 gap-filler in its own output.
-**D-978 — A REGISTER THAT CRIED WOLF.** gap-register went RED on `edgar-fulltext` ("FILLED but stale: 47d"). The
+ACTS-ON: gate — the regime series continues accruing when the host is off, by a keyless runner with no secrets.
+GOLD: structural — the honest boundary of "cloud" is drawn with numbers (10GB vs 0.5-1GB free tiers) rather than vibes.
+
+## D-978 (2026-10-06) A REGISTER THAT CRIED WOLF — repointed off a superseded table
+ gap-register went RED on `edgar-fulltext` ("FILLED but stale: 47d"). The
 scare was real-looking and false: it validated against `trd_raw_filings`, which the LIVE path no longer writes —
 going-concern/late-filing hit efts.sec.gov daily and dump JSON, and the **DEPLOYED sleeve was perfectly current**
 (events through 2026-10-05, refreshed 06:21 today). Repointed at the path the edge actually reads; the file-backing
@@ -22578,3 +22586,20 @@ ACTS-ON: clock — all 34 forward clocks can now be read against the regime they
 regime series continues accruing when the host is off.
 GOLD: structural — the record gains the one axis it was missing, and gains it in a way that survives the operator's
 machine being asleep.
+
+## D-979 (2026-10-06) THE CLOUD PATH IS BLOCKED BY AN ACCOUNT LOCK, NOT BY COST — verified by running it
+
+The D-977 workflow was not assumed to work; it was TRIGGERED (run 37507352271) and it failed in 3 seconds with:
+**"The job was not started because your account is locked due to a billing issue."** That is not a code fault and
+not a cost fault — aegis-engine is PUBLIC, so Actions minutes would be unlimited and free. The ACCOUNT is locked, so
+no job of any kind starts. The workflow is committed, correct and idle; it will run on its existing schedule the
+moment the lock clears, with no further change. Registered as `github-actions-billing-lock` (operator-actionable).
+This closes the honest shape of "run it all on the cloud": (1) the 10GB owned database exceeds every free Postgres
+tier, so the engine proper cannot move without spend the operator has not authorised; (2) the stateless keyless part
+CAN move and is built; (3) even that is gated on a GitHub account lock. Two of the three are the operator's to
+unlock, and both are now named with their exact evidence rather than described as "cloud readiness".
+Meanwhile the local tape is live and wired (D-976): the regime series accrues every daily cycle, and all 34 clocks
+can be read against it retroactively.
+ACTS-ON: gate — the cloud gap is a registered, evidenced blocker instead of an aspiration, and the thing that would
+fill it is already written and verified-by-failure rather than untested.
+GOLD: gap — a capability claim was tested to destruction before being reported as available.
