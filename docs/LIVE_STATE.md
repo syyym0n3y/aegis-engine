@@ -1,6 +1,6 @@
 # LIVE STATE — snapshot of the owned node
 
-> Written by `state-export.ts` at **2026-10-06T17:50:07.458Z**. This is a SNAPSHOT, not a live view:
+> Written by `state-export.ts` at **2026-10-06T19:00:49.040Z**. This is a SNAPSHOT, not a live view:
 > a session reading it off git (cloud, another device) must treat every number as "as of" that timestamp.
 > The node itself is never exposed — the repo is the only bridge.
 
@@ -98,12 +98,13 @@
 | gap | status | actionable by |
 |---|---|---|
 | trace-credit | blocked-credential | operator |
+| github-actions-billing-lock | blocked-credential | operator |
 | intraday-equities | blocked-paid | operator |
 | options-history | blocked-paid | operator |
 | borrow-rates | blocked-paid | operator |
-| yield-curve | filled | engine |
-| edgar-fulltext | filled | engine |
 | fred-macro | filled | operator |
+| edgar-fulltext | filled | engine |
+| yield-curve | filled | engine |
 | coingecko-blockchair | filled | engine |
 | sp500-announcement-dates | filled | operator |
 | binance-live-universe | retracted | engine |
@@ -127,7 +128,7 @@
 
 ## Guard board (last local run)
 
-`-- 2 of 33 guards RED`
+`-- all 33 guards green`
 
 > The 32-guard board reads the owned node directly and therefore CANNOT run off-machine. Any session
 > without node access must not claim a green board — it can only quote this line and its timestamp.

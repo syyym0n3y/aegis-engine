@@ -1,10 +1,9 @@
-# OPERATOR QUEUE — regenerated 2026-10-06T17:42Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-10-06T18:59Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — **2 RED** (33 guards, board logged 0.0h ago)
-- RED   gap-register   1 REGISTER FAILURE(S) — a gap marked filled is empty or
-- RED   daemon-drift   cost an hour this session (D-719/719b). The agent-output g
+## Board — all green (33 guards, board logged 0.0h ago)
+- nothing to fix. A red here that persists two cycles is the one time a session is worth starting; the guard's own output names the fix.
 
 ## Micro rung — live feed and sheet
 - hourly FX/index feed: **7/7 fresh within 3h** · sheet: **0 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
