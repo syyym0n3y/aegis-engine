@@ -1,6 +1,6 @@
 # LIVE STATE — snapshot of the owned node
 
-> Written by `state-export.ts` at **2026-10-09T01:38:07.969Z**. This is a SNAPSHOT, not a live view:
+> Written by `state-export.ts` at **2026-10-10T03:28:08.069Z**. This is a SNAPSHOT, not a live view:
 > a session reading it off git (cloud, another device) must treat every number as "as of" that timestamp.
 > The node itself is never exposed — the repo is the only bridge.
 
@@ -13,40 +13,40 @@
 
 | clock | started | last mark |
 |---|---|---|
-| fwd-book-p2-paper | 2026-08-24 | 2026-10-09 |
-| fwd-canonical-premia-blend | 2026-09-15 | 2026-10-09 |
-| fwd-cef-discount | 2026-09-01 | 2026-10-09 |
-| fwd-crypto-lit5 | 2026-08-24 | 2026-10-09 |
-| fwd-despac-underperf | 2026-08-31 | 2026-10-09 |
-| fwd-despac-underperf-v2 | 2026-09-02 | 2026-10-09 |
-| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | 2026-10-09 |
-| fwd-distress-blend-combined | 2026-09-16 | 2026-10-09 |
-| fwd-distress-ivol-blend-5 | 2026-09-16 | 2026-10-09 |
-| fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | 2026-10-09 |
-| fwd-etf-trend-timing | 2026-09-13 | 2026-10-09 |
-| fwd-fourfactor-blend-gcshort | 2026-09-16 | 2026-10-09 |
-| fwd-ftd-persistence-short | 2026-08-26 | 2026-10-09 |
-| fwd-goingconcern-distress | 2026-09-15 | 2026-10-09 |
-| fwd-gold-rangeext-cont-k24 | 2026-09-13 | 2026-10-09 |
-| fwd-hedging-pressure-flip | 2026-08-26 | 2026-10-09 |
-| fwd-isa-crypto-parity | 2026-09-13 | 2026-10-09 |
-| fwd-latefiling-distress | 2026-09-16 | 2026-10-09 |
-| fwd-nt-late-avoid | 2026-09-02 | 2026-10-09 |
-| fwd-onchain-fee-momentum | 2026-09-15 | 2026-10-09 |
-| fwd-payout-8 | 2026-08-22 | 2026-10-09 |
-| fwd-persist-real-K24 | 2026-09-03 | 2026-10-09 |
-| fwd-placeable-psl-fade-k24 | 2026-09-08 | 2026-10-09 |
-| fwd-prop-ftmo100k-utc16-0p5x-v1 | 2026-09-06 | 2026-10-09 |
-| fwd-psl-fade | 2026-09-03 | 2026-10-09 |
-| fwd-residual-follow | 2026-08-24 | 2026-10-09 |
-| fwd-spinoff-premium | 2026-08-31 | 2026-10-09 |
-| fwd-three-factor-blend | 2026-09-15 | 2026-10-09 |
-| fwd-trend-long-parity | 2026-09-13 | 2026-10-09 |
-| fwd-tsmom-110 | 2026-09-13 | 2026-10-09 |
-| fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | 2026-10-09 |
-| fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | 2026-10-09 |
-| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | 2026-10-09 |
-| fwd-xmr-asia-rangefade | 2026-09-15 | 2026-10-09 |
+| fwd-book-p2-paper | 2026-08-24 | 2026-10-10 |
+| fwd-canonical-premia-blend | 2026-09-15 | 2026-10-10 |
+| fwd-cef-discount | 2026-09-01 | 2026-10-10 |
+| fwd-crypto-lit5 | 2026-08-24 | 2026-10-10 |
+| fwd-despac-underperf | 2026-08-31 | 2026-10-10 |
+| fwd-despac-underperf-v2 | 2026-09-02 | 2026-10-10 |
+| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | 2026-10-10 |
+| fwd-distress-blend-combined | 2026-09-16 | 2026-10-10 |
+| fwd-distress-ivol-blend-5 | 2026-09-16 | 2026-10-10 |
+| fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | 2026-10-10 |
+| fwd-etf-trend-timing | 2026-09-13 | 2026-10-10 |
+| fwd-fourfactor-blend-gcshort | 2026-09-16 | 2026-10-10 |
+| fwd-ftd-persistence-short | 2026-08-26 | 2026-10-10 |
+| fwd-goingconcern-distress | 2026-09-15 | 2026-10-10 |
+| fwd-gold-rangeext-cont-k24 | 2026-09-13 | 2026-10-10 |
+| fwd-hedging-pressure-flip | 2026-08-26 | 2026-10-10 |
+| fwd-isa-crypto-parity | 2026-09-13 | 2026-10-10 |
+| fwd-latefiling-distress | 2026-09-16 | 2026-10-10 |
+| fwd-nt-late-avoid | 2026-09-02 | 2026-10-10 |
+| fwd-onchain-fee-momentum | 2026-09-15 | 2026-10-10 |
+| fwd-payout-8 | 2026-08-22 | 2026-10-10 |
+| fwd-persist-real-K24 | 2026-09-03 | 2026-10-10 |
+| fwd-placeable-psl-fade-k24 | 2026-09-08 | 2026-10-10 |
+| fwd-prop-ftmo100k-utc16-0p5x-v1 | 2026-09-06 | 2026-10-10 |
+| fwd-psl-fade | 2026-09-03 | 2026-10-10 |
+| fwd-residual-follow | 2026-08-24 | 2026-10-10 |
+| fwd-spinoff-premium | 2026-08-31 | 2026-10-10 |
+| fwd-three-factor-blend | 2026-09-15 | 2026-10-10 |
+| fwd-trend-long-parity | 2026-09-13 | 2026-10-10 |
+| fwd-tsmom-110 | 2026-09-13 | 2026-10-10 |
+| fwd-utc01-sweepPDL-reclaim-long-K6-panel17 | 2026-09-04 | 2026-10-10 |
+| fwd-utc09to10-belowPDL-long-K6-panel17 | 2026-09-04 | 2026-10-10 |
+| fwd-utc16-abovePDH-long-K6-panel17 | 2026-09-04 | 2026-10-10 |
+| fwd-xmr-asia-rangefade | 2026-09-15 | 2026-10-10 |
 
 ## Pre-registrations (most recent 40)
 
@@ -116,12 +116,12 @@
 
 | series | latest | as of |
 |---|---|---|
-| spy_vs200_pct | 8.1471 | 2026-10-07 |
-| spy_rvol20_pct | 10.1559 | 2026-10-07 |
-| spy_dd1y_pct | -0.24 | 2026-10-07 |
-| breadth_above50_pct | 22.069 | 2026-10-05 |
-| btc_vs200_pct | 16.0493 | 2026-10-07 |
-| btc_rvol20_pct | 34.8848 | 2026-10-07 |
+| spy_vs200_pct | 7.6154 | 2026-10-08 |
+| spy_rvol20_pct | 10.0426 | 2026-10-08 |
+| spy_dd1y_pct | -0.6623 | 2026-10-08 |
+| breadth_above50_pct | 26.0274 | 2026-10-07 |
+| btc_vs200_pct | 13.8995 | 2026-10-09 |
+| btc_rvol20_pct | 29.0396 | 2026-10-09 |
 
 > Breadth is a bounded liquid sample, not the full universe; all series are daily-close resolution.
 
