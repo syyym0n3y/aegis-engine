@@ -1,11 +1,9 @@
-# OPERATOR QUEUE — regenerated 2026-10-14T12:05Z (D-854)
+# OPERATOR QUEUE — regenerated 2026-10-14T22:20Z (D-854)
 
 > The one page to read. Everything a session could move on its own has been moved; what is listed under **Yours** cannot be done by Claude (accounts, deposits, fills, a support ticket) and is the whole of what stands between this record and its first real fill. Regenerated at the end of every daily cycle by `scripts/operator-queue.ts`.
 
-## Board — **3 RED** (33 guards, board logged 0.0h ago)
-- RED   gap-register   1 REGISTER FAILURE(S) — a gap marked filled is empty or
-- RED   agent-output   1 PROBLEM(S) IN LIVE AGENT OUTPUT. A guard on the ledger d
-- RED   host-budget    HOST BUDGET RED — the engine's host is degraded. An engi
+## Board — all green (33 guards, board logged 0.0h ago)
+- nothing to fix. A red here that persists two cycles is the one time a session is worth starting; the guard's own output names the fix.
 
 ## Micro rung — live feed and sheet
 - hourly FX/index feed: **7/7 fresh within 3h** · sheet: **0 candidate(s); 0 instrument(s) STALE; 12 instruments live** · manual fills recorded: **0** · kill-switch rows: 2
@@ -24,18 +22,18 @@
 | fwd-book-p2-paper | 2026-08-24 | not yet computable | 1 | only 1 marks; rule requires 30 |
 | fwd-canonical-premia-blend | 2026-09-15 | not yet computable | - | elapsed 29d of 365d horizon (Score after >=250 fresh trading days (data past 2026-09-15) ) |
 | fwd-cef-discount | 2026-09-01 | not yet computable | 0 | 0 scored month(s) since 2026-09; the rule permits a magnitude decision only at >=24 (~2028-08). ACCRUING — not |
-| fwd-crypto-lit5 | 2026-08-24 | not yet computable | 51 | 51 calendar day(s) elapsed of the 250 TRADING days the rule requires; forward table last stamped 2026-10-13 |
+| fwd-crypto-lit5 | 2026-08-24 | not yet computable | 51 | 51 calendar day(s) elapsed of the 250 TRADING days the rule requires; forward table last stamped 2026-10-14 |
 | fwd-despac-underperf | 2026-08-31 | not yet computable | 0 | 0 new de-SPACs with 500d since 2026-08-31; rule needs >=15. Post-boom de-SPAC volume is low — may stay inconcl |
 | fwd-despac-underperf-v2 | 2026-09-02 | not yet computable | 0 | 0 new de-SPACs (5.06 dated) with 500d since 2026-09-02; rule needs >=15. First possible read ~2028-09; post-bo |
-| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | not yet computable | 116 | 116 forward trade(s) since 2026-09-13; the kill clauses read at 200 and the promote clause at 400. not-yet-com |
+| fwd-direction-4h-xrp-bnb-makerin-takerout | 2026-09-13 | not yet computable | 118 | 118 forward trade(s) since 2026-09-13; the kill clauses read at 200 and the promote clause at 400. not-yet-com |
 | fwd-distress-blend-combined | 2026-09-16 | not yet computable | - | elapsed 28d of 365d horizon (~250+ trading days from 2026-09-16 (first decisive read ~202) |
 | fwd-distress-ivol-blend-5 | 2026-09-16 | not yet computable | - | elapsed 28d of 365d horizon (~250+ trading days from 2026-09-16 (first decisive read ~202) |
-| fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | not yet computable | 24 | 24 forward event-days since 2026-09-04 (rule requires >=150 for kill or >=200 for promote). not-yet-computable |
+| fwd-eq-belowPML-liquid-K5-day-clustered | 2026-09-04 | not yet computable | 25 | 25 forward event-days since 2026-09-04 (rule requires >=150 for kill or >=200 for promote). not-yet-computable |
 | fwd-etf-trend-timing | 2026-09-13 | not yet computable | 31 | 31 paper day(s) since 2026-09-13; first read at 12 months (drawdown claim — needs a drawdown to have happened) |
 | fwd-fourfactor-blend-gcshort | 2026-09-16 | not yet computable | - | elapsed 28d of 365d horizon (Score after >=250 fresh trading days past 2026-09-16 or 2027) |
 | fwd-ftd-persistence-short | 2026-08-26 | not yet computable | 49 | 49 day(s) of the 728 required. Scored by scripts/ftd-persistence.ts with FROM_D=2026-08-26 and LIQUID_ONLY=1. |
 | fwd-goingconcern-distress | 2026-09-15 | not yet computable | - | elapsed 29d of 365d horizon (Score after >=100 fresh going-concern 10-K filings past 2026) |
-| fwd-gold-rangeext-cont-k24 | 2026-09-13 | not yet computable | 1 | 1 closed paper fill(s) since 2026-09-13 (0 open); rule first reads at 150, decides at 400 (~0.6/day historical |
+| fwd-gold-rangeext-cont-k24 | 2026-09-13 | not yet computable | 1 | 1 closed paper fill(s) since 2026-09-13 (1 open); rule first reads at 150, decides at 400 (~0.6/day historical |
 | fwd-hedging-pressure-flip | 2026-08-26 | not yet computable | 49 | 49 day(s) of the 728 required. Scored by scripts/cot-crosssectional.ts and tff-crosssectional.ts with FROM_D s |
 | fwd-isa-crypto-parity | 2026-09-13 | not yet computable | 31 | 31 paper day(s) since 2026-09-13 (~1.5 months); first read at 12 months, decision at 24. not-yet-computable, N |
 | fwd-latefiling-distress | 2026-09-16 | not yet computable | - | elapsed 28d of 365d horizon (Score after >=100 fresh NT filings past 2026-09-16 accrue >=) |
@@ -45,8 +43,8 @@
 | fwd-persist-real-K24 | 2026-09-03 | not yet computable | 11 | 11 forward persist(real)+PSL-fade events since 2026-09-03 across 0 crypto with >=20; rule needs >=200 pooled t |
 | fwd-placeable-psl-fade-k24 | 2026-09-08 | not yet computable | 114 | 114 forward event(s) since 2026-09-08 across 3 placeable instrument(s); the rule's first read is at 250 and it |
 | fwd-prop-ftmo100k-utc16-0p5x-v1 | 2026-09-06 | not yet computable | 0 | ledger empty since registration 2026-09-06: fee unpaid, no evaluation started. not-yet-computable, NOT inconcl |
-| fwd-psl-fade | 2026-09-03 | not yet computable | 536 | 536 forward PSL-fade events since 2026-09-03 across 12 instrument(s) with >=20; rule needs >=1000 pooled (~6 m |
-| fwd-residual-follow | 2026-08-24 | 0.273 | 24 | residual-follow over 24 stamp(s): net 3.42bp/stamp t 0.27 (gross 13.42bp, gross t 1.07; 10bp round trip charge |
+| fwd-psl-fade | 2026-09-03 | not yet computable | 537 | 537 forward PSL-fade events since 2026-09-03 across 12 instrument(s) with >=20; rule needs >=1000 pooled (~6 m |
+| fwd-residual-follow | 2026-08-24 | 0.413 | 24 | residual-follow over 24 stamp(s): net 5.14bp/stamp t 0.41 (gross 15.14bp, gross t 1.22; 10bp round trip charge |
 | fwd-spinoff-premium | 2026-08-31 | not yet computable | 0 | 0 new liquid spincos with full 500d forward data since 2026-08-31; rule needs >=20 (~3-4y to accrue). not-yet- |
 | fwd-three-factor-blend | 2026-09-15 | not yet computable | - | elapsed 29d of 365d horizon (Score after >=250 fresh trading days past 2026-09-15 or 2027) |
 | fwd-trend-long-parity | 2026-09-13 | not yet computable | 31 | 31 paper day(s) since 2026-09-13 (~1.5 months); first read at 12 months, decision at 24. not-yet-computable, N |

@@ -1,6 +1,6 @@
 # LIVE STATE — snapshot of the owned node
 
-> Written by `state-export.ts` at **2026-10-14T12:10:11.737Z**. This is a SNAPSHOT, not a live view:
+> Written by `state-export.ts` at **2026-10-14T22:24:20.957Z**. This is a SNAPSHOT, not a live view:
 > a session reading it off git (cloud, another device) must treat every number as "as of" that timestamp.
 > The node itself is never exposed — the repo is the only bridge.
 
@@ -116,19 +116,19 @@
 
 | series | latest | as of |
 |---|---|---|
-| spy_vs200_pct | 8.0492 | 2026-10-12 |
-| spy_rvol20_pct | 9.6853 | 2026-10-12 |
-| spy_dd1y_pct | -0.1271 | 2026-10-12 |
+| spy_vs200_pct | 7.967 | 2026-10-13 |
+| spy_rvol20_pct | 9.5469 | 2026-10-13 |
+| spy_dd1y_pct | -0.1386 | 2026-10-13 |
 | breadth_above50_pct | 29.4521 | 2026-10-12 |
-| btc_vs200_pct | 15.6942 | 2026-10-13 |
-| btc_rvol20_pct | 20.0379 | 2026-10-13 |
+| btc_vs200_pct | 15.5009 | 2026-10-14 |
+| btc_rvol20_pct | 19.5856 | 2026-10-14 |
 
 > Breadth is a bounded liquid sample, not the full universe; all series are daily-close resolution.
 
 
 ## Guard board (last local run)
 
-`-- 3 of 33 guards RED`
+`-- all 33 guards green`
 
 > The 32-guard board reads the owned node directly and therefore CANNOT run off-machine. Any session
 > without node access must not claim a green board — it can only quote this line and its timestamp.
