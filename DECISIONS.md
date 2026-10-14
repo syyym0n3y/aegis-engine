@@ -22603,3 +22603,62 @@ can be read against it retroactively.
 ACTS-ON: gate — the cloud gap is a registered, evidenced blocker instead of an aspiration, and the thing that would
 fill it is already written and verified-by-failure rather than untested.
 GOLD: gap — a capability claim was tested to destruction before being reported as available.
+
+## D-980 (2026-10-14) THE P&L REPORT TAKEN LOCAL — the routine it replaces was reading a host that answers HTTP 000
+
+Operator: take the stack local, no subscription bottleneck, and augment the P&L routine so it stops relying on
+external infra. The first half was already true and is now verified rather than assumed — aegis/ballast/assay and the
+sovereign supabase all run in colima on the operator's own machine, the 10GB database is local, every feed is
+keyless, and **the host has been up 10 days 18 hours with zero reboots since the D-975 fix** (memory 74% free,
+host-budget GREEN), against the previous ~3-day reboot cycle. The engine ran a cycle every single day of the
+operator's 8-day absence: 7 docs commits, **421 clock marks**, latest today.
+The P&L routine was the genuine external dependency, and it was worse than external — it was dead. `aegis-pnl-report`
+(a Claude-app scheduled task, so a token-spending session per market hour) sourced every number from
+`glzzoomuhnugsiichnub.supabase.co`, the RENTED project paused behind unpaid invoices. **Verified: HTTP 000,
+connection refused in 38ms.** It could not have produced a true number since that project was paused. Replaced by
+`scripts/pnl-report.ts` — deterministic, owned node + owned ballast node only, no LLM, no subscription, no network
+beyond localhost — wired into the daily cycle and written to `docs/PNL.md` so it is readable off-machine via git.
+Its framing is load-bearing: the old routine carried a mandatory warning that its headline included "a large LEGACY
+crypto gain that is NOT edge"; that figure now lives only on an unreachable host, so it is **not quoted at all**, and
+the report separates REAL capital (0 fills) from PAPER (a book marked daily at $0) in every line.
+ACTS-ON: ledger — the P&L surface now reads the owned node and survives any vendor, invoice or subscription lapse.
+GOLD: structural — a reporting dependency that was both external and already-dead is replaced by a local
+deterministic one, and the deadness was proven rather than inferred.
+
+## D-981 (2026-10-14) THE RECKONING — "would real cash have made or lost money?" answered, and the honest answer is that the discipline never released it
+
+Operator asked directly. `scripts/forward-reckoning.ts` reports every clock against the floors written before its
+data existed. **No clock has cleared its promote floor, so under the ladder no real cash would have been deployed —
+there is no realised P&L because capital was never released.** What the models say, had it been deployed at
+£10,000/trade: fwd-utc16 +£1,398 (11.46bp x 122), fwd-utc09to10 +£226 (1.20bp x 188), fwd-utc01 +£2,249 (64.27bp x
+35, only 35 events old). Gross of slippage beyond the modelled cost, assuming equal notional and real fillability,
+and **unrealised — `trd_manual_trades` holds 0 fills.**
+THE FINDING THAT MATTERS IS THE DECAY. The two most mature intraday clocks have collapsed as their samples grew:
+**fwd-utc09to10 from a best mark of 64.96bp to 1.20bp** (promote floor +6bp), **fwd-utc16 from 34.09bp to 11.46bp**.
+That is the signature of an edge that was sampling noise early, and it is exactly what a forward clock exists to
+expose. The deployed blend reads forward Sharpe **1.601 at 28 of its required 250 days** (promote floor 1.79).
+A TRAP CAUGHT IN THE BUILD: the first pass selected `max(metric_value)` per clock and would have reported the blend
+at Sharpe 3.39 and utc09to10 at 65bp. Taking the best mark a clock ever printed is survivorship applied to our own
+record — the precise mechanism by which a forward test gets narrated into a win. The script now reads LATEST only,
+and says so in its own header.
+ACTS-ON: clock — every clock's standing versus its pre-written floor is now a generated artefact rather than a
+question that has to be re-derived by hand.
+GOLD: research — the programme can state, with numbers, that it has neither made nor lost real money, and why.
+
+## D-982 (2026-10-14) TWO ORPHANS AND A GUARD THAT CAUGHT ME — the yield curve nobody invoked, and a sovereignty RED on my own file
+
+Two defects found while taking the P&L surface local, both of the same family: **something existed and nothing ran it.**
+(1) `trd_yield_curve` was **50 days stale** (newest 2026-08-26) because `scripts/ingest-yield-curve.sh` exists and no
+runner invoked it — the orphaned-ingest class of D-944, recurring. Backfilled (now 9,202 days, 1990-01-02..2026-10-13)
+and WIRED into the daily cycle, which is the part that stops it recurring. Note the near-miss: FRED real yields were
+fresh throughout (Oct 9), so nothing downstream screamed, and the stale table could have sat behind a green-looking
+macro story indefinitely.
+(2) The sovereignty guard went RED on **`scripts/pnl-report.ts` — my own new file** — because I quoted the dead rented
+host's literal name in its comments and output. The guard cannot distinguish a comment from a call, and should not
+have to: a string that looks like a live dependency IS a finding in a codebase whose whole claim is that no
+`*.supabase.co` host can stop it. Hostname removed, referenced descriptively instead; guard GREEN. The engine now
+passes its own sovereignty test with the P&L surface included, which it did not an hour ago.
+ACTS-ON: gate — one orphaned feed is on a schedule and the sovereignty claim is true of every file including the
+newest one.
+GOLD: reliability — "exists" and "runs" were separated again, and the guard that exists to protect sovereignty
+proved it by refusing its author's own work.

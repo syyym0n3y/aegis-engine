@@ -16,6 +16,9 @@ while true; do
   # current-quarter chunk froze 4.5d after the last manual run and reddened data-stack. A daily refresh keeps it ~1d
   # fresh (well inside the 4d budget). Idempotent upsert on (symbol,tf); keyless; sequential; $0.
   deno run --allow-net --allow-env ../scripts/ingest-perp-5m.ts || true
+  # D-982: trd_yield_curve went 50 DAYS stale because ingest-yield-curve.sh existed and NOTHING invoked it —
+  # the orphaned-ingest class (D-944) recurring. Keyless; idempotent; backfills whatever it missed.
+  bash ../scripts/ingest-yield-curve.sh >/dev/null 2>&1 || echo "$(date -u +%FT%TZ) YIELD CURVE INGEST FAILED"
   # D-976: the regime tape — every clock mark is uninterpretable without knowing which market it ran through
   # (D-944/945: the sleeves are regime-specialised). Keyless, derived from bars already held, joined BY DATE.
   deno run --v8-flags=--max-old-space-size=4096 --allow-net --allow-env --allow-read ../scripts/market-context.ts >/dev/null 2>&1 || echo "$(date -u +%FT%TZ) MARKET CONTEXT FAILED"

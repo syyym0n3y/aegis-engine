@@ -384,10 +384,13 @@ while true; do
   # D-973: export the owned node's live state into the repo so a CLOUD session (or any machine without the
   # node) can read clocks/preregs/gaps/board as-of, without ever exposing the database. Git is the bridge.
   deno run --allow-net --allow-env --allow-read --allow-write ../scripts/state-export.ts >/dev/null 2>&1 || echo "$(date -u +%FT%TZ) STATE EXPORT FAILED"
+  # D-980: the P&L report, local. Replaces the aegis-pnl-report Claude routine that read a DEAD rented Supabase
+  # (glzzoomuhnugsiichnub, HTTP 000). No LLM, no subscription, no network beyond localhost.
+  deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/pnl-report.ts > ../data/pnl-report.log 2>&1 || echo "$(date -u +%FT%TZ) PNL REPORT FAILED"
   # D-855: the cycle regenerates docs/CATALOGUE.md, docs/SEARCH_SPACE.md and docs/OPERATOR_QUEUE.md every day; left
   # uncommitted they sit as tree noise until a session commits them, which is a prompt in disguise. Paths-restricted,
   # local only (never pushes), no-op when nothing changed.
-  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/LIVE_STATE.md docs/archive/TENFOLD.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
+  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/LIVE_STATE.md docs/PNL.md docs/archive/TENFOLD.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
   sleep 86400
 done
 

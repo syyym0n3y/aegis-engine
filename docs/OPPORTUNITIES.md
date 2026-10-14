@@ -1,4 +1,4 @@
-# Current opportunities — 2026-10-06
+# Current opportunities — 2026-10-14
 
 > TREND/momentum WATCHLIST across the global panel — one input family, NOT the deployed book. The deployed book is the
 > 5-sleeve blend (leverageable excess ~1.92, D-939e pin): see DEPLOY_RUNBOOK.md / deploy-sheet.ts for what to hold.
@@ -9,26 +9,26 @@
 ## LONG (trend up)
 | symbol | class | dir | signal | px | £size | units | profit-target | stop |
 |---|---|---|---|---|---|---|---|---|
-| USDTRY=X | fx | LONG | 5.99 | 49.120499 | £1938 | 39.454 | 49.24 | 49 |
-| SVXY | etf | LONG | 1.99 | 64.565002 | £1938 | 30.0163 | 66.29 | 62.84 |
-| PBP | etf | LONG | 1.89 | 23.3932 | £1938 | 82.8446 | 23.69 | 23.09 |
-| XLK | sector | LONG | 1.86 | 200.630005 | £1938 | 9.6596 | 206.69 | 194.57 |
-| QUAL | etf | LONG | 1.72 | 225.210007 | £1938 | 8.6053 | 229.01 | 221.41 |
-| SPY | etf | LONG | 1.63 | 772.630005 | £1938 | 2.5083 | 786.66 | 758.6 |
-| ^TNX | rate | LONG | 1.62 | 5.324 | £1938 | 364.012 | 5.5 | 5.15 |
-| ^TWII | intl_index | LONG | 1.62 | 49712.039063 | £1563 | 0.0314 | 51061.58 | 48362.5 |
+| USDTRY=X | fx | LONG | 5.95 | 49.362301 | £2000 | 40.5167 | 49.51 | 49.21 |
+| AAVE-USD | crypto | LONG | 2.01 | 158.520004 | £649 | 4.0941 | 178.09 | 138.95 |
+| PBP | etf | LONG | 1.75 | 23.530001 | £2000 | 84.9979 | 23.75 | 23.31 |
+| SVXY | etf | LONG | 1.67 | 65.43 | £2000 | 30.567 | 67.03 | 63.83 |
+| IWD | etf | LONG | 1.66 | 254.649994 | £2000 | 7.8539 | 258.41 | 250.89 |
+| ^TNX | rate | LONG | 1.56 | 5.24 | £2000 | 381.6794 | 5.42 | 5.06 |
+| SB=F | commodity | LONG | 1.46 | 20.76 | £1471 | 70.8574 | 22.18 | 19.34 |
+| QUAL | etf | LONG | 1.44 | 227.720001 | £2000 | 8.7827 | 230.87 | 224.57 |
 
 ## SHORT (trend down)
 | symbol | class | dir | signal | px | £size | units | profit-target | stop |
 |---|---|---|---|---|---|---|---|---|
-| USDCNY=X | fx | SHORT | 1.59 | 6.7048 | £1938 | 289.0467 | 6.7 | 6.71 |
-| ZF=F | rate | SHORT | 1.50 | 103.320313 | £1938 | 18.7572 | 102.69 | 103.95 |
-| ZT=F | rate | SHORT | 1.45 | 101.734375 | £1938 | 19.0496 | 101.46 | 102.01 |
-| ZN=F | rate | SHORT | 1.38 | 104.09375 | £1938 | 18.6178 | 102.76 | 105.43 |
-| VXX | etf | SHORT | 1.33 | 17.16 | £1309 | 76.2821 | 16.2 | 18.12 |
-| ZB=F | rate | SHORT | 1.25 | 102 | £1938 | 19 | 99.61 | 104.39 |
-| TLT | etf | SHORT | 0.96 | 76.904999 | £1938 | 25.1999 | 75.17 | 78.64 |
-| IEF | etf | SHORT | 0.95 | 88.805 | £1938 | 21.8231 | 87.69 | 89.92 |
+| USDCNY=X | fx | SHORT | 1.83 | 6.6828 | £2000 | 299.2758 | 6.68 | 6.69 |
+| ZF=F | rate | SHORT | 1.57 | 103.757813 | £2000 | 19.2757 | 103.12 | 104.4 |
+| ZT=F | rate | SHORT | 1.56 | 101.871094 | £2000 | 19.6327 | 101.6 | 102.15 |
+| ZN=F | rate | SHORT | 1.38 | 104.875 | £2000 | 19.0703 | 103.63 | 106.12 |
+| VXX | etf | SHORT | 1.18 | 16.690001 | £1351 | 80.9467 | 15.82 | 17.56 |
+| EURUSD=X | fx | SHORT | 1.13 | 1.118193 | £2000 | 1788.6 | 1.1 | 1.13 |
+| ZB=F | rate | SHORT | 1.09 | 103.90625 | £2000 | 19.2481 | 101.42 | 106.39 |
+| EURGBP=X | fx | SHORT | 1.04 | 0.84458 | £2000 | 2368.0409 | 0.84 | 0.85 |
 
 ## SHORT — going-concern distress (the persistent edge, D-930/931)
 164 going-concern 10-Ks filed in the last 90 days. Short the borrowable liquid names (days-to-cover < 5), long IWM,
