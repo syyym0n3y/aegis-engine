@@ -22662,3 +22662,57 @@ ACTS-ON: gate — one orphaned feed is on a schedule and the sovereignty claim i
 newest one.
 GOLD: reliability — "exists" and "runs" were separated again, and the guard that exists to protect sovereignty
 proved it by refusing its author's own work.
+
+## D-983 (2026-10-14) THE INEFFICIENCY MAP — where and WHEN this record says the market is exploitable, and a premise corrected before it was built on
+
+Operator asked to hone in on what matters per trade and instrument, find where/when the market is inefficient, and
+position for "the $114 trillion tokenisation of the entire market". Three outputs, one correction, one honest block.
+**THE PREMISE WAS WRONG AND IT MATTERED.** $114 trillion is not a tokenisation forecast — it is the **DTCC's existing
+securities custody total**. Tokenised real-world assets stand at **~$32–39bn today** (mid/late 2026), with 2030
+estimates spanning $2T (McKinsey) · $13T (JPMorgan) · $16T base / $68T bull (BCG) · $5.5–8T (Citi). Three orders of
+magnitude between the premise and the measured present. Positioning capital against "the entire market is tokenising"
+would have been positioning against an event that is not happening on those numbers. Corrected before anything was
+built on it; the real framing is a fast-growing but still-small slice.
+**WHAT TRANSFERS, STATED STRUCTURALLY.** Our edge class is CONSTRAINT, not venue. Tokenisation does not remove
+short-sale constraints, lottery demand, forced index flows or dealer hedging — it relocates where they are expressed,
+and thin early venues historically WIDEN the frictions we harvest. What does not transfer: anything latency-bound
+(already dead here) and anything needing borrow infrastructure tokenised venues lack. The venue-agnostic position —
+owned data, owned compute, a measured edge, a verification machine — is the one that cannot be worse than before.
+**`docs/INEFFICIENCY_MAP.md`** consolidates, with citations: the seven measured WHERE's (distress, IVOL, crowding,
+gamma, session sweeps, index events, wrappers); the five WHEN's that decide whether they pay (regime specialisation
+D-944, the 2021 joint-squeeze pathology D-945, the un-hedgeable acute squeeze D-946/947, intraday decay D-981,
+announcement windows closing within hours D-965); and the measured WHERE-NOT list so the programme stops paying to
+relearn order flow, ORB, turn-of-month, the London window, retail HFT and memecoin sniping.
+**THE BLOCK, NAMED NOT SKIPPED.** The five attached lecture PDFs (L1, L2-a/b, L3-a/b) were **not readable**: macOS
+privacy (TCC) blocks this process from iCloud Drive — `cp` returns *Operation not permitted* and the directory is not
+even listable. No literature claim is quoted or paraphrased anywhere in the output. The cross-reference is recorded as
+OUTSTANDING with its exact job: map each lecture's anomaly/efficiency result onto the WHERE and WHERE-NOT sections,
+and flag any lecture claim this record has already falsified — that disagreement being the most valuable output in
+either direction.
+ACTS-ON: gate — the inefficiency map is now the single page a session reads before proposing any new edge, and the
+tokenisation premise is corrected in the record rather than inherited.
+GOLD: research — a consolidation that makes the programme's measured knowledge usable in one place, with a
+load-bearing external claim falsified before capital or attention was committed to it.
+
+## D-984 (2026-10-14) MY OWN GUARD WAS MEASURING THE WRONG THING — "actively paging" was reading static occupancy, and a second decode entry point had the fixed bug
+
+Two defects, both found by the board going RED on the operator's live machine rather than by review.
+**(1) THE DECODE DAEMON HAD THE BUG I ALREADY FIXED.** D-975 hardened `cc-decode-cron-sovereign` (swap-free floor of
+700M let it load 11GB with 719M free). There is a SECOND entry point — `cc-decode-daemon-sovereign`, launchd job
+`io.revitalise.sovereign.decoded`, running at the time — carrying the identical defect at `swap free < 800M`. Proven
+on live state: the OLD rule returned "not tight" (proceed, load a multi-GB model) on a machine at **38% memory free
+with 83% of swap consumed**; the hardened rule returns "tight" (skip). Now gates on real memory headroom (>=35%),
+swap USED as a fraction (<50%), floor 2000M, and **fails CLOSED**. Fixing one entry point is not fixing the class —
+the class is "every path that loads a large model", and it must be enumerated, not assumed singular.
+**(2) THE HOST GUARD'S MESSAGE WAS A LIE ABOUT ITS OWN MEASUREMENT.** `host-budget-guard` printed "actively paging,
+not computing" while testing **static swap OCCUPANCY**. macOS keeps swap allocated long after pressure passes, so on
+a host up 10+ days it fired during ordinary work — 39% memory free with a browser open is not degradation, and a
+guard that reds in normal use is the crying-wolf failure it was explicitly designed to avoid. The temptation was to
+loosen COMFORT_PCT until the red went away, which is the motivated-operator failure the gate-threshold rule exists to
+stop. Fixed instead by measuring the thing claimed: two `vm_stat` reads a stated interval apart give a pageout RATE.
+Live now: **6 pages/s against a 200/s floor** — green on evidence, not on a relaxed bar. Occupancy is still reported,
+never RED. New thresholds registered in `trd_gate_thresholds` (D-984) with their reasoning.
+ACTS-ON: gate — the host guard now fires on genuine thrash and stays quiet during ordinary work, and both decode
+entry points refuse to load a model into a tight machine.
+GOLD: reliability — a guard was caught asserting something its own code did not measure, and the fix was to measure
+it rather than to move the line.
