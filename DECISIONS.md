@@ -22716,3 +22716,66 @@ ACTS-ON: gate — the host guard now fires on genuine thrash and stays quiet dur
 entry points refuse to load a model into a tight machine.
 GOLD: reliability — a guard was caught asserting something its own code did not measure, and the fix was to measure
 it rather than to move the line.
+
+## D-985 (2026-10-14) THE LITERATURE CROSS-REFERENCE, DONE — the taught anti-efficiency list is three-quarters dead and one-quarter deployed
+
+The five lecture PDFs plus the L1 spreadsheet became readable once the operator copied them out of iCloud (macOS TCC
+blocks this process from `com~apple~CloudDocs`; `~/Downloads` is reachable). Source: Andrikopoulos, *Financial
+Instruments 980N1*, Topics 1, 2a/2b (EMH), 3a (valuation), 3b (statement analysis). `docs/LITERATURE_CROSSREF.md`
+maps each taught result onto what this record measured. Findings that matter:
+**THE COURSE'S WEEK-ONE ARGUMENT IS OUR BEST STRUCTURAL DECISION.** The L1 spreadsheet was recomputed independently
+rather than read off: states Expansion 0.5 / Recession 0.4 / Deep Recession 0.1; Stock A 25/10/−15 → E(R) **15.0%**,
+σ 12.25%; Stock B 8/1/20 → E(R) **6.4%**, σ 5.61%; Cov **−0.0022**, **Corr −0.3204** (matches the sheet to 4dp).
+Stock B earns inclusion at under half A's expected return purely on negative correlation — the identical argument
+by which IVOL was admitted (corr −0.30 to equity, 0.07–0.11 to distress, D-939) and by which the blend is
+regime-robust while every sleeve is regime-specialised (D-944).
+**THE TAUGHT ANTI-EFFICIENCY LIST, SCORED AGAINST OUR MEASUREMENTS.** Small-firm: not merely "diminished" as the
+lecture says but **wrong-signed in the liquid tercile** (D-951) under the LIQUIDITY LAW. January/calendar: same
+class as turn-of-month, **killed by its own benchmark** (D-962). Technical analysis: confirmed dead five ways
+(D-816/925/921/948/949, ORB 0.90 → OOS −0.39, London two-sided at t −17.6). Overreaction/mean-reversion and
+"information is not always incorporated": **both survive and are what the deployed book trades** — the session-level
+fade (D-955) and the distress short's ~369-day information half-life (D-647/930/935).
+**THREE DISAGREEMENTS RECORDED.** (1) The lectures assert both "fundamental analysis does not beat the market"
+(L2-b) and "financial statement analysis can discover mispriced securities" (L3-b); our record sides with the
+latter and supplies the reconciliation — generic ratio screening is arbitraged, **constraint-linked** fundamentals
+are not. (2) CAPM prices only systematic risk; our deployed IVOL sleeve is a direct violation at t 3.17–3.77. (3)
+L2-a cites FF5 explaining 71–94% of excess-return variance; our own decomposition (D-920) found **median adj-R²
+32.8%** on 90 instruments — different setup, but a caution that the textbook figure does not transfer to what we
+trade.
+**AND WHAT THE LECTURES EXPOSE AS UNTESTED:** dividend-discount/PVGO intrinsic-vs-market as a signal, the DuPont
+decomposition as a *conditioner* rather than a screen, and two instrument classes (preferred stock, depositary
+receipts) absent from our universe entirely. Logged as leads, with the honest prior that DDM will prove
+capacity-bound in liquid names — a prediction, not a result.
+The synthesis line: **EMH is approximately right wherever the constraint is absent.** Every survivor in this record
+sits where short-sale limits, borrow, forced index flow, dealer hedging or stop clustering prevent the arbitrage the
+lectures assume will occur — which is why the forced-flow thesis and the efficient-market hypothesis are not rivals.
+ACTS-ON: gate — the inefficiency map now carries its literature column, and three untested families enter the queue
+with priors attached rather than as vague "we should look at valuation".
+GOLD: research — the programme's measured knowledge is reconciled against the taught canon, with the disagreements
+stated in both directions instead of the literature being quoted as authority or ignored as naive.
+
+## D-986 (2026-10-14) THE VISION MODEL DOES NOT FIT THIS MACHINE — proven by arithmetic after two gate thresholds failed
+
+While the literature cross-reference was being committed, the board went RED on the host and the investigation
+produced a conclusion no threshold can fix. The decode path loads a vision model that resides at **~8.7GB on a 16GB
+host — about 55% of total RAM.**
+- D-975 set its gate at "≥35% memory free". It passed at **47% free**, loaded 55%, and landed the machine at **10%**.
+- Today I raised it to "≥60% free" on the arithmetic. It passed at **64% free**, loaded 55%, and landed at **19%**.
+**64 − 55 = 9. The gate cannot succeed, because the model plus ordinary work exceeds the machine.** Two failures of
+the same shape, the second one mine, are enough: this is not a tuning problem, it is a capacity fact.
+The decode path also turned out to have THREE entry points, not one — `cc-decode-cron-sovereign` (fixed D-975),
+`cc-decode-daemon-sovereign` (fixed D-984), and the launchd job `io.revitalise.sovereign.decoded` whose KeepAlive
+re-spawned the work faster than `pkill` could stop it; `launchctl unload` silently failed and only `launchctl bootout`
+took. Orphaned children survived the job's removal and kept re-triggering model loads until killed by PID.
+**STATE LEFT:** the decode job is BOOTED OUT and the machine sits at 33% free with host-budget GREEN. A separate,
+smaller (~4.3GB) ollama worker persists, serving some other consumer — noted, not hunted, because it is not starving
+anything.
+**THE DECISION IS THE OPERATOR'S / THE CONTENT VERTICAL'S, AND IT IS NOT A THRESHOLD.** Three options, honestly:
+(a) run decode **night-only**, when nobody is using the machine — keeps the model and its measured output quality;
+(b) use a smaller vision model — but the 2026-09-19 evaluation in that repo rejects qwen2.5vl:3b as "collapses EVERY
+role to establishing", so this trades quality for RAM; (c) do not run it locally. I did not choose for them, because
+it is a capability trade for a vertical I do not own.
+ACTS-ON: gate — the decode job is off, the host is green, and re-enabling now requires an explicit scheduling or
+model decision rather than another silent threshold edit.
+GOLD: reliability — a fix I shipped was falsified by its own arithmetic within ten days, and the escalation is to
+the real constraint instead of a third threshold.
