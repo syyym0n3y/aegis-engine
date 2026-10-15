@@ -46,6 +46,12 @@ const MAP: [string, string][] = [
   ["IR3TIB01KRM156N", "rate_3m_krw"],   // 3m interbank, 1991-01 -> 2026-06
   ["IR3TIB01CNM156N", "rate_3m_cny"],   // 3m interbank, 1997-06 -> 2026-05
   ["IR3TIB01NZM156N", "rate_3m_nzd"],   // 3m interbank, 1973-12 -> 2026-06
+  // D-987 — the long-horizon BASKET's driver map named three US macro drivers as material and unmeasured, all on this
+  // same keyless endpoint: weekly initial claims (the labour RELEASE the surprise programme tests, D-987-claims-surprise-
+  // spx), nonfarm payrolls (monthly labour level), and the Fed balance sheet (QT/QE supply for the Treasury sleeve).
+  // LATEST VINTAGE: FRED serves revised values; payrolls in particular are revised heavily after first print, so these
+  // are DRIVER MEASUREMENTS, not point-in-time event inputs (ICSA's SA revisions are small; stated in the prereg).
+  ["ICSA", "claims_initial_sa"], ["PAYEMS", "payrolls_total"], ["WALCL", "fed_balance_sheet"],
 ];
 
 const out: { series: string; d: string; v: number }[] = [];

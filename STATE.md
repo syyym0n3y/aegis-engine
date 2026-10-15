@@ -1,6 +1,6 @@
 # STATE.md — current live state
 
-_Rewritten 2026-09-23 (D-970 audit: the previous version had stopped at 2026-09-13 with seven
+_Updated 2026-10-15 (D-987/988: basket, surprise programme, cc-goals, short-interest orphan). Rewritten 2026-09-23 (D-970 audit: the previous version had stopped at 2026-09-13 with seven
 competing "(LATEST)" sections; this file is now a single current page, and staleness relative
 to DECISIONS.md is a named audit check)._
 
@@ -26,6 +26,19 @@ to DECISIONS.md is a named audit check)._
   t −17.6). Gamma: vol-damping validated in 3 regimes (D-967, pooled t −17.3), sizing gain
   measured (D-968: +6.7% OOS forecast), adoption pre-registered (`D-970-gex-sizing-calibration`);
   CROWD_DC adoption pre-registered with a 2026-10-07 deadline (`D-970-crowd-dc-adoption`).
+
+## Basket + surprise programme (D-987/988, 2026-10-15)
+
+- **Long-term basket** (`docs/BASKET.md`, `research/basket.json`, regenerated each coverage cycle): 6 of 17 holdable
+  UCITS candidates have understood >= 0.8 (measured-and-fresh material drivers / material drivers): US T-bills 1.00,
+  gold 0.92, TIPS 0.88, UST 20y+ 0.86, S&P 500 0.82, Nasdaq-100 0.82. Every GBP/UK row is blocked by BoE + ONS data
+  (not allowlisted); bitcoin/HY/IG sit at 0.75. UCITS vehicle conversion UNMEASURED (no UCITS series held).
+- **Surprise programme** (`docs/SURPRISE_EFFECTS.md`, `research/surprise-ledger.json`): 6 pre-registered (`trd_prereg`
+  D-987-*), 2 tested — claims statistical surprise UNTESTED (failed day-0 positive control), CPI statistical surprise
+  REJECTED (sign missed) — 0 survived, 4 accruing with nightly floor checks that turn RED at maturity.
+- **`data/cc-goals.json`** — the read-only progress file Command Centre reads (regenerated each cycle, committed).
+- **D-988:** FINRA short interest (the deployed CROWD_DC filter's input) had frozen at 2026-07-31 — ingest orphaned;
+  now incremental, wired, continuity-guarded, current to 2026-09-30.
 
 ## Infra
 

@@ -72,6 +72,11 @@ const FEEDS: [string, string, string, number, string][] = [
   // event-days while the scorer says "not-yet-computable"). The refresher writes this mark only after its own positive
   // controls pass (>=90% of due symbols refreshed, sentinel advanced). Daily cadence, budget 3.
   ["trd_macro_series?series=eq.liquid_panel_refresh&select=d&order=d.desc&limit=1", "liquid equity panel (clock #18 input)", "d", 3, "refresh-liquid-panel.ts"],
+  // D-987: FINRA short interest — the DEPLOYED distress sleeve's CROWD_DC filter (D-971) reads days-to-cover from it, and
+  // it froze for 76 days (settlement 2026-07-31) because its ingest had no invoker while this guard did not watch it.
+  // Semi-monthly settlements published ~8 business days later: interval 15d -> budget 15*1.5+3 = 25.5d, which the
+  // newest settlement stays inside right up to the next publication.
+  ["trd_short_interest?select=settlement&order=settlement.desc&limit=1", "FINRA short interest (CROWD_DC input)", "settlement", 15, "ingest-finra-si.ts"],
 ];
 
 const today = Date.now();

@@ -24,7 +24,10 @@ data/binance/
 data/finra/
 data/literature/PredictorPortsFull.bin
 data/edgar/
-data/
+# data/ is ignored wholesale EXCEPT the one small progress file Command Centre reads (D-987); `data/*` (not `data/`)
+# is required for the negation to work — git cannot re-include a file whose parent directory is excluded.
+data/*
+!data/cc-goals.json
 scratchpad/
 *.bin
 .venv-models/

@@ -22779,3 +22779,100 @@ ACTS-ON: gate — the decode job is off, the host is green, and re-enabling now 
 model decision rather than another silent threshold edit.
 GOLD: reliability — a fix I shipped was falsified by its own arithmetic within ten days, and the escalation is to
 the real constraint instead of a third threshold.
+
+## D-987 (2026-10-15) AEGIS EARNS ITS PLACE BY UNDERSTANDING, NOT BY MINING — a measured long-term basket, a pre-registered surprise programme, and a progress file Command Centre can read
+
+Operator directive (2026-10-15, verbatim): "don't park aegis it needs to earn its own placing by exploiting every
+possible way the market rewards you and maximise the chances of success and create a long term basket of instruments
+we will trade because we can understand everything that affects that instrument, we need to test for surprise effects
+that we can exploit as well". Built under the D-823 freeze: nothing below was mined; every test was written into
+`trd_prereg` before its outcome existed, and families already measured were NOT re-registered.
+
+**1. THE BASKET (`scripts/basket-register.ts` -> `docs/BASKET.md`, `research/basket.json`, nightly).** 17 holdable
+candidates (UCITS vehicles a UK ISA/SIPP can hold; research proxies are US-listed and their UCITS conversion is stated
+UNMEASURED — INSTRUMENT LAW). Per instrument, every material driver from the operator's own category list, each probed
+LIVE and counted only if held AND fresh within a budget matched to its source cadence (daily 6d / weekly 14d / monthly
+75d) — held-but-stale is not measured. understood = measured material / material; floor 0.8.
+| in the basket | understood | blocked | understood | binding gap |
+|---|---|---|---|---|
+| US T-bills 0-1y (IB01) | 1.00 (4/4) | Bitcoin ETP | 0.75 (9/12) | spot-ETF flows, stablecoin supply, regulatory events |
+| Physical gold (SGLN/IGLN) | 0.92 (11/12) | US high yield | 0.75 (6/8) | default rates, fund flows |
+| US TIPS (ITPS) | 0.88 (7/8) | US IG credit | 0.75 (6/8) | issuance, fund flows |
+| US Treasuries 20y+ (IDTL) | 0.86 (12/14) | All-World (VWRP) | 0.67 (10/15) | non-US earnings/macro; VT bars STALE since 08-28 |
+| S&P 500 (CSPX) | 0.82 (14/17) | commodities / WTI | 0.67 (6/9) | live futures curve frozen 2024-04, OPEC, China, USDA |
+| Nasdaq-100 (EQQQ) | 0.82 (14/17) | EM equity | 0.60 (6/10) | China activity, EM earnings, EM rates stale |
+| | | FTSE 100 / gilts / linkers / GBP cash | 0.46 / 0.20 / 0.20 / 0.00 | every UK rate and release: BoE + ONS not allowlisted; OECD GBP 3m stale 287d |
+Honest caveats: materiality was judged by the author before probing (the D-716 lesson — an outside list would find
+blind spots this one inherits; the register is open), and S&P/Nasdaq clear the floor by one driver each, with the 2y
+yield counted as a labelled PROXY for the expected policy path. Understanding a driver is not an edge in it: most rows
+carry the record's verdict that the driver is real and not forward-tradable — the basket is HELD through its drivers,
+not timed on them; the deployed blend's trend/long sleeves already trade the price of every in-universe row (read from
+`tsmom-book.ts` LONGONLY_RE at run time) and its distress/IVOL shorts are not ISA-holdable, so nothing is duplicated.
+Free gaps closed on the way, on the existing keyless FRED feed: initial claims (ICSA), payrolls (PAYEMS), Fed balance
+sheet (WALCL). Four allowlist-blocked free sources registered in `trd_gap_register` (boe-uk-rates, ons-uk-releases,
+us-treasury-auctions, macro-consensus) — nothing probed.
+
+**2. THE SURPRISE PROGRAMME (`scripts/surprise-registry.ts` + `surprise-program.ts` -> `docs/SURPRISE_EFFECTS.md`,
+`research/surprise-ledger.json`, nightly).** Six registrations, `trd_prereg` D-987-* (registered 2026-10-15T02:00:53Z,
+text re-verified identical on every run). PREREG: D-987-claims-surprise-spx, D-987-cpi-surprise-spx, D-987-pead-holdout,
+D-987-revision-surprise, D-987-implied-move-surprise, D-987-release-reversal-forward. Two had their data local and ran:
+| test | n | POSITIVE CONTROL (day-0) | primary next-5-session slope (registered NEGATIVE) | verdict |
+|---|---|---|---|---|
+| weekly claims, statistical surprise | 2,961 (1970-2026) | -1.56bp/sd, t -0.83 — FAILS | -3.03bp/sd, t -0.62 (NW1); 0.51x a 6bp round trip | **UNTESTED** (proxy carries no priced information) |
+| CPI, statistical surprise | 123 (2016-2026) | +25.6bp/sd, t 2.65 — passes | **+20.3bp/sd, t 1.15 — SIGN MISSED**; halves +30.9 / -28.5bp | **REJECTED** |
+Trials 4 + 3 under their ids; pre-registered ceiling 3.19 (mined 5.46 never applies). Trading expressions: claims net
++0.42bp/release, DSR 0.006, MinTRL 217,559 releases; CPI net -15.9bp/release, DSR 0.00, PBO 0.83. INSTRUMENT conversion
+measured for the US vehicle (SPY on ^GSPC weekly: beta 0.997, corr 0.9961, 1,696 weeks); CSPX unmeasured.
+A CONSTRUCTION DEFECT CAUGHT BY READING THE FIRST DRY RUN (PRECONDITION LAW): October 2025 CPI was never published (US
+shutdown), and requiring 24 finite prior months silently dropped every release after it. Fixed to use the finite
+months present (>= 20/24, >= 2/L) — the registered rule never said "discard on one missing month". Disclosed because the
+dry run had already shown a number: the verdict is identical either way (n 114: +24.2bp t 1.31; n 123: +20.3bp t 1.15 —
+sign missed both times). DESCRIPTIVE ONLY: the CPI control's POSITIVE sign (hotter than the trailing trend -> higher
+close) is the opposite of the consensus intuition and is what a trailing proxy diverging from consensus would produce;
+both verdicts are about the STATISTICAL-proxy family. The consensus surprise remains UNTESTED for want of free
+consensus history (gap row `macro-consensus`).
+Four accrue on existing nightly feeds (PEAD on post-2026-08-24 holdout events only; estimate-revision quintiles; the
+options-implied vs realised earnings-move ratio; the D-877b index reversal scored only on releases after 2026-09-13).
+Their floors are re-checked every night; the night one may be met the runner line turns RED ("FLOOR MET — SCORER
+REQUIRED") — and a SURVIVOR keeps it RED until its fwd- clock exists — so maturity cannot lapse into discretion. The
+implied-move test already carries its scorer (counts only below its floor: 19/300 valid events today).
+Prior surprise families are listed with their verdicts, not re-run: PEAD (D-225/393/489/612), SI surprise (D-805),
+fails/short-volume surprise (D-621..626), inventories (D-743), index inclusion (D-963/965), spin-offs (clock running),
+dealer gamma (D-967/968), VRP/fear (D-276/498/830/817), GLD flows (D-745), crypto funding/order flow, real yields (D-730).
+
+**3. `data/cc-goals.json` (`scripts/cc-goals.ts`, nightly, committed by the cycle; the only file un-ignored under data/).**
+Today: basket_understood 6, basket_candidates 17, surprise_preregistered 6, surprise_tested 2, surprise_survived 0,
+clocks_promoted 0 (LATEST mark per clock only, D-981), clocks_total 34. It refuses to rewrite itself over inputs older
+than 30h, so CC can never read fresh-looking progress built on stale inputs.
+ACTS-ON: gate — six pre-registered surprise questions now bind (two decided, four machine-watched to their floors), and
+basket membership is a nightly measured quantity rather than a judgement.
+GOLD: research — the programme's answer to "what can we hold because we understand it" is now a measured list, and its
+answer to "what surprises pay" is a set of pre-registered verdicts — one UNTESTED by its own control, one REJECTED by
+its own kill condition, four on clocks — rather than a narrative.
+
+## D-988 (2026-10-15) THE DEPLOYED CROWDING FILTER WAS READING 2.5-MONTH-OLD SHORT INTEREST — the orphaned-ingest class, third time, found by the basket's freshness probes
+
+The D-987 basket register probes every driver for FRESHNESS, not presence, and on its first run `trd_short_interest`
+read newest settlement **2026-07-31** — 76 days old against a semi-monthly source. Cause: `scripts/ingest-finra-si.ts`
+(D-475) exists and **nothing invoked it**, the class of D-944 (perp 5m) and D-982 (yield curve), and continuity-guard
+did not watch the table, so the board stayed green. Consequence for the DEPLOYED book: the distress sleeve's CROWD_DC
+filter (adopted D-971 under `D-970-crowd-dc-adoption`) reads point-in-time days-to-cover at SI_LAG_D=14, so from
+2026-09-23 every paper day avoided names that were crowded at the END OF JULY — the registered construction was
+point-in-time crowding; the running one was not. FINRA had four newer settlements (08-14, 08-29, 09-15, 09-30).
+Fixed: the ingest is now INCREMENTAL by default (FINRA compareFilters `settlementDate GREATER newest-held - 1d`,
+verified with one keyless call on the allowlisted api.finra.org before use; FULL=1 keeps the old full pull) — run now:
+112,568 rows sent, table 3,904,106 -> **3,994,333**, span to **2026-09-30**, so today's 06:20 io.aegis.paper rebuild
+already reads current crowding; wired into the coverage runner so it stays current (note: that runner is a
+sleep-86400 loop whose phase has drifted to ~20:16 UTC, not the nominal 02:40 calendar slot — pre-existing, stated,
+not changed here); continuity-guard now watches it (budget
+25.5d, verified RED at GRACE 0.5 against today's 15.1-day age, GREEN at the registered grace).
+NOT measured here and stated: how much the stale filter changed the sleeve's composition or the clock's marks since
+2026-09-23 — a paired same-code rebuild (stale vs fresh SI) is the measurement, and it is a read-only run for a later
+session; the clock's numeric floors are unchanged.
+Also found, not fixed: VT / ACWI / EWU bars stale since 2026-08-28 (outside the refresh set; blocks only the
+All-World row's price driver), and the registry guard's pre-existing RED (data-stack and threshold run only via
+guard-status.sh, not as direct runner lines).
+ACTS-ON: position — the deployed paper book's distress sleeve returns to the point-in-time crowding its adoption rule
+specified, from today's 06:20 paper rebuild.
+GOLD: reliability — a live input of the deployed book had silently frozen; it is now fed nightly and guarded, and the
+detector that found it (freshness, not presence) is itself scheduled nightly.

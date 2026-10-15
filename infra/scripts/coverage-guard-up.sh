@@ -282,6 +282,10 @@ while true; do
   # then the D-750 CEF universe, then liquid equities by descending dollar volume), resuming where the last run
   # stopped. The intended ~4,100-name universe therefore takes ~46 daily runs to fill, and the script PRINTS its panel
   # completeness every run so a partial panel can never be read as a complete one. Cheap (~2 min), safe to re-run.
+  # D-987: FINRA semi-monthly short interest — ORPHANED until today (froze at settlement 2026-07-31) while the DEPLOYED
+  # distress sleeve's CROWD_DC filter (D-971) reads days-to-cover from it. Incremental (newest held settlement onward),
+  # keyless, allowlisted api.finra.org, ~20 pages. Must precede io.aegis.paper (06:20), which rebuilds the sleeve.
+  deno run --allow-net --allow-env ../scripts/ingest-finra-si.ts > ../data/finra-si.log 2>&1 || echo "$(date -u +%FT%TZ) FINRA SHORT INTEREST INGEST FAILED — the deployed CROWD_DC filter would read stale crowding"
   deno run --allow-net --allow-env --allow-read ../scripts/ingest-borrow-fees.ts > ../data/borrow-fees.log 2>&1 || echo "$(date -u +%FT%TZ) BORROW FEE INGEST FAILED — short-side costs revert to assumed"
   # BAR REFRESH (D-683) — MUST PRECEDE THE ATTRIBUTION ENGINE. There was no scheduled ingest for the attribution
   # universe at all: bars were refreshed by hand, last on 2026-08-21, and the engine below ran every morning writing
@@ -387,10 +391,18 @@ while true; do
   # D-980: the P&L report, local. Replaces the aegis-pnl-report Claude routine that read a DEAD rented Supabase
   # (glzzoomuhnugsiichnub, HTTP 000). No LLM, no subscription, no network beyond localhost.
   deno run --allow-net --allow-env --allow-read --allow-write --allow-run ../scripts/pnl-report.ts > ../data/pnl-report.log 2>&1 || echo "$(date -u +%FT%TZ) PNL REPORT FAILED"
+  # D-987: the long-term BASKET (per-instrument driver maps, understood = measured material drivers / material, fresh
+  # within source-cadence budgets) and the SURPRISE-EFFECT programme (pre-registered in trd_prereg; accruing tests have
+  # their floors re-checked every night and turn this line RED the night one may be met, so maturity cannot lapse).
+  # Then data/cc-goals.json — the one small file Command Centre's factory reads, read-only. All three are light
+  # (REST reads + one ^GSPC/SPY bar load; < 200MB), $0, keyless, no new endpoints.
+  deno run --allow-net --allow-env --allow-read --allow-write ../scripts/basket-register.ts > ../data/basket-register.log 2>&1 || echo "$(date -u +%FT%TZ) BASKET REGISTER FAILED — see data/basket-register.log"
+  deno run --allow-net --allow-env --allow-read --allow-write ../scripts/surprise-program.ts > ../data/surprise-program.log 2>&1 || echo "$(date -u +%FT%TZ) SURPRISE PROGRAMME RED — a floor may be met (scorer required) or a run failed; see data/surprise-program.log"
+  deno run --allow-net --allow-env --allow-read --allow-write ../scripts/cc-goals.ts > ../data/cc-goals.log 2>&1 || echo "$(date -u +%FT%TZ) CC GOALS NOT REWRITTEN — an input is stale or the node did not answer; see data/cc-goals.log"
   # D-855: the cycle regenerates docs/CATALOGUE.md, docs/SEARCH_SPACE.md and docs/OPERATOR_QUEUE.md every day; left
   # uncommitted they sit as tree noise until a session commits them, which is a prompt in disguise. Paths-restricted,
   # local only (never pushes), no-op when nothing changed.
-  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/LIVE_STATE.md docs/PNL.md docs/archive/TENFOLD.md 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
+  ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/LIVE_STATE.md docs/PNL.md docs/archive/TENFOLD.md docs/BASKET.md docs/SURPRISE_EFFECTS.md research/basket.json research/surprise-ledger.json data/cc-goals.json 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
   sleep 86400
 done
 
