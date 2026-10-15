@@ -77,6 +77,16 @@ const FEEDS: [string, string, string, number, string][] = [
   // Semi-monthly settlements published ~8 business days later: interval 15d -> budget 15*1.5+3 = 25.5d, which the
   // newest settlement stays inside right up to the next publication.
   ["trd_short_interest?select=settlement&order=settlement.desc&limit=1", "FINRA short interest (CROWD_DC input)", "settlement", 15, "ingest-finra-si.ts"],
+  // D-989: UK rates + releases (basket GBP rows). BoE series are daily with a ~1 business-day lag (budget 4.5d). ONS
+  // CPI is dated at the reference month's START and released ~3rd week of the next month, so the newest value is
+  // legitimately ~82 days old the day before a release: interval 55 -> 85.5d. ONS labour series are rolling 3-month
+  // averages labelled at the period's first month, published ~6 weeks after it ends: interval 92 -> 141d.
+  ["trd_macro_series?series=eq.boe_bank_rate&select=d&order=d.desc&limit=1", "BoE Bank Rate (D-989)", "d", 1, "ingest-uk-macro.ts"],
+  ["trd_macro_series?series=eq.boe_sonia&select=d&order=d.desc&limit=1", "BoE SONIA (D-989)", "d", 1, "ingest-uk-macro.ts"],
+  ["trd_macro_series?series=eq.gilt_nom_zc_10y&select=d&order=d.desc&limit=1", "BoE nominal gilt curve (D-989)", "d", 1, "ingest-uk-macro.ts"],
+  ["trd_macro_series?series=eq.gilt_real_zc_10y&select=d&order=d.desc&limit=1", "BoE real (linker) gilt curve (D-989)", "d", 1, "ingest-uk-macro.ts"],
+  ["trd_macro_series?series=eq.ons_cpi_yoy&select=d&order=d.desc&limit=1", "ONS CPI/CPIH (D-989)", "d", 55, "ingest-uk-macro.ts"],
+  ["trd_macro_series?series=eq.ons_unemp_rate&select=d&order=d.desc&limit=1", "ONS labour market (D-989)", "d", 92, "ingest-uk-macro.ts"],
 ];
 
 const today = Date.now();

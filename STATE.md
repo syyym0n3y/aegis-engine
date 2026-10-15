@@ -1,6 +1,6 @@
 # STATE.md — current live state
 
-_Updated 2026-10-15 (D-987/988: basket, surprise programme, cc-goals, short-interest orphan). Rewritten 2026-09-23 (D-970 audit: the previous version had stopped at 2026-09-13 with seven
+_Updated 2026-10-15 (D-987/988/989: basket, surprise programme, cc-goals, short-interest orphan). Rewritten 2026-09-23 (D-970 audit: the previous version had stopped at 2026-09-13 with seven
 competing "(LATEST)" sections; this file is now a single current page, and staleness relative
 to DECISIONS.md is a named audit check)._
 
@@ -36,6 +36,11 @@ to DECISIONS.md is a named audit check)._
 - **Surprise programme** (`docs/SURPRISE_EFFECTS.md`, `research/surprise-ledger.json`): 6 pre-registered (`trd_prereg`
   D-987-*), 2 tested — claims statistical surprise UNTESTED (failed day-0 positive control), CPI statistical surprise
   REJECTED (sign missed) — 0 survived, 4 accruing with nightly floor checks that turn RED at maturity.
+- **D-989 (UK half):** BoE (Bank Rate, SONIA, nominal/real gilt curves) + ONS (CPI/CPIH, labour) wired nightly and
+  continuity-guarded; basket now **10/17** — GBP money market 1.00, UK gilts 0.86, UK linkers 0.86, FTSE 100 0.83 joined.
+  UK CPI naive surprise UNTESTED (day-0 gilt control t 1.20). Surprise programme: 7 registered, 3 tested, 0 survived.
+- **Night shift holds its slot** (D-989): coverage 02:40 / daily 02:10 / crypto-forward 03:40 via `_night-window.sh`
+  (the `sleep 86400` drift had walked coverage to 09:57Z, then a reload ran it at 20:16Z).
 - **`data/cc-goals.json`** — the read-only progress file Command Centre reads (regenerated each cycle, committed).
 - **D-988:** FINRA short interest (the deployed CROWD_DC filter's input) had frozen at 2026-07-31 — ingest orphaned;
   now incremental, wired, continuity-guarded, current to 2026-09-30.

@@ -22876,3 +22876,64 @@ ACTS-ON: position — the deployed paper book's distress sleeve returns to the p
 specified, from today's 06:20 paper rebuild.
 GOLD: reliability — a live input of the deployed book had silently frozen; it is now fed nightly and guarded, and the
 detector that found it (freshness, not presence) is itself scheduled nightly.
+
+## D-989 (2026-10-15) THE UK HALF OF THE BASKET, MEASURED — BoE + ONS wired, four GBP rows move in; the naive UK CPI surprise fails its own control; the night shift made to hold its window
+
+Operator allowlisted `bankofengland.co.uk` and `ons.gov.uk` (2026-10-15). Each endpoint was PROBED WITH ONE CALL
+before code was written: BoE IADB CSV (`_iadb-fromshowcolumns.asp?csv.x=yes`, browser UA required) returned HTTP 200
+`application/csv` with all 7 requested columns (Bank Rate 3.75, SONIA 3.7302, 10y nominal zc 5.2068, 10y real zc
+1.8741, 10y implied inflation 3.3327 on 2026-09-01; the newest row is blank — the fitted curves land ~1 business day
+late); ONS time-series JSON (`www.ons.gov.uk/.../timeseries/d7g7/mm23/data`) returned 452 months with a per-observation
+`updateDate`. `scripts/ingest-uk-macro.ts` (NEW; incremental for BoE with a 10-day overlap; every ONS series' TITLE
+asserted) wrote 76,260 rows: Bank Rate/SONIA/gilt curves 1975+, CPI/CPIH annual rates, CPI index, unemployment,
+employment rate, AWE pay growth. FIRST VALUES: Bank Rate 3.75% (2026-10-13), SONIA 3.7323% (10-12), gilt 10y nominal
+zc 5.4287%, real 2.0163%, implied inflation 3.4124% (10-12); UK CPI 3.1% y/y (Aug, released 2026-09-16); unemployment
+4.9%; AWE total-pay growth 3.9%. RELEASE DATES: CPI is never revised, so an observation stamped 35-60 days after its
+reference month is its first release — 130 first-release dates 2015-10..2026-09 recovered (`ons_release:cpi`); the
+2015 rebasing re-stamped earlier history, which is excluded, not guessed. Labour series are re-stamped every month
+(revised), so 0 first-release dates exist: a UK labour SURPRISE is not testable point-in-time — stated.
+Recorded in every registry this repo has (there is no single feed registry): continuity-guard (6 feeds: Bank Rate,
+SONIA, nominal curve, real curve at 1d interval; CPI 55d; labour 92d — budgets matched to publication lags),
+driver-register (UK class, 6 HELD), gap register (`boe-uk-rates`, `ons-uk-releases` -> filled with live backing),
+coverage runner (nightly). Guards re-run green (registry's pre-existing RED unchanged).
+
+**BASKET RE-SCORED — 10 of 17 now understood >= 0.8.** GBP money market 0.00 -> **1.00 (3/3)**; UK gilts 0.20 ->
+**0.86 (6/7, DMO issuance the only gap)**; UK linkers 0.20 -> **0.86 (6/7, DMO linker issuance)**; FTSE 100 0.46 ->
+**0.83 (10/12, constituent earnings + UK fund flows)**. Stated changes to the register, not hidden: (1) the monthly
+freshness budget moved 75 -> 85 days and a 140-day budget was added for ONS rolling 3-month labour series, because UK
+CPI is dated at period start and published ~3rd week of the next month — at 75 it would read STALE every month before
+its release (crying wolf); no existing row changed state; (2) UK rows gained the drivers their US twins already carry
+(an expected-BoE-path proxy — the 5y nominal zero-coupon yield, labelled PROXY — and labour for gilts); the linker
+row's implied inflation is RPI-based while CPI/CPIH is what is ingested — a stated wedge. UCITS conversion remains
+UNMEASURED for every row.
+
+**THE UK CPI TEST — PREREG: D-989-uk-cpi-surprise-gilts**, registered 2026-10-15T02:25:14Z before any computation;
+control first, as in D-987. z = (annual CPI rate - previous month's annual rate) / sd of that change over 24 months;
+outcome the BoE 5y nominal zero-coupon yield; registered sign POSITIVE (gilts under-react). n 130 (2015-10-13..2026-09-16).
+POSITIVE CONTROL: day-0 yield move **+0.58bp per 1sd, t 1.20 (NW1 1.46) — FAILS |t| >= 2**. Primary R -> R+5:
++0.71bp/sd t 0.90; halves +0.68 / +0.50bp; effect 0.32x a 10bp round trip; expression net -6.0bp/release, DSR 0.00, PBO
+0.77. **Verdict UNTESTED** (outcome written once): the naive no-change surprise is not what gilts price on release day,
+so the forward null is about the proxy. With D-987 this makes three statistical-surprise proxies across two countries
+and both asset classes that are either unpriced (claims, UK CPI) or sign-missed (US CPI) — DESCRIPTIVE ONLY, and the
+consistent reading is that the consensus surprise, which is not held for free, is the object; it stays UNTESTED.
+
+**THE SCHEDULING DEFECT, ROOT-CAUSED FROM THE LOG.** The resident loops ended every cycle with `sleep 86400`, so each
+cycle started "previous start + duration + 24h": coverage walked 2026-10-07 21:33Z -> 23:34 -> 01:38 -> 03:28 -> 05:23
+-> 07:20 -> 10-14 09:57Z (~2h later each day); launchd's 02:40 StartCalendarInterval only governs the FIRST launch,
+because launchd never re-fires a job that is still running. Then a reload on 2026-10-14 (boot-triage at 19:33Z with
+the host up 10 days — not a reboot) restarted the loop and it cycled immediately at 20:16Z (21:16 BST, the operator's
+evening). Neither was launchd catch-up after sleep; a third, latent skew was: `sleep N` counts monotonic time that stops
+while the Mac sleeps. FIX: `infra/scripts/_night-window.sh` (NEW) — at the top of each cycle wait until local time is
+inside [START, START+90min); at the end wait for the next START (computed from tomorrow's DATE, so DST cannot shift it),
+in <= 300s chunks against the wall clock. Applied to coverage (02:40), daily (02:10) and crypto-forward (03:40). Tested
+under `set -euo pipefail` in dry mode (inside window -> runs; outside -> holds to the next slot). The sleeping loops pick
+it up through D-824 self-restart and then hold the slot.
+
+**CORRECTION OF D-987:** D-987 and its gap row said `api.fiscaldata.treasury.gov` was NOT allowlisted. It was —
+`^https?://(www\.|home\.|api\.fiscaldata\.)?treasury\.gov/` has long matched it (a dedicated line now exists too). I
+asserted a limitation without checking the file, the exact failure OPERATING_DOCTRINE Part 1 forbids. Gap row, basket
+driver text and SURPRISE_EFFECTS corrected; the Treasury-auction ingest is unbuilt (not in this request's scope).
+ACTS-ON: gate — four GBP instruments now pass the measured-understanding gate and the UK CPI surprise question is
+decided by its own control; the night-shift loops can no longer drift into working hours.
+GOLD: research — the basket stops being a US-only object, and a third statistical-surprise proxy is closed honestly
+rather than mined for a sign.

@@ -1,15 +1,16 @@
 {
-  "generated_at": "2026-10-15T02:15:08.296Z",
+  "generated_at": "2026-10-15T02:27:29.837Z",
   "generator": "scripts/surprise-program.ts (D-987)",
   "counts": {
-    "preregistered": 6,
-    "tested": 2,
+    "preregistered": 7,
+    "tested": 3,
     "survived": 0,
     "accruing": 4
   },
   "tests": [
     {
       "id": "D-987-claims-surprise-spx",
+      "sign": "NEGATIVE",
       "variable": "macro release surprise (labour, weekly)",
       "instruments": "S&P 500 (CSPX/SPY via ^GSPC)",
       "data": "FRED ICSA (keyless fredgraph, existing feed) + trd_bars_deep ^GSPC/SPY",
@@ -77,7 +78,7 @@
         },
         "effect_x_cost": 0.51,
         "cost_bp_round_trip": 6,
-        "ceiling": 3.188,
+        "ceiling": 3.19,
         "trading_expression": {
           "gross_mean_bp": 2.54,
           "net_mean_bp": 0.42,
@@ -91,7 +92,7 @@
             "13wk"
           ]
         },
-        "ceiling_before_spend": 3.188,
+        "ceiling_before_spend": 3.19,
         "trials_spent_now": 4,
         "instrument_conversion_spy_on_gspc_weekly": {
           "n_weeks": 1696,
@@ -102,6 +103,7 @@
     },
     {
       "id": "D-987-cpi-surprise-spx",
+      "sign": "NEGATIVE",
       "variable": "macro release surprise (inflation, monthly)",
       "instruments": "S&P 500 (CSPX/SPY via ^GSPC)",
       "data": "trd_macro_series cpi (FRED CPIAUCSL) + bls:consumer-price-index release dates (D-877) + ^GSPC",
@@ -149,7 +151,7 @@
         },
         "effect_x_cost": 3.38,
         "cost_bp_round_trip": 6,
-        "ceiling": 3.186,
+        "ceiling": 3.188,
         "trading_expression": {
           "gross_mean_bp": -13.57,
           "net_mean_bp": -15.86,
@@ -166,6 +168,7 @@
     },
     {
       "id": "D-987-pead-holdout",
+      "sign": "NEGATIVE",
       "variable": "earnings surprise / post-earnings drift (holdout)",
       "instruments": "US liquid single names (not ISA-basket; informs the S&P/Nasdaq driver map)",
       "data": "trd_earnings (Nasdaq calendar, daily ingest) + trd_bars_deep",
@@ -188,6 +191,7 @@
     },
     {
       "id": "D-987-revision-surprise",
+      "sign": "NEGATIVE",
       "variable": "estimate-revision surprise",
       "instruments": "US liquid single names (feeds the S&P/Nasdaq 'earnings revisions' driver)",
       "data": "trd_macro_series est_rev90_0q:* (D-817, daily since 2026-09-07) + trd_bars_deep",
@@ -205,6 +209,7 @@
     },
     {
       "id": "D-987-implied-move-surprise",
+      "sign": "NEGATIVE",
       "variable": "options-implied vs realised move surprise (earnings)",
       "instruments": "US liquid single names with listed options",
       "data": "trd_perp_oi venue=cboe interval=atm_iv_near (daily, forward-only since ~2026-08-22) + trd_earnings + trd_bars_deep",
@@ -223,6 +228,7 @@
     },
     {
       "id": "D-987-release-reversal-forward",
+      "sign": "NEGATIVE",
       "variable": "macro release-hour surprise reaction (reversal), forward",
       "instruments": "S&P 500 / Nasdaq-100 (CSPX, EQQQ)",
       "data": "trd_fx_hourly USA500IDXUSD/USATECHIDXUSD (Dukascopy, hourly refresh) + bls:* calendar",
@@ -235,6 +241,60 @@
       "numbers": {
         "releases_upper_bound": 4,
         "floor_required": 40
+      }
+    },
+    {
+      "id": "D-989-uk-cpi-surprise-gilts",
+      "sign": "POSITIVE",
+      "variable": "UK macro release surprise (CPI, monthly)",
+      "instruments": "UK gilts (IGLT/short-dated gilt funds; research series BoE 5y zero-coupon yield)",
+      "data": "ONS D7G7 + ons_release:cpi first-release dates + BoE IUDSNZC (D-989 ingest)",
+      "registered_at": "2026-10-15T02:25:14.587364+00:00",
+      "cost_bp_round_trip": 10,
+      "trials_declared": 3,
+      "status": "UNTESTED",
+      "recorded_outcome": "untested",
+      "summary": "POSITIVE CONTROL FAILED: day-0 5y gilt yield move 0.58bp/sd t 1.20 — the naive UK CPI surprise is not what gilts price on release day.",
+      "numbers": {
+        "n_events": 130,
+        "span": "2015-10-13..2026-09-16",
+        "control_day0": {
+          "slope_bp_per_sd": 0.58,
+          "t": 1.2,
+          "tNW1": 1.46
+        },
+        "primary_fwd5": {
+          "slope_bp_per_sd": 0.71,
+          "t": 0.9,
+          "tNW1": 1.22,
+          "deciding_t": 0.9
+        },
+        "half1": {
+          "n": 86,
+          "slope_bp": 0.68,
+          "t": 0.72
+        },
+        "half2": {
+          "n": 44,
+          "slope_bp": 0.5,
+          "t": 0.3
+        },
+        "effect_x_cost": 0.32,
+        "cost_bp_round_trip": 10,
+        "ceiling": 3.188,
+        "units": "slopes in bp of 5y gilt YIELD per 1sd; effect = slope x 4.5 duration in bp of price",
+        "trading_expression": {
+          "gross_mean_bp": -2.11,
+          "net_mean_bp": -6,
+          "net_sr_per_event": -0.2701,
+          "dsr": 0,
+          "minTRL": "Infinity",
+          "pbo": 0.771,
+          "variants": [
+            "24m",
+            "36m"
+          ]
+        }
       }
     }
   ]

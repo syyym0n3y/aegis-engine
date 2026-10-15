@@ -1,19 +1,23 @@
 # THE LONG-TERM BASKET — instruments held only because we can measure what moves them (D-987)
 
-> Regenerated every daily coverage-runner cycle by `scripts/basket-register.ts`; generated 2026-10-15T02:15:03.260Z. Machine-readable: `research/basket.json`. **Not advice** — single-operator research; every vehicle is a candidate to verify with the broker (ISA/SIPP eligibility, KID, TER, currency line).
+> Regenerated every daily coverage-runner cycle by `scripts/basket-register.ts`; generated 2026-10-15T02:27:36.880Z. Machine-readable: `research/basket.json`. **Not advice** — single-operator research; every vehicle is a candidate to verify with the broker (ISA/SIPP eligibility, KID, TER, currency line).
 
-**understood = measured material drivers ÷ material drivers.** A driver is MEASURED only if its feed is held AND fresh within a budget matched to how often its source publishes (daily 6d · weekly 14d · monthly 75d, monthly series dated at period start). Held-but-stale is not measured (CONTINUITY LAW). Materiality was fixed per instrument from the operator's category list before any probe ran; non-material drivers are shown but never scored. Floor for membership: **0.8**.
+**understood = measured material drivers ÷ material drivers.** A driver is MEASURED only if its feed is held AND fresh within a budget matched to how often its source publishes (daily 6d · weekly 14d · monthly 85d, monthly series dated at period start). Held-but-stale is not measured (CONTINUITY LAW). Materiality was fixed per instrument from the operator's category list before any probe ran; non-material drivers are shown but never scored. Floor for membership: **0.8**.
 
-**6 of 17 candidates qualify.** What this basket is and is not: it EXTENDS the deployed 5-sleeve blend (D-930..D-971) rather than duplicating it — the blend's trend/long sleeves already trade the price of every instrument marked "in trend universe" (read from `tsmom-book.ts` LONGONLY_RE at run time); its distress and IVOL sleeves are single-name SHORTS that no ISA can hold and are therefore not basket members. Understanding a driver is not an edge in it: most rows below carry the record's verdict that the driver is real and NOT forward-tradable — which is exactly why the basket is held through its drivers rather than timed on them (WEALTH_PATH: every timing overlay tested cost terminal wealth; the trend switch is the one admitted exception, measured as a drawdown result).
+**10 of 17 candidates qualify.** What this basket is and is not: it EXTENDS the deployed 5-sleeve blend (D-930..D-971) rather than duplicating it — the blend's trend/long sleeves already trade the price of every instrument marked "in trend universe" (read from `tsmom-book.ts` LONGONLY_RE at run time); its distress and IVOL sleeves are single-name SHORTS that no ISA can hold and are therefore not basket members. Understanding a driver is not an edge in it: most rows below carry the record's verdict that the driver is real and NOT forward-tradable — which is exactly why the basket is held through its drivers rather than timed on them (WEALTH_PATH: every timing overlay tested cost terminal wealth; the trend switch is the one admitted exception, measured as a drawdown result).
 
 ## Scoreboard
 
 | instrument | candidate vehicle | research proxy | in trend universe | understood | basket | what blocks it |
 |---|---|---|---|---|---|---|
 | US Treasury bills 0-1y | IB01 (UCITS, USD) — candidate | SHY / 3m bill yield | yes | **1.00** (4/4) | **YES** | — |
+| GBP overnight money market | CSH2 / XSTR (UCITS, GBP) — candidate | SONIA (BoE IADB) — a rate, not a fund price | no | **1.00** (3/3) | **YES** | — |
 | Physical gold | SGLN / IGLN (physical ETC, GBP/USD lines) — candidate | GLD / GC=F | yes | **0.92** (11/12) | **YES** | central-bank buying |
 | US TIPS | ITPS / IDTP (UCITS) — candidate | TIP | no | **0.88** (7/8) | **YES** | TIPS auction supply |
 | US Treasuries 20y+ | IDTL / DTLA (UCITS; GBP-hedged line exists) — candidate | TLT | yes | **0.86** (12/14) | **YES** | Treasury auction supply and results; term premium (ACM) |
+| UK gilts (conventional) | IGLT / VGOV (UCITS) — candidate | BoE nominal zero-coupon curve — yields, not a fund price | no | **0.86** (6/7) | **YES** | DMO issuance / auction results |
+| UK index-linked gilts | INXG (UCITS) — candidate | BoE real zero-coupon curve — yields, not a fund price | no | **0.86** (6/7) | **YES** | DMO linker issuance |
+| FTSE 100 | ISF / VUKE (UCITS, GBP) — candidate | ^FTSE (EWU) | yes | **0.83** (10/12) | **YES** | FTSE constituent earnings / revisions; UK fund flows / positioning |
 | S&P 500 | CSPX / VUAG (UCITS, USD/GBP lines) — candidate | SPY / ^GSPC | yes | **0.82** (14/17) | **YES** | US activity surveys (ISM / PMI); fund / ETF flows (creations, redemptions); corporate buybacks / blackout windows |
 | Nasdaq-100 | EQQQ / CNX1 (UCITS) — candidate | QQQ | yes | **0.82** (14/17) | **YES** | US activity surveys (ISM / PMI); fund / ETF flows (creations, redemptions); corporate buybacks / blackout windows |
 | Bitcoin | physically-backed BTC ETP/ETN (UK retail since 2025-10; ISA eligibility — verify) — candidate | BTC-USD / BTCUSDT | no | **0.75** (9/12) | no | spot-ETF flows; stablecoin supply (crypto liquidity); regulatory / exchange events |
@@ -23,10 +27,6 @@
 | Broad commodities | CMOD (UCITS) — candidate | DBC | no | **0.67** (6/9) | no | live futures curves / roll yield; China demand / PMI; agricultural supply (USDA WASDE / weather) |
 | WTI crude oil | CRUD (ETC) — candidate | CL=F | no | **0.67** (6/9) | no | live futures curve / roll yield; OPEC+ decisions; demand (EIA product supplied, refinery runs) |
 | Emerging-market equity | EIMI / VFEM (UCITS) — candidate | EEM | yes | **0.60** (6/10) | no | China activity / credit impulse; EM policy rates (CNY/KRW/INR/BRL); EM constituent earnings / revisions; EM fund flows |
-| FTSE 100 | ISF / VUKE (UCITS, GBP) — candidate | ^FTSE (EWU) | yes | **0.46** (5/11) | no | UK CPI / RPI + ONS release calendar; UK labour market (ONS); Bank Rate / SONIA (BoE policy path); gilt curve (nominal); FTSE constituent earnings / revisions; UK fund flows / positioning |
-| UK gilts (conventional) | IGLT / VGOV (UCITS) — candidate | none held | no | **0.20** (1/5) | no | gilt curve (nominal); UK CPI / RPI + ONS release calendar; Bank Rate / SONIA (BoE policy path); DMO issuance / auction results |
-| UK index-linked gilts | INXG (UCITS) — candidate | none held | no | **0.20** (1/5) | no | UK real yields; UK CPI / RPI + ONS release calendar; Bank Rate / SONIA (BoE policy path); UK breakevens / RPI swaps |
-| GBP overnight money market | CSH2 / XSTR (UCITS, GBP) — candidate | none | no | **0.00** (0/2) | no | Bank Rate / SONIA (BoE policy path); SONIA fixing |
 
 ## Driver maps
 
@@ -108,17 +108,18 @@ Vehicle: VWRP / SWDA (UCITS) — candidate. Proxy: VT / ACWI (EFA for ex-US). Ro
 | liquidity / credit | credit spread (BAA-10y) | yes | MEASURED | `trd_macro_series credit_baa_10y` (2026-10-13) | — |
 | flows / positioning | fund / ETF flows (creations, redemptions) | yes | GAP | no free keyless daily equity fund-flow history held (ICI is weekly aggregate, not ingested; issuer creation data not collected) | named barrier — not a market finding |
 
-### FTSE 100 — understood 0.46 (5/11) — BLOCKED
+### FTSE 100 — understood 0.83 (10/12) — IN THE BASKET
 
 Vehicle: ISF / VUKE (UCITS, GBP) — candidate. Proxy: ^FTSE (EWU). Role: home-currency equity. Vehicle conversion: UNMEASURED — no UCITS price series held; research proxy is US-listed (INSTRUMENT LAW).
 
 | category | driver | material | state | feed (latest) | what the record says |
 |---|---|---|---|---|---|
 | price itself | own price / trend / volatility (^FTSE) | yes | MEASURED | `trd_bars_deep ^FTSE` (2026-10-14) | — |
-| macro releases | UK CPI / RPI + ONS release calendar | yes | GAP | ONS releases and calendar not ingested (free; ons.gov.uk not allowlisted) | named barrier — not a market finding |
-| macro releases | UK labour market (ONS) | yes | GAP | not ingested (ons.gov.uk not allowlisted) | named barrier — not a market finding |
-| rates | Bank Rate / SONIA (BoE policy path) | yes | STALE | `trd_macro_series rate_3m_gbp` (2026-01-01) | the only GBP rate held is the OECD 3m interbank MONTHLY series; BoE IADB (daily, free, keyless) is not allowlisted |
-| rates | gilt curve (nominal) | yes | GAP | no gilt yield series held; BoE IADB yield curves are free and keyless but bankofengland.co.uk is NOT allowlisted | named barrier — not a market finding |
+| macro releases | UK CPI / CPIH + ONS first-release dates | yes | MEASURED | `trd_macro_series ons_cpi_yoy` (2026-08-01) | ONS D7G7/L55O/D7BT; 130 first-release dates 2015+ (ons_release:cpi). UK CPI surprise: see D-989 / docs/SURPRISE_EFFECTS.md |
+| macro releases | UK labour market (unemployment, employment, AWE pay growth) | yes | MEASURED | `trd_macro_series ons_unemp_rate` (2026-06-01) | ONS MGSX/LF24/KAC3 — LATEST VINTAGE (revised; no first-release dates recoverable), so a labour SURPRISE is not testable point-in-time |
+| rates | Bank Rate (BoE policy rate) | yes | MEASURED | `trd_macro_series boe_bank_rate` (2026-10-13) | BoE IADB IUDBEDR, daily from 1975 (D-989); the OECD 3m monthly series it replaces was 287 days stale |
+| rates | expected BoE path — PROXY: 5y nominal zero-coupon gilt yield (BoE IUDSNZC) — the short-dated curve is the market-implied path; SONIA OIS not held | yes | MEASURED | `trd_macro_series gilt_nom_zc_5y` (2026-10-12) | — |
+| rates | gilt curve (nominal zero-coupon 5/10/20y) | yes | MEASURED | `trd_macro_series gilt_nom_zc_10y` (2026-10-12) | BoE IADB fitted curve, ~1 business day publication lag (D-989) |
 | earnings / revisions | FTSE constituent earnings / revisions | yes | GAP | earnings + revisions feeds cover US-listed names only | named barrier — not a market finding |
 | FX | GBPUSD (FTSE 100 earns ~75% of revenue abroad — inverse GBP exposure) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
 | commodity links | crude oil (energy weight) | yes | MEASURED | `trd_bars_deep CL=F` (2026-10-14) | — |
@@ -158,7 +159,7 @@ Vehicle: IDTL / DTLA (UCITS; GBP-hedged line exists) — candidate. Proxy: TLT. 
 | macro releases | US weekly initial jobless claims | yes | MEASURED | `trd_macro_series claims_initial_sa` (2026-10-03) | statistical claims surprise UNTESTED — failed its day-0 positive control (D-987-claims-surprise-spx) |
 | macro releases | US nonfarm payrolls (level; latest vintage) | yes | MEASURED | `trd_macro_series payrolls_total` (2026-09-01) | held from D-987; first-print vintages NOT held (ALFRED) so payroll SURPRISE is untestable point-in-time |
 | rates | expected Fed policy path — PROXY: 2y Treasury yield (trd_yield_curve y2) — the standard market-implied proxy; fed-funds futures/OIS not held (CME paid) | yes | MEASURED | `trd_yield_curve` (2026-10-14) | — |
-| flows / positioning | Treasury auction supply and results | yes | GAP | fiscaldata.treasury.gov auction results are free and keyless but the host is NOT allowlisted | named barrier — not a market finding |
+| flows / positioning | Treasury auction supply and results | yes | GAP | api.fiscaldata.treasury.gov auction results are free and keyless and the host IS allowlisted (D-989 corrects D-987, which said it was not) — not yet ingested | named barrier — not a market finding |
 | rates | term premium (ACM) | yes | GAP | NY Fed ACM term-premium file is free but newyorkfed.org is NOT allowlisted | named barrier — not a market finding |
 | rates | Fed balance sheet (QT/QE supply) | yes | MEASURED | `trd_macro_series fed_balance_sheet` (2026-10-07) | held from D-987 (FRED WALCL, existing keyless feed) |
 | flows / positioning | CFTC TFF positioning (UST bond futures) | yes | MEASURED | `trd_cot_tff 020601` (2026-10-06) | — |
@@ -192,37 +193,42 @@ Vehicle: IB01 (UCITS, USD) — candidate. Proxy: SHY / 3m bill yield. Role: USD 
 | FX | GBPUSD (currency of account for a UK holder, unhedged line) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
 | price itself | own price / trend / volatility (SHY) | yes | MEASURED | `trd_bars_deep SHY` (2026-10-14) | the deployed blend's trend/long sleeves trade this price: ISA-ETF trend switch OOS Sharpe 0.62-0.76, maxDD -7..-11% (D-868/870); rates bucket worth 0.21 Sharpe as a CLASS (D-901) |
 
-### GBP overnight money market — understood 0.00 (0/2) — BLOCKED
+### GBP overnight money market — understood 1.00 (3/3) — IN THE BASKET
 
-Vehicle: CSH2 / XSTR (UCITS, GBP) — candidate. Proxy: none. Role: GBP cash ballast. Vehicle conversion: UNMEASURED — no UCITS price series held; research proxy is US-listed (INSTRUMENT LAW).
-
-| category | driver | material | state | feed (latest) | what the record says |
-|---|---|---|---|---|---|
-| rates | Bank Rate / SONIA (BoE policy path) | yes | STALE | `trd_macro_series rate_3m_gbp` (2026-01-01) | the only GBP rate held is the OECD 3m interbank MONTHLY series; BoE IADB (daily, free, keyless) is not allowlisted |
-| rates | SONIA fixing | yes | GAP | SONIA (BoE) not held — bankofengland.co.uk not allowlisted | named barrier — not a market finding |
-
-### UK gilts (conventional) — understood 0.20 (1/5) — BLOCKED
-
-Vehicle: IGLT / VGOV (UCITS) — candidate. Proxy: none held. Role: GBP duration. Vehicle conversion: UNMEASURED — no UCITS price series held; research proxy is US-listed (INSTRUMENT LAW).
+Vehicle: CSH2 / XSTR (UCITS, GBP) — candidate. Proxy: SONIA (BoE IADB) — a rate, not a fund price. Role: GBP cash ballast. Vehicle conversion: UNMEASURED — no UCITS price series held; research proxy is US-listed (INSTRUMENT LAW).
 
 | category | driver | material | state | feed (latest) | what the record says |
 |---|---|---|---|---|---|
-| rates | gilt curve (nominal) | yes | GAP | no gilt yield series held; BoE IADB yield curves are free and keyless but bankofengland.co.uk is NOT allowlisted | named barrier — not a market finding |
-| macro releases | UK CPI / RPI + ONS release calendar | yes | GAP | ONS releases and calendar not ingested (free; ons.gov.uk not allowlisted) | named barrier — not a market finding |
-| rates | Bank Rate / SONIA (BoE policy path) | yes | STALE | `trd_macro_series rate_3m_gbp` (2026-01-01) | the only GBP rate held is the OECD 3m interbank MONTHLY series; BoE IADB (daily, free, keyless) is not allowlisted |
+| rates | Bank Rate (BoE policy rate) | yes | MEASURED | `trd_macro_series boe_bank_rate` (2026-10-13) | BoE IADB IUDBEDR, daily from 1975 (D-989); the OECD 3m monthly series it replaces was 287 days stale |
+| rates | SONIA fixing (what the fund earns) | yes | MEASURED | `trd_macro_series boe_sonia` (2026-10-12) | — |
+| rates | expected BoE path — PROXY: 5y nominal zero-coupon gilt yield (BoE IUDSNZC) — the short-dated curve is the market-implied path; SONIA OIS not held | yes | MEASURED | `trd_macro_series gilt_nom_zc_5y` (2026-10-12) | — |
+
+### UK gilts (conventional) — understood 0.86 (6/7) — IN THE BASKET
+
+Vehicle: IGLT / VGOV (UCITS) — candidate. Proxy: BoE nominal zero-coupon curve — yields, not a fund price. Role: GBP duration. Vehicle conversion: UNMEASURED — no UCITS price series held; research proxy is US-listed (INSTRUMENT LAW).
+
+| category | driver | material | state | feed (latest) | what the record says |
+|---|---|---|---|---|---|
+| rates | gilt curve (nominal zero-coupon 5/10/20y) | yes | MEASURED | `trd_macro_series gilt_nom_zc_10y` (2026-10-12) | BoE IADB fitted curve, ~1 business day publication lag (D-989) |
+| macro releases | UK CPI / CPIH + ONS first-release dates | yes | MEASURED | `trd_macro_series ons_cpi_yoy` (2026-08-01) | ONS D7G7/L55O/D7BT; 130 first-release dates 2015+ (ons_release:cpi). UK CPI surprise: see D-989 / docs/SURPRISE_EFFECTS.md |
+| macro releases | UK labour market (unemployment, employment, AWE pay growth) | yes | MEASURED | `trd_macro_series ons_unemp_rate` (2026-06-01) | ONS MGSX/LF24/KAC3 — LATEST VINTAGE (revised; no first-release dates recoverable), so a labour SURPRISE is not testable point-in-time |
+| rates | Bank Rate (BoE policy rate) | yes | MEASURED | `trd_macro_series boe_bank_rate` (2026-10-13) | BoE IADB IUDBEDR, daily from 1975 (D-989); the OECD 3m monthly series it replaces was 287 days stale |
+| rates | expected BoE path — PROXY: 5y nominal zero-coupon gilt yield (BoE IUDSNZC) — the short-dated curve is the market-implied path; SONIA OIS not held | yes | MEASURED | `trd_macro_series gilt_nom_zc_5y` (2026-10-12) | — |
 | flows / positioning | DMO issuance / auction results | yes | GAP | dmo.gov.uk not ingested or allowlisted | named barrier — not a market finding |
 | rates | global duration (US 10y) | yes | MEASURED | `trd_yield_curve` (2026-10-14) | — |
 
-### UK index-linked gilts — understood 0.20 (1/5) — BLOCKED
+### UK index-linked gilts — understood 0.86 (6/7) — IN THE BASKET
 
-Vehicle: INXG (UCITS) — candidate. Proxy: none held. Role: GBP inflation protection. Vehicle conversion: UNMEASURED — no UCITS price series held; research proxy is US-listed (INSTRUMENT LAW).
+Vehicle: INXG (UCITS) — candidate. Proxy: BoE real zero-coupon curve — yields, not a fund price. Role: GBP inflation protection. Vehicle conversion: UNMEASURED — no UCITS price series held; research proxy is US-listed (INSTRUMENT LAW).
 
 | category | driver | material | state | feed (latest) | what the record says |
 |---|---|---|---|---|---|
-| rates | UK real yields | yes | GAP | BoE real curve not held (not allowlisted) | named barrier — not a market finding |
-| macro releases | UK CPI / RPI + ONS release calendar | yes | GAP | ONS releases and calendar not ingested (free; ons.gov.uk not allowlisted) | named barrier — not a market finding |
-| rates | Bank Rate / SONIA (BoE policy path) | yes | STALE | `trd_macro_series rate_3m_gbp` (2026-01-01) | the only GBP rate held is the OECD 3m interbank MONTHLY series; BoE IADB (daily, free, keyless) is not allowlisted |
-| rates | UK breakevens / RPI swaps | yes | GAP | not held | named barrier — not a market finding |
+| rates | UK real yields (10y real zero-coupon) | yes | MEASURED | `trd_macro_series gilt_real_zc_10y` (2026-10-12) | — |
+| macro releases | UK CPI / CPIH + ONS first-release dates | yes | MEASURED | `trd_macro_series ons_cpi_yoy` (2026-08-01) | ONS D7G7/L55O/D7BT; 130 first-release dates 2015+ (ons_release:cpi). UK CPI surprise: see D-989 / docs/SURPRISE_EFFECTS.md |
+| rates | Bank Rate (BoE policy rate) | yes | MEASURED | `trd_macro_series boe_bank_rate` (2026-10-13) | BoE IADB IUDBEDR, daily from 1975 (D-989); the OECD 3m monthly series it replaces was 287 days stale |
+| rates | expected BoE path — PROXY: 5y nominal zero-coupon gilt yield (BoE IUDSNZC) — the short-dated curve is the market-implied path; SONIA OIS not held | yes | MEASURED | `trd_macro_series gilt_nom_zc_5y` (2026-10-12) | — |
+| rates | UK breakeven inflation (10y implied, BoE) | yes | MEASURED | `trd_macro_series gilt_infl_zc_10y` (2026-10-12) | BoE implied inflation is RPI-based (linkers pay RPI; RPI is not ingested — the CPI/CPIH gap to RPI is a stated wedge) |
+| flows / positioning | DMO linker issuance | yes | GAP | dmo.gov.uk not ingested or allowlisted | named barrier — not a market finding |
 | rates | global real yields (US 10y TIPS) | yes | MEASURED | `trd_macro_series real_yield_10y` (2026-10-13) | — |
 
 ### Physical gold — understood 0.92 (11/12) — IN THE BASKET
@@ -330,25 +336,15 @@ Vehicle: LQDE (UCITS) — candidate. Proxy: LQD. Role: duration + credit carry. 
 
 ## The gaps that would move instruments into the basket (free unless stated)
 
-- **Bank Rate / SONIA (BoE policy path) (STALE, latest 2026-01-01)** — blocks: FTSE 100, GBP overnight money market, UK gilts (conventional), UK index-linked gilts
 - **no free keyless daily equity fund-flow history held (ICI is weekly aggregate, not ingested; issuer creation data not collected)** — blocks: All-World / Developed World, US high-yield credit, US investment-grade credit
-- **ONS releases and calendar not ingested (free; ons.gov.uk not allowlisted)** — blocks: FTSE 100, UK gilts (conventional), UK index-linked gilts
-- **no gilt yield series held; BoE IADB yield curves are free and keyless but bankofengland.co.uk is NOT allowlisted** — blocks: FTSE 100, UK gilts (conventional)
 - **own price / trend / volatility (VT) (STALE, latest 2026-08-28)** — blocks: All-World / Developed World
 - **earnings + revision feeds are US-listed names only** — blocks: All-World / Developed World
 - **ECB / BoJ policy paths (STALE, latest 2026-01-01)** — blocks: All-World / Developed World
 - **no euro-area / Japan release calendar or values held** — blocks: All-World / Developed World
-- **not ingested (ons.gov.uk not allowlisted)** — blocks: FTSE 100
-- **earnings + revisions feeds cover US-listed names only** — blocks: FTSE 100
-- **no FTSE futures COT equivalent or UK fund-flow series held** — blocks: FTSE 100
 - **no China activity, PMI or credit series held** — blocks: Emerging-market equity
 - **EM policy rates (CNY/KRW/INR/BRL) (STALE, latest 2026-07-01)** — blocks: Emerging-market equity
 - **earnings feeds cover US-listed names only** — blocks: Emerging-market equity
 - **no EM fund-flow series held** — blocks: Emerging-market equity
-- **SONIA (BoE) not held — bankofengland.co.uk not allowlisted** — blocks: GBP overnight money market
-- **dmo.gov.uk not ingested or allowlisted** — blocks: UK gilts (conventional)
-- **BoE real curve not held (not allowlisted)** — blocks: UK index-linked gilts
-- **not held** — blocks: UK index-linked gilts
 - **live futures curves / roll yield (STALE, latest 2024-04-05)** — blocks: Broad commodities
 - **no China activity series held** — blocks: Broad commodities
 - **USDA reports not ingested** — blocks: Broad commodities

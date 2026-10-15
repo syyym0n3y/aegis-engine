@@ -173,7 +173,7 @@ function firstOnOrAfter(px: number[][], d: string): number {
 const addDays = (d: string, n: number) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400e3).toISOString().slice(0, 10);
 
 // ------------------------------------------------------------------------------------------------- run
-const preregs = await q(`trd_prereg?id=like.D-987-*&select=id,registered_at,outcome,outcome_note&order=id.asc`) as PreregRow[];
+const preregs = await q(`trd_prereg?id=in.(${SURPRISE_PREREGS.map((p) => encodeURIComponent(p.id)).join(",")})&select=id,registered_at,outcome,outcome_note&order=id.asc`) as PreregRow[];
 const byId = new Map(preregs.map((p) => [p.id, p]));
 for (const p of SURPRISE_PREREGS) if (!byId.has(p.id)) { console.error(`!! RED ${p.id} is not registered — run SP_MODE=register first; no test runs unregistered.`); Deno.exit(1); }
 const verdicts: Verdict[] = [];
@@ -242,6 +242,63 @@ const today = new Date().toISOString().slice(0, 10);
     const c2 = await preregCeiling({ rest: OWNED, headers: hdr, preregId: id });
     const r = releaseTest(id, evs, gspc, ["3m", "6m"], 6, c2.ceiling);
     verdicts.push({ id, status: r.status, decisive: true, summary: r.summary, numbers: r.nums });
+  }
+}
+
+// ---- T7 UK CPI -> gilt 5y yield (D-989). Yield CHANGES, not price ratios, so it has its own small harness; the gates
+// are the same as releaseTest's. Effect in price terms = slope x 4.5 (approx. modified duration of a 5y zero).
+{
+  const id = "D-989-uk-cpi-surprise-gilts";
+  const yoy = await series("ons_cpi_yoy"); const rel = await series("ons_release:cpi"); const y5 = await series("gilt_nom_zc_5y");
+  const ym = new Map(yoy.map((r) => [r.d.slice(0, 7), r.v]));
+  const mo = (ym0: string, k: number) => { const [y, m] = ym0.split("-").map(Number); return new Date(Date.UTC(y, m - 1 + k, 1)).toISOString().slice(0, 7); };
+  const chg = (m: string) => { const a = ym.get(m), b = ym.get(mo(m, -1)); return a != null && b != null ? a - b : NaN; };
+  const yd = y5.map((r) => r.d); const yv = y5.map((r) => r.v);
+  const idxOn = (d: string) => { let lo = 0, hi = yd.length - 1, ans = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (yd[m] >= d) { ans = m; hi = m - 1; } else lo = m + 1; } return ans; };
+  const evs: { d: string; z: number[]; d0: number; f5: number }[] = [];
+  for (const r of rel) {
+    if (r.d > today) continue;
+    const ref = `${String(Math.floor(r.v / 100))}-${String(r.v % 100).padStart(2, "0")}`;
+    const x = chg(ref); if (!Number.isFinite(x)) continue;
+    const zs = [24, 36].map((L) => { const h: number[] = []; for (let k = 1; k <= L; k++) { const c = chg(mo(ref, -k)); if (Number.isFinite(c)) h.push(c); } const sd0 = sd(h); return h.length >= L - 4 && sd0 > 0 ? Math.max(-4, Math.min(4, x / sd0)) : NaN; });
+    const i = idxOn(r.d); if (i < 1 || yd[i] !== r.d || i + 5 >= yd.length) continue;   // release day must carry a fitted-curve value
+    evs.push({ d: r.d, z: zs, d0: (yv[i] - yv[i - 1]) * 100, f5: (yv[i + 5] - yv[i]) * 100 });   // bp of yield
+  }
+  const ok = evs.filter((e) => e.z.every(Number.isFinite));
+  if (ok.length < 60) verdicts.push({ id, status: "UNTESTED", decisive: false, summary: `only ${ok.length} UK CPI releases join to the gilt curve (< 60) — input inadequate (COVERAGE LAW).`, numbers: { n: ok.length } });
+  else {
+    await spendTrials({ rest: OWNED, headers: hdr, family: "surprise-program", runId: id, spent: 3 });
+    const ceil = (await preregCeiling({ rest: OWNED, headers: hdr, preregId: id })).ceiling;
+    const z0 = ok.map((e) => e.z[0]);
+    const ctrl = ols(z0, ok.map((e) => e.d0)), prim = ols(z0, ok.map((e) => e.f5));
+    const cut = Math.floor(ok.length * 2 / 3);
+    const h1 = ols(z0.slice(0, cut), ok.slice(0, cut).map((e) => e.f5)), h2 = ols(z0.slice(cut), ok.slice(cut).map((e) => e.f5));
+    const DUR = 4.5, COST = 10;
+    const netK = (k: number) => ok.map((e) => { const p = Math.max(-2, Math.min(2, e.z[k])) / 2; return (-p * DUR * e.f5 - COST * Math.abs(p)) / 1e4; });
+    const nets = [netK(0), netK(1)], net = nets[0];
+    const sr = mean(net) / (sd(net) || 1e-18), sk = skewness(net), ku = kurtosis(net);
+    const dsr = deflatedSharpe(sr, net.length, sk, ku, Math.max(2, Math.round(Math.exp(ceil * ceil / 2))), 1 / Math.max(1, net.length - 1));
+    const mtrl = minTRL(sr, 0, sk, ku, 0.95); const pbo = pboCSCV(net.map((_, r) => nets.map((x) => x[r])), 8).pbo;
+    const effBp = Math.abs(prim.b) * DUR;
+    const nums = { n_events: ok.length, span: `${ok[0].d}..${ok.at(-1)!.d}`,
+      control_day0: { slope_bp_per_sd: +ctrl.b.toFixed(2), t: +ctrl.t.toFixed(2), tNW1: +ctrl.tNW1.toFixed(2) },
+      primary_fwd5: { slope_bp_per_sd: +prim.b.toFixed(2), t: +prim.t.toFixed(2), tNW1: +prim.tNW1.toFixed(2), deciding_t: +prim.t.toFixed(2) },
+      half1: { n: h1.n, slope_bp: +h1.b.toFixed(2), t: +h1.t.toFixed(2) }, half2: { n: h2.n, slope_bp: +h2.b.toFixed(2), t: +h2.t.toFixed(2) },
+      effect_x_cost: +(effBp / COST).toFixed(2), cost_bp_round_trip: COST, ceiling: +ceil.toFixed(3), units: "slopes in bp of 5y gilt YIELD per 1sd; effect = slope x 4.5 duration in bp of price",
+      trading_expression: { gross_mean_bp: +(mean(ok.map((e) => -Math.max(-2, Math.min(2, e.z[0])) / 2 * DUR * e.f5))).toFixed(2), net_mean_bp: +(mean(net) * 1e4).toFixed(2), net_sr_per_event: +sr.toFixed(4), dsr: +dsr.toFixed(3), minTRL: Number.isFinite(mtrl) ? Math.ceil(mtrl) : "Infinity", pbo: +pbo.toFixed(3), variants: ["24m", "36m"] } };
+    let status: Verdict["status"], summary: string;
+    if (Math.abs(ctrl.t) < 2 && Math.abs(ctrl.tNW1) < 2) { status = "UNTESTED"; summary = `POSITIVE CONTROL FAILED: day-0 5y gilt yield move ${ctrl.b.toFixed(2)}bp/sd t ${ctrl.t.toFixed(2)} — the naive UK CPI surprise is not what gilts price on release day.`; }
+    else if (!(prim.b > 0)) { status = "REJECTED"; summary = `SIGN MISSED: R->R+5 yield slope ${prim.b.toFixed(2)}bp/sd (t ${prim.t.toFixed(2)}), registered positive.`; }
+    else if (Math.abs(prim.t) < 2) {
+      const nNeed = Math.ceil(ok.length * (2 / Math.max(1e-9, Math.abs(prim.t))) ** 2);
+      if (effBp >= COST && nNeed > ok.length) { status = "UNDERPOWERED"; summary = `sign matched, t ${prim.t.toFixed(2)} < 2.0 at n ${ok.length}; effect ${effBp.toFixed(1)}bp of price per 1sd needs n ~${nNeed} for t 2.0.`; (nums as Record<string, unknown>).n_required_for_t2 = nNeed; }
+      else { status = "REJECTED"; summary = `sign matched but t ${prim.t.toFixed(2)} < 2.0; effect ${effBp.toFixed(1)}bp of price per 1sd = ${(effBp / COST).toFixed(2)}x the ${COST}bp round trip.`; }
+    } else if (effBp < COST) { status = "REJECTED"; summary = `SUB-FEE: t ${prim.t.toFixed(2)}, effect ${effBp.toFixed(1)}bp = ${(effBp / COST).toFixed(2)}x cost.`; }
+    else if (!(h1.b > 0 && h2.b > 0)) { status = "REJECTED"; summary = `halves disagree (${h1.b.toFixed(2)} / ${h2.b.toFixed(2)}bp/sd).`; }
+    else if (Math.abs(prim.t) < ceil) { status = "BELOW-BAR"; summary = `sign matched in full and both halves; t ${prim.t.toFixed(2)} below ceiling ${ceil.toFixed(2)}.`; }
+    else if (dsr >= 0.95 && Number.isFinite(mtrl) && mtrl <= net.length && pbo < 0.5) { status = "SURVIVED"; summary = `cleared every registered gate (t ${prim.t.toFixed(2)}, DSR ${dsr.toFixed(3)}, MinTRL ${Math.ceil(mtrl)}, PBO ${pbo.toFixed(2)}) — forward clock, never capital.`; }
+    else { status = "REJECTED"; summary = `t clears but the expression fails: DSR ${dsr.toFixed(3)}, MinTRL ${Number.isFinite(mtrl) ? Math.ceil(mtrl) : "Inf"}, PBO ${pbo.toFixed(2)}.`; }
+    verdicts.push({ id, status, decisive: true, summary, numbers: nums });
   }
 }
 
@@ -361,7 +418,7 @@ for (const v of verdicts) {
 
 const reg = SURPRISE_PREREGS.map((p) => {
   const v = verdicts.find((x) => x.id === p.id)!; const row = byId.get(p.id)!;
-  return { id: p.id, variable: p.meta.variable, instruments: p.meta.instruments, data: p.meta.data, registered_at: row.registered_at, cost_bp_round_trip: p.meta.cost_bp, trials_declared: p.meta.trials, status: v.status, recorded_outcome: row.outcome, summary: v.summary, numbers: v.numbers };
+  return { id: p.id, sign: p.meta.sign ?? "NEGATIVE", variable: p.meta.variable, instruments: p.meta.instruments, data: p.meta.data, registered_at: row.registered_at, cost_bp_round_trip: p.meta.cost_bp, trials_declared: p.meta.trials, status: v.status, recorded_outcome: row.outcome, summary: v.summary, numbers: v.numbers };
 });
 const ledger = {
   generated_at: new Date().toISOString(), generator: "scripts/surprise-program.ts (D-987)",
@@ -394,8 +451,8 @@ const PRIOR: [string, string, string][] = [
 const GAPS: [string, string][] = [
   ["macro surprise vs CONSENSUS (CPI, payrolls, claims, ISM)", "no free keyless consensus HISTORY is held; the statistical surprises tested here are a proxy (and the claims proxy failed its positive control). Candidate forward-accrual source: the ForexFactory weekly calendar JSON (forecast + previous) — not on the endpoint allowlist, NOT probed; one operator allowlist line would start a consensus feed whose first test could be registered at birth."],
   ["FOMC / policy-rate surprise", "fed-funds futures and OIS are not held (CME data is paid); a daily 2y-yield proxy exists in trd_yield_curve but no FOMC timestamp series is ingested."],
-  ["Treasury auction surprise (tail vs when-issued)", "auction results are free and keyless at fiscaldata.treasury.gov but that host is not allowlisted; when-issued yields are not free."],
-  ["UK release surprise (ONS CPI/labour, BoE decisions)", "no UK release calendar, consensus or BoE rate series is held — this is the same gap that blocks every GBP row of the basket."],
+  ["Treasury auction surprise (tail vs when-issued)", "auction results are free and keyless at api.fiscaldata.treasury.gov and the host IS allowlisted (D-989 corrects D-987) — not yet ingested; when-issued yields are not free."],
+  ["UK release surprise vs CONSENSUS (CPI, labour, BoE decisions)", "D-989 holds ONS CPI first-release dates (130, 2015+) and the BoE curves: the NAIVE UK CPI surprise failed its day-0 control on gilts (D-989-uk-cpi-surprise-gilts UNTESTED). UK consensus is not held; ONS labour series are latest-vintage only (no first-release values), so a labour surprise is not testable point-in-time; no MPC decision-date series is ingested."],
   ["crypto spot-ETF flow surprise", "no free daily flow history is held."],
   ["intraday earnings / announcement-timestamp reaction", "intraday single-name equity history is a PAID gap (D-965); the daily expression is what D-987-pead-holdout and D-987-implied-move-surprise test."],
 ];
@@ -423,7 +480,8 @@ for (const r of reg.filter((x) => !["ACCRUING"].includes(x.status))) {
   md.push(`|---|---|`);
   md.push(`| events | ${n.n_events} (${n.span}) |`);
   md.push(`| POSITIVE CONTROL: day-0 slope | ${n.control_day0.slope_bp_per_sd}bp per 1sd, t ${n.control_day0.t} (NW1 ${n.control_day0.tNW1}) — needs abs(t) >= 2 |`);
-  md.push(`| PRIMARY: next-5-session slope | ${n.primary_fwd5.slope_bp_per_sd}bp per 1sd, t ${n.primary_fwd5.t} (NW1 ${n.primary_fwd5.tNW1}); deciding t ${n.primary_fwd5.deciding_t}; registered sign NEGATIVE |`);
+  md.push(`| PRIMARY: next-5-session slope | ${n.primary_fwd5.slope_bp_per_sd}bp per 1sd, t ${n.primary_fwd5.t} (NW1 ${n.primary_fwd5.tNW1}); deciding t ${n.primary_fwd5.deciding_t}; registered sign ${r.sign} |`);
+  if (n.units) md.push(`| units | ${n.units} |`);
   md.push(`| halves (first 2/3, last 1/3) | ${n.half1.slope_bp}bp t ${n.half1.t} (n ${n.half1.n}) / ${n.half2.slope_bp}bp t ${n.half2.t} (n ${n.half2.n}) |`);
   md.push(`| effect vs ${n.cost_bp_round_trip}bp round trip | ${n.effect_x_cost}x |`);
   md.push(`| trading expression (p = -clip(z,-2,2)/2) | gross ${n.trading_expression.gross_mean_bp}bp, net ${n.trading_expression.net_mean_bp}bp per release; DSR ${n.trading_expression.dsr}; MinTRL ${n.trading_expression.minTRL}; PBO ${n.trading_expression.pbo} over ${n.trading_expression.variants.join("/")} |`);

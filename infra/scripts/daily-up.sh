@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"; . "$(dirname "$SELF")/_self-restart.sh"  # D-824: a parse-once loop cannot see its own source change; this makes it exec the current file.
+. "$(dirname "$SELF")/_night-window.sh"; NW_START=02:10  # D-989: hold the launchd slot — no `sleep 86400` drift, no off-window cycle after a reload
 cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
 command -v colima >/dev/null && (colima status >/dev/null 2>&1 || colima start >/dev/null 2>&1) || true
@@ -8,6 +9,7 @@ docker start aegis-db aegis-rest >/dev/null 2>&1 || true
 export OWNED_REST="http://localhost:${REST_PORT:-33000}"
 while true; do
   self_restart_if_changed
+  nw_wait_for_window; self_restart_if_changed   # D-989: outside the slot, wait for it (re-check source after a long hold)
   deno run --allow-net --allow-env ../scripts/aegis-daily.ts || true
   echo "=== on-chain refresh (D-928, blockchain.info keyless) ==="
   deno run --allow-net --allow-env ../scripts/ingest-onchain.ts || true
@@ -24,5 +26,5 @@ while true; do
   deno run --v8-flags=--max-old-space-size=4096 --allow-net --allow-env --allow-read ../scripts/market-context.ts >/dev/null 2>&1 || echo "$(date -u +%FT%TZ) MARKET CONTEXT FAILED"
   echo "=== blockchair multi-chain feed (D-966, keyless, 6 chains, accrual feed) ==="
   deno run --allow-net --allow-env ../scripts/ingest-blockchair.ts || true
-  sleep 86400
+  nw_wait_next_start   # D-989: was `sleep 86400` — start walked ~2h later every day (cycle duration + 24h)
 done

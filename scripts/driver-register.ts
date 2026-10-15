@@ -139,6 +139,15 @@ const REG: Driver[] = [
     probe: "trd_macro_series?series=eq.binance_mirror_metrics_BTCUSDT&select=d&limit=1",
     proxy: "HELD (D-808/809): Binance 5-minute metrics (OI, top-trader long/short account + position ratios, taker buy/sell volume ratio) and 5-minute klines with taker volume, BTC/ETH/SOL 2023-01 ->, in data/binance-mirror. Tested: all SUB-FEE (largest 0.18x fee); footprint proxy adds < 2bp/sd over plain delta (D-808)." },
   { cls: "crypto", name: "options surface (Deribit DVOL/skew/IV)", use: "condition", probe: "trd_perp_oi?venue=eq.deribit&interval=eq.dvol&select=ts&limit=1" },
+  // ---- UK RATES / RELEASES (D-989) ----------------------------------------------------------------------------
+  { cls: "uk", name: "Bank Rate (BoE)", use: "condition", probe: "trd_macro_series?series=eq.boe_bank_rate&select=d&limit=1" },
+  { cls: "uk", name: "SONIA", use: "condition", probe: "trd_macro_series?series=eq.boe_sonia&select=d&limit=1" },
+  { cls: "uk", name: "gilt curve, nominal zero-coupon 5/10/20y", use: "condition", probe: "trd_macro_series?series=eq.gilt_nom_zc_10y&select=d&limit=1" },
+  { cls: "uk", name: "gilt curve, real (index-linked) 10y + implied inflation", use: "condition", probe: "trd_macro_series?series=eq.gilt_real_zc_10y&select=d&limit=1" },
+  { cls: "uk", name: "UK CPI / CPIH + first-release dates", use: "condition", probe: "trd_macro_series?series=eq.ons_release:cpi&select=d&limit=1",
+    proxy: "ONS D7G7/L55O/D7BT; first-release dates recovered from updateDate (35-60d window), 2015+ only" },
+  { cls: "uk", name: "UK labour market (MGSX/LF24/KAC3)", use: "explain", probe: "trd_macro_series?series=eq.ons_unemp_rate&select=d&limit=1",
+    proxy: "LATEST VINTAGE only (revised; no first-release values), so it can describe and condition slowly but cannot be a point-in-time surprise" },
   // ---- SINGLE-NAME EQUITY --------------------------------------------------------------------------------------
   { cls: "equity-single", name: "price + volume panel", use: "predict", probe: "trd_bars_deep?asset_class=eq.equity&select=symbol&limit=1" },
   { cls: "equity-single", name: "fundamentals (point-in-time)", use: "predict", probe: "trd_fundamentals?select=ticker&limit=1" },

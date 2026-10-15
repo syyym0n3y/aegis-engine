@@ -40,8 +40,12 @@ const tok = await jwt();
 const hdr = { Authorization: `Bearer ${tok}`, apikey: tok };
 
 // ---------------------------------------------------------------------------------------------------- probes
-type Cad = "daily" | "weekly" | "monthly";
-const BUDGET: Record<Cad, number> = { daily: 6, weekly: 14, monthly: 75 };   // days; monthly series are dated at period START
+type Cad = "daily" | "weekly" | "monthly" | "monthly3m";
+// days. Monthly series are dated at period START and published up to ~7 weeks after period end (UK CPI: ~3rd week of
+// the next month), so the newest value is legitimately up to ~82 days old the day before a release -> 85 (D-989; was 75,
+// which would have flagged UK CPI STALE every month before its release — crying wolf). ONS labour-market series are
+// rolling 3-month averages labelled at the period's FIRST month and published ~6 weeks after it ends: up to ~137 days.
+const BUDGET: Record<Cad, number> = { daily: 6, weekly: 14, monthly: 85, monthly3m: 140 };
 interface Probe { path: string; field: string; cad: Cad; epoch?: boolean }
 const enc = encodeURIComponent;
 const bar = (sym: string): Probe => ({ path: `trd_bars_deep?symbol=eq.${enc(sym)}&select=last_date&limit=1`, field: "last_date", cad: "daily" });
@@ -79,12 +83,13 @@ const SEASON = (sym: string): Driver => ({ cat: "seasonality", name: "calendar s
 const GPR: Driver = { cat: "macro releases", name: "geopolitical risk index (monthly)", material: false, probe: ms("gpr", "monthly") };
 const OIL: Driver = { cat: "commodity links", name: "crude oil (CL=F)", material: false, probe: bar("CL=F") };
 const FEDBS: Driver = { cat: "rates", name: "Fed balance sheet (QT/QE supply)", material: true, probe: ms("fed_balance_sheet", "weekly"), record: "held from D-987 (FRED WALCL, existing keyless feed)" };
-const AUCTIONS: Driver = { cat: "flows / positioning", name: "Treasury auction supply and results", material: true, gap: "fiscaldata.treasury.gov auction results are free and keyless but the host is NOT allowlisted" };
+const AUCTIONS: Driver = { cat: "flows / positioning", name: "Treasury auction supply and results", material: true, gap: "api.fiscaldata.treasury.gov auction results are free and keyless and the host IS allowlisted (D-989 corrects D-987, which said it was not) — not yet ingested" };
 const TERMPREM: Driver = { cat: "rates", name: "term premium (ACM)", material: true, gap: "NY Fed ACM term-premium file is free but newyorkfed.org is NOT allowlisted" };
-const BOE: Driver = { cat: "rates", name: "Bank Rate / SONIA (BoE policy path)", material: true, probe: ms("rate_3m_gbp", "monthly"), record: "the only GBP rate held is the OECD 3m interbank MONTHLY series; BoE IADB (daily, free, keyless) is not allowlisted" };
-const GILTS: Driver = { cat: "rates", name: "gilt curve (nominal)", material: true, gap: "no gilt yield series held; BoE IADB yield curves are free and keyless but bankofengland.co.uk is NOT allowlisted" };
-const UKCPI: Driver = { cat: "macro releases", name: "UK CPI / RPI + ONS release calendar", material: true, gap: "ONS releases and calendar not ingested (free; ons.gov.uk not allowlisted)" };
-const UKLAB: Driver = { cat: "macro releases", name: "UK labour market (ONS)", material: true, gap: "not ingested (ons.gov.uk not allowlisted)" };
+const BOE: Driver = { cat: "rates", name: "Bank Rate (BoE policy rate)", material: true, probe: ms("boe_bank_rate", "daily"), record: "BoE IADB IUDBEDR, daily from 1975 (D-989); the OECD 3m monthly series it replaces was 287 days stale" };
+const BOEPATH: Driver = { cat: "rates", name: "expected BoE path", material: true, probe: ms("gilt_nom_zc_5y", "daily"), proxy: "5y nominal zero-coupon gilt yield (BoE IUDSNZC) — the short-dated curve is the market-implied path; SONIA OIS not held" };
+const GILTS: Driver = { cat: "rates", name: "gilt curve (nominal zero-coupon 5/10/20y)", material: true, probe: ms("gilt_nom_zc_10y", "daily"), record: "BoE IADB fitted curve, ~1 business day publication lag (D-989)" };
+const UKCPI: Driver = { cat: "macro releases", name: "UK CPI / CPIH + ONS first-release dates", material: true, probe: ms("ons_cpi_yoy", "monthly"), record: "ONS D7G7/L55O/D7BT; 130 first-release dates 2015+ (ons_release:cpi). UK CPI surprise: see D-989 / docs/SURPRISE_EFFECTS.md" };
+const UKLAB: Driver = { cat: "macro releases", name: "UK labour market (unemployment, employment, AWE pay growth)", material: true, probe: ms("ons_unemp_rate", "monthly3m"), record: "ONS MGSX/LF24/KAC3 — LATEST VINTAGE (revised; no first-release dates recoverable), so a labour SURPRISE is not testable point-in-time" };
 
 const price = (sym: string, note?: string): Driver => ({ cat: "price itself", name: `own price / trend / volatility (${sym})`, material: true, probe: bar(sym), record: note });
 const TREND_NOTE = "the deployed blend's trend/long sleeves trade this price: ISA-ETF trend switch OOS Sharpe 0.62-0.76, maxDD -7..-11% (D-868/870); rates bucket worth 0.21 Sharpe as a CLASS (D-901)";
@@ -107,7 +112,7 @@ const INSTRUMENTS: Instrument[] = [
       { cat: "macro releases", name: "non-US activity / inflation releases", material: true, gap: "no euro-area / Japan release calendar or values held" },
       { cat: "FX", name: "EURUSD / USDJPY", material: true, probe: bar("EURUSD=X") }, GBP, VIX, CREDIT, FLOWS_EQ] },
   { key: "uk-large-cap", name: "FTSE 100", vehicle: "ISF / VUKE (UCITS, GBP) — candidate", research_proxy: "^FTSE (EWU)", role: "home-currency equity",
-    drivers: [price("^FTSE"), UKCPI, UKLAB, BOE, GILTS,
+    drivers: [price("^FTSE"), UKCPI, UKLAB, BOE, BOEPATH, GILTS,
       { cat: "earnings / revisions", name: "FTSE constituent earnings / revisions", material: true, gap: "earnings + revisions feeds cover US-listed names only" },
       { ...GBP, name: "GBPUSD (FTSE 100 earns ~75% of revenue abroad — inverse GBP exposure)" },
       { cat: "commodity links", name: "crude oil (energy weight)", material: true, probe: bar("CL=F") },
@@ -133,14 +138,15 @@ const INSTRUMENTS: Instrument[] = [
       { cat: "flows / positioning", name: "TIPS auction supply", material: true, gap: "fiscaldata.treasury.gov not allowlisted (same barrier as nominal auctions)" }] },
   { key: "usd-tbills", name: "US Treasury bills 0-1y", vehicle: "IB01 (UCITS, USD) — candidate", research_proxy: "SHY / 3m bill yield", role: "USD cash ballast (rates bucket, D-901)",
     drivers: [{ cat: "rates", name: "3m T-bill yield", material: true, probe: ms("ust_3m", "daily") }, POLICY, GBP, price("SHY", TREND_NOTE)] },
-  { key: "gbp-cash", name: "GBP overnight money market", vehicle: "CSH2 / XSTR (UCITS, GBP) — candidate", research_proxy: "none", role: "GBP cash ballast",
-    drivers: [BOE, { cat: "rates", name: "SONIA fixing", material: true, gap: "SONIA (BoE) not held — bankofengland.co.uk not allowlisted" }] },
-  { key: "uk-gilts", name: "UK gilts (conventional)", vehicle: "IGLT / VGOV (UCITS) — candidate", research_proxy: "none held", role: "GBP duration",
-    drivers: [GILTS, UKCPI, BOE, { cat: "flows / positioning", name: "DMO issuance / auction results", material: true, gap: "dmo.gov.uk not ingested or allowlisted" },
+  { key: "gbp-cash", name: "GBP overnight money market", vehicle: "CSH2 / XSTR (UCITS, GBP) — candidate", research_proxy: "SONIA (BoE IADB) — a rate, not a fund price", role: "GBP cash ballast",
+    drivers: [BOE, { cat: "rates", name: "SONIA fixing (what the fund earns)", material: true, probe: ms("boe_sonia", "daily") }, BOEPATH] },
+  { key: "uk-gilts", name: "UK gilts (conventional)", vehicle: "IGLT / VGOV (UCITS) — candidate", research_proxy: "BoE nominal zero-coupon curve — yields, not a fund price", role: "GBP duration",
+    drivers: [GILTS, UKCPI, UKLAB, BOE, BOEPATH, { cat: "flows / positioning", name: "DMO issuance / auction results", material: true, gap: "dmo.gov.uk not ingested or allowlisted" },
       { cat: "rates", name: "global duration (US 10y)", material: true, probe: curve }] },
-  { key: "uk-linkers", name: "UK index-linked gilts", vehicle: "INXG (UCITS) — candidate", research_proxy: "none held", role: "GBP inflation protection",
-    drivers: [{ cat: "rates", name: "UK real yields", material: true, gap: "BoE real curve not held (not allowlisted)" }, UKCPI, BOE,
-      { cat: "rates", name: "UK breakevens / RPI swaps", material: true, gap: "not held" }, { cat: "rates", name: "global real yields (US 10y TIPS)", material: true, probe: ms("real_yield_10y", "daily") }] },
+  { key: "uk-linkers", name: "UK index-linked gilts", vehicle: "INXG (UCITS) — candidate", research_proxy: "BoE real zero-coupon curve — yields, not a fund price", role: "GBP inflation protection",
+    drivers: [{ cat: "rates", name: "UK real yields (10y real zero-coupon)", material: true, probe: ms("gilt_real_zc_10y", "daily") }, UKCPI, BOE, BOEPATH,
+      { cat: "rates", name: "UK breakeven inflation (10y implied, BoE)", material: true, probe: ms("gilt_infl_zc_10y", "daily"), record: "BoE implied inflation is RPI-based (linkers pay RPI; RPI is not ingested — the CPI/CPIH gap to RPI is a stated wedge)" },
+      { cat: "flows / positioning", name: "DMO linker issuance", material: true, gap: "dmo.gov.uk not ingested or allowlisted" }, { cat: "rates", name: "global real yields (US 10y TIPS)", material: true, probe: ms("real_yield_10y", "daily") }] },
   { key: "gold", name: "Physical gold", vehicle: "SGLN / IGLN (physical ETC, GBP/USD lines) — candidate", research_proxy: "GLD / GC=F", role: "crisis / real-rate hedge",
     drivers: [price("GLD", TREND_NOTE), { ...REAL, record: "gold's stated #1 driver; contemporaneous confirmed, forward null (D-730)" },
       { cat: "FX", name: "US dollar (UUP)", material: true, probe: bar("UUP") }, BE, CPI, POLICY,

@@ -22,7 +22,7 @@
 export interface SurprisePrereg {
   id: string; claim: string; competing: string; rule: string; kill_condition: string;
   /** not stored in trd_prereg — programme metadata for the ledger */
-  meta: { variable: string; instruments: string; data: string; status_when_registered: "runnable-now" | "accruing"; trials: number; cost_bp: number };
+  meta: { variable: string; instruments: string; data: string; status_when_registered: "runnable-now" | "accruing"; trials: number; cost_bp: number; sign?: "POSITIVE" | "NEGATIVE" };
 }
 
 export const SURPRISE_PREREGS: SurprisePrereg[] = [
@@ -73,5 +73,13 @@ export const SURPRISE_PREREGS: SurprisePrereg[] = [
     rule: "SCORED ONLY on release dates strictly after 2026-09-13 with complete hourly bars, when >= 40 such releases exist (expected ~2027-06). STATISTIC: per-instrument OLS slope of r(+1..+4h) on z(r0), z scaled by the sd of release-hour returns over the 2016-2026-09-13 training releases (frozen). PROMOTE to a forward clock (no capital) if BOTH instruments have slope < 0, pooled t <= -CEILING, and |slope| >= 1.0x a 6bp round trip per 1sd. Trials: 2.",
     kill_condition: "REJECTED at the floor if either instrument's slope >= 0 (SIGN MISSED) or pooled |t| < 1.5; BELOW-BAR if 1.5 <= |t| < CEILING with both signs negative.",
     meta: { variable: "macro release-hour surprise reaction (reversal), forward", instruments: "S&P 500 / Nasdaq-100 (CSPX, EQQQ)", data: "trd_fx_hourly USA500IDXUSD/USATECHIDXUSD (Dukascopy, hourly refresh) + bls:* calendar", status_when_registered: "accruing", trials: 2, cost_bp: 6 },
+  },
+  {
+    id: "D-989-uk-cpi-surprise-gilts",
+    claim: "A STATISTICAL UK CPI surprise is incompletely priced on release day: on each ONS first-release date R (ons_release:cpi, 07:00 London, 2015+), s = annual CPI rate of the reference month minus that of the previous month (ONS D7G7; the naive no-change forecast of the annual rate; CPI is never revised, so both are point-in-time), z = s / sd of the same monthly change over the 24 prior months, winsorised at +/-4. Registered sign POSITIVE: a hotter print predicts a further RISE in the BoE 5y nominal zero-coupon gilt yield (IUDSNZC) from R's close to the 5th business day after R (gilts under-react).",
+    competing: "UK CPI is priced within minutes of 07:00; the naive no-change forecast is not the consensus the market trades, so z may not be a surprise at all; n ~125 monthly releases may be too few to see a plausible drift (UNDERPOWERED is a likely honest verdict).",
+    rule: "POSITIVE CONTROL first: the day-0 change in the 5y yield (previous business day -> R) regressed on z must have |t| >= 2.0 in either sign, else UNTESTED. PRIMARY STATISTIC: OLS slope b (bp of yield per 1sd of z) of the R -> R+5 business-day yield change on z, one observation per release, plain t. PROMOTE to a forward clock (never capital) only if ALL: b > 0 (SIGN MATCHED) on the full sample and in both the first-2/3 and last-1/3 halves; |t| >= CEILING; EFFECT = b x 4.5 (approx. modified duration of a 5y zero) >= 1.0x a 10bp gilt-fund round trip; the expression p = clip(z,-2,2)/2 short duration for 5 days (return = -p x 4.5 x dy - 10bp x |p|) has DSR >= 0.95, MinTRL <= n, PBO < 0.5 across 2 pre-declared variants (24 / 36-month sd window; 24 primary). UNDERPOWERED (not REJECTED) if sign matched, |t| < 2.0, effect >= 1.0x and n is below the n that the observed effect needs for |t| 2.0. Trials: 3.",
+    kill_condition: "REJECTED if b <= 0 (SIGN MISSED), or |t| < 2.0 at adequate power, or EFFECT < 1.0x cost, or the halves disagree in sign. BELOW-BAR if 2.0 <= |t| < CEILING with every sign clause matched.",
+    meta: { variable: "UK macro release surprise (CPI, monthly)", instruments: "UK gilts (IGLT/short-dated gilt funds; research series BoE 5y zero-coupon yield)", data: "ONS D7G7 + ons_release:cpi first-release dates + BoE IUDSNZC (D-989 ingest)", status_when_registered: "runnable-now", trials: 3, cost_bp: 10, sign: "POSITIVE" },
   },
 ];

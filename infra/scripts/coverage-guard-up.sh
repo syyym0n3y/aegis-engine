@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"; . "$(dirname "$SELF")/_self-restart.sh"  # D-824: a parse-once loop cannot see its own source change; this makes it exec the current file.
+. "$(dirname "$SELF")/_night-window.sh"; NW_START=02:40  # D-989: hold the launchd slot — no `sleep 86400` drift, no off-window cycle after a reload
 cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
 command -v colima >/dev/null && (colima status >/dev/null 2>&1 || colima start >/dev/null 2>&1) || true
 docker start aegis-db aegis-rest >/dev/null 2>&1 || true
 export OWNED_REST="http://localhost:${REST_PORT:-33000}"
 while true; do
-  echo "$(date -u +%FT%TZ) == CYCLE START == (D-854: log-triage-guard scopes the error window from this stamp)"
   self_restart_if_changed
+  nw_wait_for_window; self_restart_if_changed   # D-989: outside 02:40-04:10 local, wait for the slot (re-check source after a long hold)
+  echo "$(date -u +%FT%TZ) == CYCLE START == (D-854: log-triage-guard scopes the error window from this stamp)"
   if ! deno run --allow-net --allow-env ../scripts/coverage-guard.ts; then
     echo "$(date -u +%FT%TZ) COVERAGE GUARD RED — a factor family lacks adequate data; nulls there are UNTESTED, not NULL"
   fi
@@ -282,6 +284,9 @@ while true; do
   # then the D-750 CEF universe, then liquid equities by descending dollar volume), resuming where the last run
   # stopped. The intended ~4,100-name universe therefore takes ~46 daily runs to fill, and the script PRINTS its panel
   # completeness every run so a partial panel can never be read as a complete one. Cheap (~2 min), safe to re-run.
+  # D-989: UK rates + releases — BoE IADB (Bank Rate, SONIA, nominal/real/implied gilt curves) and ONS (CPI/CPIH, labour),
+  # free + keyless, allowlisted 2026-10-15. Incremental for BoE (10-day overlap), ~7 small ONS calls, sequential, $0.
+  deno run --allow-net --allow-env ../scripts/ingest-uk-macro.ts > ../data/uk-macro.log 2>&1 || echo "$(date -u +%FT%TZ) UK MACRO INGEST FAILED — basket GBP rows and the UK CPI test read stale inputs; see data/uk-macro.log"
   # D-987: FINRA semi-monthly short interest — ORPHANED until today (froze at settlement 2026-07-31) while the DEPLOYED
   # distress sleeve's CROWD_DC filter (D-971) reads days-to-cover from it. Incremental (newest held settlement onward),
   # keyless, allowlisted api.finra.org, ~20 pages. Must precede io.aegis.paper (06:20), which rebuilds the sleeve.
@@ -403,6 +408,6 @@ while true; do
   # uncommitted they sit as tree noise until a session commits them, which is a prompt in disguise. Paths-restricted,
   # local only (never pushes), no-op when nothing changed.
   ( cd .. && git add docs/CATALOGUE.md docs/SEARCH_SPACE.md docs/OPERATOR_QUEUE.md docs/QUESTION_LEDGER.md docs/LIVE_STATE.md docs/PNL.md docs/archive/TENFOLD.md docs/BASKET.md docs/SURPRISE_EFFECTS.md research/basket.json research/surprise-ledger.json data/cc-goals.json 2>/dev/null && git diff --cached --quiet || git -c user.name="aegis-runner" -c user.email="runner@aegis.local" commit -q -m "docs(cycle): regenerated catalogue, search-space map and operator queue $(date -u +%F)" ) || echo "$(date -u +%FT%TZ) CYCLE DOCS COMMIT FAILED"
-  sleep 86400
+  nw_wait_next_start   # D-989: was `sleep 86400` — start walked ~2h later every day (cycle duration + 24h)
 done
 

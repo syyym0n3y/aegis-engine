@@ -1,8 +1,8 @@
 # SURPRISE EFFECTS — what the market demonstrably rewards for being surprised, tested only as pre-registered (D-987)
 
-> Regenerated every daily coverage-runner cycle by `scripts/surprise-program.ts`. Generated 2026-10-15T02:15:08.296Z. Every test below was written into the append-only `trd_prereg` table (rows `D-987-*`, text in `scripts/surprise-registry.ts`, verified identical on every run) BEFORE its outcome was computed. Machine-readable: `research/surprise-ledger.json`.
+> Regenerated every daily coverage-runner cycle by `scripts/surprise-program.ts`. Generated 2026-10-15T02:27:29.837Z. Every test below was written into the append-only `trd_prereg` table (rows `D-987-*`, text in `scripts/surprise-registry.ts`, verified identical on every run) BEFORE its outcome was computed. Machine-readable: `research/surprise-ledger.json`.
 
-**6 pre-registered · 2 tested · 0 survived · 4 accruing.** Accruing floors are re-checked every night as an UPPER BOUND on progress; the night one may be met the run exits RED ("FLOOR MET — SCORER REQUIRED") until the registered statistic is computed and its outcome written once — maturity cannot pass silently. A survivor becomes a `trd_forward_rules` clock — never capital.
+**7 pre-registered · 3 tested · 0 survived · 4 accruing.** Accruing floors are re-checked every night as an UPPER BOUND on progress; the night one may be met the run exits RED ("FLOOR MET — SCORER REQUIRED") until the registered statistic is computed and its outcome written once — maturity cannot pass silently. A survivor becomes a `trd_forward_rules` clock — never capital.
 
 Gates for every row: the D-823 pre-registered ceiling sqrt(2 ln(trials under the id + all registrations)); SIGN stated before the data; a POSITIVE CONTROL that must show the surprise measure moves price on release day before any forward null is believed; effect in bp per 1sd vs the round-trip cost; DSR >= 0.95, MinTRL <= n and PBO < 0.5 on the net trading expression.
 
@@ -16,6 +16,7 @@ Gates for every row: the D-823 pre-registered ceiling sqrt(2 ln(trials under the
 | `D-987-revision-surprise` | estimate-revision surprise | US liquid single names (feeds the S&P/Nasdaq 'earnings revisions' driver) | **ACCRUING** | — | revision snapshots since 2026-09-07; 0/12 monthly cross-sections have a complete 21-session forward window. |
 | `D-987-implied-move-surprise` | options-implied vs realised move surprise (earnings) | US liquid single names with listed options | **ACCRUING** | — | 19/300 events with a valid pre-report IV (<= 5 days old) and a matured 20-session window, across 1/2 earnings quarter(s); 378 reported events in the window before the IV filter. Count only — no statistic computed below the floor. |
 | `D-987-release-reversal-forward` | macro release-hour surprise reaction (reversal), forward | S&P 500 / Nasdaq-100 (CSPX, EQQQ) | **ACCRUING** | — | 4/40 qualifying calendar releases since 2026-09-13 (upper bound before the hourly-bar completeness check). |
+| `D-989-uk-cpi-surprise-gilts` | UK macro release surprise (CPI, monthly) | UK gilts (IGLT/short-dated gilt funds; research series BoE 5y zero-coupon yield) | **UNTESTED** | untested | POSITIVE CONTROL FAILED: day-0 5y gilt yield move 0.58bp/sd t 1.20 — the naive UK CPI surprise is not what gilts price on release day. |
 
 ### D-987-claims-surprise-spx — UNTESTED
 
@@ -27,7 +28,7 @@ Gates for every row: the D-823 pre-registered ceiling sqrt(2 ln(trials under the
 | halves (first 2/3, last 1/3) | -5.23bp t -1.12 (n 1974) / 1.69bp t 0.21 (n 987) |
 | effect vs 6bp round trip | 0.51x |
 | trading expression (p = -clip(z,-2,2)/2) | gross 2.54bp, net 0.42bp per release; DSR 0.006; MinTRL 217559; PBO 0.229 over 4wk/8wk/13wk |
-| pre-registered ceiling | 3.188 |
+| pre-registered ceiling | 3.19 |
 | eras (descriptive) | 1970s -19.6bp t -2.16 · 1980s 8.4bp t 0.88 · 1990s 3.24bp t 0.38 · 2000s -12.94bp t -1.15 · 2010s 3.22bp t 0.37 · 2020s 12.68bp t 0.91 |
 | INSTRUMENT conversion (SPY on ^GSPC, weekly) | beta 0.997, corr 0.9961 over 1696 weeks |
 
@@ -41,8 +42,21 @@ Gates for every row: the D-823 pre-registered ceiling sqrt(2 ln(trials under the
 | halves (first 2/3, last 1/3) | 30.87bp t 1.46 (n 82) / -28.52bp t -0.9 (n 41) |
 | effect vs 6bp round trip | 3.38x |
 | trading expression (p = -clip(z,-2,2)/2) | gross -13.57bp, net -15.86bp per release; DSR 0; MinTRL Infinity; PBO 0.829 over 3m/6m |
-| pre-registered ceiling | 3.186 |
+| pre-registered ceiling | 3.188 |
 | eras (descriptive) | 2010s 17.19bp t 0.9 · 2020s 21.87bp t 0.87 |
+
+### D-989-uk-cpi-surprise-gilts — UNTESTED
+
+| measure | value |
+|---|---|
+| events | 130 (2015-10-13..2026-09-16) |
+| POSITIVE CONTROL: day-0 slope | 0.58bp per 1sd, t 1.2 (NW1 1.46) — needs abs(t) >= 2 |
+| PRIMARY: next-5-session slope | 0.71bp per 1sd, t 0.9 (NW1 1.22); deciding t 0.9; registered sign POSITIVE |
+| units | slopes in bp of 5y gilt YIELD per 1sd; effect = slope x 4.5 duration in bp of price |
+| halves (first 2/3, last 1/3) | 0.68bp t 0.72 (n 86) / 0.5bp t 0.3 (n 44) |
+| effect vs 10bp round trip | 0.32x |
+| trading expression (p = -clip(z,-2,2)/2) | gross -2.11bp, net -6bp per release; DSR 0; MinTRL Infinity; PBO 0.771 over 24m/36m |
+| pre-registered ceiling | 3.188 |
 
 ## Surprise families already measured on this record (not re-registered — D-823 forbids re-mining)
 
@@ -68,8 +82,8 @@ Gates for every row: the D-823 pre-registered ceiling sqrt(2 ln(trials under the
 |---|---|
 | macro surprise vs CONSENSUS (CPI, payrolls, claims, ISM) | no free keyless consensus HISTORY is held; the statistical surprises tested here are a proxy (and the claims proxy failed its positive control). Candidate forward-accrual source: the ForexFactory weekly calendar JSON (forecast + previous) — not on the endpoint allowlist, NOT probed; one operator allowlist line would start a consensus feed whose first test could be registered at birth. |
 | FOMC / policy-rate surprise | fed-funds futures and OIS are not held (CME data is paid); a daily 2y-yield proxy exists in trd_yield_curve but no FOMC timestamp series is ingested. |
-| Treasury auction surprise (tail vs when-issued) | auction results are free and keyless at fiscaldata.treasury.gov but that host is not allowlisted; when-issued yields are not free. |
-| UK release surprise (ONS CPI/labour, BoE decisions) | no UK release calendar, consensus or BoE rate series is held — this is the same gap that blocks every GBP row of the basket. |
+| Treasury auction surprise (tail vs when-issued) | auction results are free and keyless at api.fiscaldata.treasury.gov and the host IS allowlisted (D-989 corrects D-987) — not yet ingested; when-issued yields are not free. |
+| UK release surprise vs CONSENSUS (CPI, labour, BoE decisions) | D-989 holds ONS CPI first-release dates (130, 2015+) and the BoE curves: the NAIVE UK CPI surprise failed its day-0 control on gilts (D-989-uk-cpi-surprise-gilts UNTESTED). UK consensus is not held; ONS labour series are latest-vintage only (no first-release values), so a labour surprise is not testable point-in-time; no MPC decision-date series is ingested. |
 | crypto spot-ETF flow surprise | no free daily flow history is held. |
 | intraday earnings / announcement-timestamp reaction | intraday single-name equity history is a PAID gap (D-965); the daily expression is what D-987-pead-holdout and D-987-implied-move-surprise test. |
 

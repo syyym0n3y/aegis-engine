@@ -56,6 +56,10 @@ const BACKING: Record<string, [string, string]> = {
   // D-966: the blockchair half is a LIVE DAILY FEED (bc_* series via daily-up.sh) — table-backed so staleness is
   // caught; the coingecko half is the snapshot file data/coingecko-ref.json, noted in the row's blocker text.
   "coingecko-blockchair": ["trd_macro_series?series=like.bc_*&select=d&order=d.desc&limit=1", "d"],
+  // D-989: BoE IADB (Bank Rate, SONIA, nominal/real/implied-inflation gilt curves) and ONS (CPI/CPIH, labour) via
+  // ingest-uk-macro.ts. Backed by the fastest-moving series of each source.
+  "boe-uk-rates": ["trd_macro_series?series=eq.boe_bank_rate&select=d&order=d.desc&limit=1", "d"],
+  "ons-uk-releases": ["trd_macro_series?series=eq.ons_release:cpi&select=d&order=d.desc&limit=1", "d"],
 };
 // D-965: some closures are backed by an archive SNAPSHOT FILE, not a live table (the SPDJI PR pull is a one-off
 // crawl like edgar-fulltext). A file-backed fill is checkable too: the file must exist, parse, carry >= minRows
