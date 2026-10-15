@@ -1,6 +1,6 @@
 # THE LONG-TERM BASKET — instruments held only because we can measure what moves them (D-987)
 
-> Regenerated every daily coverage-runner cycle by `scripts/basket-register.ts`; generated 2026-10-15T02:27:36.880Z. Machine-readable: `research/basket.json`. **Not advice** — single-operator research; every vehicle is a candidate to verify with the broker (ISA/SIPP eligibility, KID, TER, currency line).
+> Regenerated every daily coverage-runner cycle by `scripts/basket-register.ts`; generated 2026-10-15T04:26:46.327Z. Machine-readable: `research/basket.json`. **Not advice** — single-operator research; every vehicle is a candidate to verify with the broker (ISA/SIPP eligibility, KID, TER, currency line).
 
 **understood = measured material drivers ÷ material drivers.** A driver is MEASURED only if its feed is held AND fresh within a budget matched to how often its source publishes (daily 6d · weekly 14d · monthly 85d, monthly series dated at period start). Held-but-stale is not measured (CONTINUITY LAW). Materiality was fixed per instrument from the operator's category list before any probe ran; non-material drivers are shown but never scored. Floor for membership: **0.8**.
 
@@ -45,20 +45,20 @@ Vehicle: CSPX / VUAG (UCITS, USD/GBP lines) — candidate. Proxy: SPY / ^GSPC. R
 | rates | Treasury curve (discount rate, term spread) | yes | MEASURED | `trd_yield_curve` (2026-10-14) | orphaned 50 days then wired daily (D-982) |
 | rates | 10y real yield (TIPS) | yes | MEASURED | `trd_macro_series real_yield_10y` (2026-10-13) | D-730: contemporaneous driver confirmed; forward change-conditioning null (t 0.16/-0.27/-0.13) |
 | earnings / revisions | constituent earnings (reported vs consensus) | yes | MEASURED | `trd_earnings` (2026-10-13) | PEAD decayed post-2012 (D-225); holdout registered D-987-pead-holdout |
-| earnings / revisions | consensus estimate revisions (~1,000 liquid names) | yes | MEASURED | `trd_macro_series est_rev90_0q:AAPL` (2026-10-14) | forward-only since 2026-09-07; D-987-revision-surprise accruing |
+| earnings / revisions | consensus estimate revisions (~1,000 liquid names) | yes | MEASURED | `trd_macro_series est_rev90_0q:AAPL` (2026-10-15) | forward-only since 2026-09-07; D-987-revision-surprise accruing |
 | flows / positioning | CFTC TFF positioning (E-mini S&P) | yes | MEASURED | `trd_cot_tff 13874A` (2026-10-06) | — |
 | flows / positioning | fund / ETF flows (creations, redemptions) | yes | GAP | no free keyless daily equity fund-flow history held (ICI is weekly aggregate, not ingested; issuer creation data not collected) | named barrier — not a market finding |
 | flows / positioning | corporate buybacks / blackout windows | yes | GAP | no buyback-execution series held; only 8-K text (trd_raw_filings), not a flow measure | named barrier — not a market finding |
 | options / gamma | implied volatility (VIX) | yes | MEASURED | `trd_bars_deep ^VIX` (2026-10-14) | fear-reversion near-miss (D-276); same-bar phantoms killed (D-498) |
-| options / gamma | SPX dealer gamma (SqueezeMetrics GEX) | yes | MEASURED | `trd_macro_series sqm_gex` (2026-10-13) | vol-damping validated 3 regimes, pooled t -17.3; sizing only, never direction (D-967/968) |
+| options / gamma | SPX dealer gamma (SqueezeMetrics GEX) | yes | MEASURED | `trd_macro_series sqm_gex` (2026-10-14) | vol-damping validated 3 regimes, pooled t -17.3; sizing only, never direction (D-967/968) |
 | liquidity / credit | credit spread (BAA-10y) | yes | MEASURED | `trd_macro_series credit_baa_10y` (2026-10-13) | — |
 | FX | GBPUSD (currency of account for a UK holder, unhedged line) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
 | liquidity / credit | financial conditions (NFCI, weekly) | no | MEASURED | `trd_macro_series fin_conditions` (2026-10-02) | — |
 | liquidity / credit | equity breadth (% > 200dma, survivorship-biased level) | no | MEASURED | `trd_macro_series breadth_pct_gt_200dma_surv` (2026-10-12) | — |
 | seasonality | calendar seasonality (derived from the price series) | no | MEASURED | `trd_bars_deep SPY` (2026-10-14) | turn-of-month = drift wearing a calendar, killed by its benchmark (D-962) |
 | macro releases | geopolitical risk index (monthly) | no | MEASURED | `trd_macro_series gpr` (2026-09-30) | — |
-| commodity links | crude oil (CL=F) | no | MEASURED | `trd_bars_deep CL=F` (2026-10-14) | — |
-| options / gamma | CBOE SKEW / put-call | no | MEASURED | `trd_macro_series cboe_skew` (2026-10-13) | options-regime conditioning null OOS (D-739) |
+| commodity links | crude oil (CL=F) | no | MEASURED | `trd_bars_deep CL=F` (2026-10-15) | — |
+| options / gamma | CBOE SKEW / put-call | no | MEASURED | `trd_macro_series cboe_skew` (2026-10-14) | options-regime conditioning null OOS (D-739) |
 
 ### Nasdaq-100 — understood 0.82 (14/17) — IN THE BASKET
 
@@ -75,12 +75,12 @@ Vehicle: EQQQ / CNX1 (UCITS) — candidate. Proxy: QQQ. Role: growth tilt (megac
 | rates | Treasury curve (discount rate, term spread) | yes | MEASURED | `trd_yield_curve` (2026-10-14) | orphaned 50 days then wired daily (D-982) |
 | rates | 10y real yield (TIPS) | yes | MEASURED | `trd_macro_series real_yield_10y` (2026-10-13) | D-730: contemporaneous driver confirmed; forward change-conditioning null (t 0.16/-0.27/-0.13) |
 | earnings / revisions | constituent earnings (reported vs consensus) | yes | MEASURED | `trd_earnings` (2026-10-13) | PEAD decayed post-2012 (D-225); holdout registered D-987-pead-holdout |
-| earnings / revisions | consensus estimate revisions (~1,000 liquid names) | yes | MEASURED | `trd_macro_series est_rev90_0q:AAPL` (2026-10-14) | forward-only since 2026-09-07; D-987-revision-surprise accruing |
+| earnings / revisions | consensus estimate revisions (~1,000 liquid names) | yes | MEASURED | `trd_macro_series est_rev90_0q:AAPL` (2026-10-15) | forward-only since 2026-09-07; D-987-revision-surprise accruing |
 | flows / positioning | CFTC TFF positioning (E-mini Nasdaq) | yes | MEASURED | `trd_cot_tff 209742` (2026-10-06) | — |
 | flows / positioning | fund / ETF flows (creations, redemptions) | yes | GAP | no free keyless daily equity fund-flow history held (ICI is weekly aggregate, not ingested; issuer creation data not collected) | named barrier — not a market finding |
 | flows / positioning | corporate buybacks / blackout windows | yes | GAP | no buyback-execution series held; only 8-K text (trd_raw_filings), not a flow measure | named barrier — not a market finding |
-| options / gamma | QQQ implied vol (CBOE ATM IV) | yes | MEASURED | `trd_perp_oi QQQ` (2026-10-14) | — |
-| options / gamma | QQQ dealer gamma (naive GEX, forward-only) | yes | MEASURED | `trd_perp_oi QQQ` (2026-10-14) | — |
+| options / gamma | QQQ implied vol (CBOE ATM IV) | yes | MEASURED | `trd_perp_oi QQQ` (2026-10-15) | — |
+| options / gamma | QQQ dealer gamma (naive GEX, forward-only) | yes | MEASURED | `trd_perp_oi QQQ` (2026-10-15) | — |
 | liquidity / credit | credit spread (BAA-10y) | yes | MEASURED | `trd_macro_series credit_baa_10y` (2026-10-13) | — |
 | FX | GBPUSD (currency of account for a UK holder, unhedged line) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
 | seasonality | calendar seasonality (derived from the price series) | no | MEASURED | `trd_bars_deep QQQ` (2026-10-14) | turn-of-month = drift wearing a calendar, killed by its benchmark (D-962) |
@@ -122,8 +122,8 @@ Vehicle: ISF / VUKE (UCITS, GBP) — candidate. Proxy: ^FTSE (EWU). Role: home-c
 | rates | gilt curve (nominal zero-coupon 5/10/20y) | yes | MEASURED | `trd_macro_series gilt_nom_zc_10y` (2026-10-12) | BoE IADB fitted curve, ~1 business day publication lag (D-989) |
 | earnings / revisions | FTSE constituent earnings / revisions | yes | GAP | earnings + revisions feeds cover US-listed names only | named barrier — not a market finding |
 | FX | GBPUSD (FTSE 100 earns ~75% of revenue abroad — inverse GBP exposure) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
-| commodity links | crude oil (energy weight) | yes | MEASURED | `trd_bars_deep CL=F` (2026-10-14) | — |
-| commodity links | copper / miners | yes | MEASURED | `trd_bars_deep HG=F` (2026-10-14) | — |
+| commodity links | crude oil (energy weight) | yes | MEASURED | `trd_bars_deep CL=F` (2026-10-15) | — |
+| commodity links | copper / miners | yes | MEASURED | `trd_bars_deep HG=F` (2026-10-15) | — |
 | flows / positioning | UK fund flows / positioning | yes | GAP | no FTSE futures COT equivalent or UK fund-flow series held | named barrier — not a market finding |
 | options / gamma | implied volatility (VIX) | yes | MEASURED | `trd_bars_deep ^VIX` (2026-10-14) | fear-reversion near-miss (D-276); same-bar phantoms killed (D-498) |
 | seasonality | calendar seasonality (derived from the price series) | no | MEASURED | `trd_bars_deep ^FTSE` (2026-10-14) | turn-of-month = drift wearing a calendar, killed by its benchmark (D-962) |
@@ -140,7 +140,7 @@ Vehicle: EIMI / VFEM (UCITS) — candidate. Proxy: EEM. Role: EM growth. Vehicle
 | rates | EM policy rates (CNY/KRW/INR/BRL) | yes | STALE | `trd_macro_series rate_3m_cny` (2026-07-01) | OECD/IMF monthly series; EM carry = research-space risk premium (D-741) |
 | earnings / revisions | EM constituent earnings / revisions | yes | GAP | earnings feeds cover US-listed names only | named barrier — not a market finding |
 | commodity links | broad commodities (DBC) | yes | MEASURED | `trd_bars_deep DBC` (2026-10-12) | — |
-| options / gamma | EEM dealer gamma / IV (CBOE, forward-only) | yes | MEASURED | `trd_perp_oi EEM` (2026-10-14) | — |
+| options / gamma | EEM dealer gamma / IV (CBOE, forward-only) | yes | MEASURED | `trd_perp_oi EEM` (2026-10-15) | — |
 | flows / positioning | EM fund flows | yes | GAP | no EM fund-flow series held | named barrier — not a market finding |
 | rates | 10y real yield (TIPS) | yes | MEASURED | `trd_macro_series real_yield_10y` (2026-10-13) | D-730: contemporaneous driver confirmed; forward change-conditioning null (t 0.16/-0.27/-0.13) |
 | FX | GBPUSD (currency of account for a UK holder, unhedged line) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
@@ -163,7 +163,7 @@ Vehicle: IDTL / DTLA (UCITS; GBP-hedged line exists) — candidate. Proxy: TLT. 
 | rates | term premium (ACM) | yes | GAP | NY Fed ACM term-premium file is free but newyorkfed.org is NOT allowlisted | named barrier — not a market finding |
 | rates | Fed balance sheet (QT/QE supply) | yes | MEASURED | `trd_macro_series fed_balance_sheet` (2026-10-07) | held from D-987 (FRED WALCL, existing keyless feed) |
 | flows / positioning | CFTC TFF positioning (UST bond futures) | yes | MEASURED | `trd_cot_tff 020601` (2026-10-06) | — |
-| options / gamma | TLT dealer gamma (CBOE, forward-only) | yes | MEASURED | `trd_perp_oi TLT` (2026-10-14) | — |
+| options / gamma | TLT dealer gamma (CBOE, forward-only) | yes | MEASURED | `trd_perp_oi TLT` (2026-10-15) | — |
 | FX | GBPUSD (USD line unhedged; the GBP-hedged line removes it) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
 | options / gamma | rates volatility (MOVE) | no | GAP | MOVE index not held (ICE, not free history) | named barrier — not a market finding |
 
@@ -244,13 +244,13 @@ Vehicle: SGLN / IGLN (physical ETC, GBP/USD lines) — candidate. Proxy: GLD / G
 | macro releases | US CPI level + release calendar | yes | MEASURED | `trd_macro_series cpi` (2026-09-01) | statistical CPI surprise: D-987-cpi-surprise-spx REJECTED (sign missed); release-hour reversal forward-only (D-987-release-reversal-forward) |
 | rates | expected Fed policy path — PROXY: 2y Treasury yield (trd_yield_curve y2) — the standard market-implied proxy; fed-funds futures/OIS not held (CME paid) | yes | MEASURED | `trd_yield_curve` (2026-10-14) | — |
 | flows / positioning | CFTC disaggregated positioning (gold) | yes | MEASURED | `trd_cot_disagg 088691` (2026-10-06) | — |
-| flows / positioning | ETF holdings (GLD tonnes) | yes | MEASURED | `trd_macro_series gld_tonnes` (2026-10-13) | 'flows drive gold' REFUTED — flow follows price (D-745) |
+| flows / positioning | ETF holdings (GLD tonnes) | yes | MEASURED | `trd_macro_series gld_tonnes` (2026-10-14) | 'flows drive gold' REFUTED — flow follows price (D-745) |
 | macro releases | geopolitical risk (GPR) | yes | MEASURED | `trd_macro_series gpr` (2026-09-30) | — |
 | flows / positioning | central-bank buying | yes | GAP | IMF COFER / WGC reserve data is quarterly and lagged — EXPLAIN-only, cannot condition a position (D-716) | named barrier — not a market finding |
-| options / gamma | GLD implied vol / dealer gamma (CBOE, forward-only) | yes | MEASURED | `trd_perp_oi GLD` (2026-10-14) | — |
+| options / gamma | GLD implied vol / dealer gamma (CBOE, forward-only) | yes | MEASURED | `trd_perp_oi GLD` (2026-10-15) | — |
 | FX | GBPUSD (currency of account for a UK holder, unhedged line) | yes | MEASURED | `trd_bars_deep GBPUSD=X` (2026-10-14) | currency-of-account worth ~1.3pp/yr to a GBP investor (D-731) |
 | seasonality | calendar seasonality (derived from the price series) | no | MEASURED | `trd_bars_deep GLD` (2026-10-14) | turn-of-month = drift wearing a calendar, killed by its benchmark (D-962) |
-| commodity links | gold/silver ratio | no | MEASURED | `trd_bars_deep SI=F` (2026-10-14) | — |
+| commodity links | gold/silver ratio | no | MEASURED | `trd_bars_deep SI=F` (2026-10-15) | — |
 
 ### Broad commodities — understood 0.67 (6/9) — BLOCKED
 
@@ -275,7 +275,7 @@ Vehicle: CRUD (ETC) — candidate. Proxy: CL=F. Role: energy shock hedge. Vehicl
 
 | category | driver | material | state | feed (latest) | what the record says |
 |---|---|---|---|---|---|
-| price itself | own price / trend / volatility (CL=F) | yes | MEASURED | `trd_bars_deep CL=F` (2026-10-14) | — |
+| price itself | own price / trend / volatility (CL=F) | yes | MEASURED | `trd_bars_deep CL=F` (2026-10-15) | — |
 | commodity links | inventories (EIA weekly) | yes | MEASURED | `trd_macro_series eia_crude_stocks_w` (2026-10-02) | change-conditioning null (D-743) |
 | commodity links | live futures curve / roll yield | yes | STALE | `trd_macro_series eia_cl_c2` (2024-04-05) | frozen 2024-04 (research history only, D-742) |
 | flows / positioning | CFTC disaggregated positioning (crude) | yes | MEASURED | `trd_cot_disagg 067651` (2026-10-06) | — |
@@ -291,10 +291,10 @@ Vehicle: physically-backed BTC ETP/ETN (UK retail since 2025-10; ISA eligibility
 
 | category | driver | material | state | feed (latest) | what the record says |
 |---|---|---|---|---|---|
-| price itself | own price / trend / volatility (BTC-USD) | yes | MEASURED | `trd_bars_deep BTC-USD` (2026-10-14) | spot-crypto trend switch Sharpe 0.69, -6% DD 2018-26 (D-871); ISA+crypto pair 1.29 OOS, 0.90 ex-2020-21 (D-873) |
-| flows / positioning | perp funding | yes | MEASURED | `trd_perp_oi BTCUSDT` (2026-10-14) | pooling artefact retracted (D-415); profitable direction an unregistered flip (D-553/554) |
-| flows / positioning | top-trader long/short positioning | yes | MEASURED | `trd_perp_oi BTCUSDT` (2026-10-14) | — |
-| options / gamma | implied vol (Deribit DVOL) | yes | MEASURED | `trd_macro_series deribit_btc_dvol` (2026-10-14) | BTC VRP measured NW t 4.39; return effect below bar (D-817) |
+| price itself | own price / trend / volatility (BTC-USD) | yes | MEASURED | `trd_bars_deep BTC-USD` (2026-10-15) | spot-crypto trend switch Sharpe 0.69, -6% DD 2018-26 (D-871); ISA+crypto pair 1.29 OOS, 0.90 ex-2020-21 (D-873) |
+| flows / positioning | perp funding | yes | MEASURED | `trd_perp_oi BTCUSDT` (2026-10-15) | pooling artefact retracted (D-415); profitable direction an unregistered flip (D-553/554) |
+| flows / positioning | top-trader long/short positioning | yes | MEASURED | `trd_perp_oi BTCUSDT` (2026-10-15) | — |
+| options / gamma | implied vol (Deribit DVOL) | yes | MEASURED | `trd_macro_series deribit_btc_dvol` (2026-10-15) | BTC VRP measured NW t 4.39; return effect below bar (D-817) |
 | flows / positioning | on-chain activity / fees | yes | MEASURED | `trd_macro_series onchain_btc_transaction_fees_usd` (2026-10-13) | fee-momentum clock (D-928); breadth consumer registered (D-972) |
 | flows / positioning | CFTC TFF positioning (CME bitcoin) | yes | MEASURED | `trd_cot_tff 133741` (2026-10-06) | — |
 | flows / positioning | spot-ETF flows | yes | GAP | no free daily spot-ETF flow history held | named barrier — not a market finding |

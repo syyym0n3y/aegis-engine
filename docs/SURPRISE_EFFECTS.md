@@ -1,6 +1,6 @@
 # SURPRISE EFFECTS — what the market demonstrably rewards for being surprised, tested only as pre-registered (D-987)
 
-> Regenerated every daily coverage-runner cycle by `scripts/surprise-program.ts`. Generated 2026-10-15T02:27:29.837Z. Every test below was written into the append-only `trd_prereg` table (rows `D-987-*`, text in `scripts/surprise-registry.ts`, verified identical on every run) BEFORE its outcome was computed. Machine-readable: `research/surprise-ledger.json`.
+> Regenerated every daily coverage-runner cycle by `scripts/surprise-program.ts`. Generated 2026-10-15T04:26:50.714Z. Every test below was written into the append-only `trd_prereg` table (rows `D-987-*`, text in `scripts/surprise-registry.ts`, verified identical on every run) BEFORE its outcome was computed. Machine-readable: `research/surprise-ledger.json`.
 
 **7 pre-registered · 3 tested · 0 survived · 4 accruing.** Accruing floors are re-checked every night as an UPPER BOUND on progress; the night one may be met the run exits RED ("FLOOR MET — SCORER REQUIRED") until the registered statistic is computed and its outcome written once — maturity cannot pass silently. A survivor becomes a `trd_forward_rules` clock — never capital.
 

@@ -1,6 +1,6 @@
 # P&L — owned node only (no rented infra, no LLM)
 
-> Generated 2026-10-14T22:24:21.196Z by `pnl-report.ts` from the local database. The predecessor routine
+> Generated 2026-10-15T04:26:44.809Z by `pnl-report.ts` from the local database. The predecessor routine
 > read the rented CC oversight project, which is dead (HTTP 000). Nothing here depends on any subscription.
 
 ## REAL capital
@@ -10,7 +10,7 @@ Kill switches: `paper`=armed, `micro`=armed. Arming them does not place anything
 
 ## PAPER book — `fwd-distress-ivol-blend-5` (DORMANT, $0 at risk)
 
-- marks on record: **62**, latest **2026-10-14** (elapsed 28d)
+- marks on record: **63**, latest **2026-10-15** (elapsed 29d)
 - clock: **not yet computable**
 
 > This is a PAPER number on a book nobody has funded. It is not proof the edge works, and a forward Sharpe on
