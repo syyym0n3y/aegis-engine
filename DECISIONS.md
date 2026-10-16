@@ -22937,3 +22937,27 @@ ACTS-ON: gate — four GBP instruments now pass the measured-understanding gate 
 decided by its own control; the night-shift loops can no longer drift into working hours.
 GOLD: research — the basket stops being a US-only object, and a third statistical-surprise proxy is closed honestly
 rather than mined for a sign.
+
+## D-990 (2026-10-16) DECODE IS NIGHT-ONLY — and the memory culprit turned out to be something else entirely
+
+Operator: run decode night-only. Done, and the investigation corrected a diagnosis I had been running on since D-986.
+**THE GATE.** `cc-decode-daemon-sovereign` now idles outside **04:00–07:00 local**, enforced in all THREE paths that
+can trigger a model load — `lane()`, `scout_lane()` and the promote loop. The first pass gated only `lane()` and the
+model still loaded, which is the same enumerate-don't-assume lesson as D-986's three entry points; the second pass
+aborted mid-edit on a bad anchor and wrote nothing, which is why the gate count was verified (4 call sites: 1 def +
+3 guards) rather than trusted. The window sits AFTER the aegis coverage cycle (02:40–~04:40) so the two never contend.
+**THE DIAGNOSIS I HAD WRONG.** With all three paths gated and the daemon restarted on the new code, the 8.4GB vision
+model STILL loaded within seconds. Rather than patch further, the caller was identified by socket:
+`lsof -iTCP:11434` showed the established client was **PID 42822 = `io.revitalise.sovereign.llm-proxy`**, not decode
+at all. The proxy pins nothing — it forwards — so the model was being held by a STALE ollama worker from before
+ollama's upgrade (0.16.2 → **0.40.3**), carrying a keep-alive that predated the 60s setting put in place at D-975.
+Restarting the ollama launchd job applied the plist env (`OLLAMA_KEEP_ALIVE=60s`, `OLLAMA_MAX_LOADED_MODELS=1`) and
+the model unloaded: **memory 10% → 78% free, host-budget GREEN.**
+The lesson is the cost of assuming a culprit: three rounds of gating were aimed at a process that was not holding the
+memory. One `lsof` answered it. A guard that NAMES the largest process (D-975) was right there and still did not
+identify the *client* — naming the holder is not naming the requester, and the next version of that guard should
+report the socket peer when the holder is a model server.
+ACTS-ON: gate — decode cannot run during the operator's working day, and the ollama keep-alive is now verified in
+effect rather than assumed from a plist written before an upgrade.
+GOLD: reliability — the requested change shipped, and a diagnosis that had survived two decisions was falsified by
+one command.
