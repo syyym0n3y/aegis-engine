@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T04:26:50.714Z",
+  "generated_at": "2026-10-16T03:35:18.414Z",
   "generator": "scripts/surprise-program.ts (D-987)",
   "counts": {
     "preregistered": 7,
@@ -19,12 +19,12 @@
       "trials_declared": 4,
       "status": "UNTESTED",
       "recorded_outcome": "untested",
-      "summary": "POSITIVE CONTROL FAILED: day-0 slope -1.56bp/sd t -0.83 — the statistical surprise carries no priced information on release day, so a forward null would be about the PROXY, not the market.",
+      "summary": "POSITIVE CONTROL FAILED: day-0 slope -1.55bp/sd t -0.83 — the statistical surprise carries no priced information on release day, so a forward null would be about the PROXY, not the market.",
       "numbers": {
-        "n_events": 2961,
-        "span": "1970-01-08..2026-10-01",
+        "n_events": 2962,
+        "span": "1970-01-08..2026-10-08",
         "control_day0": {
-          "slope_bp_per_sd": -1.56,
+          "slope_bp_per_sd": -1.55,
           "t": -0.83,
           "tNW1": -0.74
         },
@@ -40,8 +40,8 @@
           "t": -1.12
         },
         "half2": {
-          "n": 987,
-          "slope_bp": 1.69,
+          "n": 988,
+          "slope_bp": 1.7,
           "t": 0.21
         },
         "eras": {
@@ -71,12 +71,12 @@
             "t": 0.37
           },
           "2020s": {
-            "n": 353,
-            "bBp": 12.68,
-            "t": 0.91
+            "n": 354,
+            "bBp": 12.72,
+            "t": 0.92
           }
         },
-        "effect_x_cost": 0.51,
+        "effect_x_cost": 0.5,
         "cost_bp_round_trip": 6,
         "ceiling": 3.19,
         "trading_expression": {
@@ -84,8 +84,8 @@
           "net_mean_bp": 0.42,
           "net_sr_per_event": 0.0035,
           "dsr": 0.006,
-          "minTRL": 217559,
-          "pbo": 0.229,
+          "minTRL": 219089,
+          "pbo": 0.271,
           "variants": [
             "4wk",
             "8wk",
@@ -177,13 +177,13 @@
       "trials_declared": 1,
       "status": "ACCRUING",
       "recorded_outcome": null,
-      "summary": "289 holdout events with a reported surprise across 3 month(s); 1/6 months have >= 50 raw events and a complete 20-session window (upper bound before the liquidity filter).",
+      "summary": "297 holdout events with a reported surprise across 3 month(s); 1/6 months have >= 50 raw events and a complete 20-session window (upper bound before the liquidity filter).",
       "numbers": {
-        "holdout_events_raw": 289,
+        "holdout_events_raw": 297,
         "by_month": {
           "2026-08": 86,
           "2026-09": 168,
-          "2026-10": 35
+          "2026-10": 43
         },
         "floor_months_upper_bound": 1,
         "floor_months_required": 6
@@ -218,11 +218,11 @@
       "trials_declared": 1,
       "status": "ACCRUING",
       "recorded_outcome": null,
-      "summary": "19/300 events with a valid pre-report IV (<= 5 days old) and a matured 20-session window, across 1/2 earnings quarter(s); 378 reported events in the window before the IV filter. Count only — no statistic computed below the floor.",
+      "summary": "20/300 events with a valid pre-report IV (<= 5 days old) and a matured 20-session window, across 1/2 earnings quarter(s); 387 reported events in the window before the IV filter. Count only — no statistic computed below the floor.",
       "numbers": {
         "iv_first": "2026-08-23",
-        "events_valid_iv": 19,
-        "events_reported": 378,
+        "events_valid_iv": 20,
+        "events_reported": 387,
         "seasons": 1
       }
     },

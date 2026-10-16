@@ -1,6 +1,6 @@
 # SURPRISE EFFECTS — what the market demonstrably rewards for being surprised, tested only as pre-registered (D-987)
 
-> Regenerated every daily coverage-runner cycle by `scripts/surprise-program.ts`. Generated 2026-10-15T04:26:50.714Z. Every test below was written into the append-only `trd_prereg` table (rows `D-987-*`, text in `scripts/surprise-registry.ts`, verified identical on every run) BEFORE its outcome was computed. Machine-readable: `research/surprise-ledger.json`.
+> Regenerated every daily coverage-runner cycle by `scripts/surprise-program.ts`. Generated 2026-10-16T03:35:18.414Z. Every test below was written into the append-only `trd_prereg` table (rows `D-987-*`, text in `scripts/surprise-registry.ts`, verified identical on every run) BEFORE its outcome was computed. Machine-readable: `research/surprise-ledger.json`.
 
 **7 pre-registered · 3 tested · 0 survived · 4 accruing.** Accruing floors are re-checked every night as an UPPER BOUND on progress; the night one may be met the run exits RED ("FLOOR MET — SCORER REQUIRED") until the registered statistic is computed and its outcome written once — maturity cannot pass silently. A survivor becomes a `trd_forward_rules` clock — never capital.
 
@@ -10,11 +10,11 @@ Gates for every row: the D-823 pre-registered ceiling sqrt(2 ln(trials under the
 
 | id | surprise variable | instrument | status | outcome recorded | result |
 |---|---|---|---|---|---|
-| `D-987-claims-surprise-spx` | macro release surprise (labour, weekly) | S&P 500 (CSPX/SPY via ^GSPC) | **UNTESTED** | untested | POSITIVE CONTROL FAILED: day-0 slope -1.56bp/sd t -0.83 — the statistical surprise carries no priced information on release day, so a forward null would be about the PROXY, not the market. |
+| `D-987-claims-surprise-spx` | macro release surprise (labour, weekly) | S&P 500 (CSPX/SPY via ^GSPC) | **UNTESTED** | untested | POSITIVE CONTROL FAILED: day-0 slope -1.55bp/sd t -0.83 — the statistical surprise carries no priced information on release day, so a forward null would be about the PROXY, not the market. |
 | `D-987-cpi-surprise-spx` | macro release surprise (inflation, monthly) | S&P 500 (CSPX/SPY via ^GSPC) | **REJECTED** | rejected | SIGN MISSED: fwd-5 slope 20.29bp/sd (t 1.15) is not negative; a positive slope is an unregistered flip and not claimable. |
-| `D-987-pead-holdout` | earnings surprise / post-earnings drift (holdout) | US liquid single names (not ISA-basket; informs the S&P/Nasdaq driver map) | **ACCRUING** | — | 289 holdout events with a reported surprise across 3 month(s); 1/6 months have >= 50 raw events and a complete 20-session window (upper bound before the liquidity filter). |
+| `D-987-pead-holdout` | earnings surprise / post-earnings drift (holdout) | US liquid single names (not ISA-basket; informs the S&P/Nasdaq driver map) | **ACCRUING** | — | 297 holdout events with a reported surprise across 3 month(s); 1/6 months have >= 50 raw events and a complete 20-session window (upper bound before the liquidity filter). |
 | `D-987-revision-surprise` | estimate-revision surprise | US liquid single names (feeds the S&P/Nasdaq 'earnings revisions' driver) | **ACCRUING** | — | revision snapshots since 2026-09-07; 0/12 monthly cross-sections have a complete 21-session forward window. |
-| `D-987-implied-move-surprise` | options-implied vs realised move surprise (earnings) | US liquid single names with listed options | **ACCRUING** | — | 19/300 events with a valid pre-report IV (<= 5 days old) and a matured 20-session window, across 1/2 earnings quarter(s); 378 reported events in the window before the IV filter. Count only — no statistic computed below the floor. |
+| `D-987-implied-move-surprise` | options-implied vs realised move surprise (earnings) | US liquid single names with listed options | **ACCRUING** | — | 20/300 events with a valid pre-report IV (<= 5 days old) and a matured 20-session window, across 1/2 earnings quarter(s); 387 reported events in the window before the IV filter. Count only — no statistic computed below the floor. |
 | `D-987-release-reversal-forward` | macro release-hour surprise reaction (reversal), forward | S&P 500 / Nasdaq-100 (CSPX, EQQQ) | **ACCRUING** | — | 4/40 qualifying calendar releases since 2026-09-13 (upper bound before the hourly-bar completeness check). |
 | `D-989-uk-cpi-surprise-gilts` | UK macro release surprise (CPI, monthly) | UK gilts (IGLT/short-dated gilt funds; research series BoE 5y zero-coupon yield) | **UNTESTED** | untested | POSITIVE CONTROL FAILED: day-0 5y gilt yield move 0.58bp/sd t 1.20 — the naive UK CPI surprise is not what gilts price on release day. |
 
@@ -22,14 +22,14 @@ Gates for every row: the D-823 pre-registered ceiling sqrt(2 ln(trials under the
 
 | measure | value |
 |---|---|
-| events | 2961 (1970-01-08..2026-10-01) |
-| POSITIVE CONTROL: day-0 slope | -1.56bp per 1sd, t -0.83 (NW1 -0.74) — needs abs(t) >= 2 |
+| events | 2962 (1970-01-08..2026-10-08) |
+| POSITIVE CONTROL: day-0 slope | -1.55bp per 1sd, t -0.83 (NW1 -0.74) — needs abs(t) >= 2 |
 | PRIMARY: next-5-session slope | -3.03bp per 1sd, t -0.74 (NW1 -0.62); deciding t -0.62; registered sign NEGATIVE |
-| halves (first 2/3, last 1/3) | -5.23bp t -1.12 (n 1974) / 1.69bp t 0.21 (n 987) |
-| effect vs 6bp round trip | 0.51x |
-| trading expression (p = -clip(z,-2,2)/2) | gross 2.54bp, net 0.42bp per release; DSR 0.006; MinTRL 217559; PBO 0.229 over 4wk/8wk/13wk |
+| halves (first 2/3, last 1/3) | -5.23bp t -1.12 (n 1974) / 1.7bp t 0.21 (n 988) |
+| effect vs 6bp round trip | 0.5x |
+| trading expression (p = -clip(z,-2,2)/2) | gross 2.54bp, net 0.42bp per release; DSR 0.006; MinTRL 219089; PBO 0.271 over 4wk/8wk/13wk |
 | pre-registered ceiling | 3.19 |
-| eras (descriptive) | 1970s -19.6bp t -2.16 · 1980s 8.4bp t 0.88 · 1990s 3.24bp t 0.38 · 2000s -12.94bp t -1.15 · 2010s 3.22bp t 0.37 · 2020s 12.68bp t 0.91 |
+| eras (descriptive) | 1970s -19.6bp t -2.16 · 1980s 8.4bp t 0.88 · 1990s 3.24bp t 0.38 · 2000s -12.94bp t -1.15 · 2010s 3.22bp t 0.37 · 2020s 12.72bp t 0.92 |
 | INSTRUMENT conversion (SPY on ^GSPC, weekly) | beta 0.997, corr 0.9961 over 1696 weeks |
 
 ### D-987-cpi-surprise-spx — REJECTED

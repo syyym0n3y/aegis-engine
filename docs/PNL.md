@@ -1,6 +1,6 @@
 # P&L — owned node only (no rented infra, no LLM)
 
-> Generated 2026-10-15T04:26:44.809Z by `pnl-report.ts` from the local database. The predecessor routine
+> Generated 2026-10-16T03:35:16.165Z by `pnl-report.ts` from the local database. The predecessor routine
 > read the rented CC oversight project, which is dead (HTTP 000). Nothing here depends on any subscription.
 
 ## REAL capital
@@ -10,7 +10,7 @@ Kill switches: `paper`=armed, `micro`=armed. Arming them does not place anything
 
 ## PAPER book — `fwd-distress-ivol-blend-5` (DORMANT, $0 at risk)
 
-- marks on record: **63**, latest **2026-10-15** (elapsed 29d)
+- marks on record: **65**, latest **2026-10-16** (elapsed 30d)
 - clock: **not yet computable**
 
 > This is a PAPER number on a book nobody has funded. It is not proof the edge works, and a forward Sharpe on
@@ -21,9 +21,9 @@ Kill switches: `paper`=armed, `micro`=armed. Arming them does not place anything
 
 | series | latest | as of |
 |---|---|---|
-| spy_vs200_pct | 7.967 | 2026-10-13 |
-| spy_rvol20_pct | 9.5469 | 2026-10-13 |
-| spy_dd1y_pct | -0.1386 | 2026-10-13 |
+| spy_vs200_pct | 6.7372 | 2026-10-14 |
+| spy_rvol20_pct | 10.1768 | 2026-10-14 |
+| spy_dd1y_pct | -1.2181 | 2026-10-14 |
 | breadth_above50_pct | 29.4521 | 2026-10-12 |
 
 ## Wealth ledger (ballast)
